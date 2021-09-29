@@ -37,6 +37,11 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.execution.Token
+import com.dimajix.flowman.metric.CollectingMetricSink
+import com.dimajix.flowman.metric.GaugeMetric
+import com.dimajix.flowman.metric.Metric
+import com.dimajix.flowman.metric.MetricBoard
+import com.dimajix.flowman.metric.MetricWrapper
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.AssertionResultWrapper
@@ -60,12 +65,13 @@ import com.dimajix.flowman.spec.hook.ReportHook.ReporterJobToken
 import com.dimajix.flowman.spec.hook.ReportHook.ReporterLifecycleToken
 import com.dimajix.flowman.spec.hook.ReportHook.ReporterTargetToken
 import com.dimajix.flowman.spec.hook.ReportHook.defaultTemplate
+import com.dimajix.flowman.spec.metric.MetricBoardSpec
 import com.dimajix.flowman.spi.LogFilter
 
 
 object ReportHook {
     case class ReporterLifecycleToken(output:Option[PrintStream]) extends LifecycleToken
-    case class ReporterJobToken(phase:Phase, output:Option[PrintStream]) extends JobToken
+    case class ReporterJobToken(phase:Phase, output:Option[PrintStream], metrics:Option[CollectingMetricSink]) extends JobToken
     case class ReporterTargetToken(phase:Phase, output:Option[PrintStream]) extends TargetToken
     case class ReporterAssertionToken(output:Option[PrintStream]) extends AssertionToken
 
@@ -76,7 +82,8 @@ case class ReportHook(
     instanceProperties: Hook.Properties,
     location:Path,
     mode:OutputMode = OutputMode.OVERWRITE,
-    template:URL = defaultTemplate
+    template:URL = defaultTemplate,
+    metrics:Option[MetricBoard] = None
 ) extends BaseHook {
     private val logger = LoggerFactory.getLogger(classOf[ReportHook])
 
@@ -136,7 +143,7 @@ case class ReportHook(
      * @param job
      * @return
      */
-    override def startLifecycle(excution:Execution, job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken = {
+    override def startLifecycle(execution:Execution, job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken = {
         logger.info(s"Creating new report to $location")
         val output = newOutput()
         output.foreach { p =>
@@ -152,10 +159,16 @@ case class ReportHook(
      * @param token The token returned by startJob
      * @param result
      */
-    override def finishLifecycle(excution:Execution, token:LifecycleToken, result:LifecycleResult) : Unit = {
+    override def finishLifecycle(execution:Execution, token:LifecycleToken, result:LifecycleResult) : Unit = {
         val lifecycleToken = token.asInstanceOf[ReporterLifecycleToken]
         lifecycleToken.output.foreach { p =>
-            val text = context.evaluate(lifecycleFinishVtl, Map("job" -> JobWrapper(result.job), "lifecycle" -> result.lifecycle.map(_.toString).asJava, "status" -> result.status.toString, "result" -> LifecycleResultWrapper(result)))
+            val vars = Map(
+                "job" -> JobWrapper(result.job),
+                "lifecycle" -> result.lifecycle.map(_.toString).asJava,
+                "status" -> result.status.toString,
+                "result" -> LifecycleResultWrapper(result)
+            )
+            val text = context.evaluate(lifecycleFinishVtl, vars)
             p.print(text)
             p.flush()
             p.close()
@@ -168,7 +181,23 @@ case class ReportHook(
      * @param job
      * @return
      */
-    override def startJob(excution:Execution, job: Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
+    override def startJob(execution:Execution, job: Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
+        // Add collecting metric sink, only if no metrics board is specified
+        val metricSink =
+            if (metrics.isEmpty) {
+                val sink = new CollectingMetricSink
+                execution.metrics.addSink(sink)
+                Some(sink)
+            }
+            else {
+                None
+            }
+
+        // Register custom metrics board
+        metrics.foreach { board =>
+            board.reset(execution.metrics)
+        }
+
         val output = parent.flatMap {
             case ReporterLifecycleToken(output) => output
             case _ => newOutput()
@@ -178,7 +207,8 @@ case class ReportHook(
             p.print(text)
             p.flush()
         }
-        ReporterJobToken(phase, output)
+
+        ReporterJobToken(phase, output, metricSink)
     }
 
     /**
@@ -186,10 +216,29 @@ case class ReportHook(
      * @param token The token returned by startJob
      * @param result
      */
-    override def finishJob(excution:Execution, token: JobToken, result: JobResult): Unit = {
+    override def finishJob(execution:Execution, token: JobToken, result: JobResult): Unit = {
         val jobToken = token.asInstanceOf[ReporterJobToken]
+
+        // Remove custom board it
+        val boardMetrics = metrics.toSeq.flatMap { board =>
+            board.metrics(execution.metrics, result.status).map(m => MetricWrapper(m))
+        }
+
+        // Grab metrics from Sink and remove it
+        val sinkMetrics = jobToken.metrics.toSeq.flatMap { sink =>
+            execution.metrics.removeSink(sink)
+            sink.metrics.map(m => MetricWrapper(m))
+        }
+
         jobToken.output.foreach { p =>
-            val text = context.evaluate(jobFinishVtl, Map("job" -> JobWrapper(result.job), "phase" -> result.phase.toString, "status" -> result.status.toString, "result" -> JobResultWrapper(result)))
+            val vars = Map(
+                "job" -> JobWrapper(result.job),
+                "phase" -> result.phase.toString,
+                "status" -> result.status.toString,
+                "result" -> JobResultWrapper(result),
+                "metrics" -> (boardMetrics ++ sinkMetrics).asJava
+            )
+            val text = context.evaluate(jobFinishVtl, vars)
             p.print(text)
             p.flush()
         }
@@ -200,9 +249,9 @@ case class ReportHook(
      * @param target
      * @return
      */
-    override def startTarget(excution:Execution, target: Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = {
+    override def startTarget(execution:Execution, target: Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = {
         val output = parent.flatMap {
-            case ReporterJobToken(_, output) => output
+            case ReporterJobToken(_, output, _) => output
             case _ => None
         }
         output.foreach { p =>
@@ -218,10 +267,16 @@ case class ReportHook(
      * @param token The token returned by startJob
      * @param result
      */
-    override def finishTarget(excution:Execution, token: TargetToken, result: TargetResult): Unit = {
+    override def finishTarget(execution:Execution, token: TargetToken, result: TargetResult): Unit = {
         val targetToken = token.asInstanceOf[ReporterTargetToken]
         targetToken.output.foreach { p =>
-            val text = context.evaluate(targetFinishVtl, Map("target" -> TargetWrapper(result.target), "phase" -> result.phase.toString, "status" -> result.status.toString, "result" -> TargetResultWrapper(result)))
+            val vars = Map(
+                "target" -> TargetWrapper(result.target),
+                "phase" -> result.phase.toString,
+                "status" -> result.status.toString,
+                "result" -> TargetResultWrapper(result)
+            )
+            val text = context.evaluate(targetFinishVtl, vars)
             p.print(text)
             p.flush()
         }
@@ -232,9 +287,9 @@ case class ReportHook(
      * @param assertion
      * @return
      */
-    override def startAssertion(excution:Execution, assertion: Assertion, parent: Option[Token]): AssertionToken = {
+    override def startAssertion(execution:Execution, assertion: Assertion, parent: Option[Token]): AssertionToken = {
         val output = parent.flatMap {
-            case ReporterJobToken(_, output) => output
+            case ReporterJobToken(_, output, _) => output
             case ReporterTargetToken(_, output) => output
             case _ => None
         }
@@ -251,10 +306,15 @@ case class ReportHook(
      * @param token The token returned by startJob
      * @param status
      */
-    override def finishAssertion(excution:Execution, token: AssertionToken, result: AssertionResult): Unit = {
+    override def finishAssertion(execution:Execution, token: AssertionToken, result: AssertionResult): Unit = {
         val assertionToken = token.asInstanceOf[ReporterAssertionToken]
         assertionToken.output.foreach { p =>
-            val text = context.evaluate(assertionFinishVtl, Map("assertion" -> AssertionWrapper(result.assertion), "status" -> result.status.toString, "result" -> AssertionResultWrapper(result)))
+            val vars = Map(
+                "assertion" -> AssertionWrapper(result.assertion),
+                "status" -> result.status.toString,
+                "result" -> AssertionResultWrapper(result)
+            )
+            val text = context.evaluate(assertionFinishVtl, vars)
             p.print(text)
             p.flush()
         }
@@ -266,13 +326,15 @@ class ReportHookSpec extends HookSpec {
     @JsonProperty(value="location", required=true) private var location:String = _
     @JsonProperty(value="mode", required=false) private var mode:Option[String] = None
     @JsonProperty(value="template", required=false) private var template:String = defaultTemplate.toString
+    @JsonProperty(value="metrics", required=false) private var metrics:Option[MetricBoardSpec] = None
 
     override def instantiate(context: Context): ReportHook = {
         ReportHook(
             instanceProperties(context),
             new Path(context.evaluate(location)),
             OutputMode.ofString(context.evaluate(mode).getOrElse("overwrite")),
-            new URL(context.evaluate(template))
+            new URL(context.evaluate(template)),
+            metrics.map(_.instantiate(context))
         )
     }
 }

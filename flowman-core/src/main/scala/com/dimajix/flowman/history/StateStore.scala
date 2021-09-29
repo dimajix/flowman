@@ -16,10 +16,19 @@
 
 package com.dimajix.flowman.history
 
+import com.dimajix.flowman.execution
+import com.dimajix.flowman.execution.AbstractExecutionListener
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.execution.Token
+import com.dimajix.flowman.history
+import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetResult
 
 
 abstract class JobToken
@@ -85,4 +94,32 @@ abstract class StateStore {
       * @return
       */
     def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState]
+}
+
+
+
+object StateStoreAdaptorListener {
+    final case class StateStoreJobToken(token:history.JobToken) extends execution.JobToken
+    final case class StateStoreTargetToken(token:history.TargetToken) extends execution.TargetToken
+}
+final class StateStoreAdaptorListener(store:StateStore) extends AbstractExecutionListener {
+    import StateStoreAdaptorListener._
+
+    override def startJob(execution:Execution, job:Job, instance: JobInstance, phase: Phase, parent:Option[Token]): com.dimajix.flowman.execution.JobToken = {
+        StateStoreJobToken(store.startJob(instance, phase))
+    }
+    override def finishJob(execution:Execution, token: com.dimajix.flowman.execution.JobToken, result: JobResult): Unit = {
+        val status = result.status
+        val t = token.asInstanceOf[StateStoreJobToken].token
+        store.finishJob(t, status)
+    }
+    override def startTarget(execution:Execution, target:Target, instance: TargetInstance, phase: Phase, parent: Option[com.dimajix.flowman.execution.Token]): com.dimajix.flowman.execution.TargetToken = {
+        val t = parent.map(_.asInstanceOf[StateStoreJobToken].token)
+        StateStoreTargetToken(store.startTarget(instance, phase, t))
+    }
+    override def finishTarget(execution:Execution, token: com.dimajix.flowman.execution.TargetToken, result:TargetResult): Unit = {
+        val status = result.status
+        val t = token.asInstanceOf[StateStoreTargetToken].token
+        store.finishTarget(t, status)
+    }
 }

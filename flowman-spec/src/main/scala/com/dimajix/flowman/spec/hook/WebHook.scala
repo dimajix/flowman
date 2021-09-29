@@ -72,7 +72,7 @@ case class WebHook(
      * @param job
      * @return
      */
-    override def startJob(excution:Execution, job:Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
+    override def startJob(execution:Execution, job:Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
         val env = instance.asMap -- context.environment.keys
         invoke(jobStart, env)
         DummyJobToken(env)
@@ -84,9 +84,9 @@ case class WebHook(
      * @param token The token returned by startJob
      * @param result
      */
-    override def finishJob(excution:Execution, token: JobToken, result: JobResult): Unit = {
+    override def finishJob(execution:Execution, token: JobToken, result: JobResult): Unit = {
         val status = result.status
-        val env = token.asInstanceOf[DummyJobToken].env + ("status" -> status.lower)
+        val env = token.asInstanceOf[DummyJobToken].env + ("status" -> status)
         invoke(jobFinish, env)
 
         status match {
@@ -103,7 +103,7 @@ case class WebHook(
      * @param target
      * @return
      */
-    override def startTarget(excution:Execution, target:Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken =  {
+    override def startTarget(execution:Execution, target:Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken =  {
         val parentEnv = parent.map {
                 case t:DummyJobToken => t.env
                 case _ => Map()
@@ -119,9 +119,9 @@ case class WebHook(
      * @param token The token returned by startJob
      * @param result
      */
-    override def finishTarget(excution:Execution, token: TargetToken, result: TargetResult): Unit = {
+    override def finishTarget(execution:Execution, token: TargetToken, result: TargetResult): Unit = {
         val status = result.status
-        val env = token.asInstanceOf[DummyTargetToken].env + ("status" -> status.lower)
+        val env = token.asInstanceOf[DummyTargetToken].env + ("status" -> status)
         invoke(targetFinish, env)
 
         status match {
@@ -132,7 +132,7 @@ case class WebHook(
         }
     }
 
-    private def invoke(urlTemplate:Option[String], args:Map[String,String]) : Unit = {
+    private def invoke(urlTemplate:Option[String], args:Map[String,AnyRef]) : Unit = {
         urlTemplate.foreach { v =>
             val url = context.environment.evaluate(v, args)
             try {

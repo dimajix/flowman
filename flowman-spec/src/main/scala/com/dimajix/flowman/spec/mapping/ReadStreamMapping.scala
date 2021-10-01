@@ -27,8 +27,11 @@ import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.Reference
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
@@ -37,7 +40,7 @@ import com.dimajix.spark.sql.SchemaUtils
 
 case class ReadStreamMapping (
     instanceProperties:Mapping.Properties,
-    relation:RelationIdentifier,
+    relation:Reference[Relation],
     columns:Seq[Field],
     filter:Option[String] = None
 ) extends BaseMapping {
@@ -49,7 +52,7 @@ case class ReadStreamMapping (
      * @return
      */
     override def requires : Set[ResourceIdentifier] = {
-        val rel = context.getRelation(relation)
+        val rel = relation.value
         rel.resources() ++ rel.requires ++ rel.provides
     }
 
@@ -74,9 +77,9 @@ case class ReadStreamMapping (
         require(input != null)
 
         val schema = if (columns.nonEmpty) Some(spark.sql.types.StructType(columns.map(_.sparkField))) else None
-        logger.info(s"Reading from streaming relation '$relation' with filter '${filter.getOrElse("")}'")
+        logger.info(s"Reading from streaming relation '${relation.identifier}' with filter '${filter.getOrElse("")}'")
 
-        val rel = context.getRelation(relation)
+        val rel = relation.value
         val df = rel.readStream(execution, schema)
 
         // Apply optional filter
@@ -99,7 +102,7 @@ case class ReadStreamMapping (
             StructType(columns)
         }
         else {
-            val relation = context.getRelation(this.relation)
+            val relation = this.relation.value
             relation.describe(execution)
         }
 
@@ -111,14 +114,14 @@ case class ReadStreamMapping (
      * Params: linker - The linker object to use for creating new edges
      */
     override def link(linker: Linker): Unit = {
-        linker.read(relation, Map())
+        linker.read(relation.identifier, Map())
     }
 }
 
 
 
 class ReadStreamMappingSpec extends MappingSpec {
-    @JsonProperty(value = "relation", required = true) private var relation:String = _
+    @JsonProperty(value = "relation", required = true) private var relation:RelationReferenceSpec = _
     @JsonProperty(value = "columns", required=false) private var columns:Map[String,String] = Map()
     @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
@@ -130,7 +133,7 @@ class ReadStreamMappingSpec extends MappingSpec {
     override def instantiate(context: Context): ReadStreamMapping = {
         ReadStreamMapping(
             instanceProperties(context),
-            RelationIdentifier(context.evaluate(relation)),
+            relation.instantiate(context),
             context.evaluate(columns).map { case(name,typ) => Field(name, FieldType.of(typ))}.toSeq,
             context.evaluate(filter)
         )

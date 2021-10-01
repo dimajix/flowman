@@ -40,11 +40,16 @@ import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.metric.LongAccumulatorMetric
 import com.dimajix.flowman.metric.Selector
 import com.dimajix.flowman.model.BaseTarget
+import com.dimajix.flowman.model.IdentifierRelationReference
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.Reference
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.spec.relation.IdentifierRelationReferenceSpec
+import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.sql.functions.count_records
 
@@ -55,7 +60,19 @@ object RelationTarget {
         new RelationTarget(
             Target.Properties(context),
             MappingOutputIdentifier(""),
-            relation,
+            IdentifierRelationReference(context,relation),
+            OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
+            Map(),
+            conf.getConf(DEFAULT_TARGET_PARALLELISM),
+            conf.getConf(DEFAULT_TARGET_REBALANCE)
+        )
+    }
+    def apply(context: Context, relation: RelationIdentifier, mapping: MappingOutputIdentifier) : RelationTarget = {
+        val conf = context.flowmanConf
+        new RelationTarget(
+            Target.Properties(context),
+            mapping,
+            IdentifierRelationReference(context,relation),
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
@@ -65,8 +82,8 @@ object RelationTarget {
 }
 case class RelationTarget(
     instanceProperties: Target.Properties,
-    mapping:MappingOutputIdentifier,
-    relation: RelationIdentifier,
+    mapping: MappingOutputIdentifier,
+    relation: Reference[Relation],
     mode: OutputMode = OutputMode.OVERWRITE,
     partition: Map[String,String] = Map(),
     parallelism: Int = 16,
@@ -104,7 +121,7 @@ case class RelationTarget(
       */
     override def provides(phase: Phase) : Set[ResourceIdentifier] = {
         val partition = this.partition.mapValues(v => SingleValue(v))
-        val rel = context.getRelation(relation)
+        val rel = relation.value
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.provides
@@ -119,7 +136,7 @@ case class RelationTarget(
       * @return
       */
     override def requires(phase: Phase) : Set[ResourceIdentifier] = {
-        val rel = context.getRelation(relation)
+        val rel = relation.value
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.requires
@@ -140,7 +157,7 @@ case class RelationTarget(
      */
     override def dirty(execution: Execution, phase: Phase): Trilean = {
         val partition = this.partition.mapValues(v => SingleValue(v))
-        val rel = context.getRelation(relation)
+        val rel = relation.value
 
         phase match {
             case Phase.VALIDATE => No
@@ -176,7 +193,7 @@ case class RelationTarget(
         val partition = this.partition.mapValues(v => SingleValue(v))
         if (mapping.nonEmpty)
             linker.input(mapping.mapping, mapping.output)
-        linker.write(relation, partition)
+        linker.write(relation.identifier, partition)
     }
 
     /**
@@ -187,15 +204,15 @@ case class RelationTarget(
     override def create(execution: Execution) : Unit = {
         require(execution != null)
 
-        val rel = context.getRelation(relation)
+        val rel = relation.value
         if (rel.exists(execution) == Yes) {
-            logger.info(s"Migrating existing relation '$relation'")
+            logger.info(s"Migrating existing relation '${relation.identifier}'")
             val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
             val migrationStrategy = MigrationStrategy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_STRATEGY))
             rel.migrate(execution, migrationPolicy, migrationStrategy)
         }
         else {
-            logger.info(s"Creating relation '$relation'")
+            logger.info(s"Creating relation '${relation.identifier}'")
             rel.create(execution, true)
         }
     }
@@ -211,7 +228,7 @@ case class RelationTarget(
         if (mapping.nonEmpty) {
             val partition = this.partition.mapValues(v => SingleValue(v))
 
-            logger.info(s"Writing mapping '${this.mapping}' to relation '$relation' into partition $partition with mode '$mode'")
+            logger.info(s"Writing mapping '${this.mapping}' to relation '${relation.identifier}' into partition $partition with mode '$mode'")
             val mapping = context.getMapping(this.mapping.mapping)
             val dfIn = executor.instantiate(mapping, this.mapping.output)
             val dfOut =
@@ -223,7 +240,7 @@ case class RelationTarget(
                     dfIn.coalesce(parallelism)
 
             val dfCount = countRecords(executor, dfOut)
-            val rel = context.getRelation(relation)
+            val rel = relation.value
             rel.write(executor, dfCount, partition, mode)
         }
     }
@@ -237,9 +254,9 @@ case class RelationTarget(
         require(executor != null)
 
         val partition = this.partition.mapValues(v => SingleValue(v))
-        val rel = context.getRelation(relation)
+        val rel = relation.value
         if (rel.loaded(executor, partition) == No) {
-            logger.error(s"Verification of target '$identifier' failed - partition $partition of relation '$relation' does not exist")
+            logger.error(s"Verification of target '$identifier' failed - partition $partition of relation '${relation.identifier}' does not exist")
             throw new VerificationFailedException(identifier)
         }
     }
@@ -253,8 +270,8 @@ case class RelationTarget(
 
         val partition = this.partition.mapValues(v => SingleValue(v))
 
-        logger.info(s"Truncating partition $partition of relation '$relation'")
-        val rel = context.getRelation(relation)
+        logger.info(s"Truncating partition $partition of relation '${relation.identifier}'")
+        val rel = relation.value
         rel.truncate(executor, partition)
     }
 
@@ -265,8 +282,8 @@ case class RelationTarget(
     override def destroy(executor: Execution) : Unit = {
         require(executor != null)
 
-        logger.info(s"Destroying relation '$relation'")
-        val rel = context.getRelation(relation)
+        logger.info(s"Destroying relation '${relation.identifier}'")
+        val rel = relation.value
         rel.destroy(executor, true)
     }
 }
@@ -277,14 +294,14 @@ object RelationTargetSpec {
     def apply(name:String, relation:String, partition:Map[String,String]=Map()) : RelationTargetSpec = {
         val spec = new RelationTargetSpec
         spec.name = name
-        spec.relation = relation
+        spec.relation = IdentifierRelationReferenceSpec(relation)
         spec.partition = partition
         spec
     }
 }
 class RelationTargetSpec extends TargetSpec {
     @JsonProperty(value="mapping", required=true) private var mapping:String = ""
-    @JsonProperty(value="relation", required=true) private var relation:String = _
+    @JsonProperty(value="relation", required=true) private var relation:RelationReferenceSpec = _
     @JsonProperty(value="mode", required=false) private var mode:Option[String] = None
     @JsonProperty(value="partition", required=false) private var partition:Map[String,String] = Map()
     @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
@@ -295,7 +312,7 @@ class RelationTargetSpec extends TargetSpec {
         RelationTarget(
             instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
-            RelationIdentifier.parse(context.evaluate(relation)),
+            relation.instantiate(context),
             OutputMode.ofString(context.evaluate(mode).getOrElse(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE))),
             context.evaluate(partition),
             context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),

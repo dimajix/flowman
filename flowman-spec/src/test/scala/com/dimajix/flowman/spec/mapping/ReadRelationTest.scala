@@ -20,6 +20,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.IdentifierRelationReference
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.RelationIdentifier
@@ -46,7 +47,7 @@ class ReadRelationTest extends AnyFlatSpec with Matchers {
 
         mapping shouldBe a[ReadRelationMapping]
         val rrm = mapping.asInstanceOf[ReadRelationMapping]
-        rrm.relation should be (RelationIdentifier("some_relation"))
+        rrm.relation should be (IdentifierRelationReference(context, RelationIdentifier("some_relation")))
         rrm.filter should be (Some("landing_date > 123"))
         rrm.partitions should be (Map("p0" -> SingleValue("12")))
     }

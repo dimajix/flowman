@@ -43,6 +43,18 @@ class RelationDatasetTest extends AnyFlatSpec with Matchers with MockFactory wit
         val spec =
             """
               |kind: relation
+              |relation: some_relation
+              |""".stripMargin
+        val ds = ObjectMapper.parse[DatasetSpec](spec)
+        ds shouldBe a[RelationDatasetSpec]
+    }
+
+    it should "support embedded relations" in {
+        val spec =
+            """
+              |kind: relation
+              |relation:
+              |  kind: null
               |""".stripMargin
         val ds = ObjectMapper.parse[DatasetSpec](spec)
         ds shouldBe a[RelationDatasetSpec]

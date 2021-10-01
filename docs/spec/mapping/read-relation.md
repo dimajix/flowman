@@ -9,7 +9,55 @@ in a data flow.
 mappings:
   measurements-raw:
     kind: readRelation
-    relation: measurements-raw
+    relation: measurements_raw
+    partitions:
+      year:
+        start: $start_year
+        end: $end_year
+    columns:
+      raw_data: String
+    filter: "raw_data IS NOT NULL"
+
+relations:
+  measurements_raw:
+    kind: file
+    format: text
+    location: "s3a://dimajix-training/data/weather/"
+    pattern: "${year}"
+    partitions:
+      - name: year
+        type: integer
+        granularity: 1
+    schema:
+      kind: embedded
+      fields:
+        - name: raw_data
+          type: string
+          description: "Raw measurement data"
+```
+
+Since Flowman 0.18.0, you can also directly specify the relation inside the dataset definition. This saves you
+from having to create a separate relation definition in the `relations` section.  This is only recommeneded, if you
+do not access the target relation otherwise, such that a shared definition would not provide any benefir.
+```yaml
+mappings:
+  measurements-raw:
+    kind: readRelation
+    relation:
+      kind: file
+      format: text
+      location: "s3a://dimajix-training/data/weather/"
+      pattern: "${year}"
+      partitions:
+        - name: year
+          type: integer
+          granularity: 1
+      schema:
+        kind: embedded
+        fields:
+          - name: raw_data
+            type: string
+            description: "Raw measurement data"
     partitions:
       year:
         start: $start_year
@@ -35,8 +83,8 @@ Cache mode for the results of this mapping. Supported values are
   * `MEMORY_AND_DISK` - Caches the results first in memory and then spills to disk.
   * `MEMORY_AND_DISK_SER` - Caches the results first in memory in a serialized format and then spills to disk.
 
-* `relation` **(mandatory)** *(type: string)*:
-Specifies the name of the relation to read from.
+* `relation` **(mandatory)** *(type: string or relation)*:
+Specifies the name of the relation to read from. As an alternative, you can also directly embed a relation definition.
 
 * `partitions` **(optional)** *(type: map:partition)*:
 Specifies the partition (or multiple partitions) to read data from.

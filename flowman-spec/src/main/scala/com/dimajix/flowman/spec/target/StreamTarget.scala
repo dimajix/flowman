@@ -43,16 +43,19 @@ import com.dimajix.flowman.execution.StreamingOperation
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.Reference
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.types.SingleValue
 
 
 case class StreamTarget(
     instanceProperties:Target.Properties,
     mapping:MappingOutputIdentifier,
-    relation:RelationIdentifier,
+    relation:Reference[Relation],
     mode:OutputMode,
     trigger:Trigger,
     parallelism:Int,
@@ -74,7 +77,7 @@ case class StreamTarget(
       * @return
       */
     override def provides(phase: Phase) : Set[ResourceIdentifier] = {
-        val rel = context.getRelation(relation)
+        val rel = relation.value
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.provides
@@ -87,7 +90,7 @@ case class StreamTarget(
       * @return
       */
     override def requires(phase: Phase) : Set[ResourceIdentifier] = {
-        val rel = context.getRelation(relation)
+        val rel = relation.value
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.requires
@@ -106,7 +109,7 @@ case class StreamTarget(
      * @return
      */
     override def dirty(execution: Execution, phase: Phase): Trilean = {
-        val rel = context.getRelation(relation)
+        val rel = relation.value
 
         phase match {
             case Phase.VALIDATE => No
@@ -131,7 +134,7 @@ case class StreamTarget(
      */
     override def link(linker: Linker): Unit = {
         linker.input(mapping.mapping, mapping.output)
-        linker.write(relation, Map())
+        linker.write(relation.identifier, Map())
     }
 
     /**
@@ -141,15 +144,15 @@ case class StreamTarget(
     override def create(execution: Execution) : Unit = {
         require(execution != null)
 
-        val rel = context.getRelation(relation)
+        val rel = relation.value
         if (rel.exists(execution) == Yes) {
-            logger.info(s"Migrating existing relation '$relation'")
+            logger.info(s"Migrating existing relation '${relation.identifier}'")
             val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
             val migrationStrategy = MigrationStrategy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_STRATEGY))
             rel.migrate(execution, migrationPolicy, migrationStrategy)
         }
         else {
-            logger.info(s"Creating relation '$relation'")
+            logger.info(s"Creating relation '${relation.identifier}'")
             rel.create(execution, true)
         }
     }
@@ -163,9 +166,9 @@ case class StreamTarget(
     override def build(execution: Execution): Unit = {
         require(execution != null)
 
-        logger.info(s"Streaming mapping '${this.mapping}' to relation '$relation' with trigger '$trigger', mode '$mode' and checkpoint '$checkpointLocation'")
+        logger.info(s"Streaming mapping '${this.mapping}' to relation '${relation.identifier}' with trigger '$trigger', mode '$mode' and checkpoint '$checkpointLocation'")
         val mapping = context.getMapping(this.mapping.mapping)
-        val rel = context.getRelation(relation)
+        val rel = relation.value
         val dfIn = execution.instantiate(mapping, this.mapping.output)
         val dfOut =
             if (parallelism <= 0)
@@ -196,8 +199,8 @@ case class StreamTarget(
     override def truncate(execution: Execution): Unit = {
         require(execution != null)
 
-        logger.info(s"Truncating relation '$relation'")
-        val rel = context.getRelation(relation)
+        logger.info(s"Truncating relation '${relation.identifier}'")
+        val rel = relation.value
         rel.truncate(execution)
     }
 
@@ -208,8 +211,8 @@ case class StreamTarget(
     override def destroy(execution: Execution) : Unit = {
         require(execution != null)
 
-        logger.info(s"Destroying relation '$relation'")
-        val rel = context.getRelation(relation)
+        logger.info(s"Destroying relation '${relation.identifier}'")
+        val rel = relation.value
         rel.destroy(execution, true)
     }
 }
@@ -219,7 +222,7 @@ case class StreamTarget(
 
 class StreamTargetSpec extends TargetSpec {
     @JsonProperty(value="mapping", required=true) private var mapping:String = _
-    @JsonProperty(value="relation", required=true) private var relation:String = _
+    @JsonProperty(value="relation", required=true) private var relation:RelationReferenceSpec = _
     @JsonProperty(value="mode", required=false) private var mode:String = OutputMode.UPDATE.toString
     @JsonProperty(value="trigger", required=false) private var trigger:Option[String] = None
     @JsonProperty(value="checkpointLocation", required=false) private var checkpointLocation:Option[String] = None
@@ -240,7 +243,7 @@ class StreamTargetSpec extends TargetSpec {
         StreamTarget(
             instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
-            RelationIdentifier.parse(context.evaluate(relation)),
+            relation.instantiate(context),
             OutputMode.ofString(context.evaluate(this.mode)),
             trigger,
             context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),

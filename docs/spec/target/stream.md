@@ -14,7 +14,28 @@ targets:
     mapping: source_data
     mode: append
     trigger: 5 seconds
+
+relations:
+  kafka_sink:
+    kind: kafka
+    topics: generic_events
 ```
+
+Since Flowman 0.18.0, you can also directly specify the relation inside the target definition. This saves you
+from having to create a separate relation definition in the `relations` section. This is only recommeneded, if you
+do not access the target relation otherwise, such that a shared definition would not provide any benefir.
+```yaml
+targets:
+  my_stream:
+    kind: stream
+    relation:
+      kind: kafka
+      topics: generic_events
+    mapping: source_data
+    mode: append
+    trigger: 5 seconds
+```
+
 
 ## Fields
 
@@ -23,8 +44,8 @@ targets:
 * `mapping` **(optional)** *(type: string)*:
   Specifies the name of the input mapping to be read from
 
-* `relation` **(mandatory)** *(type: string)*:
-  Specifies the name of the relation to write to
+* `relation` **(mandatory)** *(type: string or relation)*:
+  Specifies the name of the relation to write to. You can also specify an inline relation, as shown in the example
 
 * `mode` **(optional)** *(type: string)* *(default=update)*:
   Specifies how the results are written to the streaming sink. Options include:

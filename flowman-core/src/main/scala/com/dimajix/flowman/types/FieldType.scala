@@ -31,8 +31,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import org.apache.spark.sql.types.DataType
 
-import com.dimajix.flowman.types.DoubleType.parse
-
 
 object FieldType {
     private val nonDecimalNameToType = {

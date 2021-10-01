@@ -22,8 +22,8 @@
 
     <repositories>
         <repository>
-            <id>cloudera-ext</id>
-            <url>https://repository.cloudera.com/artifactory/ext-release-local/</url>
+            <id>cloudera</id>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
         </repository>
     </repositories>
 

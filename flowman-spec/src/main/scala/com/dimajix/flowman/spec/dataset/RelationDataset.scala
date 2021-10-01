@@ -25,8 +25,12 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.AbstractInstance
 import com.dimajix.flowman.model.Dataset
+import com.dimajix.flowman.model.IdentifierRelationReference
+import com.dimajix.flowman.model.Reference
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
 
@@ -34,15 +38,15 @@ import com.dimajix.flowman.types.StructType
 object RelationDataset {
     def apply(context: Context, relation:RelationIdentifier, partition:Map[String,SingleValue]) : RelationDataset = {
         new RelationDataset(
-            Dataset.Properties(context),
-            relation,
+            Dataset.Properties(context, "relation(" + relation.name + ")", "relation"),
+            IdentifierRelationReference(context,relation),
             partition
         )
     }
 }
 case class RelationDataset(
     instanceProperties: Dataset.Properties,
-    relation: RelationIdentifier,
+    relation: Reference[Relation],
     partition:Map[String,SingleValue]
 ) extends AbstractInstance with Dataset {
     /**
@@ -50,7 +54,7 @@ case class RelationDataset(
       * @return
       */
     override def provides : Set[ResourceIdentifier] = {
-        val instance = context.getRelation(relation)
+        val instance = relation.value
         instance.provides ++ instance.resources(partition)
     }
 
@@ -59,7 +63,7 @@ case class RelationDataset(
      * @return
      */
     override def requires : Set[ResourceIdentifier] = {
-        val instance = context.getRelation(relation)
+        val instance = relation.value
         instance.provides ++ instance.requires ++ instance.resources(partition)
     }
 
@@ -70,7 +74,7 @@ case class RelationDataset(
       * @return
       */
     override def exists(execution: Execution): Trilean = {
-        val instance = context.getRelation(relation)
+        val instance = relation.value
         instance.loaded(execution, partition)
     }
 
@@ -80,7 +84,7 @@ case class RelationDataset(
       * @param execution
       */
     override def clean(execution: Execution): Unit = {
-        val instance = context.getRelation(relation)
+        val instance = relation.value
         instance.truncate(execution, partition)
     }
 
@@ -92,7 +96,7 @@ case class RelationDataset(
       * @return
       */
     override def read(execution: Execution, schema: Option[org.apache.spark.sql.types.StructType]): DataFrame = {
-        val instance = context.getRelation(relation)
+        val instance = relation.value
         instance.read(execution, schema, partition)
     }
 
@@ -103,7 +107,7 @@ case class RelationDataset(
       * @param df - dataframe to write
       */
     override def write(execution: Execution, df: DataFrame, mode: OutputMode): Unit = {
-        val instance = context.getRelation(relation)
+        val instance = relation.value
         // Remove partition columns
         val outDf = partition.keys.foldLeft(df)((df,col) => df.drop(col))
         instance.write(execution, outDf, partition, mode)
@@ -115,21 +119,21 @@ case class RelationDataset(
       * @return
       */
     override def describe(execution:Execution) : Option[StructType] = {
-        val instance = context.getRelation(relation)
+        val instance = relation.value
         Some(instance.describe(execution))
     }
 }
 
 
 class RelationDatasetSpec extends DatasetSpec {
-    @JsonProperty(value="relation", required = true) private var relation: String = _
+    @JsonProperty(value="relation", required = true) private var relation: RelationReferenceSpec = _
     @JsonProperty(value="partition", required = false) private var partition: Map[String, String] = Map()
 
     override def instantiate(context: Context): RelationDataset = {
-        val id = RelationIdentifier(context.evaluate(relation))
+        val rel = relation.instantiate(context)
         RelationDataset(
-            instanceProperties(context, id.toString),
-            id,
+            instanceProperties(context, rel.identifier.toString),
+            relation.instantiate(context),
             partition.map { case(n,p) => (n,SingleValue(context.evaluate(p))) }
         )
     }

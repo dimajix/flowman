@@ -10,8 +10,39 @@ the physical location or connection, the format and so on.
 targets:
   stations:
     kind: relation
-    mapping: stations-mapping
-    relation: stations-relation
+    mapping: stations_mapping
+    relation: stations
+    mode: overwrite
+    parallelism: 32
+    rebalance: true
+    partition:
+      processing_date: "${processing_date}"
+
+relations:
+  stations:
+    kind: file
+    format: parquet
+    location: "$basedir/stations/"
+    schema:
+      kind: avro
+      file: "${project.basedir}/schema/stations.avsc"
+```
+
+Since Flowman 0.18.0, you can also directly specify the relation inside the target definition. This saves you
+from having to create a separate relation definition in the `relations` section. This is only recommeneded, if you
+do not access the target relation otherwise, such that a shared definition would not provide any benefir.
+```yaml
+targets:
+  stations:
+    kind: relation
+    mapping: stations_mapping
+    relation:
+      kind: file
+      format: parquet
+      location: "$basedir/stations/"
+      schema:
+        kind: avro
+        file: "${project.basedir}/schema/stations.avsc"
     mode: overwrite
     parallelism: 32
     rebalance: true

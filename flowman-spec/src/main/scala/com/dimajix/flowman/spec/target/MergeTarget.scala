@@ -25,7 +25,6 @@ import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY
-import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
@@ -33,20 +32,20 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
-import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.graph.Linker
-import com.dimajix.flowman.metric.LongAccumulatorMetric
-import com.dimajix.flowman.metric.Selector
 import com.dimajix.flowman.model.BaseTarget
+import com.dimajix.flowman.model.IdentifierRelationReference
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.Reference
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
-import com.dimajix.flowman.types.SingleValue
-import com.dimajix.spark.sql.functions.count_records
+import com.dimajix.flowman.spec.relation.IdentifierRelationReferenceSpec
+import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 
 
 object MergeTarget {
@@ -55,7 +54,7 @@ object MergeTarget {
         new MergeTarget(
             Target.Properties(context),
             MappingOutputIdentifier(""),
-            relation,
+            IdentifierRelationReference(context, relation),
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
             conf.getConf(DEFAULT_TARGET_REBALANCE)
         )
@@ -64,8 +63,8 @@ object MergeTarget {
 
 case class MergeTarget(
     instanceProperties: Target.Properties,
-    mapping:MappingOutputIdentifier,
-    relation: RelationIdentifier,
+    mapping: MappingOutputIdentifier,
+    relation: Reference[Relation],
     parallelism: Int = 16,
     rebalance: Boolean = false
 ) extends BaseTarget {
@@ -97,7 +96,7 @@ case class MergeTarget(
       * @return
       */
     override def provides(phase: Phase) : Set[ResourceIdentifier] = {
-        val rel = context.getRelation(relation)
+        val rel = relation.value
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.provides
@@ -111,7 +110,7 @@ case class MergeTarget(
       * @return
       */
     override def requires(phase: Phase) : Set[ResourceIdentifier] = {
-        val rel = context.getRelation(relation)
+        val rel = relation.value
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.requires
@@ -130,7 +129,7 @@ case class MergeTarget(
      * @return
      */
     override def dirty(execution: Execution, phase: Phase): Trilean = {
-        val rel = context.getRelation(relation)
+        val rel = relation.value
 
         phase match {
             case Phase.VALIDATE => No
@@ -157,7 +156,7 @@ case class MergeTarget(
      */
     override def link(linker: Linker): Unit = {
         linker.input(mapping.mapping, mapping.output)
-        linker.write(relation, Map())
+        linker.write(relation.identifier, Map())
     }
 
     /**
@@ -168,15 +167,15 @@ case class MergeTarget(
     override def create(execution: Execution) : Unit = {
         require(execution != null)
 
-        val rel = context.getRelation(relation)
+        val rel = relation.value
         if (rel.exists(execution) == Yes) {
-            logger.info(s"Migrating existing relation '$relation'")
+            logger.info(s"Migrating existing relation '${relation.identifier}'")
             val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
             val migrationStrategy = MigrationStrategy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_STRATEGY))
             rel.migrate(execution, migrationPolicy, migrationStrategy)
         }
         else {
-            logger.info(s"Creating relation '$relation'")
+            logger.info(s"Creating relation '${relation.identifier}'")
             rel.create(execution, true)
         }
     }
@@ -189,7 +188,7 @@ case class MergeTarget(
     override def build(executor:Execution) : Unit = {
         require(executor != null)
 
-        logger.info(s"Merging mapping '${this.mapping}' into relation '$relation'")
+        logger.info(s"Merging mapping '${this.mapping}' into relation '${relation.identifier}'")
         val mapping = context.getMapping(this.mapping.mapping)
         val dfIn = executor.instantiate(mapping, this.mapping.output)
         val dfOut =
@@ -202,7 +201,7 @@ case class MergeTarget(
 
         // Setup metric for counting number of records
         val dfCount = countRecords(executor, dfOut)
-        val rel = context.getRelation(relation)
+        val rel = relation.value
         //rel.merge(executor, dfCount)
     }
 
@@ -214,9 +213,9 @@ case class MergeTarget(
     override def verify(executor: Execution) : Unit = {
         require(executor != null)
 
-        val rel = context.getRelation(relation)
+        val rel = relation.value
         if (rel.loaded(executor) == No) {
-            logger.error(s"Verification of target '$identifier' failed - relation '$relation' does not exist")
+            logger.error(s"Verification of target '$identifier' failed - relation '${relation.identifier}' does not exist")
             throw new VerificationFailedException(identifier)
         }
     }
@@ -228,8 +227,8 @@ case class MergeTarget(
     override def truncate(executor: Execution): Unit = {
         require(executor != null)
 
-        logger.info(s"Truncating relation '$relation'")
-        val rel = context.getRelation(relation)
+        logger.info(s"Truncating relation '${relation.identifier}'")
+        val rel = relation.value
         rel.truncate(executor)
     }
 
@@ -240,8 +239,8 @@ case class MergeTarget(
     override def destroy(executor: Execution) : Unit = {
         require(executor != null)
 
-        logger.info(s"Destroying relation '$relation'")
-        val rel = context.getRelation(relation)
+        logger.info(s"Destroying relation '${relation.identifier}''")
+        val rel = relation.value
         rel.destroy(executor, true)
     }
 }
@@ -251,14 +250,13 @@ object MergeTargetSpec {
     def apply(name:String, relation:String) : MergeTargetSpec = {
         val spec = new MergeTargetSpec
         spec.name = name
-        spec.relation = relation
+        spec.relation = IdentifierRelationReferenceSpec(relation)
         spec
     }
 }
-
 class MergeTargetSpec extends TargetSpec {
     @JsonProperty(value="mapping", required=true) private var mapping:String = ""
-    @JsonProperty(value="relation", required=true) private var relation:String = _
+    @JsonProperty(value="relation", required=true) private var relation:RelationReferenceSpec = _
     @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
     @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
 
@@ -267,7 +265,7 @@ class MergeTargetSpec extends TargetSpec {
         MergeTarget(
             instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
-            RelationIdentifier.parse(context.evaluate(relation)),
+            relation.instantiate(context),
             context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),
             context.evaluate(rebalance).map(_.toBoolean).getOrElse(conf.getConf(DEFAULT_TARGET_REBALANCE))
         )

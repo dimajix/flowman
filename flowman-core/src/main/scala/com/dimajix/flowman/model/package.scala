@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman
 
+import com.dimajix.flowman.execution.Context
+
 
 package object model {
     type MappingIdentifier = Identifier[Mapping]

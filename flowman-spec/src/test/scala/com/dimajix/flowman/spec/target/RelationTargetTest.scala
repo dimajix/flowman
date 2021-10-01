@@ -42,13 +42,28 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.spec.dataset.DatasetSpec
+import com.dimajix.flowman.spec.dataset.RelationDatasetSpec
 import com.dimajix.flowman.spec.mapping.ProvidedMapping
 import com.dimajix.flowman.spec.relation.NullRelation
 import com.dimajix.spark.testing.LocalSparkSession
 
 
 class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "The RelationTarget" should "provide correct dependencies" in {
+    "The RelationTarget" should "support embedded relations" in {
+        val spec =
+            """
+              |kind: relation
+              |relation:
+              |  kind: null
+              |mapping: some_mapping
+              |""".stripMargin
+        val ds = ObjectMapper.parse[TargetSpec](spec)
+        ds shouldBe a[RelationTargetSpec]
+    }
+
+    it should "provide correct dependencies" in {
         val spec =
             s"""
                |mappings:
@@ -254,9 +269,9 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             "some_table"
         )
         val targetGen = (context:Context) => RelationTarget(
-            Target.Properties(context),
-            MappingOutputIdentifier("mapping"),
-            RelationIdentifier("relation")
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
         )
         val project = Project(
             name = "test",

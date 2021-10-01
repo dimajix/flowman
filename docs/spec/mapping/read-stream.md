@@ -12,7 +12,34 @@ mappings:
     columns:
       raw_data: String
     filter: "raw_data IS NOT NULL"
+
+relations:
+  measurements-raw:
+    kind: kafka
+    hosts:
+      - kafka-01
+      - kafka-02
+    topics: measurements_raw
 ```
+
+Since Flowman 0.18.0, you can also directly specify the relation inside the dataset definition. This saves you
+from having to create a separate relation definition in the `relations` section.  This is only recommeneded, if you
+do not access the target relation otherwise, such that a shared definition would not provide any benefir.
+```yaml
+mappings:
+  measurements-raw:
+    kind: readStream
+    relation:
+      kind: kafka
+      hosts:
+        - kafka-01
+        - kafka-02
+      topics: measurements_raw  
+    columns:
+      raw_data: String
+    filter: "raw_data IS NOT NULL"
+```
+
 
 ## Fields
 

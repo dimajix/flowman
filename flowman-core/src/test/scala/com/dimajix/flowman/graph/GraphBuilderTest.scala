@@ -24,15 +24,15 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 
 
 class GraphBuilderTest extends AnyFlatSpec with Matchers with MockFactory {
     "The GraphBuilder" should "work" in {
         val mapping1 = mock[Mapping]
-        val mappingTemplate1 = mock[Template[Mapping]]
+        val mappingTemplate1 = mock[Prototype[Mapping]]
         val mapping2 = mock[Mapping]
-        val mappingTemplate2 = mock[Template[Mapping]]
+        val mappingTemplate2 = mock[Prototype[Mapping]]
 
         val project = Project(
             name = "project",

@@ -38,7 +38,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.TargetResult
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.spark.testing.LocalSparkSession
@@ -102,10 +102,10 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
     }
 
     it should "correctly build targets and fixtures and check assertions" in {
-        val targetTemplate = mock[Template[Target]]
+        val targetTemplate = mock[Prototype[Target]]
         val target = mock[Target]
-        val relationTemplate = mock[Template[Relation]]
-        val mappingTemplate = mock[Template[Mapping]]
+        val relationTemplate = mock[Prototype[Relation]]
+        val mappingTemplate = mock[Prototype[Mapping]]
         val project = Project(
             name = "default",
             targets = Map(
@@ -123,12 +123,12 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             .build()
         val context = session.getContext(project)
 
-        val fixtureTemplate = mock[Template[Target]]
+        val fixtureTemplate = mock[Prototype[Target]]
         val fixture = mock[Target]
-        val assertionTemplate = mock[Template[Assertion]]
+        val assertionTemplate = mock[Prototype[Assertion]]
         val assertion = mock[Assertion]
-        val overrideRelationTemplate = mock[Template[Relation]]
-        val overrideMappingTemplate = mock[Template[Mapping]]
+        val overrideRelationTemplate = mock[Prototype[Relation]]
+        val overrideMappingTemplate = mock[Prototype[Mapping]]
         val overrideMapping = mock[Mapping]
         val test = Test(
             Test.Properties(context),
@@ -214,7 +214,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             .build()
         val context = session.getContext(project)
 
-        val assertionTemplate = mock[Template[Assertion]]
+        val assertionTemplate = mock[Prototype[Assertion]]
         val assertion = mock[Assertion]
         val test = Test(
             Test.Properties(context),
@@ -233,9 +233,9 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
     }
 
     it should "ignore errors if told so" in {
-        val targetTemplate = mock[Template[Target]]
+        val targetTemplate = mock[Prototype[Target]]
         val target = mock[Target]
-        val mappingTemplate = mock[Template[Mapping]]
+        val mappingTemplate = mock[Prototype[Mapping]]
         val mapping = mock[Mapping]
         val project = Project(
             name = "default",
@@ -251,9 +251,9 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             .build()
         val context = session.getContext(project)
 
-        val fixtureTemplate = mock[Template[Target]]
+        val fixtureTemplate = mock[Prototype[Target]]
         val fixture = mock[Target]
-        val assertionTemplate = mock[Template[Assertion]]
+        val assertionTemplate = mock[Prototype[Assertion]]
         val assertion = mock[Assertion]
         val test = Test(
             Test.Properties(context),
@@ -325,7 +325,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
     }
 
     it should "stop processing on the first exception" in {
-        val targetTemplate = mock[Template[Target]]
+        val targetTemplate = mock[Prototype[Target]]
         val target = mock[Target]
         val project = Project(
             name = "default",
@@ -338,9 +338,9 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             .build()
         val context = session.getContext(project)
 
-        val fixtureTemplate = mock[Template[Target]]
+        val fixtureTemplate = mock[Prototype[Target]]
         val fixture = mock[Target]
-        val assertionTemplate = mock[Template[Assertion]]
+        val assertionTemplate = mock[Prototype[Assertion]]
         val test = Test(
             Test.Properties(context),
             targets = Seq(TargetIdentifier("target")),
@@ -386,9 +386,9 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             .build()
         val context = session.getContext(project)
 
-        val assertionTemplate1 = mock[Template[Assertion]]
+        val assertionTemplate1 = mock[Prototype[Assertion]]
         val assertion1 = mock[Assertion]
-        val assertionTemplate2 = mock[Template[Assertion]]
+        val assertionTemplate2 = mock[Prototype[Assertion]]
         val assertion2 = mock[Assertion]
         val test = Test(
             Test.Properties(context),
@@ -425,9 +425,9 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             .build()
         val context = session.getContext(project)
 
-        val assertionTemplate1 = mock[Template[Assertion]]
+        val assertionTemplate1 = mock[Prototype[Assertion]]
         val assertion1 = mock[Assertion]
-        val assertionTemplate2 = mock[Template[Assertion]]
+        val assertionTemplate2 = mock[Prototype[Assertion]]
         val assertion2 = mock[Assertion]
         val test = Test(
             Test.Properties(context),

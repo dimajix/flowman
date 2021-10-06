@@ -28,7 +28,7 @@ import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.ResourceIdentifier
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 
 
 object MappingUtilsTest {
@@ -46,7 +46,7 @@ object MappingUtilsTest {
         name: String,
         inputs: Seq[MappingOutputIdentifier],
         requires: Set[ResourceIdentifier]
-    ) extends Template[Mapping] {
+    ) extends Prototype[Mapping] {
         override def instantiate(context: Context): Mapping = DummyMapping(context, name, inputs, requires)
     }
 }

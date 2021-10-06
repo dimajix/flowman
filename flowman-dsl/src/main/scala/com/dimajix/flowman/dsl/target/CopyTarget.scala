@@ -20,7 +20,7 @@ import com.dimajix.flowman.dsl.TargetGen
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.target
 
 
@@ -29,8 +29,8 @@ object CopyTarget {
     type Schema = target.CopyTarget.Schema
 }
 case class CopyTarget(
-    source:Template[Dataset],
-    target:Template[Dataset],
+    source:Prototype[Dataset],
+    target:Prototype[Dataset],
     schema:Option[CopyTarget.Schema] = None,
     mode:OutputMode = OutputMode.OVERWRITE,
     parallelism:Int = 16,

@@ -32,7 +32,7 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.IntegerType
@@ -72,7 +72,7 @@ class TruncateTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
 
-        val relationTemplate = mock[Template[Relation]]
+        val relationTemplate = mock[Prototype[Relation]]
         val relation = mock[Relation]
         val context = ScopeContext.builder(session.context)
             .withRelations(Map("some_relation" -> relationTemplate))
@@ -143,7 +143,7 @@ class TruncateTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
 
-        val relationTemplate = mock[Template[Relation]]
+        val relationTemplate = mock[Prototype[Relation]]
         val relation = mock[Relation]
         val context = ScopeContext.builder(session.context)
             .withRelations(Map("some_relation" -> relationTemplate))

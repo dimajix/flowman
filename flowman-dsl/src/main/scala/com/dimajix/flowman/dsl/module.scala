@@ -32,7 +32,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.transforms.schema.Path
 
 

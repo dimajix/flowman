@@ -28,14 +28,14 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.types.StructType
 
 
 case class UnitMapping(
     instanceProperties:Mapping.Properties,
-    mappings:Map[String,Template[Mapping]],
+    mappings:Map[String,Prototype[Mapping]],
     environment:Map[String,String]
 ) extends BaseMapping {
     private val unitContext = ScopeContext.builder(context)

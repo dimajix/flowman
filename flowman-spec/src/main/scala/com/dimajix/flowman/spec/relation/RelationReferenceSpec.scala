@@ -29,7 +29,7 @@ import com.dimajix.flowman.model.IdentifierRelationReference
 import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.ValueRelationReference
 import com.dimajix.flowman.spec.Spec
 
@@ -42,7 +42,7 @@ final case class IdentifierRelationReferenceSpec(relation:String) extends Relati
         IdentifierRelationReference(context,id)
     }
 }
-final case class ValueRelationReferenceSpec(relation:Template[Relation]) extends RelationReferenceSpec {
+final case class ValueRelationReferenceSpec(relation:Prototype[Relation]) extends RelationReferenceSpec {
     override def instantiate(context: Context): Reference[Relation] = {
         ValueRelationReference(context, relation)
     }

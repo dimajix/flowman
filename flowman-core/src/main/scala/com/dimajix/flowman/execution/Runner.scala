@@ -48,7 +48,7 @@ import com.dimajix.flowman.model.Result
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.TargetResult
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.flowman.spi.LogFilter
@@ -541,7 +541,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
 final class Runner(
     private[execution] val parentExecution:Execution,
     private[execution] val stateStore: StateStore,
-    private[execution] val hooks: Seq[Template[Hook]]=Seq()
+    private[execution] val hooks: Seq[Prototype[Hook]]=Seq()
 ) {
     require(parentExecution != null)
     require(stateStore != null)

@@ -40,7 +40,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.TargetResult
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -169,7 +169,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
     }
 
     it should "catch exceptions during execution" in {
-        val targetTemplate = mock[Template[Target]]
+        val targetTemplate = mock[Prototype[Target]]
         val target = mock[Target]
         val project = Project(
             "project",
@@ -230,7 +230,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
         def genProject(targets:Map[String, Boolean]) : Project = {
             Project(
                 name = "default",
-                targets = targets.map { case(name,toBeExecuted) => name -> Template.of(genTarget(name, toBeExecuted)) }
+                targets = targets.map { case(name,toBeExecuted) => name -> Prototype.of(genTarget(name, toBeExecuted)) }
             )
         }
 
@@ -266,7 +266,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
 
         val project = Project(
             name = "default",
-            targets = Map("a" -> Template.of(genTarget("a")))
+            targets = Map("a" -> Prototype.of(genTarget("a")))
         )
 
         val session = Session.builder()
@@ -395,7 +395,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
 
         val ns = Namespace(
             name = "default",
-            hooks = Seq(new Template[Hook] {
+            hooks = Seq(new Prototype[Hook] {
                 override def instantiate(context: Context): Hook = namespaceHook
             })
         )

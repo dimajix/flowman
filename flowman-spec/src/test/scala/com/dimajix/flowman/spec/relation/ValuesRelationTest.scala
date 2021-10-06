@@ -30,7 +30,7 @@ import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
@@ -135,7 +135,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
     }
 
     it should "work with specified records and schema" in {
-        val relationTemplate = mock[Template[Relation]]
+        val relationTemplate = mock[Prototype[Relation]]
 
         val project = Project(
             "my_project",
@@ -188,7 +188,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
     }
 
     it should "work with specified records and columns" in {
-        val relationTemplate = mock[Template[Relation]]
+        val relationTemplate = mock[Prototype[Relation]]
 
         val project = Project(
             "my_project",
@@ -238,7 +238,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
     }
 
     it should "support some lifecycle methods" in {
-        val relationTemplate = mock[Template[Relation]]
+        val relationTemplate = mock[Prototype[Relation]]
 
         val project = Project(
             "my_project",

@@ -122,7 +122,7 @@ object Job {
         private var parameters:Seq[Parameter] = Seq()
         private var targets:Seq[TargetIdentifier] = Seq()
         private var environment:Map[String,String] = Map()
-        private var hooks:Seq[Template[Hook]] = Seq()
+        private var hooks:Seq[Prototype[Hook]] = Seq()
 
         def build() : Job = Job(
             Job.Properties(context, context.namespace, context.project, name, labels, description),
@@ -186,14 +186,14 @@ object Job {
             this.targets = this.targets :+ target
             this
         }
-        def addHook(hook:Template[Hook]) : Builder = {
+        def addHook(hook:Prototype[Hook]) : Builder = {
             require(hook != null)
             this.hooks = this.hooks :+ hook
             this
         }
         def addHook(hook:Hook) : Builder = {
             require(hook != null)
-            val template = new Template[Hook] {
+            val template = new Prototype[Hook] {
                 override def instantiate(context: Context): Hook = hook
             }
             this.hooks = this.hooks :+ template
@@ -257,8 +257,8 @@ final case class Job(
     parameters:Seq[Job.Parameter] = Seq(),
     environment:Map[String,String] = Map(),
     targets:Seq[TargetIdentifier] = Seq(),
-    metrics:Option[Template[MetricBoard]] = None,
-    hooks:Seq[Template[Hook]] = Seq()
+    metrics:Option[Prototype[MetricBoard]] = None,
+    hooks:Seq[Prototype[Hook]] = Seq()
 ) extends AbstractInstance {
     override def category: String = "job"
     override def kind : String = "job"

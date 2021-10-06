@@ -40,7 +40,7 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 
@@ -48,8 +48,8 @@ import com.dimajix.flowman.model.TestIdentifier
 object RootContext {
     class Builder private[RootContext](namespace:Option[Namespace], profiles:Set[String], parent:Context = null) extends AbstractContext.Builder[Builder,RootContext](parent, SettingLevel.NAMESPACE_SETTING) {
         private var projectResolver:Option[String => Option[Project]] = None
-        private var overrideMappings:Map[MappingIdentifier, Template[Mapping]] = Map()
-        private var overrideRelations:Map[RelationIdentifier, Template[Relation]] = Map()
+        private var overrideMappings:Map[MappingIdentifier, Prototype[Mapping]] = Map()
+        private var overrideRelations:Map[RelationIdentifier, Prototype[Relation]] = Map()
         private var execution:Option[Execution] = None
 
         override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
@@ -78,7 +78,7 @@ object RootContext {
          * @param mappings
          * @return
          */
-        def overrideMappings(mappings:Map[MappingIdentifier,Template[Mapping]]) : Builder = {
+        def overrideMappings(mappings:Map[MappingIdentifier,Prototype[Mapping]]) : Builder = {
             if (mappings.keySet.exists(_.project.isEmpty))
                 throw new IllegalArgumentException("MappingIdentifiers need to contain valid project for overriding")
             overrideMappings = overrideMappings ++ mappings
@@ -90,14 +90,14 @@ object RootContext {
          * @param relations
          * @return
          */
-        def overrideRelations(relations:Map[RelationIdentifier,Template[Relation]]) : Builder = {
+        def overrideRelations(relations:Map[RelationIdentifier,Prototype[Relation]]) : Builder = {
             if (relations.keySet.exists(_.project.isEmpty))
                 throw new IllegalArgumentException("RelationIdentifiers need to contain valid project for overriding")
             overrideRelations = overrideRelations ++ relations
             this
         }
 
-        override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Template[Connection]]) : RootContext = {
+        override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Prototype[Connection]]) : RootContext = {
             new RootContext(namespace, projectResolver, profiles, env, config, execution, connections, overrideMappings, overrideRelations)
         }
     }
@@ -115,9 +115,9 @@ final class RootContext private[execution](
     _env:Map[String,(Any, Int)],
     _config:Map[String,(String, Int)],
     _execution:Option[Execution],
-    extraConnections:Map[String, Template[Connection]],
-    overrideMappings:Map[MappingIdentifier, Template[Mapping]],
-    overrideRelations:Map[RelationIdentifier, Template[Relation]]
+    extraConnections:Map[String, Prototype[Connection]],
+    overrideMappings:Map[MappingIdentifier, Prototype[Mapping]],
+    overrideRelations:Map[RelationIdentifier, Prototype[Relation]]
 ) extends AbstractContext(
     _env + ("namespace" -> (NamespaceWrapper(_namespace) -> SettingLevel.SCOPE_OVERRIDE.level)),
     _config

@@ -98,16 +98,16 @@ object Module {
 
 
 final case class Module(
-   config : Map[String,String] = Map(),
-   environment : Map[String,String] = Map(),
+    config : Map[String,String] = Map(),
+    environment : Map[String,String] = Map(),
 
-   profiles : Map[String,Profile] = Map(),
-   relations : Map[String,Template[Relation]] = Map(),
-   connections : Map[String,Template[Connection]] = Map(),
-   mappings : Map[String,Template[Mapping]] = Map(),
-   targets : Map[String,Template[Target]] = Map(),
-   jobs : Map[String,Template[Job]] = Map(),
-   tests : Map[String,Template[Test]] = Map()
+    profiles : Map[String,Profile] = Map(),
+    relations : Map[String,Prototype[Relation]] = Map(),
+    connections : Map[String,Prototype[Connection]] = Map(),
+    mappings : Map[String,Prototype[Mapping]] = Map(),
+    targets : Map[String,Prototype[Target]] = Map(),
+    jobs : Map[String,Prototype[Job]] = Map(),
+    tests : Map[String,Prototype[Test]] = Map()
 ) {
     /**
      * Creates a new dataflow by merging this one with another one.

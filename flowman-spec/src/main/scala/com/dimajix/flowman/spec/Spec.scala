@@ -22,10 +22,10 @@ import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Instance
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 
 
-trait Spec[T] extends Template[T] {
+trait Spec[T] extends Prototype[T] {
     def instantiate(context:Context) : T
 }
 

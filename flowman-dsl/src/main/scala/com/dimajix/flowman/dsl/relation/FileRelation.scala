@@ -22,12 +22,12 @@ import com.dimajix.flowman.dsl.RelationGen
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.relation
 
 
 case class FileRelation(
-    schema:Option[Template[Schema]] = None,
+    schema:Option[Prototype[Schema]] = None,
     partitions: Seq[PartitionField] = Seq(),
     location:Path,
     pattern:Option[String] = None,

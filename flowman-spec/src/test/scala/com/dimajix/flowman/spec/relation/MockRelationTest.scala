@@ -30,7 +30,7 @@ import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
@@ -82,8 +82,8 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
     }
 
     it should "support create, write and destroy" in {
-        val baseRelationTemplate = mock[Template[Relation]]
-        val mockRelationTemplate = mock[Template[Relation]]
+        val baseRelationTemplate = mock[Prototype[Relation]]
+        val mockRelationTemplate = mock[Prototype[Relation]]
 
         val project = Project(
             "my_project",
@@ -137,9 +137,9 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
     }
 
     it should "read empty DataFrames" in {
-        val baseRelationTemplate = mock[Template[Relation]]
+        val baseRelationTemplate = mock[Prototype[Relation]]
         val baseRelation = mock[Relation]
-        val mockRelationTemplate = mock[Template[Relation]]
+        val mockRelationTemplate = mock[Prototype[Relation]]
 
         val project = Project(
             "my_project",
@@ -190,9 +190,9 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
     }
 
     it should "work nicely with overrides" in {
-        val baseRelationTemplate = mock[Template[Relation]]
+        val baseRelationTemplate = mock[Prototype[Relation]]
         val baseRelation = mock[Relation]
-        val mockRelationTemplate = mock[Template[Relation]]
+        val mockRelationTemplate = mock[Prototype[Relation]]
 
         val project = Project(
             "my_project",
@@ -238,9 +238,9 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
     }
 
     it should "return provided records as a DataFrame" in {
-        val baseRelationTemplate = mock[Template[Relation]]
+        val baseRelationTemplate = mock[Prototype[Relation]]
         val baseRelation = mock[Relation]
-        val mockRelationTemplate = mock[Template[Relation]]
+        val mockRelationTemplate = mock[Prototype[Relation]]
 
         val project = Project(
             "my_project",

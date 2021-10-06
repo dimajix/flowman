@@ -25,7 +25,7 @@ abstract class Reference[T] {
     def identifier:Identifier[T]
 }
 
-final case class ValueRelationReference(context:Context, template:Template[Relation]) extends Reference[Relation] {
+final case class ValueRelationReference(context:Context, template:Prototype[Relation]) extends Reference[Relation] {
     override lazy val value : Relation = template.instantiate(context)
     override def name: String = value.name
     override def identifier: RelationIdentifier = value.identifier

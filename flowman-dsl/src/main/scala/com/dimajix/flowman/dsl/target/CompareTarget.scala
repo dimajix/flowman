@@ -19,13 +19,13 @@ package com.dimajix.flowman.dsl.target
 import com.dimajix.flowman.dsl.TargetGen
 import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.target
 
 
 case class CompareTarget(
-    actual:Template[Dataset],
-    expected:Template[Dataset]
+    actual:Prototype[Dataset],
+    expected:Prototype[Dataset]
 ) extends TargetGen {
     override def apply(props: Target.Properties): target.CompareTarget = {
         val context = props.context

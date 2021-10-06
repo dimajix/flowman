@@ -29,7 +29,7 @@ import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
@@ -78,9 +78,9 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
     }
 
     it should "create empty DataFrames" in {
-        val baseMappingTemplate = mock[Template[Mapping]]
+        val baseMappingTemplate = mock[Prototype[Mapping]]
         val baseMapping = mock[Mapping]
-        val mockMappingTemplate = mock[Template[Mapping]]
+        val mockMappingTemplate = mock[Prototype[Mapping]]
 
         val project = Project(
             "my_project",
@@ -142,9 +142,9 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
     }
 
     it should "work nicely as an override" in {
-        val baseMappingTemplate = mock[Template[Mapping]]
+        val baseMappingTemplate = mock[Prototype[Mapping]]
         val baseMapping = mock[Mapping]
-        val mockMappingTemplate = mock[Template[Mapping]]
+        val mockMappingTemplate = mock[Prototype[Mapping]]
 
         val project = Project(
             "my_project",
@@ -195,9 +195,9 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
     }
 
     it should "work with specified records" in {
-        val baseMappingTemplate = mock[Template[Mapping]]
+        val baseMappingTemplate = mock[Prototype[Mapping]]
         val baseMapping = mock[Mapping]
-        val mockMappingTemplate = mock[Template[Mapping]]
+        val mockMappingTemplate = mock[Prototype[Mapping]]
 
         val project = Project(
             "my_project",

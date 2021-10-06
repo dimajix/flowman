@@ -101,8 +101,8 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
     }
 
     "Mapping.link default implementation" should "work" in {
-        val mappingTemplate1 = mock[Template[Mapping]]
-        val mappingTemplate2 = mock[Template[Mapping]]
+        val mappingTemplate1 = mock[Prototype[Mapping]]
+        val mappingTemplate2 = mock[Prototype[Mapping]]
 
         val project = Project(
             name = "project",

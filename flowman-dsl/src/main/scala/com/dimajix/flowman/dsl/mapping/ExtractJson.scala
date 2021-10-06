@@ -20,14 +20,14 @@ import com.dimajix.flowman.dsl.MappingGen
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.mapping.ExtractJsonMapping
 
 
 case class ExtractJson(
     input:MappingOutputIdentifier,
     column:String,
-    schema:Template[Schema],
+    schema:Prototype[Schema],
     parseMode:String = "PERMISSIVE"
 ) extends MappingGen {
     def apply(props:Mapping.Properties) : ExtractJsonMapping = {

@@ -36,7 +36,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.TargetResult
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.target.NullTarget
 import com.dimajix.flowman.spec.target.NullTargetSpec
 import com.dimajix.flowman.types.StringType
@@ -156,7 +156,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     }
 
     it should "work inside a namespace and job" in {
-        val namespaceHook = new Template[Hook] {
+        val namespaceHook = new Prototype[Hook] {
             override def instantiate(context: Context): Hook = WebHook(
                 Hook.Properties(context),
                 jobStart = Some("http://0.0.0.0/$env/$job"),
@@ -165,7 +165,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
                 targetFinish = Some("http://0.0.0.0/$env/$job/$target")
             )
         }
-        val jobHook = new Template[Hook] {
+        val jobHook = new Prototype[Hook] {
             override def instantiate(context: Context): Hook = WebHook(
                 Hook.Properties(context),
                 jobStart = Some("http://0.0.0.0/$env/$name/$arg1"),

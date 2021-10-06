@@ -29,7 +29,7 @@ import com.dimajix.flowman.model.Profile
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 
 
 class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
@@ -62,9 +62,9 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
     }
 
     it should "correctly lookup connections in profiles" in {
-        val namespaceConnectionTemplate = mock[Template[Connection]]
+        val namespaceConnectionTemplate = mock[Prototype[Connection]]
         val namespaceConnection = mock[Connection]
-        val namespaceProfileConnectionTemplate = mock[Template[Connection]]
+        val namespaceProfileConnectionTemplate = mock[Prototype[Connection]]
         val namespaceProfileConnection = mock[Connection]
         val namespace = Namespace(
             name = "default",
@@ -77,9 +77,9 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
             )
         )
 
-        val projectConnectionTemplate = mock[Template[Connection]]
+        val projectConnectionTemplate = mock[Prototype[Connection]]
         val projectConnection = mock[Connection]
-        val projectProfileConnectionTemplate = mock[Template[Connection]]
+        val projectProfileConnectionTemplate = mock[Prototype[Connection]]
         val projectProfileConnection = mock[Connection]
         val project = Project(
             name = "my_project",
@@ -135,11 +135,11 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
 
     it should "support override mappings" in {
         val projectMapping1 = mock[Mapping]
-        val projectMappingTemplate1 = mock[Template[Mapping]]
+        val projectMappingTemplate1 = mock[Prototype[Mapping]]
         val projectMapping2 = mock[Mapping]
-        val projectMappingTemplate2 = mock[Template[Mapping]]
+        val projectMappingTemplate2 = mock[Prototype[Mapping]]
         val overrideMapping = mock[Mapping]
-        val overrideMappingTemplate = mock[Template[Mapping]]
+        val overrideMappingTemplate = mock[Prototype[Mapping]]
 
         val project = Project(
             name = "my_project",
@@ -188,11 +188,11 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
 
     it should "support override relations" in {
         val projectRelation1 = mock[Relation]
-        val projectRelationTemplate1 = mock[Template[Relation]]
+        val projectRelationTemplate1 = mock[Prototype[Relation]]
         val projectRelation2 = mock[Relation]
-        val projectRelationTemplate2 = mock[Template[Relation]]
+        val projectRelationTemplate2 = mock[Prototype[Relation]]
         val overrideRelation = mock[Relation]
-        val overrideRelationTemplate = mock[Template[Relation]]
+        val overrideRelationTemplate = mock[Prototype[Relation]]
 
         val project = Project(
             name = "my_project",

@@ -32,7 +32,7 @@ import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spi.LogFilter
 import com.dimajix.flowman.spi.SparkExtension
 import com.dimajix.flowman.spi.UdfProvider
@@ -451,7 +451,7 @@ class Session private[execution](
     /**
      * Returns the list of all hooks
      */
-    def hooks : Seq[Template[Hook]] = _hooks
+    def hooks : Seq[Prototype[Hook]] = _hooks
 
     /**
       * Returns an appropriate runner for a specific job. Note that every invocation will actually create a new

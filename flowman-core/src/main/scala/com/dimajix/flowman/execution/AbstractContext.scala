@@ -27,14 +27,14 @@ import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.Profile
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 
 
 object AbstractContext {
     abstract class Builder[B <: Builder[B,C], C <: Context](parent:Context, defaultSettingLevel:SettingLevel) { this:B =>
         private var _environment = Seq[(String,Any,SettingLevel)]()
         private var _config = Seq[(String,String,SettingLevel)]()
-        private var _connections = Seq[(String, Template[Connection], SettingLevel)]()
+        private var _connections = Seq[(String, Prototype[Connection], SettingLevel)]()
 
         protected val logger:Logger
 
@@ -45,7 +45,7 @@ object AbstractContext {
         def build() : C = {
             val rawEnvironment = mutable.Map[String,(Any, Int)]()
             val rawConfig = mutable.Map[String,(String, Int)]()
-            val rawConnections = mutable.Map[String, (Template[Connection], Int)]()
+            val rawConnections = mutable.Map[String, (Prototype[Connection], Int)]()
 
             // Fetch environment from parent
             if (parent != null) {
@@ -73,7 +73,7 @@ object AbstractContext {
                 }
             }
 
-            def addConnection(name:String, connection:Template[Connection], settingLevel: SettingLevel) : Unit = {
+            def addConnection(name:String, connection:Prototype[Connection], settingLevel: SettingLevel) : Unit = {
                 val currentValue = rawConnections.getOrElse(name, (null, SettingLevel.NONE.level))
                 if (currentValue._2 <= settingLevel.level) {
                     rawConnections.update(name, (connection, settingLevel.level))
@@ -118,7 +118,7 @@ object AbstractContext {
           * @param connections
           * @return
           */
-        def withConnections(connections:Map[String,Template[Connection]]) : B = {
+        def withConnections(connections:Map[String,Prototype[Connection]]) : B = {
             require(connections != null)
             withConnections(connections, defaultSettingLevel)
             this
@@ -128,7 +128,7 @@ object AbstractContext {
           * @param connections
           * @return
           */
-        def withConnections(connections:Map[String,Template[Connection]], level:SettingLevel) : B = {
+        def withConnections(connections:Map[String,Prototype[Connection]], level:SettingLevel) : B = {
             require(connections != null)
             require(level != null)
             _connections = _connections ++ connections.map(kv => (kv._1, kv._2, level))
@@ -208,7 +208,7 @@ object AbstractContext {
             this
         }
 
-        protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Template[Connection]]) : C
+        protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Prototype[Connection]]) : C
     }
 }
 

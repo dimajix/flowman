@@ -22,13 +22,13 @@ import com.dimajix.flowman.dsl.RelationGen
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.relation.HiveTableRelation
 
 
 case class HiveTable(
     database: Option[String] = None,
-    schema:Option[Template[Schema]] = None,
+    schema:Option[Prototype[Schema]] = None,
     partitions: Seq[PartitionField] = Seq(),
     table: String,
     external: Boolean = false,

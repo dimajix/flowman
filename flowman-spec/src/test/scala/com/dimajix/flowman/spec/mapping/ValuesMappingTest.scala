@@ -30,7 +30,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
@@ -124,7 +124,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
     }
 
     it should "work with specified records and schema" in {
-        val mappingTemplate = mock[Template[Mapping]]
+        val mappingTemplate = mock[Prototype[Mapping]]
 
         val project = Project(
             "my_project",
@@ -172,7 +172,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
     }
 
     it should "work with specified records and columns" in {
-        val mappingTemplate = mock[Template[Mapping]]
+        val mappingTemplate = mock[Prototype[Mapping]]
 
         val project = Project(
             "my_project",

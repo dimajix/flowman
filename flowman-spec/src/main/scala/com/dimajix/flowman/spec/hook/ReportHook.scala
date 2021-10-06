@@ -38,8 +38,6 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.execution.Token
 import com.dimajix.flowman.metric.CollectingMetricSink
-import com.dimajix.flowman.metric.GaugeMetric
-import com.dimajix.flowman.metric.Metric
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricWrapper
 import com.dimajix.flowman.model.Assertion

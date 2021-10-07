@@ -28,7 +28,7 @@ import com.dimajix.flowman.spec.metric.MetricSinkSpec
 import com.dimajix.flowman.spec.storage.StorageSpec
 
 
-class NamespaceSpec {
+final class NamespaceSpec {
     @JsonProperty(value="name") private var name: String = "default"
     @JsonProperty(value="environment") private var environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var config: Seq[String] = Seq()

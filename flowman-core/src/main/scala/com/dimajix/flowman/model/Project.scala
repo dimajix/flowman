@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,8 @@ object Project {
                 mappings = module.mappings,
                 targets = module.targets,
                 jobs = module.jobs,
-                tests = module.tests
+                tests = module.tests,
+                templates = module.templates
             )
         }
 
@@ -143,5 +144,6 @@ final case class Project(
     mappings : Map[String,Prototype[Mapping]] = Map(),
     targets : Map[String,Prototype[Target]] = Map(),
     jobs : Map[String,Prototype[Job]] = Map(),
-    tests : Map[String,Prototype[Test]] = Map()
+    tests : Map[String,Prototype[Test]] = Map(),
+    templates: Map[String,Template[_]] = Map()
 )

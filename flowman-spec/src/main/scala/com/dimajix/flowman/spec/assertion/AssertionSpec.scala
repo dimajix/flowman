@@ -29,7 +29,7 @@ import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
 object AssertionSpec extends TypeRegistry[AssertionSpec] {
-    class NameResolver extends NamedSpec.NameResolver[AssertionSpec]
+    final class NameResolver extends NamedSpec.NameResolver[AssertionSpec]
 }
 
 

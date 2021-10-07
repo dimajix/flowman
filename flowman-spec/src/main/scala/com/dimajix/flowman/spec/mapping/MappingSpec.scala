@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
 object MappingSpec extends TypeRegistry[MappingSpec] {
-    class NameResolver extends NamedSpec.NameResolver[MappingSpec]
+    final class NameResolver extends NamedSpec.NameResolver[MappingSpec]
 }
 
 /**

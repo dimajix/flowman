@@ -22,6 +22,7 @@ import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.TemplateIdentifier
 import com.dimajix.flowman.model.TestIdentifier
 
 
@@ -57,6 +58,8 @@ class NoSuchJobException(val job:JobIdentifier)
     extends ExecutionException(s"Job '$job' not found")
 class NoSuchTestException(val test:TestIdentifier)
     extends ExecutionException(s"Test '$test' not found")
+class NoSuchTemplateException(val template:TemplateIdentifier)
+    extends ExecutionException(s"Template '$template' not found")
 
 class DescribeMappingFailedException(val mapping:MappingIdentifier, cause:Throwable = None.orNull)
     extends ExecutionException(s"Describing mapping $mapping failed", cause)

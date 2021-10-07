@@ -107,7 +107,8 @@ final case class Module(
     mappings : Map[String,Prototype[Mapping]] = Map(),
     targets : Map[String,Prototype[Target]] = Map(),
     jobs : Map[String,Prototype[Job]] = Map(),
-    tests : Map[String,Prototype[Test]] = Map()
+    tests : Map[String,Prototype[Test]] = Map(),
+    templates: Map[String,Template[_]] = Map()
 ) {
     /**
      * Creates a new dataflow by merging this one with another one.
@@ -125,7 +126,8 @@ final case class Module(
             mappings = mappings ++ other.mappings,
             targets = targets ++ other.targets,
             jobs = jobs ++ other.jobs,
-            tests = tests ++ other.tests
+            tests = tests ++ other.tests,
+            templates = templates ++ other.templates
         )
     }
 
@@ -146,7 +148,8 @@ final case class Module(
             mappings = mappings,
             targets = targets,
             jobs = jobs,
-            tests = tests
+            tests = tests,
+            templates = templates
         )
     }
 }

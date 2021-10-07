@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ final case class JobInstance(
 }
 
 object Job {
-    case class Parameter(
+    final case class Parameter(
         name:String,
         ftype : FieldType,
         granularity: Option[String]=None,
@@ -310,7 +310,12 @@ final case class Job(
             }
             (pname, pval)
         }
-        parameters.flatMap(p => p.default.map(v => p.name -> v)).toMap ++ processedArgs
+        parameters.map { p =>
+            val pname = p.name
+            pname -> processedArgs.get(pname)
+                .orElse(p.default)
+                .getOrElse(throw new IllegalArgumentException(s"Missing parameter '$pname' in job '$name'"))
+        }.toMap
     }
 
     /**

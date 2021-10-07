@@ -34,6 +34,8 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.Prototype
+import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.TemplateIdentifier
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 
@@ -228,4 +230,13 @@ final class ScopeContext(
             parent.getTest(identifier)
         }
     }
+
+    /**
+     * Returns a specific named [[Template]]. The Test can either be inside this Contexts project or in a different
+     * project within the same namespace
+     *
+     * @param identifier
+     * @return
+     */
+    override def getTemplate(identifier: TemplateIdentifier): Template[_] = parent.getTemplate(identifier)
 }

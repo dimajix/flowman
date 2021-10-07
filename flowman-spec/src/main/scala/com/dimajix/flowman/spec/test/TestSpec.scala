@@ -33,7 +33,7 @@ import com.dimajix.flowman.spec.target.TargetSpec
 
 
 object TestSpec {
-    class NameResolver extends NamedSpec.NameResolver[TestSpec]
+    final class NameResolver extends NamedSpec.NameResolver[TestSpec]
 }
 
 

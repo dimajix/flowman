@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,9 @@ import com.dimajix.flowman.types.StringType
 
 
 object JobSpec extends TypeRegistry[JobSpec] {
-    class NameResolver extends NamedSpec.NameResolver[JobSpec]
+    final class NameResolver extends NamedSpec.NameResolver[JobSpec]
 
-    class Parameter extends Spec[Job.Parameter] {
+    final class Parameter extends Spec[Job.Parameter] {
         @JsonProperty(value = "name") private var name: String = ""
         @JsonProperty(value = "description") private var description: Option[String] = None
         @JsonProperty(value = "type", required = false) private var ftype: FieldType = StringType
@@ -56,7 +56,7 @@ object JobSpec extends TypeRegistry[JobSpec] {
     }
 }
 
-class JobSpec extends NamedSpec[Job] {
+final class JobSpec extends NamedSpec[Job] {
     @JsonProperty(value="extends") private var parents:Seq[String] = Seq()
     @JsonProperty(value="description") private var description:Option[String] = None
     @JsonProperty(value="parameters") private var parameters:Seq[JobSpec.Parameter] = Seq()

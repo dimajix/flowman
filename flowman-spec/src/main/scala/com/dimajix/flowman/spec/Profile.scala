@@ -26,7 +26,7 @@ import com.dimajix.flowman.spec.connection.ConnectionSpec
 
 
 object ProfileSpec {
-    class NameResolver extends StdConverter[Map[String,ProfileSpec],Map[String,ProfileSpec]] {
+    final class NameResolver extends StdConverter[Map[String,ProfileSpec],Map[String,ProfileSpec]] {
         override def convert(value: Map[String,ProfileSpec]): Map[String,ProfileSpec] = {
             value.foreach(kv => kv._2.name = kv._1)
             value
@@ -35,7 +35,7 @@ object ProfileSpec {
 }
 
 
-class ProfileSpec {
+final class ProfileSpec {
     @JsonIgnore private var name:String = ""
     @JsonProperty(value="enabled") private var enabled : Boolean = false
     @JsonProperty(value="environment") private var environment: Seq[String] = Seq()

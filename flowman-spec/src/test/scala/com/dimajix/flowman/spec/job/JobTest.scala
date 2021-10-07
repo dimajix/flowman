@@ -298,9 +298,10 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
 
         val job = module.jobs("job").instantiate(session.context)
         job should not be (null)
-        job.arguments(Map()) should be (Map("p2" -> "v2", "p3" -> 7))
+        an[IllegalArgumentException] should be thrownBy(job.arguments(Map()))
         job.arguments(Map("p1" -> "lala")) should be (Map("p1" -> "lala", "p2" -> "v2", "p3" -> 7))
-        job.arguments(Map("p2" -> "lala")) should be (Map("p2" -> "lala", "p3" -> 7))
+        job.arguments(Map("p1" -> "xyz", "p2" -> "lala")) should be (Map("p1" -> "xyz", "p2" -> "lala", "p3" -> 7))
+        an[IllegalArgumentException] should be thrownBy(job.arguments(Map("p1" -> "xyz", "p4" -> "lala")))
     }
 
     it should "support environment" in {

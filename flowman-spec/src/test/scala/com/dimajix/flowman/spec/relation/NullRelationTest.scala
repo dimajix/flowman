@@ -26,11 +26,22 @@ import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.spark.testing.LocalSparkSession
 
 
 class NullRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "The NullRelation" should "support the full lifecycle" in {
+    "The NullRelation" should "be parsable" in {
+        val spec =
+            """
+              |kind: null
+              |""".stripMargin
+
+        val relation = ObjectMapper.parse[RelationSpec](spec)
+        relation shouldBe a[NullRelationSpec]
+    }
+
+    it should "support the full lifecycle" in {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
 

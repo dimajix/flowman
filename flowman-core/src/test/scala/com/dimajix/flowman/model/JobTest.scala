@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
         val job = Job.builder(context)
             .addParameter("p1", IntegerType, Some("2"))
             .addParameter("p2", StringType)
+            .addParameter("p3", StringType, value=Some("default"))
             .build()
 
         job.arguments(Map(
@@ -81,8 +82,36 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "p2" -> "lala"
         )) should be (Map(
             "p1" -> 17,
-            "p2" -> "lala"
+            "p2" -> "lala",
+            "p3" -> "default"
         ))
+    }
+
+    it should "throw an error on missing arguments" in {
+        val session = Session.builder().disableSpark().build()
+        val context = session.context
+        val job = Job.builder(context)
+            .addParameter("p1", IntegerType, Some("2"))
+            .addParameter("p2", StringType)
+            .build()
+
+        an[IllegalArgumentException] should be thrownBy(job.arguments(Map(
+            "p1" -> "17",
+        )))
+    }
+
+    it should "throw an error on unknown arguments" in {
+        val session = Session.builder().disableSpark().build()
+        val context = session.context
+        val job = Job.builder(context)
+            .addParameter("p1", IntegerType, Some("2"))
+            .addParameter("p2", StringType)
+            .build()
+
+        an[IllegalArgumentException] should be thrownBy(job.arguments(Map(
+            "p1" -> "17",
+            "p3" -> "28",
+        )))
     }
 
     "Job.parseArguments" should "parse arguments" in {

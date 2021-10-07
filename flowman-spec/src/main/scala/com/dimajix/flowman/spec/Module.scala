@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spec.test.TestSpec
 
 
-class ModuleSpec {
+final class ModuleSpec {
     @JsonProperty(value="environment") private var environment: Seq[String] = Seq()
     @JsonProperty(value="config") private var config: Seq[String] = Seq()
     @JsonDeserialize(converter=classOf[ProfileSpec.NameResolver])
@@ -45,6 +45,8 @@ class ModuleSpec {
     @JsonProperty(value="jobs") private var jobs: Map[String,JobSpec] = Map()
     @JsonDeserialize(converter=classOf[TestSpec.NameResolver])
     @JsonProperty(value="tests") private var tests: Map[String,TestSpec] = Map()
+    @JsonDeserialize(converter=classOf[TemplateSpec.NameResolver])
+    @JsonProperty(value="templates") private var templates: Map[String,TemplateSpec[_]] = Map()
 
     def instantiate() : Module = {
         Module(
@@ -56,7 +58,8 @@ class ModuleSpec {
             mappings = mappings,
             targets = targets,
             jobs = jobs,
-            tests = tests
+            tests = tests,
+            templates = templates
         )
     }
 }

@@ -41,6 +41,8 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.Prototype
+import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.TemplateIdentifier
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 
@@ -256,6 +258,21 @@ final class RootContext private[execution](
             throw new NoSuchTestException(identifier)
         val child = getProjectContext(identifier.project.get)
         child.getTest(identifier)
+    }
+
+    /**
+     * Returns a fully qualified template from a project belonging to the namespace of this execution
+     *
+     * @param identifier
+     * @return
+     */
+    override def getTemplate(identifier: TemplateIdentifier): Template[_] = {
+        require(identifier != null && identifier.nonEmpty)
+
+        if (identifier.project.isEmpty)
+            throw new NoSuchTemplateException(identifier)
+        val child = getProjectContext(identifier.project.get)
+        child.getTemplate(identifier)
     }
 
     /**

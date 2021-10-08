@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.spec.relation
 
-import scala.collection.JavaConverters._
-
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -41,7 +39,7 @@ class RelationTemplateTest extends AnyFlatSpec with Matchers {
         relation shouldBe a[RelationTemplateInstanceSpec]
 
         val relationTemplate = relation.asInstanceOf[RelationTemplateInstanceSpec]
-        relationTemplate.args.asScala.toMap should be (Map("arg1" -> "value_1", "arg2" -> "value_2"))
+        relationTemplate.args should be (Map("arg1" -> "value_1", "arg2" -> "value_2"))
     }
 
     it should "work" in {

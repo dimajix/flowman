@@ -16,15 +16,13 @@
 
 package com.dimajix.flowman.spec.mapping
 
-import scala.collection.JavaConverters._
-
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.NoSuchTemplateException
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.spec.ObjectMapper
 
 
@@ -41,7 +39,7 @@ class MappingTemplateTest extends AnyFlatSpec with Matchers {
         mapping shouldBe a[MappingTemplateInstanceSpec]
 
         val mappingTemplate = mapping.asInstanceOf[MappingTemplateInstanceSpec]
-        mappingTemplate.args.asScala.toMap should be (Map("arg1" -> "value_1", "arg2" -> "value_2"))
+        mappingTemplate.args should be (Map("arg1" -> "value_1", "arg2" -> "value_2"))
     }
 
     it should "work" in {

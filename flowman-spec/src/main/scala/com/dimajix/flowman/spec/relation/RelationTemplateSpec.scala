@@ -16,11 +16,8 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.util
-
-import scala.collection.JavaConverters._
-
 import com.fasterxml.jackson.annotation.JsonAnySetter
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
@@ -43,8 +40,13 @@ class RelationTemplateSpec extends TemplateSpec[Relation] with RelationTemplate 
 
 
 class RelationTemplateInstanceSpec extends RelationSpec {
+    @JsonIgnore
+    private[spec] var args:Map[String,String] = Map()
+
     @JsonAnySetter
-    private[spec] var args:java.util.Map[String,String] = new util.HashMap[String,String]()
+    private def setArg(name:String, value:String) : Unit = {
+        args = args.updated(name, value)
+    }
 
     override def instantiate(context: Context): Relation = {
         // get template name from member "kind"
@@ -53,7 +55,7 @@ class RelationTemplateInstanceSpec extends RelationSpec {
         val template = context.getTemplate(identifier).asInstanceOf[RelationTemplate]
 
         // parse args
-        val parsedArgs = template.arguments(args.asScala.toMap)
+        val parsedArgs = template.arguments(context.evaluate(args))
         template.instantiate(context, name, parsedArgs)
     }
 }

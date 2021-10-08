@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.spec.target
 
-import scala.collection.JavaConverters._
-
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -41,7 +39,7 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
         target shouldBe a[TargetTemplateInstanceSpec]
 
         val targetTemplate = target.asInstanceOf[TargetTemplateInstanceSpec]
-        targetTemplate.args.asScala.toMap should be (Map("arg1" -> "value_1", "arg2" -> "value_2"))
+        targetTemplate.args should be (Map("arg1" -> "value_1", "arg2" -> "value_2"))
     }
 
     it should "work" in {

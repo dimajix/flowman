@@ -96,7 +96,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             .build()
 
         an[IllegalArgumentException] should be thrownBy(job.arguments(Map(
-            "p1" -> "17",
+            "p1" -> "17"
         )))
     }
 
@@ -110,7 +110,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
 
         an[IllegalArgumentException] should be thrownBy(job.arguments(Map(
             "p1" -> "17",
-            "p3" -> "28",
+            "p3" -> "28"
         )))
     }
 

@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spec
 
 import java.io.IOException
-import java.util
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -25,20 +24,23 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.DatabindContext
 import com.fasterxml.jackson.databind.JavaType
-import com.fasterxml.jackson.databind.cfg.MapperConfig
-import com.fasterxml.jackson.databind.exc.InvalidTypeIdException
-import com.fasterxml.jackson.databind.jsontype.NamedType
-import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator
+import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.jsontype.TypeIdResolver
-import com.fasterxml.jackson.databind.jsontype.impl.StdTypeResolverBuilder
-import com.fasterxml.jackson.databind.jsontype.impl.TypeNameIdResolver
 import com.fasterxml.jackson.databind.util.StdConverter
+
+import com.dimajix.jackson.WrappingTypeIdResolver
 
 import com.dimajix.flowman.model.BaseTemplate
 import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.spec.mapping.MappingSpec
+import com.dimajix.flowman.spec.mapping.MappingTemplateInstanceSpec
+import com.dimajix.flowman.spec.mapping.MappingTemplateSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
 import com.dimajix.flowman.spec.relation.RelationTemplateInstanceSpec
 import com.dimajix.flowman.spec.relation.RelationTemplateSpec
+import com.dimajix.flowman.spec.target.TargetSpec
+import com.dimajix.flowman.spec.target.TargetTemplateInstanceSpec
+import com.dimajix.flowman.spec.target.TargetTemplateSpec
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StringType
 
@@ -70,7 +72,9 @@ object TemplateSpec {
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible=true)
 @JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "relation", value = classOf[RelationTemplateSpec])
+    new JsonSubTypes.Type(name = "relation", value = classOf[RelationTemplateSpec]),
+    new JsonSubTypes.Type(name = "mapping", value = classOf[MappingTemplateSpec]),
+    new JsonSubTypes.Type(name = "target", value = classOf[TargetTemplateSpec])
 ))
 abstract class TemplateSpec[T] extends BaseTemplate[T] {
     @JsonIgnore var name:String = ""
@@ -84,31 +88,30 @@ abstract class TemplateSpec[T] extends BaseTemplate[T] {
 
 
 
-class CustomTypeResolverBuilder extends StdTypeResolverBuilder {
-    override protected def idResolver(config: MapperConfig[_], baseType: JavaType, subtypeValidator: PolymorphicTypeValidator, subtypes: util.Collection[NamedType], forSer: Boolean, forDeser: Boolean) : TypeIdResolver = {
-        val resolver = TypeNameIdResolver.construct(config, baseType, subtypes, forSer, forDeser)
+class CustomTypeResolverBuilder extends com.dimajix.jackson.CustomTypeResolverBuilder {
+    override protected def wrapIdResolver(resolver:TypeIdResolver, baseType: JavaType) : TypeIdResolver = {
         new CustomTypeIdResolver(resolver, baseType)
     }
 }
-class CustomTypeIdResolver(wrapped:TypeIdResolver, baseType:JavaType) extends TypeIdResolver {
-    override def init(baseType: JavaType): Unit = wrapped.init(baseType)
-    override def idFromValue(value: Any): String = wrapped.idFromValue(value)
-    override def idFromValueAndType(value: Any, suggestedType: Class[_]): String = wrapped.idFromValueAndType(value, suggestedType)
-    override def idFromBaseType(): String = wrapped.idFromBaseType()
+class CustomTypeIdResolver(wrapped:TypeIdResolver, baseType:JavaType) extends WrappingTypeIdResolver(wrapped) {
     @throws[IOException]
     override def typeFromId(context: DatabindContext, id: String): JavaType = {
         if (id.startsWith("template/")) {
             if (baseType.getRawClass  eq classOf[RelationSpec]) {
                 context.constructType(classOf[RelationTemplateInstanceSpec] )
             }
+            else if (baseType.getRawClass  eq classOf[MappingSpec]) {
+                context.constructType(classOf[MappingTemplateInstanceSpec] )
+            }
+            else if (baseType.getRawClass  eq classOf[TargetSpec]) {
+                context.constructType(classOf[TargetTemplateInstanceSpec] )
+            }
             else {
-                throw new InvalidTypeIdException(null, "Invalid template type", baseType, id)
+                throw new JsonMappingException(s"Invalid template type '$id' for base type ${baseType.getRawClass.getName}")
             }
         }
         else {
             wrapped.typeFromId(context, id)
         }
     }
-    override def getDescForKnownTypeIds: String = wrapped.getDescForKnownTypeIds
-    override def getMechanism: JsonTypeInfo.Id = wrapped.getMechanism
 }

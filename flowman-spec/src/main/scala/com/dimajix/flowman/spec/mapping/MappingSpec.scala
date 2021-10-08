@@ -19,11 +19,13 @@ package com.dimajix.flowman.spec.mapping
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.spec.CustomTypeResolverBuilder
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.MappingType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
@@ -36,6 +38,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
 /**
   * Interface class for specifying a transformation (mapping)
   */
+@JsonTypeResolver(classOf[CustomTypeResolverBuilder])
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "aggregate", value = classOf[AggregateMappingSpec]),

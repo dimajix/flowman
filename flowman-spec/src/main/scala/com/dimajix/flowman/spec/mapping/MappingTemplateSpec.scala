@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.relation
+package com.dimajix.flowman.spec.mapping
 
 import java.util
 
@@ -24,16 +24,16 @@ import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.model.Relation
-import com.dimajix.flowman.model.RelationTemplate
+import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingTemplate
 import com.dimajix.flowman.model.TemplateIdentifier
 import com.dimajix.flowman.spec.TemplateSpec
 
 
-class RelationTemplateSpec extends TemplateSpec[Relation] with RelationTemplate {
-    @JsonProperty(value="template", required=true) private var spec:RelationSpec = _
+class MappingTemplateSpec extends TemplateSpec[Mapping] with MappingTemplate {
+    @JsonProperty(value="template", required=true) private var spec:MappingSpec = _
 
-    override def instantiateInternal(context: Context, name: String): Relation = {
+    override def instantiateInternal(context: Context, name: String): Mapping = {
         synchronized {
             spec.name = name
             spec.instantiate(context)
@@ -42,15 +42,15 @@ class RelationTemplateSpec extends TemplateSpec[Relation] with RelationTemplate 
 }
 
 
-class RelationTemplateInstanceSpec extends RelationSpec {
+class MappingTemplateInstanceSpec extends MappingSpec {
     @JsonAnySetter
     private[spec] var args:java.util.Map[String,String] = new util.HashMap[String,String]()
 
-    override def instantiate(context: Context): Relation = {
+    override def instantiate(context: Context): Mapping = {
         // get template name from member "kind"
         // Lookup template in context
         val identifier = TemplateIdentifier(kind.stripPrefix("template/"))
-        val template = context.getTemplate(identifier).asInstanceOf[RelationTemplate]
+        val template = context.getTemplate(identifier).asInstanceOf[MappingTemplate]
 
         // parse args
         val parsedArgs = template.arguments(args.asScala.toMap)

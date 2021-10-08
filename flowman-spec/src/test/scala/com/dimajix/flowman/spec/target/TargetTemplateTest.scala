@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.relation
+package com.dimajix.flowman.spec.target
 
 import scala.collection.JavaConverters._
 
@@ -24,12 +24,12 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.NoSuchTemplateException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
-import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
 
 
-class RelationTemplateTest extends AnyFlatSpec with Matchers {
-    "A RelationTemplateInstance" should "be deserialized" in {
+class TargetTemplateTest extends AnyFlatSpec with Matchers {
+    "A TargetTemplateInstance" should "be deserialized" in {
         val spec =
             """
               |kind: template/user
@@ -37,11 +37,11 @@ class RelationTemplateTest extends AnyFlatSpec with Matchers {
               |arg2: value_2
               |""".stripMargin
 
-        val relation = ObjectMapper.parse[RelationSpec](spec)
-        relation shouldBe a[RelationTemplateInstanceSpec]
+        val target = ObjectMapper.parse[TargetSpec](spec)
+        target shouldBe a[TargetTemplateInstanceSpec]
 
-        val relationTemplate = relation.asInstanceOf[RelationTemplateInstanceSpec]
-        relationTemplate.args.asScala.toMap should be (Map("arg1" -> "value_1", "arg2" -> "value_2"))
+        val targetTemplate = target.asInstanceOf[TargetTemplateInstanceSpec]
+        targetTemplate.args.asScala.toMap should be (Map("arg1" -> "value_1", "arg2" -> "value_2"))
     }
 
     it should "work" in {
@@ -49,7 +49,7 @@ class RelationTemplateTest extends AnyFlatSpec with Matchers {
             """
               |templates:
               |  user:
-              |    kind: relation
+              |    kind: target
               |    parameters:
               |      - name: p0
               |        type: string
@@ -57,18 +57,10 @@ class RelationTemplateTest extends AnyFlatSpec with Matchers {
               |        type: int
               |        default: 12
               |    template:
-              |      kind: values
-              |      records:
-              |        - ["$p0",$p1]
-              |      schema:
-              |        kind: embedded
-              |        fields:
-              |          - name: str_col
-              |            type: string
-              |          - name: int_col
-              |            type: integer
+              |      kind: blackhole
+              |      mapping: $p0
               |
-              |relations:
+              |targets:
               |  rel_1:
               |    kind: template/user
               |    p0: some_value
@@ -89,21 +81,21 @@ class RelationTemplateTest extends AnyFlatSpec with Matchers {
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        val rel_1 = context.getRelation(RelationIdentifier("rel_1"))
-        rel_1 shouldBe a[ValuesRelation]
+        val rel_1 = context.getTarget(TargetIdentifier("rel_1"))
+        rel_1 shouldBe a[BlackholeTarget]
 
-        an[IllegalArgumentException] should be thrownBy(context.getRelation(RelationIdentifier("rel_2")))
+        an[IllegalArgumentException] should be thrownBy(context.getTarget(TargetIdentifier("rel_2")))
 
-        val rel_3 = context.getRelation(RelationIdentifier("rel_3"))
-        rel_3 shouldBe a[ValuesRelation]
+        val rel_3 = context.getTarget(TargetIdentifier("rel_3"))
+        rel_3 shouldBe a[BlackholeTarget]
 
-        an[IllegalArgumentException] should be thrownBy(context.getRelation(RelationIdentifier("rel_4")))
+        an[IllegalArgumentException] should be thrownBy(context.getTarget(TargetIdentifier("rel_4")))
     }
 
     it should "throw an error on unknown templates" in {
         val spec =
             """
-              |relations:
+              |targets:
               |  rel_1:
               |    kind: template/user
               |    p0: some_value
@@ -113,6 +105,6 @@ class RelationTemplateTest extends AnyFlatSpec with Matchers {
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        an[NoSuchTemplateException] should be thrownBy(context.getRelation(RelationIdentifier("rel_1")))
+        an[NoSuchTemplateException] should be thrownBy(context.getTarget(TargetIdentifier("rel_1")))
     }
 }

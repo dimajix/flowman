@@ -19,11 +19,13 @@ package com.dimajix.flowman.spec.target
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.spec.CustomTypeResolverBuilder
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.TargetType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
@@ -34,6 +36,7 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
 }
 
 
+@JsonTypeResolver(classOf[CustomTypeResolverBuilder])
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "blackhole", value = classOf[BlackholeTargetSpec]),

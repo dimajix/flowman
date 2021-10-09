@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec
+package com.dimajix.flowman.spec.template
 
 import java.io.IOException
 
@@ -30,28 +30,22 @@ import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.jackson.WrappingTypeIdResolver
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.BaseTemplate
+import com.dimajix.flowman.model.Instance
+import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.mapping.MappingSpec
-import com.dimajix.flowman.spec.mapping.MappingTemplateInstanceSpec
-import com.dimajix.flowman.spec.mapping.MappingTemplateSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
-import com.dimajix.flowman.spec.relation.RelationTemplateInstanceSpec
-import com.dimajix.flowman.spec.relation.RelationTemplateSpec
 import com.dimajix.flowman.spec.target.TargetSpec
-import com.dimajix.flowman.spec.target.TargetTemplateInstanceSpec
-import com.dimajix.flowman.spec.target.TargetTemplateSpec
+import com.dimajix.flowman.spec.test.TestSpec
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StringType
 
 
 object TemplateSpec {
-    final class NameResolver extends StdConverter[Map[String, TemplateSpec[_]], Map[String, TemplateSpec[_]]] {
-        override def convert(value: Map[String, TemplateSpec[_]]): Map[String, TemplateSpec[_]] = {
-            value.foreach(kv => kv._2.name = kv._1)
-            value
-        }
-    }
+    final class NameResolver extends NamedSpec.NameResolver[TemplateSpec]
 
     final class Parameter {
         @JsonProperty(value = "name") private var name: String = ""
@@ -59,12 +53,12 @@ object TemplateSpec {
         @JsonProperty(value = "type", required = false) private var ftype: FieldType = StringType
         @JsonProperty(value = "default", required = false) private var default: Option[String] = None
 
-        def instantiate(): Template.Parameter = {
+        def instantiate(context: Context): Template.Parameter = {
             Template.Parameter(
-                name,
+                context.evaluate(name),
                 ftype,
-                default,
-                description
+                context.evaluate(default),
+                context.evaluate(description)
             )
         }
     }
@@ -76,14 +70,19 @@ object TemplateSpec {
     new JsonSubTypes.Type(name = "mapping", value = classOf[MappingTemplateSpec]),
     new JsonSubTypes.Type(name = "target", value = classOf[TargetTemplateSpec])
 ))
-abstract class TemplateSpec[T] extends BaseTemplate[T] {
-    @JsonIgnore var name:String = ""
+abstract class TemplateSpec extends NamedSpec[Template[_]] {
+    @JsonProperty(value="parameters", required=false) protected var parameters : Seq[TemplateSpec.Parameter] = Seq()
 
-    override def parameters: Seq[Template.Parameter] = _parameters.map(_.instantiate())
-
-    @JsonProperty(value="kind", required = true) protected var kind: String = _
-    @JsonProperty(value="labels", required=false) protected var labels:Map[String,String] = Map()
-    @JsonProperty(value="parameters", required=false) protected var _parameters : Seq[TemplateSpec.Parameter] = Seq()
+    protected def instanceProperties(context:Context) : Template.Properties = {
+        Template.Properties(
+            context,
+            context.namespace,
+            context.project,
+            name,
+            kind,
+            context.evaluate(labels)
+        )
+    }
 }
 
 

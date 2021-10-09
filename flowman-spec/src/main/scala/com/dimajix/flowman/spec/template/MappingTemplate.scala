@@ -14,23 +14,26 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.mapping
+package com.dimajix.flowman.spec.template
 
 import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.BaseTemplate
 import com.dimajix.flowman.model.Mapping
-import com.dimajix.flowman.model.MappingTemplate
+import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.TemplateIdentifier
-import com.dimajix.flowman.spec.TemplateSpec
+import com.dimajix.flowman.spec.mapping.MappingSpec
 
 
-class MappingTemplateSpec extends TemplateSpec[Mapping] with MappingTemplate {
-    @JsonProperty(value="template", required=true) private var spec:MappingSpec = _
-
-    override def instantiateInternal(context: Context, name: String): Mapping = {
+case class MappingTemplate(
+    instanceProperties: Template.Properties,
+    parameters: Seq[Template.Parameter],
+    spec:MappingSpec
+) extends BaseTemplate[Mapping] with com.dimajix.flowman.model.MappingTemplate {
+    override protected def instantiateInternal(context: Context, name: String): Mapping = {
         synchronized {
             spec.name = name
             spec.instantiate(context)
@@ -38,13 +41,25 @@ class MappingTemplateSpec extends TemplateSpec[Mapping] with MappingTemplate {
     }
 }
 
+class MappingTemplateSpec extends TemplateSpec {
+    @JsonProperty(value="template", required=true) private var spec:MappingSpec = _
+
+    override def instantiate(context: Context): MappingTemplate = {
+        MappingTemplate(
+            instanceProperties(context),
+            parameters.map(_.instantiate(context)),
+            spec
+        )
+    }
+}
+
 
 class MappingTemplateInstanceSpec extends MappingSpec {
     @JsonIgnore
-    private[spec] var args:Map[String,String] = Map()
+    private[spec] var args: Map[String, String] = Map()
 
     @JsonAnySetter
-    private def setArg(name:String, value:String) : Unit = {
+    private def setArg(name: String, value: String): Unit = {
         args = args.updated(name, value)
     }
 

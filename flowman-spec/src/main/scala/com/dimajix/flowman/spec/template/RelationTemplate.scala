@@ -14,23 +14,26 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.target
+package com.dimajix.flowman.spec.template
 
 import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetTemplate
+import com.dimajix.flowman.model.BaseTemplate
+import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.TemplateIdentifier
-import com.dimajix.flowman.spec.TemplateSpec
+import com.dimajix.flowman.spec.relation.RelationSpec
 
 
-class TargetTemplateSpec extends TemplateSpec[Target] with TargetTemplate {
-    @JsonProperty(value="template", required=true) private var spec:TargetSpec = _
-
-    override def instantiateInternal(context: Context, name: String): Target = {
+case class RelationTemplate(
+    instanceProperties: Template.Properties,
+    parameters: Seq[Template.Parameter],
+    spec:RelationSpec
+) extends BaseTemplate[Relation] with com.dimajix.flowman.model.RelationTemplate {
+    override protected def instantiateInternal(context: Context, name: String): Relation = {
         synchronized {
             spec.name = name
             spec.instantiate(context)
@@ -38,8 +41,19 @@ class TargetTemplateSpec extends TemplateSpec[Target] with TargetTemplate {
     }
 }
 
+class RelationTemplateSpec extends TemplateSpec {
+    @JsonProperty(value="template", required=true) private var spec:RelationSpec = _
 
-class TargetTemplateInstanceSpec extends TargetSpec {
+    override def instantiate(context: Context): RelationTemplate = {
+        RelationTemplate(
+            instanceProperties(context),
+            parameters.map(_.instantiate(context)),
+            spec
+        )
+    }
+}
+
+class RelationTemplateInstanceSpec extends RelationSpec {
     @JsonIgnore
     private[spec] var args:Map[String,String] = Map()
 
@@ -48,11 +62,11 @@ class TargetTemplateInstanceSpec extends TargetSpec {
         args = args.updated(name, value)
     }
 
-    override def instantiate(context: Context): Target = {
+    override def instantiate(context: Context): Relation = {
         // get template name from member "kind"
         // Lookup template in context
         val identifier = TemplateIdentifier(kind.stripPrefix("template/"))
-        val template = context.getTemplate(identifier).asInstanceOf[TargetTemplate]
+        val template = context.getTemplate(identifier).asInstanceOf[RelationTemplate]
 
         // parse args
         val parsedArgs = template.arguments(context.evaluate(args))

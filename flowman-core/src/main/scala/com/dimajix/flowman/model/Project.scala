@@ -145,5 +145,5 @@ final case class Project(
     targets : Map[String,Prototype[Target]] = Map(),
     jobs : Map[String,Prototype[Job]] = Map(),
     tests : Map[String,Prototype[Test]] = Map(),
-    templates: Map[String,Template[_]] = Map()
+    templates: Map[String,Prototype[Template[_]]] = Map()
 )

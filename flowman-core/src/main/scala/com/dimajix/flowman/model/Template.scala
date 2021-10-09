@@ -24,6 +24,31 @@ import com.dimajix.flowman.types.FieldType
 
 
 object Template {
+    object Properties {
+        def apply(context: Context, name:String = "") : Properties = {
+            Properties(
+                context,
+                context.namespace,
+                context.project,
+                name,
+                "",
+                Map()
+            )
+        }
+    }
+    final case class Properties(
+        context:Context,
+        namespace:Option[Namespace],
+        project:Option[Project],
+        name:String,
+        kind:String,
+        labels:Map[String,String]
+    ) extends Instance.Properties[Properties] {
+        override def withName(name: String): Properties = copy(name=name)
+        def identifier : TemplateIdentifier = TemplateIdentifier(name, project.map(_.name))
+    }
+
+
     final case class Parameter(
         name:String,
         ftype : FieldType,
@@ -42,9 +67,31 @@ object Template {
 }
 
 
-trait Template[T] {
-    def name : String
+trait Template[T] extends Instance {
+    /**
+     * Returns the category of this resource
+     * @return
+     */
+    final override def category: String = "template"
+
+    /**
+     * Returns an identifier for this target
+     * @return
+     */
+    def identifier : TemplateIdentifier
+
+    /**
+     * Returns the list of parameters required for instantiation of this template
+     */
     def parameters : Seq[Template.Parameter]
+
+    /**
+     * Instantiate this template with the given parameters
+     * @param context
+     * @param name
+     * @param args
+     * @return
+     */
     def instantiate(context: Context, name:String, args:Map[String,Any]): T
 
     /**
@@ -75,7 +122,22 @@ trait Template[T] {
 }
 
 
-abstract class BaseTemplate[T] extends Template[T] {
+abstract class BaseTemplate[T] extends AbstractInstance with Template[T] {
+    protected override def instanceProperties : Template.Properties
+
+    /**
+     * Returns an identifier for this target
+     * @return
+     */
+    override def identifier : TemplateIdentifier = instanceProperties.identifier
+
+    /**
+     * Instantiate this template with the given parameters
+     * @param context
+     * @param name
+     * @param args
+     * @return
+     */
     def instantiate(context: Context, name:String, args:Map[String,Any]): T = {
         // Validate args!
         val ctxt = ScopeContext.builder(context)

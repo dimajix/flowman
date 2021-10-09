@@ -111,6 +111,7 @@ final class ProjectContext private[execution](
     private val connections = TrieMap[String,Connection]()
     private val jobs = TrieMap[String,Job]()
     private val tests = TrieMap[String,Test]()
+    private val templates = TrieMap[String,Template[_]]()
 
     /**
       * Returns the namespace associated with this context. Can be null
@@ -315,21 +316,24 @@ final class ProjectContext private[execution](
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.forall(_ == _project.name)) {
-            _project.templates
-                .getOrElse(identifier.name,
-                    throw new NoSuchTemplateException(identifier)
-                )
+            templates.getOrElseUpdate(identifier.name,
+                _project.templates
+                    .getOrElse(identifier.name,
+                        throw new NoSuchTemplateException(identifier)
+                    )
+                    .instantiate(this)
+            )
         }
         else {
             parent.getTemplate(identifier)
         }
     }
 
-    private def findOrInstantiate[T](identifier:Identifier[T], templates:Map[String,Prototype[T]], cache:TrieMap[String,T]) = {
+    private def findOrInstantiate[T](identifier:Identifier[T], prototypes:Map[String,Prototype[T]], cache:TrieMap[String,T]) = {
         val name = identifier.name
         cache.get(name)
             .orElse {
-                templates
+                prototypes
                     .get(name)
                     .map(m => cache.getOrElseUpdate(name, m.instantiate(this)))
             }

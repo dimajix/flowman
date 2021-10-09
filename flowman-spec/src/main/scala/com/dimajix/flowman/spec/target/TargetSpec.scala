@@ -25,9 +25,9 @@ import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.spec.CustomTypeResolverBuilder
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.TargetType
+import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 

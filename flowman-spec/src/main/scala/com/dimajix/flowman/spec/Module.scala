@@ -25,6 +25,7 @@ import com.dimajix.flowman.spec.mapping.MappingSpec
 import com.dimajix.flowman.spec.job.JobSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
 import com.dimajix.flowman.spec.target.TargetSpec
+import com.dimajix.flowman.spec.template.TemplateSpec
 import com.dimajix.flowman.spec.test.TestSpec
 
 
@@ -46,7 +47,7 @@ final class ModuleSpec {
     @JsonDeserialize(converter=classOf[TestSpec.NameResolver])
     @JsonProperty(value="tests") private var tests: Map[String,TestSpec] = Map()
     @JsonDeserialize(converter=classOf[TemplateSpec.NameResolver])
-    @JsonProperty(value="templates") private var templates: Map[String,TemplateSpec[_]] = Map()
+    @JsonProperty(value="templates") private var templates: Map[String,TemplateSpec] = Map()
 
     def instantiate() : Module = {
         Module(

@@ -25,9 +25,9 @@ import org.apache.spark.storage.StorageLevel
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Mapping
-import com.dimajix.flowman.spec.CustomTypeResolverBuilder
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.MappingType
+import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 

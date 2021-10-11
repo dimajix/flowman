@@ -26,6 +26,7 @@
 * Implement new `openapi` plugin to support OpenAPI 3.0 schemas
 * Add new `readHive` mapping
 * Add new `simpleReport` and `report` hook
+* Implement new templates
 
 
 # Version 0.17.1 - 2021-06-18

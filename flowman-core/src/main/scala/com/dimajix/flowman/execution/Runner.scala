@@ -251,7 +251,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                         catch {
                             case NonFatal(ex) =>
                                 // Primarily exceptions during target instantiation will be caught here
-                                logger.error(s"Caught exception during $phase $title:", ex)
+                                logger.error(s"Caught exception during $title:", ex)
                                 JobResult(job, instance, phase, ex, startTime)
                         }
                     }

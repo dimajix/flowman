@@ -511,14 +511,14 @@ case class HiveTableRelation(
     private def doMigration(execution: Execution, currentSchema:com.dimajix.flowman.types.StructType, targetSchema:com.dimajix.flowman.types.StructType, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
-                logger.warn(s"Migration required for HiveTable relation '$identifier' of Hive table $tableIdentifier, but migrations are disabled.")
+                logger.warn(s"Migration required for HiveTable relation '$identifier' of Hive table $tableIdentifier, but migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}\nNew schema:\n${targetSchema.treeString}")
             case MigrationStrategy.FAIL =>
-                logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $tableIdentifier, since migrations are disabled")
+                logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $tableIdentifier, since migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}\nNew schema:\n${targetSchema.treeString}")
                 throw new MigrationFailedException(identifier)
             case MigrationStrategy.ALTER =>
                 val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
                 if (migrations.exists(m => !supported(m))) {
-                    logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $tableIdentifier, since that would require unsupported changes")
+                    logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $tableIdentifier, since that would require unsupported changes.\nCurrent schema:\n${currentSchema.treeString}\nNew schema:\n${targetSchema.treeString}")
                     throw new MigrationFailedException(identifier)
                 }
                 alter(migrations)

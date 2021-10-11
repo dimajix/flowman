@@ -455,7 +455,7 @@ case class HiveUnionTableRelation(
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for HiveUnionTable relation '$identifier' of Hive union table $viewIdentifier, but migrations are disabled.")
             case MigrationStrategy.FAIL =>
-                logger.error(s"Cannot migrate HiveUnionTable HiveTable '$identifier' of Hive union table $viewIdentifier, since migrations are disabled")
+                logger.error(s"Cannot migrate HiveUnionTable HiveTable '$identifier' of Hive union table $viewIdentifier, since migrations are disabled.")
                 throw new MigrationFailedException(identifier)
             case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE =>
                 alter

@@ -120,6 +120,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
 
         (baseMapping.context _).expects().anyNumberOfTimes().returns(context)
         (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Seq())
+        (baseMapping.identifier _).expects().anyNumberOfTimes().returns(MappingIdentifier("my_project/base"))
         (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"other")
             .anyNumberOfTimes().returns(otherSchema)
         (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"error")
@@ -183,6 +184,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
 
         (baseMapping.context _).expects().anyNumberOfTimes().returns(context)
         (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Seq())
+        (baseMapping.identifier _).expects().anyNumberOfTimes().returns(MappingIdentifier("my_project/base"))
         (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"main")
             .anyNumberOfTimes().returns(schema)
         mapping.describe(executor, Map()) should be (Map("main" -> schema))
@@ -232,6 +234,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         (baseMapping.context _).expects().anyNumberOfTimes().returns(context)
         (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Seq("main"))
         (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Seq())
+        (baseMapping.identifier _).expects().anyNumberOfTimes().returns(MappingIdentifier("my_project/base"))
         (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"main")
             .anyNumberOfTimes().returns(schema)
 

@@ -38,10 +38,11 @@ final case class Identifier[T](name:String, project:Option[String]) {
     def nonEmpty : Boolean = name.nonEmpty
 
     override def toString : String = {
+        val nm = if (name.nonEmpty) name else "<anonymous>"
         if (project.isEmpty)
-            name
+            nm
         else
-            project.get + "/" + name
+            project.get + "/" + nm
     }
 }
 
@@ -81,4 +82,3 @@ final case class MappingOutputIdentifier(name:String, output:String, project:Opt
             project.get + "/" + name + ":" + output
     }
 }
-

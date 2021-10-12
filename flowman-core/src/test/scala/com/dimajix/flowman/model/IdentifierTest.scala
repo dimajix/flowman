@@ -27,10 +27,16 @@ class IdentifierTest extends AnyFlatSpec with Matchers {
         MappingIdentifier.parse("p1/p2/lala") should be (new MappingIdentifier("lala", Some("p1/p2")))
     }
 
-    it should "be stringified corectly" in {
+    it should "be stringified correctly" in {
         new MappingIdentifier("lala", None).toString should be ("lala")
         new MappingIdentifier("lala", Some("project")).toString should be ("project/lala")
         new MappingIdentifier("lala", Some("p1/p2")).toString should be ("p1/p2/lala")
+    }
+
+    it should "be stringified correctly when empty" in {
+        new MappingIdentifier("", None).toString should be ("<anonymous>")
+        new MappingIdentifier("", Some("project")).toString should be ("project/<anonymous>")
+        new MappingIdentifier("", Some("p1/p2")).toString should be ("p1/p2/<anonymous>")
     }
 
     it should "support null values" in {

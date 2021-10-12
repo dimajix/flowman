@@ -58,7 +58,8 @@ case class DeltaVacuumTarget(
      * @return
      */
     override def requires(phase: Phase): Set[ResourceIdentifier] = {
-        relation.value.requires
+        val rel = relation.value
+        rel.provides ++ rel.requires
     }
 
     /**

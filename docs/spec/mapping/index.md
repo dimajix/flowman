@@ -21,11 +21,11 @@ mappings, Flowman takes care of this dependency management under the hood.
 ## Mapping Syntax
 
 Mappings are specified in the `mappings` section of a file. For example
-```
+```yaml
 mappings:
   measurements-raw:
     kind: readRelation
-    source: measurements-raw
+    relation: measurements-raw
     partitions:
       year:
         start: $start_year

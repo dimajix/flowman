@@ -24,6 +24,7 @@ import com.dimajix.flowman.model.IdentifierRelationReference
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.ValueRelationReference
 import com.dimajix.flowman.types.SingleValue
 
 
@@ -50,5 +51,37 @@ class ReadRelationTest extends AnyFlatSpec with Matchers {
         rrm.relation should be (IdentifierRelationReference(context, RelationIdentifier("some_relation")))
         rrm.filter should be (Some("landing_date > 123"))
         rrm.partitions should be (Map("p0" -> SingleValue("12")))
+    }
+
+    it should "support embedded relations" in {
+        val spec =
+            """
+              |mappings:
+              |  t0:
+              |    kind: readRelation
+              |    relation:
+              |      name: embedded
+              |      kind: values
+              |      records:
+              |        - ["key",12]
+              |      schema:
+              |        kind: embedded
+              |        fields:
+              |          - name: key_column
+              |            type: string
+              |          - name: value_column
+              |            type: integer
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withProject(project).disableSpark().build()
+        val context = session.getContext(project)
+        val mapping = context.getMapping(MappingIdentifier("t0"))
+
+        mapping shouldBe a[ReadRelationMapping]
+        val rrm = mapping.asInstanceOf[ReadRelationMapping]
+        rrm.relation shouldBe a[ValueRelationReference]
+        rrm.relation.identifier should be (RelationIdentifier("embedded", "project"))
+        rrm.relation.name should be ("embedded")
     }
 }

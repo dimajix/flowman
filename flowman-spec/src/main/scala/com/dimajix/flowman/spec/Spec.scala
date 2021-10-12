@@ -41,8 +41,7 @@ object NamedSpec {
 
 
 abstract class NamedSpec[T] extends Spec[T] {
-    @JsonIgnore protected[spec] var name:String = ""
-
+    @JsonProperty(value="name", required = false) protected[spec] var name:String = ""
     @JsonProperty(value="kind", required = true) protected var kind: String = _
     @JsonProperty(value="labels", required=false) protected var labels:Map[String,String] = Map()
 

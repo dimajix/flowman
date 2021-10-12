@@ -5,7 +5,7 @@
 * Support writing to dynamic partitions for file relations, Hive tables, JDBC relations and Delta tables
 * Fix the name of some config variables (floman.* => flowman.*)
 * Added new config variables `flowman.default.relation.migrationPolicy` and `flowman.default.relation.migrationStrategy`
-* Add plugin for supporting DeltaLake (https://delta.io)
+* Add plugin for supporting DeltaLake (https://delta.io), which provides `deltaTable` and `deltaFile` relation types
 * Fix non-deterministic column order in `schema` mapping, `values` mapping and `values` relation 
 * Mark Hive dependencies has 'provided', which reduces the size of dist packages
 * Significantly reduce size of AWS dependencies in AWS plugin

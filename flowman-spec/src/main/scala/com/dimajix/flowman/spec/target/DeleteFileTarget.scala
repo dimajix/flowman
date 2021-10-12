@@ -33,7 +33,7 @@ import com.dimajix.flowman.model.Target
 
 case class DeleteFileTarget(
     instanceProperties:Target.Properties,
-    path: Path,
+    location: Path,
     recursive: Boolean
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[DeleteFileTarget])
@@ -56,7 +56,7 @@ case class DeleteFileTarget(
         phase match {
             case Phase.BUILD =>
                 val fs = execution.fs
-                val file = fs.file(path)
+                val file = fs.file(location)
                 !file.exists()
             case Phase.VERIFY => Yes
             case _ => No
@@ -70,7 +70,7 @@ case class DeleteFileTarget(
      */
     override def build(executor:Execution) : Unit = {
         val fs = executor.fs
-        val file = fs.file(path)
+        val file = fs.file(location)
         logger.info(s"Deleting file '$file' (recursive=$recursive)")
         file.delete(recursive)
     }
@@ -83,9 +83,9 @@ case class DeleteFileTarget(
     override def verify(executor: Execution) : Unit = {
         require(executor != null)
 
-        val file = executor.fs.file(path)
+        val file = executor.fs.file(location)
         if (file.exists()) {
-            logger.error(s"Verification of target '$identifier' failed - location '$path' exists")
+            logger.error(s"Verification of target '$identifier' failed - location '$location' exists")
             throw new VerificationFailedException(identifier)
         }
     }
@@ -94,13 +94,13 @@ case class DeleteFileTarget(
 
 
 class DeleteFileTargetSpec extends TargetSpec {
-    @JsonProperty(value = "target", required = true) private var target: String = ""
+    @JsonProperty(value = "location", required = true) private var location: String = ""
     @JsonProperty(value = "recursive", required = false) private var recursive: String = "true"
 
     override def instantiate(context: Context): DeleteFileTarget = {
         DeleteFileTarget(
             instanceProperties(context),
-            new Path(context.evaluate(target)),
+            new Path(context.evaluate(location)),
             context.evaluate(recursive).toBoolean
         )
     }

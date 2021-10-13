@@ -10,6 +10,7 @@ templates:
       - sourceTable
       - targetTable
     template:
+      # This is now a normal target definition, which can also access the parameters as variables  
       kind: copy
       source:
         kind: relation

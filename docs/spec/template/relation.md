@@ -13,6 +13,7 @@ templates:
         type: int
         default: 12
     template:
+      # This is now a normal relation definition, which can also access the parameters as variables  
       kind: values
       records:
         - ["$key",$value]

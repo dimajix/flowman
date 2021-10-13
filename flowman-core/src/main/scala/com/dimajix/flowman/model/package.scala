@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ package object model {
     type TargetIdentifier = Identifier[Target]
     type JobIdentifier = Identifier[Job]
     type TestIdentifier = Identifier[Test]
+    type TemplateIdentifier = Identifier[Template[_]]
 
     object MappingIdentifier extends IdentifierFactory[Mapping]
     object ConnectionIdentifier extends IdentifierFactory[Connection]
@@ -31,4 +32,5 @@ package object model {
     object TargetIdentifier extends IdentifierFactory[Target]
     object JobIdentifier extends IdentifierFactory[Job]
     object TestIdentifier extends IdentifierFactory[Test]
+    object TemplateIdentifier extends IdentifierFactory[Template[_]]
 }

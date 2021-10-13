@@ -51,7 +51,7 @@ class SchemaWriter(fields:Seq[Field]) {
     }
 
     private def saveAsSpark(file:File) : Unit = {
-        val schema = SchemaConverter.toSpark(fields)
+        val schema = org.apache.spark.sql.types.StructType(fields.map(_.catalogField))
         writeSchemaFile(file, schema.prettyJson)
     }
 

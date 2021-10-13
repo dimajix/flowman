@@ -35,7 +35,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.types.StructType
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.spark.sql.SchemaUtils
 
 
 case class FileDataset(
@@ -109,7 +109,7 @@ case class FileDataset(
         // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
         // underlying format implementation
         val providingClass = DataSource.lookupDataSource(format, execution.spark.sessionState.conf)
-        val df = providingClass.newInstance() match {
+        val df = providingClass.getDeclaredConstructor().newInstance() match {
             case _: RelationProvider => reader.load(location.toString)
             case _: SchemaRelationProvider => reader.load(location.toString)
             case _: FileFormat => reader.load(Seq(location.toString):_*)

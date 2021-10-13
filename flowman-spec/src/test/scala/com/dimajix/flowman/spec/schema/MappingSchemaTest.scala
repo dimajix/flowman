@@ -25,9 +25,10 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
+import com.dimajix.spark.testing.LocalSparkSession
 
 
-class MappingSchemaTest extends AnyFlatSpec with Matchers {
+class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A MappingSchema" should "resolve the correct schema" in {
         val spec =
             """
@@ -55,7 +56,7 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers {
               |    input: read
               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val schema = MappingSchema(context, "alias")
@@ -64,6 +65,30 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers {
             Field("str_col", StringType),
             Field("int_col", IntegerType),
             Field("spart", StringType, false)
+        ))
+    }
+
+    it should "work with non-trivial schema inferrence" in {
+        val spec =
+            """
+              |mappings:
+              |  sql:
+              |    kind: sql
+              |    sql: "
+              |     SELECT
+              |         'x1' AS str_col,
+              |         12 AS int_col
+              |    "
+              |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.getContext(project)
+
+        val schema = MappingSchema(context, "sql")
+
+        schema.fields should be (Seq(
+            Field("str_col", StringType, nullable=false),
+            Field("int_col", IntegerType, nullable=false)
         ))
     }
 
@@ -99,7 +124,7 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers {
               |    input: read
               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val sink = context.getRelation(RelationIdentifier("sink"))

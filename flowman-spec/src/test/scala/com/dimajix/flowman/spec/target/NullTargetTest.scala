@@ -25,9 +25,10 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Target
+import com.dimajix.spark.testing.LocalSparkSession
 
 
-class NullTargetTest extends AnyFlatSpec with Matchers {
+class NullTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A NullTarget" should "be parseable" in {
         val spec =
             """
@@ -44,7 +45,7 @@ class NullTargetTest extends AnyFlatSpec with Matchers {
     }
 
     it should "do nothing" in {
-        val session = Session.builder.build()
+        val session = Session.builder.withSparkSession(spark).build()
         val execution = session.execution
         val context = session.context
 

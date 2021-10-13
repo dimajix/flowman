@@ -36,6 +36,7 @@ class DateTimeUtilsTest extends AnyFlatSpec with Matchers {
         DateTimeUtils.stringToTime("2020-02-03T22:33:11GMT+05:00") should be (Date.from(Instant.from(ZonedDateTime.of(2020,2,3,22,33,11,0,ZoneId.of("GMT+05:00")))))
         //DateTimeUtils.stringToTime("2000-01-01T22:33")
         DateTimeUtils.stringToTime("2020-02-03T22:33:11") should be (Timestamp.valueOf("2020-02-03 22:33:11"))
+        DateTimeUtils.stringToTime("2020-02-03T22:33:11+00:00") should be (Date.from(Instant.from(ZonedDateTime.of(2020,2,3,22,33,11,0,ZoneId.of("UTC")))))
     }
 
     it should "correctly convert milliseconds to days" in {

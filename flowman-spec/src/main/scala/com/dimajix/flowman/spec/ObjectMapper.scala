@@ -25,6 +25,7 @@ import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.dataset.DatasetSpec
 import com.dimajix.flowman.spec.history.HistorySpec
 import com.dimajix.flowman.spec.mapping.MappingSpec
+import com.dimajix.flowman.spec.metric.MetricSinkSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.spec.target.TargetSpec
@@ -55,6 +56,7 @@ object ObjectMapper extends CoreObjectMapper {
         val connectionTypes = ConnectionSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val assertionTypes = AssertionSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val datasetTypes = DatasetSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val metricSinkTypes = MetricSinkSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mapper = super.mapper
         mapper.registerSubtypes(stateStoreTypes:_*)
         mapper.registerSubtypes(catalogTypes:_*)
@@ -66,6 +68,7 @@ object ObjectMapper extends CoreObjectMapper {
         mapper.registerSubtypes(connectionTypes:_*)
         mapper.registerSubtypes(assertionTypes:_*)
         mapper.registerSubtypes(datasetTypes:_*)
+        mapper.registerSubtypes(metricSinkTypes:_*)
         mapper
     }
 }

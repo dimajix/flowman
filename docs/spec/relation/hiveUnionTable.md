@@ -99,7 +99,34 @@ Name of the Hive database where the tables should be created in
  to the `TBLPROPERTIES` in a `CREATE TABLE` statement.
 
 
-## Description
+## Automatic Migrations
+
+The core idea of the `hiveUnionTable` relation type is to support a broad range of non-destructive migrations. The
+following changes to a data schema are supported
+* New columns can be added. This will be performed without created a new underlying table.
+* Existing columns can be dropped, although the previously existing columns will be still included in the Hive view
+  on top of all physical tables.
+* Column nullability can be changed. If changing from nullable to non-nullable, the currently underlying table will
+  be reused (since the new type is stricter than before), otherwise a new table will be created.
+* The data type of on existing column can be changed. Depending on the change (i.e. more or less restrictive data type), 
+  either the existing physical table will be reused, or a new underlying table will be created and the view will be
+  adjusted.
+
+
+## Output Modes
+The `hiveUnionTable` relation supports the following output modes in a [`relation` target](../target/relation.md):
+
+|Output Mode |Supported  | Comments|
+--- | --- | ---
+|`errorIfExists`|yes|Throw an error if the Hive table already exists|
+|`ignoreIfExists`|yes|Do nothing if the Hive table already exists|
+|`overwrite`|yes|Overwrite the whole table or the specified partitions|
+|`append`|yes|Append new records to the existing table|
+|`update`|no|-|
+|`merge`|no|-|
+
+
+## Remarks
 
 When using Hive union tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the
 whole lifecycle for you. This means that
@@ -108,3 +135,9 @@ whole lifecycle for you. This means that
 * Hive tables will be truncated or individual partitions will be dropped during `clean` phase
 * Hive tables will be removed during `destroy` phase
 
+### Supported Data Types
+Please note that depending on the used tools accessing the data and the used Spark version, not all data types are
+supported:
+* `VARCHAR(n)` and `CHAR(n)` require Spark 3.1+ to be supported. Older version will fall back to writing `STRING`
+  columns instead
+* `DATE` types might not be supported in older Impala version (if you plan to query Hive tables using Impala)  

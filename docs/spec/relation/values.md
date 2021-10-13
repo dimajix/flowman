@@ -59,4 +59,7 @@ relations:
 
 * `schema` **(optional)** *(type: schema)*:
   As an alternative of specifying a list of columns you can also directly specify a schema.
-  
+
+
+## Output Modes
+A `values` relation cannot be written to at all, therefore no output mode is supported.

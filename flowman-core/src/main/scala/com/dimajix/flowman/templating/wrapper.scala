@@ -17,6 +17,7 @@
 package com.dimajix.flowman.templating
 
 import java.io.FileInputStream
+import java.io.IOException
 import java.io.StringWriter
 import java.net.URLDecoder
 import java.net.URLEncoder
@@ -33,19 +34,29 @@ import org.apache.commons.io.IOUtils
 import org.apache.hadoop.fs.Path
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.templating.FileWrapper.logger
 import com.dimajix.flowman.util.UtcTimestamp
 
 
 object FileWrapper {
+    private val logger = LoggerFactory.getLogger(classOf[FileWrapper])
     def read(str:String) : String = {
-        val input = new FileInputStream(str)
         try {
-            IOUtils.toString(input, Charset.forName("UTF-8"))
+            val input = new FileInputStream(str)
+            try {
+                IOUtils.toString(input, Charset.forName("UTF-8"))
+            }
+            finally {
+                input.close()
+            }
         }
-        finally {
-            input.close()
+        catch {
+            case ex:IOException =>
+                logger.warn(s"Cannot read file '$str', return empty string instead: ${ex.getMessage}")
+                ""
         }
     }
 }
@@ -53,12 +64,19 @@ case class FileWrapper(file:File) {
     override def toString: String = file.toString
 
     def read() : String = {
-        val input = file.open()
         try {
-            IOUtils.toString(input, Charset.forName("UTF-8"))
+            val input = file.open()
+            try {
+                IOUtils.toString(input, Charset.forName("UTF-8"))
+            }
+            finally {
+                input.close()
+            }
         }
-        finally {
-            input.close()
+        catch {
+            case ex:IOException =>
+                logger.warn(s"Cannot read file '${file.toString}', return empty string instead: ${ex.getMessage}")
+                ""
         }
     }
     def getParent() : FileWrapper = FileWrapper(file.parent)
@@ -79,10 +97,10 @@ case class RecursiveValue(engine:VelocityEngine, context:VelocityContext, value:
 
 object URLWrapper {
     def encode(str:String) : String = {
-        return URLEncoder.encode(str, "UTF-8")
+        URLEncoder.encode(str, "UTF-8")
     }
     def decode(str:String) : String = {
-        return URLDecoder.decode(str, "UTF-8")
+        URLDecoder.decode(str, "UTF-8")
     }
 }
 
@@ -117,6 +135,7 @@ object SystemWrapper {
 }
 
 object TimestampWrapper {
+    def now() : UtcTimestamp = UtcTimestamp.now()
     def parse(value:String) : UtcTimestamp = UtcTimestamp.parse(value)
     def valueOf(value:String) : UtcTimestamp = UtcTimestamp.parse(value)
     def toEpochSeconds(value:String) : Long = UtcTimestamp.toEpochSeconds(value)
@@ -133,6 +152,8 @@ object TimestampWrapper {
 }
 
 object LocalDateWrapper {
+    def now() : LocalDate = LocalDate.now(ZoneOffset.UTC)
+    def today() : LocalDate = LocalDate.now(ZoneOffset.UTC)
     def parse(value:String) : LocalDate = LocalDate.parse(value)
     def valueOf(value:String) : LocalDate = LocalDate.parse(value)
     def format(value:String, format:String) : String = DateTimeFormatter.ofPattern(format).format(LocalDate.parse(value))
@@ -149,6 +170,7 @@ object LocalDateWrapper {
 }
 
 object LocalDateTimeWrapper {
+    def now() : LocalDateTime = LocalDateTime.now(ZoneOffset.UTC)
     def parse(value:String) : LocalDateTime = LocalDateTime.parse(value)
     def valueOf(value:String) : LocalDateTime = LocalDateTime.parse(value)
     def ofEpochSeconds(epoch:String) : LocalDateTime = LocalDateTime.ofEpochSecond(epoch.toLong, 0, ZoneOffset.UTC)

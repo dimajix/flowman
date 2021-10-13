@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.dimajix.flowman.spec.target
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.databind.util.StdConverter
+import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
@@ -27,19 +27,16 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.TargetType
+import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
 object TargetSpec extends TypeRegistry[TargetSpec] {
-    class NameResolver extends StdConverter[Map[String, TargetSpec], Map[String, TargetSpec]] {
-        override def convert(value: Map[String, TargetSpec]): Map[String, TargetSpec] = {
-            value.foreach(kv => kv._2.name = kv._1)
-            value
-        }
-    }
+    final class NameResolver extends NamedSpec.NameResolver[TargetSpec]
 }
 
 
+@JsonTypeResolver(classOf[CustomTypeResolverBuilder])
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "blackhole", value = classOf[BlackholeTargetSpec]),
@@ -53,6 +50,7 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "getFile", value = classOf[GetFileTargetSpec]),
     new JsonSubTypes.Type(name = "hiveDatabase", value = classOf[HiveDatabaseTargetSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalTargetSpec]),
+    new JsonSubTypes.Type(name = "merge", value = classOf[MergeTargetSpec]),
     new JsonSubTypes.Type(name = "mergeFiles", value = classOf[MergeFilesTargetSpec]),
     new JsonSubTypes.Type(name = "null", value = classOf[NullTargetSpec]),
     new JsonSubTypes.Type(name = "putFile", value = classOf[PutFileTargetSpec]),
@@ -61,6 +59,7 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "sftpUpload", value = classOf[SftpUploadTargetSpec]),
     new JsonSubTypes.Type(name = "stream", value = classOf[StreamTargetSpec]),
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateTargetSpec]),
+    new JsonSubTypes.Type(name = "truncate", value = classOf[TruncateTargetSpec]),
     new JsonSubTypes.Type(name = "validate", value = classOf[ValidateTargetSpec]),
     new JsonSubTypes.Type(name = "verify", value = classOf[VerifyTargetSpec])
 ))
@@ -81,7 +80,7 @@ abstract class TargetSpec extends NamedSpec[Target] {
             context,
             context.namespace,
             context.project,
-            name,
+            context.evaluate(name),
             kind,
             context.evaluate(labels),
             before.map(context.evaluate).map(TargetIdentifier.parse),

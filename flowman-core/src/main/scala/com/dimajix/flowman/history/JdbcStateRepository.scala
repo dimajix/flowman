@@ -193,7 +193,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                 && r.project === run.project
                 && r.job === run.job
                 && r.args_hash === run.args_hash
-                && r.status =!= Status.SKIPPED.value
+                && r.status =!= Status.SKIPPED.toString
             ).map(_.id)
             .max
 
@@ -290,7 +290,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                 && tr.project === target.project
                 && tr.target === target.target
                 && tr.partitions_hash === target.partitions_hash
-                && tr.status =!= Status.SKIPPED.value
+                && tr.status =!= Status.SKIPPED.toString
             )
             .map(_.id)
             .max

@@ -9,7 +9,7 @@
     <parent>
         <groupId>com.dimajix.flowman</groupId>
         <artifactId>flowman-root</artifactId>
-        <version>0.17.1</version>
+        <version>0.18.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -17,7 +17,7 @@
         <plugin.name>flowman-mariadb</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <mariadb-java-client.version>2.2.4</mariadb-java-client.version>
+        <mariadb-java-client.version>2.7.3</mariadb-java-client.version>
     </properties>
 
     <build>

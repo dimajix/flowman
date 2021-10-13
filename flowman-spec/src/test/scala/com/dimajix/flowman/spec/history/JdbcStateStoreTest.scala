@@ -24,7 +24,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.NoSuchConnectionException
-import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.spec.ObjectMapper
 
 
@@ -47,10 +47,8 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter {
             """.stripMargin
         val monitor = ObjectMapper.parse[HistorySpec](spec)
 
-        val session = Session.builder()
-            .build()
-
-        a[NoSuchConnectionException] shouldBe thrownBy(monitor.instantiate(session.context))
+        val context = RootContext.builder().build()
+        a[NoSuchConnectionException] shouldBe thrownBy(monitor.instantiate(context))
     }
 
     it should "be parseable" in {

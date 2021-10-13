@@ -43,7 +43,7 @@ class SortMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val mapping = project.mappings("m1")

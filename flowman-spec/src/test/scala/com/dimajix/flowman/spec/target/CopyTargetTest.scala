@@ -55,13 +55,13 @@ class CopyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |    tpc: p2
               |mode: append
               |""".stripMargin
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val context = session.context
 
         val targetSpec = ObjectMapper.parse[TargetSpec](spec).asInstanceOf[CopyTargetSpec]
         val target = targetSpec.instantiate(context)
-        target.source should be (RelationDataset(Dataset.Properties(context, "relation(local_file)", "relation"), RelationIdentifier("local_file"), Map("spc" -> SingleValue("part_value"))))
-        target.target should be (RelationDataset(Dataset.Properties(context, "relation(some_hive_table)","relation"), RelationIdentifier("some_hive_table"), Map("tpc" -> SingleValue("p2"))))
+        target.source should be (RelationDataset(context, RelationIdentifier("local_file"), Map("spc" -> SingleValue("part_value"))))
+        target.target should be (RelationDataset(context, RelationIdentifier("some_hive_table"), Map("tpc" -> SingleValue("p2"))))
         target.mode should be (OutputMode.APPEND)
     }
 
@@ -108,7 +108,7 @@ class CopyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |    mode: overwrite
               |""".stripMargin
         val project = Module.read.string(spec).toProject("test")
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.getContext(project)
 

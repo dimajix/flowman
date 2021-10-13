@@ -26,13 +26,19 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.No
 import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.hadoop.FileCollector
 import com.dimajix.flowman.hadoop.FileUtils
@@ -47,8 +53,8 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.flowman.util.UtcTimestamp
+import com.dimajix.spark.sql.SchemaUtils
 
 
 case class FileRelation(
@@ -66,6 +72,7 @@ case class FileRelation(
         FileCollector.builder(context.hadoopConf)
             .path(location)
             .pattern(pattern)
+            .partitionBy(partitions.map(_.name):_*)
             .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment.toMap)
             .build()
     }
@@ -167,15 +174,110 @@ case class FileRelation(
         require(df != null)
         require(partition != null)
 
-        requireAllPartitionKeys(partition)
+        if (partition.isEmpty && this.partitions.nonEmpty)
+            doWriteDynamicPartitions(execution, df, mode)
+        else
+            doWriteStaticPartitions(execution, df, partition, mode)
+    }
+    private def doWriteDynamicPartitions(execution:Execution, df:DataFrame,  mode:OutputMode) : Unit = {
+        val outputPath = collector.root
+        logger.info(s"Writing file relation '$identifier' to output location '$outputPath' as '$format' with mode '$mode' with dynamic partitions")
 
+        if (pattern.nonEmpty)
+            throw new IllegalArgumentException(s"Pattern not supported for 'file' relation '$identifier' with dynamic partitions")
+
+        mode match {
+            // Since Flowman has a slightly different semantics of when data is available, we need to handle some
+            // cases explicitly
+            case OutputMode.IGNORE_IF_EXISTS =>
+                if (loaded(execution) == No) {
+                    doWriteDynamic(execution, df, outputPath, OutputMode.OVERWRITE)
+                }
+            case OutputMode.ERROR_IF_EXISTS =>
+                if (loaded(execution) == Yes) {
+                    throw new FileAlreadyExistsException(outputPath.toString)
+                }
+                doWriteDynamic(execution, df, outputPath, OutputMode.OVERWRITE)
+            case m => m.batchMode
+                doWriteDynamic(execution, df, outputPath, mode)
+        }
+
+    }
+    private def doWriteDynamic(execution:Execution, df:DataFrame, outputPath:Path, mode:OutputMode) : Unit = {
+        val overwriteMode = mode match {
+            case OutputMode.OVERWRITE_DYNAMIC => "dynamic"
+            case _ => "static"
+        }
+        this.writer(execution, df, format, options, mode.batchMode, dynamicPartitions=true)
+            .option("partitionOverwriteMode", overwriteMode)
+            .partitionBy(partitions.map(_.name):_*)
+            .save(outputPath.toString)
+    }
+    private def doWriteStaticPartitions(execution:Execution, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
         val partitionSpec = PartitionSchema(partitions).spec(partition)
         val outputPath = collector.resolve(partitionSpec.toMap)
-
         logger.info(s"Writing file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to output location '$outputPath' as '$format' with mode '$mode'")
 
+        requireAllPartitionKeys(partition)
+
+        mode match {
+            // Since Flowman has a slightly different semantics of when data is available, we need to handle some
+            // cases explicitly
+            case OutputMode.IGNORE_IF_EXISTS =>
+                if (loaded(execution, partition) == No) {
+                    doWrite(execution, df, outputPath, OutputMode.OVERWRITE)
+                }
+            case OutputMode.ERROR_IF_EXISTS =>
+                if (loaded(execution, partition) == Yes) {
+                    throw new FileAlreadyExistsException(outputPath.toString)
+                }
+                doWrite(execution, df, outputPath, OutputMode.OVERWRITE)
+            case m => m.batchMode
+                doWrite(execution, df, outputPath, mode)
+        }
+    }
+    private def doWrite(execution:Execution, df:DataFrame, outputPath:Path, mode:OutputMode) : Unit = {
         this.writer(execution, df, format, options, mode.batchMode)
             .save(outputPath.toString)
+    }
+
+
+    /**
+     * Reads data from a streaming source
+     *
+     * @param execution
+     * @param schema
+     * @return
+     */
+    override def readStream(execution: Execution, schema: Option[StructType]): DataFrame = {
+        logger.info(s"Streaming from file relation '$identifier' at '$location'")
+
+        val df = streamReader(execution, format, options).load(location.toString)
+        SchemaUtils.applySchema(df, schema)
+    }
+
+    /**
+     * Writes data to a streaming sink
+     *
+     * @param execution
+     * @param df
+     * @return
+     */
+    override def writeStream(execution: Execution, df: DataFrame, mode: OutputMode, trigger: Trigger, checkpointLocation: Path): StreamingQuery = {
+        logger.info(s"Streaming to file relation '$identifier' at '$location'")
+
+        if (pattern.nonEmpty)
+            throw new IllegalArgumentException(s"Pattern not supported in streaming mode for 'file' relation '$identifier'")
+
+        val writer = streamWriter(execution, df, format, options, mode.streamMode, trigger, checkpointLocation)
+        if (partitions.nonEmpty) {
+            writer
+                .partitionBy(partitions.map(_.name):_*)
+                .start(location.toString)
+        }
+        else {
+            writer.start(location.toString)
+        }
     }
 
 
@@ -194,9 +296,16 @@ case class FileRelation(
 
         requireValidPartitionKeys(partition)
 
+        val rootLocation = collector.root
+        val fs = rootLocation.getFileSystem(execution.hadoopConf)
+        val isStream = FileUtils.isValidStreamData(fs, rootLocation)
+
         def checkPartition(path:Path) = {
-            val fs = path.getFileSystem(execution.hadoopConf)
-            FileUtils.isValidFileData(fs, path)
+            // TODO: Valid file data detection is difficult, since
+            //  * streaming won't write a _SUCCESS file
+            //  * dynamic partitioning writes a _SUCCESS file at the top level
+            // FileUtils.isValidFileData(fs, path)
+            FileUtils.isValidHiveData(fs, path)
         }
 
         if (this.partitions.nonEmpty) {
@@ -204,9 +313,7 @@ case class FileRelation(
             collector.glob(partitionSpec).exists(checkPartition)
         }
         else {
-            val partitionSpec = PartitionSchema(partitions).spec(partition)
-            val outputPath = collector.resolve(partitionSpec)
-            checkPartition(outputPath)
+            checkPartition(collector.resolve())
         }
     }
 
@@ -248,7 +355,7 @@ case class FileRelation(
       *
       * @param execution
       */
-    override def migrate(execution:Execution) : Unit = {
+    override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
     }
 
     /**

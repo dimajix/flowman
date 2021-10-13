@@ -31,6 +31,7 @@ class ProjectContextTest extends AnyFlatSpec with Matchers {
             version = Some("1.0")
         )
         val session = Session.builder()
+            .disableSpark()
             .build()
 
         val context = session.getContext(project)
@@ -50,6 +51,7 @@ class ProjectContextTest extends AnyFlatSpec with Matchers {
             basedir = Some(file.absolute.parent)
         )
         val session = Session.builder()
+            .disableSpark()
             .build()
 
         val context = session.getContext(project)

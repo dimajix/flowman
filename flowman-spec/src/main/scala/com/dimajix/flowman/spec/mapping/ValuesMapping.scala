@@ -16,8 +16,13 @@
 
 package com.dimajix.flowman.spec.mapping
 
+import scala.collection.immutable.ListMap
+
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.sql.DataFrame
+
+import com.dimajix.jackson.ListMapDeserializer
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -26,13 +31,10 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
-import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
-import com.dimajix.flowman.types.MapRecord
 import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.StructType
-import com.dimajix.flowman.types.ValueRecord
 import com.dimajix.spark.sql.DataFrameUtils
 
 
@@ -100,7 +102,8 @@ case class ValuesMapping(
 
 class ValuesMappingSpec extends MappingSpec {
     @JsonProperty(value = "schema", required=false) private var schema:Option[SchemaSpec] = None
-    @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
+    @JsonDeserialize(using = classOf[ListMapDeserializer]) // Old Jackson in old Spark doesn't support ListMap
+    @JsonProperty(value = "columns", required = false) private var columns:ListMap[String,String] = ListMap()
     @JsonProperty(value = "records", required=false) private var records:Seq[Record] = Seq()
 
     /**
@@ -111,7 +114,7 @@ class ValuesMappingSpec extends MappingSpec {
     override def instantiate(context: Context): ValuesMapping = {
         ValuesMapping(
             instanceProperties(context),
-            context.evaluate(columns).toSeq.map(kv => Field(kv._1, FieldType.of(kv._2))),
+            columns.toSeq.map(kv => Field(kv._1, FieldType.of(context.evaluate(kv._2)))),
             schema.map(_.instantiate(context)),
             records.map(_.map(context.evaluate))
         )

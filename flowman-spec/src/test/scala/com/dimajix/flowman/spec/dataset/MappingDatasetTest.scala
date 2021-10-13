@@ -31,7 +31,7 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.ResourceIdentifier
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.dataset.MappingDatasetTest.DummyMappingSpec
 import com.dimajix.flowman.types.StructType
@@ -54,7 +54,7 @@ object MappingDatasetTest {
     case class DummyMappingSpec(
         name: String,
         requires: Set[ResourceIdentifier]
-    ) extends Template[Mapping] {
+    ) extends Prototype[Mapping] {
         override def instantiate(context: Context): Mapping = DummyMapping(context, name, requires)
     }
 }

@@ -47,7 +47,7 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |  - ["b",2]
               |""".stripMargin
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.context
 
         val ds = ObjectMapper.parse[DatasetSpec](spec)
@@ -79,7 +79,7 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |      type: integer
               |""".stripMargin
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.context
 
         val ds = ObjectMapper.parse[DatasetSpec](spec)

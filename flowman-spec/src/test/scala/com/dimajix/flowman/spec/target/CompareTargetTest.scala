@@ -18,11 +18,13 @@ package com.dimajix.flowman.spec.target
 
 import com.google.common.io.Resources
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.AnalysisException
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.ResourceIdentifier
@@ -51,7 +53,7 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
     it should "work on same files" in {
         val basedir = new Path(Resources.getResource(".").toURI)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.context
 
@@ -69,12 +71,20 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         target.requires(Phase.TRUNCATE) should be (Set())
         target.requires(Phase.DESTROY) should be (Set())
 
-        noException shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
+        val result = target.execute(executor, Phase.VERIFY)
+        result.target should be (target)
+        result.phase should be (Phase.VERIFY)
+        result.status should be (Status.SUCCESS)
+        result.exception should be (None)
+        result.numFailures should be (0)
+        result.numSuccesses should be (0)
+        result.numExceptions should be (0)
+        result.children.size should be (0)
     }
 
     it should "fail on non existing actual file" in {
         val basedir = new Path(Resources.getResource(".").toURI)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.context
 
@@ -93,12 +103,20 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         target.requires(Phase.TRUNCATE) should be (Set())
         target.requires(Phase.DESTROY) should be (Set())
 
-        a[VerificationFailedException] shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
+        val result = target.execute(executor, Phase.VERIFY)
+        result.target should be (target)
+        result.phase should be (Phase.VERIFY)
+        result.status should be (Status.FAILED)
+        result.exception.get shouldBe a[VerificationFailedException]
+        result.numFailures should be (0)
+        result.numSuccesses should be (0)
+        result.numExceptions should be (1)
+        result.children.size should be (0)
     }
 
     it should "throw an exception on an non existing expected file" in {
         val basedir = new Path(Resources.getResource(".").toURI)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.context
 
@@ -108,12 +126,20 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
             FileDataset(Dataset.Properties(context), new Path(basedir, "data/no_such_file"), "csv")
         )
 
-        an[Exception] shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
+        val result = target.execute(executor, Phase.VERIFY)
+        result.target should be (target)
+        result.phase should be (Phase.VERIFY)
+        result.status should be (Status.FAILED)
+        result.exception.get shouldBe a[AnalysisException]
+        result.numFailures should be (0)
+        result.numSuccesses should be (0)
+        result.numExceptions should be (1)
+        result.children.size should be (0)
     }
 
     it should "work with a directory as expected" in {
         val basedir = new Path(Resources.getResource(".").toURI)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.context
 
@@ -123,12 +149,20 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
             FileDataset(Dataset.Properties(context), new Path(basedir, "data"), "csv")
         )
 
-        noException shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
+        val result = target.execute(executor, Phase.VERIFY)
+        result.target should be (target)
+        result.phase should be (Phase.VERIFY)
+        result.status should be (Status.SUCCESS)
+        result.exception should be (None)
+        result.numFailures should be (0)
+        result.numSuccesses should be (0)
+        result.numExceptions should be (0)
+        result.children.size should be (0)
     }
 
     it should "work with a directory as actual" in {
         val basedir = new Path(Resources.getResource(".").toURI)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.context
 
@@ -138,12 +172,20 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
             FileDataset(Dataset.Properties(context), new Path(basedir, "data/data_1.csv"), "csv")
         )
 
-        noException shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
+        val result = target.execute(executor, Phase.VERIFY)
+        result.target should be (target)
+        result.phase should be (Phase.VERIFY)
+        result.status should be (Status.SUCCESS)
+        result.exception should be (None)
+        result.numFailures should be (0)
+        result.numSuccesses should be (0)
+        result.numExceptions should be (0)
+        result.children.size should be (0)
     }
 
     it should "work with a directory as expected and actual" in {
         val basedir = new Path(Resources.getResource(".").toURI)
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.context
 
@@ -153,6 +195,14 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
             FileDataset(Dataset.Properties(context), new Path(basedir, "data/expected"), "csv")
         )
 
-        noException shouldBe thrownBy(target.execute(executor, Phase.VERIFY))
+        val result = target.execute(executor, Phase.VERIFY)
+        result.target should be (target)
+        result.phase should be (Phase.VERIFY)
+        result.status should be (Status.SUCCESS)
+        result.exception should be (None)
+        result.numFailures should be (0)
+        result.numSuccesses should be (0)
+        result.numExceptions should be (0)
+        result.children.size should be (0)
     }
 }

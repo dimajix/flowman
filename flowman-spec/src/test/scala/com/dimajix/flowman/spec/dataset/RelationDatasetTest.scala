@@ -28,7 +28,7 @@ import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
@@ -43,6 +43,18 @@ class RelationDatasetTest extends AnyFlatSpec with Matchers with MockFactory wit
         val spec =
             """
               |kind: relation
+              |relation: some_relation
+              |""".stripMargin
+        val ds = ObjectMapper.parse[DatasetSpec](spec)
+        ds shouldBe a[RelationDatasetSpec]
+    }
+
+    it should "support embedded relations" in {
+        val spec =
+            """
+              |kind: relation
+              |relation:
+              |  kind: null
               |""".stripMargin
         val ds = ObjectMapper.parse[DatasetSpec](spec)
         ds shouldBe a[RelationDatasetSpec]
@@ -50,7 +62,7 @@ class RelationDatasetTest extends AnyFlatSpec with Matchers with MockFactory wit
 
     it should "work" in {
         val relation = mock[Relation]
-        val relationSpec = mock[Template[Relation]]
+        val relationSpec = mock[Prototype[Relation]]
         (relationSpec.instantiate _).expects(*).returns(relation)
 
         val project = Project(

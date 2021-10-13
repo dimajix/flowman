@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.assertion
 
+import java.time.Instant
+
 import org.apache.spark.sql.types.BooleanType
 import org.apache.spark.sql.types.FloatType
 import org.apache.spark.sql.types.IntegerType
@@ -28,6 +30,7 @@ import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.spark.testing.LocalSparkSession
@@ -82,13 +85,23 @@ class ColumnsAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSess
 
         val df = execution.spark.range(2).toDF()
 
+        val ts = Instant.now()
         val result = assertion.execute(execution, Map(MappingOutputIdentifier("df") -> df))
-        result should be (Seq(
-            AssertionResult("ID IS PRESENT", true),
-            AssertionResult("id IS ABSENT", false),
-            AssertionResult("no_such_column IS ABSENT", true),
-            AssertionResult("id IS OF TYPE BOOLEAN", false),
-            AssertionResult("ID IS OF TYPE (STRING,BIGINT)", true)
-        ))
+        val result2 = result.copy(children=result.children.map(_.copy(startTime=ts, endTime=ts)), startTime=ts, endTime=ts)
+        result2 should be (
+            AssertionResult(
+                assertion,
+                Seq(
+                    AssertionTestResult("ID IS PRESENT", None, true, None, ts, ts),
+                    AssertionTestResult("id IS ABSENT", None, false, None, ts, ts),
+                    AssertionTestResult("no_such_column IS ABSENT", None, true, None, ts, ts),
+                    AssertionTestResult("id IS OF TYPE BOOLEAN", None, false, None, ts, ts),
+                    AssertionTestResult("ID IS OF TYPE (STRING,BIGINT)", None, true, None, ts, ts)
+                ),
+                None,
+                ts,
+                ts
+            )
+        )
     }
 }

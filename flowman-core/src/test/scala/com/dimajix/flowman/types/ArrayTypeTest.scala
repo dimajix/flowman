@@ -31,9 +31,6 @@ class ArrayTypeTest extends AnyFlatSpec with Matchers {
               |  elementType: String
             """.stripMargin
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-
         val result = ObjectMapper.parse[FieldType](spec)
         result shouldBe an[ArrayType]
         result.sparkType shouldBe a[org.apache.spark.sql.types.ArrayType]
@@ -47,9 +44,6 @@ class ArrayTypeTest extends AnyFlatSpec with Matchers {
               |  elementType: String
             """.stripMargin
 
-        val session = Session.builder().build()
-        implicit val context = session.context
-
         val result = ObjectMapper.parse[FieldType](spec)
         result shouldBe an[ArrayType]
         result.sparkType shouldBe a[org.apache.spark.sql.types.ArrayType]
@@ -62,9 +56,6 @@ class ArrayTypeTest extends AnyFlatSpec with Matchers {
               |  containsNull: false
               |  elementType: String
             """.stripMargin
-
-        val session = Session.builder().build()
-        implicit val context = session.context
 
         val result = ObjectMapper.parse[FieldType](spec)
         result shouldBe an[ArrayType]
@@ -80,9 +71,6 @@ class ArrayTypeTest extends AnyFlatSpec with Matchers {
               |    kind: array
               |    elementType: String
             """.stripMargin
-
-        val session = Session.builder().build()
-        implicit val context = session.context
 
         val result = ObjectMapper.parse[FieldType](spec)
         result shouldBe an[ArrayType]

@@ -22,9 +22,13 @@ import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
+import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.MigrationFailedException
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.PartitionField
@@ -40,9 +44,9 @@ case class HiveViewRelation(
     override val instanceProperties:Relation.Properties,
     override val database: Option[String],
     override val table: String,
-    override val partitions: Seq[PartitionField],
-    sql: Option[String],
-    mapping: Option[MappingOutputIdentifier]
+    override val partitions: Seq[PartitionField] = Seq(),
+    sql: Option[String] = None,
+    mapping: Option[MappingOutputIdentifier] = None
 ) extends HiveRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveViewRelation])
 
@@ -121,23 +125,48 @@ case class HiveViewRelation(
      * definition actually changed.
      * @param execution
      */
-    override def migrate(execution:Execution) : Unit = {
+    override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
         val catalog = execution.catalog
         if (catalog.tableExists(tableIdentifier)) {
             val newSelect = getSelect(execution)
             val curTable = catalog.getTable(tableIdentifier)
             // Check if current table is a VIEW or a table
             if (curTable.tableType == CatalogTableType.VIEW) {
-                if (curTable.viewText.get != newSelect) {
-                    logger.info(s"Migrating Hive view relation '$identifier' with VIEW $tableIdentifier")
-                    catalog.alterView(tableIdentifier, newSelect)
-                }
+                migrateFromView(catalog, newSelect, migrationStrategy)
             }
             else {
-                logger.warn(s"VIEW target is currently a table, dropping...")
-                catalog.dropTable(tableIdentifier, false)
-                create(execution, false)
+                migrateFromTable(catalog, newSelect, migrationStrategy)
             }
+        }
+    }
+
+    private def migrateFromView(catalog:Catalog, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
+        val curTable = catalog.getTable(tableIdentifier)
+        if (curTable.viewText.get != newSelect) {
+            migrationStrategy match {
+                case MigrationStrategy.NEVER =>
+                    logger.warn(s"Migration required for HiveView relation '$identifier' of Hive view $tableIdentifier, but migrations are disabled.")
+                case MigrationStrategy.FAIL =>
+                    logger.error(s"Cannot migrate relation HiveView '$identifier' of Hive view $tableIdentifier, since migrations are disabled.")
+                    throw new MigrationFailedException(identifier)
+                case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
+                    logger.info(s"Migrating HiveView relation '$identifier' with VIEW $tableIdentifier")
+                    catalog.alterView(tableIdentifier, newSelect)
+            }
+        }
+    }
+
+    private def migrateFromTable(catalog:Catalog, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
+        migrationStrategy match {
+            case MigrationStrategy.NEVER =>
+                logger.warn(s"Migration required for HiveView relation '$identifier' from TABLE to a VIEW $tableIdentifier, but migrations are disabled.")
+            case MigrationStrategy.FAIL =>
+                logger.error(s"Cannot migrate relation HiveView '$identifier' from TABLE to a VIEW $tableIdentifier, since migrations are disabled.")
+                throw new MigrationFailedException(identifier)
+            case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
+                logger.info(s"Migrating HiveView relation '$identifier' from TABLE to a VIEW $tableIdentifier")
+                catalog.dropTable(tableIdentifier, false)
+                catalog.createView(tableIdentifier, newSelect, false)
         }
     }
 

@@ -52,7 +52,7 @@ class DeduplicateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         mapping shouldBe an[DeduplicateMappingSpec]
 
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
 
         val instance = context.getMapping(MappingIdentifier("dedup"))

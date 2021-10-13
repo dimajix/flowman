@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,9 +82,9 @@ trait Schema extends Instance {
       * Returns a Spark schema for this schema
       * @return
       */
-    def sparkSchema : org.apache.spark.sql.types.StructType = {
-        org.apache.spark.sql.types.StructType(fields.map(_.sparkField))
-    }
+    def sparkSchema : org.apache.spark.sql.types.StructType
+
+    def catalogSchema : org.apache.spark.sql.types.StructType
 
     /**
       * Provides a human readable string representation of the schema
@@ -97,5 +97,20 @@ trait Schema extends Instance {
       */
     def treeString : String = {
         StructType(fields).treeString
+    }
+}
+
+
+abstract class BaseSchema extends AbstractInstance with Schema {
+    /**
+     * Returns a Spark schema for this schema
+     * @return
+     */
+    override def sparkSchema : org.apache.spark.sql.types.StructType = {
+        org.apache.spark.sql.types.StructType(fields.map(_.sparkField))
+    }
+
+    override def catalogSchema : org.apache.spark.sql.types.StructType = {
+        org.apache.spark.sql.types.StructType(fields.map(_.catalogField))
     }
 }

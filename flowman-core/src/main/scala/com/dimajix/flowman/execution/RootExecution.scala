@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,16 +23,23 @@ import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
+import com.dimajix.flowman.model.Assertion
+import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.LifecycleResult
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetResult
 
 
-class RootExecution(session:Session) extends CachingExecution(None, true) {
+final class RootExecution(session:Session) extends CachingExecution(None, true) {
     override protected val logger = LoggerFactory.getLogger(classOf[RootExecution])
 
     /**
      * Returns the FlowmanConf object, which contains all Flowman settings.
      * @return
      */
-    def flowmanConf : FlowmanConf = session.flowmanConf
+    override def flowmanConf : FlowmanConf = session.flowmanConf
 
     /**
      * Returns the MetricRegistry of this execution
@@ -54,17 +61,24 @@ class RootExecution(session:Session) extends CachingExecution(None, true) {
      */
     override def spark: SparkSession = session.spark
 
-     /**
+    /**
      * Returns true if a SparkSession is already available
      * @return
      */
-     override def sparkRunning: Boolean = session.sparkRunning
+    override def sparkRunning: Boolean = session.sparkRunning
 
     /**
      * Returns the table catalog used for managing table instances
      * @return
      */
     override def catalog: Catalog = session.catalog
+
+    /**
+     * Returns the [[OperationManager]] of this execution, which is the same instance created by the [[Session]]
+     *
+     * @return
+     */
+    override def operations: OperationManager = session.operations
 
     /**
      * Releases any temporary tables
@@ -77,5 +91,26 @@ class RootExecution(session:Session) extends CachingExecution(None, true) {
         }
 
         super.cleanup()
+    }
+
+    override def withListeners[T](listeners:Seq[ExecutionListener])(fn:Execution => T) : T = {
+        val execution = new MonitorExecution(this, listeners.map(l => (l,None)))
+        fn(execution)
+    }
+
+    override def monitorLifecycle(job:Job, arguments:Map[String,Any], phases:Seq[Phase])(fn:Execution => LifecycleResult) : LifecycleResult = {
+        fn(this)
+    }
+
+    override def monitorJob(job:Job, arguments:Map[String,Any], phase:Phase)(fn:Execution => JobResult) : JobResult = {
+        fn(this)
+    }
+
+    override def monitorTarget(target:Target, phase:Phase)(fn:Execution => TargetResult) : TargetResult = {
+        fn(this)
+    }
+
+    override def monitorAssertion(assertion:Assertion)(fn:Execution => AssertionResult) : AssertionResult = {
+        fn(this)
     }
 }

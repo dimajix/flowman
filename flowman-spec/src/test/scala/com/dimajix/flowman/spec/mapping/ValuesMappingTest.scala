@@ -30,7 +30,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
@@ -61,7 +61,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("fake")).asInstanceOf[ValuesMapping]
@@ -92,10 +92,13 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
               |    columns:
               |      str_col: string
               |      int_col: integer
+              |      some_col: string
+              |      other_col: string
+              |      last_col: string
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("fake")).asInstanceOf[ValuesMapping]
@@ -106,6 +109,13 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
         mapping.identifier should be (MappingIdentifier("project/fake"))
         mapping.output should be (MappingOutputIdentifier("project/fake:main"))
         mapping.outputs should be (Seq("main"))
+        mapping.columns should be (Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType),
+            Field("some_col", StringType),
+            Field("other_col", StringType),
+            Field("last_col", StringType)
+        ))
         mapping.records should be (Seq(
             ArrayRecord("a","12","3"),
             ArrayRecord("cat","","7"),
@@ -114,7 +124,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
     }
 
     it should "work with specified records and schema" in {
-        val mappingTemplate = mock[Template[Mapping]]
+        val mappingTemplate = mock[Prototype[Mapping]]
 
         val project = Project(
             "my_project",
@@ -162,7 +172,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
     }
 
     it should "work with specified records and columns" in {
-        val mappingTemplate = mock[Template[Mapping]]
+        val mappingTemplate = mock[Prototype[Mapping]]
 
         val project = Project(
             "my_project",

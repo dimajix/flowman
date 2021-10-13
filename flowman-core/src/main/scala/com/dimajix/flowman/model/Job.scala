@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ final case class JobInstance(
 }
 
 object Job {
-    case class Parameter(
+    final case class Parameter(
         name:String,
         ftype : FieldType,
         granularity: Option[String]=None,
@@ -122,7 +122,7 @@ object Job {
         private var parameters:Seq[Parameter] = Seq()
         private var targets:Seq[TargetIdentifier] = Seq()
         private var environment:Map[String,String] = Map()
-        private var hooks:Seq[Template[Hook]] = Seq()
+        private var hooks:Seq[Prototype[Hook]] = Seq()
 
         def build() : Job = Job(
             Job.Properties(context, context.namespace, context.project, name, labels, description),
@@ -186,14 +186,14 @@ object Job {
             this.targets = this.targets :+ target
             this
         }
-        def addHook(hook:Template[Hook]) : Builder = {
+        def addHook(hook:Prototype[Hook]) : Builder = {
             require(hook != null)
             this.hooks = this.hooks :+ hook
             this
         }
         def addHook(hook:Hook) : Builder = {
             require(hook != null)
-            val template = new Template[Hook] {
+            val template = new Prototype[Hook] {
                 override def instantiate(context: Context): Hook = hook
             }
             this.hooks = this.hooks :+ template
@@ -257,8 +257,8 @@ final case class Job(
     parameters:Seq[Job.Parameter] = Seq(),
     environment:Map[String,String] = Map(),
     targets:Seq[TargetIdentifier] = Seq(),
-    metrics:Option[Template[MetricBoard]] = None,
-    hooks:Seq[Template[Hook]] = Seq()
+    metrics:Option[Prototype[MetricBoard]] = None,
+    hooks:Seq[Prototype[Hook]] = Seq()
 ) extends AbstractInstance {
     override def category: String = "job"
     override def kind : String = "job"
@@ -310,7 +310,12 @@ final case class Job(
             }
             (pname, pval)
         }
-        parameters.flatMap(p => p.default.map(v => p.name -> v)).toMap ++ processedArgs
+        parameters.map { p =>
+            val pname = p.name
+            pname -> processedArgs.get(pname)
+                .orElse(p.default)
+                .getOrElse(throw new IllegalArgumentException(s"Missing parameter '$pname' in job '$name'"))
+        }.toMap
     }
 
     /**

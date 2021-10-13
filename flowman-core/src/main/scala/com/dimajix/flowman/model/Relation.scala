@@ -16,17 +16,8 @@
 
 package com.dimajix.flowman.model
 
-import java.util.Locale
-
-import com.dimajix.common.Trilean
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.OutputMode
-import com.dimajix.flowman.types.Field
-import com.dimajix.flowman.types.FieldValue
-import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.DataFrameReader
 import org.apache.spark.sql.DataFrameWriter
@@ -36,10 +27,23 @@ import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.streaming.DataStreamReader
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.streaming.{OutputMode => StreamOutputMode}
 
+import com.dimajix.common.SetIgnoreCase
+import com.dimajix.common.Trilean
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MergeClause
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.graph.Linker
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.SchemaUtils
 
 
 object Relation {
@@ -152,7 +156,7 @@ trait Relation extends Instance {
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    def read(execution:Execution, schema:Option[org.apache.spark.sql.types.StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame
+    def read(execution:Execution, schema:Option[org.apache.spark.sql.types.StructType] = None, partitions:Map[String,FieldValue] = Map()) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition
@@ -161,6 +165,15 @@ trait Relation extends Instance {
       * @param partition - destination partition
       */
     def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:OutputMode = OutputMode.OVERWRITE) : Unit
+
+    /**
+     * Performs a merge operation. All condition columns should reference the relation using the alias `relation`.
+     * @param execution
+     * @param df
+     * @param mergeCondition
+     * @param clauses
+     */
+    def merge(execution:Execution, df:DataFrame, mergeCondition:Column, clauses:Seq[MergeClause]) : Unit = ???
 
     /**
       * Removes one or more partitions.
@@ -183,7 +196,7 @@ trait Relation extends Instance {
       * @param df
       * @return
       */
-    def writeStream(execution:Execution, df:DataFrame, mode:OutputMode, checkpointLocation:Path) : StreamingQuery = ???
+    def writeStream(execution:Execution, df:DataFrame, mode:OutputMode, trigger:Trigger, checkpointLocation:Path) : StreamingQuery = ???
 
     /**
       * Returns true if the relation already exists, otherwise it needs to be created prior usage. This refers to
@@ -223,7 +236,7 @@ trait Relation extends Instance {
       * This will update any existing relation to the specified metadata.
       * @param execution
       */
-    def migrate(execution:Execution) : Unit
+    def migrate(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED, migrationStrategy:MigrationStrategy=MigrationStrategy.ALTER) : Unit
 
     /**
      * Creates all known links for building a descriptive graph of the whole data flow
@@ -269,7 +282,11 @@ abstract class BaseRelation extends AbstractInstance with Relation {
       * inference.
       * @return
       */
-    override def fields : Seq[Field] = schema.toSeq.flatMap(_.fields) ++ partitions.map(_.field)
+    override def fields : Seq[Field] = {
+        val partitions = this.partitions
+        val partitionFields = SetIgnoreCase(partitions.map(_.name))
+        schema.toSeq.flatMap(_.fields).filter(f => !partitionFields.contains(f.name)) ++ partitions.map(_.field)
+    }
 
     /**
      * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
@@ -278,9 +295,9 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @return
      */
     override def describe(execution:Execution) : StructType = {
-        val partitions = this.partitions.map(_.name).toSet
+        val partitions = SetIgnoreCase(this.partitions.map(_.name))
         if (!fields.forall(f => partitions.contains(f.name))) {
-            // Use given fields if relation contains valid list of fields
+            // Use given fields if relation contains valid list of fields in addition to the partition columns
             StructType(fields)
         }
         else {
@@ -333,8 +350,8 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @param df
      * @return
      */
-    protected def writer(execution: Execution, df:DataFrame, format:String, options:Map[String,String], saveMode:SaveMode) : DataFrameWriter[Row] = {
-        applyOutputSchema(execution, df)
+    protected def writer(execution: Execution, df:DataFrame, format:String, options:Map[String,String], saveMode:SaveMode, dynamicPartitions:Boolean=false) : DataFrameWriter[Row] = {
+        applyOutputSchema(execution, df, includePartitions = dynamicPartitions)
             .write
             .format(format)
             .options(options)
@@ -348,12 +365,13 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @param df
      * @return
      */
-    protected def streamWriter(execution: Execution, df:DataFrame, format:String, options:Map[String,String], outputMode:StreamOutputMode, checkpointLocation:Path) : DataStreamWriter[Row]= {
-        val outputDf = applyOutputSchema(execution, df)
-        outputDf.writeStream
+    protected def streamWriter(execution: Execution, df:DataFrame, format:String, options:Map[String,String], outputMode:StreamOutputMode, trigger:Trigger, checkpointLocation:Path) : DataStreamWriter[Row]= {
+        applyOutputSchema(execution, df, includePartitions=true)
+            .writeStream
             .format(format)
             .options(options)
             .option("checkpointLocation", checkpointLocation.toString)
+            .trigger(trigger)
             .outputMode(outputMode)
     }
 
@@ -384,7 +402,7 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @return
      */
     protected def outputSchema(execution:Execution) : Option[org.apache.spark.sql.types.StructType] = {
-        schema.map(_.sparkSchema)
+        schema.map(_.catalogSchema)
     }
 
     /**
@@ -393,8 +411,27 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @param df
      * @return
      */
-    protected def applyOutputSchema(execution:Execution, df:DataFrame) : DataFrame = {
-        SchemaUtils.applySchema(df, outputSchema(execution))
+    protected def applyOutputSchema(execution:Execution, df:DataFrame, includePartitions:Boolean=false) : DataFrame = {
+        // Add all partition columns to the output schema
+        val outputSchema = {
+            val baseSchema = this.outputSchema(execution)
+            if (includePartitions) {
+                baseSchema.map { schema =>
+                    val schemaFieldNames = SetIgnoreCase(schema.fieldNames)
+                    partitions.foldLeft(schema)((schema, partition) =>
+                        if (!schemaFieldNames.contains(partition.name))
+                            org.apache.spark.sql.types.StructType(schema.fields :+ partition.sparkField)
+                        else
+                            schema
+                    )
+                }
+            }
+            else {
+                baseSchema
+            }
+        }
+
+        SchemaUtils.applySchema(df, outputSchema)
     }
 }
 
@@ -428,25 +465,49 @@ trait PartitionedRelation { this:Relation =>
     protected def addPartition(df:DataFrame, partition:Map[String,SingleValue]) : DataFrame = {
         val partitionSchema = PartitionSchema(this.partitions)
 
-        def addPartitioColumn(df: DataFrame, partitionName: String, partitionValue: SingleValue): DataFrame = {
+        def addPartitionColumn(df: DataFrame, partitionName: String, partitionValue: SingleValue): DataFrame = {
             val field = partitionSchema.get(partitionName)
             val value = field.parse(partitionValue.value)
             df.withColumn(partitionName, lit(value))
         }
 
-        partition.foldLeft(df)((df, pv) => addPartitioColumn(df, pv._1, pv._2))
+        partition.foldLeft(df)((df, pv) => addPartitionColumn(df, pv._1, pv._2))
     }
 
+    /**
+     * This method ensures that the given map contains entries for all partitions of the relations. It also ensures
+     * that the map does not contain any additional key which is not a partition key
+     * @param map
+     */
     protected def requireAllPartitionKeys(map: Map[String,_]) : Unit = {
-        val partitionKeys = partitions.map(_.name.toLowerCase(Locale.ROOT)).toSet
-        val valueKeys = map.keys.map(_.toLowerCase(Locale.ROOT)).toSet
+        val partitionKeys = SetIgnoreCase(partitions.map(_.name))
+        val valueKeys = SetIgnoreCase(map.keys)
         valueKeys.foreach(key => if (!partitionKeys.contains(key)) throw new IllegalArgumentException(s"Specified partition '$key' not defined in relation '$identifier'"))
         partitionKeys.foreach(key => if (!valueKeys.contains(key)) throw new IllegalArgumentException(s"Value for partition '$key' missing for relation '$identifier'"))
     }
 
+    /**
+     * This method ensures that the given map contains entries for all partitions of the relations. It also ensures
+     * that the map does not contain any additional key which is not a partition key. In this method the partition
+     * keys can also be contained in the second argument [[columns]], which would be the columns of a DataFrame
+     * when dynamically writing to partitions.
+     * @param map
+     */
+    protected def requireAllPartitionKeys(parts: Map[String,_], columns:Iterable[String]) : Unit = {
+        val partitionKeys = SetIgnoreCase(partitions.map(_.name))
+        val valueKeys = SetIgnoreCase(parts.keys)
+        val columnKeys = SetIgnoreCase(columns)
+        valueKeys.foreach(key => if (!partitionKeys.contains(key)) throw new IllegalArgumentException(s"Specified partition '$key' not defined in relation '$identifier'"))
+        partitionKeys.foreach(key => if (!valueKeys.contains(key) && !columnKeys.contains(key)) throw new IllegalArgumentException(s"Value for partition '$key' missing for relation '$identifier'"))
+    }
+
+    /**
+     * This method ensures that the given map does not contain any additional key which is not a partition key
+     * @param map
+     */
     protected def requireValidPartitionKeys(map: Map[String,_]) : Unit = {
-        val partitionKeys = partitions.map(_.name.toLowerCase(Locale.ROOT)).toSet
-        val valueKeys = map.keys.map(_.toLowerCase(Locale.ROOT)).toSet
+        val partitionKeys = SetIgnoreCase(partitions.map(_.name))
+        val valueKeys = SetIgnoreCase(map.keys)
         valueKeys.foreach(key => if (!partitionKeys.contains(key)) throw new IllegalArgumentException(s"Specified partition '$key' not defined in relation '$identifier'"))
     }
 }

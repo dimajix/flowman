@@ -62,6 +62,7 @@ build-default:
 
 build-hadoop2.6-spark2.4:
   stage: build
+  image: dimajix/maven-npm:jdk-1.8
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.6 -Pspark-2.4 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop2.6-spark2.4"
@@ -71,6 +72,7 @@ build-hadoop2.6-spark2.4:
 
 build-hadoop2.7-spark2.4:
   stage: build
+  image: dimajix/maven-npm:jdk-1.8
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.7 -Pspark-2.4 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop2.9-spark2.4"
@@ -80,6 +82,7 @@ build-hadoop2.7-spark2.4:
 
 build-hadoop3.1-spark2.4:
   stage: build
+  image: dimajix/maven-npm:jdk-1.8
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.1 -Pspark-2.4 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop3.1-spark2.4"
@@ -125,9 +128,20 @@ build-hadoop3.2-spark3.1:
 
 build-cdh6.3:
   stage: build
+  image: dimajix/maven-npm:jdk-1.8
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -PCDH-6.3 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-cdh6.3"
+    paths:
+      - flowman-dist/target/flowman-dist-*-bin.tar.gz
+    expire_in: 5 days
+
+build-cdp7.1:
+  stage: build
+  image: dimajix/maven-npm:jdk-1.8
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -PCDP-7.1 -Ddockerfile.skip'
+  artifacts:
+    name: "flowman-dist-cdp7.1"
     paths:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days

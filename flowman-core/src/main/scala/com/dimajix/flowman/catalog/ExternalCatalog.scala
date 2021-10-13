@@ -29,6 +29,8 @@ abstract class ExternalCatalog {
 
     def alterTable(table: CatalogTable): Unit
 
+    def refreshTable(table: CatalogTable): Unit
+
     def dropTable(table: CatalogTable): Unit
 
     def truncateTable(table: CatalogTable): Unit

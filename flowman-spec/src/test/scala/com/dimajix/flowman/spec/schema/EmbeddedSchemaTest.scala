@@ -35,7 +35,7 @@ class EmbeddedSchemaTest extends AnyFlatSpec with Matchers {
               |    type: integer
             """.stripMargin
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
 
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         schemaSpec shouldBe a[EmbeddedSchemaSpec]
@@ -58,7 +58,7 @@ class EmbeddedSchemaTest extends AnyFlatSpec with Matchers {
               |    type: integer
             """.stripMargin
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
 
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         val result = schemaSpec.instantiate(session.context)

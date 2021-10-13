@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.test
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.TargetIdentifier
@@ -26,6 +25,7 @@ import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.assertion.AssertionSpec
+import com.dimajix.flowman.spec.hook.HookSpec
 import com.dimajix.flowman.spec.mapping.MappingSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
 import com.dimajix.flowman.spec.splitSettings
@@ -33,12 +33,7 @@ import com.dimajix.flowman.spec.target.TargetSpec
 
 
 object TestSpec {
-    class NameResolver extends StdConverter[Map[String, TestSpec], Map[String, TestSpec]] {
-        override def convert(value: Map[String, TestSpec]): Map[String, TestSpec] = {
-            value.foreach(kv => kv._2.name = kv._1)
-            value
-        }
-    }
+    final class NameResolver extends NamedSpec.NameResolver[TestSpec]
 }
 
 
@@ -85,7 +80,7 @@ class TestSpec extends NamedSpec[Test] {
             context,
             context.namespace,
             context.project,
-            name,
+            context.evaluate(name),
             context.evaluate(labels),
             description.map(context.evaluate)
         )

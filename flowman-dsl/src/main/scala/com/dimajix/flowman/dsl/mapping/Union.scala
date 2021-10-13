@@ -20,13 +20,13 @@ import com.dimajix.flowman.dsl.MappingGen
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.mapping.UnionMapping
 
 
 case class Union(
     inputs:Seq[MappingOutputIdentifier],
-    schema:Option[Template[Schema]] = None,
+    schema:Option[Prototype[Schema]] = None,
     distinct:Boolean = false,
     filter:Option[String] = None
 ) extends MappingGen {

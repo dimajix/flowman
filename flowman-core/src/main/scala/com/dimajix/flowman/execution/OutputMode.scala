@@ -32,6 +32,10 @@ object OutputMode {
         override def batchMode: SaveMode = SaveMode.Overwrite
         override def streamMode : StreamingMode = StreamingMode.Complete()
     }
+    case object OVERWRITE_DYNAMIC extends OutputMode {
+        override def batchMode: SaveMode = SaveMode.Overwrite
+        override def streamMode : StreamingMode = StreamingMode.Complete()
+    }
     case object APPEND extends OutputMode {
         override def batchMode: SaveMode = SaveMode.Append
         override def streamMode : StreamingMode = StreamingMode.Append()
@@ -52,11 +56,12 @@ object OutputMode {
     def ofString(mode:String) : OutputMode = {
         mode.toLowerCase(Locale.ROOT) match {
             case "overwrite" | "complete" => OutputMode.OVERWRITE
+            case "overwrite_dynamic" | "dynamic_overwrite" => OutputMode.OVERWRITE_DYNAMIC
             case "append" => OutputMode.APPEND
-            case "update" => OutputMode.UPDATE
+            case "update"|"upsert" => OutputMode.UPDATE
             case "ignore" | "ignore_if_exists" | "ignoreifexists" => OutputMode.IGNORE_IF_EXISTS
             case "error" | "error_if_exists" | "errorifexists" | "default" => OutputMode.ERROR_IF_EXISTS
-            case _ => throw new IllegalArgumentException(s"Unknown save mode: $mode. " +
+            case _ => throw new IllegalArgumentException(s"Unknown save mode: '$mode'. " +
                 "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists'.")
         }
     }

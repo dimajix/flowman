@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.tools.exec.job
 
+import scala.concurrent.ExecutionContext
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -25,9 +26,9 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.common.ThreadUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Lifecycle
-import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
@@ -35,7 +36,6 @@ import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.splitSettings
-import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.types.FieldValue
 
@@ -57,6 +57,8 @@ sealed class PhaseCommand(phase:Phase) extends Command {
     var dryRun: Boolean = false
     @Option(name = "-nl", aliases=Array("--no-lifecycle"), usage = "only executes the specific phase and not the whole lifecycle")
     var noLifecycle: Boolean = false
+    @Option(name = "-j", aliases=Array("--jobs"), usage = "number of jobs to run in parallel")
+    var parallelism: Int = 1
 
     override def execute(session: Session, project: Project, context:Context) : Boolean = {
         val args = splitSettings(this.args).toMap
@@ -79,14 +81,29 @@ sealed class PhaseCommand(phase:Phase) extends Command {
             else
                 Lifecycle.ofPhase(phase)
 
-        job.interpolate(args).forall { args =>
+        val status = if (parallelism > 1)
+            executeParallel(session, job, args, lifecycle)
+        else
+            executeLinear(session, job, args, lifecycle)
+
+        status match {
+            case Status.SUCCESS => true
+            case Status.SKIPPED => true
+            case _ => false
+        }
+    }
+
+    private def executeLinear(session: Session, job:Job, args:Map[String,FieldValue], lifecycle: Seq[Phase]) : Status = {
+        Status.ofAll(job.interpolate(args), keepGoing=keepGoing) { args =>
             val runner = session.runner
-            val result = runner.executeJob(job, lifecycle, args, targets.map(_.r), force, keepGoing, dryRun)
-            result match {
-                case Status.SUCCESS => true
-                case Status.SKIPPED => true
-                case _ => false
-            }
+            runner.executeJob(job, lifecycle, args, targets.map(_.r), force, keepGoing, dryRun)
+        }
+    }
+
+    private def executeParallel(session: Session, job:Job, args:Map[String,FieldValue], lifecycle: Seq[Phase]) : Status = {
+        Status.parallelOfAll(job.interpolate(args).toSeq, parallelism, keepGoing=keepGoing, prefix="JobExecution") { args =>
+            val runner = session.runner
+            runner.executeJob(job, lifecycle, args, targets.map(_.r), force, keepGoing, dryRun)
         }
     }
 }

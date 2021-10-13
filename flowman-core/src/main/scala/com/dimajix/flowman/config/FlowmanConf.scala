@@ -18,9 +18,15 @@ package com.dimajix.flowman.config
 
 import java.io.File
 import java.nio.file.FileSystem
+import java.util.Locale
 import java.util.NoSuchElementException
 
+import org.apache.spark.SPARK_REPO_URL
+
+import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.execution.Executor
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.SimpleExecutor
 import com.dimajix.flowman.execution.SimpleScheduler
@@ -48,8 +54,12 @@ object FlowmanConf {
         .doc("Enables Hive support. WHen using newer Hadoop versions, you might want to disable it")
         .booleanConf
         .createWithDefault(features.hiveSupported)
-    val HIVE_ANALYZE_TABLE = buildConf("floman.hive.analyzeTable")
+    val HIVE_ANALYZE_TABLE = buildConf("flowman.hive.analyzeTable")
         .doc("Performs ANALYZE TABLE commands")
+        .booleanConf
+        .createWithDefault(true)
+    val IMPALA_COMPUTE_STATS = buildConf("flowman.impala.computeStats")
+        .doc("Performs COMPUTE STATS commands")
         .booleanConf
         .createWithDefault(true)
     val HOME_DIRECTORY = buildConf("flowman.home")
@@ -82,18 +92,32 @@ object FlowmanConf {
         .classConf(classOf[Scheduler])
         .createWithDefault(classOf[SimpleScheduler])
 
+    val DEFAULT_RELATION_MIGRATION_POLICY = buildConf("flowman.default.relation.migrationPolicy")
+        .doc("Default migration policy. Allowed values are 'relaxed' and 'strict'")
+        .stringConf
+        .createWithDefault(MigrationPolicy.RELAXED.toString)
+    val DEFAULT_RELATION_MIGRATION_STRATEGY = buildConf("flowman.default.relation.migrationStrategy")
+        .doc("Default migration strategy. Allowed values are 'never', 'fail', 'alter', 'alter_replace' and 'replace'")
+        .stringConf
+        .createWithDefault(MigrationStrategy.ALTER.toString)
+
     val DEFAULT_TARGET_OUTPUT_MODE = buildConf("flowman.default.target.outputMode")
         .doc("Default output mode of targets")
         .stringConf
         .createWithDefault(OutputMode.OVERWRITE.toString)
-    val DEFAULT_TARGET_REBALANCE = buildConf("floman.default.target.rebalance")
+    val DEFAULT_TARGET_REBALANCE = buildConf("flowman.default.target.rebalance")
         .doc("Rebalances all outputs before writing")
         .booleanConf
         .createWithDefault(false)
-    val DEFAULT_TARGET_PARALLELISM = buildConf("floman.default.target.parallelism")
+    val DEFAULT_TARGET_PARALLELISM = buildConf("flowman.default.target.parallelism")
         .doc("Uses the specified number of partitions for writing targets. -1 disables")
         .intConf
         .createWithDefault(16)
+
+    val WORKAROUND_ANALYZE_PARTITION = buildConf("flowman.workaround.analyze_partition")
+        .doc("Enables workaround to setup a new HMS connection for ANALYZE PARTITION. Required for CDP 7.1")
+        .booleanConf
+        .createWithDefault(SPARK_VERSION.matches("\\d.\\d.\\d.7.\\d.\\d.\\d.+") && SPARK_REPO_URL.contains("cloudera"))
 }
 
 

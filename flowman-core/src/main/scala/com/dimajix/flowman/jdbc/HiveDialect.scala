@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 package com.dimajix.flowman.jdbc
+
 
 object HiveDialect extends BaseDialect {
     override def canHandle(url : String): Boolean = url.startsWith("jdbc:hive")

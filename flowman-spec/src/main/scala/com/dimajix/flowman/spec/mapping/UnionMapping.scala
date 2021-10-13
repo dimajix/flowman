@@ -111,7 +111,7 @@ class UnionMappingSpec extends MappingSpec {
     @JsonProperty(value="inputs", required=true) var inputs:Seq[String] = Seq()
     @JsonProperty(value="schema", required=false) var schema:SchemaSpec = _
     @JsonProperty(value="distinct", required=false) var distinct:String = "false"
-    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
+    @JsonProperty(value="filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed

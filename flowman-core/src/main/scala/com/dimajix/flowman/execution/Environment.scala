@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.io.StringWriter
 import java.util.NoSuchElementException
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 import org.apache.velocity.VelocityContext
 
@@ -49,7 +50,7 @@ final class Environment(rawEnvironment:Map[String,Any]) {
     private def evaluateNotNull(string:String, additionalValues:Map[String,AnyRef]) : String = {
         val output = new StringWriter()
         val context = if (additionalValues.nonEmpty)
-            new VelocityContext(additionalValues.asJava, templateContext)
+            new VelocityContext(mutable.Map(additionalValues.toSeq:_*).asJava, templateContext)
         else
             templateContext
         templateEngine.evaluate(context, output, "context", string)

@@ -20,9 +20,31 @@ import org.apache.spark.sql.catalyst.TableIdentifier
 
 
 abstract class SqlStatements {
+    /**
+     * The SQL query that should be used to discover the schema of a table. It only needs to
+     * ensure that the result set has the same schema as the table, such as by calling
+     * "SELECT * ...". Dialects can override this method to return a query that works best in a
+     * particular database.
+     * @param table The name of the table.
+     * @return The SQL query to use for discovering the schema.
+     */
+    def schema(table: TableIdentifier): String
+
     def create(table: TableDefinition): String
 
+    /**
+     * Get the SQL query that should be used to find if the given table exists. Dialects can
+     * override this method to return a query that works best in a particular database.
+     * @param table  The name of the table.
+     * @return The SQL query to use for checking the table.
+     */
     def tableExists(table: TableIdentifier) : String
 
     def firstRow(table: TableIdentifier, condition:String) : String
+
+    def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean): String
+    def renameColumn(table: TableIdentifier, columnName: String, newName: String) : String
+    def deleteColumn(table: TableIdentifier, columnName: String): String
+    def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String): String
+    def updateColumnNullability(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean): String
 }

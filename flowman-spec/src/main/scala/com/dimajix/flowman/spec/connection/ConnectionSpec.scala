@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.connection
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
@@ -29,13 +28,7 @@ import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
 object ConnectionSpec extends TypeRegistry[ConnectionSpec] {
-    class NameResolver extends StdConverter[Map[String, ConnectionSpec], Map[String, ConnectionSpec]] {
-        override def convert(value: Map[String, ConnectionSpec]): Map[String, ConnectionSpec] = {
-            value.foreach(kv => kv._2.name = kv._1)
-            value
-        }
-    }
-
+    final class NameResolver extends NamedSpec.NameResolver[ConnectionSpec]
 }
 
 /**
@@ -68,7 +61,7 @@ abstract class ConnectionSpec extends NamedSpec[Connection] {
             context,
             context.namespace,
             context.project,
-            name,
+            context.evaluate(name),
             kind,
             context.evaluate(labels)
         )

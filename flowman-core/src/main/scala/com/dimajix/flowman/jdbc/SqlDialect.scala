@@ -18,7 +18,9 @@ package com.dimajix.flowman.jdbc
 
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.jdbc.JdbcType
+import org.apache.spark.sql.types.DataType
 
+import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.types.FieldType
 
 
@@ -36,7 +38,17 @@ abstract class SqlDialect {
       * @param dt The datatype (e.g. [[org.apache.spark.sql.types.StringType]])
       * @return The new JdbcType if there is an override for this DataType
       */
-    def getJdbcType(dt: FieldType): Option[JdbcType]
+    def getJdbcType(dt: FieldType): JdbcType
+
+    /**
+     * Returns the Flowman type for a given JDBC type
+     * @param sqlType
+     * @param precision
+     * @param scale
+     * @param signed
+     * @return
+     */
+    def getFieldType(sqlType: Int, typeName:String, precision: Int, scale: Int, signed: Boolean): FieldType
 
     /**
       * Quotes the identifier. This is used to put quotes around the identifier in case the column
@@ -64,6 +76,13 @@ abstract class SqlDialect {
       * @return
       */
     def literal(value:Any) : String
+
+    /**
+     * Returns true if the given table supports a specific table change
+     * @param change
+     * @return
+     */
+    def supportsChange(table:TableIdentifier, change:TableChange) : Boolean
 
     def statement : SqlStatements
 

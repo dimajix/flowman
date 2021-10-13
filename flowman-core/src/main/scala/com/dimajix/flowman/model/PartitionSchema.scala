@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +21,12 @@ import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.types._
 
 
-object PartitionSchema {
-    def apply(fields:Seq[PartitionField]) : PartitionSchema = new PartitionSchema(fields)
-}
-
-
 /**
   * Helper class for working with partitioned relations. The class provides convenience methods for creating the
   * correct Hive partition specification and for creating a Hive compatible path.
   * @param fields
   */
-class PartitionSchema(val fields:Seq[PartitionField]) {
+final case class PartitionSchema(fields:Seq[PartitionField]) {
     private val partitionsByName = MapIgnoreCase(fields.map(p => (p.name, p)))
 
     /**

@@ -106,22 +106,22 @@ object AvroSchemaUtils {
         else
             atype
     }
-    private def toAvroDefault(field:Field) : JsonNode = {
+    private def toAvroDefault(field:Field) : AnyRef = {
         field.default.map  { default =>
             field.ftype match {
-                case StringType => new TextNode(default)
-                case CharType(_) => new TextNode(default)
-                case VarcharType(_) => new TextNode(default)
-                case BinaryType => new TextNode(default)
-                case IntegerType => new IntNode(default.toInt)
-                case ByteType => new IntNode(default.toInt)
-                case ShortType => new IntNode(default.toInt)
-                case LongType => new LongNode(default.toLong)
-                case FloatType => new DoubleNode(default.toDouble)
-                case DoubleType => new DoubleNode(default.toDouble)
-                case DecimalType(_,_) => new TextNode(default)
-                case BooleanType => if (default.toBoolean) BooleanNode.TRUE else BooleanNode.FALSE
-                case NullType => NullNode.instance
+                case StringType => default
+                case CharType(_) => default
+                case VarcharType(_) => default
+                case BinaryType => default
+                case IntegerType => Integer.valueOf(default.toInt)
+                case ByteType => Integer.valueOf(default.toInt)
+                case ShortType => Integer.valueOf(default.toInt)
+                case LongType => java.lang.Long.valueOf(default.toLong)
+                case FloatType => java.lang.Double.valueOf(default.toDouble)
+                case DoubleType => java.lang.Double.valueOf(default.toDouble)
+                case DecimalType(_,_) => default
+                case BooleanType => if (default.toBoolean) java.lang.Boolean.TRUE else java.lang.Boolean.FALSE
+                case NullType => null
                 case _ => null
             }
         }.orNull

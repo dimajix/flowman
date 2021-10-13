@@ -21,7 +21,12 @@ import java.util.TimeZone
 import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.internal.config.ConfigEntry
+import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.analysis.NoSuchDatabaseException
+import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.ViewType
+import org.apache.spark.sql.catalyst.catalog.CatalogTable
+import org.apache.spark.sql.catalyst.catalog.SessionCatalog
 import org.apache.spark.sql.catalyst.util.IntervalUtils
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.SQLExecution
@@ -61,7 +66,7 @@ object SparkShim {
     }
 
     def relationSupportsMultiplePaths(providingClass:Class[_]) : Boolean = {
-        providingClass.newInstance() match {
+        providingClass.getDeclaredConstructor().newInstance() match {
             case _: RelationProvider => false
             case _: SchemaRelationProvider => false
             case _: FileFormat => true
@@ -75,8 +80,6 @@ object SparkShim {
         queryExecution: QueryExecution,
         name: Option[String] = None)(body: => T): T =
         SQLExecution.withNewExecutionId(queryExecution, name)(body)
-
-    def getCachedPlan(ir:InMemoryRelation) : SparkPlan = ir.cachedPlan
 
     val LocalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.LocalTempView
     val GlobalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.GlobalTempView

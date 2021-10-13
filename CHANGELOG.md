@@ -1,3 +1,34 @@
+# Version 0.18.0 - 2021-10-13
+
+* Improve automatic schema migration for Hive and JDBC relations
+* Improve support of CHAR(n) and VARCHAR(n) types. Those types will now be propagates to Hive with newer Spark versions
+* Support writing to dynamic partitions for file relations, Hive tables, JDBC relations and Delta tables
+* Fix the name of some config variables (floman.* => flowman.*)
+* Added new config variables `flowman.default.relation.migrationPolicy` and `flowman.default.relation.migrationStrategy`
+* Add plugin for supporting DeltaLake (https://delta.io), which provides `deltaTable` and `deltaFile` relation types
+* Fix non-deterministic column order in `schema` mapping, `values` mapping and `values` relation 
+* Mark Hive dependencies has 'provided', which reduces the size of dist packages
+* Significantly reduce size of AWS dependencies in AWS plugin
+* Add new build profile for Cloudera CDP-7.1
+* Improve Spark configuration of `LocalSparkSession` and `TestRunner`  
+* Update Spark 3.0 build profile to Spark 3.0.3
+* Upgrade Impala JDBC driver from 2.6.17.1020 to 2.6.23.1028
+* Upgrade MySQL JDBC driver from 8.0.20 to 8.0.25  
+* Upgrade MariaDB JDBC driver from 2.2.4 to 2.7.3
+* Upgrade several Maven plugins to latest versions
+* Add new config option `flowman.workaround.analyze_partition` to workaround CDP 7.1 issues
+* Fix migrating Hive views to tables and vice-versa
+* Add new option "-j <n>" to allow running multiple job instances in parallel
+* Add new option "-j <n>" to allow running multiple tests in parallel
+* Add new `uniqueKey` assertion
+* Add new `schema` assertion
+* Update Swagger libraries for `swagger` schema
+* Implement new `openapi` plugin to support OpenAPI 3.0 schemas
+* Add new `readHive` mapping
+* Add new `simpleReport` and `report` hook
+* Implement new templates
+
+
 # Version 0.17.1 - 2021-06-18
 
 * Bump CDH version to 6.3.4

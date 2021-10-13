@@ -9,7 +9,7 @@
     <parent>
         <artifactId>flowman-root</artifactId>
         <groupId>com.dimajix.flowman</groupId>
-        <version>0.17.1</version>
+        <version>0.18.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -37,8 +37,9 @@
                             <includeScope>runtime</includeScope>
                             <outputProperty>flowman-server.classpath</outputProperty>
                             <outputAbsoluteArtifactFilename>false</outputAbsoluteArtifactFilename>
+                            <fileSeparator>/</fileSeparator>
                             <pathSeparator>,</pathSeparator>
-                            <prefix>$FLOWMAN_HOME/lib</prefix>
+                            <prefix>lib</prefix>
                             <!-- Manually exclude shaded artifacts -->
                             <excludeArtifactIds>json,org.everit.json.schema,velocity-engine-core</excludeArtifactIds>
                         </configuration>

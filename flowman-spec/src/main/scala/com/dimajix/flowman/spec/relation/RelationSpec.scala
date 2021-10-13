@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.relation
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.common.TypeRegistry
@@ -26,21 +27,18 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.RelationType
+import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
 object RelationSpec extends TypeRegistry[RelationSpec] {
-    class NameResolver extends StdConverter[Map[String, RelationSpec], Map[String, RelationSpec]] {
-        override def convert(value: Map[String, RelationSpec]): Map[String, RelationSpec] = {
-            value.foreach(kv => kv._2.name = kv._1)
-            value
-        }
-    }
+    final class NameResolver extends NamedSpec.NameResolver[RelationSpec]
 }
 
 /**
   * Interface class for declaring relations (for sources and sinks) as part of a model
   */
+@JsonTypeResolver(classOf[CustomTypeResolverBuilder])
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible=true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "const", value = classOf[ValuesRelationSpec]),
@@ -76,7 +74,7 @@ abstract class RelationSpec extends NamedSpec[Relation] {
             context,
             context.namespace,
             context.project,
-            name,
+            context.evaluate(name),
             kind,
             context.evaluate(labels),
             description.map(context.evaluate)

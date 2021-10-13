@@ -18,23 +18,20 @@ package com.dimajix.flowman.spec
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.JavaType
-import com.fasterxml.jackson.databind.`type`.TypeFactory
-import com.fasterxml.jackson.databind.util.Converter
 import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Instance
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 
 
-trait Spec[T] extends Template[T] {
+trait Spec[T] extends Prototype[T] {
     def instantiate(context:Context) : T
 }
 
 
 object NamedSpec {
-    class NameResolver[T, S <: NamedSpec[T]] extends StdConverter[Map[String, S], Map[String, S]] {
+    class NameResolver[S <: NamedSpec[_]] extends StdConverter[Map[String, S], Map[String, S]] {
         override def convert(value: Map[String, S]): Map[String, S] = {
             value.foreach(kv => kv._2.name = kv._1)
             value
@@ -44,8 +41,7 @@ object NamedSpec {
 
 
 abstract class NamedSpec[T] extends Spec[T] {
-    @JsonIgnore protected var name:String = ""
-
+    @JsonProperty(value="name", required = false) protected[spec] var name:String = ""
     @JsonProperty(value="kind", required = true) protected var kind: String = _
     @JsonProperty(value="labels", required=false) protected var labels:Map[String,String] = Map()
 

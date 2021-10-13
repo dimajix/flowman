@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@ package com.dimajix.flowman.model
 
 import com.dimajix.flowman.execution.AssertionToken
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.JobToken
+import com.dimajix.flowman.execution.LifecycleToken
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.RunnerListener
+import com.dimajix.flowman.execution.ExecutionListener
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.execution.TestToken
@@ -54,7 +56,7 @@ object Hook {
 }
 
 
-trait Hook extends Instance with RunnerListener {
+trait Hook extends Instance with ExecutionListener {
     /**
      * Returns the category of this resource
      * @return
@@ -66,28 +68,56 @@ trait Hook extends Instance with RunnerListener {
      * @param job
      * @return
      */
-    override def startJob(job:Job, instance:JobInstance, phase:Phase) : JobToken
+    override def startLifecycle(execution:Execution, job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken
 
     /**
      * Sets the status of a job after it has been started
      * @param token The token returned by startJob
-     * @param status
+     * @param result
      */
-    override def finishJob(token:JobToken, status:Status) : Unit
+    override def finishLifecycle(execution:Execution, token:LifecycleToken, result:LifecycleResult) : Unit
+
+    /**
+     * Starts the run and returns a token, which can be anything
+     * @param job
+     * @return
+     */
+    override def startJob(execution:Execution, job:Job, instance:JobInstance, phase:Phase, parent:Option[Token]) : JobToken
+
+    /**
+     * Sets the status of a job after it has been started
+     * @param token The token returned by startJob
+     * @param result
+     */
+    override def finishJob(execution:Execution, token:JobToken, result:JobResult) : Unit
 
     /**
      * Starts the run and returns a token, which can be anything
      * @param target
      * @return
      */
-    override def startTarget(target:Target, instance:TargetInstance, phase:Phase, parent:Option[Token]) : TargetToken
+    override def startTarget(execution:Execution, target:Target, instance:TargetInstance, phase:Phase, parent:Option[Token]) : TargetToken
 
     /**
      * Sets the status of a job after it has been started
      * @param token The token returned by startJob
+     * @param result
+     */
+    override def finishTarget(execution:Execution, token:TargetToken, result:TargetResult) : Unit
+
+    /**
+     * Starts the assertion and returns a token, which can be anything
+     * @param assertion
+     * @return
+     */
+    override def startAssertion(execution:Execution, assertion:Assertion, parent:Option[Token]) : AssertionToken
+
+    /**
+     * Sets the status of a assertion after it has been started
+     * @param token The token returned by startJob
      * @param status
      */
-    override def finishTarget(token:TargetToken, status:Status) : Unit
+    override def finishAssertion(execution:Execution, token:AssertionToken, result:AssertionResult) : Unit
 }
 
 
@@ -96,13 +126,12 @@ trait Hook extends Instance with RunnerListener {
  */
 abstract class BaseHook extends AbstractInstance with Hook {
     protected override def instanceProperties: Hook.Properties
-
-    override def startJob(job: Job, instance: JobInstance, phase: Phase): JobToken = new JobToken {}
-    override def finishJob(token: JobToken, status: Status): Unit = {}
-    override def startTarget(target: Target, instance:TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = new TargetToken {}
-    override def finishTarget(token: TargetToken, status: Status): Unit = {}
-    override def startTest(test: Test, instance: TestInstance): TestToken = new TestToken {}
-    override def finishTest(token: TestToken, status: Status): Unit = {}
-    override def startAssertion(assertion: Assertion, parent: Option[Token]): AssertionToken = new AssertionToken {}
-    override def finishAssertion(token: AssertionToken, status: Status): Unit = {}
+    override def startLifecycle(execution:Execution, job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken = new LifecycleToken {}
+    override def finishLifecycle(execution:Execution, token:LifecycleToken, result:LifecycleResult) : Unit = {}
+    override def startJob(execution:Execution, job: Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = new JobToken {}
+    override def finishJob(execution:Execution, token: JobToken, result: JobResult): Unit = {}
+    override def startTarget(execution:Execution, target: Target, instance:TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = new TargetToken {}
+    override def finishTarget(execution:Execution, token: TargetToken, result:TargetResult): Unit = {}
+    override def startAssertion(execution:Execution, assertion: Assertion, parent: Option[Token]): AssertionToken = new AssertionToken {}
+    override def finishAssertion(execution:Execution, token: AssertionToken, result:AssertionResult): Unit = {}
 }

@@ -1,4 +1,4 @@
-# Build Targets
+# Targets
 
 From a top level perspective, Flowman works like a build tool like make or maven. Of course in contrast to classical
 build tools, the project specification in Flowman also contains the logic to be build (normally that is separated

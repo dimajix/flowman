@@ -27,8 +27,11 @@ import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.Reference
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
@@ -40,7 +43,7 @@ import com.dimajix.flowman.types.StructType
 
 case class ReadRelationMapping(
     instanceProperties:Mapping.Properties,
-    relation:RelationIdentifier,
+    relation:Reference[Relation],
     columns:Seq[Field] = Seq(),
     partitions:Map[String,FieldValue] = Map(),
     filter:Option[String] = None
@@ -53,7 +56,7 @@ case class ReadRelationMapping(
      * @return
      */
     override def requires : Set[ResourceIdentifier] = {
-        val rel = context.getRelation(relation)
+        val rel = relation.value
         rel.resources(partitions) ++ rel.requires ++ rel.provides
     }
 
@@ -78,10 +81,10 @@ case class ReadRelationMapping(
         require(input != null)
 
         val schema = if (columns.nonEmpty) Some(spark.sql.types.StructType(columns.map(_.sparkField))) else None
-        logger.info(s"Reading from relation '$relation' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")} and filter '${filter.getOrElse("")}'")
+        logger.info(s"Reading from relation '${relation.identifier}' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")} and filter '${filter.getOrElse("")}'")
 
         // Read relation
-        val rel = context.getRelation(relation)
+        val rel = relation.value
         val df = rel.read(execution, schema, partitions)
 
         // Apply optional filter
@@ -104,7 +107,7 @@ case class ReadRelationMapping(
             StructType(columns)
         }
         else {
-            val relation = context.getRelation(this.relation)
+            val relation = this.relation.value
             relation.describe(execution)
         }
 
@@ -116,14 +119,14 @@ case class ReadRelationMapping(
      * Params: linker - The linker object to use for creating new edges
      */
     override def link(linker: Linker): Unit = {
-        linker.read(relation, partitions)
+        linker.read(relation.identifier, partitions)
     }
 }
 
 
 
 class ReadRelationMappingSpec extends MappingSpec {
-    @JsonProperty(value = "relation", required = true) private var relation:String = _
+    @JsonProperty(value = "relation", required = true) private var relation:RelationReferenceSpec = _
     @JsonProperty(value = "columns", required=false) private var columns:Map[String,String] = Map()
     @JsonProperty(value = "partitions", required=false) private var partitions:Map[String,FieldValue] = Map()
     @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
@@ -141,7 +144,7 @@ class ReadRelationMappingSpec extends MappingSpec {
             }
         ReadRelationMapping(
             instanceProperties(context),
-            RelationIdentifier(context.evaluate(relation)),
+            relation.instantiate(context),
             context.evaluate(columns).map { case(name,typ) => Field(name, FieldType.of(typ))}.toSeq,
             partitions,
             context.evaluate(filter)

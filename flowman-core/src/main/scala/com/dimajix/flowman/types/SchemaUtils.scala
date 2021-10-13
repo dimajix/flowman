@@ -17,10 +17,79 @@
 package com.dimajix.flowman.types
 
 import java.util.Locale
+
 import scala.language.existentials
 
 
 object SchemaUtils {
+
+    /**
+     * This will normalize a given schema in the sense that all field names are converted to lowercase and all
+     * metadata is stripped except the comments
+     * @param schema
+     * @return
+     */
+    def normalize(schema:StructType) : StructType = {
+        com.dimajix.flowman.types.StructType(schema.fields.map(normalize))
+    }
+    private def normalize(field:Field) : Field = {
+        Field(field.name.toLowerCase(Locale.ROOT), normalize(field.ftype), field.nullable, description=field.description)
+    }
+    private def normalize(dtype:FieldType) : FieldType = {
+        dtype match {
+            case struct:StructType => normalize(struct)
+            case array:ArrayType => ArrayType(normalize(array.elementType),array.containsNull)
+            case map:MapType => MapType(normalize(map.keyType), normalize(map.valueType), map.containsNull)
+            case dt:FieldType => dt
+        }
+    }
+
+    /**
+     * Replaces all occurances of VarChar and Char types by String types.
+     * @param schema
+     * @return
+     */
+    def replaceCharVarchar(schema:StructType) : StructType = {
+        StructType(schema.fields.map(replaceCharVarchar))
+    }
+    def replaceCharVarchar(field:Field) : Field = {
+        field.copy(ftype = replaceCharVarchar(field.ftype))
+    }
+    private def replaceCharVarchar(dtype:FieldType) : FieldType = {
+        dtype match {
+            case struct:StructType => replaceCharVarchar(struct)
+            case array:ArrayType => ArrayType(replaceCharVarchar(array.elementType),array.containsNull)
+            case map:MapType => MapType(replaceCharVarchar(map.keyType), replaceCharVarchar(map.valueType), map.containsNull)
+            case _:CharType => StringType
+            case _:VarcharType => StringType
+            case dt:FieldType => dt
+        }
+    }
+
+    /**
+     * Verify is a given source field is compatible with a given target field, i.e. if a safe conversion is
+     * possible from a source field to a target field
+     * @param sourceField
+     * @param targetField
+     * @return
+     */
+    def isCompatible(sourceField:Field, targetField:Field) : Boolean = {
+        if (sourceField.name.toLowerCase(Locale.ROOT) != targetField.name.toLowerCase(Locale.ROOT)) {
+            false
+        }
+        else {
+            val sourceNullable = sourceField.nullable || sourceField.ftype == NullType
+            val targetNullable = targetField.nullable || targetField.ftype == NullType
+            if (sourceNullable && !targetNullable) {
+                false
+            }
+            else {
+                val coercedType = coerce(sourceField.ftype, targetField.ftype)
+                coercedType == targetField.ftype
+            }
+        }
+    }
+
     private def coerceNumericTypes(left:NumericType[_], right:NumericType[_]) : NumericType[_] = {
         class TypeInfo
         case class FractionalType(dt:NumericType[_], precision:Int, scale:Int) extends TypeInfo

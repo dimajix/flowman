@@ -48,7 +48,7 @@ class DropMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("drop")
         project.mappings("drop") shouldBe a[DropMappingSpec]
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
         val instance = context.getMapping(MappingIdentifier("drop"))
         instance shouldBe an[DropMapping]

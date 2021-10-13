@@ -18,34 +18,48 @@ package com.dimajix.flowman.execution
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
 import com.dimajix.flowman.model.Module
+import com.dimajix.spark.testing.LocalSparkSession
 
 
-class SessionTest extends AnyFlatSpec with Matchers {
+class SessionTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A Session" should "be buildable" in {
         val session = Session.builder()
+            .disableSpark()
             .build()
         session should not be (null)
+        session.shutdown()
     }
 
     it should "contain a valid context" in {
         val session = Session.builder()
+            .disableSpark()
             .build()
-        session.context should not be (null)
+        val context = session.context
+
+        context should not be (null)
+        context.execution should be (session.execution)
+
+        session.shutdown()
     }
 
     it should "contain a valid runner" in {
         val session = Session.builder()
+            .disableSpark()
             .build()
         session.runner should not be (null)
+        session.shutdown()
     }
 
     it should "create a valid Spark session" in {
         val session = Session.builder()
+            .enableSpark()
             .build()
         session.sparkRunning should be (false)
         session.spark should not be (null)
         session.sparkRunning should be (true)
+        session.shutdown()
     }
 
     it should "throw an exception when accessing Spark when it is disabled" in {
@@ -55,6 +69,7 @@ class SessionTest extends AnyFlatSpec with Matchers {
         session.sparkRunning should be (false)
         an[IllegalStateException] shouldBe thrownBy(session.spark)
         session.sparkRunning should be (false)
+        session.shutdown()
     }
 
     it should "apply configs in correct order" in {
@@ -64,6 +79,7 @@ class SessionTest extends AnyFlatSpec with Matchers {
         )
         val project = module.toProject("project")
         val session = Session.builder()
+            .withSparkSession(spark)
             .withConfig(Map("spark.lala" -> "lala_cmdline", "spark.lolo" -> "lolo_cmdline"))
             .withProject(project)
             .build()
@@ -71,10 +87,12 @@ class SessionTest extends AnyFlatSpec with Matchers {
         session.spark.conf.get("spark.lolo") should be ("lolo_cmdline")
         session.spark.conf.get("spark.lili") should be ("lili.project")
         session.spark.stop()
+        session.shutdown()
     }
 
     it should "correctly propagate configurations" in {
         val session = Session.builder()
+            .disableSpark()
             .withConfig("spark.lala", "spark_lala")
             .withConfig("flowman.lolo", "flowman_lolo")
             .withConfig("other.abc", "other_abc")
@@ -91,10 +109,12 @@ class SessionTest extends AnyFlatSpec with Matchers {
         session.config.get("spark.lala") should be ("spark_lala")
         session.config.get("flowman.lolo") should be ("flowman_lolo")
         session.config.get("other.abc") should be ("other_abc")
+        session.shutdown()
     }
 
     it should "create new detached Sessions" in {
         val session = Session.builder()
+            .enableSpark()
             .build()
         session.sparkRunning should be (false)
 
@@ -110,10 +130,14 @@ class SessionTest extends AnyFlatSpec with Matchers {
         session.context should not equal(newSession.context)
         session.execution should not equal(newSession.execution)
         session.runner should not equal(newSession.runner)
+
+        session.shutdown()
+        newSession.shutdown()
     }
 
     it should "set all Spark configs" in {
         val session = Session.builder()
+            .enableSpark()
             .withConfig(Map("spark.lala" -> "lolo"))
             .build()
 
@@ -121,10 +145,13 @@ class SessionTest extends AnyFlatSpec with Matchers {
 
         session.spark.conf.get("spark.lala") should be ("lolo")
         newSession.spark.conf.get("spark.lala") should be ("lolo")
+        session.shutdown()
+        newSession.shutdown()
     }
 
     it should "use the Spark application name from the session builder" in {
         val session = Session.builder()
+            .enableSpark()
             .withSparkName("My Spark App")
             .build()
 
@@ -132,10 +159,13 @@ class SessionTest extends AnyFlatSpec with Matchers {
 
         session.spark.conf.get("spark.app.name") should be ("My Spark App")
         newSession.spark.conf.get("spark.app.name") should be ("My Spark App")
+        session.shutdown()
+        newSession.shutdown()
     }
 
     it should "use the Spark application name from the configuration" in {
         val session = Session.builder()
+            .enableSpark()
             .withConfig(Map("spark.app.name" -> "My Spark App"))
             .withSparkName("To be overriden")
             .build()
@@ -144,5 +174,7 @@ class SessionTest extends AnyFlatSpec with Matchers {
 
         session.spark.conf.get("spark.app.name") should be ("My Spark App")
         newSession.spark.conf.get("spark.app.name") should be ("My Spark App")
+        session.shutdown()
+        newSession.shutdown()
     }
 }

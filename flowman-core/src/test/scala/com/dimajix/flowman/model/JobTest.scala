@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.dimajix.flowman.types.StringType
 
 class JobTest extends AnyFlatSpec with Matchers with MockFactory {
     "Job.Builder" should "work" in {
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.context
         val job = Job.builder(context)
             .setProperties(Job.Properties(context, "some_job"))
@@ -69,11 +69,12 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
     }
 
     "Job.arguments" should "parse arguments" in {
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.context
         val job = Job.builder(context)
             .addParameter("p1", IntegerType, Some("2"))
             .addParameter("p2", StringType)
+            .addParameter("p3", StringType, value=Some("default"))
             .build()
 
         job.arguments(Map(
@@ -81,12 +82,40 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "p2" -> "lala"
         )) should be (Map(
             "p1" -> 17,
-            "p2" -> "lala"
+            "p2" -> "lala",
+            "p3" -> "default"
         ))
     }
 
+    it should "throw an error on missing arguments" in {
+        val session = Session.builder().disableSpark().build()
+        val context = session.context
+        val job = Job.builder(context)
+            .addParameter("p1", IntegerType, Some("2"))
+            .addParameter("p2", StringType)
+            .build()
+
+        an[IllegalArgumentException] should be thrownBy(job.arguments(Map(
+            "p1" -> "17"
+        )))
+    }
+
+    it should "throw an error on unknown arguments" in {
+        val session = Session.builder().disableSpark().build()
+        val context = session.context
+        val job = Job.builder(context)
+            .addParameter("p1", IntegerType, Some("2"))
+            .addParameter("p2", StringType)
+            .build()
+
+        an[IllegalArgumentException] should be thrownBy(job.arguments(Map(
+            "p1" -> "17",
+            "p3" -> "28"
+        )))
+    }
+
     "Job.parseArguments" should "parse arguments" in {
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.context
         val job = Job.builder(context)
             .addParameter("p1", IntegerType, Some("2"))
@@ -104,7 +133,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
     }
 
     it should "throw an exception for unknown parameters" in {
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.context
         val job = Job.builder(context)
             .addParameter("p1", IntegerType, Some("2"))
@@ -117,7 +146,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
     }
 
     "Job.interpolate" should "interpolate arguments" in {
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.context
         val job = Job.builder(context)
             .addParameter("p1", IntegerType, Some("2"))
@@ -141,7 +170,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
     }
 
     it should "work with simple arguments" in {
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.context
         val job = Job.builder(context)
             .addParameter("p1", IntegerType, Some("2"))
@@ -159,7 +188,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
     }
 
     it should "support granularity" in {
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.context
         val job = Job.builder(context)
             .addParameter("p1", IntegerType, Some("2"))
@@ -186,7 +215,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
     }
 
     "Job.merge" should "correctly merge Jobs" in {
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.context
 
         val job = Job.builder(context)

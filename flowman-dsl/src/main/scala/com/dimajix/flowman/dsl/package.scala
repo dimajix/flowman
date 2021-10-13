@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman
 
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 
 
 package object dsl {
@@ -35,6 +35,6 @@ package object dsl {
     type MappingGen = (model.Mapping.Properties => model.Mapping)
     type JobGen = (model.Job.Properties => model.Job)
 
-    type SchemaGen = Template[model.Schema]
-    type DatasetGen = Template[model.Dataset]
+    type SchemaGen = Prototype[model.Schema]
+    type DatasetGen = Prototype[model.Dataset]
 }

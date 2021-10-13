@@ -10,8 +10,40 @@ the physical location or connection, the format and so on.
 targets:
   stations:
     kind: relation
-    input: stations-mapping
-    target: stations-relation
+    mapping: stations_mapping
+    relation: stations
+    mode: overwrite
+    parallelism: 32
+    rebalance: true
+    partition:
+      processing_date: "${processing_date}"
+
+relations:
+  stations:
+    kind: file
+    format: parquet
+    location: "$basedir/stations/"
+    schema:
+      kind: avro
+      file: "${project.basedir}/schema/stations.avsc"
+```
+
+Since Flowman 0.18.0, you can also directly specify the relation inside the target definition. This saves you
+from having to create a separate relation definition in the `relations` section. This is only recommeneded, if you
+do not access the target relation otherwise, such that a shared definition would not provide any benefir.
+```yaml
+targets:
+  stations:
+    kind: relation
+    mapping: stations_mapping
+    relation:
+      kind: file
+      name: stations-relation
+      format: parquet
+      location: "$basedir/stations/"
+      schema:
+        kind: avro
+        file: "${project.basedir}/schema/stations.avsc"
     mode: overwrite
     parallelism: 32
     rebalance: true
@@ -31,13 +63,23 @@ Specifies the name of the relation to write to
 
 * `mode` **(optional)** *(type: string)* *(default=overwrite)*: 
 Specifies the behavior when data or table or partition already exists. Options include:
-  * `overwrite`: overwrite the existing data.
+  * `overwrite`: overwrite the existing data. If dynamically writing to a partitioned table, all partitions will be 
+    removed first.
+  * `overwrite_dynamic`: overwrite the existing data. If dynamically writing to a partitioned table, only those 
+    partitions with new records will be replaced
   * `append`: append the data.
+  * `update`: perform upserts - not all relations support this ([JDBC](../relation/jdbc.md) and 
+    [Delta Lake](../relation/deltaTable.md) are two examples supporting upserts).
   * `ignore`: ignore the operation (i.e. no-op).
   * `error` or `errorifexists`: throw an exception at runtime . 
-The default value is controlled by the Flowman config variable `floman.default.target.outputMode`.
+The default value is controlled by the Flowman config variable `flowman.default.target.outputMode`.
 
 * `partition` **(optional)** *(type: map:string)* *(default=empty)*:
+Specifies the partition to be written to. When the target relation has defined partitions, Flowman always supports
+  writing into individual partitions. Some relation types ([`hiveTable`](../relation/hiveTable.md), 
+  [`jdbc`](../relation/jdbc.md) and [`file`](../relation/file.md)) also support *dynamic partitioning*, where
+  you do not specify an explicit target partition, but simply pass in possibly multiple different partition values
+  in the data itself (i.e. the output of the `mapping` which is written to the relation).
 
 * `parallelism` **(optional)** *(type: integer)* *(default=16)*:
 This specifies the parallelism to be used when writing data. The parallelism equals the number
@@ -64,7 +106,7 @@ target.
 * `CREATE` - This will create the target relation or migrate it to the newest schema (if possible).
 * `BUILD` - This will write the output of the specified mapping into the relation. If no mapping is specified, nothing
  will be done. 
-* `VERIFY`
+* `VERIFY` - This will verify that the relation (and any specified partition) actually contains data.
 * `TRUNCATE` - This removes the contents of the specified relation. The relation itself will not be removed (for example
 if the relation refers to a Hive table)
 * `DESTROY` - This drops the relation itself and all its content.
@@ -80,3 +122,5 @@ The relation target also provides some metric containing the number of records w
   - `namespace` - Name of the namespace (typically `default`)
   - `project` - Name of the project
   - `version` - Version of the project
+
+See [Execution Metrics](../../cookbook/metrics.md) for more information how to use these metrics.

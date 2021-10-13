@@ -22,7 +22,7 @@ import com.dimajix.flowman.model.Project
 
 
 
-class ProjectSpec {
+final class ProjectSpec {
     @JsonProperty(value="name", required = true) private var name: String = ""
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
     @JsonProperty(value="version", required = false) private var version: Option[String] = None

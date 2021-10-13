@@ -17,32 +17,37 @@
 package com.dimajix.flowman.spec.target
 
 import java.time.Clock
+import java.time.Instant
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.AssertionRunner
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.ErrorMode
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.ValidationFailedException
+import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.assertion.AssertionSpec
-import com.dimajix.flowman.util.ConsoleColors.green
-import com.dimajix.flowman.util.ConsoleColors.red
-import com.dimajix.spark.sql.DataFrameUtils
 
 
 case class VerifyTarget(
     instanceProperties:Target.Properties,
-    assertions:Map[String,Assertion] = Map()
+    assertions:Map[String,Assertion] = Map(),
+    errorMode:ErrorMode = ErrorMode.FAIL_AT_END
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[VerifyTarget])
 
@@ -100,40 +105,37 @@ case class VerifyTarget(
      *
      * @param executor
      */
-    override protected def verify(execution: Execution): Unit = {
-        // Collect all required DataFrames for caching. We assume that each DataFrame might be used in multiple
-        // assertions and that the DataFrames aren't very huge (we are talking about tests!)
-        val inputDataFrames = assertions
-            .flatMap { case(_,instance) =>  instance.inputs }
-            .toSeq
-            .distinct
-            .map(id => execution.instantiate(context.getMapping(id.mapping), id.output))
-        val cacheLevel = StorageLevel.NONE // actually disable caching for now
+    protected override def verify2(execution: Execution): TargetResult = {
+        val startTime = Instant.now()
+        val runner = new AssertionRunner(context, execution, cacheLevel = StorageLevel.NONE)
+        val result = runner.run(assertions.values.toList, keepGoing = errorMode != ErrorMode.FAIL_FAST)
 
-        DataFrameUtils.withCaches(inputDataFrames, cacheLevel) {
-            assertions.map { case (name, instance) =>
-                val description = instance.description.getOrElse(name)
-
-                if (execution.assert(instance).exists(r => !r.valid)) {
-                    logger.error(red(s" ✘ failed: $description"))
-                    throw new ValidationFailedException(identifier)
-                }
-                else {
-                    logger.info(green(s" ✓ passed: $description"))
-                }
+        if (!result.forall(_.success)) {
+            logger.error(s"Verification $identifier failed.")
+            if (errorMode != ErrorMode.FAIL_NEVER) {
+                TargetResult(this, Phase.VERIFY, result, new VerificationFailedException(identifier), startTime)
             }
+            else {
+                TargetResult(this, Phase.VERIFY, result, Status.SUCCESS, startTime)
+            }
+        }
+        else {
+            TargetResult(this, Phase.VERIFY, result, Status.SUCCESS, startTime)
         }
     }
 }
 
 
 class VerifyTargetSpec extends TargetSpec {
+    @JsonDeserialize(converter=classOf[AssertionSpec.NameResolver])
     @JsonProperty(value = "assertions", required = true) private var assertions: Map[String,AssertionSpec] = Map()
+    @JsonProperty(value = "mode", required = false) private var mode: String = "failAtEnd"
 
     override def instantiate(context: Context): VerifyTarget = {
         VerifyTarget(
             instanceProperties(context),
-            assertions.map {case(name,assertion) => name -> assertion.instantiate(context) }
+            assertions.map {case(name,assertion) => name -> assertion.instantiate(context) },
+            ErrorMode.ofString(context.evaluate(mode))
         )
     }
 }

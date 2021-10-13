@@ -1,9 +1,7 @@
-# Flowman Cookbook
+# Cookbooks
 
 This part of the documentation contains approaches to common problems
 
-
-## Cookbooks
 
 ```eval_rst
 .. toctree::

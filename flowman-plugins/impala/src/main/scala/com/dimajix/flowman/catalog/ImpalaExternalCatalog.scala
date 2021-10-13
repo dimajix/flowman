@@ -48,7 +48,7 @@ object ImpalaExternalCatalog {
 }
 
 
-class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends ExternalCatalog {
+class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection, computeStats:Boolean) extends ExternalCatalog {
     private val logger = LoggerFactory.getLogger(classOf[ImpalaExternalCatalog])
     private val connect = createConnectionFactory(connection)
 
@@ -61,10 +61,22 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
     }
 
     override def alterTable(table: CatalogTable): Unit = {
+        logger.info(s"REFRESH Impala metadata for altered table ${table.identifier}")
+        withStatement { stmt =>
+            val identifier = HiveDialect.quote(table.identifier)
+            stmt.execute(s"REFRESH $identifier")
+        }
+    }
+
+    override def refreshTable(table: CatalogTable): Unit = {
         logger.info(s"REFRESH Impala metadata for modified table ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
             stmt.execute(s"REFRESH $identifier")
+
+            if (computeStats) {
+                stmt.execute(s"COMPUTE STATS $identifier")
+            }
         }
     }
 
@@ -90,6 +102,10 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
             val identifier = HiveDialect.quote(table.identifier)
             val spec = HiveDialect.expr.partition(PartitionSpec(partition.spec))
             stmt.execute(s"REFRESH $identifier $spec")
+
+            if (computeStats) {
+                stmt.execute(s"COMPUTE INCREMENTAL STATS $identifier $spec")
+            }
         }
     }
 
@@ -99,6 +115,10 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection) extends
             val identifier = HiveDialect.quote(table.identifier)
             val spec = HiveDialect.expr.partition(PartitionSpec(partition.spec))
             stmt.execute(s"REFRESH $identifier $spec")
+
+            if (computeStats) {
+                stmt.execute(s"COMPUTE INCREMENTAL STATS $identifier $spec")
+            }
         }
     }
 

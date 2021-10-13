@@ -16,15 +16,23 @@
 
 package com.dimajix.flowman.spec.relation
 
+import scala.collection.immutable.ListMap
+import scala.collection.mutable
+
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.StructType
+
+import com.dimajix.jackson.ListMapDeserializer
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
@@ -40,8 +48,8 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.spark.sql.DataFrameUtils
+import com.dimajix.spark.sql.SchemaUtils
 
 
 case class ValuesRelation(
@@ -168,7 +176,7 @@ case class ValuesRelation(
      *
      * @param execution
      */
-    override def migrate(execution: Execution): Unit = {}
+    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {}
 
     /**
      * Returns the schema of the relation, excluding partition columns
@@ -219,14 +227,15 @@ case class ValuesRelation(
      * @return
      */
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
-        Some(StructType(effectiveSchema.fields.map(_.sparkField)))
+        Some(StructType(effectiveSchema.fields.map(_.catalogField)))
     }
 }
 
 
 class ValuesRelationSpec extends RelationSpec {
     @JsonProperty(value = "schema", required=false) private var schema:Option[SchemaSpec] = None
-    @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
+    @JsonDeserialize(using = classOf[ListMapDeserializer]) // Old Jackson in old Spark doesn't support ListMap
+    @JsonProperty(value = "columns", required = false) private var columns:ListMap[String,String] = ListMap()
     @JsonProperty(value = "records", required=false) private var records:Seq[Record] = Seq()
 
     /**
@@ -237,7 +246,7 @@ class ValuesRelationSpec extends RelationSpec {
     override def instantiate(context: Context): ValuesRelation = {
         ValuesRelation(
             instanceProperties(context),
-            context.evaluate(columns).toSeq.map(kv => Field(kv._1, FieldType.of(kv._2))),
+            columns.toSeq.map(kv => Field(kv._1, FieldType.of(context.evaluate(kv._2)))),
             schema.map(_.instantiate(context)),
             records.map(_.map(context.evaluate))
         )

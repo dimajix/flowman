@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spec.job
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
@@ -32,15 +31,11 @@ import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StringType
 
-object JobSpec extends TypeRegistry[JobSpec] {
-    class NameResolver extends StdConverter[Map[String, JobSpec], Map[String, JobSpec]] {
-        override def convert(value: Map[String, JobSpec]): Map[String, JobSpec] = {
-            value.foreach(kv => kv._2.name = kv._1)
-            value
-        }
-    }
 
-    class Parameter extends Spec[Job.Parameter] {
+object JobSpec extends TypeRegistry[JobSpec] {
+    final class NameResolver extends NamedSpec.NameResolver[JobSpec]
+
+    final class Parameter extends Spec[Job.Parameter] {
         @JsonProperty(value = "name") private var name: String = ""
         @JsonProperty(value = "description") private var description: Option[String] = None
         @JsonProperty(value = "type", required = false) private var ftype: FieldType = StringType
@@ -61,7 +56,7 @@ object JobSpec extends TypeRegistry[JobSpec] {
     }
 }
 
-class JobSpec extends NamedSpec[Job] {
+final class JobSpec extends NamedSpec[Job] {
     @JsonProperty(value="extends") private var parents:Seq[String] = Seq()
     @JsonProperty(value="description") private var description:Option[String] = None
     @JsonProperty(value="parameters") private var parameters:Seq[JobSpec.Parameter] = Seq()
@@ -98,7 +93,7 @@ class JobSpec extends NamedSpec[Job] {
             context,
             context.namespace,
             context.project,
-            name,
+            context.evaluate(name),
             context.evaluate(labels),
             description.map(context.evaluate)
         )

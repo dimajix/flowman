@@ -6,17 +6,16 @@ is installed on the build machine.
 ## Prerequisites
 
 You need the following tools installed on your machine:
-* JDK 1.8 or later. If you build a variant with Scala 2.11, you have to use JDK 1.8 (and not anything newer like
-  Java 11). This mainly affects builds with Spark 2.x
+* JDK 1.8 or later - but not too new (Java 16 is currently not supported)
 * Apache Maven (install via package manager download from https://maven.apache.org/download.cgi)
 * npm (install via package manager or download from https://www.npmjs.com/get-npm)
 * Windows users also need Hadoop winutils installed. Those can be retrieved from https://github.com/cdarlint/winutils
 and later. See some additional details for building on Windows below.
-
+  
 
 # Build with Maven
 
-Building Flowman with the default settings (i.e. Hadoop and Spark version) is as easy as
+Building Flowman with the default settings (i.e. newest supported Spark and Hadoop versions will be used) is as easy as
 
 ```shell
 mvn clean install
@@ -28,8 +27,28 @@ The main artifacts will be a Docker image 'dimajix/flowman' and additionally a t
 version of Flowman for direct installation in cases where Docker is not available or when you want to run Flowman 
 in a complex environment with Kerberos. You can find the `tar.gz` file in the directory `flowman-dist/target`
 
+## Skip Tests
+
+In case you don't want to run tests, you can simply append `-DskipTests`
+
+```shell
+mvn clean install -DskipTests
+```
+
+## Skip Docker Image
+
+In case you don't want to build the Docker image (for example when the build itself is done within a Docker container), 
+you can simply append `-Ddockerfile.skip`
+
+```shell
+mvn clean install -Ddockerfile.skip
+```
+
 
 # Custom Builds
+
+Flowman supports various versions of Spark and Hadoop to match your requirements and your environment. By providing
+appropriate build profiles, you can easily create a custom build.
 
 ## Build on Windows
 
@@ -47,12 +66,7 @@ value "core.autocrlf" to "input"
 git config --global core.autocrlf input
 ```
 
-You might also want to skip unittests (the HBase plugin is currently failing under windows)
-
-```shell
-mvn clean install -DskipTests
-```
-    
+   
 It may well be the case that some unittests fail on Windows - don't panic, we focus on Linux systems and ensure that
 the `master` branch really builds clean with all unittests passing on Linux.
 
@@ -86,8 +100,21 @@ using the correct version. The following profiles are available:
 * hadoop-3.1
 * hadoop-3.2
 * CDH-6.3
+* CDP-7.1
 
 With these profiles it is easy to build Flowman to match your environment. 
+
+
+## Building for specific Java Version
+
+If nothing else is set on the command line, Flowman will now build for Java 11 (except when building the profile
+CDH-6.3, where Java 1.8 is used). If you are still stuck on Java 1.8, you can simply override the Java version by 
+specifying the property `java.version`
+
+```shell
+mvn install -Djava.version=1.8
+```
+
 
 ## Building for Open Source Hadoop and Spark
 
@@ -135,16 +162,26 @@ mvn clean install -Pspark-3.1 -Phadoop-3.2
 
 ## Building for Cloudera
 
-The Maven project also contains preconfigured profiles for Cloudera CDH 6.3.
+The Maven project also contains preconfigured profiles for Cloudera CDH 6.3 and for Cloudera CDP 7.1.
 
 ```shell
-mvn clean install -Pspark-2.4 -PCDH-6.3 -DskipTests
+mvn clean install -PCDH-6.3 -DskipTests
 ```
 
+```shell
+mvn clean install -PCDP-7.1 -DskipTests
+```
+
+
 # Coverage Analysis
+
+Flowman also now supports creating a coverage analysis via the scoverage Maven plugin. It is not part of the default
+build and has to be triggered explicitly:
+
 ```shell
 mvn scoverage:report
 ```
+
 
 # Building Documentation
 

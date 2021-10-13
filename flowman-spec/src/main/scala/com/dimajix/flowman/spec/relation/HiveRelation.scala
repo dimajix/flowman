@@ -26,7 +26,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionedRelation
 import com.dimajix.flowman.types.FieldValue
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.spark.sql.SchemaUtils
 
 
 abstract class HiveRelation extends BaseRelation with PartitionedRelation {

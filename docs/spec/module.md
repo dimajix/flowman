@@ -29,6 +29,12 @@ mappings:
 targets:
     ...
 
+tests:
+    ...
+
+templates:
+    ...
+
 jobs:
     ...
 ```
@@ -155,6 +161,8 @@ This defines a mapping called `measurements-raw` and reads data from a relation 
 `measurements-raw`. As you can see, you can reuse the same name inside different sections,
 for example you can use the same name `measurements-raw` as a relation, a mapping and an
 output.
+
+You can read all about mappings in the [Mappings](mapping/index.md) section.
  
 
 ### `targets` Section
@@ -171,6 +179,13 @@ targets:
 ``` 
 This would define one output called `measurements-dump` which will show the first 100 records
 from a mapping called `measurements`.
+
+You can read all about build targets in the [Targets](target/index.md) section.
+
+
+### `tests` Section
+Flowman also provides a built in test framework for creating unit tests for your logic. The test framework is able
+to replace relations and mappings by mocked data, so the tests do not require any external data sources.
 
 
 ### `jobs` Section
@@ -203,3 +218,9 @@ information on the console and the last would call another job called `dump-all`
 
 Every project should contain one job called `main` which is executed whenever the whole
 project is to be executed using the [Flowman CLI](../cli/flowexec.md)
+
+
+### `templates` Section
+
+With Flowman 0.18.0, a new templating mechanism is implemented which helps you to avoid repeating similar
+specification blocks.

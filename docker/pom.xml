@@ -10,7 +10,7 @@
     <parent>
         <groupId>com.dimajix.flowman</groupId>
         <artifactId>flowman-root</artifactId>
-        <version>0.17.1</version>
+        <version>0.18.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -23,6 +23,12 @@
     <profiles>
         <profile>
             <id>CDH-6.3</id>
+            <properties>
+                <docker.base-image.version>2.4.5</docker.base-image.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>CDP-7.1</id>
             <properties>
                 <docker.base-image.version>2.4.5</docker.base-image.version>
             </properties>

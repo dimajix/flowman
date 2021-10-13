@@ -1,11 +1,20 @@
-# DeleteFile Target
+# Delete File Target
+
+## Example
+
+```yaml
+targets:
+  deleteTempFiles:
+    kind: deleteFile
+    location: hdfs:///tmp/my-location
+```
 
 ## Fields
 
 * `kind` **(mandatory)** *(type: string)*: `deleteFile`
 
-* `target` **(mandatory)** *(type: string)*: 
+* `location` **(mandatory)** *(type: string)*: 
 
 
 ## Supported Phases
-* `BUILD`
+* `BUILD` - This will remove the specified location

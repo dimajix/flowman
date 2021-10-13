@@ -67,6 +67,12 @@ More detail on all these items is described in the following sections:
 * [Kerberos](cookbook/kerberos.md) How to use Flowman in Kerberized environments
 
 
+### Plugins
+
+Flowman also provides optional plugins which extend functionality. You can find an overview of all 
+[available plugins](plugins/index.md)
+
+
 ## Table of Contents
 
 ```eval_rst
@@ -81,5 +87,6 @@ More detail on all these items is described in the following sections:
    cli/index
    spec/index
    cookbook/index
+   plugins/index
    config
 ```

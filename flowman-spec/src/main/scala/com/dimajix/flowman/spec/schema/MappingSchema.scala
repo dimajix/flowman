@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@ package com.dimajix.flowman.spec.schema
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-import com.dimajix.flowman.execution.AnalyzingExecution
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.model.AbstractInstance
+import com.dimajix.flowman.model.BaseSchema
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.types.Field
@@ -36,11 +35,11 @@ object MappingSchema {
 case class MappingSchema (
     instanceProperties:Schema.Properties,
     mapping: MappingOutputIdentifier
-) extends AbstractInstance with Schema {
+) extends BaseSchema {
     private lazy val cachedFields = {
-        val executor = new AnalyzingExecution(context)
+        val execution = context.execution
         val instance = context.getMapping(mapping.mapping)
-        executor.describe(instance, mapping.output).fields
+        execution.describe(instance, mapping.output).fields
     }
 
     /**

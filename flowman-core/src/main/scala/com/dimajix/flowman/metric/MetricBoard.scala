@@ -54,7 +54,7 @@ final case class MetricBoard(
         selections.flatMap { sel =>
             // Relabeling should happen has late as possible, since some values might be dynamic
             def relabel(metric:Metric) : Metric = metric match {
-                case gauge:GaugeMetric => FixedGaugeMetric(sel.name, env.evaluate(labels ++ sel.labels, gauge.labels + ("status" -> status.toString)), gauge.value)
+                case gauge:GaugeMetric => FixedGaugeMetric(sel.name, env.evaluate(labels ++ sel.labels, gauge.labels + ("status" -> status)), gauge.value)
                 case _ => throw new IllegalArgumentException(s"Metric of type ${metric.getClass} not supported")
             }
 

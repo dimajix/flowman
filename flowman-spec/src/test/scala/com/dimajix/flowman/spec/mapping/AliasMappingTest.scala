@@ -42,7 +42,7 @@ class AliasMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         mapping shouldBe an[AliasMappingSpec]
 
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
         val instance = context.getMapping(MappingIdentifier("my_alias"))
         instance shouldBe an[AliasMapping]

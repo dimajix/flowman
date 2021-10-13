@@ -33,7 +33,9 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.TemplateIdentifier
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 
@@ -42,33 +44,33 @@ object ScopeContext {
     class Builder(parent:Context) extends AbstractContext.Builder[Builder,ScopeContext](parent, SettingLevel.SCOPE_OVERRIDE) {
         require(parent != null)
 
-        private var mappings = Map[String, Template[Mapping]]()
-        private var relations = Map[String, Template[Relation]]()
-        private var targets = Map[String, Template[Target]]()
-        private var jobs = Map[String, Template[Job]]()
-        private var tests = Map[String, Template[Test]]()
+        private var mappings = Map[String, Prototype[Mapping]]()
+        private var relations = Map[String, Prototype[Relation]]()
+        private var targets = Map[String, Prototype[Target]]()
+        private var jobs = Map[String, Prototype[Job]]()
+        private var tests = Map[String, Prototype[Test]]()
 
-        def withMappings(mappings:Map[String,Template[Mapping]]) : Builder = {
+        def withMappings(mappings:Map[String,Prototype[Mapping]]) : Builder = {
             require(mappings != null)
             this.mappings = this.mappings ++ mappings
             this
         }
-        def withRelations(relations:Map[String,Template[Relation]]) : Builder = {
+        def withRelations(relations:Map[String,Prototype[Relation]]) : Builder = {
             require(relations != null)
             this.relations = this.relations ++ relations
             this
         }
-        def withTargets(targets:Map[String,Template[Target]]) : Builder = {
+        def withTargets(targets:Map[String,Prototype[Target]]) : Builder = {
             require(targets != null)
             this.targets = this.targets ++ targets
             this
         }
-        def withJobs(jobs:Map[String,Template[Job]]) : Builder = {
+        def withJobs(jobs:Map[String,Prototype[Job]]) : Builder = {
             require(jobs != null)
             this.jobs = this.jobs ++ jobs
             this
         }
-        def withTests(tests:Map[String,Template[Test]]) : Builder = {
+        def withTests(tests:Map[String,Prototype[Test]]) : Builder = {
             require(tests != null)
             this.tests = this.tests ++ tests
             this
@@ -76,7 +78,7 @@ object ScopeContext {
 
         override protected val logger = LoggerFactory.getLogger(classOf[ScopeContext])
 
-        override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Template[Connection]]) : ScopeContext = {
+        override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Prototype[Connection]]) : ScopeContext = {
             new ScopeContext(
                 parent,
                 env,
@@ -99,12 +101,12 @@ final class ScopeContext(
     parent:Context,
     fullEnv:Map[String,(Any, Int)],
     fullConfig:Map[String,(String, Int)],
-    scopeMappings:Map[String,Template[Mapping]] = Map(),
-    scopeRelations:Map[String,Template[Relation]] = Map(),
-    scopeTargets:Map[String,Template[Target]] = Map(),
-    scopeConnections:Map[String,Template[Connection]] = Map(),
-    scopeJobs:Map[String,Template[Job]] = Map(),
-    scopeTests:Map[String,Template[Test]] = Map()
+    scopeMappings:Map[String,Prototype[Mapping]] = Map(),
+    scopeRelations:Map[String,Prototype[Relation]] = Map(),
+    scopeTargets:Map[String,Prototype[Target]] = Map(),
+    scopeConnections:Map[String,Prototype[Connection]] = Map(),
+    scopeJobs:Map[String,Prototype[Job]] = Map(),
+    scopeTests:Map[String,Prototype[Test]] = Map()
 ) extends AbstractContext(fullEnv, fullConfig) {
     private val mappings = TrieMap[String,Mapping]()
     private val relations = TrieMap[String,Relation]()
@@ -228,4 +230,13 @@ final class ScopeContext(
             parent.getTest(identifier)
         }
     }
+
+    /**
+     * Returns a specific named [[Template]]. The Test can either be inside this Contexts project or in a different
+     * project within the same namespace
+     *
+     * @param identifier
+     * @return
+     */
+    override def getTemplate(identifier: TemplateIdentifier): Template[_] = parent.getTemplate(identifier)
 }

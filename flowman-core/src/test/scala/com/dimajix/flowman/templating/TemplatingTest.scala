@@ -224,6 +224,11 @@ class TemplatingTest extends AnyFlatSpec with Matchers with LocalTempDir {
         evaluate(s"$$File.read('$file')") should be ("This is a test")
     }
 
+    it should "only warn if some file does not exist" in {
+        evaluate(s"$$File.read('/no_such_file')") should be ("")
+        evaluate(s"$$File.read('')") should be ("")
+    }
+
     "JSON" should "provide some JSON functionality" in {
         val json =
             """

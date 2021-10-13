@@ -25,6 +25,8 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
@@ -38,8 +40,8 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.spark.sql.DataFrameUtils
+import com.dimajix.spark.sql.SchemaUtils
 
 
 case class MockRelation(
@@ -184,7 +186,7 @@ case class MockRelation(
      *
      * @param execution
      */
-    override def migrate(execution: Execution): Unit = {}
+    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {}
 
     /**
      * Returns the schema of the relation, excluding partition columns
@@ -221,8 +223,8 @@ case class MockRelation(
     }
 
     /**
-     * Creates a Spark schema from the list of fields. This mocking implementation will add partition columns, since
-     * these are required for reading.
+     * Creates a Spark schema from the list of fields. This implementation will add partition columns, since
+     * these are part of the specification.
      * @return
      */
     override protected def inputSchema : Option[StructType] = {
@@ -231,11 +233,11 @@ case class MockRelation(
 
     /**
      * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing.
-     * This mocking implementation will add partition columns, since these are required for writing.
+     * This implementation will add partition columns, since these are required for writing.
      * @return
      */
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
-        schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
+        schema.map(s => StructType(s.fields.map(_.catalogField) ++ partitions.map(_.catalogField)))
     }
 }
 

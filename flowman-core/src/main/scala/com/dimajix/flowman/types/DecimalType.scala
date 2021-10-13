@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.types
 
+import scala.math.min
+import scala.math.max
+
 import org.apache.spark.sql.types.DataType
 
 
@@ -24,6 +27,10 @@ object DecimalType {
     val MAX_SCALE = 38
     val SYSTEM_DEFAULT: DecimalType = DecimalType(MAX_PRECISION, 18)
     val USER_DEFAULT: DecimalType = DecimalType(10, 0)
+
+    def bounded(precision: Int, scale: Int): DecimalType = {
+        DecimalType(min(precision, MAX_PRECISION), min(scale, MAX_SCALE))
+    }
 }
 case class DecimalType(precision: Int, scale: Int) extends NumericType[java.math.BigDecimal] {
     protected override def parseRaw(value:String) : java.math.BigDecimal = new java.math.BigDecimal(value)

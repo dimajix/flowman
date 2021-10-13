@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,13 @@ import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
+import com.dimajix.flowman.model.Assertion
+import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.LifecycleResult
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetResult
 
 
 class AnalyzingExecution(context: Context) extends CachingExecution(None, true) {
@@ -73,5 +80,30 @@ class AnalyzingExecution(context: Context) extends CachingExecution(None, true) 
      *
      * @return
      */
-    override def catalog: Catalog = ???
+    override def catalog: Catalog = throw new UnsupportedOperationException
+
+    /**
+     * Executes an assertion from a TestSuite. This method ensures that all inputs are instantiated correctly
+     *
+     * @param assertion
+     * @return
+     */
+    override def assert(assertion: Assertion): AssertionResult = throw new UnsupportedOperationException
+
+    /**
+     * Returns the [[OperationManager]] of this execution, which should be the instance created by the [[Session]]
+     *
+     * @return
+     */
+    override def operations: OperationManager = throw new UnsupportedOperationException
+
+    override def withListeners[T](listeners: Seq[ExecutionListener])(fn: Execution => T): T = throw new UnsupportedOperationException
+
+    override def monitorLifecycle(job: Job, arguments: Map[String, Any], phases: Seq[Phase])(fn: Execution => LifecycleResult): LifecycleResult = throw new UnsupportedOperationException
+
+    override def monitorJob(job: Job, arguments: Map[String, Any], phase: Phase)(fn: Execution => JobResult): JobResult = throw new UnsupportedOperationException
+
+    override def monitorTarget(target: Target, phase: Phase)(fn: Execution => TargetResult): TargetResult = throw new UnsupportedOperationException
+
+    override def monitorAssertion(assertion: Assertion)(fn: Execution => AssertionResult): AssertionResult = throw new UnsupportedOperationException
 }

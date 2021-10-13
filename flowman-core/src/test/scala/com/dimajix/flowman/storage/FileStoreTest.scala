@@ -25,6 +25,7 @@ import com.dimajix.flowman.execution.Session
 class FileStoreTest extends AnyFlatSpec with Matchers {
     "A FileStore" should "list all projects" in {
         val session = Session.builder()
+            .disableSpark()
             .build()
 
         val root = session.fs.local("../examples")

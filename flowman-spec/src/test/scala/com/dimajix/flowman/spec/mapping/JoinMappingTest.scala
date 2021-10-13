@@ -149,7 +149,7 @@ class JoinMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession{
               |  - df2
               |condition: "df1.key = df2.key"
             """.stripMargin
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val mapping = ObjectMapper.parse[MappingSpec](spec)
         mapping shouldBe a[JoinMappingSpec]
 

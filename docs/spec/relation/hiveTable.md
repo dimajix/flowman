@@ -44,7 +44,7 @@ relations:
     # Specify additional serialization/deserialization properties
     serdeProperties:
       separatorChar: "\t"
-    # Specify a schema, which is mandatory for write operations
+    # Specify a schema, which is mandatory for creating the table during CREATE phase
     schema:
       kind: inline
       fields:
@@ -58,15 +58,16 @@ relations:
  * `kind` **(mandatory)** *(string)*: `hiveTable`
  
  * `schema` **(optional)** *(schema)* *(default: empty)*: 
- Explicitly specifies the schema of the JDBC source. Alternatively Flowman will automatically
- try to infer the schema.
+ Explicitly specifies the schema of the Hive table. Alternatively Flowman will automatically use the schema of 
+   the Hive table, if it already exists.
  
  * `description` **(optional)** *(string)* *(default: empty)*:
  A description of the relation. This is purely for informational purpose.
  
  * `options` **(optional)** *(map:string)* *(default: empty)*:
- All key-value pairs specified in *options* are directly passed to Apache spark for reading
- and/or writing to this relation.
+ All key-value pairs specified in *options* are directly passed to Apache Spark for reading
+ and/or writing to this relation. The `options` will not be persisted in the Hive metastore. If that is what you
+ want, then have a closer look at `properties` below.
  
  * `database` **(mandatory)** *(string)*:
  Defines the Hive database where the table is defined. When no database is specified, the
@@ -106,10 +107,11 @@ relations:
  to the `OUTPUT FORMAT` in a `CREATE TABLE` statement.
 
  * `partitions` **(optional)** *(list:partition)* *(default: empty)*:
- Specifies all partition columns. This is used both for creating Hive tables, but also for
- writing and reading to and from them. Therefore if you are working with partitioned Hive
- tables **you have to specify partition columns, even if Flowman is not used for creating
- the table**.
+ Specifies all partition columns. This is used both for creating Hive tables, but also for  writing and reading to and 
+   from them. Therefore if you are working with partitioned Hive  tables **you have to specify partition columns, even 
+   if Flowman is not used for creating the table**. You *may* also include the partition column in the schema, although
+   this is not considered to be best practice. But it turns out to be quite useful in combination with dynamically
+   writing to multiple partitions.
 
  * `properties` **(optional)** *(map:string)* *(default: empty)*:
  Specifies additional properties of the Hive table. This setting is only used
@@ -123,6 +125,33 @@ relations:
  files and can be used to workaround some bugs in the Hive backend.
 
 
+## Automatic Migrations
+Flowman supports some automatic migrations, specifically with the migration strategies `ALTER`, `ALTER_REPLACE` 
+and `REPLACE` (those can be set via the global config variable `flowman.default.relation.migrationStrategy`,
+see [configuration](../../config.md) for more details).
+
+The migration strategy `ALTER` supports the following alterations:
+* Changing nullability
+* Adding new columns
+
+Other changes (like changing the data type or dropping columns) is not supported in the `ALTER` strategy and
+will require either `REPLACE` or `ALTER_REPLACE` - but this will remove all existing data in that table!
+
+
+## Output Modes
+The `hive` relation supports the following output modes in a [`relation` target](../target/relation.md):
+
+|Output Mode |Supported  | Comments|
+--- | --- | ---
+|`errorIfExists`|yes|Throw an error if the Hive table already exists|
+|`ignoreIfExists`|yes|Do nothing if the Hive table already exists|
+|`overwrite`|yes|Overwrite the whole table or the specified partitions. If using dynamic partitioning, the table is truncated first.|
+|`overwrite_dynamic`|yes|Overwrite only the partitions dynamically inferred from the data.|
+|`append`|yes|Append new records to the existing table|
+|`update`|no|-|
+|`merge`|no|-|
+
+
 ## Remarks
 
 When using Hive tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the
@@ -132,10 +161,28 @@ whole lifecycle for you. This means that
 * Hive tables will be truncated or individual partitions will be dropped during `clean` phase
 * Hive tables will be removed during `destroy` phase
 
-### Schema Inference
+### Supported Data Types
+Please note that depending on the used tools accessing the data and the used Spark version, not all data types are
+supported:
+* `VARCHAR(n)` and `CHAR(n)` require Spark 3.1+ to be supported. Older version will fall back to writing `STRING` 
+columns instead
+* `DATE` types might not be supported in older Impala version (if you plan to query Hive tables using Impala)  
 
+### Schema Inference
 Note that Flowman will rely on schema inference in some important situations, like [mocking](mock.md) and generally
 for describing the schema of a relation. This might create unwanted connections to the physical data source,
 particular in case of self-contained tests. To prevent Flowman from creating a connection to the physical data
 source, you simply need to explicitly specify a schema, which will then be used instead of the physical schema
 in all situations where only schema information is required.
+
+
+### Writing to Dynamic Partitions
+Beside explicitly writing to a single Hive partition, Flowman also supports to write to multiple partitions where
+the records need to contain values for the partition columns. In order to activate this feature, you need to set
+the following Spark configuration properties:
+
+```yaml
+config:
+  - hive.exec.dynamic.partition=true  
+  - hive.exec.dynamic.partition.mode=nonstrict
+```

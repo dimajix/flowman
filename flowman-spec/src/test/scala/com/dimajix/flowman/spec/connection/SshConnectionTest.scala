@@ -19,7 +19,7 @@ package com.dimajix.flowman.spec.connection
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.spec.ObjectMapper
 
 
@@ -31,12 +31,11 @@ class SshConnectionTest extends AnyFlatSpec with Matchers {
               |host: my_host
             """.stripMargin
 
-        val session = Session.builder().build()
-
+        val context = RootContext.builder().build()
         val conSpec = ObjectMapper.parse[ConnectionSpec](spec)
         conSpec shouldBe a[SshConnectionSpec]
 
-        val result = conSpec.instantiate(session.context)
+        val result = conSpec.instantiate(context)
         result shouldBe a[SshConnection]
         val ssh = result.asInstanceOf[SshConnection]
         ssh.host should be ("my_host")
@@ -49,11 +48,12 @@ class SshConnectionTest extends AnyFlatSpec with Matchers {
               |kind: sftp
               |host: my_host
             """.stripMargin
-        val session = Session.builder().build()
+
+        val context = RootContext.builder().build()
         val conSpec = ObjectMapper.parse[ConnectionSpec](spec)
         conSpec shouldBe a[SshConnectionSpec]
 
-        val result = conSpec.instantiate(session.context)
+        val result = conSpec.instantiate(context)
         result shouldBe a[SshConnection]
         val ssh = result.asInstanceOf[SshConnection]
         ssh.host should be ("my_host")

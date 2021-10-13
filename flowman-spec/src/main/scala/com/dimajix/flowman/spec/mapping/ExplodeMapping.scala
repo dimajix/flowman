@@ -76,7 +76,8 @@ case class ExplodeMapping(
         require(deps != null)
 
         def isSimpleArray(df:DataFrame) : Boolean = {
-            val field = df.schema.fields.find(_.name.toLowerCase(Locale.ROOT) == array.last.toString.toLowerCase(Locale.ROOT)).get
+            val arrayTail = array.last.toString.toLowerCase(Locale.ROOT)
+            val field = df.schema.fields.find(_.name.toLowerCase(Locale.ROOT) == arrayTail).get
             field.dataType match {
                 case _:st.StructType => false
                 case _ => true
@@ -105,7 +106,8 @@ case class ExplodeMapping(
         require(deps != null)
 
         def isSimpleArray(dt:StructType) : Boolean = {
-            val field = dt.fields.find(_.name.toLowerCase(Locale.ROOT) == array.last.toString.toLowerCase(Locale.ROOT)).get
+            val arrayTail = array.last.toString.toLowerCase(Locale.ROOT)
+            val field = dt.fields.find(_.name.toLowerCase(Locale.ROOT) == arrayTail).get
             field.ftype match {
                 case _:StructType => false
                 case _ => true

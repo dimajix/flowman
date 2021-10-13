@@ -16,10 +16,18 @@
 
 package com.dimajix.flowman.spec.target
 
+import java.nio.file.Paths
+import java.util.UUID
+
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.StructType
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.common.No
+import com.dimajix.common.Unknown
+import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
@@ -34,13 +42,39 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.spec.dataset.DatasetSpec
+import com.dimajix.flowman.spec.dataset.RelationDatasetSpec
 import com.dimajix.flowman.spec.mapping.ProvidedMapping
 import com.dimajix.flowman.spec.relation.NullRelation
 import com.dimajix.spark.testing.LocalSparkSession
 
 
 class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "The RelationTarget" should "work" in {
+    "The RelationTarget" should "support embedded relations" in {
+        val spec =
+            """
+              |kind: relation
+              |relation:
+              |  kind: null
+              |  name: ${target_name}
+              |mapping: some_mapping
+              |""".stripMargin
+        val ds = ObjectMapper.parse[TargetSpec](spec)
+        ds shouldBe a[RelationTargetSpec]
+
+        val session = Session.builder().withEnvironment("target_name", "abc").disableSpark().build()
+        val context = session.context
+
+        val instance = ds.instantiate(context)
+        instance shouldBe a[RelationTarget]
+
+        val rt = instance.asInstanceOf[RelationTarget]
+        rt.relation.name should be ("abc")
+        rt.relation.identifier should be (RelationIdentifier("abc"))
+    }
+
+    it should "provide correct dependencies" in {
         val spec =
             s"""
                |mappings:
@@ -61,7 +95,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                |    relation: some_relation
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val target = context.getTarget(TargetIdentifier("out"))
@@ -80,6 +114,157 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
     }
 
+    it should "work without a mapping" in {
+        val spec =
+            s"""
+               |relations:
+               |  some_relation:
+               |    kind: file
+               |    location: test/data/data_1.csv
+               |    format: csv
+               |
+               |targets:
+               |  out:
+               |    kind: relation
+               |    relation: some_relation
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().disableSpark().build()
+        val context = session.getContext(project)
+
+        val target = context.getTarget(TargetIdentifier("out"))
+        target.kind should be ("relation")
+
+        target.requires(Phase.CREATE) should be (Set())
+        target.requires(Phase.BUILD) should be (Set())
+        target.requires(Phase.VERIFY) should be (Set())
+        target.requires(Phase.TRUNCATE) should be (Set())
+        target.requires(Phase.DESTROY) should be (Set())
+
+        target.provides(Phase.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
+        target.provides(Phase.BUILD) should be (Set())
+        target.provides(Phase.VERIFY) should be (Set())
+        target.provides(Phase.TRUNCATE) should be (Set())
+        target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
+    }
+
+    it should "support the whole lifecycle" in {
+        val inputPath = Paths.get(tempDir.toString, "test_" + UUID.randomUUID().toString)
+        val outputPath = Paths.get(tempDir.toString, "test_" + UUID.randomUUID().toString)
+        val spec =
+            s"""
+               |mappings:
+               |  input:
+               |    kind: read
+               |    relation: input
+               |
+               |relations:
+               |  input:
+               |    kind: file
+               |    location: ${inputPath.toUri}
+               |    format: csv
+               |    schema:
+               |      kind: embedded
+               |      fields:
+               |        - name: int_col
+               |          type: integer
+               |        - name: dbl_col
+               |          type: double
+               |        - name: str_col
+               |          type: string
+               |  output:
+               |    kind: file
+               |    location: ${outputPath.toUri}
+               |    format: csv
+               |    schema:
+               |      kind: embedded
+               |      fields:
+               |        - name: int_col
+               |          type: integer
+               |        - name: dbl_col
+               |          type: double
+               |        - name: str_col
+               |          type: string
+               |
+               |targets:
+               |  out:
+               |    kind: relation
+               |    mapping: input
+               |    relation: output
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .build()
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        val input = context.getRelation(RelationIdentifier("input"))
+        val output = context.getRelation(RelationIdentifier("output"))
+        val target = context.getTarget(TargetIdentifier("out"))
+
+        // == Create =================================================================================================
+        input.exists(execution) should be (No)
+        input.loaded(execution) should be (No)
+        input.create(execution)
+        input.exists(execution) should be (Yes)
+        input.loaded(execution) should be (No)
+
+        // == Write ==================================================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row(null, null, "1"),
+            Row(234, 123.0, "1"),
+            Row(2345, 1234.0, "1"),
+            Row(23456, 12345.0, "2")
+        ))
+        val df = spark.createDataFrame(rdd, StructType(input.fields.map(_.catalogField)))
+        input.write(execution, df)
+        input.exists(execution) should be (Yes)
+        input.loaded(execution) should be (Yes)
+
+        // == Create =================================================================================================
+        output.exists(execution) should be (No)
+        output.loaded(execution) should be (No)
+        target.dirty(execution, Phase.CREATE) should be (Yes)
+        target.execute(execution, Phase.CREATE)
+        output.exists(execution) should be (Yes)
+        output.loaded(execution) should be (No)
+        target.dirty(execution, Phase.CREATE) should be (Unknown)
+        output.read(execution).count() should be (0)
+
+        // == Build ==================================================================================================
+        target.dirty(execution, Phase.BUILD) should be (Yes)
+        target.execute(execution, Phase.BUILD)
+        output.exists(execution) should be (Yes)
+        output.loaded(execution) should be (Yes)
+        target.dirty(execution, Phase.BUILD) should be (No)
+        output.read(execution).count() should be (4)
+
+        // == Verify =================================================================================================
+        target.dirty(execution, Phase.VERIFY) should be (Yes)
+        target.execute(execution, Phase.VERIFY)
+        output.exists(execution) should be (Yes)
+        output.loaded(execution) should be (Yes)
+        target.dirty(execution, Phase.VERIFY) should be (Yes)
+        output.read(execution).count() should be (4)
+
+        // == Truncate ===============================================================================================
+        target.dirty(execution, Phase.TRUNCATE) should be (Yes)
+        target.execute(execution, Phase.TRUNCATE)
+        output.exists(execution) should be (Yes)
+        output.loaded(execution) should be (No)
+        target.dirty(execution, Phase.TRUNCATE) should be (No)
+        output.read(execution).count() should be (0)
+
+        // == Destroy ================================================================================================
+        target.dirty(execution, Phase.DESTROY) should be (Yes)
+        target.execute(execution, Phase.DESTROY)
+        output.exists(execution) should be (No)
+        output.loaded(execution) should be (No)
+        target.dirty(execution, Phase.DESTROY) should be (No)
+    }
+
     it should "count the number of records" in {
         val spark = this.spark
         import spark.implicits._
@@ -95,9 +280,9 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             "some_table"
         )
         val targetGen = (context:Context) => RelationTarget(
-            Target.Properties(context),
-            MappingOutputIdentifier("mapping"),
-            RelationIdentifier("relation")
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
         )
         val project = Project(
             name = "test",

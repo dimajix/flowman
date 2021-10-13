@@ -26,6 +26,7 @@ class OutputModeTest extends AnyFlatSpec with Matchers {
         OutputMode.ofString("overwrite") should be (OutputMode.OVERWRITE)
         OutputMode.ofString("APPEND") should be (OutputMode.APPEND)
         OutputMode.ofString("UPDATE") should be (OutputMode.UPDATE)
+        OutputMode.ofString("UPSERT") should be (OutputMode.UPDATE)
         OutputMode.ofString("IGNORE_IF_EXISTS") should be (OutputMode.IGNORE_IF_EXISTS)
         OutputMode.ofString("ERROR_IF_EXISTS") should be (OutputMode.ERROR_IF_EXISTS)
         a[NullPointerException] shouldBe thrownBy(OutputMode.ofString(null))

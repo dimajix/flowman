@@ -19,7 +19,6 @@ package com.dimajix.flowman.spec.assertion
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
@@ -30,12 +29,7 @@ import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
 object AssertionSpec extends TypeRegistry[AssertionSpec] {
-    class NameResolver extends StdConverter[Map[String, AssertionSpec], Map[String, AssertionSpec]] {
-        override def convert(value: Map[String, AssertionSpec]): Map[String, AssertionSpec] = {
-            value.foreach(kv => kv._2.name = kv._1)
-            value
-        }
-    }
+    final class NameResolver extends NamedSpec.NameResolver[AssertionSpec]
 }
 
 
@@ -43,7 +37,9 @@ object AssertionSpec extends TypeRegistry[AssertionSpec] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "expression", value = classOf[ExpressionAssertionSpec]),
     new JsonSubTypes.Type(name = "columns", value = classOf[ColumnsAssertionSpec]),
-    new JsonSubTypes.Type(name = "sql", value = classOf[SqlAssertionSpec])
+    new JsonSubTypes.Type(name = "schema", value = classOf[SchemaAssertionSpec]),
+    new JsonSubTypes.Type(name = "sql", value = classOf[SqlAssertionSpec]),
+    new JsonSubTypes.Type(name = "uniqueKey", value = classOf[UniqueKeyAssertionSpec])
 ))
 abstract class AssertionSpec  extends NamedSpec[Assertion] {
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
@@ -56,7 +52,7 @@ abstract class AssertionSpec  extends NamedSpec[Assertion] {
             context,
             context.namespace,
             context.project,
-            name,
+            context.evaluate(name),
             kind,
             context.evaluate(labels),
             context.evaluate(description)

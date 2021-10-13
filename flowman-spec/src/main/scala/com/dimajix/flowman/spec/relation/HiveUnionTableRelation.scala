@@ -16,23 +16,29 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.util.Locale
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.catalog.CatalogTable
+import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
+import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
-import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.ExecutionException
+import com.dimajix.flowman.execution.MigrationFailedException
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.execution.UnspecifiedSchemaException
+import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
@@ -41,12 +47,14 @@ import com.dimajix.flowman.model.PartitionedRelation
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.transforms.UnionTransformer
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.spark.sql.catalyst.SqlBuilder
+import com.dimajix.spark.sql.{SchemaUtils => SparkSchemaUtils}
 
 
 object HiveUnionTableRelation {
@@ -82,6 +90,21 @@ case class HiveUnionTableRelation(
     serdeProperties: Map[String, String] = Map()
 )  extends BaseRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[HiveUnionTableRelation])
+    private lazy val tableSchema = schema.map { schema =>
+        EmbeddedSchema(
+            Schema.Properties(
+                schema.context,
+                schema.namespace,
+                schema.project,
+                schema.name,
+                schema.kind,
+                schema.labels
+            ),
+            schema.description,
+            schema.fields.map(com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar),
+            schema.primaryKey
+        )
+    }
 
     def viewIdentifier: TableIdentifier = TableIdentifier(view, viewDatabase)
     def tableIdentifier(version:Int) : TableIdentifier = {
@@ -90,7 +113,7 @@ case class HiveUnionTableRelation(
 
     private def listTables(executor: Execution) : Seq[TableIdentifier] = {
         val catalog = executor.catalog
-        val regex = (TableIdentifier(tablePrefix, tableDatabase).unquotedString + "_[0-9]+").r
+        val regex = (TableIdentifier(tablePrefix, tableDatabase.orElse(Some(catalog.currentDatabase))).unquotedString + "_[0-9]+").r
         catalog.listTables(tableDatabase.getOrElse(catalog.currentDatabase), tablePrefix + "_*")
             .filter { table =>
                 table.unquotedString match {
@@ -200,7 +223,7 @@ case class HiveUnionTableRelation(
         val tableDf = execution.spark.read.table(viewIdentifier.unquotedString)
         val df = filterPartition(tableDf, partitions)
 
-        SchemaUtils.applySchema(df, schema)
+        SparkSchemaUtils.applySchema(df, schema)
     }
 
     /**
@@ -228,19 +251,31 @@ case class HiveUnionTableRelation(
                 val table = catalog.getTable(id)
                 SchemaUtils.isCompatible(df.schema, table.schema)
             }
+            .orElse {
+                // Try to use provided schema instead
+                schema.flatMap { schema =>
+                    val catalogSchema = schema.catalogSchema
+                    allTables.find { id =>
+                        val table = catalog.getTable(id)
+                        SchemaUtils.isCompatible(catalogSchema, table.schema)
+                    }
+                }
+            }
             .getOrElse {
                 logger.error(s"Cannot find appropriate target table for Hive Union Table '$identifier'. Required schema is\n ${df.schema.treeString}")
                 throw new ExecutionException(s"Cannot find appropriate target table for Hive Union Table '$identifier'")
             }
 
         // 3. Drop  partition from all other tables
-        allTables.filter(_ != table).foreach { table =>
-            catalog.dropPartition(table, partitionSpec, ignoreIfNotExists=true)
+        if (mode == OutputMode.OVERWRITE) {
+            allTables.filter(_ != table).foreach { table =>
+                catalog.dropPartition(table, partitionSpec, ignoreIfNotExists = true)
+            }
         }
 
         // 4. Write to that table
         val relation = tableRelation(table, None)
-        relation.write(execution, df, partition, OutputMode.OVERWRITE)
+        relation.write(execution, df, partition, mode)
     }
 
     /**
@@ -281,10 +316,12 @@ case class HiveUnionTableRelation(
         val catalog = execution.catalog
 
         if (this.partitions.isEmpty) {
-            if (catalog.tableExists(viewIdentifier))
-                Unknown
-            else
-                No
+            catalog.tableExists(viewIdentifier) &&
+                listTables(execution).exists { table =>
+                    val location = catalog.getTableLocation(table)
+                    val fs = location.getFileSystem(execution.hadoopConf)
+                    FileUtils.isValidHiveData(fs, location)
+                }
         }
         else {
             val partitionSchema = PartitionSchema(this.partitions)
@@ -321,6 +358,10 @@ case class HiveUnionTableRelation(
 
         if (!ifNotExists || exists(execution) == No) {
             logger.info(s"Creating Hive union relation '$identifier'")
+            if (schema.isEmpty) {
+                throw new UnspecifiedSchemaException(identifier)
+            }
+
             // Create first table using current schema
             val hiveTableRelation = tableRelation(1)
             hiveTableRelation.create(execution, ifNotExists)
@@ -364,11 +405,11 @@ case class HiveUnionTableRelation(
       *
       * @param execution
       */
-    override def migrate(execution: Execution): Unit = {
+    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {
         require(execution != null)
 
         val catalog = execution.catalog
-        val sourceSchema = schema.get.sparkSchema
+        val sourceSchema = schema.get.catalogSchema
         val allTables = listTables(execution)
 
         // 1. Find all tables
@@ -377,10 +418,10 @@ case class HiveUnionTableRelation(
             .find { id =>
                 val table = catalog.getTable(id)
                 val targetSchema = table.dataSchema
-                val targetFieldsByName = targetSchema.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+                val targetFieldsByName = MapIgnoreCase(targetSchema.map(f => (f.name, f)))
 
                 sourceSchema.forall { field =>
-                    targetFieldsByName.get(field.name.toLowerCase(Locale.ROOT))
+                    targetFieldsByName.get(field.name)
                         .forall(tgt => SchemaUtils.isCompatible(field, tgt))
                 }
             }
@@ -391,28 +432,59 @@ case class HiveUnionTableRelation(
                 //  3.1 Migrate table (add new columns)
                 val table = catalog.getTable(id)
                 val targetSchema = table.dataSchema
-                val targetFields = targetSchema.map(f => f.name.toLowerCase(Locale.ROOT)).toSet
+                val targetFields = SetIgnoreCase(targetSchema.map(f => f.name))
 
-                val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name.toLowerCase(Locale.ROOT)))
+                val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name))
                 if (missingFields.nonEmpty) {
-                    val newSchema = StructType(targetSchema.fields ++ missingFields)
-                    logger.info(s"Migrating Hive Union Table relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $id. New schema is\n ${newSchema.treeString}")
-                    catalog.addTableColumns(id, missingFields)
+                    doMigrateAlterTable(execution, table, missingFields, migrationStrategy)
                 }
 
             case None =>
                 // 3. If not found:
                 //  3.2 Create new table
-                val tableSet = allTables.toSet
-                val version = (1 to 100000).find(n => !tableSet.contains(tableIdentifier(n))).get
-                logger.info(s"Migrating Hive Union Table relation '$identifier' by creating new Hive table ${tableIdentifier(version)}")
-                val hiveTableRelation = tableRelation(version)
-                hiveTableRelation.create(execution, false)
+                doMigrateNewTable(execution, allTables, migrationStrategy)
         }
 
         //  4 Always migrate union view, maybe SQL generator changed
         val hiveViewRelation = viewRelationFromTables(execution)
-        hiveViewRelation.migrate(execution)
+        hiveViewRelation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+    }
+
+    private def doMigrate(migrationStrategy:MigrationStrategy)(alter: => Unit) : Unit = {
+        migrationStrategy match {
+            case MigrationStrategy.NEVER =>
+                logger.warn(s"Migration required for HiveUnionTable relation '$identifier' of Hive union table $viewIdentifier, but migrations are disabled.")
+            case MigrationStrategy.FAIL =>
+                logger.error(s"Cannot migrate HiveUnionTable HiveTable '$identifier' of Hive union table $viewIdentifier, since migrations are disabled.")
+                throw new MigrationFailedException(identifier)
+            case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE =>
+                alter
+            case MigrationStrategy.REPLACE =>
+                logger.warn(s"Migration required for HiveUnionTable relation '$identifier' of Hive union table $viewIdentifier with migration strategy ${MigrationStrategy.REPLACE}, altering table instead.")
+                alter
+        }
+    }
+
+    private def doMigrateAlterTable(execution:Execution, table:CatalogTable, rawMissingFields:Seq[StructField], migrationStrategy:MigrationStrategy) : Unit = {
+        doMigrate(migrationStrategy) {
+            val catalog = execution.catalog
+            val id = table.identifier
+            val targetSchema = table.dataSchema
+            val missingFields = HiveTableRelation.cleanupFields(rawMissingFields)
+            val newSchema = StructType(targetSchema.fields ++ missingFields)
+            logger.info(s"Migrating Hive Union Table relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $id. New schema is\n ${newSchema.treeString}")
+            catalog.addTableColumns(id, missingFields)
+        }
+    }
+
+    private def doMigrateNewTable(execution:Execution, allTables:Seq[TableIdentifier], migrationStrategy:MigrationStrategy) : Unit = {
+        doMigrate(migrationStrategy) {
+            val tableSet = allTables.toSet
+            val version = (1 to 100000).find(n => !tableSet.contains(tableIdentifier(n))).get
+            logger.info(s"Migrating Hive Union Table relation '$identifier' by creating new Hive table ${tableIdentifier(version)}")
+            val hiveTableRelation = tableRelation(version)
+            hiveTableRelation.create(execution, false)
+        }
     }
 }
 

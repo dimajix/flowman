@@ -19,10 +19,17 @@ package com.dimajix.flowman.jdbc
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.jdbc.JdbcType
 
+import com.dimajix.flowman.catalog.TableChange
+import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.DropColumn
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.ByteType
 import com.dimajix.flowman.types.DecimalType
 import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.FloatType
 import com.dimajix.flowman.types.ShortType
 import com.dimajix.flowman.types.StringType
 
@@ -37,18 +44,49 @@ object DerbyDialect extends BaseDialect {
       * name is a reserved keyword, or in case it contains characters that require quotes (e.g. space).
       */
     override def quoteIdentifier(colName: String): String = {
-        s"""$colName"""
+        s""""$colName""""
     }
 
-    override def getJdbcType(dt: FieldType): Option[JdbcType] = dt match {
-        case StringType => Option(JdbcType("CLOB", java.sql.Types.CLOB))
-        case ByteType => Option(JdbcType("SMALLINT", java.sql.Types.SMALLINT))
-        case ShortType => Option(JdbcType("SMALLINT", java.sql.Types.SMALLINT))
-        case BooleanType => Option(JdbcType("BOOLEAN", java.sql.Types.BOOLEAN))
+    /**
+     * Quotes a table name including the optional database prefix
+     * @param table
+     * @return
+     */
+    override def quote(table:TableIdentifier) : String = {
+        if (table.database.isDefined)
+            table.database.get + "." + table.table
+        else
+            table.table
+    }
+
+    override def getJdbcType(dt: FieldType): JdbcType = dt match {
+        case StringType => JdbcType("CLOB", java.sql.Types.CLOB)
+        case ByteType => JdbcType("SMALLINT", java.sql.Types.SMALLINT)
+        case ShortType => JdbcType("SMALLINT", java.sql.Types.SMALLINT)
+        case BooleanType => JdbcType("BOOLEAN", java.sql.Types.BOOLEAN)
         // 31 is the maximum precision and 5 is the default scale for a Derby DECIMAL
         case t: DecimalType if t.precision > 31 =>
-            Option(JdbcType("DECIMAL(31,5)", java.sql.Types.DECIMAL))
+            JdbcType("DECIMAL(31,5)", java.sql.Types.DECIMAL)
         case _ => super.getJdbcType(dt)
+    }
+
+    override def getFieldType(sqlType: Int, typeName:String, precision: Int, scale: Int, signed: Boolean): FieldType = {
+        sqlType match {
+            case java.sql.Types.REAL => FloatType
+            case _ => super.getFieldType(sqlType, typeName, precision, scale, signed)
+        }
+    }
+
+    /**
+     * Returns true if the given table supports a specific table change
+     * @param change
+     * @return
+     */
+    override def supportsChange(table:TableIdentifier, change:TableChange) : Boolean = {
+        change match {
+            case _:UpdateColumnType => false
+            case x:TableChange => super.supportsChange(table, change)
+        }
     }
 
     override def statement : SqlStatements = Statements
@@ -62,4 +100,7 @@ class DerbyStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
         else
             s"SELECT * FROM ${dialect.quote(table)} WHERE $condition FETCH FIRST ROW ONLY"
     }
+
+    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String): String =
+        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} SET DATA TYPE $newDataType"
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,13 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.types.StructType
 
 
@@ -82,10 +87,17 @@ abstract class Execution {
     def sparkRunning: Boolean
 
     /**
-      * Returns the table catalog used for managing table instances
+      * Returns the table catalog used for managing Hive table instances. The Catalog will take care of many
+      * technical details, like refreshing additional external catalogs like Impala.
       * @return
       */
     def catalog: Catalog
+
+    /**
+     * Returns the [[OperationManager]] of this execution, which should be the instance created by the [[Session]]
+     * @return
+     */
+    def operations: OperationManager
 
     /**
       * Creates an instance of a mapping, or retrieves it from cache
@@ -112,7 +124,7 @@ abstract class Execution {
      * @param assertion
      * @return
      */
-    def assert(assertion:Assertion) : Seq[AssertionResult] = {
+    def assert(assertion:Assertion) : AssertionResult = {
         val context = assertion.context
         val inputs = assertion.inputs
             .map(id => id -> instantiate(context.getMapping(id.mapping), id.output))
@@ -148,4 +160,54 @@ abstract class Execution {
       * Releases any temporary tables
       */
     def cleanup() : Unit
+
+    /**
+     * Invokes a function with a new Executor that with additional listeners.
+     * @param listeners
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def withListeners[T](listeners:Seq[ExecutionListener])(fn:Execution => T) : T
+
+    /**
+     * Monitors the execution of a lifecycle by calling appropriate listeners at the start and end.
+     * @param job
+     * @param arguments
+     * @param phases
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def monitorLifecycle(job:Job, arguments:Map[String,Any], phases:Seq[Phase])(fn:Execution => LifecycleResult) : LifecycleResult = fn(this)
+
+    /**
+     * Monitors the execution of a job by calling appropriate listeners at the start and end.
+     * @param job
+     * @param arguments
+     * @param phase
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def monitorJob(job:Job, arguments:Map[String,Any], phase:Phase)(fn:Execution => JobResult) : JobResult = fn(this)
+
+    /**
+     * Monitors the execution of a target by calling appropriate listeners at the start and end.
+     * @param target
+     * @param phase
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def monitorTarget(target:Target, phase:Phase)(fn:Execution => TargetResult) : TargetResult = fn(this)
+
+    /**
+     * Monitors the execution of an assertion by calling appropriate listeners at the start and end.
+     * @param assertion
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def monitorAssertion(assertion:Assertion)(fn:Execution => AssertionResult) : AssertionResult = fn(this)
 }

@@ -28,21 +28,21 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 
 
 class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
     "Graph.ofProject" should "work" in {
         val mapping1 = mock[Mapping]
-        val mappingTemplate1 = mock[Template[Mapping]]
+        val mappingTemplate1 = mock[Prototype[Mapping]]
         val mapping2 = mock[Mapping]
-        val mappingTemplate2 = mock[Template[Mapping]]
+        val mappingTemplate2 = mock[Prototype[Mapping]]
         val sourceRelation = mock[Relation]
-        val sourceRelationTemplate = mock[Template[Relation]]
+        val sourceRelationTemplate = mock[Prototype[Relation]]
         val targetRelation = mock[Relation]
-        val targetRelationTemplate = mock[Template[Relation]]
+        val targetRelationTemplate = mock[Prototype[Relation]]
         val target = mock[Target]
-        val targetTemplate = mock[Template[Target]]
+        val targetTemplate = mock[Prototype[Target]]
 
         val project = Project(
             name = "project",
@@ -58,7 +58,7 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
                 "tgt" -> targetRelationTemplate
             )
         )
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         (mappingTemplate1.instantiate _).expects(context).returns(mapping1)

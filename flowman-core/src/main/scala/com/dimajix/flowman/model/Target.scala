@@ -16,12 +16,20 @@
 
 package com.dimajix.flowman.model
 
+import java.time.Instant
+
+import org.apache.spark.sql.DataFrame
+
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.Linker
+import com.dimajix.flowman.metric.LongAccumulatorMetric
+import com.dimajix.flowman.metric.Selector
+import com.dimajix.spark.sql.functions.count_records
 
 /**
   *
@@ -144,11 +152,12 @@ trait Target extends Instance {
     def dirty(execution: Execution, phase: Phase) : Trilean
 
     /**
-      * Executes a specific phase of this target
-      * @param execution
-      * @param phase
-      */
-    def execute(execution: Execution, phase: Phase) : Unit
+     * Executes a specific phase of this target. This method is explicitly allowed to throw an exception, which will
+     * be caught by the [[com.dimajix.flowman.execution.Runner]]
+     * @param execution
+     * @param phase
+     */
+    def execute(execution: Execution, phase: Phase) : TargetResult
 
     /**
      * Creates all known links for building a descriptive graph of the whole data flow
@@ -216,7 +225,6 @@ abstract class BaseTarget extends AbstractInstance with Target {
      */
     override def requires(phase: Phase): Set[ResourceIdentifier] = Set()
 
-
     /**
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
      * then an [[execute]] should update the output, such that the target is not 'dirty' any more.
@@ -228,19 +236,20 @@ abstract class BaseTarget extends AbstractInstance with Target {
     override def dirty(execution: Execution, phase: Phase): Trilean = Unknown
 
     /**
-     * Executes a specific phase of this target
- *
+     * Executes a specific phase of this target. This method is explicitly allowed to throw an exception, which will
+     * be caught by the [[com.dimajix.flowman.execution.Runner]]
+     *
      * @param execution
      * @param phase
      */
-    override def execute(execution: Execution, phase: Phase) : Unit = {
+    override def execute(execution: Execution, phase: Phase) : TargetResult = {
         phase match {
-            case Phase.VALIDATE => validate(execution)
-            case Phase.CREATE => create(execution)
-            case Phase.BUILD => build(execution)
-            case Phase.VERIFY => verify(execution)
-            case Phase.TRUNCATE => truncate(execution)
-            case Phase.DESTROY => destroy(execution)
+            case Phase.VALIDATE => validate2(execution)
+            case Phase.CREATE => create2(execution)
+            case Phase.BUILD => build2(execution)
+            case Phase.VERIFY => verify2(execution)
+            case Phase.TRUNCATE => truncate2(execution)
+            case Phase.DESTROY => destroy2(execution)
         }
     }
 
@@ -251,44 +260,122 @@ abstract class BaseTarget extends AbstractInstance with Target {
     override def link(linker:Linker) : Unit = {}
 
     /**
-     * Performs validation before execution. This might be a good point in time to validate any
-     * assumption on data sources
+     * Performs validation before execution. This might be a good point in time to validate any assumption on data
+     * sources. This method should not throw an exception, instead it should wrap up any exception in the
+     * [[TargetResult]].
      */
-    protected def validate(executor:Execution) : Unit = {}
+    protected def validate2(execution:Execution) : TargetResult = {
+        TargetResult.of(this, Phase.VALIDATE)(validate(execution))
+    }
 
     /**
      * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
-     * will not provide the data itself, it will only create the container
-     * @param executor
+     * will not provide the data itself, it will only create the container. This method should not throw an exception,
+     * instead it should wrap up any exception in the [[TargetResult]].
+     * @param execution
      */
-    protected def create(executor:Execution) : Unit = {}
+    protected def create2(execution:Execution) : TargetResult = {
+        TargetResult.of(this, Phase.CREATE)(create(execution))
+    }
 
     /**
-     * Abstract method which will perform the output operation. All required tables need to be
-     * registered as temporary tables in the Spark session before calling the execute method.
+     * Abstract method which will perform the build phase. This method should not throw an exception,
+     * instead it should wrap up any exception in the [[TargetResult]].
      *
-     * @param executor
+     * @param execution
      */
-    protected def build(executor:Execution) : Unit = {}
+    protected def build2(execution:Execution) : TargetResult = {
+        TargetResult.of(this, Phase.BUILD)(build(execution))
+    }
 
     /**
-     * Performs a verification of the build step or possibly other checks.
+     * Performs a verification of the build step or possibly other checks. This method should not throw an exception,
+     * instead it should wrap up any exception in the [[TargetResult]].
      *
-     * @param executor
+     * @param execution
      */
-    protected def verify(executor: Execution) : Unit = {}
+    protected def verify2(execution: Execution) : TargetResult = {
+        TargetResult.of(this, Phase.VERIFY)(verify(execution))
+    }
 
     /**
-     * Deletes data of a specific target
+     * Deletes data of a specific target. This method should not throw an exception, instead it should wrap up any
+     * exception in the [[TargetResult]].
      *
-     * @param executor
+     * @param execution
      */
-    protected def truncate(executor:Execution) : Unit = {}
+    protected def truncate2(execution:Execution) : TargetResult = {
+        TargetResult.of(this, Phase.TRUNCATE)(truncate(execution))
+    }
 
     /**
      * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
-     * the table definition
-     * @param executor
+     * the table definition. This method should not throw an exception, instead it should wrap up any exception
+     * in the [[TargetResult]].
+     * @param execution
      */
-    protected def destroy(executor:Execution) : Unit = {}
+    protected def destroy2(execution:Execution) : TargetResult = {
+        TargetResult.of(this, Phase.DESTROY)(destroy(execution))
+    }
+
+    /**
+     * Performs validation before execution. This might be a good point in time to validate any assumption on data
+     * sources. This method may throw an exception, which will be caught an wrapped in the final [[TargetResult.]]
+     * @param execution
+     */
+    protected def validate(execution:Execution) : Unit = {}
+
+    /**
+     * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
+     * will not provide the data itself, it will only create the container. This method may throw an exception, which
+     * will be caught an wrapped in the final [[TargetResult.]]
+     * @param execution
+     */
+    protected def create(execution:Execution) : Unit = {}
+
+    /**
+     * Abstract method which will perform the output operation. This method may throw an exception, which will be
+     * caught an wrapped in the final [[TargetResult.]]
+     *
+     * @param execution
+     */
+    protected def build(execution:Execution) : Unit = {}
+
+    /**
+     * Performs a verification of the build step or possibly other checks. . This method may throw an exception,
+     * which will be caught an wrapped in the final [[TargetResult.]]
+     *
+     * @param execution
+     */
+    protected def verify(execution: Execution) : Unit = {}
+
+    /**
+     * Deletes data of a specific target. This method may throw an exception, which will be caught an wrapped in the
+     * final [[TargetResult.]]
+     *
+     * @param execution
+     */
+    protected def truncate(execution:Execution) : Unit = {}
+
+    /**
+     * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
+     * the table definition. This method may throw an exception, which will be caught an wrapped in the final
+     * [[TargetResult.]]
+     * @param execution
+     */
+    protected def destroy(execution:Execution) : Unit = {}
+
+    protected def countRecords(execution:Execution, df:DataFrame) : DataFrame = {
+        val counter = execution.metrics.findMetric(Selector(Some("target_records"), metadata.asMap))
+            .headOption
+            .map(_.asInstanceOf[LongAccumulatorMetric].counter)
+            .getOrElse {
+                val counter = execution.spark.sparkContext.longAccumulator
+                val metric = LongAccumulatorMetric("target_records", metadata.asMap, counter)
+                execution.metrics.addMetric(metric)
+                counter
+            }
+
+        count_records(df, counter)
+    }
 }

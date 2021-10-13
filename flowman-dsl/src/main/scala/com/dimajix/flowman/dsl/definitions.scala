@@ -19,7 +19,7 @@ package com.dimajix.flowman.dsl
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Identifier
 import com.dimajix.flowman.model.Instance
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 
 
 class Field {
@@ -58,7 +58,7 @@ trait Wrapper[T <: Instance, P <: Instance.Properties[P]] {
     def props:Context => P
 }
 
-case class NamedWrapper[T <: Instance, P <: Instance.Properties[P]](name:String, wrapper:Wrapper[T,P]) extends Template[T] {
+case class NamedWrapper[T <: Instance, P <: Instance.Properties[P]](name:String, wrapper:Wrapper[T,P]) extends Prototype[T] {
     def identifier : Identifier[T] = Identifier[T](name, None)
 
     override def instantiate(context: Context): T = {

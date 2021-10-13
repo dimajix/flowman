@@ -87,7 +87,7 @@ class ConformMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         mapping shouldBe an[ConformMappingSpec]
 
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
         val instance = context.getMapping(MappingIdentifier("my_structure"))
         instance shouldBe an[ConformMapping]

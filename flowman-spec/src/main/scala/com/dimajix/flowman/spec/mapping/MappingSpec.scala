@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.dimajix.flowman.spec.mapping
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.databind.util.StdConverter
+import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.common.TypeRegistry
@@ -27,21 +27,18 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.MappingType
+import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
 object MappingSpec extends TypeRegistry[MappingSpec] {
-    class NameResolver extends StdConverter[Map[String, MappingSpec], Map[String, MappingSpec]] {
-        override def convert(value: Map[String, MappingSpec]): Map[String, MappingSpec] = {
-            value.foreach(kv => kv._2.name = kv._1)
-            value
-        }
-    }
+    final class NameResolver extends NamedSpec.NameResolver[MappingSpec]
 }
 
 /**
   * Interface class for specifying a transformation (mapping)
   */
+@JsonTypeResolver(classOf[CustomTypeResolverBuilder])
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "aggregate", value = classOf[AggregateMappingSpec]),
@@ -70,6 +67,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "project", value = classOf[ProjectMappingSpec]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedMappingSpec]),
     new JsonSubTypes.Type(name = "read", value = classOf[ReadRelationMappingSpec]),
+    new JsonSubTypes.Type(name = "readHive", value = classOf[ReadHiveMappingSpec]),
     new JsonSubTypes.Type(name = "readRelation", value = classOf[ReadRelationMappingSpec]),
     new JsonSubTypes.Type(name = "readStream", value = classOf[ReadStreamMappingSpec]),
     new JsonSubTypes.Type(name = "rebalance", value = classOf[RebalanceMappingSpec]),
@@ -110,7 +108,7 @@ abstract class MappingSpec extends NamedSpec[Mapping] {
             context,
             context.namespace,
             context.project,
-            name,
+            context.evaluate(name),
             kind,
             context.evaluate(labels),
             context.evaluate(broadcast).toBoolean,

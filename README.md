@@ -4,6 +4,8 @@
 [![Build Status](https://travis-ci.org/dimajix/flowman.svg?branch=develop)](https://travis-ci.org/dimajix/flowman)
 [![Documentation](https://readthedocs.org/projects/flowman/badge/?version=latest)](https://flowman.readthedocs.io/en/latest/)
 
+[Flowman.io](https://flowman.io)
+
 Flowman is a Spark based ETL program that simplifies the act of writing data transformations.
 The main idea is that users write so called *specifications* in purely declarative YAML files
 instead of writing Spark jobs in Scala or Python. The main advantage of this approach is that
@@ -27,7 +29,8 @@ and schema information) in a single place managed by a single program.
 
 ## Documentation
 
-You can find comprehensive documentation at [Read the Docs](https://flowman.readthedocs.io/en/latest/). 
+You can find the official homepage at [Flowman.io](https://flowman.io)
+ and a comprehensive documentation at [Read the Docs](https://flowman.readthedocs.io/en/latest/). 
 
 
 # Installation

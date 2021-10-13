@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 
 package com.dimajix.flowman.spec.mapping
-
-import java.util.Locale
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
@@ -104,16 +102,7 @@ extends BaseMapping {
 }
 
 
-object ConformMappingSpec {
-    private val typeAliases = Map(
-        "text" -> "string",
-        "long" -> "bigint",
-        "short" -> "tinyint"
-    )
-}
 class ConformMappingSpec extends MappingSpec {
-    import ConformMappingSpec.typeAliases
-
     @JsonProperty(value = "input", required = true) private[spec] var input: String = _
     @JsonProperty(value = "types", required = false) private[spec] var types: Map[String, String] = Map()
     @JsonProperty(value = "naming", required = false) private[spec] var naming: Option[String] = None
@@ -126,13 +115,10 @@ class ConformMappingSpec extends MappingSpec {
       * @return
       */
     override def instantiate(context: Context): Mapping = {
-        val types = this.types.map(kv =>
-            typeAliases.getOrElse(kv._1.toLowerCase(Locale.ROOT), kv._1) -> FieldType.of(context.evaluate(kv._2))
-        )
         ConformMapping(
             instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(input)),
-            types,
+            types.map(kv => kv._1 -> FieldType.of(context.evaluate(kv._2))),
             context.evaluate(naming).filter(_.nonEmpty).map(CaseFormat.ofString),
             context.evaluate(flatten).toBoolean,
             context.evaluate(filter)

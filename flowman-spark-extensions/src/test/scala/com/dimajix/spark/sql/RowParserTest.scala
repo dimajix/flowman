@@ -36,6 +36,12 @@ import com.dimajix.util.DateTimeUtils
 
 
 class RowParserTest extends AnyFlatSpec with Matchers {
+    def localTime(str:String) : Timestamp = new Timestamp(DateTimeUtils.stringToTime(str).getTime)
+    def utcTime(str:String) : Timestamp = {
+        val utcStr = if (str.contains('+')) str else str + "+00:00"
+        new Timestamp(DateTimeUtils.stringToTime(utcStr).getTime)
+    }
+
     "The RowParser" should "work different data types" in {
         val lines = Seq(
             Array("1","lala","2.3","3.4","2019-02-01","2019-02-01T12:34:00.000"),
@@ -56,11 +62,38 @@ class RowParserTest extends AnyFlatSpec with Matchers {
         val result = lines.map(parser.parse)
 
         result should be (Seq(
-            Row(1,"lala",2.3, new java.math.BigDecimal("3.400000"), Date.valueOf("2019-02-01"),new Timestamp(DateTimeUtils.stringToTime("2019-02-01T12:34:00").getTime)),
-            Row(2,"lolo",3.4, new java.math.BigDecimal("4.500000"), Date.valueOf("2019-02-02"),new Timestamp(DateTimeUtils.stringToTime("2019-02-01T12:34:00").getTime)),
+            Row(1,"lala",2.3, new java.math.BigDecimal("3.400000"), Date.valueOf("2019-02-01"),localTime("2019-02-01T12:34:00")),
+            Row(2,"lolo",3.4, new java.math.BigDecimal("4.500000"), Date.valueOf("2019-02-02"),localTime("2019-02-01T12:34:00")),
             Row(null,null,null,null,null,null),
             Row(null,null,null,null,null,null)
         ))
+    }
+
+    it should "support different timestamp formats" in {
+        val lines = Seq(
+            Array("2019-02-01T12:34:01.000000"),        // local time
+            Array("2019-02-01T12:34:02.000"),           // local time
+            Array("2019-02-01T12:34:03"),               // local time
+            Array("2019-02-01T12:34:04.000+00:00"),     // utc time
+            Array("2019-02-01T12:34:05+00:00"),         // utc time
+            Array("2019-02-01 12:34:06")                // local time
+        )
+        val schema = StructType(Seq(
+            StructField("c1", TimestampType)
+        ))
+        val parser = new RowParser(schema, RowParser.Options())
+
+        val result = lines.map(parser.parse)
+
+        result should be (Seq(
+            Row(localTime("2019-02-01T12:34:01")),
+            Row(localTime("2019-02-01T12:34:02")),
+            Row(localTime("2019-02-01T12:34:03")),
+            Row(utcTime("2019-02-01T12:34:04")),
+            Row(utcTime("2019-02-01T12:34:05")),
+            Row(localTime("2019-02-01T12:34:06"))
+        ))
+
     }
 
     it should "accept fewer columns if told so" in {

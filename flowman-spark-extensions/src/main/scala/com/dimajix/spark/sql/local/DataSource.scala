@@ -37,7 +37,7 @@ case class DataSource(spark:SparkSession,
     private lazy val providingClass: Class[_ <: RelationProvider] = lookupDataSource(format)
 
     def read(files:Seq[File]) : DataFrame = {
-        val provider = providingClass.newInstance()
+        val provider = providingClass.getDeclaredConstructor().newInstance()
         val dataSchema = schema.getOrElse(provider.inferSchema(spark, options, files).get)
         val relation = provider.createRelation(spark, options, files, dataSchema)
         relation.read()
@@ -45,7 +45,7 @@ case class DataSource(spark:SparkSession,
 
     def write(file:File, df:DataFrame, mode:SaveMode) : Unit = {
         val files = Seq(file)
-        val provider = providingClass.newInstance()
+        val provider = providingClass.getDeclaredConstructor().newInstance()
         val dataSchema = schema.getOrElse(df.schema)
         val relation = provider.createRelation(spark, options, files, dataSchema)
         relation.write(df, mode)

@@ -25,6 +25,8 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Relation
@@ -34,7 +36,7 @@ import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.model.SimpleResourceIdentifier
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.spark.sql.SchemaUtils
 
 
 class ProvidedRelation(
@@ -140,7 +142,7 @@ class ProvidedRelation(
             throw new UnsupportedOperationException(s"Cannot destroy provided table '$table' in relation '$identifier'")
     }
 
-    override def migrate(execution: Execution): Unit = {}
+    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {}
 }
 
 

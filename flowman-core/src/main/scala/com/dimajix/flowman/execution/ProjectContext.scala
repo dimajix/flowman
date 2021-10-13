@@ -35,7 +35,9 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.TemplateIdentifier
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 
@@ -46,8 +48,8 @@ object ProjectContext {
         require(project != null)
 
         override protected val logger = LoggerFactory.getLogger(classOf[ProjectContext])
-        private var overrideMappings:Map[String, Template[Mapping]] = Map()
-        private var overrideRelations:Map[String, Template[Relation]] = Map()
+        private var overrideMappings:Map[String, Prototype[Mapping]] = Map()
+        private var overrideRelations:Map[String, Prototype[Relation]] = Map()
 
         override def withProfile(profile:Profile) : Builder = {
             withProfile(profile, SettingLevel.PROJECT_PROFILE)
@@ -59,7 +61,7 @@ object ProjectContext {
          * @param mappings
          * @return
          */
-        def overrideMappings(mappings:Map[String,Template[Mapping]]) : Builder = {
+        def overrideMappings(mappings:Map[String,Prototype[Mapping]]) : Builder = {
             overrideMappings = overrideMappings ++ mappings
             this
         }
@@ -69,12 +71,12 @@ object ProjectContext {
          * @param relations
          * @return
          */
-        def overrideRelations(relations:Map[String,Template[Relation]]) : Builder = {
+        def overrideRelations(relations:Map[String,Prototype[Relation]]) : Builder = {
             overrideRelations = overrideRelations ++ relations
             this
         }
 
-        override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Template[Connection]]) : ProjectContext = {
+        override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Prototype[Connection]]) : ProjectContext = {
             new ProjectContext(parent, project, env, config, connections, overrideMappings, overrideRelations)
         }
     }
@@ -94,9 +96,9 @@ final class ProjectContext private[execution](
     _project:Project,
     _env:Map[String,(Any, Int)],
     _config:Map[String,(String, Int)],
-    extraConnections:Map[String, Template[Connection]],
-    overrideMappingTemplates:Map[String, Template[Mapping]],
-    overrideRelationTemplates:Map[String, Template[Relation]]
+    extraConnections:Map[String, Prototype[Connection]],
+    overrideMappingTemplates:Map[String, Prototype[Mapping]],
+    overrideRelationTemplates:Map[String, Prototype[Relation]]
 ) extends AbstractContext(
     _env + ("project" -> ((ProjectWrapper(_project), SettingLevel.SCOPE_OVERRIDE.level))),
     _config)
@@ -109,6 +111,7 @@ final class ProjectContext private[execution](
     private val connections = TrieMap[String,Connection]()
     private val jobs = TrieMap[String,Job]()
     private val tests = TrieMap[String,Test]()
+    private val templates = TrieMap[String,Template[_]]()
 
     /**
       * Returns the namespace associated with this context. Can be null
@@ -302,11 +305,35 @@ final class ProjectContext private[execution](
         }
     }
 
-    private def findOrInstantiate[T](identifier:Identifier[T], templates:Map[String,Template[T]], cache:TrieMap[String,T]) = {
+    /**
+     * Returns a specific named Template. The template can either be inside this Contexts project or in a different
+     * project within the same namespace
+     *
+     * @param identifier
+     * @return
+     */
+    override def getTemplate(identifier: TemplateIdentifier): Template[_] = {
+        require(identifier != null && identifier.nonEmpty)
+
+        if (identifier.project.forall(_ == _project.name)) {
+            templates.getOrElseUpdate(identifier.name,
+                _project.templates
+                    .getOrElse(identifier.name,
+                        throw new NoSuchTemplateException(identifier)
+                    )
+                    .instantiate(this)
+            )
+        }
+        else {
+            parent.getTemplate(identifier)
+        }
+    }
+
+    private def findOrInstantiate[T](identifier:Identifier[T], prototypes:Map[String,Prototype[T]], cache:TrieMap[String,T]) = {
         val name = identifier.name
         cache.get(name)
             .orElse {
-                templates
+                prototypes
                     .get(name)
                     .map(m => cache.getOrElseUpdate(name, m.instantiate(this)))
             }

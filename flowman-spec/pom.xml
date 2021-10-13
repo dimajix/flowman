@@ -9,7 +9,7 @@
     <parent>
         <artifactId>flowman-root</artifactId>
         <groupId>com.dimajix.flowman</groupId>
-        <version>0.17.1</version>
+        <version>0.18.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -27,6 +27,11 @@
     </build>
 
     <dependencies>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-jackson-compat</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-core</artifactId>

@@ -115,6 +115,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
 
                 // Transform any non-fatal exception in a DescribeMappingFailedException
                 try {
+                    logger.info(s"Describing mapping '${mapping.identifier}' for output ${output}")
                     mapping.describe(this, deps, output)
                 }
                 catch {
@@ -124,12 +125,20 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
     }
 
     /**
-     * Releases any temporary tables
+     * Releases all DataFrames and all caches of DataFrames which have been created within this scope. This method
+     * will not cleanup the parent Execution (if any).
      */
     override def cleanup() : Unit = {
-        frameCache.values.foreach(_.values.foreach(_.unpersist(true)))
-        frameCache.clear()
-        schemaCache.clear()
+        // Find out if we are using a shared cache. If that is the case, do not perform a cleanup operation!
+        val sharedCache = parent match {
+            case Some(_:CachingExecution) if !isolated => true
+            case _ => false
+        }
+        if (!sharedCache) {
+            frameCache.values.foreach(_.values.foreach(_.unpersist(true)))
+            frameCache.clear()
+            schemaCache.clear()
+        }
     }
 
     /**

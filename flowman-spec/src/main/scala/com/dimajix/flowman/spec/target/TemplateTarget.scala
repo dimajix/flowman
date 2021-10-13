@@ -28,6 +28,7 @@ import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.splitSettings
 
 
@@ -105,7 +106,7 @@ case class TemplateTarget(
      * @param execution
      * @param phase
      */
-    override def execute(execution: Execution, phase: Phase): Unit = {
+    override def execute(execution: Execution, phase: Phase): TargetResult = {
         targetInstance.execute(execution, phase)
     }
 

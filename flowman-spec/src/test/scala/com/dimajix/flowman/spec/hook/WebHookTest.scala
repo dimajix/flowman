@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.hook
 
+import java.time.Instant
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -26,22 +28,26 @@ import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.TargetResult
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.target.NullTarget
 import com.dimajix.flowman.spec.target.NullTargetSpec
 import com.dimajix.flowman.types.StringType
+import com.dimajix.spark.testing.LocalSparkSession
 
 
-class WebHookTest extends AnyFlatSpec with Matchers {
+class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The WebHook" should "provide a working job API" in {
         val session = Session.builder()
             .withEnvironment("env", "some_environment")
+            .withSparkSession(spark)
             .build()
         val hook = WebHook(
             Hook.Properties(session.context),
@@ -51,14 +57,16 @@ class WebHookTest extends AnyFlatSpec with Matchers {
 
         val job = Job.builder(session.context).build()
         val instance = JobInstance("default", "p1", "j1", Map("arg1" -> "v1"))
+        val execution = session.execution
 
-        val token = hook.startJob(job, instance, Phase.BUILD)
-        hook.finishJob(token, Status.SUCCESS)
+        val token = hook.startJob(execution, job, instance, Phase.BUILD, None)
+        hook.finishJob(execution, token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS, Instant.now()))
     }
 
     it should "provide a working target API" in {
         val session = Session.builder()
             .withEnvironment("env", "some_environment")
+            .withSparkSession(spark)
             .build()
         val hook = new WebHook(
             Hook.Properties(session.context),
@@ -68,9 +76,10 @@ class WebHookTest extends AnyFlatSpec with Matchers {
 
         val target = NullTarget(Target.Properties(session.context, "t1"), Map())
         val instance = TargetInstance("default", "p1", "t1", Map("arg1" -> "v1"))
+        val execution = session.execution
 
-        val token = hook.startTarget(target, instance, Phase.BUILD, None)
-        hook.finishTarget(token, Status.SUCCESS)
+        val token = hook.startTarget(execution, target, instance, Phase.BUILD, None)
+        hook.finishTarget(execution, token, TargetResult(target, instance, Phase.BUILD, Seq(), Status.SUCCESS, None, Instant.now(), Instant.now()))
     }
 
     it should "be deserializable in a namespace" in {
@@ -92,6 +101,7 @@ class WebHookTest extends AnyFlatSpec with Matchers {
         val ns = Namespace.read.string(spec)
         val session = Session.builder()
                 .withNamespace(ns)
+                .withSparkSession(spark)
                 .build()
         val hook = session.hooks.head.instantiate(session.context).asInstanceOf[WebHook]
         hook.jobStart should be (Some("job_start/$job/$target"))
@@ -125,6 +135,7 @@ class WebHookTest extends AnyFlatSpec with Matchers {
               |        targetFailure: target_failure/$job/$target
               |""".stripMargin
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val job = Module.read.string(spec)
             .toProject("project")
@@ -145,7 +156,7 @@ class WebHookTest extends AnyFlatSpec with Matchers {
     }
 
     it should "work inside a namespace and job" in {
-        val namespaceHook = new Template[Hook] {
+        val namespaceHook = new Prototype[Hook] {
             override def instantiate(context: Context): Hook = WebHook(
                 Hook.Properties(context),
                 jobStart = Some("http://0.0.0.0/$env/$job"),
@@ -154,7 +165,7 @@ class WebHookTest extends AnyFlatSpec with Matchers {
                 targetFinish = Some("http://0.0.0.0/$env/$job/$target")
             )
         }
-        val jobHook = new Template[Hook] {
+        val jobHook = new Prototype[Hook] {
             override def instantiate(context: Context): Hook = WebHook(
                 Hook.Properties(context),
                 jobStart = Some("http://0.0.0.0/$env/$name/$arg1"),
@@ -172,6 +183,7 @@ class WebHookTest extends AnyFlatSpec with Matchers {
             targets = Map("t0" -> NullTargetSpec("t0"))
         )
         val session = Session.builder()
+            .withSparkSession(spark)
             .withNamespace(ns)
             .withEnvironment("env", "some_env")
             .withProject(project)

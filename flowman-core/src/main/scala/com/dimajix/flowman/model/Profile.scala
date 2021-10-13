@@ -20,7 +20,7 @@ package com.dimajix.flowman.model
 final case class Profile(
     name:String,
     enabled:Boolean = false,
-    connections:Map[String,Template[Connection]] = Map(),
+    connections:Map[String,Prototype[Connection]] = Map(),
     config:Map[String,String] = Map(),
     environment:Map[String,String] = Map()
 ) {

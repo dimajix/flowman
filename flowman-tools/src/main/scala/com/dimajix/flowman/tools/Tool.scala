@@ -114,6 +114,8 @@ class Tool {
 
         if (disableSpark)
             builder.disableSpark()
+        else
+            builder.enableSpark()
 
         builder.build()
     }

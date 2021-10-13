@@ -150,7 +150,8 @@ case class LocalTarget(
         if (header)
             writer.writeHeaders(cols:_*)
 
-        dfOut.rdd.toLocalIterator.foreach(row =>
+        val dfCount = countRecords(executor, dfOut)
+        dfCount.rdd.toLocalIterator.foreach(row =>
             writer.writeRow((0 until row.size).map(row.getString).toArray)
         )
 

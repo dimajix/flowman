@@ -2,6 +2,12 @@
 The *JSON schema* refers to a JSON schema definition. Note that by the nature of JSON, there is no well defined
 ordering of fields within the definition.
 
+## Plugin
+
+This schema type is provided as part of the [`flowman-json` plugin](../../plugins/json.md), which needs to be enabled in your 
+`namespace.yml` file. See [namespace documentation](../namespace.md) for more information for configuring plugins.
+
+
 ## Example
 ```yaml
 kind: json

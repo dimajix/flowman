@@ -41,7 +41,9 @@ plugins:
   - flowman-mysql
   - flowman-mssqlserver
   - flowman-swagger
+  - flowman-openapi
   - flowman-json
+  - flowman-delta
 
 
 # The 'store' defines how Flowman can reference entities in different projects.

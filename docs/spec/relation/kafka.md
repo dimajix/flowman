@@ -3,6 +3,11 @@
 The Kafak relation is provided via the `flowman-kafka` plugin. It allows you to access Kafka topics both in batch
 and in stream processing, both as sources and as sinks
 
+## Plugin
+
+This relation type is provided as part of the [`flowman-kafka` plugin](../../plugins/kafka.md), which needs to be enabled in your
+`namespace.yml` file. See [namespace documentation](../namespace.md) for more information for configuring plugins.
+
 ## Example
 
 ```yaml
@@ -49,3 +54,29 @@ List of Kafka bootstrap servers to contact. This list does not need to be exhaus
 * `endOffset` **(optional)** *(type: string)* *(default: latest)*:
  When reading from Kafka using batch processing, you can specify the latest offset to process. Per default this is set
   to `latest` which means that messages including the latest one will be processed
+
+
+## Output Modes
+
+### Batch Writing
+The `kafa` relation supports the following output modes in a [`relation` target](../target/relation.md):
+
+|Output Mode |Supported  | Comments|
+--- | --- | ---
+|`errorIfExists`|yes|Throw an error if the Kafka topic already exists|
+|`ignoreIfExists`|yes|Do nothing if the Kafka topic already exists|
+|`overwrite`|no|-|
+|`overwrite_dynamic`|no|-|
+|`append`|yes|Append new records to the existing Kafka topic|
+|`update`|no|-|
+|`merge`|no|-|
+
+### Stream Writing
+In addition to batch writing, the Kafka relation also supports stream writing via the 
+[`stream` target](../target/stream.md) with the following semantics:
+
+|Output Mode |Supported  | Comments|
+--- | --- | ---
+|`append`|yes|Append new records from the streaming process once they don't change any more|
+|`update`|yes|Append records every time they are updated|
+|`complete`|no|-|

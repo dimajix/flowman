@@ -20,7 +20,7 @@ tests:
         kind: mock
         records:
           - "042599999963897201301010000I"
-
+            
   test_aggregation:
     description: "Test all aggregations"
     extends:
@@ -78,7 +78,7 @@ tests:
 * `assertions`: **(optional)** *(type: map:assertion)*:
   This section contains the set of [assertions](../assertion/index.md) to be executed. The test is considered to have
   failed if a single assertion has failed.
-  
+
 
 ## Sub Pages
 ```eval_rst

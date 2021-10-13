@@ -24,6 +24,8 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
@@ -131,7 +133,7 @@ case class NullRelation(
     override def destroy(execution: Execution, ifExists:Boolean=false): Unit = {
         require(execution != null)
     }
-    override def migrate(execution: Execution): Unit = {
+    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {
         require(execution != null)
     }
 
@@ -146,8 +148,8 @@ case class NullRelation(
     }
 
     /**
-     * Creates a Spark schema from the list of fields. This JDBC implementation will add partition columns, since
-     * these are required for reading.
+     * Creates a Spark schema from the list of fields. This implementation will add partition columns, since
+     * these are part of the specification.
      * @return
      */
     override protected def inputSchema : Option[StructType] = {
@@ -156,11 +158,11 @@ case class NullRelation(
 
     /**
      * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing.
-     * This JDBC implementation will add partition columns, since these are required for writing.
+     * This implementation will add partition columns, since these are required for writing.
      * @return
      */
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
-        schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
+        schema.map(s => StructType(s.fields.map(_.catalogField) ++ partitions.map(_.catalogField)))
     }
 }
 

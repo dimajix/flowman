@@ -1,0 +1,3 @@
+#if($result.success) ✓ #else ✘ #end${result.status} assertion '${assertion.name}' (${assertion.description})
+#foreach($test in ${result.children}) #if($test.success)   ✓ passed:#else   ✘ failed:#end ${test.name}
+#end

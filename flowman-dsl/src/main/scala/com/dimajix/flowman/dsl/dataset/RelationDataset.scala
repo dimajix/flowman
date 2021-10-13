@@ -30,7 +30,7 @@ case class RelationDataset (
 ) extends DatasetGen {
     override def instantiate(context: Context): dataset.RelationDataset = {
         dataset.RelationDataset(
-            Dataset.Properties(context),
+            context,
             relation,
             partition
         )

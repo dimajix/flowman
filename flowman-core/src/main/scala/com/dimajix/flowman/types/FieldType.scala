@@ -31,15 +31,32 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import org.apache.spark.sql.types.DataType
 
-import com.dimajix.flowman.types.DoubleType.parse
-
 
 object FieldType {
     private val nonDecimalNameToType = {
-        Seq(NullType, DateType, TimestampType, BinaryType, IntegerType, BooleanType, LongType,
-            DoubleType, FloatType, ShortType, ByteType, StringType, CalendarIntervalType, DurationType)
-            .map(t => t.sqlType -> t).toMap ++
-            Map("byte" -> ByteType, "short" -> ShortType, "long" -> LongType, "int" -> IntegerType, "text" -> StringType)
+        Seq(
+            NullType,
+            DateType,
+            TimestampType,
+            BinaryType,
+            IntegerType,
+            BooleanType,
+            LongType,
+            DoubleType,
+            FloatType,
+            ShortType,
+            ByteType,
+            StringType,
+            CalendarIntervalType,
+            DurationType
+        ).map(t => t.sqlType -> t).toMap ++
+            Map(
+                "byte" -> ByteType,
+                "short" -> ShortType,
+                "long" -> LongType,
+                "int" -> IntegerType,
+                "text" -> StringType
+            )
     }
 
     private val FIXED_DECIMAL = """decimal\(\s*(\d+)\s*,\s*(\-?\d+)\s*\)""".r
@@ -99,13 +116,13 @@ object FieldType {
 abstract class FieldType {
     /**
       * The Spark type to use
-      *
       * @return
       */
     def sparkType : DataType
 
     /**
-      * The type to use in catalogs like Hive etc
+      * The type to use in catalogs like Hive etc. In contrast to [[sparkType]], this method will keep VarChartype
+      * and similar types, which are not used in Spark itself
       */
     def catalogType : DataType = sparkType
 
@@ -261,7 +278,13 @@ abstract class ContainerType extends FieldType {
 }
 
 
-private object FieldTypeDeserializer {
+private class FieldTypeDeserializer(vc:Class[_]) extends StdDeserializer[FieldType](vc) {
+    import java.io.IOException
+
+    def this() = this(null)
+
+    @throws[IOException]
+    @throws[JsonProcessingException]
     def deserialize(jp: JsonParser, ctxt: DeserializationContext): FieldType = {
         jp.getCurrentToken match {
             case JsonToken.VALUE_STRING => {
@@ -278,18 +301,5 @@ private object FieldTypeDeserializer {
             }
             case _ => throw JsonMappingException.from(jp, "Wrong type for FieldType")
         }
-    }
-}
-
-
-private class FieldTypeDeserializer(vc:Class[_]) extends StdDeserializer[FieldType](vc) {
-    import java.io.IOException
-
-    def this() = this(null)
-
-    @throws[IOException]
-    @throws[JsonProcessingException]
-    def deserialize(jp: JsonParser, ctxt: DeserializationContext): FieldType = {
-        FieldTypeDeserializer.deserialize(jp, ctxt)
     }
 }

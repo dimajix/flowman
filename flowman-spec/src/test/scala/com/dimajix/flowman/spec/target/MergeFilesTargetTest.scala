@@ -26,12 +26,13 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Target
+import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.LocalTempDir
 
 
-class MergeFilesTargetTest extends AnyFlatSpec with Matchers with LocalTempDir {
+class MergeFilesTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A MergeFilesTask" should "work" in {
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.context
         val fs = session.fs
@@ -89,7 +90,7 @@ class MergeFilesTargetTest extends AnyFlatSpec with Matchers with LocalTempDir {
     }
 
     it should "support delimiters" in {
-        val session = Session.builder().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
         val context = session.context
         val fs = session.fs

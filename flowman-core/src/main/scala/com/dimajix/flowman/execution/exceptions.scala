@@ -22,8 +22,15 @@ import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.TemplateIdentifier
 import com.dimajix.flowman.model.TestIdentifier
 
+
+class OperationException(
+    val message: String = "",
+    val cause: Throwable = None.orNull
+) extends Exception(message, cause) {
+}
 
 class ExecutionException(
     val message: String = "",
@@ -51,6 +58,8 @@ class NoSuchJobException(val job:JobIdentifier)
     extends ExecutionException(s"Job '$job' not found")
 class NoSuchTestException(val test:TestIdentifier)
     extends ExecutionException(s"Test '$test' not found")
+class NoSuchTemplateException(val template:TemplateIdentifier)
+    extends ExecutionException(s"Template '$template' not found")
 
 class DescribeMappingFailedException(val mapping:MappingIdentifier, cause:Throwable = None.orNull)
     extends ExecutionException(s"Describing mapping $mapping failed", cause)
@@ -63,4 +72,10 @@ class VerificationFailedException(val target:TargetIdentifier, cause:Throwable =
     extends ExecutionException(s"Verification of target $target failed", cause)
 
 class IncompatibleSchemaException(val relation:RelationIdentifier)
-    extends ExecutionException(s"Incompatible schema in relation '$relation")
+    extends ExecutionException(s"Incompatible schema in relation '$relation'")
+
+class UnspecifiedSchemaException(val relation:RelationIdentifier, cause:Throwable = None.orNull)
+    extends ExecutionException(s"No schema specified for '$relation' failed", cause)
+
+class MigrationFailedException(val relation:RelationIdentifier, cause:Throwable = None.orNull)
+    extends ExecutionException(s"Migration of '$relation' failed", cause)

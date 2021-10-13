@@ -67,6 +67,7 @@ object Runner {
         private var profiles:Seq[String] = Seq()
         private var sparkMaster:String = "local[*]"
         private var sparkName:String = ""
+        private var allowHive:Boolean = true
         private lazy val fs = FileSystem(new Configuration(false))
 
         def withNamespace(namespace:URL) : Builder = {
@@ -126,20 +127,48 @@ object Runner {
             this
         }
 
+        /**
+         * Explicitly sets the Spark appliction name.
+         * @param name
+         * @return
+         */
         def withSparkName(name:String) : Builder = {
             this.sparkName = name
             this
         }
 
+        /**
+         * Explicitly set a Spark master. Will use `local[*]` if no master is set
+         * @param master
+         * @return
+         */
         def withSparkMaster(master:String) : Builder = {
             this.sparkMaster = master
+            this
+        }
+
+        /**
+         * Explicitly enable Hive support (although it is already enabled per default)
+         * @return
+         */
+        def enableHive() : Builder = {
+            this.allowHive = true
+            this
+        }
+
+        /**
+         * Disable Hive support (which is enabled per default)
+         * @return
+         */
+        def disableHive() : Builder = {
+            this.allowHive = false
             this
         }
 
         def build() : Runner = {
             if (project == null)
                 throw new IllegalArgumentException("Runner requires a project")
-            new Runner(namespace, project, environment, config, profiles, sparkMaster, sparkName)
+            new Runner(namespace, project, environment, config, profiles, sparkMaster, sparkName, allowHive)
         }
     }
 
@@ -154,7 +183,8 @@ class Runner private(
     config: Map[String,String],
     profiles: Seq[String],
     sparkMaster:String,
-    sparkName:String
+    sparkName:String,
+    enableHive:Boolean
 ) {
     /** Temp directory which can be used for storing test data */
     val tempDir : File = createTempDir()
@@ -173,9 +203,19 @@ class Runner private(
 
     // Spark override properties
     private val sparkOverrides = Map(
-        "javax.jdo.option.ConnectionURL" -> s"jdbc:derby:;databaseName=$metastorePath;create=true",
-        "datanucleus.rdbms.datastoreAdapterClassName" -> "org.datanucleus.store.rdbms.adapter.DerbyAdapter",
-        "hive.metastore.uris" -> "",
+        "spark.hadoop.javax.jdo.option.ConnectionURL" -> s"jdbc:derby:;databaseName=$metastorePath;create=true",
+        "spark.hadoop.datanucleus.rdbms.datastoreAdapterClassName" -> "org.datanucleus.store.rdbms.adapter.DerbyAdapter",
+        "spark.hadoop.datanucleus.schema.autoCreateTables" -> "true",
+        "spark.hadoop.datanucleus.schema.autoCreateAll" -> "true",
+        "spark.hadoop.datanucleus.autoCreateSchema" -> "true",
+        "spark.hadoop.datanucleus.autoCreateColumns" -> "true",
+        "spark.hadoop.datanucleus.autoCreateConstraints" -> "true",
+        "spark.hadoop.datanucleus.autoStartMechanismMode" -> "ignored",
+        "spark.hadoop.hive.metastore.schema.verification.record.version" -> "true",
+        "spark.hadoop.hive.metastore.schema.verification" -> "false",
+        "spark.hadoop.hive.metastore.uris" -> "",
+        "spark.sql.hive.metastore.sharedPrefixes" -> "org.apache.derby",
+        "spark.sql.session.timeZone" -> "UTC",
         SQLConf.CHECKPOINT_LOCATION.key -> streamingCheckpointPath,
         "spark.sql.warehouse.dir" -> warehousePath,
         SQLConf.SHUFFLE_PARTITIONS.key -> "8",
@@ -188,7 +228,7 @@ class Runner private(
             HiveConf.ConfVars.values().flatMap { confvar =>
                 if (confvar.varname.contains("datanucleus") ||
                     confvar.varname.contains("jdo")) {
-                    Some((confvar.varname, confvar.getDefaultExpr()))
+                    Some(("spark.hadoop." + confvar.varname, confvar.getDefaultExpr()))
                 }
                 else {
                     None
@@ -341,10 +381,11 @@ class Runner private(
     private def createSparkSession(conf:SparkConf) : SparkSession = {
         val builder = SparkSession.builder()
             .config(conf)
-        if (features.hiveSupported)
+        if (features.hiveSupported && enableHive)
             builder.enableHiveSupport()
         val spark = builder.getOrCreate()
         val sc = spark.sparkContext
+        sc.setLogLevel("WARN")
         sc.setCheckpointDir(checkpointPath)
 
         // Perform one Spark operation, this help to fix some race conditions with frequent setup/teardown

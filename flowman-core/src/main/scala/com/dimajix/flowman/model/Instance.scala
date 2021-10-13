@@ -19,15 +19,15 @@ package com.dimajix.flowman.model
 import com.dimajix.flowman.execution.Context
 
 
-object Template {
-    implicit def of[T](instance:T) : Template[T] = new Template[T] {
+object Prototype {
+    implicit def of[T](instance:T) : Prototype[T] = new Prototype[T] {
         override def instantiate(context: Context): T = instance
     }
-    implicit def of[T](fn:Context => T) : Template[T] = new Template[T] {
+    implicit def of[T](fn:Context => T) : Prototype[T] = new Prototype[T] {
         override def instantiate(context: Context): T = fn(context)
     }
 }
-trait Template[T] {
+trait Prototype[T] {
     def instantiate(context: Context) : T
 }
 

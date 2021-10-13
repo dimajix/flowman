@@ -24,6 +24,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.BaseAssertion
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
@@ -93,25 +94,30 @@ case class SqlAssertion(
      * @param input
      * @return
      */
-    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Seq[AssertionResult] = {
+    override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): AssertionResult = {
         require(execution != null)
         require(input != null)
 
-        DataFrameUtils.withTempViews(input.map(kv => kv._1.name -> kv._2)) {
-            tests.par.map { test =>
-                // Execute query
-                val sql = test.sql
-                val actual = execution.spark.sql(sql)
+        AssertionResult.of(this) {
+            DataFrameUtils.withTempViews(input.map(kv => kv._1.name -> kv._2)) {
+                tests.par.map { test =>
+                    // Execute query
+                    val sql = test.sql
 
-                val result = DataFrameUtils.diffToStringValues(test.expected, actual)
-                result match {
-                    case Some(diff) =>
-                        logger.error(s"failed query: $sql\n$diff")
-                        AssertionResult(sql, false)
-                    case None =>
-                        AssertionResult(sql, true)
-                }
-            }.toList
+                    AssertionTestResult.of(sql) {
+                        val actual = execution.spark.sql(sql)
+
+                        val result = DataFrameUtils.diffToStringValues(test.expected, actual)
+                        result match {
+                            case Some(diff) =>
+                                logger.error(s"failed query: $sql\n$diff")
+                                false
+                            case None =>
+                                true
+                        }
+                    }
+                }.toList
+            }
         }
     }
 }

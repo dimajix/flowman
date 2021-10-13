@@ -52,7 +52,11 @@ relations:
   An optional list of records to be returned. Note that this list needs to include values for any partition columns
   of the mocked relation. The partition values need to be appended at the end.
 
-  
+
+## Output Modes
+A `mock` relation supports all output modes, each of them simply discarding all records.
+
+
 ## Remarks
 
 Mocking relations is very useful for creating meaningful tests. But you need to take into account one important fact:

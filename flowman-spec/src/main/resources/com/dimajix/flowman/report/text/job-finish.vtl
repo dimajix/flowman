@@ -1,0 +1,11 @@
+======================================================================================================================
+${result.status} ${result.phase} of job '${job.identifier}' (${job.description})
+Execution Metrics:
+#foreach($metric in ${metrics})   ${metric.name} ${metric.labels} ${metric.value}
+#end
+
+Total time: ${result.duration}
+Finished at: ${result.endTime}
+======================================================================================================================
+
+

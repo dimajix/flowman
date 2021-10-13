@@ -63,6 +63,20 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         fileSystem.create(new Path(workingDirectory, "data/2017/06/19/1497833100.i-02255f88.rtb-imp.log")).close()
         fileSystem.create(new Path(workingDirectory, "data/2017/06/19/1497834000.i-02255f88.rtb-imp.log")).close()
         fileSystem.create(new Path(workingDirectory, "data/2017/06/19/1497852000.i-02255f88.rtb-imp.log")).close()
+
+        fileSystem.mkdirs(new Path(workingDirectory, "hive_data/year=2016/month=1/day=3"))
+        fileSystem.create(new Path(workingDirectory, "hive_data/year=2016/month=1/day=3/01.seq")).close()
+        fileSystem.create(new Path(workingDirectory, "hive_data/year=2016/month=1/day=3/02.seq")).close()
+        fileSystem.mkdirs(new Path(workingDirectory, "hive_data/year=2016/month=1/day=4"))
+        fileSystem.mkdirs(new Path(workingDirectory, "hive_data/year=2016/month=1/day=5"))
+        fileSystem.create(new Path(workingDirectory, "hive_data/year=2016/month=1/day=5/01.seq")).close()
+        fileSystem.create(new Path(workingDirectory, "hive_data/year=2016/month=1/day=5/02.seq")).close()
+        fileSystem.mkdirs(new Path(workingDirectory, "hive_data/year=2016/month=2/day=1"))
+        fileSystem.create(new Path(workingDirectory, "hive_data/year=2016/month=2/day=1/01.seq")).close()
+        fileSystem.create(new Path(workingDirectory, "hive_data/year=2016/month=2/day=1/02.seq")).close()
+        fileSystem.create(new Path(workingDirectory, "hive_data/year=2016/month=2/day=1/03.seq")).close()
+        fileSystem.create(new Path(workingDirectory, "hive_data/year=2016/month=2/day=1/04.seq")).close()
+        fileSystem.mkdirs(new Path(workingDirectory, "hive_data/year=2016/month=2/day=2"))
     }
     override def afterAll = {
         fileSystem.delete(workingDirectory, true)
@@ -81,7 +95,6 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "glob intermediate directories" in {
         val collector = FileCollector.builder(hadoopConf)
-            .path(workingDirectory)
             .path(new Path(workingDirectory, "data/2016/0*/0*"))
             .build()
         val files = collector.glob()
@@ -97,7 +110,6 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "not return empty directories when using glob" in {
         val collector = FileCollector.builder(hadoopConf)
-            .path(workingDirectory)
             .path(new Path(workingDirectory, "data/2018/0*/0*"))
             .build()
         val files = collector.glob()
@@ -107,7 +119,6 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "not glob when using collect" in {
         val collector = FileCollector.builder(hadoopConf)
-            .path(workingDirectory)
             .path(new Path(workingDirectory, "data/2016/0*/0*"))
             .build()
         val files = collector.collect()
@@ -119,7 +130,6 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "not return empty directories when using collect" in {
         val collector = FileCollector.builder(hadoopConf)
-            .path(workingDirectory)
             .path(new Path(workingDirectory, "data/2018/0*/0*"))
             .build()
         val files = collector.collect()
@@ -129,9 +139,9 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "support default values" in {
         val collector = FileCollector.builder(hadoopConf)
-            .path(workingDirectory)
             .path(new Path(workingDirectory, "data"))
             .pattern("$year/$month/$day")
+            .partitionBy("year","month","day")
             .defaults(Map("year" -> "*", "month" -> "*", "day" -> "*"))
             .build()
 
@@ -172,6 +182,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(workingDirectory)
             .pattern("data/$ts.format('yyyy/MM/dd')")
+            .partitionBy("ts")
             .build()
         val files = collector.glob(partitions)
 
@@ -193,6 +204,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(workingDirectory)
             .pattern("data/$ts.format('yyyy/MM/dd')")
+            .partitionBy("ts")
             .build()
         val files = collector.glob(partitions)
 
@@ -211,6 +223,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(workingDirectory)
             .pattern("data/$ts.format('yyyy/MM/dd')")
+            .partitionBy("ts")
             .build()
         val files = collector.glob(partitions)
 
@@ -229,6 +242,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(workingDirectory)
             .pattern("data/$ts.format('yyyy/MM/dd')")
+            .partitionBy("ts")
             .build()
         val files = collector.glob(partitions)
 
@@ -248,6 +262,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(workingDirectory)
             .pattern("""$ts.format("'data/'yyyy/MM/dd")""")
+            .partitionBy("ts")
             .build()
         val files = collector.glob(partitions)
 
@@ -267,6 +282,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd/HH'.seq'")""")
+            .partitionBy("ts")
             .build()
         val files = collector.glob(partitions)
 
@@ -285,6 +301,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd/HH'.seq'")""")
+            .partitionBy("ts")
             .build()
         val files = collector.glob(partitions)
 
@@ -305,6 +322,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd/HH'.seq'")""")
+            .partitionBy("ts")
             .build()
         val files = collector.glob(partitions)
 
@@ -326,6 +344,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
+            .partitionBy("ts")
             .build()
 
         val files = collector.glob(partitions)
@@ -350,6 +369,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
+            .partitionBy("ts")
             .build()
 
         val globbedFiles = collector.glob(partitions)
@@ -376,6 +396,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
+            .partitionBy("ts")
             .build()
 
         val globbedFiles = collector.glob(partitions)
@@ -388,5 +409,50 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         collectedFiles.toSeq.sortBy(_.toString) should be(Seq(
             new Path(workingDirectory, "data/2017/06/19/1497831300.i-*.log")
         ))
+    }
+
+    it should "use Hive partition names when to pattern is specified" in {
+        val collector = FileCollector.builder(hadoopConf)
+            .path(new Path(workingDirectory, "hive_data"))
+            .partitionBy("year","month","day")
+            .defaults(Map("year" -> "*", "month" -> "*", "day" -> "*"))
+            .build()
+
+        val files1 = collector.glob(Seq(PartitionSpec(Map("year" -> "2016", "month" -> "1", "day" -> "3"))))
+        files1.toSeq.sortBy(_.toString) should be (Seq(
+            new Path(workingDirectory, "hive_data/year=2016/month=1/day=3")
+        ))
+
+        val files2 = collector.glob(Seq(PartitionSpec(Map("year" -> "2016", "month" -> "1"))))
+        files2.toSeq.sortBy(_.toString) should be (Seq(
+            new Path(workingDirectory, "hive_data/year=2016/month=1/day=3"),
+            new Path(workingDirectory, "hive_data/year=2016/month=1/day=4"),
+            new Path(workingDirectory, "hive_data/year=2016/month=1/day=5")
+        ))
+
+        val files3 = collector.glob(Seq(PartitionSpec(Map("year" -> "2016", "day" -> "1"))))
+        files3.toSeq.sortBy(_.toString) should be (Seq(
+            new Path(workingDirectory, "hive_data/year=2016/month=2/day=1")
+        ))
+
+        val files4 = collector.glob(Seq(PartitionSpec(Map("year" -> "2016"))))
+        files4.toSeq.sortBy(_.toString) should be (Seq(
+            new Path(workingDirectory, "hive_data/year=2016/month=1/day=3"),
+            new Path(workingDirectory, "hive_data/year=2016/month=1/day=4"),
+            new Path(workingDirectory, "hive_data/year=2016/month=1/day=5"),
+            new Path(workingDirectory, "hive_data/year=2016/month=2/day=1"),
+            new Path(workingDirectory, "hive_data/year=2016/month=2/day=2")
+        ))
+    }
+
+    it should "throw an exception if an unknown partition name is specified" in {
+        val collector = FileCollector.builder(hadoopConf)
+            .path(new Path(workingDirectory, "hive_data"))
+            .partitionBy("year","month","day")
+            .defaults(Map("year" -> "*", "month" -> "*", "day" -> "*"))
+            .build()
+
+        an[IllegalArgumentException] should be thrownBy(collector.glob(Seq(PartitionSpec(Map("ts" -> "2016")))))
+        an[IllegalArgumentException] should be thrownBy(collector.collect(Seq(PartitionSpec(Map("ts" -> "2016")))))
     }
 }

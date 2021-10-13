@@ -153,6 +153,7 @@ case class FileTarget(
     override def build(executor: Execution): Unit = {
         require(executor != null)
 
+        logger.info(s"Writing mapping '$this.mapping' to directory '$location'")
         val mapping = context.getMapping(this.mapping.mapping)
         val dfIn = executor.instantiate(mapping, this.mapping.output)
         val table = {
@@ -164,8 +165,8 @@ case class FileTarget(
                 dfIn.coalesce(parallelism)
         }
 
-        logger.info(s"Writing mapping '$mapping' to directory '$location'")
-        table.write
+        val dfCount = countRecords(executor, table)
+        dfCount.write
             .options(options)
             .format(format)
             .mode(mode.batchMode)

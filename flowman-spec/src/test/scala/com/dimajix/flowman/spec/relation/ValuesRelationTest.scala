@@ -22,13 +22,15 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
@@ -59,7 +61,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("fake")).asInstanceOf[ValuesRelation]
@@ -70,6 +72,10 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
         relation.provides should be (Set())
         relation.requires should be (Set())
         relation.identifier should be (RelationIdentifier("project/fake"))
+        relation.fields should be (Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType)
+        ))
         relation.records should be (Seq(
             ArrayRecord("a","12","3"),
             ArrayRecord("cat","","7"),
@@ -90,10 +96,13 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
               |    columns:
               |      str_col: string
               |      int_col: integer
+              |      some_col: string
+              |      other_col: string
+              |      last_col: string
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("fake")).asInstanceOf[ValuesRelation]
@@ -104,6 +113,20 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
         relation.provides should be (Set())
         relation.requires should be (Set())
         relation.identifier should be (RelationIdentifier("project/fake"))
+        relation.columns should be (Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType),
+            Field("some_col", StringType),
+            Field("other_col", StringType),
+            Field("last_col", StringType)
+        ))
+        relation.fields should be (Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType),
+            Field("some_col", StringType),
+            Field("other_col", StringType),
+            Field("last_col", StringType)
+        ))
         relation.records should be (Seq(
             ArrayRecord("a","12","3"),
             ArrayRecord("cat","","7"),
@@ -112,7 +135,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
     }
 
     it should "work with specified records and schema" in {
-        val relationTemplate = mock[Template[Relation]]
+        val relationTemplate = mock[Prototype[Relation]]
 
         val project = Project(
             "my_project",
@@ -149,7 +172,10 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
         relation.requires should be (Set())
         relation.resources(Map()) should be (Set())
         relation.partitions should be (Seq())
-        relation.fields should be (schema.fields)
+        relation.fields should be (Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType)
+        ))
         relation.describe(executor) should be (StructType(schema.fields))
 
         val df = relation.read(executor, None)
@@ -162,7 +188,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
     }
 
     it should "work with specified records and columns" in {
-        val relationTemplate = mock[Template[Relation]]
+        val relationTemplate = mock[Prototype[Relation]]
 
         val project = Project(
             "my_project",
@@ -196,7 +222,10 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
         relation.requires should be (Set())
         relation.resources(Map()) should be (Set())
         relation.partitions should be (Seq())
-        relation.fields should be (schema.fields)
+        relation.fields should be (Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType)
+        ))
         relation.describe(executor) should be (StructType(schema.fields))
 
         val df = relation.read(executor, None)
@@ -209,7 +238,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
     }
 
     it should "support some lifecycle methods" in {
-        val relationTemplate = mock[Template[Relation]]
+        val relationTemplate = mock[Prototype[Relation]]
 
         val project = Project(
             "my_project",

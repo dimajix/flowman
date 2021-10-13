@@ -29,7 +29,7 @@ import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
@@ -45,7 +45,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
               |mappings:
               |  empty:
               |    kind: null
-              |    fields:
+              |    columns:
               |      str_col: string
               |      int_col: integer
               |
@@ -59,7 +59,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("mock")).asInstanceOf[MockMapping]
@@ -78,9 +78,9 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
     }
 
     it should "create empty DataFrames" in {
-        val baseMappingTemplate = mock[Template[Mapping]]
+        val baseMappingTemplate = mock[Prototype[Mapping]]
         val baseMapping = mock[Mapping]
-        val mockMappingTemplate = mock[Template[Mapping]]
+        val mockMappingTemplate = mock[Prototype[Mapping]]
 
         val project = Project(
             "my_project",
@@ -120,6 +120,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
 
         (baseMapping.context _).expects().anyNumberOfTimes().returns(context)
         (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Seq())
+        (baseMapping.identifier _).expects().anyNumberOfTimes().returns(MappingIdentifier("my_project/base"))
         (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"other")
             .anyNumberOfTimes().returns(otherSchema)
         (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"error")
@@ -142,9 +143,9 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
     }
 
     it should "work nicely as an override" in {
-        val baseMappingTemplate = mock[Template[Mapping]]
+        val baseMappingTemplate = mock[Prototype[Mapping]]
         val baseMapping = mock[Mapping]
-        val mockMappingTemplate = mock[Template[Mapping]]
+        val mockMappingTemplate = mock[Prototype[Mapping]]
 
         val project = Project(
             "my_project",
@@ -183,6 +184,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
 
         (baseMapping.context _).expects().anyNumberOfTimes().returns(context)
         (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Seq())
+        (baseMapping.identifier _).expects().anyNumberOfTimes().returns(MappingIdentifier("my_project/base"))
         (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"main")
             .anyNumberOfTimes().returns(schema)
         mapping.describe(executor, Map()) should be (Map("main" -> schema))
@@ -195,9 +197,9 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
     }
 
     it should "work with specified records" in {
-        val baseMappingTemplate = mock[Template[Mapping]]
+        val baseMappingTemplate = mock[Prototype[Mapping]]
         val baseMapping = mock[Mapping]
-        val mockMappingTemplate = mock[Template[Mapping]]
+        val mockMappingTemplate = mock[Prototype[Mapping]]
 
         val project = Project(
             "my_project",
@@ -232,6 +234,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         (baseMapping.context _).expects().anyNumberOfTimes().returns(context)
         (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Seq("main"))
         (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Seq())
+        (baseMapping.identifier _).expects().anyNumberOfTimes().returns(MappingIdentifier("my_project/base"))
         (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"main")
             .anyNumberOfTimes().returns(schema)
 

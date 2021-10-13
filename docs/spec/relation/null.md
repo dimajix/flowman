@@ -30,3 +30,7 @@ relations:
 * `partitions` **(optional)** *(list:partition)* *(default: empty)*:
   Even though a `null` relation does not provide any physical storage, it still optionally 
   provides virtual partition columns.
+
+
+## Output Modes
+A `null` relation supports all output modes, each of them simply discarding all records.

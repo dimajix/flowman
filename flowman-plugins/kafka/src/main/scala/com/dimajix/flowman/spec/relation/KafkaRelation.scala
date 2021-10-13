@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
@@ -30,6 +31,8 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Relation
@@ -37,6 +40,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.annotation.RelationType
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.types
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
@@ -45,7 +49,7 @@ import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.TimestampType
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.spark.sql.SchemaUtils
 
 
 case class KafkaRelation(
@@ -87,21 +91,39 @@ case class KafkaRelation(
       * @return
       */
     override def schema : Option[Schema] = {
-        val fields =
-            Field("key", BinaryType, nullable = true) ::
-            Field("value", BinaryType, nullable = false) ::
-            Field("topic", StringType, nullable = false) ::
-            Field("partition", IntegerType, nullable = false) ::
-            Field("offset", LongType, nullable = false) ::
-            Field("timestamp", TimestampType, nullable = false) ::
-            Field("timestampType", IntegerType, nullable = false) ::
-            Nil
         Some(EmbeddedSchema(
             Schema.Properties(context),
             description,
             fields,
             Nil
         ))
+    }
+
+    /**
+     * Returns a list of fields including the partition columns. This method should not perform any physical schema
+     * inference.
+     *
+     * @return
+     */
+    override def fields: Seq[Field] = Seq(
+        Field("key", BinaryType, nullable = true),
+        Field("value", BinaryType, nullable = false),
+        Field("topic", StringType, nullable = false),
+        Field("partition", IntegerType, nullable = false),
+        Field("offset", LongType, nullable = false),
+        Field("timestamp", TimestampType, nullable = false),
+        Field("timestampType", IntegerType, nullable = false)
+    )
+
+    /**
+     * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
+     * the physical source
+     *
+     * @param execution
+     * @return
+     */
+    override def describe(execution: Execution): types.StructType = {
+        types.StructType(fields)
     }
 
     /**
@@ -189,15 +211,15 @@ case class KafkaRelation(
       * @param df
       * @return
       */
-    override def writeStream(execution: Execution, df: DataFrame, mode: OutputMode, checkpointLocation: Path): StreamingQuery = {
+    override def writeStream(execution: Execution, df: DataFrame, mode: OutputMode, trigger:Trigger, checkpointLocation: Path): StreamingQuery = {
         require(execution != null)
         require(df != null)
 
         val hosts = this.hosts.mkString(",")
-        val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in relation '$name'"))
+        val topic = this.topics.headOption.getOrElse(throw new IllegalArgumentException(s"Missing field 'topic' in Kafka relation '$name'"))
         logger.info(s"Streaming to Kafka topic '$topic' at hosts '$hosts'")
 
-        this.streamWriter(execution, df, "kafka", options, mode.streamMode, checkpointLocation)
+        this.streamWriter(execution, df, "kafka", options, mode.streamMode, trigger, checkpointLocation)
             .option("topic", topic)
             .option("kafka.bootstrap.servers", hosts)
             .start()
@@ -236,7 +258,7 @@ case class KafkaRelation(
       *
       * @param execution
       */
-    override def migrate(execution: Execution): Unit = ???
+    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {}
 
     /**
       * Returns empty schema, so we read in all columns from Kafka

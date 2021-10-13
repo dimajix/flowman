@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import java.time.Instant
+
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -26,7 +28,9 @@ import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.JobWrapper
+import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.NamespaceWrapper
@@ -35,8 +39,10 @@ import com.dimajix.flowman.model.ProjectWrapper
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetInstance
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.TargetResult
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.types.StringType
+import com.dimajix.spark.testing.LocalSparkSession
 
 
 object RunnerJobTest {
@@ -61,7 +67,7 @@ object RunnerJobTest {
 }
 
 
-class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
+class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with LocalSparkSession {
     "The Runner for Jobs" should "correctly handle environments and arguments" in {
         val project = Project(
             name = "default",
@@ -73,6 +79,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
         val session = Session.builder()
             .withEnvironment("global_env", "global")
             .withEnvironment("global_env_to_overwrite", "global")
+            .withSparkSession(spark)
             .build()
         val context = session.getContext(project)
         val job = Job.builder(context)
@@ -115,7 +122,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
                 "job" -> JobWrapper(job),
                 "force" -> false,
                 "dryRun" -> false,
-                "phase" -> "build",
+                "phase" -> "BUILD",
                 "project" -> ProjectWrapper(project),
                 "namespace" -> NamespaceWrapper(None)
             ))
@@ -124,6 +131,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
 
     it should "work" in {
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.context)
             .setName("batch")
@@ -136,6 +144,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
 
     it should "throw exceptions on missing parameters" in {
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.context)
             .setName("batch")
@@ -148,6 +157,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
 
     it should "fail on missing targets" in {
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.context)
             .setName("batch")
@@ -159,13 +169,14 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
     }
 
     it should "catch exceptions during execution" in {
-        val targetTemplate = mock[Template[Target]]
+        val targetTemplate = mock[Prototype[Target]]
         val target = mock[Target]
         val project = Project(
             "project",
             targets = Map("some_target" -> targetTemplate)
         )
         val session = Session.builder()
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.getContext(project))
             .setName("batch")
@@ -204,9 +215,9 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
                 (target.instance _).expects().atLeastOnce().returns(instance)
                 (target.dirty _).expects(*, Phase.CREATE).returns(Yes)
                 (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
-                (target.execute _).expects(*, Phase.CREATE).returning(Unit)
+                (target.execute _).expects(*, Phase.CREATE).returning(TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
             } else {
-                (target.execute _).expects(*, Phase.CREATE).never().returning(Unit)
+                (target.execute _).expects(*, Phase.CREATE).never()
             }
 
             target
@@ -219,7 +230,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
         def genProject(targets:Map[String, Boolean]) : Project = {
             Project(
                 name = "default",
-                targets = targets.map { case(name,toBeExecuted) => name -> Template.of(genTarget(name, toBeExecuted)) }
+                targets = targets.map { case(name,toBeExecuted) => name -> Prototype.of(genTarget(name, toBeExecuted)) }
             )
         }
 
@@ -227,6 +238,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
             val project = genProject(Map("a" -> true, "ax" -> true, "b" -> false))
             val session = Session.builder()
                 .withProject(project)
+                .withSparkSession(spark)
                 .build()
             val job = genJob(session, project)
             val runner = session.runner
@@ -247,18 +259,19 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
             (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
             (target.instance _).expects().atLeastOnce().returns(instance)
             (target.dirty _).expects(*, Phase.CREATE).atLeastOnce().returns(Yes)
-            (target.execute _).expects(*, Phase.CREATE).never().returning(Unit)
+            (target.execute _).expects(*, Phase.CREATE).never()
 
             target
         }
 
         val project = Project(
             name = "default",
-            targets = Map("a" -> Template.of(genTarget("a")))
+            targets = Map("a" -> Prototype.of(genTarget("a")))
         )
 
         val session = Session.builder()
             .withProject(project)
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.getContext(session.project.get))
             .setTargets(project.targets.map(t => TargetIdentifier(t._1)).toSeq)
@@ -288,7 +301,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
                     (target.execute _).expects(*, Phase.CREATE).throwing(new UnsupportedOperationException)
                 }
                 else {
-                    (target.execute _).expects(*, Phase.CREATE).returning(Unit)
+                    (target.execute _).expects(*, Phase.CREATE).returning(TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
                 }
             } else {
                 (target.execute _).expects(*, Phase.CREATE).never()
@@ -306,6 +319,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
         )
         val session = Session.builder()
             .withProject(project)
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.getContext(session.project.get))
             .setTargets(project.targets.map(t => TargetIdentifier(t._1)).toSeq)
@@ -333,7 +347,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
                 (target.execute _).expects(*, Phase.CREATE).throwing(new UnsupportedOperationException)
             }
             else {
-                (target.execute _).expects(*, Phase.CREATE).returning(Unit)
+                (target.execute _).expects(*, Phase.CREATE).returning(TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
             }
 
             target
@@ -348,6 +362,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
         )
         val session = Session.builder()
             .withProject(project)
+            .withSparkSession(spark)
             .build()
         val job = Job.builder(session.getContext(session.project.get))
             .setTargets(project.targets.map(t => TargetIdentifier(t._1)).toSeq)
@@ -358,23 +373,29 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
 
     it should "invoke all hooks (in jobs and namespaces)" in {
         val jobHook = mock[Hook]
+        val jobLifecycleToken = new LifecycleToken {}
         val jobJobToken = new JobToken {}
         val jobTargetToken = new TargetToken {}
-        (jobHook.startJob _).expects( where( (_:Job, _:JobInstance, phase:Phase) => phase == Phase.BUILD) ).returning(jobJobToken)
-        (jobHook.finishJob _).expects(jobJobToken, Status.SUCCESS)
-        (jobHook.startTarget _).expects( where( (_:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(jobJobToken))).returning(jobTargetToken)
-        (jobHook.finishTarget _).expects(jobTargetToken, Status.SUCCESS)
+        (jobHook.startLifecycle _).expects( where( (_:Execution, _:Job, _:JobInstance, phase:Seq[Phase]) => phase == Seq(Phase.BUILD)) ).returning(jobLifecycleToken)
+        (jobHook.finishLifecycle _).expects(where( (_:Execution, token:LifecycleToken, result:LifecycleResult) => token == jobLifecycleToken && result.status == Status.SUCCESS))
+        (jobHook.startJob _).expects( where( (_:Execution, _:Job, _:JobInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(jobLifecycleToken)) ).returning(jobJobToken)
+        (jobHook.finishJob _).expects(where( (_:Execution, token:JobToken, result:JobResult) => token == jobJobToken && result.status == Status.SUCCESS))
+        (jobHook.startTarget _).expects( where( (_:Execution, _:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(jobJobToken))).returning(jobTargetToken)
+        (jobHook.finishTarget _).expects(where( (_:Execution, token:TargetToken, result:TargetResult) => token == jobTargetToken && result.status == Status.SUCCESS))
         val namespaceHook = mock[Hook]
+        val namespaceLifecycleToken = new LifecycleToken {}
         val namespaceJobToken = new JobToken {}
         val namespaceTargetToken = new TargetToken {}
-        (namespaceHook.startJob _).expects( where( (_:Job, _:JobInstance, phase:Phase) => phase == Phase.BUILD) ).returning(namespaceJobToken)
-        (namespaceHook.finishJob _).expects(namespaceJobToken, Status.SUCCESS)
-        (namespaceHook.startTarget _).expects( where( (_:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(namespaceJobToken))).returning(namespaceTargetToken)
-        (namespaceHook.finishTarget _).expects(namespaceTargetToken, Status.SUCCESS)
+        (namespaceHook.startLifecycle _).expects( where( (_:Execution, _:Job, _:JobInstance, phase:Seq[Phase]) => phase == Seq(Phase.BUILD)) ).returning(namespaceLifecycleToken)
+        (namespaceHook.finishLifecycle _).expects(where( (_:Execution, token:LifecycleToken, result:LifecycleResult) => token == namespaceLifecycleToken && result.status == Status.SUCCESS))
+        (namespaceHook.startJob _).expects( where( (_:Execution, _:Job, _:JobInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(namespaceLifecycleToken)) ).returning(namespaceJobToken)
+        (namespaceHook.finishJob _).expects(where( (_:Execution, token:JobToken, result:JobResult) => token == namespaceJobToken && result.status == Status.SUCCESS))
+        (namespaceHook.startTarget _).expects( where( (_:Execution, _:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(namespaceJobToken))).returning(namespaceTargetToken)
+        (namespaceHook.finishTarget _).expects(where( (_:Execution, token:TargetToken, result:TargetResult) => token == namespaceTargetToken && result.status == Status.SUCCESS))
 
         val ns = Namespace(
             name = "default",
-            hooks = Seq(new Template[Hook] {
+            hooks = Seq(new Prototype[Hook] {
                 override def instantiate(context: Context): Hook = namespaceHook
             })
         )
@@ -383,6 +404,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers {
             targets = Map("t0" -> NullTarget("t0", Map("p1" -> "$p1")))
         )
         val session = Session.builder()
+            .withSparkSession(spark)
             .withNamespace(ns)
             .withProject(project)
             .build()

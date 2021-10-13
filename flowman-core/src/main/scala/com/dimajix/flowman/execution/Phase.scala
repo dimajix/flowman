@@ -19,40 +19,27 @@ package com.dimajix.flowman.execution
 import java.util.Locale
 
 
-sealed abstract class Phase  {
-    val value:String
-
-    override def toString: String = value
+sealed abstract class Phase {
+    def lower : String = toString.toLowerCase(Locale.ROOT)
+    def upper : String = toString.toUpperCase(Locale.ROOT)
 }
 
 object Phase {
-    case object VALIDATE extends Phase {
-        override val value = "validate"
-    }
-    case object CREATE extends Phase {
-        override val value = "create"
-    }
-    case object BUILD extends Phase {
-        override val value = "build"
-    }
-    case object VERIFY extends Phase {
-        override val value = "verify"
-    }
-    case object TRUNCATE extends Phase {
-        override val value = "truncate"
-    }
-    case object DESTROY extends Phase {
-        override val value = "destroy"
-    }
+    case object VALIDATE extends Phase
+    case object CREATE extends Phase
+    case object BUILD extends Phase
+    case object VERIFY extends Phase
+    case object TRUNCATE extends Phase
+    case object DESTROY extends Phase
 
     def ofString(status:String) : Phase = {
         status.toLowerCase(Locale.ROOT) match {
-            case VALIDATE.value => VALIDATE
-            case CREATE.value => CREATE
-            case BUILD.value => BUILD
-            case VERIFY.value => VERIFY
-            case TRUNCATE.value => TRUNCATE
-            case DESTROY.value => DESTROY
+            case "validate" => VALIDATE
+            case "create" => CREATE
+            case "build" => BUILD
+            case "verify" => VERIFY
+            case "truncate" => TRUNCATE
+            case "destroy" => DESTROY
             case _ => throw new IllegalArgumentException(s"No phase defined for '$status'")
         }
     }

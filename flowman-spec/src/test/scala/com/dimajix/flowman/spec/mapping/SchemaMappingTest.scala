@@ -31,7 +31,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
-import com.dimajix.flowman.types.SchemaUtils
+import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -46,26 +46,30 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |    columns:
               |      _2: string
               |      _1: string
-            """.stripMargin
+              |      _5: string
+              |      _3: string
+              |      _4: string
+              |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
         project.mappings.size should be (1)
         project.mappings.contains("t1") should be (true)
 
-        val df = spark.createDataFrame(Seq(
-            ("col1", 12),
-            ("col2", 23)
-        ))
-
-        val mapping = context.getMapping(MappingIdentifier("t1"))
+        val mapping = context.getMapping(MappingIdentifier("t1")).asInstanceOf[SchemaMapping]
         mapping.inputs should be (Seq(MappingOutputIdentifier("t0")))
         mapping.output should be (MappingOutputIdentifier("project/t1:main"))
         mapping.identifier should be (MappingIdentifier("project/t1"))
-        mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))
+        mapping.schema should be (None)
+        mapping.columns should be (Seq(
+            Field("_2", ftypes.StringType),
+            Field("_1", ftypes.StringType),
+            Field("_5", ftypes.StringType),
+            Field("_3", ftypes.StringType),
+            Field("_4", ftypes.StringType)
+        ))
     }
 
     it should "work" in {

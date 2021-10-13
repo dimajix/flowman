@@ -20,8 +20,8 @@ package com.dimajix.spark.sql.catalyst
 import java.util.concurrent.atomic.AtomicLong
 
 import scala.collection.mutable.Map
-import scala.util.control.NonFatal
 import scala.language.implicitConversions
+import scala.util.control.NonFatal
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.Dataset
@@ -30,7 +30,6 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.optimizer.CollapseProject
 import org.apache.spark.sql.catalyst.optimizer.CombineFilters
 import org.apache.spark.sql.catalyst.optimizer.CombineUnions
-import org.apache.spark.sql.catalyst.optimizer.PushDownPredicate
 import org.apache.spark.sql.catalyst.optimizer.PushProjectionThroughUnion
 import org.apache.spark.sql.catalyst.optimizer.RemoveRedundantAliases
 import org.apache.spark.sql.catalyst.optimizer.SimplifyCasts
@@ -44,6 +43,8 @@ import org.apache.spark.sql.types.ByteType
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.NullType
+
+import com.dimajix.util.Reflection
 
 
 object SqlBuilder {
@@ -655,6 +656,12 @@ class SqlBuilder private(
   }
 
   object Simplifier extends RuleExecutor[LogicalPlan] {
+    // Figure out the right PushDownPredicate, depending on the Spark version and distribution
+    private val PushDownPredicate = {
+      Reflection.companion[Rule[LogicalPlan]]("org.apache.spark.sql.catalyst.optimizer.PushPredicateThroughNonJoin")
+        .orElse(Reflection.companion[Rule[LogicalPlan]]("org.apache.spark.sql.catalyst.optimizer.PushDownPredicate"))
+        .get
+    }
     override protected def batches: Seq[Batch] = Seq(
       Batch("Simplify plan", FixedPoint(100),
         // It is a good idea to bring projections as near as possible to the inputs, since this

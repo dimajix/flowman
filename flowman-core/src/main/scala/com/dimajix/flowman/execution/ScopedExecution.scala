@@ -25,8 +25,9 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricSystem
 
 
-class ScopedExecution(parent:Execution) extends CachingExecution(Some(parent), true) {
+class ScopedExecution(parent:Execution, isolated:Boolean=true) extends CachingExecution(Some(parent), isolated) {
     override protected val logger = LoggerFactory.getLogger(classOf[ScopedExecution])
+    private val operationsManager = new OperationManager(parent.operations)
 
     /**
      * Returns the FlowmanConf object, which contains all Flowman settings.
@@ -65,4 +66,13 @@ class ScopedExecution(parent:Execution) extends CachingExecution(Some(parent), t
      * @return
      */
     override def catalog: Catalog = parent.catalog
+
+    /**
+     * Returns the [[OperationManager]] of this execution, which should be the instance created by the [[Session]]
+     *
+     * @return
+     */
+    override def operations: OperationManager = operationsManager
+
+    override def withListeners[T](listeners: Seq[ExecutionListener])(fn: Execution => T): T = parent.withListeners(listeners)(fn)
 }

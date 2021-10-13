@@ -32,7 +32,7 @@ import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.model.Template
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spi.LogFilter
 import com.dimajix.flowman.spi.SparkExtension
 import com.dimajix.flowman.spi.UdfProvider
@@ -44,7 +44,7 @@ import com.dimajix.spark.sql.execution.ExtraStrategies
 
 object Session {
     class Builder {
-        private var sparkSession: SparkConf => SparkSession = (_ => null)
+        private var sparkSession: SparkConf => SparkSession = null
         private var sparkMaster:Option[String] = None
         private var sparkName:Option[String] = None
         private var config = Map[String,String]()
@@ -102,6 +102,14 @@ object Session {
             require(value != null)
             config = config.updated(key, value)
             this
+        }
+
+        def withConfig(key:String, value:Boolean) : Builder = {
+            withConfig(key, value.toString)
+        }
+
+        def withConfig(key:String, value:Int) : Builder = {
+            withConfig(key, value.toString)
         }
 
         /**
@@ -186,11 +194,18 @@ object Session {
             this
         }
 
+        def enableSpark() : Builder = {
+            sparkSession = _ => null
+            this
+        }
+
         /**
          * Build the Flowman session and applies all previously specified options
          * @return
          */
         def build() : Session = {
+            if (sparkSession == null)
+                throw new IllegalArgumentException("You need to either enable or disable Spark before creating a Flowman Session.")
             new Session(namespace, project, sparkSession, sparkMaster, sparkName, config, environment, profiles, jars)
         }
     }
@@ -278,31 +293,30 @@ class Session private[execution](
             .setMaster(sparkMaster)
             .setAppName(sparkName)
 
-        Option(_sparkSession)
-            .flatMap(builder => Option(builder(sparkConf)))
-            .map { spark =>
-                logger.info("Creating Spark session using provided builder")
-                // Set all session properties that can be changed in an existing session
-                sparkConf.getAll.foreach { case (key, value) =>
-                    if (!SparkShim.isStaticConf(key)) {
-                        spark.conf.set(key, value)
-                    }
+        val spark = _sparkSession(sparkConf)
+        if (spark != null) {
+            logger.info("Creating Spark session using provided builder")
+            // Set all session properties that can be changed in an existing session
+            sparkConf.getAll.foreach { case (key, value) =>
+                if (!SparkShim.isStaticConf(key)) {
+                    spark.conf.set(key, value)
                 }
-                spark
             }
-            .getOrElse {
-                logger.info("Creating new Spark session")
-                val sessionBuilder = SparkSession.builder()
-                    .config(sparkConf)
-                if (flowmanConf.sparkEnableHive) {
-                    logger.info("Enabling Spark Hive support")
-                    sessionBuilder.enableHiveSupport()
-                }
-                // Apply all session extensions to builder
-                SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder, config))
-                // Create Spark session
-                sessionBuilder.getOrCreate()
+            spark
+        }
+        else {
+            logger.info("Creating new Spark session")
+            val sessionBuilder = SparkSession.builder()
+                .config(sparkConf)
+            if (flowmanConf.sparkEnableHive) {
+                logger.info("Enabling Spark Hive support")
+                sessionBuilder.enableHiveSupport()
             }
+            // Apply all session extensions to builder
+            SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder, config))
+            // Create Spark session
+            sessionBuilder.getOrCreate()
+        }
     }
     private def createSession() : SparkSession = {
         val spark = createOrReuseSession()
@@ -342,6 +356,9 @@ class Session private[execution](
     }
     private var sparkSession:SparkSession = null
 
+    private val rootExecution : RootExecution = new RootExecution(this)
+    private val operationsManager = new OperationManager
+
     private lazy val rootContext : RootContext = {
         def loadProject(name:String) : Option[Project] = {
             Some(store.loadProject(name))
@@ -350,6 +367,7 @@ class Session private[execution](
         val builder = RootContext.builder(_namespace, _profiles)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_config, SettingLevel.GLOBAL_OVERRIDE)
+            .withExecution(rootExecution)
             .withProjectResolver(loadProject)
         _namespace.foreach { ns =>
             _profiles.foreach(p => ns.profiles.get(p).foreach { profile =>
@@ -371,10 +389,6 @@ class Session private[execution](
             logger.info("Using global configuration settings")
             context.config
         }
-    }
-
-    private lazy val rootExecution : RootExecution = {
-        new RootExecution(this)
     }
 
     private lazy val _catalog = {
@@ -437,10 +451,11 @@ class Session private[execution](
     /**
      * Returns the list of all hooks
      */
-    def hooks : Seq[Template[Hook]] = _hooks
+    def hooks : Seq[Prototype[Hook]] = _hooks
 
     /**
-      * Returns an appropriate runner for a specific job
+      * Returns an appropriate runner for a specific job. Note that every invocation will actually create a new
+      * runner.
       *
       * @return
       */
@@ -504,6 +519,13 @@ class Session private[execution](
       * @return
       */
     def execution : Execution = rootExecution
+
+    /**
+     * Returns the [[OperationManager]] of this session, where all background operations and streaming queries are
+     * managed.
+     * @return
+     */
+    def operations : OperationManager = operationsManager
 
     /**
       * Either returns an existing or creates a new project specific context

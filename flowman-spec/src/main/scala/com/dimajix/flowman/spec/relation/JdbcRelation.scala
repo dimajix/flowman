@@ -17,10 +17,13 @@
 package com.dimajix.flowman.spec.relation
 
 import java.sql.Connection
+import java.sql.SQLInvalidAuthorizationSpecException
+import java.sql.SQLNonTransientConnectionException
+import java.sql.SQLNonTransientException
 import java.sql.Statement
-import java.util.Properties
+import java.util.Locale
 
-import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -32,10 +35,21 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
+import com.dimajix.flowman.catalog.TableChange
+import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.DropColumn
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MigrationFailedException
+import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialect
 import com.dimajix.flowman.jdbc.SqlDialects
@@ -51,16 +65,16 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.types.Field
-import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.flowman.types.{StructType => FlowmanStructType}
+import com.dimajix.spark.sql.SchemaUtils
 
 
 case class JdbcRelation(
     override val instanceProperties:Relation.Properties,
-    override val schema:Option[Schema],
-    override val partitions: Seq[PartitionField],
+    override val schema:Option[Schema] = None,
+    override val partitions: Seq[PartitionField] = Seq(),
     connection: ConnectionIdentifier,
     properties: Map[String,String] = Map(),
     database: Option[String] = None,
@@ -109,6 +123,23 @@ case class JdbcRelation(
     }
 
     /**
+     * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
+     * the physical source
+     * @param execution
+     * @return
+     */
+    override def describe(execution:Execution) : FlowmanStructType = {
+        if (schema.nonEmpty) {
+            FlowmanStructType(fields)
+        }
+        else {
+            withConnection { (con, options) =>
+                JdbcUtils.getSchema(con, tableIdentifier, options)
+            }
+        }
+    }
+
+    /**
       * Reads the configured table from the source
       * @param execution
       * @param schema
@@ -120,23 +151,23 @@ case class JdbcRelation(
         require(partitions != null)
 
         // Get Connection
-        val (url,props) = createProperties()
+        val (_,props) = createProperties()
 
         // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
         val reader = execution.spark.read
+            .format("jdbc")
+            .options(props)
 
         val tableDf =
             if (query.nonEmpty) {
-                logger.info(s"Reading data from JDBC source '$identifier' using connection '$connection' using partition values $partitions")
-                reader.format("jdbc")
-                    .option("query", query.get)
-                    .option("url", url)
-                    .options(props.asScala)
+                logger.info(s"Reading JDBC relation '$identifier' with a custom query via connection '$connection' partition $partitions")
+                reader.option(JDBCOptions.JDBC_QUERY_STRING, query.get)
                     .load()
             }
             else {
-                logger.info(s"Reading data from JDBC table $tableIdentifier using connection '$connection' using partition values $partitions")
-                reader.jdbc(url, tableIdentifier.unquotedString, props)
+                logger.info(s"Reading JDBC relation '$identifier' from table $tableIdentifier via connection '$connection' partition $partitions")
+                reader.option(JDBCOptions.JDBC_TABLE_NAME, tableIdentifier.unquotedString)
+                    .load()
             }
 
         // Apply embedded schema, if it is specified. This will remove/cast any columns not present in the
@@ -160,56 +191,53 @@ case class JdbcRelation(
         require(df != null)
         require(partition != null)
 
+        logger.info(s"Writing JDBC relation '$identifier' for table $tableIdentifier using connection '$connection' partition $partition with mode '$mode'")
         if (query.nonEmpty)
             throw new UnsupportedOperationException(s"Cannot write into JDBC relation '$identifier' which is defined by an SQL query")
-
-        logger.info(s"Writing data to JDBC relation '$identifier' for table $tableIdentifier using connection '$connection' with mode '$mode'")
-
-        // Get Connection
-        val (url,props) = createProperties()
-        val dialect = SqlDialects.get(url)
 
         // Apply schema and add partition column
         val dfExt = addPartition(applyOutputSchema(execution, df), partition)
 
         // Write partition into DataBase
         if (partition.isEmpty) {
-            // Write partition into DataBase
-            this.writer(execution, dfExt, "jdbc", Map(), mode.batchMode)
-                .mode(mode.batchMode)
-                .jdbc(url, tableIdentifier.unquotedString, props)
+            doWrite(execution, dfExt, mode.batchMode)
         }
         else {
-            def writePartition(): Unit = {
-                this.writer(execution, dfExt, "jdbc", Map(), SaveMode.Append)
-                    .jdbc(url, tableIdentifier.unquotedString, props)
-            }
-
             mode match {
                 case OutputMode.OVERWRITE =>
-                    withStatement { (statement, _) =>
+                    withStatement { (statement, options) =>
+                        val dialect = SqlDialects.get(options.url)
                         val condition = partitionCondition(dialect, partition)
                         val query = "DELETE FROM " + dialect.quote(tableIdentifier) + " WHERE " + condition
                         statement.executeUpdate(query)
                     }
-                    writePartition()
+                    doWrite(execution, dfExt, SaveMode.Append)
                 case OutputMode.APPEND =>
-                    writePartition()
+                    doWrite(execution, dfExt, SaveMode.Append)
+                case OutputMode.UPDATE =>
+                    ???
                 case OutputMode.IGNORE_IF_EXISTS =>
                     if (!checkPartition(partition)) {
-                        writePartition()
+                        doWrite(execution, dfExt, SaveMode.Append)
                     }
                 case OutputMode.ERROR_IF_EXISTS =>
                     if (!checkPartition(partition)) {
-                        writePartition()
+                        doWrite(execution, dfExt, SaveMode.Append)
                     }
                     else {
                         throw new PartitionAlreadyExistsException(database.getOrElse(""), table.get, partition.mapValues(_.value))
                     }
-                case _ => throw new IllegalArgumentException(s"Unknown save mode: '$mode'. " +
+                case _ => throw new IllegalArgumentException(s"Unsupported save mode: '$mode'. " +
                     "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists'.")
             }
         }
+    }
+    private def doWrite(execution: Execution, df:DataFrame ,saveMode: SaveMode): Unit = {
+        val (_,props) = createProperties()
+        this.writer(execution, df, "jdbc", Map(), saveMode)
+            .options(props)
+            .option(JDBCOptions.JDBC_TABLE_NAME, tableIdentifier.unquotedString)
+            .save()
     }
 
     /**
@@ -288,18 +316,18 @@ case class JdbcRelation(
         if (query.nonEmpty)
             throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' which is defined by an SQL query")
 
-        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier")
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                if (this.schema.isEmpty) {
-                    throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' without a schema")
-                }
                 doCreate(con, options)
             }
         }
     }
 
     private def doCreate(con:Connection, options:JDBCOptions): Unit = {
+        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier with schema\n${this.schema.map(_.treeString).orNull}")
+        if (this.schema.isEmpty) {
+            throw new UnspecifiedSchemaException(identifier)
+        }
         val schema = this.schema.get
         val table = TableDefinition(
             tableIdentifier,
@@ -328,87 +356,136 @@ case class JdbcRelation(
         }
     }
 
-    override def migrate(execution:Execution) : Unit = {
+    override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
         if (query.nonEmpty)
-            throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' which is defined by an SQL query")
+            throw new UnsupportedOperationException(s"Cannot migrate JDBC relation '$identifier' which is defined by an SQL query")
 
         // Only try migration if schema is explicitly specified
         if (schema.isDefined) {
-            // Get Connection
-            val (url, props) = createProperties()
-
             withConnection { (con, options) =>
                 val dialect = SqlDialects.get(options.url)
-                def getJdbcType(field:Field) : String = {
-                    dialect.getJdbcType(field.ftype)
-                        .getOrElse(throw new IllegalArgumentException(s"Can't get JDBC type for field '${field.name}' with type ${field.ftype}"))
-                        .databaseTypeDefinition
-                }
-
                 if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                    // Read schema from database using Spark.
-                    val df = execution.spark.read.jdbc(url, tableIdentifier.unquotedString, props)
-
-                    // Map all data types to JDBC types and sort field names
-                    val dfFields = df.schema.fields.map(field => (field.name, getJdbcType(Field.of(field)), field.nullable)).toSeq.sorted
-                    val curFields = schema.get.fields.map(field => (field.name, getJdbcType(field), field.nullable)).sorted
-
-                    if (dfFields != curFields) {
-                        logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier")
-                        JdbcUtils.dropTable(con, tableIdentifier, options)
-                        doCreate(con, options)
+                    val targetSchema = FlowmanStructType(schema.get.fields)
+                    val currentSchema = JdbcUtils.getSchema(con, tableIdentifier, options)
+                    if (TableChange.requiresMigration(currentSchema, targetSchema, migrationPolicy)) {
+                        doMigration(currentSchema, targetSchema, migrationPolicy, migrationStrategy)
                     }
                 }
             }
         }
     }
 
+    private def doMigration(currentSchema:FlowmanStructType, targetSchema:FlowmanStructType, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+        withConnection { (con, options) =>
+            migrationStrategy match {
+                case MigrationStrategy.NEVER =>
+                    logger.warn(s"Migration required for relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                case MigrationStrategy.FAIL =>
+                    logger.error(s"Cannot migrate relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                    throw new MigrationFailedException(identifier)
+                case MigrationStrategy.ALTER =>
+                    val dialect = SqlDialects.get(options.url)
+                    val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
+                    if (migrations.exists(m => !dialect.supportsChange(tableIdentifier, m))) {
+                        logger.error(s"Cannot migrate relation JDBC relation '$identifier' of table $tableIdentifier, since that would require unsupported changes.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                        throw new MigrationFailedException(identifier)
+                    }
+                    alter(migrations, con, options)
+                case MigrationStrategy.ALTER_REPLACE =>
+                    val dialect = SqlDialects.get(options.url)
+                    val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
+                    if (migrations.forall(m => dialect.supportsChange(tableIdentifier, m))) {
+                        try {
+                            alter(migrations, con, options)
+                        }
+                        catch {
+                            case e: SQLNonTransientConnectionException => throw e
+                            case e: SQLInvalidAuthorizationSpecException => throw e
+                            case _: SQLNonTransientException => recreate(con, options)
+                        }
+                    }
+                    else {
+                        recreate(con, options)
+                    }
+                case MigrationStrategy.REPLACE =>
+                    recreate(con, options)
+            }
+        }
+
+        def alter(migrations:Seq[TableChange], con:Connection, options:JDBCOptions) : Unit = {
+            logger.info(s"Migrating JDBC relation '$identifier', this will alter JDBC table $tableIdentifier. New schema:\n${targetSchema.treeString}")
+            if (migrations.isEmpty)
+                logger.warn("Empty list of migrations - nothing to do")
+
+            try {
+                JdbcUtils.alterTable(con, tableIdentifier, migrations, options)
+            }
+            catch {
+                case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
+            }
+        }
+
+        def recreate(con:Connection, options:JDBCOptions) : Unit = {
+            try {
+                logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier. New schema:\n${targetSchema.treeString}")
+                JdbcUtils.dropTable(con, tableIdentifier, options)
+                doCreate(con, options)
+            }
+            catch {
+                case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
+            }
+        }
+    }
+
     /**
       * Creates a Spark schema from the list of fields. This JDBC implementation will add partition columns, since
-      * these are required for reading.
+      * these will be present while reading.
       * @return
       */
     override protected def inputSchema : Option[StructType] = {
-        schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
+        schema.map { s =>
+            val partitions = this.partitions
+            val partitionFields = SetIgnoreCase(partitions.map(_.name))
+            StructType(s.fields.map(_.sparkField).filter(f => !partitionFields.contains(f.name)) ++ partitions.map(_.sparkField))
+        }
     }
 
     /**
       * Creates a Spark schema from the list of fields. The list is used for output operations, i.e. for writing.
-      * This JDBC implementation will add partition columns, since these are required for writing.
+      * This JDBC implementation will infer the curren schema from the database.
       * @return
       */
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
-        schema.map(s => StructType(s.fields.map(_.sparkField) ++ partitions.map(_.sparkField)))
+        // Always use the current schema
+        withConnection { (con, options) =>
+            Some(JdbcUtils.getSchema(con, tableIdentifier, options).sparkType)
+        }
     }
 
-    private def createProperties() = {
+    private def createProperties() : (String,Map[String,String]) = {
         val connection = jdbcConnection
-        val props = new Properties()
-        props.setProperty("driver", connection.driver)
-        connection.username.foreach(props.setProperty("user", _))
-        connection.password.foreach(props.setProperty("password", _))
+        val props = mutable.Map[String,String]()
+        props.put(JDBCOptions.JDBC_URL, connection.url)
+        props.put(JDBCOptions.JDBC_DRIVER_CLASS, connection.driver)
+        connection.username.foreach(props.put("user", _))
+        connection.password.foreach(props.put("password", _))
 
-        connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
-        properties.foreach(kv => props.setProperty(kv._1, kv._2))
+        connection.properties.foreach(kv => props.put(kv._1, kv._2))
+        properties.foreach(kv => props.put(kv._1, kv._2))
 
-        (jdbcConnection.url,props)
+        (connection.url,props.toMap)
     }
 
     private def withConnection[T](fn:(Connection,JDBCOptions) => T) : T = {
-        val connection = jdbcConnection
-        val props = scala.collection.mutable.Map[String,String]()
-        props.update("driver", connection.driver)
-        connection.username.foreach(props.update("user", _))
-        connection.password.foreach(props.update("password", _))
+        val (url,props) = createProperties()
+        logger.debug(s"Connecting to jdbc source at $url")
 
-        logger.debug("Connecting to jdbc source at {}", connection.url)
-
-        val options = new JDBCOptions(connection.url, tableIdentifier.unquotedString, props.toMap ++ connection.properties ++ properties)
+        val options = new JDBCOptions(url, tableIdentifier.unquotedString, props)
         val conn = try {
             JdbcUtils.createConnection(options)
         } catch {
             case NonFatal(e) =>
-                logger.error(s"Error connecting to jdbc source at ${connection.url}: ${e.getMessage}")
+                logger.error(s"Error connecting to jdbc source at $url: ${e.getMessage}")
                 throw e
         }
 

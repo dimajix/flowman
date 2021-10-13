@@ -22,7 +22,7 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.RootContext
 
 
 class SchemaTest extends AnyFlatSpec with Matchers {
@@ -56,10 +56,10 @@ class SchemaTest extends AnyFlatSpec with Matchers {
               |    type: integer
             """.stripMargin
 
-        val session = Session.builder().build()
+        val context = RootContext.builder().build()
         val result = mapper.readValue(spec, classOf[SchemaSpec])
 
-        val schema = result.instantiate(session.context)
+        val schema = result.instantiate(context)
         schema.treeString should be (
             """root
               | |-- str_col: string (nullable = true)
@@ -80,10 +80,10 @@ class SchemaTest extends AnyFlatSpec with Matchers {
               |      elementType: String
               |""".stripMargin
 
-        val session = Session.builder().build()
+        val context = RootContext.builder().build()
         val result = mapper.readValue(spec, classOf[SchemaSpec])
 
-        val schema = result.instantiate(session.context)
+        val schema = result.instantiate(context)
         schema.treeString should be (
             """root
               | |-- str_col: string (nullable = true)
@@ -111,10 +111,10 @@ class SchemaTest extends AnyFlatSpec with Matchers {
               |          nullable: true
               |""".stripMargin
 
-        val session = Session.builder().build()
+        val context = RootContext.builder().build()
         val result = mapper.readValue(spec, classOf[SchemaSpec])
 
-        val schema = result.instantiate(session.context)
+        val schema = result.instantiate(context)
         schema.treeString should be (
             """root
               | |-- str_col: string (nullable = true)
@@ -146,10 +146,10 @@ class SchemaTest extends AnyFlatSpec with Matchers {
               |          nullable: true
               |""".stripMargin
 
-        val session = Session.builder().build()
+        val context = RootContext.builder().build()
         val result = mapper.readValue(spec, classOf[SchemaSpec])
 
-        val schema = result.instantiate(session.context)
+        val schema = result.instantiate(context)
         schema.treeString should be (
             """root
               | |-- str_col: string (nullable = true)

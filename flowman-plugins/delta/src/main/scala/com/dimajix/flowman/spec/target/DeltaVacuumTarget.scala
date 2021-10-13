@@ -35,7 +35,6 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.spec.annotation.TargetType
 import com.dimajix.flowman.spec.relation.DeltaFileRelation
-import com.dimajix.flowman.spec.relation.DeltaRelation
 import com.dimajix.flowman.spec.relation.DeltaTableRelation
 import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 
@@ -84,11 +83,10 @@ case class DeltaVacuumTarget(
      * @param execution
      */
     override protected def build(execution: Execution): Unit = {
-        val rel = relation.value.asInstanceOf[DeltaRelation]
-        val deltaTable = rel match {
+        val deltaTable = relation.value match {
             case table:DeltaTableRelation => DeltaTable.forName(execution.spark, TableIdentifier(table.table, Some(table.database)).toString())
             case files:DeltaFileRelation => DeltaTable.forPath(execution.spark, files.location.toString)
-            case _ => throw new UnsupportedOperationException("DeltaVacuumTarget only supports relations of type deltaTable and deltaFiles")
+            case rel:Relation => throw new IllegalArgumentException(s"DeltaVacuumTarget only supports relations of type deltaTable and deltaFiles, but it was given relation '${rel.identifier}' of kind '${rel.kind}'")
         }
 
         retentionTime match {

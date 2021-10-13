@@ -1,4 +1,4 @@
-# Version 0.18.0
+# Version 0.18.0 - 2021-10-13
 
 * Improve automatic schema migration for Hive and JDBC relations
 * Improve support of CHAR(n) and VARCHAR(n) types. Those types will now be propagates to Hive with newer Spark versions

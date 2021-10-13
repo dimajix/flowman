@@ -38,6 +38,7 @@ targets:
     mapping: stations_mapping
     relation:
       kind: file
+      name: stations-relation
       format: parquet
       location: "$basedir/stations/"
       schema:

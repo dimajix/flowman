@@ -102,14 +102,14 @@ abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation w
     private def doMigration(execution: Execution, table:DeltaTableV2, currentSchema:com.dimajix.flowman.types.StructType, targetSchema:com.dimajix.flowman.types.StructType, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
-                logger.warn(s"Migration required for Delta relation '$identifier', but migrations are disabled.")
+                logger.warn(s"Migration required for Delta relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
             case MigrationStrategy.FAIL =>
-                logger.error(s"Cannot migrate Delta relation '$identifier', since migrations are disabled")
+                logger.error(s"Cannot migrate Delta relation '$identifier', since migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
                 throw new MigrationFailedException(identifier)
             case MigrationStrategy.ALTER =>
                 val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
                 if (migrations.exists(m => !supported(m))) {
-                    logger.error(s"Cannot migrate Delta relation '$identifier', since that would require unsupported changes")
+                    logger.error(s"Cannot migrate Delta relation '$identifier', since that would require unsupported changes.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
                     throw new MigrationFailedException(identifier)
                 }
                 alter(migrations)

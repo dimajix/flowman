@@ -93,7 +93,7 @@ final class JobSpec extends NamedSpec[Job] {
             context,
             context.namespace,
             context.project,
-            name,
+            context.evaluate(name),
             context.evaluate(labels),
             description.map(context.evaluate)
         )

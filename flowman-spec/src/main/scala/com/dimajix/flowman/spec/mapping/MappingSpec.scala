@@ -108,7 +108,7 @@ abstract class MappingSpec extends NamedSpec[Mapping] {
             context,
             context.namespace,
             context.project,
-            name,
+            context.evaluate(name),
             kind,
             context.evaluate(labels),
             context.evaluate(broadcast).toBoolean,

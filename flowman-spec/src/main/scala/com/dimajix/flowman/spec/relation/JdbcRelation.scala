@@ -379,15 +379,15 @@ case class JdbcRelation(
         withConnection { (con, options) =>
             migrationStrategy match {
                 case MigrationStrategy.NEVER =>
-                    logger.warn(s"Migration required for relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}\nNew schema:\n${targetSchema.treeString}")
+                    logger.warn(s"Migration required for relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
                 case MigrationStrategy.FAIL =>
-                    logger.error(s"Cannot migrate relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}\nNew schema:\n${targetSchema.treeString}")
+                    logger.error(s"Cannot migrate relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
                     throw new MigrationFailedException(identifier)
                 case MigrationStrategy.ALTER =>
                     val dialect = SqlDialects.get(options.url)
                     val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
                     if (migrations.exists(m => !dialect.supportsChange(tableIdentifier, m))) {
-                        logger.error(s"Cannot migrate relation JDBC relation '$identifier' of table $tableIdentifier, since that would require unsupported changes.\nCurrent schema:\n${currentSchema.treeString}\nNew schema:\n${targetSchema.treeString}")
+                        logger.error(s"Cannot migrate relation JDBC relation '$identifier' of table $tableIdentifier, since that would require unsupported changes.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
                         throw new MigrationFailedException(identifier)
                     }
                     alter(migrations, con, options)

@@ -61,7 +61,7 @@ abstract class ConnectionSpec extends NamedSpec[Connection] {
             context,
             context.namespace,
             context.project,
-            name,
+            context.evaluate(name),
             kind,
             context.evaluate(labels)
         )

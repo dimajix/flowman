@@ -52,7 +52,7 @@ abstract class AssertionSpec  extends NamedSpec[Assertion] {
             context,
             context.namespace,
             context.project,
-            name,
+            context.evaluate(name),
             kind,
             context.evaluate(labels),
             context.evaluate(description)

@@ -80,7 +80,7 @@ abstract class TargetSpec extends NamedSpec[Target] {
             context,
             context.namespace,
             context.project,
-            name,
+            context.evaluate(name),
             kind,
             context.evaluate(labels),
             before.map(context.evaluate).map(TargetIdentifier.parse),

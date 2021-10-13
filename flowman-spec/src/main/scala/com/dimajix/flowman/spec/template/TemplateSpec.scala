@@ -78,7 +78,7 @@ abstract class TemplateSpec extends NamedSpec[Template[_]] {
             context,
             context.namespace,
             context.project,
-            name,
+            context.evaluate(name),
             kind,
             context.evaluate(labels)
         )

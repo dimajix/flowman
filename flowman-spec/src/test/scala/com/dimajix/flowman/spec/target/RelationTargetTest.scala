@@ -57,10 +57,21 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
               |kind: relation
               |relation:
               |  kind: null
+              |  name: ${target_name}
               |mapping: some_mapping
               |""".stripMargin
         val ds = ObjectMapper.parse[TargetSpec](spec)
         ds shouldBe a[RelationTargetSpec]
+
+        val session = Session.builder().withEnvironment("target_name", "abc").disableSpark().build()
+        val context = session.context
+
+        val instance = ds.instantiate(context)
+        instance shouldBe a[RelationTarget]
+
+        val rt = instance.asInstanceOf[RelationTarget]
+        rt.relation.name should be ("abc")
+        rt.relation.identifier should be (RelationIdentifier("abc"))
     }
 
     it should "provide correct dependencies" in {

@@ -92,12 +92,12 @@ class FixedWidthFormat extends TextBasedFileFormat with DataSourceRegister{
 
 
 private[spark] class FixedWidthOutputWriter(
-               path: String,
-               schema: StructType,
-               context: TaskAttemptContext,
-               options: FixedWidthOptions) extends OutputWriter with Logging {
+    file: String,
+    schema: StructType,
+    context: TaskAttemptContext,
+    options: FixedWidthOptions) extends OutputWriter with Logging {
 
-    private val writer = CodecStreams.createOutputStreamWriter(context, new Path(path))
+    private val writer = CodecStreams.createOutputStreamWriter(context, new Path(file))
     private val writerSettings = options.asWriterSettings(schema)
     writerSettings.setHeaders(schema.fieldNames: _*)
     private val gen = new FixedWidthWriter(writer, writerSettings)
@@ -242,4 +242,6 @@ private[spark] class FixedWidthOutputWriter(
     def close(): Unit = gen.close()
 
     def flush(): Unit = gen.flush()
+
+    /*override*/ def path(): String = this.file
 }

@@ -44,9 +44,9 @@ object SqlExpressionBuilder {
         expr match {
             case alias @ Alias(expr @ WindowExpression(RowNumber(), _), name) =>
                 unboundedWindowExpressionToSql(alias, expr)
-            case alias @ Alias(expr @ WindowExpression(Lead(_,_,_), _), name) =>
+            case alias @ Alias(expr @ WindowExpression(_:Lead, _), name) =>
                 unboundedWindowExpressionToSql(alias, expr)
-            case alias @ Alias(expr @ WindowExpression(Lag(_,_,_), _), name) =>
+            case alias @ Alias(expr @ WindowExpression(_:Lag, _), name) =>
                 unboundedWindowExpressionToSql(alias, expr)
             case alias @ Alias(expr:WindowExpression, name) =>
                 windowExpressionToSql(alias, expr)

@@ -1,3 +1,9 @@
+# Version 0.19.0
+
+* Add build profile for Hadoop 3.3
+* Add build profile for Spark 3.2
+
+
 # Version 0.18.0 - 2021-10-13
 
 * Improve automatic schema migration for Hive and JDBC relations

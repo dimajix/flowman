@@ -45,12 +45,12 @@ object SqlParser {
 
     def resolveDependencies(plan:LogicalPlan) : Seq[String] = {
         val cteNames = plan
-            .collect { case p:With => p.cteRelations.map(kv => kv._1)}
+            .collect { case With(_,cteRelations) => cteRelations.map(kv => kv._1)}
             .flatten
             .toSet
         val cteDependencies = plan
-            .collect { case p: With =>
-                p.cteRelations
+            .collect { case With(_,cteRelations) =>
+                cteRelations
                     .map(kv => kv._2.child)
                     .flatMap(resolveDependencies)
                     .filter(!cteNames.contains(_))

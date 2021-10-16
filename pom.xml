@@ -71,7 +71,6 @@
         <commons-dbcp.version>1.4</commons-dbcp.version>
         <commons-digester.version>1.8.1</commons-digester.version>
         <commons-httpclient.version>3.1</commons-httpclient.version>
-        <commons-io.version>2.4</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
         <commons-logging.version>1.1.3</commons-logging.version>
         <commons-math3.version>3.4.1</commons-math3.version>
@@ -112,6 +111,7 @@
         <httpcore.version>4.4.12</httpcore.version>
         <dropwizard.version>4.1.1</dropwizard.version>
         <snappy.version>1.1.8.2</snappy.version>
+        <commons-io.version>2.4</commons-io.version>
         <commons-collections.version>3.2.2</commons-collections.version>
         <commons-compress.version>1.20</commons-compress.version>
         <commons-lang3.version>3.9</commons-lang3.version>
@@ -184,6 +184,7 @@
                 <joda-time.version>2.9.9</joda-time.version>
                 <commons-collections.version>3.2.1</commons-collections.version>
                 <commons-compress.version>1.19</commons-compress.version>
+                <commons-io.version>2.4</commons-io.version>
                 <commons-lang3.version>3.7</commons-lang3.version>
                 <slf4j.version>1.7.25</slf4j.version>
             </properties>
@@ -240,6 +241,7 @@
                 <joda-time.version>2.9.3</joda-time.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.19</commons-compress.version>
+                <commons-io.version>2.4</commons-io.version>
                 <commons-lang3.version>3.8.1</commons-lang3.version>
             </properties>
         </profile>
@@ -276,6 +278,7 @@
                 <joda-time.version>2.9.3</joda-time.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.8.1</commons-compress.version>
+                <commons-io.version>2.4</commons-io.version>
                 <commons-lang3.version>3.5</commons-lang3.version>
             </properties>
         </profile>
@@ -309,6 +312,7 @@
                 <joda-time.version>2.10.5</joda-time.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.20</commons-compress.version>
+                <commons-io.version>2.4</commons-io.version>
                 <commons-lang3.version>3.9</commons-lang3.version>
             </properties>
         </profile>
@@ -342,7 +346,42 @@
                 <joda-time.version>2.10.5</joda-time.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.20</commons-compress.version>
+                <commons-io.version>2.4</commons-io.version>
                 <commons-lang3.version>3.9</commons-lang3.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-3.2</id>
+            <properties>
+                <scala.version>2.12.15</scala.version>
+                <scala.api_version>2.12</scala.api_version>
+                <scalatest.version>3.2.5</scalatest.version>
+                <scalatest-api.version>3.2</scalatest-api.version>
+                <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
+                <spark.version>3.2.0</spark.version>
+                <spark-api.version>3.2</spark-api.version>
+                <snappy.version>1.1.8.4</snappy.version>
+                <netty-all.version>4.1.68.Final</netty-all.version>
+                <antlr4.version>4.8-1</antlr4.version>
+                <jackson.version>2.12.3</jackson.version>
+                <jackson-api.version>2.12</jackson-api.version>
+                <jackson.databind.version>2.12.3</jackson.databind.version>
+                <paranamer.version>2.8</paranamer.version>
+                <kafka.version>2.6.0</kafka.version>
+                <derby.version>10.14.2.0</derby.version>
+                <zookeeper.version>3.6.2</zookeeper.version>
+                <avro.version>1.10.2</avro.version>
+                <json4s.version>3.7.0-M11</json4s.version>
+                <guava.version>14.0.1</guava.version>
+                <slf4j.version>1.7.30</slf4j.version>
+                <httpclient.version>4.5.13</httpclient.version>
+                <httpcore.version>4.4.14</httpcore.version>
+                <dropwizard.version>4.1.1</dropwizard.version>
+                <joda-time.version>2.10.10</joda-time.version>
+                <commons-collections.version>3.2.2</commons-collections.version>
+                <commons-compress.version>1.21</commons-compress.version>
+                <commons-io.version>2.8.0</commons-io.version>
+                <commons-lang3.version>3.12.0</commons-lang3.version>
             </properties>
         </profile>
 
@@ -404,6 +443,16 @@
                 <json-smart.version>2.3</json-smart.version>
                 <commons-beanutils.version>1.9.3</commons-beanutils.version>
                 <commons-codec.version>1.11</commons-codec.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>hadoop-3.3</id>
+            <properties>
+                <hadoop.version>3.3.1</hadoop.version>
+                <hadoop-api.version>3.2</hadoop-api.version>
+                <json-smart.version>2.3</json-smart.version>
+                <commons-beanutils.version>1.9.3</commons-beanutils.version>
+                <commons-codec.version>1.15</commons-codec.version>
             </properties>
         </profile>
     </profiles>

@@ -110,9 +110,9 @@ build-hadoop3.2-spark3.0:
 
 build-hadoop2.7-spark3.1:
   stage: build
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.7 -Pspark-3.0 -Ddockerfile.skip'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.7 -Pspark-3.1 -Ddockerfile.skip'
   artifacts:
-    name: "flowman-dist-hadoop3.1-spark3.0"
+    name: "flowman-dist-hadoop3.1-spark3.1"
     paths:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days
@@ -122,6 +122,24 @@ build-hadoop3.2-spark3.1:
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.2 -Pspark-3.1 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop3.2-spark3.1"
+    paths:
+      - flowman-dist/target/flowman-dist-*-bin.tar.gz
+    expire_in: 5 days
+
+build-hadoop2.7-spark3.2:
+  stage: build
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-2.7 -Pspark-3.2 -Ddockerfile.skip'
+  artifacts:
+    name: "flowman-dist-hadoop3.1-spark3.2"
+    paths:
+      - flowman-dist/target/flowman-dist-*-bin.tar.gz
+    expire_in: 5 days
+
+build-hadoop3.2-spark3.3:
+  stage: build
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.3 -Pspark-3.2 -Ddockerfile.skip'
+  artifacts:
+    name: "flowman-dist-hadoop3.3-spark3.2"
     paths:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days

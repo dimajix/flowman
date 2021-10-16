@@ -16,7 +16,7 @@ Fortunately, Spark is rather simple to install locally on your machine:
 
 ### Download & Install Spark
 
-As of this writing, the latest release of Flowman is 0.14.2 and is available prebuilt for Spark 3.0.1 on the Spark
+As of this writing, the latest release of Flowman is 0.18.0 and is available prebuilt for Spark 3.1.2 on the Spark
 homepage. So we download the appropriate Spark distribution from the Apache archive and unpack it.
 
 ```shell
@@ -24,8 +24,8 @@ homepage. So we download the appropriate Spark distribution from the Apache arch
 mkdir playground
 cd playground# Download and unpack Spark & Hadoop
 
-curl -L https://archive.apache.org/dist/spark/spark-3.0.1/spark-3.0.1-bin-hadoop3.2.tgz | tar xvzf -# Create a nice link
-ln -snf spark-3.0.1-bin-hadoop3.2 spark
+curl -L https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.1.2-bin-hadoop3.2.tgz | tar xvzf -# Create a nice link
+ln -snf spark-3.1.2-bin-hadoop3.2 spark
 ```
 
 The Spark package already contains Hadoop, so with this single download you already have both installed and integrated with each other.
@@ -37,8 +37,8 @@ You find prebuilt Flowman packages on the corresponding release page on GitHub. 
 
 ```shell
 # Download and unpack Flowman
-curl -L https://github.com/dimajix/flowman/releases/download/0.14.2/flowman-dist-0.14.2-oss-spark3.0-hadoop3.2-bin.tar.gz | tar xvzf -# Create a nice link
-ln -snf flowman-0.14.2 flowman
+curl -L https://github.com/dimajix/flowman/releases/download/0.18.0/flowman-dist-0.18.0-oss-spark3.1-hadoop3.2-bin.tar.gz | tar xvzf -# Create a nice link
+ln -snf flowman-0.18.0 flowman
 ```
 
 ### Flowman Configuration

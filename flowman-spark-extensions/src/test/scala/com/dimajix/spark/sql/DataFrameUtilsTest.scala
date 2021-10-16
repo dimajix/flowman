@@ -19,7 +19,10 @@ package com.dimajix.spark.sql
 import java.sql.Date
 import java.sql.Timestamp
 
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.plans.logical.View
 import org.apache.spark.sql.types.DateType
 import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.types.DoubleType
@@ -37,6 +40,17 @@ import com.dimajix.util.DateTimeUtils
 
 
 class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    implicit class ExtractPlan(opt:Option[LogicalPlan]) {
+        def plan : Option[LogicalPlan] = {
+            opt.map {
+                // Spark >= 3.2
+                case view:View => view.child
+                // Spark < 3.2
+                case df:LogicalPlan => df
+            }
+        }
+    }
+
     "DataFrameUtils.ofStringValues" should "create a DataFrame" in {
         val lines = Seq(
             Array("1","lala","2.3","3.4","2019-02-01","2019-02-01T12:34:00.000"),
@@ -173,7 +187,7 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         spark.sessionState.catalog.getTempView("temp") should be (None)
 
         DataFrameUtils.withTempViews(Seq("temp" -> df)) {
-            spark.sessionState.catalog.getTempView("temp") should be (Some(df.queryExecution.logical))
+            spark.sessionState.catalog.getTempView("temp").plan should be (Some(df.queryExecution.logical))
         }
 
         spark.sessionState.catalog.getTempView("temp") should be (None)
@@ -186,7 +200,7 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         an[IllegalArgumentException] should be thrownBy(
             DataFrameUtils.withTempViews(Seq("temp" -> df)) {
-                spark.sessionState.catalog.getTempView("temp") should be (Some(df.queryExecution.logical))
+                spark.sessionState.catalog.getTempView("temp").plan should be (Some(df.queryExecution.logical))
                 throw new IllegalArgumentException()
             })
 

@@ -453,6 +453,8 @@ class SqlBuilder private(
         // This rule combine adjacent Unions together so we can generate flat UNION ALL SQL string.
         CombineUnions),
       Batch("Recover Scoping Info", Once,
+        // Replace View with a HiveTableRelation to truncate execution plan
+        ReplaceView,
         // A logical plan is allowed to have same-name outputs with different qualifiers(e.g. the
         // `Join` operator). However, this kind of plan can't be put under a sub query as we will
         // erase and assign a new qualifier to all outputs and make it impossible to distinguish
@@ -461,6 +463,7 @@ class SqlBuilder private(
         // qualifiers, as attributes have unique names now and we don't need qualifiers to resolve
         // ambiguity.
         NormalizedAttribute,
+        // Insert sub queries on top of operators that need to appear after FROM clause.
         // Our analyzer will add one or more sub-queries above table relation, this rule removes
         // these sub-queries so that next rule can combine adjacent table relation and sample to
         // SQLTable.
@@ -512,6 +515,15 @@ class SqlBuilder private(
             }
 
             children.head +: tailPlans
+        }
+    }
+
+    object ReplaceView extends Rule[LogicalPlan] {
+        override def apply(plan: LogicalPlan): LogicalPlan = plan.transformDown {
+            case view: View =>
+                val m = view.desc
+                val cols = view.output.map(a => AttributeReference(a.name, a.dataType, a.nullable, a.metadata)(a.exprId, a.qualifier))
+                HiveTableRelation(view.desc, cols, Seq())
         }
     }
 
@@ -755,7 +767,7 @@ class SqlBuilder private(
           l.output.map(_.withQualifier(None))))
 
       case view: View =>
-        val  m = view.desc
+        val m = view.desc
         Some(SQLTable(m.database, m.identifier.table, view.output.map(_.withQualifier(None))))
 
       case relation: HiveTableRelation =>

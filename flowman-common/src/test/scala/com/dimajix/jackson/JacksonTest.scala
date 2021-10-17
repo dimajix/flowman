@@ -33,12 +33,10 @@ object JacksonTest {
         @JsonProperty(value = "map") var map: Map[String,String] = Map()
     }
 
-    case class CaseClassWithDefaults @JsonCreator(mode=JsonCreator.Mode.DISABLED)(
+    case class CaseClassWithDefaults (
         @JsonProperty(value = "key", defaultValue = "key") key: String = "key",
         @JsonProperty(value = "value", defaultValue = "value") value: String = "value"
     ) {
-        @JsonCreator
-        def this() = this("key", "value")
     }
 }
 

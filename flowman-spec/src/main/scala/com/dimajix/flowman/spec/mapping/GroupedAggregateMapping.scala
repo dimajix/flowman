@@ -19,12 +19,12 @@ package com.dimajix.flowman.spec.mapping
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.expressions.NamedExpression
-import org.apache.spark.sql.catalyst.plans.logical.GroupingSets
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.expr
-import org.apache.spark.sql.functions.struct
 import org.apache.spark.sql.functions.grouping_id
+import org.apache.spark.sql.functions.struct
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -221,10 +221,14 @@ case class GroupedAggregateMapping(
             else
                 input
 
-        DataFrameUtils.ofRows(input.sparkSession, GroupingSets(
-            groupings.map(g => g.map(_.expr)),
-            dimensions.map(_.expr),
-            df.queryExecution.logical, expressions))
+        DataFrameUtils.ofRows(input.sparkSession,
+            SparkShim.groupingSetAggregate(
+                dimensions.map(_.expr),
+                groupings.map(g => g.map(_.expr)),
+                expressions,
+                df.queryExecution.logical
+            )
+        )
     }
 }
 

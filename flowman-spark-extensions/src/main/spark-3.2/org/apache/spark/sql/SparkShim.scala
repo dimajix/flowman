@@ -29,6 +29,11 @@ import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.ViewType
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.SessionCatalog
+import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.catalyst.expressions.GroupingSets
+import org.apache.spark.sql.catalyst.expressions.NamedExpression
+import org.apache.spark.sql.catalyst.plans.logical.Aggregate
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.util.DateTimeUtils.localDateToDays
 import org.apache.spark.sql.catalyst.util.DateTimeUtils.microsToInstant
 import org.apache.spark.sql.catalyst.util.IntervalUtils
@@ -81,6 +86,18 @@ object SparkShim {
             case _: FileDataSourceV2 => true
             case _ => false
         }
+    }
+
+    def groupingSetAggregate(
+        groupByExpressions:Seq[Expression],
+        groupingSets:Seq[Seq[Expression]],
+        aggregateExpressions: Seq[NamedExpression],
+        child: LogicalPlan) : LogicalPlan = {
+        Aggregate(
+            Seq(GroupingSets(groupingSets, groupByExpressions)),
+            aggregateExpressions,
+            child
+        )
     }
 
     def withNewExecutionId[T](

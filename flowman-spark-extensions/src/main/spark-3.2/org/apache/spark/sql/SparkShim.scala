@@ -65,7 +65,7 @@ object SparkShim {
     }
 
     def isStaticConf(key:String) : Boolean = {
-        SQLConf.isStaticConfigKey(key)
+        SQLConf.isStaticConfigKey(key) || (ConfigEntry.findEntry(key) != null && !SQLConf.containsConfigKey(key))
     }
 
     def relationSupportsMultiplePaths(spark:SparkSession, format:String) : Boolean = {

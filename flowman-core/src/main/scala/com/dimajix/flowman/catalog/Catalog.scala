@@ -633,7 +633,7 @@ final class Catalog(val spark:SparkSession, val config:Configuration, val extern
         if (!exists) {
             logger.info(s"Creating Hive view $table")
 
-            val plan = spark.sql(select).queryExecution.logical
+            val plan = spark.sql(select).queryExecution.analyzed
             val cmd = CreateViewCommand(table, Nil, None, Map(), Some(select), plan, false, false, SparkShim.PersistedView)
             cmd.run(spark)
 

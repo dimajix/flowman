@@ -85,7 +85,7 @@ extends BaseMapping {
             }
         }
         else if (url.nonEmpty) {
-            IOUtils.toString(url.get)
+            IOUtils.toString(url.get, "UTF-8")
         }
         else {
             throw new IllegalArgumentException("SQL mapping needs either 'sql', 'file' or 'url'")

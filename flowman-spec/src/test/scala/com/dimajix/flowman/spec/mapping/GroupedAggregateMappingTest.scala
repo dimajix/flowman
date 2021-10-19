@@ -73,6 +73,10 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
             Mapping.Properties(context),
             MappingOutputIdentifier("data"),
             Map(
+                "g3" -> GroupedAggregateMapping.Group(
+                    dimensions = Seq("_1", "_3"),
+                    aggregations = Seq()
+                ),
                 "g1" -> GroupedAggregateMapping.Group(
                     dimensions = Seq("_1", "_2"),
                     aggregations = Seq("count")
@@ -80,10 +84,6 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
                 "g2" -> GroupedAggregateMapping.Group(
                     dimensions = Seq("_1"),
                     aggregations = Seq("count")
-                ),
-                "g3" -> GroupedAggregateMapping.Group(
-                    dimensions = Seq("_1", "_3"),
-                    aggregations = Seq()
                 )
             ),
             Map(

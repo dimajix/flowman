@@ -58,6 +58,10 @@ import com.dimajix.spark.testing.QueryTest
 
 
 class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession with QueryTest {
+    implicit class Unqoute(str:String) {
+        def unqouted : String = str.replace("`", "")
+    }
+
     "The HiveUnionTableRelation" should "support the full lifecycle" in (if (hiveSupported) {
         val spec =
             """
@@ -1032,6 +1036,6 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             StructField("ts", TimestampType)
         ))
         val sql = HiveUnionTableRelation.unionSql(Seq(df1,df2), schema)
-        sql should be ("SELECT CAST(`col_0` AS DOUBLE) AS `col_0`, `col_1`, CAST(NULL AS BOOLEAN) AS `col_2`, `ts` FROM `default`.`hive_union_0` UNION ALL SELECT `col_0`, CAST(NULL AS STRING) AS `col_1`, `col_2`, `ts` FROM `default`.`hive_union_1`")
+        sql.unqouted should be ("SELECT CAST(col_0 AS DOUBLE) AS col_0, col_1, CAST(NULL AS BOOLEAN) AS col_2, ts FROM default.hive_union_0 UNION ALL SELECT col_0, CAST(NULL AS STRING) AS col_1, col_2, ts FROM default.hive_union_1")
     })
 }

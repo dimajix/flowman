@@ -115,21 +115,31 @@ case class GroupedAggregateMapping(
 
         val allGroupings = performGroupedAggregation(filteredInput, dimensionColumns, groupingColumns)
 
+        // This is a workaround for newer Spark version, which apparently use a different mechanism to derive
+        // grouping-ids than Spark up until 3.1.x
+        val dimensionIndices2 = {
+            if (org.apache.spark.SPARK_VERSION >= "3.2")
+                groups.values.flatMap(g => g.dimensions ++ g.filter.map(f => filterNames(filterIndices(f)))).toSeq.distinct.zipWithIndex.toMap
+            else
+                dimensionIndices
+        }
+        // Calculate grouping IDs used for extracting individual groups
         val numDimensions = dimensions.size
         val groupingMask = (1 << numDimensions) - 1
         val groupIds = groups.values.map { group =>
             val dimensions = group.dimensions
             val filter = group.filter.map(f => filterNames(filterIndices(f)))
-            (groupingMask +: (dimensions ++ filter).map(d => ~(1 << (numDimensions - 1 - dimensionIndices(d))))).reduce(_ & _)
+            (groupingMask +: (dimensions ++ filter).map(d => ~(1 << (numDimensions - 1 - dimensionIndices2(d))))).reduce(_ & _)
         }
 
-        // Apply all grouping filters to reduce cache size
+        // Apply all grouping filters to reduce cache size.
         val cache = if (filterIndices.nonEmpty) {
             val filter = groups.values.zip(groupIds).map { case (group, groupId) =>
                 val filter = group.filter.map(f => filterNames(filterIndices(f)))
                 createGroupFilter(groupId, filter)
             }.reduce(_ || _)
             allGroupings.filter(filter)
+                .drop(filterNames:_*)
         }
         else {
             allGroupings
@@ -172,6 +182,7 @@ case class GroupedAggregateMapping(
                 createGroupFilter(groupId, filter)
             }.reduce(_ || _)
             allGroupings.filter(filter)
+                .drop(filterNames:_*)
         }
         else {
             allGroupings

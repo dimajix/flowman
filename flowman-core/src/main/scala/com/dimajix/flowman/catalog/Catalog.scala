@@ -32,7 +32,7 @@ import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTablePartition
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
-import org.apache.spark.sql.catalyst.catalog.CatalogTypes.TablePartitionSpec
+import org.apache.spark.sql.catalyst.plans.logical.AnalysisOnlyCommand
 import org.apache.spark.sql.execution.command.AlterTableAddColumnsCommand
 import org.apache.spark.sql.execution.command.AlterTableAddPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableChangeColumnCommand
@@ -634,7 +634,12 @@ final class Catalog(val spark:SparkSession, val config:Configuration, val extern
             logger.info(s"Creating Hive view $table")
 
             val plan = spark.sql(select).queryExecution.analyzed
-            val cmd = CreateViewCommand(table, Nil, None, Map(), Some(select), plan, false, false, SparkShim.PersistedView)
+            @annotation.nowarn // Disable warning about unreachable code for Spark 3.2
+            val cmd = CreateViewCommand(table, Nil, None, Map(), Some(select), plan, false, false, SparkShim.PersistedView) match {
+                // Workaround for providing compatibility with Spark 3.2 and older versions
+                case ac:AnalysisOnlyCommand => ac.markAsAnalyzed().asInstanceOf[CreateViewCommand]
+                case c:CreateViewCommand => c
+            }
             cmd.run(spark)
 
             // Publish view to external catalog
@@ -649,8 +654,14 @@ final class Catalog(val spark:SparkSession, val config:Configuration, val extern
 
         logger.info(s"Redefining Hive view $table")
 
-        val plan = spark.sql(select).queryExecution.logical
-        val cmd = AlterViewAsCommand(table, select, plan)
+        val plan = spark.sql(select).queryExecution.analyzed
+        @annotation.nowarn // Disable warning about unreachable code for Spark 3.2
+        val cmd = AlterViewAsCommand(table, select, plan) match {
+            // Workaround for providing compatibility with Spark 3.2 and older versions
+            case ac:AnalysisOnlyCommand => ac.markAsAnalyzed().asInstanceOf[AlterViewAsCommand]
+            case c:AlterViewAsCommand => c
+        }
+
         cmd.run(spark)
 
         // Publish view to external catalog

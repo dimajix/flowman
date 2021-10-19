@@ -20,7 +20,6 @@ import scala.util.control.NonFatal
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.catalyst.plans.logical.QualifiedColType
 import org.apache.spark.sql.delta.catalog.DeltaTableV2
 import org.apache.spark.sql.delta.commands.AlterTableAddColumnsDeltaCommand
 import org.apache.spark.sql.delta.commands.AlterTableChangeColumnDeltaCommand
@@ -43,6 +42,7 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionedRelation
+import com.dimajix.flowman.spark.sql.delta.QualifiedColumn
 import com.dimajix.spark.sql.SchemaUtils
 
 
@@ -135,8 +135,7 @@ abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation w
                         val table = loadDeltaTable(execution)
                         AlterTableAddColumnsDeltaCommand(
                             table,
-                            Seq(QualifiedColType(
-                                Seq(column.name), column.catalogType, column.nullable, column.description, None)
+                            Seq(QualifiedColumn(column.name, column.catalogType, column.nullable, column.description)
                             )).run(spark)
                     case UpdateColumnNullability(column, nullable) =>
                         val table = loadDeltaTable(execution)

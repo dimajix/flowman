@@ -634,7 +634,7 @@ final class Catalog(val spark:SparkSession, val config:Configuration, val extern
             logger.info(s"Creating Hive view $table")
 
             val plan = spark.sql(select).queryExecution.analyzed
-            @annotation.nowarn // Disable warning about unreachable code for Spark 3.2
+            //@annotation.nowarn // Disable warning about unreachable code for Spark 3.2
             val cmd = CreateViewCommand(table, Nil, None, Map(), Some(select), plan, false, false, SparkShim.PersistedView) match {
                 // Workaround for providing compatibility with Spark 3.2 and older versions
                 case ac:AnalysisOnlyCommand => ac.markAsAnalyzed().asInstanceOf[CreateViewCommand]
@@ -655,7 +655,7 @@ final class Catalog(val spark:SparkSession, val config:Configuration, val extern
         logger.info(s"Redefining Hive view $table")
 
         val plan = spark.sql(select).queryExecution.analyzed
-        @annotation.nowarn // Disable warning about unreachable code for Spark 3.2
+        //@annotation.nowarn // Disable warning about unreachable code for Spark 3.2
         val cmd = AlterViewAsCommand(table, select, plan) match {
             // Workaround for providing compatibility with Spark 3.2 and older versions
             case ac:AnalysisOnlyCommand => ac.markAsAnalyzed().asInstanceOf[AlterViewAsCommand]

@@ -32,6 +32,8 @@
                 <exclude>org.scala-lang.modules:scala-collection-compat_${scala.api_version}</exclude>
                 <exclude>org.lz4:lz4-java</exclude>
                 <exclude>com.github.luben:zstd-jni</exclude>
+                <exclude>org.apache.hadoop:hadoop-client-api</exclude>
+                <exclude>org.apache.hadoop:hadoop-client-runtime</exclude>
             </excludes>
         </dependencySet>
     </dependencySets>

@@ -23,8 +23,12 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+import org.slf4j.LoggerFactory
+
+import com.dimajix.flowman.execution.AssertionRunner
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.model.AssertionResult.logger
 
 
 object Result {
@@ -323,6 +327,8 @@ case class TestResult(
 
 
 object AssertionResult {
+    private val logger = LoggerFactory.getLogger(classOf[AssertionTestResult])
+
     def apply(assertion: Assertion, exception:Throwable, startTime:Instant) : AssertionResult =
         AssertionResult(
             assertion,
@@ -362,6 +368,7 @@ object AssertionResult {
             case Success(results) =>
                 AssertionResult(assertion, results, None, startTime, Instant.now())
             case Failure(exception) =>
+                logger.error(s"Caught exception while executing assertion '${assertion.name}': ", exception)
                 AssertionResult(assertion, Seq(), Some(exception), startTime, Instant.now())
         }
     }
@@ -390,6 +397,8 @@ case class AssertionResult(
 
 
 object AssertionTestResult {
+    private val logger = LoggerFactory.getLogger(classOf[AssertionTestResult])
+
     def apply(name:String, description:Option[String], success:Boolean) : AssertionTestResult = AssertionTestResult(
         name,
         description,
@@ -421,6 +430,7 @@ object AssertionTestResult {
             case Success(result) =>
                 AssertionTestResult(name, description, result, None, startTime, Instant.now())
             case Failure(exception) =>
+                logger.error(s"Caught exception executing test '${name}': ", exception)
                 AssertionTestResult(name, description, false, Some(exception), startTime, Instant.now())
         }
     }

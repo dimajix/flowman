@@ -8,8 +8,8 @@ mappings:
     input: weather_details
     dimensions:
       - country
-      - year
-      - month
+      - EXTRACT(YEAR FROM ts) AS year
+      - EXTRACT(MONTH FROM ts) AS month
     aggregations:
       avg_temp: "AVG(temperature)"
       min_temp: "MIN(temperature)"
@@ -36,14 +36,14 @@ Cache mode for the results of this mapping. Supported values are
 Specifies the name of the input mapping to be aggregated
 
 * `dimensions` **(mandatory)** *(type: list:string)*:
-Specifies the list of dimensions to aggregate on
+Specifies the list of dimensions to aggregate on. Since Flowman 0.18.1 you can also specify valid SQL expressions as dimensions.
 
 * `aggregations` **(mandatory)** *(type: map:string)*:
 Specifies the list of aggregations to perform. Each aggregation has a name (the key in the
 map) and an aggregation expression. The name corresponds to the outgoing column name.
 
 * `filter` **(optional)** *(type: string)* *(default: empty)*:
-An optional SQL filter expression that is applied *after* aggregation.
+An optional SQL filter expression that is applied *after* aggregation, which corresponds to a `HAVING` filter in classical SQL.
 
 
 ## Outputs
@@ -56,11 +56,11 @@ example above would be equivalent to the following SQL statemtn:
 ```
 SELECT
     country,
-    year,
-    month,
+    EXTRACT(YEAR FROM ts) AS year,
+    EXTRACT(MONTH FROM ts) AS month,
     AVG(temperature) AS avg_temp,
     MIN(temperature) AS min_temp,
     MAX(temperature) AS max_temp
 FROM weather_details
-GROUP BY country, year, month    
+GROUP BY country, EXTRACT(YEAR FROM ts), EXTRACT(MONTH FROM ts)    
 ```

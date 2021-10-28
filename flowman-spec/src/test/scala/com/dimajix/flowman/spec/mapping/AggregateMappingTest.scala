@@ -102,7 +102,7 @@ class AggregateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
             MappingOutputIdentifier("myview"),
             Seq("_1 AS dim1", "upper(_2) AS dim2"),
             ListMap(
-                "agg3" -> "sum(_3)",
+                "agg3" -> "sum(_3)"
             )
         )
 

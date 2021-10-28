@@ -19,7 +19,9 @@ package com.dimajix.flowman.spec.target
 import java.io.File
 import java.time.Duration
 
+import io.delta.sql.DeltaSparkSessionExtension
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.SparkSession
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -44,6 +46,11 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    override def configureSpark(builder: SparkSession.Builder): SparkSession.Builder = {
+        builder.config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+            .withExtensions(new DeltaSparkSessionExtension)
+    }
+
     "A DeltaVacuumTarget" should "be parseable" in {
         val spec =
             """

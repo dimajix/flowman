@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,9 @@ import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
-import java.util.ServiceLoader
 
-import scala.collection.mutable
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -92,13 +91,11 @@ class PluginManager {
             method.setAccessible(true)
             jarFiles.foreach(jar => method.invoke(classLoader, jar))
         } catch {
-            case t: Throwable =>
-                t.printStackTrace()
+            case t: Throwable => logger.error(s"Cannot add plugin ${plugin.name} to classpath", t)
         }
 
         // Inform all interested parties that a Plugin has been loaded
-        ServiceLoader.load(classOf[PluginListener])
-            .iterator().asScala
+        PluginListener.listeners
             .foreach(_.pluginLoaded(plugin, classLoader))
     }
 

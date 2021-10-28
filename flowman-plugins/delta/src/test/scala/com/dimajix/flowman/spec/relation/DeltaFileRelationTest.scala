@@ -22,6 +22,7 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Paths
 import java.util.UUID
 
+import io.delta.sql.DeltaSparkSessionExtension
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
@@ -52,8 +53,8 @@ import com.dimajix.spark.testing.QueryTest
 
 class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession with QueryTest {
     override def configureSpark(builder: SparkSession.Builder): SparkSession.Builder = {
-        builder.config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-            .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+        builder.config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+            .withExtensions(new DeltaSparkSessionExtension)
     }
 
     "The DeltaFileRelation" should "be parseable" in {

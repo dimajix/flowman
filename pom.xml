@@ -118,6 +118,8 @@
 
         <!-- Flowman version -->
         <flowman.version>${project.version}</flowman.version>
+        <flowman.dist.suffix>-${hadoop.dist}-spark${spark-api.version}-hadoop${hadoop-api.version}</flowman.dist.suffix>
+        <flowman.dist.label>${project.version}${flowman.dist.suffix}</flowman.dist.label>
 
         <!-- Language versions -->
         <java.version>11</java.version>
@@ -585,6 +587,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
                 <version>3.1.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-help-plugin</artifactId>
+                <version>3.2.0</version>
             </plugin>
         </plugins>
 

@@ -14,23 +14,17 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <properties>
-        <dist.tag>${project.version}-${hadoop.dist}-spark${spark-api.version}-hadoop${hadoop-api.version}</dist.tag>
-        <docker.base-image.repository>dimajix/spark</docker.base-image.repository>
-        <docker.base-image.version>${spark.version}</docker.base-image.version>
-    </properties>
-
     <profiles>
         <profile>
             <id>CDH-6.3</id>
             <properties>
-                <docker.base-image.version>2.4.5</docker.base-image.version>
+                <dockerfile.skip>true</dockerfile.skip>
             </properties>
         </profile>
         <profile>
             <id>CDP-7.1</id>
             <properties>
-                <docker.base-image.version>2.4.5</docker.base-image.version>
+                <dockerfile.skip>true</dockerfile.skip>
             </properties>
         </profile>
     </profiles>
@@ -53,7 +47,7 @@
                                 <resource>
                                     <directory>../flowman-dist/target</directory>
                                     <includes>
-                                        <include>flowman-dist-${dist.tag}-bin.tar.gz</include>
+                                        <include>flowman-dist-${flowman.dist.label}-bin.tar.gz</include>
                                     </includes>
                                     <filtering>false</filtering>
                                 </resource>
@@ -95,12 +89,12 @@
                     <repository>dimajix/flowman</repository>
                     <contextDirectory>target/build</contextDirectory>
                     <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
-                    <tag>${dist.tag}</tag>
+                    <tag>${flowman.dist.label}</tag>
                     <pullNewerImage>false</pullNewerImage>
                     <buildArgs>
                         <BUILD_SPARK_VERSION>${spark.version}</BUILD_SPARK_VERSION>
                         <BUILD_HADOOP_VERSION>${hadoop-api.version}</BUILD_HADOOP_VERSION>
-                        <DIST_FILE>flowman-dist-${dist.tag}-bin.tar.gz</DIST_FILE>
+                        <DIST_FILE>flowman-dist-${flowman.dist.label}-bin.tar.gz</DIST_FILE>
                         <http_proxy>${env.http_proxy}</http_proxy>
                         <https_proxy>${env.https_proxy}</https_proxy>
                     </buildArgs>

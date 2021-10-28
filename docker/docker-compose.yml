@@ -2,7 +2,7 @@ version: "3"
 
 services:
   flowman:
-    image: dimajix/flowman:${project.version}-${hadoop.dist}-spark${spark-api.version}-hadoop${hadoop-api.version}
+    image: dimajix/flowman:${project.version}${flowman.dist.suffix}
     command: bash
     environment:
       - http_proxy=${http_proxy}

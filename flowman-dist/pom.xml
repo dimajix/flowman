@@ -14,10 +14,6 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <properties>
-        <flowman.dist.suffix>-${hadoop.dist}-spark${spark-api.version}-hadoop${hadoop-api.version}</flowman.dist.suffix>
-    </properties>
-
     <build>
         <plugins>
             <plugin>
@@ -230,7 +226,7 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <finalName>${project.artifactId}-${project.version}${flowman.dist.suffix}</finalName>
+                            <finalName>${project.artifactId}-${flowman.dist.label}</finalName>
                             <descriptors>
                                 <descriptor>src/main/assembly/assembly.xml</descriptor>
                             </descriptors>

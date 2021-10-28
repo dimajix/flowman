@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
+FLOWMAN_VERSION=$(mvn -q -N help:evaluate -Dexpression=project.version -DforceStdout)
+echo "Building Flowman release version ${FLOWMAN_VERSION}"
+
 mkdir -p release
 
-FLOWMAN_VERSION=$(mvn -q -N org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -DforceStdout)
 
 build_profile() {
     profiles=""
@@ -12,14 +14,14 @@ build_profile() {
     done
 
     # Set new version
-    HADOOP_DIST=$(mvn $profiles -q -N org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=hadoop.dist -DforceStdout)
-    SPARK_API_VERSION=$(mvn $profiles -q -N org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=spark-api.version -DforceStdout)
-    HADOOP_API_VERSION=$(mvn $profiles -q -N org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=hadoop-api.version -DforceStdout)
+    HADOOP_DIST=$(mvn $profiles -q -N help:evaluate -Dexpression=hadoop.dist -DforceStdout)
+    SPARK_API_VERSION=$(mvn $profiles -q -N help:evaluate -Dexpression=spark-api.version -DforceStdout)
+    HADOOP_API_VERSION=$(mvn $profiles -q -N help:evaluate -Dexpression=hadoop-api.version -DforceStdout)
 
     echo "Building for dist $HADOOP_DIST with Spark $SPARK_API_VERSION and Hadoop $HADOOP_API_VERSION"
     mvn -q versions:set -DnewVersion=${FLOWMAN_VERSION}-${HADOOP_DIST}-spark${SPARK_API_VERSION}-hadoop${HADOOP_API_VERSION}
 
-    mvn clean install $profiles -DskipTests -Ddockerfile.skip -Dflowman.dist.suffix=""
+    mvn clean install $profiles -DskipTests -Dflowman.dist.suffix=""
     cp flowman-dist/target/flowman-dist-*.tar.gz release
 
     # Revert to original version
@@ -42,3 +44,6 @@ build_profile hadoop-3.3 spark-3.2
 export JAVA_HOME=/usr/lib/jvm/java-1.8.0
 build_profile CDH-6.3
 build_profile CDP-7.1
+
+# Finally build default version
+mvn clean install -DskipTests

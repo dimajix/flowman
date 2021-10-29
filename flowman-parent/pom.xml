@@ -242,12 +242,6 @@
             <!-- Flowman Dependencies -->
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-jackson-compat</artifactId>
-                <version>${flowman.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spark-extensions</artifactId>
                 <version>${flowman.version}</version>
                 <scope>provided</scope>

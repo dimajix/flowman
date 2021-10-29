@@ -461,7 +461,6 @@
 
     <modules>
         <module>flowman-scalatest-compat</module>
-        <module>flowman-jackson-compat</module>
         <module>flowman-spark-testing</module>
         <module>flowman-spark-extensions</module>
         <module>flowman-common</module>
@@ -923,11 +922,6 @@
                 <artifactId>flowman-spark-testing</artifactId>
                 <version>${project.version}</version>
                 <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-jackson-compat</artifactId>
-                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>

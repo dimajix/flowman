@@ -27,7 +27,10 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
+import com.dimajix.flowman.metric.withMetrics
+import com.dimajix.flowman.metric.withWallTime
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.Job
@@ -41,7 +44,7 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.withShutdownHook
 
 
-final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,Option[Token])]) extends Execution {
+final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,Option[Token])], metricsBoard:Option[MetricBoard]) extends Execution {
     private val logger = LoggerFactory.getLogger(classOf[MonitorExecution])
 
     /**
@@ -118,14 +121,26 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
     override def cleanup(): Unit = parent.cleanup()
 
     /**
-     * Invokes a function with a new Executor that with additional listeners.
+     * Invokes a function with a new [[Executor]] that with additional [[ExecutionListener]].
      * @param listeners
      * @param fn
      * @tparam T
      * @return
      */
     override def withListeners[T](listeners:Seq[ExecutionListener])(fn:Execution => T) : T = {
-        val execution = new MonitorExecution(this, this.listeners ++ listeners.map(l => (l,None)))
+        val execution = new MonitorExecution(parent, this.listeners ++ listeners.map(l => (l,None)), metricsBoard)
+        fn(execution)
+    }
+
+    /**
+     * Invokes a function with a new Executor with a specific [[MetricBoard]]
+     * @param metrics
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    override def withMetrics[T](metrics: Option[MetricBoard])(fn: Execution => T): T = {
+        val execution = new MonitorExecution(parent, this.listeners, metrics)
         fn(execution)
     }
 
@@ -171,16 +186,17 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
 
         val tokens = start(instance)
         withShutdownHook(finish(tokens, failure())) {
-            val execution = new MonitorExecution(this.parent, tokens.map(lt => (lt._1, Option(lt._2))))
-            val result = try {
-                fn(execution)
-            } catch {
-                case NonFatal(ex) =>
-                    finish(tokens, failure())
-                    throw ex
+            withTokens(tokens) { execution =>
+                val result = try {
+                    fn(execution)
+                } catch {
+                    case NonFatal(ex) =>
+                        finish(tokens, failure())
+                        throw ex
+                }
+                finish(tokens, result)
+                result
             }
-            finish(tokens, result)
-            result
         }
     }
 
@@ -226,16 +242,21 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
 
         val tokens = start(instance)
         withShutdownHook(finish(tokens, failure())) {
-            val execution = new MonitorExecution(this.parent, tokens.map(lt => (lt._1, Option(lt._2))))
-            val result = try {
-                fn(execution)
-            } catch {
-                case NonFatal(ex) =>
-                    finish(tokens, failure())
-                    throw ex
+            withTokens(tokens) { execution =>
+                val result = try {
+                    com.dimajix.flowman.metric.withMetrics(metrics, metricsBoard) {
+                        withWallTime(metrics, job.metadata, phase) {
+                            fn(execution)
+                        }
+                    }
+                } catch {
+                    case NonFatal(ex) =>
+                        finish(tokens, failure())
+                        throw ex
+                }
+                finish(tokens, result)
+                result
             }
-            finish(tokens, result)
-            result
         }
     }
 
@@ -279,16 +300,19 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
 
         val tokens = start()
         withShutdownHook(finish(tokens, failure())) {
-            val execution = new MonitorExecution(this.parent, tokens.map(lt => (lt._1, Option(lt._2))))
-            val result = try {
-                fn(execution)
-            } catch {
-                case NonFatal(ex) =>
-                    finish(tokens, failure())
-                    throw ex
+            withTokens(tokens) { execution =>
+                val result = try {
+                    withWallTime(execution.metrics, target.metadata, phase) {
+                        fn(execution)
+                    }
+                } catch {
+                    case NonFatal(ex) =>
+                        finish(tokens, failure())
+                        throw ex
+                }
+                finish(tokens, result)
+                result
             }
-            finish(tokens, result)
-            result
         }
     }
 
@@ -332,16 +356,22 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
 
         val tokens = start()
         withShutdownHook(finish(tokens, failure())) {
-            val execution = new MonitorExecution(this.parent, tokens.map(lt => (lt._1, Option(lt._2))))
-            val result = try {
-                fn(execution)
-            } catch {
-                case NonFatal(ex) =>
-                    finish(tokens, failure())
-                    throw ex
+            withTokens(tokens) { execution =>
+                val result = try {
+                    fn(execution)
+                } catch {
+                    case NonFatal(ex) =>
+                        finish(tokens, failure())
+                        throw ex
+                }
+                finish(tokens, result)
+                result
             }
-            finish(tokens, result)
-            result
         }
+    }
+
+    private def withTokens[T <: Token,R](tokens:Seq[(ExecutionListener,T)])(fn:Execution => R) : R = {
+        val execution = new MonitorExecution(this.parent, tokens.map(lt => (lt._1, Option(lt._2))), metricsBoard)
+        fn(execution)
     }
 }

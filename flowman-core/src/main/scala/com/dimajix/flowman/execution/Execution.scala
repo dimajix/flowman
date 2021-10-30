@@ -24,6 +24,7 @@ import org.apache.spark.sql.SparkSession
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
@@ -162,13 +163,22 @@ abstract class Execution {
     def cleanup() : Unit
 
     /**
-     * Invokes a function with a new Executor that with additional listeners.
+     * Invokes a function with a new [[Executor]] that with additional [[ExecutionListener]].
      * @param listeners
      * @param fn
      * @tparam T
      * @return
      */
     def withListeners[T](listeners:Seq[ExecutionListener])(fn:Execution => T) : T
+
+    /**
+     * Invokes a function with a new Executor with a specific [[MetricBoard]]
+     * @param metrics
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def withMetrics[T](metrics:Option[MetricBoard])(fn:Execution => T) : T
 
     /**
      * Monitors the execution of a lifecycle by calling appropriate listeners at the start and end.

@@ -258,6 +258,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             (target.provides _).expects(*).atLeastOnce().returns(Set())
             (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
             (target.instance _).expects().atLeastOnce().returns(instance)
+            (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
             (target.dirty _).expects(*, Phase.CREATE).atLeastOnce().returns(Yes)
             (target.execute _).expects(*, Phase.CREATE).never()
 

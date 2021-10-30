@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,21 +34,18 @@ import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.StateStoreAdaptorListener
 import com.dimajix.flowman.history.TargetState
-import com.dimajix.flowman.metric.MetricBoard
-import com.dimajix.flowman.metric.MetricSystem
-import com.dimajix.flowman.metric.withWallTime
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Result
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.TargetResult
-import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.flowman.spi.LogFilter
@@ -240,9 +237,9 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             val allMetrics = job.metrics.map(_.instantiate(context))
 
             val startTime = Instant.now()
-            val result = execution.monitorJob(job, arguments, phase) { execution =>
-                withMetrics(execution.metrics, allMetrics) {
-                    withWallTime(execution.metrics, job.metadata, phase) {
+            val result =
+                execution.withMetrics(allMetrics) { execution =>
+                    execution.monitorJob(job, arguments, phase) { execution =>
                         val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
                         try {
                             val results = executeJobTargets(execution, context, job, phase, targets, force, keepGoing, dryRun)
@@ -256,7 +253,6 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                         }
                     }
                 }
-            }
 
             val endTime = result.endTime
             val duration = Duration.between(startTime, endTime)
@@ -328,9 +324,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             }
             else {
                 resultOf(target, phase, dryRun) {
-                    withWallTime(execution.metrics, target.metadata, phase) {
-                        target.execute(execution, phase)
-                    }
+                    target.execute(execution, phase)
                 }
             }
         }
@@ -358,37 +352,6 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         stateStore.getTargetState(target) match {
             case Some(state:TargetState) => checkState(state)
             case _ => false
-        }
-    }
-
-    private def withMetrics[T <: Result](metricSystem: MetricSystem, metrics:Option[MetricBoard])(fn: => T) : T = {
-        // Publish metrics
-        metrics.foreach { metrics =>
-            metrics.reset(metricSystem)
-            metricSystem.addBoard(metrics)
-        }
-
-        // Run original function
-        var status:Status = Status.UNKNOWN
-        try {
-            val result = fn
-            status = result.status
-            result
-        }
-        catch {
-            case NonFatal(ex) =>
-                status = Status.FAILED
-                throw ex
-        }
-        finally {
-            // Unpublish metrics
-            metrics.foreach { metrics =>
-                // Do not publish metrics for skipped jobs
-                if (status != Status.SKIPPED) {
-                    metricSystem.commitBoard(metrics, status)
-                }
-                metricSystem.removeBoard(metrics)
-            }
         }
     }
 }

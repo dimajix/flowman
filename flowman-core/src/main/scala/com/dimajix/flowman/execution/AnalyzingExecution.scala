@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
@@ -98,6 +99,8 @@ class AnalyzingExecution(context: Context) extends CachingExecution(None, true) 
     override def operations: OperationManager = throw new UnsupportedOperationException
 
     override def withListeners[T](listeners: Seq[ExecutionListener])(fn: Execution => T): T = throw new UnsupportedOperationException
+
+    override def withMetrics[T](metrics: Option[MetricBoard])(fn: Execution => T): T = throw new UnsupportedOperationException
 
     override def monitorLifecycle(job: Job, arguments: Map[String, Any], phases: Seq[Phase])(fn: Execution => LifecycleResult): LifecycleResult = throw new UnsupportedOperationException
 

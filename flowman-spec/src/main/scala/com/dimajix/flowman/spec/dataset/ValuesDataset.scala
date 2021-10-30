@@ -33,6 +33,7 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.sql.SchemaUtils
 
@@ -81,7 +82,7 @@ case class ValuesDataset(
         val sparkSchema = recordsSchema.sparkType
 
         val values = records.map(_.toArray(recordsSchema))
-        val df = DataFrameUtils.ofStringValues(execution.spark, values, sparkSchema)
+        val df = DataFrameBuilder.ofStringValues(execution.spark, values, sparkSchema)
         SchemaUtils.applySchema(df, schema)
     }
 

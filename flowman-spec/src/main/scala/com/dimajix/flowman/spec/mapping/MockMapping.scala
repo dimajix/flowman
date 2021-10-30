@@ -30,6 +30,7 @@ import com.dimajix.flowman.types.MapRecord
 import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.types.ValueRecord
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 
 
@@ -62,12 +63,12 @@ case class MockMapping(
             val (name,schema) = schemas.head
 
             val values = records.map(_.toArray(schema))
-            val df = DataFrameUtils.ofStringValues(execution.spark, values, schema.sparkType)
+            val df = DataFrameBuilder.ofStringValues(execution.spark, values, schema.sparkType)
             Map(name -> df)
         }
         else {
             schemas.map { case (name, schema) =>
-                val df = DataFrameUtils.ofSchema(execution.spark, schema.sparkType)
+                val df = DataFrameBuilder.ofSchema(execution.spark, schema.sparkType)
                 (name, df)
             }
         }

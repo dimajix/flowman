@@ -16,11 +16,6 @@
 
 package com.dimajix.spark.sql
 
-import java.sql.Date
-import java.sql.Timestamp
-
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.View
 import org.apache.spark.sql.types.DateType
@@ -36,7 +31,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.spark.testing.LocalSparkSession
-import com.dimajix.util.DateTimeUtils
 
 
 class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSession {
@@ -49,45 +43,6 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                 case df:LogicalPlan => df
             }
         }
-    }
-
-    "DataFrameUtils.ofStringValues" should "create a DataFrame" in {
-        val lines = Seq(
-            Array("1","lala","2.3","3.4","2019-02-01","2019-02-01T12:34:00.000"),
-            Array("2","lolo","3.4","4.5","2019-02-02","2019-02-01T12:34:00"),
-            Array("","","","","",""),
-            Array(null:String,null:String,null:String,null:String,null:String,null:String)
-        )
-        val schema = StructType(Seq(
-            StructField("c1", IntegerType),
-            StructField("c2", StringType),
-            StructField("c3", DoubleType),
-            StructField("c4", DecimalType(30,6)),
-            StructField("c5", DateType),
-            StructField("c6", TimestampType)
-        ))
-        val df = DataFrameUtils.ofStringValues(spark, lines, schema)
-
-        df.collect() should be (Seq(
-            Row(1,"lala",2.3, new java.math.BigDecimal("3.400000"), Date.valueOf("2019-02-01"),new Timestamp(DateTimeUtils.stringToTime("2019-02-01T12:34:00").getTime)),
-            Row(2,"lolo",3.4, new java.math.BigDecimal("4.500000"), Date.valueOf("2019-02-02"),new Timestamp(DateTimeUtils.stringToTime("2019-02-01T12:34:00").getTime)),
-            Row(null,null,null,null,null,null),
-            Row(null,null,null,null,null,null)
-        ))
-        df.schema should be (schema)
-    }
-
-    "DataFrameUtils.ofSchema" should "create an empty DataFrame" in {
-        val schema = StructType(Seq(
-            StructField("c1", IntegerType),
-            StructField("c2", StringType),
-            StructField("c3", DoubleType),
-            StructField("c4", DateType)
-        ))
-        val df = DataFrameUtils.ofSchema(spark, schema)
-
-        df.collect() should be (Seq())
-        df.schema should be (schema)
     }
 
     "DataFrameUtils.compare" should "work" in {
@@ -103,8 +58,8 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             Array("2","","3.4","",""),
             Array("",null,"",null,null)
         )
-        val df1 = DataFrameUtils.ofStringValues(spark, lines, schema)
-        val df2 = DataFrameUtils.ofStringValues(spark, lines, schema)
+        val df1 = DataFrameBuilder.ofStringValues(spark, lines, schema)
+        val df2 = DataFrameBuilder.ofStringValues(spark, lines, schema)
 
         DataFrameUtils.compare(df1, df2) should be (true)
         DataFrameUtils.compare(df1.limit(2), df2) should be (false)
@@ -126,8 +81,8 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             Array("2","","3.4","", ""),
             Array("",null,"",null, null)
         )
-        val df1 = DataFrameUtils.ofStringValues(spark, lines, schema)
-        val df2 = DataFrameUtils.ofStringValues(spark, lines, schema)
+        val df1 = DataFrameBuilder.ofStringValues(spark, lines, schema)
+        val df2 = DataFrameBuilder.ofStringValues(spark, lines, schema)
 
         DataFrameUtils.diff(df1, df2) should be (None)
         DataFrameUtils.diff(df1.limit(2), df2) should not be (None)
@@ -148,7 +103,7 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             Array("2","","3.4","","",""),
             Array("",null,"",null,null,null)
         )
-        val df1 = DataFrameUtils.ofStringValues(spark, lines, schema)
+        val df1 = DataFrameBuilder.ofStringValues(spark, lines, schema)
 
         DataFrameUtils.diffToStringValues(lines, df1) should be (None)
         DataFrameUtils.diffToStringValues(lines, df1.limit(2)) should not be (None)

@@ -40,6 +40,7 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.sql.SchemaUtils
 
@@ -95,14 +96,14 @@ case class MockRelation(
                 .getOrElse(throw new IllegalArgumentException("Cannot mock relation with records without schema information"))
 
             val values = records.map(_.toArray(fullSchema))
-            val df = DataFrameUtils.ofStringValues(execution.spark, values, fullSchema.sparkType)
+            val df = DataFrameBuilder.ofStringValues(execution.spark, values, fullSchema.sparkType)
             SchemaUtils.applySchema(df, schema)
         }
         else {
             val readSchema = schema.orElse(inputSchema)
                 .getOrElse(throw new IllegalArgumentException("Mock relation either needs own schema or a desired input schema"))
 
-            DataFrameUtils.ofSchema(execution.spark, readSchema)
+            DataFrameBuilder.ofSchema(execution.spark, readSchema)
         }
     }
 

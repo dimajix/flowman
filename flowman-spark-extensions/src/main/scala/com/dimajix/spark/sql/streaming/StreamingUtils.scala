@@ -9,6 +9,7 @@ import org.apache.spark.sql.execution.streaming.Source
 import org.apache.spark.sql.execution.streaming.StreamingExecutionRelation
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 
 
@@ -27,10 +28,10 @@ object StreamingUtils {
                     triggerDF.schema.map(f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)()),
                     triggerDF.queryExecution.toRdd,
                     isStreaming = true)(spark)
-                DataFrameUtils.ofRows(spark, logicalPlan)
+                DataFrameBuilder.ofRows(spark, logicalPlan)
             }
             override def stop(): Unit = {}
         }
-        DataFrameUtils.ofRows(spark, StreamingExecutionRelation(source, spark))
+        DataFrameBuilder.ofRows(spark, StreamingExecutionRelation(source, spark))
     }
 }

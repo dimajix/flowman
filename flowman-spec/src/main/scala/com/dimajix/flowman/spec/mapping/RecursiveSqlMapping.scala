@@ -41,6 +41,7 @@ import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.sql.DataFrameUtils.withTempView
 import com.dimajix.spark.sql.DataFrameUtils.withTempViews
@@ -133,7 +134,7 @@ extends BaseMapping {
 
         // Create dummy data frames
         val replacements = input.map { case (id,schema) =>
-            id.name -> DataFrameUtils.singleRow(spark, schema.sparkType)
+            id.name -> DataFrameBuilder.singleRow(spark, schema.sparkType)
         }
 
         val result = withTempViews(replacements) {

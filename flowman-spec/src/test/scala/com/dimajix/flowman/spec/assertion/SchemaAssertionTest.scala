@@ -39,6 +39,7 @@ import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.MapType
 import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -113,7 +114,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             )
         )
 
-        val df1 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df1 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("col_2", IntegerType),
             Field("map", MapType(StringType, DoubleType)),
@@ -129,7 +130,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df2 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df2 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("col_2", IntegerType),
             Field("map", MapType(StringType, DoubleType)),
@@ -145,7 +146,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df3 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df3 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_2", IntegerType),
             Field("col_1", StringType),
             Field("map", MapType(StringType, DoubleType)),
@@ -161,7 +162,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df4 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df4 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("map", MapType(StringType, DoubleType)),
             Field("array", ArrayType(BooleanType)),
@@ -176,7 +177,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df5 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df5 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("col_2", IntegerType),
             Field("map", MapType(StringType, DoubleType)),
@@ -191,7 +192,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df6 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df6 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("col_2", IntegerType),
             Field("map", MapType(StringType, DoubleType)),
@@ -231,7 +232,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ignoreOrder = true
         )
 
-        val df1 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df1 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("col_2", IntegerType),
             Field("map", MapType(StringType, DoubleType)),
@@ -247,7 +248,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df2 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df2 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("col_2", IntegerType),
             Field("map", MapType(StringType, DoubleType)),
@@ -263,7 +264,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df3 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df3 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_2", IntegerType),
             Field("col_1", StringType),
             Field("map", MapType(StringType, DoubleType)),
@@ -279,7 +280,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df4 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df4 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("map", MapType(StringType, DoubleType)),
             Field("array", ArrayType(BooleanType)),
@@ -294,7 +295,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df5 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df5 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("col_2", IntegerType),
             Field("map", MapType(StringType, DoubleType)),
@@ -309,7 +310,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df6 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df6 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("col_2", IntegerType),
             Field("map", MapType(StringType, DoubleType)),
@@ -347,7 +348,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ignoreCase = true
         )
 
-        val df1 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df1 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("COL_1", StringType),
             Field("struct", StructType(Seq(
                 Field("NESTED_COL_1", StringType),
@@ -360,7 +361,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df2 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df2 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("COL_1", StringType),
             Field("struct", StructType(Seq(
                 Field("NESTED_COL_1", IntegerType),
@@ -373,7 +374,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df4 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df4 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("COL_1", StringType),
             Field("struct", StructType(Seq(
                 Field("nested_col_2", StringType),
@@ -405,7 +406,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ignoreNullability = false
         )
 
-        val df1 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df1 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType, nullable = false),
             Field("struct", StructType(Seq(
                 Field("nested_col_1", StringType, nullable = false),
@@ -418,7 +419,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df2 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df2 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType, nullable = false),
             Field("struct", StructType(Seq(
                 Field("nested_col_1", StringType),
@@ -431,7 +432,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df3 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df3 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("struct", StructType(Seq(
                 Field("nested_col_1", StringType, nullable = false),
@@ -463,7 +464,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ignoreNullability = true
         )
 
-        val df1 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df1 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType, nullable = false),
             Field("struct", StructType(Seq(
                 Field("nested_col_1", StringType, nullable = false),
@@ -476,7 +477,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df2 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df2 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType, nullable = false),
             Field("struct", StructType(Seq(
                 Field("nested_col_1", StringType),
@@ -489,7 +490,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df3 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df3 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("struct", StructType(Seq(
                 Field("nested_col_1", StringType, nullable = false),
@@ -524,7 +525,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ignoreTypes = true
         )
 
-        val df1 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df1 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", DoubleType),
             Field("col_2", IntegerType),
             Field("map", MapType(StringType, DoubleType)),
@@ -540,7 +541,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df2 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df2 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("col_2", IntegerType),
             Field("map", StringType),
@@ -556,7 +557,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df3 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df3 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("col_2", IntegerType),
             Field("map", MapType(StringType, DoubleType)),
@@ -572,7 +573,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df4 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df4 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("col_2", IntegerType),
             Field("map", MapType(StringType, DoubleType)),
@@ -585,7 +586,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df5 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df5 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("col_2", IntegerType),
             Field("map", MapType(StringType, DoubleType)),
@@ -601,7 +602,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
-        val df6 = DataFrameUtils.ofSchema(execution.spark, StructType(Seq(
+        val df6 = DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(
             Field("col_1", StringType),
             Field("col_2", StructType(Seq(
                 Field("nested_col_1", StringType),

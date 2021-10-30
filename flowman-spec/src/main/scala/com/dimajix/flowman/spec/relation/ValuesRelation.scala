@@ -48,6 +48,7 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.sql.SchemaUtils
 
@@ -105,14 +106,14 @@ case class ValuesRelation(
         if (records.nonEmpty) {
             val fullSchema = com.dimajix.flowman.types.StructType(effectiveSchema.fields)
             val values = records.map(_.toArray(fullSchema))
-            val df = DataFrameUtils.ofStringValues(execution.spark, values, fullSchema.sparkType)
+            val df = DataFrameBuilder.ofStringValues(execution.spark, values, fullSchema.sparkType)
             SchemaUtils.applySchema(df, schema)
         }
         else {
             val readSchema = schema.orElse(inputSchema)
                 .getOrElse(throw new IllegalArgumentException("Values relation either needs own schema or a desired input schema"))
 
-            DataFrameUtils.ofSchema(execution.spark, readSchema)
+            DataFrameBuilder.ofSchema(execution.spark, readSchema)
         }
     }
 

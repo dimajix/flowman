@@ -38,42 +38,7 @@ import com.dimajix.spark.sql.local.csv.CsvOptions
 
 
 object DataFrameUtils {
-    private val rowParserOptions = RowParser.Options()
     private val tempViewLock = new ReentrantLock
-
-    /**
-     * Creates a DataFrame containing a single Row for a given Schema, either with NULL values or with default values.
-     * @param sparkSession
-     * @param schema
-     * @return
-     */
-    def singleRow(sparkSession: SparkSession, schema: StructType): DataFrame = {
-        val logicalPlan = PlanUtils.singleRowPlan(schema)
-        new Dataset[Row](sparkSession, logicalPlan, RowEncoder(schema))
-    }
-
-    /**
-     * Creates a DataFrame from a Spark [[LogicalPlan]]
-     * @param sparkSession
-     * @param logicalPlan
-     * @return
-     */
-    def ofRows(sparkSession: SparkSession, logicalPlan: LogicalPlan): DataFrame = {
-        val qe = sparkSession.sessionState.executePlan(logicalPlan)
-        qe.assertAnalyzed()
-        new Dataset[Row](sparkSession, logicalPlan, RowEncoder(qe.analyzed.schema))
-    }
-
-    /**
-     * Creates a DataFrame from a sequence of Spark [[Row]] objects and a Spark schema.
-     * @param sparkSession
-     * @param rows
-     * @param schema
-     * @return
-     */
-    def ofRows(sparkSession: SparkSession, rows:Seq[Row], schema:StructType): DataFrame = {
-        sparkSession.createDataFrame(rows.asJava, schema)
-    }
 
     /**
      * Temporarily caches a set of DataFrames
@@ -155,31 +120,6 @@ object DataFrameUtils {
         finally {
             tempViewLock.unlock()
         }
-    }
-
-    /**
-     * Creates a DataFrame from a sequence of string array records. The string values will be converted to appropriate
-     * data types as specified in the schema
-     * @param sparkSession
-     * @param lines
-     * @param schema
-     * @return
-     */
-    def ofStringValues(sparkSession: SparkSession, lines:Seq[Array[String]], schema:StructType) : DataFrame = {
-        val reader = new RowParser(schema, rowParserOptions)
-        val rows = lines.map(reader.parse)
-        sparkSession.createDataFrame(rows.asJava, schema)
-    }
-
-    /**
-     * Create an empty [[DataFrame]] from a schema
-     * @param sparkSession
-     * @param schema
-     * @return
-     */
-    def ofSchema(sparkSession: SparkSession, schema:StructType) : DataFrame = {
-        val rdd = sparkSession.sparkContext.emptyRDD[Row]
-        sparkSession.createDataFrame(rdd, schema)
     }
 
     def compare(left:DataFrame, right:DataFrame) : Boolean = {

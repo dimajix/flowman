@@ -32,6 +32,7 @@ import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.spec.mapping.GroupedAggregateMappingSpec.GroupSpec
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 
 
@@ -232,7 +233,7 @@ case class GroupedAggregateMapping(
             else
                 input
 
-        DataFrameUtils.ofRows(input.sparkSession,
+        DataFrameBuilder.ofRows(input.sparkSession,
             SparkShim.groupingSetAggregate(
                 dimensions.map(_.expr),
                 groupings.map(g => g.map(_.expr)),

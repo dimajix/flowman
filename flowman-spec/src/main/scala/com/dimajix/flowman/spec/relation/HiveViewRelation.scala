@@ -36,6 +36,7 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.sql.SqlParser
 import com.dimajix.spark.sql.catalyst.SqlBuilder
 
@@ -142,7 +143,9 @@ case class HiveViewRelation(
 
     private def migrateFromView(catalog:Catalog, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
         val curTable = catalog.getTable(tableIdentifier)
-        if (curTable.viewText.get != newSelect) {
+        val curSchema = SchemaUtils.normalize(curTable.schema)
+        val newSchema = SchemaUtils.normalize(catalog.spark.sql(newSelect).schema)
+        if (curTable.viewText.get != newSelect || curSchema != newSchema) {
             migrationStrategy match {
                 case MigrationStrategy.NEVER =>
                     logger.warn(s"Migration required for HiveView relation '$identifier' of Hive view $tableIdentifier, but migrations are disabled.")

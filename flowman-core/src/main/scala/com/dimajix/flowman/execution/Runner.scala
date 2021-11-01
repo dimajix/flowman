@@ -301,18 +301,14 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @return
      */
     private def executeTargetPhase(execution: Execution, target:Target, phase:Phase, force:Boolean, dryRun:Boolean) : TargetResult = {
-        // Create target instance for state server
-        val instance = target.instance
-
         val forceDirty = force || execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY)
-        val canSkip = !force && checkTarget(instance, phase)
 
         val startTime = Instant.now()
         execution.monitorTarget(target, phase) { execution =>
             logSubtitle(s"$phase target '${target.identifier}'")
 
             // First checkJob if execution is really required
-            if (canSkip) {
+            if (!force && checkTarget(target.instance, phase)) {
                 logger.info(cyan(s"Target '${target.identifier}' up to date for phase '$phase' according to state store, skipping execution"))
                 logger.info("")
                 TargetResult(target, phase, Status.SKIPPED, startTime)

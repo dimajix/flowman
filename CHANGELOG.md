@@ -3,6 +3,7 @@
 * Add build profile for Hadoop 3.3
 * Add build profile for Spark 3.2
 * Allow SQL expressions as dimensions in `aggregate` mapping
+* Update Hive views when the resulting schema would change
 
 
 # Version 0.18.0 - 2021-10-13

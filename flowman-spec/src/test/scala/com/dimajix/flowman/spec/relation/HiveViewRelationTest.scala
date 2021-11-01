@@ -287,4 +287,86 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
 
         context.getRelation(RelationIdentifier("t0")).destroy(execution)
     }
+
+    it should "migrate a view if the schema changes" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val view = HiveViewRelation(
+            Relation.Properties(context),
+            database = Some("default"),
+            table = "view",
+            sql = Some("SELECT * FROM table")
+        )
+        val table = HiveTableRelation(
+            Relation.Properties(context, "rel_1"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.StringType),
+                    Field("f2", com.dimajix.flowman.types.IntegerType),
+                    Field("f3", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            table = "table",
+            database = Some("default")
+        )
+        val table2 = HiveTableRelation(
+            Relation.Properties(context, "rel_1"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.StringType),
+                    Field("f2", com.dimajix.flowman.types.DoubleType),
+                    Field("f4", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            table = "table",
+            database = Some("default")
+        )
+
+        // == Create TABLE ============================================================================================
+        table.exists(execution) should be (No)
+        table.create(execution)
+        table.exists(execution) should be (Yes)
+        session.catalog.getTable(TableIdentifier("table", Some("default"))).tableType should be (CatalogTableType.MANAGED)
+        session.catalog.getTable(TableIdentifier("table", Some("default"))).schema should be (table.schema.get.sparkSchema)
+
+        // == Create VIEW =============================================================================================
+        view.exists(execution) should be (No)
+        view.create(execution)
+        view.exists(execution) should be (Yes)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table.schema.get.sparkSchema)
+
+        // == Migrate VIEW ===========================================================================================
+        view.migrate(execution)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table.schema.get.sparkSchema)
+
+        // == Replace TABLE ===========================================================================================
+        table.destroy(execution, ifExists = true)
+        table2.create(execution)
+        table2.exists(execution) should be (Yes)
+        session.catalog.getTable(TableIdentifier("table", Some("default"))).tableType should be (CatalogTableType.MANAGED)
+        session.catalog.getTable(TableIdentifier("table", Some("default"))).schema should be (table2.schema.get.sparkSchema)
+
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table.schema.get.sparkSchema)
+
+        // == Migrate VIEW ===========================================================================================
+        view.migrate(execution)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table2.schema.get.sparkSchema)
+
+        // == Migrate VIEW ===========================================================================================
+        view.migrate(execution)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table2.schema.get.sparkSchema)
+
+        // == Destroy TABLE ===========================================================================================
+        table.destroy(execution, ifExists = true)
+        view.destroy(execution, ifExists = true)
+    }
 }

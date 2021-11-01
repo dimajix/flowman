@@ -303,12 +303,15 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
     private def executeTargetPhase(execution: Execution, target:Target, phase:Phase, force:Boolean, dryRun:Boolean) : TargetResult = {
         val forceDirty = force || execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY)
 
+        // We need to check the target *before* we run code inside the monitor (which will mark the target as RUNNING)
+        val canSkip = !force && checkTarget(target.instance, phase)
+
         val startTime = Instant.now()
         execution.monitorTarget(target, phase) { execution =>
             logSubtitle(s"$phase target '${target.identifier}'")
 
             // First checkJob if execution is really required
-            if (!force && checkTarget(target.instance, phase)) {
+            if (canSkip) {
                 logger.info(cyan(s"Target '${target.identifier}' up to date for phase '$phase' according to state store, skipping execution"))
                 logger.info("")
                 TargetResult(target, phase, Status.SKIPPED, startTime)

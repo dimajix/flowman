@@ -430,7 +430,7 @@
         <profile>
             <id>hadoop-3.1</id>
             <properties>
-                <hadoop.version>3.1.4</hadoop.version>
+                <hadoop.version>3.1.2</hadoop.version>
                 <hadoop-api.version>3.1</hadoop-api.version>
                 <json-smart.version>2.3</json-smart.version>
                 <commons-beanutils.version>1.9.3</commons-beanutils.version>

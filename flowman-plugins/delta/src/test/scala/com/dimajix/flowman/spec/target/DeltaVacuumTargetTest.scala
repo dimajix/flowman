@@ -22,6 +22,7 @@ import java.time.Duration
 import io.delta.sql.DeltaSparkSessionExtension
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.col
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -43,6 +44,9 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
+import org.apache.spark.sql.{types => stypes}
+
+import com.dimajix.flowman.model.PartitionField
 
 
 class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
@@ -163,6 +167,122 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.create(execution)
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
+
+        // == Vacuum ==================================================================================================
+        target.dirty(execution, Phase.BUILD) should be (Unknown)
+        target.execute(execution, Phase.BUILD)
+
+        // == Destroy =================================================================================================
+        relation.destroy(execution)
+        location.exists() should be (false)
+        relation.exists(execution) should be (No)
+    }
+
+    it should "support compaction without partition columns" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val execution = session.execution
+
+        val location = new File(tempDir, "delta/default/lala2")
+        val relation = DeltaTableRelation(
+            Relation.Properties(context, "delta_relation"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("str_col", StringType),
+                    Field("int_col", IntegerType)
+                )
+            )),
+            database = "default",
+            table = "delta_table",
+            location = Some(new Path(location.toURI))
+        )
+
+        val target = DeltaVacuumTarget(
+            Target.Properties(context, "vacuum"),
+            ValueRelationReference(context, Prototype.of(relation)),
+            compaction = true,
+            minFiles = 1,
+            maxFiles = 8
+        )
+        target.phases should be (Set(Phase.BUILD))
+
+        // == Create ==================================================================================================
+        location.exists() should be (false)
+        relation.exists(execution) should be (No)
+        relation.create(execution)
+        location.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+
+        // == Write ===================================================================================================
+        val df = spark.range(1000).repartition(200)
+            .select(
+                col("id").cast(stypes.StringType).as("str_col"),
+                col("id").as("int_col")
+            )
+        relation.loaded(execution) should be (No)
+        relation.write(execution, df)
+        relation.loaded(execution) should be (Yes)
+
+        // == Vacuum ==================================================================================================
+        target.dirty(execution, Phase.BUILD) should be (Unknown)
+        target.execute(execution, Phase.BUILD)
+
+        // == Destroy =================================================================================================
+        relation.destroy(execution)
+        location.exists() should be (false)
+        relation.exists(execution) should be (No)
+    }
+
+    it should "support compaction with partition columns" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val execution = session.execution
+
+        val location = new File(tempDir, "delta/default/lala2")
+        val relation = DeltaTableRelation(
+            Relation.Properties(context, "delta_relation"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("str_col", StringType),
+                    Field("int_col", IntegerType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("part", StringType)
+            ),
+            database = "default",
+            table = "delta_table",
+            location = Some(new Path(location.toURI))
+        )
+
+        val target = DeltaVacuumTarget(
+            Target.Properties(context, "vacuum"),
+            ValueRelationReference(context, Prototype.of(relation)),
+            compaction = true,
+            minFiles = 1,
+            maxFiles = 8
+        )
+        target.phases should be (Set(Phase.BUILD))
+
+        // == Create ==================================================================================================
+        location.exists() should be (false)
+        relation.exists(execution) should be (No)
+        relation.create(execution)
+        location.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+
+        // == Write ===================================================================================================
+        val df = spark.range(1000).repartition(200)
+            .select(
+                col("id").cast(stypes.StringType).as("str_col"),
+                col("id").as("int_col"),
+                (col("id") % 5).cast(stypes.StringType).as("part")
+            )
+        relation.loaded(execution) should be (No)
+        relation.write(execution, df)
+        relation.loaded(execution) should be (Yes)
 
         // == Vacuum ==================================================================================================
         target.dirty(execution, Phase.BUILD) should be (Unknown)

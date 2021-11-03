@@ -319,6 +319,64 @@ class OpenApiSchemaUtilsTest extends AnyFlatSpec with Matchers  {
         ))
     }
 
+    it should "support nested allOf" in {
+        val spec =
+            """
+              |openapi: "3.0"
+              |info:
+              |  version: 1.0.0
+              |  title: Swagger Petstore
+              |  description: A sample API that uses a petstore as an example to demonstrate features in the swagger-2.0 specification
+              |  termsOfService: http://swagger.io/terms/
+              |  contact:
+              |    name: Swagger API Team
+              |    email: apiteam@swagger.io
+              |    url: http://swagger.io
+              |  license:
+              |    name: Apache 2.0
+              |url: https://www.apache.org/licenses/LICENSE-2.0.html
+              |components:
+              |  schemas:
+              |    Pet:
+              |      properties:
+              |        info:
+              |          allOf:
+              |            - type: object
+              |              allOf:
+              |                - type: object
+              |                  required:
+              |                    - name
+              |                  properties:
+              |                    name:
+              |                      type: string
+              |                      description: The Pets name
+              |                    tag:
+              |                      type: string
+              |                - type: object
+              |                  properties:
+              |                    some_field:
+              |                      type: string
+              |            - type: object
+              |              required:
+              |                - id
+              |              properties:
+              |                id:
+              |                  type: integer
+              |                  format: int64
+              |                  description: The Pets ID
+              |""".stripMargin
+
+        val fields = OpenApiSchemaUtils.fromOpenApi(spec, Some("Pet"), false)
+        fields should be (Seq(
+            Field("info", StructType(Seq(
+                Field("name", StringType, false, description = Some("The Pets name")),
+                Field("tag", StringType),
+                Field("some_field", StringType),
+                Field("id", LongType, false, description = Some("The Pets ID"), format=Some("int64"))
+            )))
+        ))
+    }
+
     it should "support nested schemas" in {
         val spec =
             """

@@ -89,7 +89,7 @@ object OpenApiSchemaUtils {
             .map(_.asScala)
             .getOrElse(Map.empty[String,Schema[_]])
         val model = entity.filter(_.nonEmpty)
-            .flatMap(e => schemas.get(e))
+            .map(e => schemas.getOrElse(e, throw new IllegalArgumentException(s"Entity $e not found in schema")))
             .getOrElse(schemas.values.head)
         fromOpenApi(model, nullable)
     }
@@ -223,7 +223,6 @@ object OpenApiSchemaUtils {
                     case _ => IntegerType
                 }
             case _:MapSchema => MapType(StringType, StringType)
-            case obj:ObjectSchema => fromOpenApiObject(obj.getProperties.asScala.toSeq, fqName + ".", Option(obj.getRequired).toSeq.flatMap(_.asScala).toSet, nullable)
             case s:StringSchema =>
                 val minLength = Option(s.getMinLength).map(_.intValue())
                 val maxLength = Option(s.getMaxLength).map(_.intValue())
@@ -233,7 +232,9 @@ object OpenApiSchemaUtils {
                     case (_,_) => StringType
                 }
             case _:UUIDSchema => StringType
+            case obj:ObjectSchema => fromOpenApiObject(obj.getProperties.asScala.toSeq, fqName + ".", Option(obj.getRequired).toSeq.flatMap(_.asScala).toSet, nullable)
             case s:Schema[_] if s.getEnum != null => StringType // enums
+            case s:Schema[_] => fromOpenApiObject(s.getProperties.asScala.toSeq, fqName + ".", Option(s.getRequired).toSeq.flatMap(_.asScala).toSet, nullable)
             case _ => throw new UnsupportedOperationException(s"Swagger type $property of field $fqName not supported")
         }
     }

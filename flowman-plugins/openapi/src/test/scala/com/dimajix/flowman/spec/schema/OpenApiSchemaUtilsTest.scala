@@ -319,6 +319,45 @@ class OpenApiSchemaUtilsTest extends AnyFlatSpec with Matchers  {
         ))
     }
 
+    it should "support nested schemas" in {
+        val spec =
+            """
+              |openapi: "3.0"
+              |components:
+              |  schemas:
+              |    Card:
+              |      description: "Card information"
+              |      additionalProperties: false
+              |      type: object
+              |      required:
+              |        - data
+              |      properties:
+              |        data:
+              |          description: "Some nested schema"
+              |          required:
+              |            - id
+              |            - product
+              |          properties:
+              |            id:
+              |              description: "Some identifier"
+              |              type: string
+              |              format: uuid
+              |            product:
+              |              description: "Product name"
+              |              type: string
+              |              minLength: 1
+              |              maxLength: 40
+              |""".stripMargin
+
+        val fields = OpenApiSchemaUtils.fromOpenApi(spec, Some("Card"), false)
+        fields should be (Seq(
+            Field("data", StructType(Seq(
+                Field("id", StringType, nullable = false, description = Some("Some identifier"), format = Some("uuid")),
+                Field("product", VarcharType(40), nullable = false, description = Some("Product name"))
+            )), nullable = false, description=Some("Some nested schema"))
+        ))
+    }
+
     it should "support allOf in arrays" in {
         val spec =
             """

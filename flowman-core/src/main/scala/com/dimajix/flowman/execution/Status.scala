@@ -30,12 +30,28 @@ import com.dimajix.flowman.model.Result
 sealed abstract class Status {
     def lower : String = toString.toLowerCase(Locale.ROOT)
     def upper : String = toString.toUpperCase(Locale.ROOT)
+
+    /**
+     * Returns [[true]] if this Status represents an successful operation (i.e. SUCCESS or SKIPPED)
+     * @return
+     */
+    final def success : Boolean = this match {
+        case Status.SUCCESS|Status.SUCCESS_WITH_ERRORS|Status.SKIPPED => true
+        case _ => false
+    }
+
+    /**
+     * Returns [[true]] is this Status has to be interpreted as an unsuccessful operation
+     * @return
+     */
+    final def failure : Boolean = !success
 }
 
 object Status {
     case object UNKNOWN extends Status
     case object RUNNING extends Status
     case object SUCCESS extends Status
+    case object SUCCESS_WITH_ERRORS extends Status
     case object FAILED extends Status
     case object ABORTED extends Status
     case object SKIPPED extends Status
@@ -45,6 +61,7 @@ object Status {
             case "unknown" => UNKNOWN
             case "running" => RUNNING
             case "success" => SUCCESS
+            case "success_with_errors" => SUCCESS_WITH_ERRORS
             case "failed" => FAILED
             case "aborted"|"killed" => ABORTED
             case "skipped" => SKIPPED
@@ -62,12 +79,14 @@ object Status {
     def ofAll[T](seq: Iterable[T], keepGoing:Boolean=false)(fn:T => Status) : Status = {
         val iter = seq.iterator
         var error = false
+        var success_with_errors = false
         var skipped = true
         val empty = !iter.hasNext
         while (iter.hasNext && (!error || keepGoing)) {
             val item = iter.next()
             val status = fn(item)
-            error |= (status != Status.SUCCESS && status != Status.SKIPPED)
+            error |= status.failure
+            success_with_errors |= (status == Status.SUCCESS_WITH_ERRORS)
             skipped &= (status == Status.SKIPPED)
         }
 
@@ -77,18 +96,22 @@ object Status {
             Status.FAILED
         else if (skipped)
             Status.SKIPPED
+        else if (success_with_errors)
+            Status.SUCCESS_WITH_ERRORS
         else
             Status.SUCCESS
     }
 
-    def ofAll[T](seq: Iterable[Status]) : Status = {
+    def ofAll(seq: Iterable[Status]) : Status = {
         val iter = seq.iterator
         var error = false
+        var success_with_errors = false
         var skipped = true
         val empty = !iter.hasNext
         while (iter.hasNext && (!error)) {
             val status = iter.next()
-            error |= (status != Status.SUCCESS && status != Status.SKIPPED)
+            error |= status.failure
+            success_with_errors |= (status == Status.SUCCESS_WITH_ERRORS)
             skipped &= (status == Status.SKIPPED)
         }
 
@@ -98,6 +121,8 @@ object Status {
             Status.FAILED
         else if (skipped)
             Status.SKIPPED
+        else if (success_with_errors)
+            Status.SUCCESS_WITH_ERRORS
         else
             Status.SUCCESS
     }
@@ -115,6 +140,7 @@ object Status {
         var error = false
         var skipped = true
         var empty = true
+        var success_with_errors = false
 
         ThreadUtils.parmap(seq, prefix, parallelism) { p =>
             if (!error || keepGoing) {
@@ -126,7 +152,8 @@ object Status {
                     result match {
                         case Success(status) =>
                             empty = false
-                            error |= (status != Status.SUCCESS && status != Status.SKIPPED)
+                            error |= status.failure
+                            success_with_errors |= (status == Status.SUCCESS_WITH_ERRORS)
                             skipped &= (status == Status.SKIPPED)
                             status
                         case Failure(_) =>
@@ -145,6 +172,8 @@ object Status {
             Status.FAILED
         else if (skipped)
             Status.SKIPPED
+        else if (success_with_errors)
+            Status.SUCCESS_WITH_ERRORS
         else
             Status.SUCCESS
     }

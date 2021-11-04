@@ -110,17 +110,18 @@ case class ValidateTarget(
         val runner = new AssertionRunner(context, execution, cacheLevel = StorageLevel.NONE)
         val result = runner.run(assertions.values.toList, keepGoing = errorMode != ErrorMode.FAIL_FAST)
 
-        if (!result.forall(_.success)) {
+        val status = Status.ofAll(result.map(_.status))
+        if (!status.success) {
             logger.error(s"Validation $identifier failed.")
             if (errorMode != ErrorMode.FAIL_NEVER) {
                 TargetResult(this, Phase.VALIDATE, result, new ValidationFailedException(identifier), startTime)
             }
             else {
-                TargetResult(this, Phase.VALIDATE, result, Status.SUCCESS, startTime)
+                TargetResult(this, Phase.VALIDATE, result, Status.SUCCESS_WITH_ERRORS, startTime)
             }
         }
         else {
-            TargetResult(this, Phase.VALIDATE, result, Status.SUCCESS, startTime)
+            TargetResult(this, Phase.VALIDATE, result, status, startTime)
         }
     }
 }

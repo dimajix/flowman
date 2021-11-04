@@ -77,6 +77,8 @@ private[execution] sealed class RunnerImpl {
         result.status match {
             case Status.SUCCESS =>
                 logger.info(green(s"Successfully finished phase '$phase' for target '${target.identifier}'"))
+            case Status.SUCCESS_WITH_ERRORS =>
+                logger.info(yellow(s"Successfully finished phase '$phase' for target '${target.identifier}' with errors"))
             case Status.SKIPPED =>
                 logger.info(green(s"Skipped phase '$phase' for target '${target.identifier}'"))
             case Status.FAILED if result.exception.nonEmpty =>
@@ -146,6 +148,8 @@ private[execution] sealed class RunnerImpl {
         val msg = status match {
             case Status.SUCCESS|Status.SKIPPED =>
                 boldGreen(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
+            case Status.SUCCESS_WITH_ERRORS =>
+                boldYellow(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
             case Status.ABORTED|Status.FAILED =>
                 boldRed(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
             case Status.RUNNING =>
@@ -344,7 +348,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                 // Same lifecycle, but previous phase => target is not valid
                 false
             } else {
-                state.status == Status.SUCCESS || state.status == Status.SKIPPED
+                state.status.success
             }
         }
 
@@ -411,11 +415,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
                 }
 
                 // Compute complete status - which is only SUCCESS if all steps have been executed successfully
-                val status = if (Seq(buildStatus, testStatus, destroyStatus).forall(_ == Status.SUCCESS))
-                    Status.SUCCESS
-                else
-                    Status.FAILED
-
+                val status = Status.ofAll(Seq(buildStatus, testStatus, destroyStatus))
                 val endTime = Instant.now()
                 val duration = Duration.between(startTime, endTime)
                 logStatus(title, status, duration, endTime)

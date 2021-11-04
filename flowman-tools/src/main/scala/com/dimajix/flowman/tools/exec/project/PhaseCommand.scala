@@ -84,11 +84,7 @@ sealed class PhaseCommand(phase:Phase) extends Command {
         job.interpolate(args).forall { args =>
             val runner = session.runner
             val result = runner.executeJob(job, lifecycle, args, targets.map(_.r), force, keepGoing, dryRun)
-            result match {
-                case Status.SUCCESS => true
-                case Status.SKIPPED => true
-                case _ => false
-            }
+            result.success
         }
     }
 }

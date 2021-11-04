@@ -279,7 +279,7 @@ class ValidateTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         val result = target.execute(execution, Phase.VALIDATE)
         result.target should be (target)
         result.phase should be (Phase.VALIDATE)
-        result.status should be (Status.SUCCESS)
+        result.status should be (Status.SUCCESS_WITH_ERRORS)
         result.exception should be (None)
         result.numFailures should be (1)
         result.numSuccesses should be (1)

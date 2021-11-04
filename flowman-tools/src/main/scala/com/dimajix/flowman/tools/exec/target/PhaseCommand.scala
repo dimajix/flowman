@@ -62,9 +62,7 @@ class PhaseCommand(phase:Phase) extends Command {
             val runner = session.runner
             runner.executeTargets(allTargets, lifecycle, force = force, keepGoing = keepGoing)
         } match {
-            case Success(Status.SUCCESS) => true
-            case Success(Status.SKIPPED) => true
-            case Success(_) => false
+            case Success(status) => status.success
             case Failure(e) =>
                 logger.error(e.getMessage)
                 false

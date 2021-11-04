@@ -145,6 +145,8 @@ case class SimpleReportHook(
         val msg = status match {
             case Status.SUCCESS|Status.SKIPPED =>
                 boldGreen(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
+            case Status.SUCCESS_WITH_ERRORS =>
+                boldYellow(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
             case Status.ABORTED|Status.FAILED =>
                 boldRed(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
             case Status.RUNNING =>

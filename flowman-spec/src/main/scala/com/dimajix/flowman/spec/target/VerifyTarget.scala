@@ -110,17 +110,18 @@ case class VerifyTarget(
         val runner = new AssertionRunner(context, execution, cacheLevel = StorageLevel.NONE)
         val result = runner.run(assertions.values.toList, keepGoing = errorMode != ErrorMode.FAIL_FAST)
 
-        if (!result.forall(_.success)) {
+        val status = Status.ofAll(result.map(_.status))
+        if (!status.success) {
             logger.error(s"Verification $identifier failed.")
             if (errorMode != ErrorMode.FAIL_NEVER) {
                 TargetResult(this, Phase.VERIFY, result, new VerificationFailedException(identifier), startTime)
             }
             else {
-                TargetResult(this, Phase.VERIFY, result, Status.SUCCESS, startTime)
+                TargetResult(this, Phase.VERIFY, result, Status.SUCCESS_WITH_ERRORS, startTime)
             }
         }
         else {
-            TargetResult(this, Phase.VERIFY, result, Status.SUCCESS, startTime)
+            TargetResult(this, Phase.VERIFY, result, status, startTime)
         }
     }
 }

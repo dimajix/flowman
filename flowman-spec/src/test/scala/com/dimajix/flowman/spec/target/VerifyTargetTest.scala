@@ -287,7 +287,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         val result = target.execute(execution, Phase.VERIFY)
         result.target should be (target)
         result.phase should be (Phase.VERIFY)
-        result.status should be (Status.SUCCESS)
+        result.status should be (Status.SUCCESS_WITH_ERRORS)
         result.exception should be (None)
         result.numFailures should be (1)
         result.numSuccesses should be (1)

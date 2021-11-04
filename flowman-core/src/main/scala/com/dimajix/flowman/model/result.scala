@@ -66,7 +66,7 @@ object Result {
                 case Some(result) =>
                     results += result
                     val status = result.status
-                    error |= (status != Status.SUCCESS && status != Status.SKIPPED)
+                    error |= status.failure
                 case None =>
             }
         }
@@ -86,7 +86,7 @@ sealed abstract class Result {
     def endTime : Instant
     def duration : Duration = Duration.between(startTime, endTime)
 
-    def success : Boolean = status == Status.SUCCESS
+    def success : Boolean = status == Status.SUCCESS || status == Status.SUCCESS_WITH_ERRORS
     def failure : Boolean = status == Status.FAILED
     def skipped : Boolean = status == Status.SKIPPED
     def exception : Option[Throwable] = None
@@ -452,5 +452,4 @@ case class AssertionTestResult(
         else
             Status.FAILED
     }
-    override def failure: Boolean = !success
 }

@@ -60,13 +60,10 @@ class RunCommand extends Command {
         else
             executeLinear(session, context, allTests)
 
-        status match {
-            case Status.SUCCESS => true
-            case Status.SKIPPED => true
-            case _ =>
-                logger.error(red("There have been test failures"))
-                false
+        if(!status.success) {
+            logger.error(red("There have been test failures"))
         }
+        status.success
     }
 
     private def executeLinear(session: Session, context:Context, tests:Seq[String]) : Status = {

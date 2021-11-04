@@ -4,6 +4,7 @@
 * Add build profile for Spark 3.2
 * Allow SQL expressions as dimensions in `aggregate` mapping
 * Update Hive views when the resulting schema would change
+* Add new `mapping cache` command to FlowShell
 
 
 # Version 0.18.0 - 2021-10-13

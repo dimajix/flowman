@@ -21,6 +21,7 @@ build_profile() {
     echo "Building for dist $HADOOP_DIST with Spark $SPARK_API_VERSION and Hadoop $HADOOP_API_VERSION"
     mvn -q versions:set -DnewVersion=${FLOWMAN_VERSION}-${HADOOP_DIST}-spark${SPARK_API_VERSION}-hadoop${HADOOP_API_VERSION}
 
+    #mvn clean deploy $profiles -DskipTests -Dflowman.dist.suffix=""
     mvn clean install $profiles -DskipTests -Dflowman.dist.suffix=""
     cp flowman-dist/target/flowman-dist-*.tar.gz release
 

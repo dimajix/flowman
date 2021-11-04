@@ -18,6 +18,7 @@ package com.dimajix.flowman.tools.exec.mapping
 
 import scala.util.control.NonFatal
 
+import org.apache.spark.storage.StorageLevel
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
@@ -30,24 +31,23 @@ import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
 
 
-class ExplainCommand extends Command {
-    private val logger = LoggerFactory.getLogger(classOf[ExplainCommand])
+class CacheCommand extends Command {
+    private val logger = LoggerFactory.getLogger(classOf[CacheCommand])
 
-    @Option(name="-e", aliases=Array("--extended"), required = false)
-    var extended: Boolean = false
-    @Argument(usage = "specifies the mapping to explain", metaVar = "<mapping>", required = true)
+    @Argument(usage = "specifies the mapping to cache", metaVar = "<mapping>", required = true)
     var mapping: String = ""
 
 
     override def execute(session: Session, project: Project, context:Context) : Boolean = {
-        logger.info(s"Explaining mapping '$mapping'")
+        logger.info(s"Caching mapping '$mapping'")
 
         try {
             val id = MappingOutputIdentifier(mapping)
             val instance = context.getMapping(id.mapping)
             val executor = session.execution
             val table = executor.instantiate(instance, id.output)
-            table.explain(extended)
+            if (table.storageLevel == StorageLevel.NONE)
+                table.cache()
             true
         }
         catch {
@@ -55,7 +55,7 @@ class ExplainCommand extends Command {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 false
             case NonFatal(e) =>
-                logger.error(s"Caught exception while explaining mapping '$mapping", e)
+                logger.error(s"Caught exception while caching mapping '$mapping", e)
                 false
         }
     }

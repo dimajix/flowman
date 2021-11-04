@@ -42,6 +42,9 @@ class InspectCommand extends Command {
             println(s"    kind: ${mapping.kind}")
             println(s"    inputs: ${mapping.inputs.map(_.toString).mkString(",")}")
             println(s"    outputs: ${mapping.outputs.mkString(",")}")
+            println(s"    cache: ${mapping.cache.toString()}")
+            println(s"    broadcast: ${mapping.broadcast}")
+            println(s"    checkpoint: ${mapping.checkpoint}")
             println(s"  Requires:")
                 mapping.requires
                     .map(_.toString)

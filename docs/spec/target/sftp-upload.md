@@ -3,18 +3,47 @@ The SFTP upload target is used for uploading data which resides either on the lo
 in a Hadoop compatible filesystem (HDFS, S3, ...) to an external SFTP server.
 
 ## Example
-```
+```yaml
+connections:
+  my-sftp-connection:
+    kind: ssh
+    host: "sftp.server.dimajix.net"
+    port: "22"
+    username: "testuser"
+    password: "12345678"
+    keyFile: "/home/user/private_key"
+
 jobs:
   main:
-    tasks:
-      - kind: sftp-upload
-        description: "Upload some data to a SFTP server"
-        connection: my-sftp-connection
-        source: "$hdfs_export_basedir/export_table/${processing_date}"
-        target: "${sftp_target}/inbox/_${processing_date}.txt"
-        merge: true
-        overwrite: true
+    upload_data:
+      kind: sftp-upload
+      description: "Upload some data to a SFTP server"
+      connection: my-sftp-connection
+      source: "$hdfs_export_basedir/export_table/${processing_date}"
+      target: "${sftp_target}/inbox/_${processing_date}.txt"
+      merge: true
+      overwrite: true
 ```
+You can also directly embed the connection into the target as follows:
+```yaml
+jobs:
+  main:
+    upload_data:
+      kind: sftp-upload
+      description: "Upload some data to a SFTP server"
+      connection:
+        kind: ssh
+        host: "sftp.server.dimajix.net"
+        port: "22"
+        username: "testuser"
+        password: "12345678"
+        keyFile: "/home/user/private_key"
+      source: "$hdfs_export_basedir/export_table/${processing_date}"
+      target: "${sftp_target}/inbox/_${processing_date}.txt"
+      merge: true
+      overwrite: true
+```
+
 
 ## Fields
 * `kind` **(mandatory)** *(type: string)*: `sftp-upload`

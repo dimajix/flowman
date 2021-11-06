@@ -5,6 +5,7 @@
 * Allow SQL expressions as dimensions in `aggregate` mapping
 * Update Hive views when the resulting schema would change
 * Add new `mapping cache` command to FlowShell
+* Support embedded connection definitions
 
 
 # Version 0.18.0 - 2021-10-13

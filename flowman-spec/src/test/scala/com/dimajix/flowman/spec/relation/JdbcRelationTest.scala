@@ -42,10 +42,13 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.model.ConnectionIdentifier
+import com.dimajix.flowman.model.ConnectionReference
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.model.ValueConnectionReference
+import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.DateType
@@ -83,7 +86,46 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         }
     }
 
-    "The JdbcRelation" should "support create" in {
+    "The JdbcRelation" should "support embedding the connection" in {
+        val spec =
+            s"""
+               |kind: jdbc
+               |name: some_relation
+               |description: "This is a test table"
+               |connection:
+               |  kind: jdbc
+               |  name: some_connection
+               |  driver: some_driver
+               |  url: some_url
+               |table: lala_001
+               |schema:
+               |  kind: inline
+               |  fields:
+               |    - name: str_col
+               |      type: string
+               |    - name: int_col
+               |      type: integer
+            """.stripMargin
+        val relationSpec = ObjectMapper.parse[RelationSpec](spec).asInstanceOf[JdbcRelationSpec]
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+
+        val relation = relationSpec.instantiate(context)
+        relation.name should be ("some_relation")
+        relation.schema should be (Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", StringType),
+                    Field("int_col", IntegerType)
+                )
+            )))
+        relation.connection shouldBe a[ValueConnectionReference]
+        relation.connection.identifier should be (ConnectionIdentifier("some_connection"))
+        relation.connection.name should be ("some_connection")
+    }
+
+    it should "support create" in {
         val db = tempDir.toPath.resolve("mydb")
         val url = "jdbc:derby:" + db + ";create=true"
         val driver = "org.apache.derby.jdbc.EmbeddedDriver"
@@ -517,12 +559,12 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                     Field("int_col", IntegerType)
                 )
             )),
-            connection = ConnectionIdentifier("c0"),
+            connection = ConnectionReference(context, ConnectionIdentifier("c0")),
             table = Some("lala_001")
         )
         val relation_t1 = JdbcRelation(
             Relation.Properties(context, "t1"),
-            connection = ConnectionIdentifier("c0"),
+            connection = ConnectionReference(context, ConnectionIdentifier("c0")),
             query = Some("SELECT * FROM lala_001")
         )
 
@@ -578,7 +620,7 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                     Field("int_col", IntegerType)
                 )
             )),
-            connection = ConnectionIdentifier("c0"),
+            connection = ConnectionReference(context, ConnectionIdentifier("c0")),
             table = Some("lala_001")
         )
         val rel1 = JdbcRelation(
@@ -590,7 +632,7 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                     Field("new_col", DateType)
                 )
             )),
-            connection = ConnectionIdentifier("c0"),
+            connection = ConnectionReference(context, ConnectionIdentifier("c0")),
             table = Some("lala_001")
         )
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,29 @@ class ImpalaExternalCatalogTest extends AnyFlatSpec with Matchers {
               |  kind: impala
               |  connection: impala
             """.stripMargin
+
+        val namespace = Namespace.read.string(spec)
+        namespace.catalogs should not be (null)
+        namespace.catalogs.head shouldBe an[ImpalaCatalogSpec]
+
+        val session = Session.builder()
+            .disableSpark()
+            .withNamespace(namespace)
+            .build()
+
+        val catalogs = namespace.catalogs.head.instantiate(session.context)
+        catalogs shouldBe an[ImpalaExternalCatalog]
+    }
+
+    it should "support an embedded connection" in {
+        val spec =
+            """
+              |catalog:
+              |  kind: impala
+              |  connection:
+              |    kind: jdbc
+              |    url: jdbc:impala:localhost:21050
+              |""".stripMargin
 
         val namespace = Namespace.read.string(spec)
         namespace.catalogs should not be (null)

@@ -37,21 +37,18 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.graph.Linker
-import com.dimajix.flowman.metric.LongAccumulatorMetric
-import com.dimajix.flowman.metric.Selector
 import com.dimajix.flowman.model.BaseTarget
-import com.dimajix.flowman.model.IdentifierRelationReference
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.RelationReference
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.spec.relation.IdentifierRelationReferenceSpec
 import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.spark.sql.functions.count_records
 
 
 object RelationTarget {
@@ -60,7 +57,7 @@ object RelationTarget {
         new RelationTarget(
             Target.Properties(context),
             MappingOutputIdentifier(""),
-            IdentifierRelationReference(context,relation),
+            RelationReference(context,relation),
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
@@ -72,7 +69,7 @@ object RelationTarget {
         new RelationTarget(
             Target.Properties(context),
             mapping,
-            IdentifierRelationReference(context,relation),
+            RelationReference(context,relation),
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
             conf.getConf(DEFAULT_TARGET_PARALLELISM),

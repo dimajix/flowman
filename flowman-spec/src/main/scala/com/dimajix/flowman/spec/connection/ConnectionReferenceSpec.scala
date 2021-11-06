@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.relation
+package com.dimajix.flowman.spec.connection
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonProcessingException
@@ -25,46 +25,46 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Connection
+import com.dimajix.flowman.model.ConnectionIdentifier
+import com.dimajix.flowman.model.ConnectionReference
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Reference
-import com.dimajix.flowman.model.Relation
-import com.dimajix.flowman.model.RelationIdentifier
-import com.dimajix.flowman.model.RelationReference
 import com.dimajix.flowman.spec.Spec
 
 
-@JsonDeserialize(using=classOf[RelationReferenceDeserializer])
-abstract class RelationReferenceSpec extends Spec[Reference[Relation]]
-final case class IdentifierRelationReferenceSpec(relation:String) extends RelationReferenceSpec {
-    override def instantiate(context: Context): Reference[Relation] = {
-        val id = RelationIdentifier.parse(context.evaluate(relation))
-        RelationReference(context,id)
+@JsonDeserialize(using=classOf[ConnectionReferenceDeserializer])
+abstract class ConnectionReferenceSpec extends Spec[Reference[Connection]]
+final case class IdentifierConnectionReferenceSpec(connection:String) extends ConnectionReferenceSpec {
+    override def instantiate(context: Context): Reference[Connection] = {
+        val id = ConnectionIdentifier.parse(context.evaluate(connection))
+        ConnectionReference(context,id)
     }
 }
-final case class ValueRelationReferenceSpec(relation:Prototype[Relation]) extends RelationReferenceSpec {
-    override def instantiate(context: Context): Reference[Relation] = {
-        RelationReference(context, relation)
+final case class ValueConnectionReferenceSpec(connection:Prototype[Connection]) extends ConnectionReferenceSpec {
+    override def instantiate(context: Context): Reference[Connection] = {
+        ConnectionReference(context, connection)
     }
 }
 
 
-private class RelationReferenceDeserializer(vc:Class[_]) extends StdDeserializer[RelationReferenceSpec](vc) {
+private class ConnectionReferenceDeserializer(vc:Class[_]) extends StdDeserializer[ConnectionReferenceSpec](vc) {
     import java.io.IOException
 
     def this() = this(null)
 
     @throws[IOException]
     @throws[JsonProcessingException]
-    def deserialize(jp: JsonParser, ctxt: DeserializationContext): RelationReferenceSpec = {
+    def deserialize(jp: JsonParser, ctxt: DeserializationContext): ConnectionReferenceSpec = {
         jp.getCurrentToken match {
             case JsonToken.VALUE_STRING => {
-                IdentifierRelationReferenceSpec(jp.getText)
+                IdentifierConnectionReferenceSpec(jp.getText)
             }
             case JsonToken.START_OBJECT => {
-                val spec = jp.readValueAs(classOf[RelationSpec])
-                ValueRelationReferenceSpec(spec)
+                val spec = jp.readValueAs(classOf[ConnectionSpec])
+                ValueConnectionReferenceSpec(spec)
             }
-            case _ => throw JsonMappingException.from(jp, "Wrong type for RelationReference")
+            case _ => throw JsonMappingException.from(jp, "Wrong type for ConnectionReference")
         }
     }
 }

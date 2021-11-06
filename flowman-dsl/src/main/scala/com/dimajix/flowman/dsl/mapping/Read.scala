@@ -17,9 +17,9 @@
 package com.dimajix.flowman.dsl.mapping
 
 import com.dimajix.flowman.dsl.MappingGen
-import com.dimajix.flowman.model.IdentifierRelationReference
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.RelationReference
 import com.dimajix.flowman.spec.mapping.ReadRelationMapping
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
@@ -34,7 +34,7 @@ case class Read(
     def apply(props:Mapping.Properties) : ReadRelationMapping = {
         ReadRelationMapping(
             props,
-            IdentifierRelationReference(props.context, relation),
+            RelationReference(props.context, relation),
             columns,
             partitions,
             filter

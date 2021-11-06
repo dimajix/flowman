@@ -25,8 +25,14 @@ abstract class Reference[T] {
     def identifier:Identifier[T]
 }
 
-final case class ValueRelationReference(context:Context, template:Prototype[Relation]) extends Reference[Relation] {
-    override lazy val value : Relation = template.instantiate(context)
+object RelationReference {
+    def apply(context:Context, prototype:Prototype[Relation]) : ValueRelationReference =
+        ValueRelationReference(context, prototype)
+    def apply(context: Context, relation:RelationIdentifier) : IdentifierRelationReference =
+        IdentifierRelationReference(context, relation)
+}
+final case class ValueRelationReference(context:Context, prototype:Prototype[Relation]) extends Reference[Relation] {
+    override lazy val value : Relation = prototype.instantiate(context)
     override def name: String = value.name
     override def identifier: RelationIdentifier = value.identifier
 }
@@ -35,3 +41,22 @@ final case class IdentifierRelationReference(context: Context, relation:Relation
     override def name: String = relation.name
     override def identifier: RelationIdentifier = relation
 }
+
+
+object ConnectionReference {
+    def apply(context:Context, prototype:Prototype[Connection]) : ValueConnectionReference =
+        ValueConnectionReference(context, prototype)
+    def apply(context: Context, connection:ConnectionIdentifier) : IdentifierConnectionReference =
+        IdentifierConnectionReference(context, connection)
+}
+final case class ValueConnectionReference(context:Context, prototype:Prototype[Connection]) extends Reference[Connection] {
+    override lazy val value : Connection = prototype.instantiate(context)
+    override def name: String = value.name
+    override def identifier: ConnectionIdentifier = value.identifier
+}
+final case class IdentifierConnectionReference(context: Context, connection:ConnectionIdentifier) extends Reference[Connection] {
+    override lazy val value: Connection = context.getConnection(connection)
+    override def name: String = connection.name
+    override def identifier: ConnectionIdentifier = connection
+}
+

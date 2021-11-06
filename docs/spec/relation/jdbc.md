@@ -10,6 +10,7 @@ driver onto the classpath of Flowman. This can be done by using an appropriate p
 # First specify a connection. This can be used by multiple JDBC relations
 connections:
   frontend:
+    kind: jdbc
     driver: "$frontend_db_driver"
     url: "$frontend_db_url"
     username: "$frontend_db_username"
@@ -23,6 +24,23 @@ relations:
     # Specify the table
     table: "users"
 ```
+It is also possible to directly embed the connection as follows:
+```yaml
+relations:
+  frontend_users:
+    kind: jdbc
+    # Specify the name of the connection to use
+    connection:
+      kind: jdbc
+      driver: "$frontend_db_driver"
+      url: "$frontend_db_url"
+      username: "$frontend_db_username"
+      password: "$frontend_db_password"
+    # Specify the table
+    table: "users"
+```
+For most cases, it is recommended not to embed the connection, since this prevents reusing the same connection in
+multiple places.
 
 
 ## Fields

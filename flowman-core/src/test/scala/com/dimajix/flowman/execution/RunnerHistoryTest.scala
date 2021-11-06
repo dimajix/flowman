@@ -151,13 +151,15 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
             (target.provides _).when(*).returns(Set())
             (target.identifier _).when().returns(TargetIdentifier(name))
             (target.instance _).when().returns(instance)
+            (target.namespace _).when().returns(ctx.namespace)
+            (target.project _).when().returns(ctx.project)
             (target.dirty _).when(*, Phase.CREATE).returns(dirty)
             (target.execute _).when(*, Phase.CREATE).returns(TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
             target
         }
         def genJob(session:Session, target:String) : Job = {
             Job.builder(session.getContext(session.project.get))
-                .setName("job-" + Random.nextLong())
+                .setName("default")
                 .addTarget(TargetIdentifier(target))
                 .build()
         }

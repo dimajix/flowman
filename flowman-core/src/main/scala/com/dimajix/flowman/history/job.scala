@@ -48,6 +48,7 @@ final case class JobState(
     id:String,
     namespace:String,
     project:String,
+    version:String,
     job:String,
     phase:Phase,
     args:Map[String,String],

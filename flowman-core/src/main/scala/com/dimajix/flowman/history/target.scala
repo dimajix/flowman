@@ -53,6 +53,7 @@ final case class TargetState(
     jobId:Option[String],
     namespace:String,
     project:String,
+    version:String,
     target:String,
     partitions:Map[String,String],
     phase:Phase,

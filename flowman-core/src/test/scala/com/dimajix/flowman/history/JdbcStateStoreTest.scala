@@ -30,6 +30,8 @@ import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.TargetResult
@@ -74,8 +76,14 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
     "The Job-API of JdbcStateStore" should "provide basic state management for jobs" in {
         val store = newStateStore()
 
-        val context = RootContext.builder().build()
-        val job = Job.builder(context).build()
+        val namespace = Namespace(name="default")
+        val project = Project(name="p1")
+        val context = RootContext.builder(namespace)
+            .build()
+            .getProjectContext(project)
+        val job = Job.builder(context)
+            .setName("j1")
+            .build()
         val instance = JobInstance("default", "p1", "j1")
 
         store.getJobState(instance) should be (None)
@@ -90,8 +98,14 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
     it should "return failed on job failures" in {
         val store = newStateStore()
 
-        val context = RootContext.builder().build()
-        val job = Job.builder(context).build()
+        val namespace = Namespace(name="default")
+        val project = Project(name="p1")
+        val context = RootContext.builder(namespace)
+            .build()
+            .getProjectContext(project)
+        val job = Job.builder(context)
+            .setName("j1")
+            .build()
         val instance = JobInstance("default", "p1", "j1")
 
         store.getJobState(instance) should be (None)
@@ -113,8 +127,14 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
     it should "return correct state on skipped target" in {
         val store = newStateStore()
 
-        val context = RootContext.builder().build()
-        val job = Job.builder(context).build()
+        val namespace = Namespace(name="default")
+        val project = Project(name="p1")
+        val context = RootContext.builder(namespace)
+            .build()
+            .getProjectContext(project)
+        val job = Job.builder(context)
+            .setName("j1")
+            .build()
         val instance = JobInstance("default", "p1", "j1")
 
         store.getJobState(instance) should be (None)
@@ -157,8 +177,14 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
     it should "support job parameters" in {
         val store = newStateStore()
 
-        val context = RootContext.builder().build()
-        val job = Job.builder(context).build()
+        val namespace = Namespace(name="default")
+        val project = Project(name="p1")
+        val context = RootContext.builder(namespace)
+            .build()
+            .getProjectContext(project)
+        val job = Job.builder(context)
+            .setName("j1")
+            .build()
         val instance = JobInstance("default", "p1", "j1", Map("p1" -> "v1"))
 
         store.getJobState(instance) should be(None)
@@ -178,8 +204,13 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
     "The Target-API of JdbcStateStore" should "provide basic state management for targets" in {
         val store = newStateStore()
 
+        val namespace = Namespace(name="default")
+        val project = Project(name="p1")
         val instance = TargetInstance("default", "p1", "j1")
         val target = mock[Target]
+        (target.namespace _).expects().anyNumberOfTimes().returns(Some(namespace))
+        (target.project _).expects().anyNumberOfTimes().returns(Some(project))
+        (target.name _).expects().anyNumberOfTimes().returns("j1")
         (target.instance _).expects().anyNumberOfTimes().returns(instance)
 
         store.getTargetState(instance) should be (None)
@@ -194,8 +225,13 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
     it should "return failed on target failures" in {
         val store = newStateStore()
 
+        val namespace = Namespace(name="default")
+        val project = Project(name="p1")
         val instance = TargetInstance("default", "p1", "j1")
         val target = mock[Target]
+        (target.namespace _).expects().anyNumberOfTimes().returns(Some(namespace))
+        (target.project _).expects().anyNumberOfTimes().returns(Some(project))
+        (target.name _).expects().anyNumberOfTimes().returns("j1")
         (target.instance _).expects().anyNumberOfTimes().returns(instance)
 
         store.getTargetState(instance) should be (None)
@@ -217,8 +253,13 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
     it should "return correct state on skipped target" in {
         val store = newStateStore()
 
+        val namespace = Namespace(name="default")
+        val project = Project(name="p1")
         val instance = TargetInstance("default", "p1", "j1")
         val target = mock[Target]
+        (target.namespace _).expects().anyNumberOfTimes().returns(Some(namespace))
+        (target.project _).expects().anyNumberOfTimes().returns(Some(project))
+        (target.name _).expects().anyNumberOfTimes().returns("j1")
         (target.instance _).expects().anyNumberOfTimes().returns(instance)
 
         store.getTargetState(instance) should be (None)
@@ -261,8 +302,13 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
     it should "support single value target partitions" in {
         val store = newStateStore()
 
+        val namespace = Namespace(name="default")
+        val project = Project(name="p1")
         val instance = TargetInstance("default", "p1", "j1")
         val target = mock[Target]
+        (target.namespace _).expects().anyNumberOfTimes().returns(Some(namespace))
+        (target.project _).expects().anyNumberOfTimes().returns(Some(project))
+        (target.name _).expects().anyNumberOfTimes().returns("j1")
         (target.instance _).expects().anyNumberOfTimes().returns(instance)
 
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v1"))) should be(None)
@@ -281,8 +327,13 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
     it should "support multi value target partitions" in {
         val store = newStateStore()
 
+        val namespace = Namespace(name="default")
+        val project = Project(name="p1")
         val instance = TargetInstance("default", "p1", "j1")
         val target = mock[Target]
+        (target.namespace _).expects().anyNumberOfTimes().returns(Some(namespace))
+        (target.project _).expects().anyNumberOfTimes().returns(Some(project))
+        (target.name _).expects().anyNumberOfTimes().returns("j1")
         (target.instance _).expects().anyNumberOfTimes().returns(instance)
 
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(None)

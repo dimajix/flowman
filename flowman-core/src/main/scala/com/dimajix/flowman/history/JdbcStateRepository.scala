@@ -36,15 +36,16 @@ private[history] object JdbcStateRepository {
     private val logger = LoggerFactory.getLogger(classOf[JdbcStateRepository])
 
     case class JobRun(
-                         id:Long,
-                         namespace: String,
-                         project:String,
-                         job:String,
-                         phase:String,
-                         args_hash:String,
-                         start_ts:Timestamp,
-                         end_ts:Timestamp,
-                         status:String
+        id:Long,
+        namespace: String,
+        project:String,
+        version:String,
+        job:String,
+        phase:String,
+        args_hash:String,
+        start_ts:Timestamp,
+        end_ts:Timestamp,
+        status:String
     ) extends JobToken
 
     case class JobArgument(
@@ -58,6 +59,7 @@ private[history] object JdbcStateRepository {
         job_id:Option[Long],
         namespace: String,
         project:String,
+        version:String,
         target:String,
         phase:String,
         partitions_hash:String,
@@ -105,6 +107,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def namespace = column[String]("namespace")
         def project = column[String]("project")
+        def version = column[String]("version")
         def job = column[String]("job")
         def phase = column[String]("phase")
         def args_hash = column[String]("args_hash")
@@ -114,7 +117,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
         def idx = index("JOB_RUN_IDX", (namespace, project, job, phase, args_hash, status), unique = false)
 
-        def * = (id, namespace, project, job, phase, args_hash, start_ts, end_ts, status) <> (JobRun.tupled, JobRun.unapply)
+        def * = (id, namespace, project, version, job, phase, args_hash, start_ts, end_ts, status) <> (JobRun.tupled, JobRun.unapply)
     }
 
     class JobArguments(tag: Tag) extends Table[JobArgument](tag, "JOB_ARGUMENT") {
@@ -133,6 +136,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         def job_id = column[Option[Long]]("job_id")
         def namespace = column[String]("namespace")
         def project = column[String]("project")
+        def version = column[String]("version")
         def target = column[String]("target")
         def phase = column[String]("phase")
         def partitions_hash = column[String]("partitions_hash")
@@ -143,7 +147,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         def idx = index("TARGET_RUN_IDX", (namespace, project, target, phase, partitions_hash, status), unique = false)
         def job = foreignKey("TARGET_RUN_JOB_RUN_FK", job_id, jobRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-        def * = (id, job_id, namespace, project, target, phase, partitions_hash, start_ts, end_ts, status) <> (TargetRun.tupled, TargetRun.unapply)
+        def * = (id, job_id, namespace, project, version, target, phase, partitions_hash, start_ts, end_ts, status) <> (TargetRun.tupled, TargetRun.unapply)
     }
 
     class TargetPartitions(tag: Tag) extends Table[TargetPartition](tag, "TARGET_PARTITION") {
@@ -212,6 +216,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             state.id.toString,
             state.namespace,
             state.project,
+            state.version,
             state.job,
             Phase.ofString(state.phase),
             args,
@@ -275,6 +280,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                 state.id.toString,
                 state.namespace,
                 state.project,
+                state.version,
                 state.job,
                 Phase.ofString(state.phase),
                 Map(),
@@ -312,6 +318,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             state.job_id.map(_.toString),
             state.namespace,
             state.project,
+            state.version,
             state.target,
             parts,
             Phase.ofString(state.phase),
@@ -377,6 +384,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                 state.job_id.map(_.toString),
                 state.namespace,
                 state.project,
+                state.version,
                 state.target,
                 Map(),
                 Phase.ofString(state.phase),

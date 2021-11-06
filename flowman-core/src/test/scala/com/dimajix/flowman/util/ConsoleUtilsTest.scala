@@ -16,16 +16,31 @@
 
 package com.dimajix.flowman.util
 
+import java.time.ZonedDateTime
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.history.JobState
 import com.dimajix.spark.testing.LocalSparkSession
 
-
+object ConsoleUtilsTest {
+    final case class JobState(
+        id:String,
+        namespace:String,
+        project:String,
+        job:String,
+        phase:Phase,
+        args:Map[String,String],
+        status:Status,
+        startDateTime:Option[ZonedDateTime] = None,
+        endDateTime:Option[ZonedDateTime] = None
+    )
+}
 class ConsoleUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    import ConsoleUtilsTest.JobState
+
     val inputJson =
         """
           |{

@@ -64,8 +64,9 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
     override def getJobState(job: JobInstance): Option[JobState] = {
         val run = JobRun(
             0,
-            Option(job.namespace).getOrElse(""),
-            Option(job.project).getOrElse(""),
+            job.namespace,
+            job.project,
+            null,
             job.job,
             null,
             hashArgs(job),
@@ -88,9 +89,10 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         val run =  JobRun(
             0,
-            instance.namespace,
-            instance.project,
-            instance.job,
+            job.namespace.map(_.name).getOrElse(""),
+            job.project.map(_.name).getOrElse(""),
+            job.project.flatMap(_.version).getOrElse(""),
+            job.name,
             phase.upper,
             hashArgs(instance),
             now,
@@ -130,8 +132,9 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         val run =  TargetRun(
             0,
             None,
-            Option(target.namespace).getOrElse(""),
-            Option(target.project).getOrElse(""),
+            target.namespace,
+            target.project,
+            null,
             target.target,
             null,
             hashPartitions(target),
@@ -155,9 +158,10 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         val run =  TargetRun(
             0,
             parent.map(_.asInstanceOf[JobRun].id),
-            instance.namespace,
-            instance.project,
-            instance.target,
+            target.namespace.map(_.name).getOrElse(""),
+            target.project.map(_.name).getOrElse(""),
+            target.project.flatMap(_.version).getOrElse(""),
+            target.name,
             phase.upper,
             hashPartitions(instance),
             now,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,23 @@ package com.dimajix.flowman.history
 import java.nio.file.Files
 import java.nio.file.Path
 
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetResult
 
 
-class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter {
+class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter with MockFactory {
     var tempDir: Path = _
 
     before {
@@ -68,208 +74,226 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter {
     "The Job-API of JdbcStateStore" should "provide basic state management for jobs" in {
         val store = newStateStore()
 
-        val job = JobInstance("default", "p1", "j1")
+        val context = RootContext.builder().build()
+        val job = Job.builder(context).build()
+        val instance = JobInstance("default", "p1", "j1")
 
-        store.getJobState(job) should be (None)
-        val token = store.startJob(job, Phase.BUILD)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token, Status.SUCCESS)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
+        store.getJobState(instance) should be (None)
+        val token = store.startJob(job, instance, Phase.BUILD)
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS))
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.SUCCESS))
     }
 
     it should "return failed on job failures" in {
         val store = newStateStore()
 
-        val job = JobInstance("default", "p1", "j1")
+        val context = RootContext.builder().build()
+        val job = Job.builder(context).build()
+        val instance = JobInstance("default", "p1", "j1")
 
-        store.getJobState(job) should be (None)
-        val token = store.startJob(job, Phase.BUILD)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token, Status.SUCCESS)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
+        store.getJobState(instance) should be (None)
+        val token = store.startJob(job, instance, Phase.BUILD)
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS))
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = store.startJob(job, Phase.BUILD)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token2, Status.FAILED)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.FAILED))
+        val token2 = store.startJob(job, instance, Phase.BUILD)
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token2, JobResult(job, instance, Phase.BUILD, Status.FAILED))
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.FAILED))
     }
 
     it should "return correct state on skipped target" in {
         val store = newStateStore()
 
-        val job = JobInstance("default", "p1", "j1")
+        val context = RootContext.builder().build()
+        val job = Job.builder(context).build()
+        val instance = JobInstance("default", "p1", "j1")
 
-        store.getJobState(job) should be (None)
-        val token = store.startJob(job, Phase.BUILD)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token, Status.SUCCESS)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
+        store.getJobState(instance) should be (None)
+        val token = store.startJob(job, instance, Phase.BUILD)
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS))
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = store.startJob(job, Phase.BUILD)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token2, Status.SKIPPED)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
+        val token2 = store.startJob(job, instance, Phase.BUILD)
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token2, JobResult(job, instance, Phase.BUILD, Status.SKIPPED))
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token3 = store.startJob(job, Phase.BUILD)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token3, Status.FAILED)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.FAILED))
+        val token3 = store.startJob(job, instance, Phase.BUILD)
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token3, JobResult(job, instance, Phase.BUILD, Status.FAILED))
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.FAILED))
 
-        val token4 = store.startJob(job, Phase.BUILD)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token4, Status.SKIPPED)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.FAILED))
+        val token4 = store.startJob(job, instance, Phase.BUILD)
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token4, JobResult(job, instance, Phase.BUILD, Status.SKIPPED))
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.FAILED))
 
-        val token5 = store.startJob(job, Phase.BUILD)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token5, Status.SUCCESS)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be (Some(Status.SUCCESS))
+        val token5 = store.startJob(job, instance, Phase.BUILD)
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishJob(token5, JobResult(job, instance, Phase.BUILD, Status.SUCCESS))
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be (Some(Status.SUCCESS))
     }
 
     it should "support job parameters" in {
         val store = newStateStore()
 
-        val job = JobInstance("default", "p1", "j1", Map("p1" -> "v1"))
+        val context = RootContext.builder().build()
+        val job = Job.builder(context).build()
+        val instance = JobInstance("default", "p1", "j1", Map("p1" -> "v1"))
 
-        store.getJobState(job) should be(None)
-        val token = store.startJob(job, Phase.BUILD)
-        store.getJobState(job).map(_.phase) should be (Some(Phase.BUILD))
-        store.getJobState(job.copy(args = Map())) should be(None)
-        store.getJobState(job.copy(args = Map("p1" -> "v3")))should be(None)
-        store.getJobState(job).map(_.status) should be(Some(Status.RUNNING))
-        store.finishJob(token, Status.SUCCESS)
-        store.getJobState(job).map(_.phase) should be(Some(Phase.BUILD))
-        store.getJobState(job).map(_.status) should be(Some(Status.SUCCESS))
-        store.getJobState(job.copy(args = Map("p1" -> "v2"))) should be(None)
-        store.getJobState(job.copy(args = Map("p2" -> "v1"))) should be(None)
+        store.getJobState(instance) should be(None)
+        val token = store.startJob(job, instance, Phase.BUILD)
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance.copy(args = Map())) should be(None)
+        store.getJobState(instance.copy(args = Map("p1" -> "v3")))should be(None)
+        store.getJobState(instance).map(_.status) should be(Some(Status.RUNNING))
+        store.finishJob(token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS))
+        store.getJobState(instance).map(_.phase) should be(Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be(Some(Status.SUCCESS))
+        store.getJobState(instance.copy(args = Map("p1" -> "v2"))) should be(None)
+        store.getJobState(instance.copy(args = Map("p2" -> "v1"))) should be(None)
     }
 
 
     "The Target-API of JdbcStateStore" should "provide basic state management for targets" in {
         val store = newStateStore()
 
-        val target = TargetInstance("default", "p1", "j1")
+        val instance = TargetInstance("default", "p1", "j1")
+        val target = mock[Target]
+        (target.instance _).expects().anyNumberOfTimes().returns(instance)
 
-        store.getTargetState(target) should be (None)
-        val token = store.startTarget(target, Phase.BUILD, None)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
-        store.finishTarget(token, Status.SUCCESS)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
+        store.getTargetState(instance) should be (None)
+        val token = store.startTarget(target, instance, Phase.BUILD, None)
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token, TargetResult(target, Phase.BUILD, Status.SUCCESS))
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.SUCCESS))
     }
 
     it should "return failed on target failures" in {
         val store = newStateStore()
 
-        val target = TargetInstance("default", "p1", "j1")
+        val instance = TargetInstance("default", "p1", "j1")
+        val target = mock[Target]
+        (target.instance _).expects().anyNumberOfTimes().returns(instance)
 
-        store.getTargetState(target) should be (None)
-        val token = store.startTarget(target, Phase.BUILD, None)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
-        store.finishTarget(token, Status.SUCCESS)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
+        store.getTargetState(instance) should be (None)
+        val token = store.startTarget(target, instance, Phase.BUILD, None)
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token, TargetResult(target, Phase.BUILD, Status.SUCCESS))
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = store.startTarget(target, Phase.BUILD, None)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
-        store.finishTarget(token2, Status.FAILED)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.FAILED))
+        val token2 = store.startTarget(target, instance, Phase.BUILD, None)
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token2, TargetResult(target, Phase.BUILD, Status.FAILED))
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.FAILED))
     }
 
     it should "return correct state on skipped target" in {
         val store = newStateStore()
 
-        val target = TargetInstance("default", "p1", "j1")
+        val instance = TargetInstance("default", "p1", "j1")
+        val target = mock[Target]
+        (target.instance _).expects().anyNumberOfTimes().returns(instance)
 
-        store.getTargetState(target) should be (None)
-        val token = store.startTarget(target, Phase.BUILD, None)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
-        store.finishTarget(token, Status.SUCCESS)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
+        store.getTargetState(instance) should be (None)
+        val token = store.startTarget(target, instance, Phase.BUILD, None)
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token, TargetResult(target, Phase.BUILD, Status.SUCCESS))
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = store.startTarget(target, Phase.BUILD, None)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
-        store.finishTarget(token2, Status.SKIPPED)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
+        val token2 = store.startTarget(target, instance, Phase.BUILD, None)
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token2, TargetResult(target, Phase.BUILD, Status.SKIPPED))
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token3 = store.startTarget(target, Phase.BUILD, None)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
-        store.finishTarget(token3, Status.FAILED)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.FAILED))
+        val token3 = store.startTarget(target, instance, Phase.BUILD, None)
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token3, TargetResult(target, Phase.BUILD, Status.FAILED))
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.FAILED))
 
-        val token4 = store.startTarget(target, Phase.BUILD, None)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
-        store.finishTarget(token4, Status.SKIPPED)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.FAILED))
+        val token4 = store.startTarget(target, instance, Phase.BUILD, None)
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token4, TargetResult(target, Phase.BUILD, Status.SKIPPED))
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.FAILED))
 
-        val token5 = store.startTarget(target, Phase.BUILD, None)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.RUNNING))
-        store.finishTarget(token5, Status.SUCCESS)
-        store.getTargetState(target).map(_.phase) should be (Some(Phase.BUILD))
-        store.getTargetState(target).map(_.status) should be (Some(Status.SUCCESS))
+        val token5 = store.startTarget(target, instance, Phase.BUILD, None)
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
+        store.finishTarget(token5, TargetResult(target, Phase.BUILD, Status.SUCCESS))
+        store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getTargetState(instance).map(_.status) should be (Some(Status.SUCCESS))
     }
 
     it should "support single value target partitions" in {
         val store = newStateStore()
 
-        val target = TargetInstance("default", "p1", "j1")
+        val instance = TargetInstance("default", "p1", "j1")
+        val target = mock[Target]
+        (target.instance _).expects().anyNumberOfTimes().returns(instance)
 
-        store.getTargetState(target.copy(partitions = Map("p1" -> "v1"))) should be(None)
-        val token = store.startTarget(target.copy(partitions = Map("p1" -> "v1")), Phase.BUILD, None)
-        store.getTargetState(target.copy(partitions = Map("p1" -> "v1"))).map(_.phase) should be(Some(Phase.BUILD))
-        store.getTargetState(target.copy(partitions = Map("p1" -> "v1"))).map(_.status) should be(Some(Status.RUNNING))
-        store.finishTarget(token, Status.SUCCESS)
-        store.getTargetState(target.copy(partitions = Map("p1" -> "v1"))).map(_.phase) should be(Some(Phase.BUILD))
-        store.getTargetState(target.copy(partitions = Map("p1" -> "v1"))).map(_.status) should be(Some(Status.SUCCESS))
-        store.getTargetState(target.copy(partitions = Map("p1" -> "v2"))) should be(None)
-        store.getTargetState(target.copy(partitions = Map("p2" -> "v1"))) should be(None)
-        store.getTargetState(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(None)
-        store.getTargetState(target) should be(None)
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v1"))) should be(None)
+        val token = store.startTarget(target, instance.copy(partitions = Map("p1" -> "v1")), Phase.BUILD, None)
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v1"))).map(_.phase) should be(Some(Phase.BUILD))
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v1"))).map(_.status) should be(Some(Status.RUNNING))
+        store.finishTarget(token, TargetResult(target, Phase.BUILD, Status.SUCCESS))
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v1"))).map(_.phase) should be(Some(Phase.BUILD))
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v1"))).map(_.status) should be(Some(Status.SUCCESS))
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v2"))) should be(None)
+        store.getTargetState(instance.copy(partitions = Map("p2" -> "v1"))) should be(None)
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(None)
+        store.getTargetState(instance) should be(None)
     }
 
     it should "support multi value target partitions" in {
         val store = newStateStore()
 
-        val target = TargetInstance("default", "p1", "j1")
+        val instance = TargetInstance("default", "p1", "j1")
+        val target = mock[Target]
+        (target.instance _).expects().anyNumberOfTimes().returns(instance)
 
-        store.getTargetState(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(None)
-        val token = store.startTarget(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2")), Phase.BUILD, None)
-        store.getTargetState(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))).map(_.phase) should be(Some(Phase.BUILD))
-        store.getTargetState(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))).map(_.status) should be(Some(Status.RUNNING))
-        store.finishTarget(token, Status.SUCCESS)
-        store.getTargetState(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))).map(_.phase) should be(Some(Phase.BUILD))
-        store.getTargetState(target.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))).map(_.status) should be(Some(Status.SUCCESS))
-        store.getTargetState(target.copy(partitions = Map("p1" -> "v2", "p2" -> "v2"))) should be(None)
-        store.getTargetState(target.copy(partitions = Map("p1" -> "v2"))) should be(None)
-        store.getTargetState(target) should be(None)
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(None)
+        val token = store.startTarget(target, instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2")), Phase.BUILD, None)
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))).map(_.phase) should be(Some(Phase.BUILD))
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))).map(_.status) should be(Some(Status.RUNNING))
+        store.finishTarget(token, TargetResult(target, Phase.BUILD, Status.SUCCESS))
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))).map(_.phase) should be(Some(Phase.BUILD))
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))).map(_.status) should be(Some(Status.SUCCESS))
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v2", "p2" -> "v2"))) should be(None)
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v2"))) should be(None)
+        store.getTargetState(instance) should be(None)
     }
 }

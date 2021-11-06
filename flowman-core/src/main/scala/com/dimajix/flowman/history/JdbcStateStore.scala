@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,12 @@ import slick.jdbc.PostgresProfile
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetResult
 
 
 
@@ -77,18 +81,18 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
 
     /**
       * Starts the run and returns a token, which can be anything
-      * @param job
+      * @param instance
       * @return
       */
-    override def startJob(job:JobInstance, phase: Phase) : JobToken = {
+    override def startJob(job:Job, instance:JobInstance, phase: Phase) : JobToken = {
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         val run =  JobRun(
             0,
-            Option(job.namespace).getOrElse(""),
-            Option(job.project).getOrElse(""),
-            job.job,
+            instance.namespace,
+            instance.project,
+            instance.job,
             phase.upper,
-            hashArgs(job),
+            hashArgs(instance),
             now,
             new Timestamp(0),
             Status.RUNNING.upper
@@ -96,7 +100,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
 
         logger.debug(s"Start '${phase}' job '${run.namespace}/${run.project}/${run.job}' in state database")
         withSession { repository =>
-            repository.insertJobRun(run, job.args)
+            repository.insertJobRun(run, instance.args)
         }
     }
 
@@ -105,7 +109,8 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       *
       * @param token
       */
-    override def finishJob(token:JobToken, status: Status) : Unit = {
+    override def finishJob(token:JobToken, result: JobResult) : Unit = {
+        val status = result.status
         val run = token.asInstanceOf[JobRun]
         logger.info(s"Mark '${run.phase}' job '${run.namespace}/${run.project}/${run.job}' as $status in state database")
 
@@ -142,19 +147,19 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
 
     /**
       * Starts the run and returns a token, which can be anything
-      * @param target
+      * @param instance
       * @return
       */
-    override def startTarget(target:TargetInstance, phase: Phase, parent:Option[JobToken]) : TargetToken = {
+    override def startTarget(target:Target, instance:TargetInstance, phase: Phase, parent:Option[JobToken]) : TargetToken = {
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         val run =  TargetRun(
             0,
             parent.map(_.asInstanceOf[JobRun].id),
-            Option(target.namespace).getOrElse(""),
-            Option(target.project).getOrElse(""),
-            target.target,
+            instance.namespace,
+            instance.project,
+            instance.target,
             phase.upper,
-            hashPartitions(target),
+            hashPartitions(instance),
             now,
             new Timestamp(0),
             Status.RUNNING.upper
@@ -162,7 +167,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
 
         logger.debug(s"Start '$phase' target '${run.namespace}/${run.project}/${run.target}' in state database")
         withSession { repository =>
-            repository.insertTargetRun(run, target.partitions)
+            repository.insertTargetRun(run, instance.partitions)
         }
     }
 
@@ -171,13 +176,13 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       *
       * @param token
       */
-    override def finishTarget(token:TargetToken, status: Status) : Unit = {
+    override def finishTarget(token:TargetToken, result: TargetResult) : Unit = {
+        val status = result.status
         val run = token.asInstanceOf[TargetRun]
         logger.info(s"Mark '${run.phase}' target '${run.namespace}/${run.project}/${run.target}' as $status in state database")
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession{ repository =>
-            // Library.setState(run.copy(end_ts = now, status=status))
             repository.setTargetStatus(run.copy(end_ts = now, status=status.upper))
         }
     }

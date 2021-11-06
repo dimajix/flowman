@@ -9,16 +9,6 @@ export default {
           .then(response => response.data)
       },
 
-      listProjects() {
-        return axios.get('/api/project')
-          .then(response => response.data)
-      },
-
-      getProject(name) {
-        return axios.get('/api/project/' + name)
-          .then(response => response.data)
-      },
-
       listJobs(project) {
         return axios.get('/api/project/' + project + '/job')
           .then(response => response.data)

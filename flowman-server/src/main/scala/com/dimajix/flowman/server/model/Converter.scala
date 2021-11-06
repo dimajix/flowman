@@ -32,21 +32,6 @@ object Converter {
         )
     }
 
-    def ofSpec(project:model.Project) : Project = {
-        Project(
-            project.name,
-            project.version,
-            project.description,
-            project.environment,
-            project.config,
-            project.profiles.keys.toSeq,
-            project.connections.keys.toSeq,
-            project.basedir.map(_.toString),
-            project.jobs.keys.toSeq,
-            project.targets.keys.toSeq
-        )
-    }
-
     def ofSpec(job:model.Job) : Job = {
         Job(
             job.name,

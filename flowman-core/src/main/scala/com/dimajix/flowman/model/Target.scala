@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.model
 
-import java.time.Instant
-
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.common.Trilean
@@ -25,7 +23,6 @@ import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.metric.LongAccumulatorMetric
 import com.dimajix.flowman.metric.Selector

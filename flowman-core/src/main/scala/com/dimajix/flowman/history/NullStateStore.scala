@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,12 @@
 package com.dimajix.flowman.history
 
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetResult
 
 
 object NullStateStore {
@@ -43,14 +46,14 @@ class NullStateStore extends StateStore {
       * @param batch
       * @return
       */
-    override def startJob(batch:JobInstance, phase:Phase) : JobToken = DummyJobToken()
+    override def startJob(job:Job, instance:JobInstance, phase:Phase) : JobToken = DummyJobToken()
 
     /**
       * Sets the status of a job after it has been started
       * @param token
       * @param status
       */
-    override def finishJob(token:JobToken, status:Status) : Unit = {}
+    override def finishJob(token:JobToken, result:JobResult) : Unit = {}
 
     /**
       * Returns the state of a target
@@ -64,14 +67,14 @@ class NullStateStore extends StateStore {
       * @param target
       * @return
       */
-    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]=None) : TargetToken = DummyTargetToken()
+    override def startTarget(target:Target, instance:TargetInstance, phase:Phase, parent:Option[JobToken]=None) : TargetToken = DummyTargetToken()
 
     /**
       * Sets the status of a target after it has been started
       * @param token
       * @param status
       */
-    override def finishTarget(token:TargetToken, status:Status) : Unit = {}
+    override def finishTarget(token:TargetToken, result:TargetResult) : Unit = {}
 
     /**
       * Returns a list of job matching the query criteria

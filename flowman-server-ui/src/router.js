@@ -3,7 +3,6 @@ import Router from 'vue-router'
 import Home from './views/Home.vue'
 import Namespace from './views/Namespace.vue'
 import System from './views/System.vue'
-import Project from './views/Project.vue'
 import JobHistory from './views/JobHistory.vue'
 import TargetHistory from './views/TargetHistory.vue'
 
@@ -25,14 +24,6 @@ export default new Router({
       path: '/system',
       name: 'system',
       component: System
-    },
-    {
-      path: '/project/:name',
-      name: 'project',
-      component: Project,
-      props: route => ({
-        projectName: route.params.name
-      })
     },
     {
       path: '/job-history',

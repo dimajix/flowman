@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.dimajix.flowman.execution
 import com.dimajix.flowman.execution.AbstractExecutionListener
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.Token
 import com.dimajix.flowman.history
 import com.dimajix.flowman.model.Job
@@ -47,14 +46,14 @@ abstract class StateStore {
       * @param job
       * @return
       */
-    def startJob(job:JobInstance, phase:Phase) : JobToken
+    def startJob(job:Job, instance: JobInstance, phase:Phase) : JobToken
 
     /**
       * Sets the status of a job after it has been started
       * @param token The token returned by startJob
       * @param status
       */
-    def finishJob(token:JobToken, status:Status) : Unit
+    def finishJob(token:JobToken, result:JobResult) : Unit
 
     /**
       * Returns the state of a specific target on its last run, or None if no information is available
@@ -68,14 +67,14 @@ abstract class StateStore {
       * @param target
       * @return
       */
-    def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken
+    def startTarget(target:Target, instance:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken
 
     /**
       * Sets the status of a job after it has been started
       * @param token The token returned by startJob
       * @param status
       */
-    def finishTarget(token:TargetToken, status:Status) : Unit
+    def finishTarget(token:TargetToken, result:TargetResult) : Unit
 
     /**
       * Returns a list of job matching the query criteria
@@ -106,20 +105,18 @@ final class StateStoreAdaptorListener(store:StateStore) extends AbstractExecutio
     import StateStoreAdaptorListener._
 
     override def startJob(execution:Execution, job:Job, instance: JobInstance, phase: Phase, parent:Option[Token]): com.dimajix.flowman.execution.JobToken = {
-        StateStoreJobToken(store.startJob(instance, phase))
+        StateStoreJobToken(store.startJob(job, instance, phase))
     }
     override def finishJob(execution:Execution, token: com.dimajix.flowman.execution.JobToken, result: JobResult): Unit = {
-        val status = result.status
         val t = token.asInstanceOf[StateStoreJobToken].token
-        store.finishJob(t, status)
+        store.finishJob(t, result)
     }
     override def startTarget(execution:Execution, target:Target, instance: TargetInstance, phase: Phase, parent: Option[com.dimajix.flowman.execution.Token]): com.dimajix.flowman.execution.TargetToken = {
         val t = parent.map(_.asInstanceOf[StateStoreJobToken].token)
-        StateStoreTargetToken(store.startTarget(instance, phase, t))
+        StateStoreTargetToken(store.startTarget(target, instance, phase, t))
     }
     override def finishTarget(execution:Execution, token: com.dimajix.flowman.execution.TargetToken, result:TargetResult): Unit = {
-        val status = result.status
         val t = token.asInstanceOf[StateStoreTargetToken].token
-        store.finishTarget(t, status)
+        store.finishTarget(t, result)
     }
 }

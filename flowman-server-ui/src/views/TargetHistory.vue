@@ -1,5 +1,7 @@
 <template>
-  <v-container>
+  <v-container
+    fluid
+  >
     <v-card>
       <v-card-title>Target History</v-card-title>
       <v-data-table

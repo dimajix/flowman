@@ -148,6 +148,16 @@ case class LifecycleResult(
 
 
 object JobResult {
+    def apply(job:Job, instance: JobInstance, phase: Phase, status:Status) : JobResult =
+        JobResult(
+            job,
+            instance,
+            phase,
+            Seq(),
+            status,
+            startTime=Instant.now(),
+            endTime=Instant.now()
+        )
     def apply(job:Job, instance: JobInstance, phase: Phase, status:Status, startTime:Instant) : JobResult =
         JobResult(
             job,

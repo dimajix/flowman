@@ -37,27 +37,6 @@
         <template v-slot:activator>
           <v-list-item>
             <v-list-item-action>
-              <v-icon>work</v-icon>
-            </v-list-item-action>
-            <v-list-item-title>Projects</v-list-item-title>
-          </v-list-item>
-        </template>
-
-        <v-list-item
-          v-for="project in projects"
-          :key="project.basedir"
-          :to="{ name: 'project', params:{ name: project.name}}"
-        >
-          <v-list-item-content>
-            <v-list-item-title>{{ project.name }}</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list-group>
-
-      <v-list-group no-action>
-        <template v-slot:activator>
-          <v-list-item>
-            <v-list-item-action>
               <v-icon>history</v-icon>
             </v-list-item-action>
             <v-list-item-title>
@@ -88,12 +67,10 @@
 
     data() {
       return {
-        projects: []
       }
     },
 
     mounted() {
-      this.$api.listProjects().then(response => this.projects = response)
     },
 
     methods: {

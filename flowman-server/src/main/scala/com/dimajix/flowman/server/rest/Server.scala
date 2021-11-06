@@ -48,7 +48,6 @@ class Server(
         implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
         val namespaceService = new NamespaceService(session.namespace.get)
-        val projectService = new ProjectService(session.store)
         val jobHistoryService = new JobHistoryService(session.history)
         val targetHistoryService = new TargetHistoryService(session.history)
 
@@ -57,8 +56,6 @@ class Server(
                     SwaggerDocService.routes
                     ~
                     namespaceService.routes
-                    ~
-                    projectService.routes
                     ~
                     jobHistoryService.routes
                     ~

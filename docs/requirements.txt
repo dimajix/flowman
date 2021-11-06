@@ -1,1 +1,2 @@
+docutils==0.17.1
 sphinx_markdown_tables

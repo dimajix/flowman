@@ -63,6 +63,7 @@ extends BaseMapping {
         SqlParser.resolveDependencies(statement)
             .filter(_.toLowerCase(Locale.ROOT) != "__this__")
             .map(MappingOutputIdentifier.parse)
+            .toSeq
     }
 
     /**

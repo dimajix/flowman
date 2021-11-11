@@ -384,9 +384,20 @@
             </dependency>
             <dependency>
                 <groupId>org.scala-lang.modules</groupId>
+                <artifactId>scala-xml_${scala.api_version}</artifactId>
+                <version>${scala-xml.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang.modules</groupId>
                 <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
                 <version>${scala-parser-combinators.version}</version>
                 <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang.modules</groupId>
+                <artifactId>scala-collection-compat_${scala.api_version}</artifactId>
+                <version>${scala-collection-compat.version}</version>
             </dependency>
 
             <!-- Spark Dependencies -->

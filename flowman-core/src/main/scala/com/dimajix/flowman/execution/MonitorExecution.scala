@@ -29,7 +29,6 @@ import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
-import com.dimajix.flowman.metric.withMetrics
 import com.dimajix.flowman.metric.withWallTime
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
@@ -240,12 +239,14 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
             JobResult(job, instance, phase, Status.FAILED, startTime)
         }
 
+        // Note that some hooks might reset all metrics (for example the StateStoreAdaptorListener)
         val tokens = start(instance)
         withShutdownHook(finish(tokens, failure())) {
             withTokens(tokens) { execution =>
                 val result = try {
-                    com.dimajix.flowman.metric.withMetrics(metrics, metricsBoard) {
-                        withWallTime(metrics, job.metadata, phase) {
+                    // The following line will also reset all metrics belonging to the metricsBoard
+                    com.dimajix.flowman.metric.withMetrics(execution.metrics, metricsBoard) {
+                        withWallTime(execution.metrics, job.metadata, phase) {
                             fn(execution)
                         }
                     }

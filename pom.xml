@@ -92,7 +92,9 @@
         <scala.api_version>2.12</scala.api_version>
         <scalatest.version>3.2.5</scalatest.version>
         <scalatest-api.version>3.2</scalatest-api.version>
+        <scala-xml.version>1.2.0</scala-xml.version>
         <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
+        <scala-collection-compat.version>2.1.1</scala-collection-compat.version>
         <spark.version>3.1.2</spark.version>
         <spark-api.version>3.1</spark-api.version>
         <netty-all.version>4.1.51.Final</netty-all.version>
@@ -160,6 +162,7 @@
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
+                <scala-xml.version>1.0.5</scala-xml.version>
                 <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
                 <spark.version>2.4.0-cdh6.3.4</spark.version>
                 <spark-api.version>2.4</spark-api.version>
@@ -216,6 +219,7 @@
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
+                <scala-xml.version>1.0.5</scala-xml.version>
                 <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
                 <spark.version>2.4.7.${cdp.version}</spark.version>
                 <spark-api.version>2.4</spark-api.version>
@@ -257,6 +261,7 @@
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
+                <scala-xml.version>1.0.5</scala-xml.version>
                 <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
                 <spark.version>2.4.8</spark.version>
                 <spark-api.version>2.4</spark-api.version>
@@ -291,6 +296,7 @@
                 <scala.api_version>2.12</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
+                <scala-xml.version>1.2.0</scala-xml.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <spark.version>3.0.3</spark.version>
                 <spark-api.version>3.0</spark-api.version>
@@ -325,6 +331,7 @@
                 <scala.api_version>2.12</scala.api_version>
                 <scalatest.version>3.2.5</scalatest.version>
                 <scalatest-api.version>3.2</scalatest-api.version>
+                <scala-xml.version>1.2.0</scala-xml.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <spark.version>3.1.2</spark.version>
                 <spark-api.version>3.1</spark-api.version>
@@ -359,6 +366,7 @@
                 <scala.api_version>2.12</scala.api_version>
                 <scalatest.version>3.2.5</scalatest.version>
                 <scalatest-api.version>3.2</scalatest-api.version>
+                <scala-xml.version>1.2.0</scala-xml.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <spark.version>3.2.0</spark.version>
                 <spark-api.version>3.2</spark-api.version>
@@ -1055,7 +1063,7 @@
             <dependency>
                 <groupId>org.scala-lang.modules</groupId>
                 <artifactId>scala-xml_${scala.api_version}</artifactId>
-                <version>1.2.0</version>
+                <version>${scala-xml.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -1063,6 +1071,11 @@
                 <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
                 <version>${scala-parser-combinators.version}</version>
                 <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang.modules</groupId>
+                <artifactId>scala-collection-compat_${scala.api_version}</artifactId>
+                <version>${scala-collection-compat.version}</version>
             </dependency>
 
             <dependency>

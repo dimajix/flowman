@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ class SqlParserTest extends AnyFlatSpec with Matchers {
             """
               |SELECT * FROM db.lala
               |""".stripMargin)
-        deps should be (Seq("db.lala"))
+        deps should be (Set("db.lala"))
     }
 
     it should "support CTEs" in {
@@ -39,6 +39,39 @@ class SqlParserTest extends AnyFlatSpec with Matchers {
               |)
               |SELECT * FROM tmp
               |""".stripMargin)
-        deps should be (Seq("db.lala"))
+        deps should be (Set("db.lala"))
+    }
+
+    it should "support nested CTEs" in {
+        val deps = SqlParser.resolveDependencies(
+            """
+              |WITH tmp AS (
+              |   WITH tmp2 AS (
+              |       SELECT
+              |          *
+              |       FROM db.lala
+              |   )
+              |   SELECT
+              |     *
+              |   FROM tmp2
+              |)
+              |SELECT * FROM tmp
+              |""".stripMargin)
+        deps should be (Set("db.lala"))
+    }
+
+    it should "support scalar exporessions" in {
+        val sql =
+            """
+              |SELECT
+              |  id AS campaign
+              |FROM
+              |  fe_campaign
+              |WHERE
+              |  CAST(end_date AS DATE) >= CAST('${processing_datetime}' AS DATE)
+              |    AND CAST(start_date AS DATE) > (SELECT min(day) FROM campaign_contacts_raw)
+              |""".stripMargin
+        val deps = SqlParser.resolveDependencies(sql)
+        deps should be (Set("fe_campaign", "campaign_contacts_raw"))
     }
 }

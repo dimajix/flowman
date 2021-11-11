@@ -347,4 +347,28 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v2"))) should be(None)
         store.getTargetState(instance) should be(None)
     }
+
+    it should "support metrics" in {
+        val store = newStateStore()
+
+        val namespace = Namespace(name="default")
+        val project = Project(name="p1")
+        val context = RootContext.builder(namespace)
+            .build()
+            .getProjectContext(project)
+        val job = Job.builder(context)
+            .setName("j1")
+            .build()
+        val instance = JobInstance("default", "p1", "j1")
+
+        store.getJobState(instance) should be(None)
+        val token = store.startJob(job, instance, Phase.BUILD)
+        store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be(Some(Status.RUNNING))
+        store.finishJob(token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS))
+        store.getJobState(instance).map(_.phase) should be(Some(Phase.BUILD))
+        store.getJobState(instance).map(_.status) should be(Some(Status.SUCCESS))
+
+        // TODO!!!
+    }
 }

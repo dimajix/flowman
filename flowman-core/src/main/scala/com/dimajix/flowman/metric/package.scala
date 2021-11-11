@@ -28,7 +28,7 @@ import com.dimajix.flowman.model.Result
 
 
 package object metric {
-    def withMetrics[T <: Result](metricSystem: MetricSystem, metrics:Option[MetricBoard])(fn: => T) : T = {
+    def withMetrics[T <: Result[T]](metricSystem: MetricSystem, metrics:Option[MetricBoard])(fn: => T) : T = {
         // Publish metrics
         metrics.foreach { metrics =>
             metrics.reset(metricSystem)

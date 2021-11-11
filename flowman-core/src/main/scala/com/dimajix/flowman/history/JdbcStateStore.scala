@@ -21,6 +21,7 @@ import java.sql.SQLRecoverableException
 import java.sql.SQLTransientException
 import java.sql.Timestamp
 import java.time.Clock
+import java.time.ZoneId
 
 import javax.xml.bind.DatatypeConverter
 import org.slf4j.LoggerFactory
@@ -31,6 +32,8 @@ import slick.jdbc.PostgresProfile
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.metric.GaugeMetric
+import com.dimajix.flowman.metric.Metric
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.JobResult
@@ -74,9 +77,20 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             null,
             null
         )
-        logger.debug(s"Checking last state of phase '${run.phase}' of job '${run.namespace}/${run.project}/${run.job}' in state database")
+        logger.debug(s"Checking last state of '${run.phase}' job '${run.namespace}/${run.project}/${run.job}' in history database")
         withSession { repository =>
             repository.getJobState(run)
+        }
+    }
+
+    /**
+     * Returns all metrics belonging to a specific job instance
+     * @param jobId
+     * @return
+     */
+    override def getJobMetrics(jobId:String) : Seq[Measurement] = {
+        withSession { repository =>
+            repository.getJobMetrics(jobId.toLong)
         }
     }
 
@@ -100,7 +114,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             Status.RUNNING.upper
         )
 
-        logger.debug(s"Start '${phase}' job '${run.namespace}/${run.project}/${run.job}' in state database")
+        logger.debug(s"Start '${phase}' job '${run.namespace}/${run.project}/${run.job}' in history database")
         withSession { repository =>
             repository.insertJobRun(run, instance.args)
         }
@@ -111,15 +125,19 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       *
       * @param token
       */
-    override def finishJob(token:JobToken, result: JobResult) : Unit = {
+    override def finishJob(token:JobToken, result: JobResult, metrics:Seq[Metric]=Seq()) : Unit = {
         val status = result.status
         val run = token.asInstanceOf[JobRun]
-        logger.info(s"Mark '${run.phase}' job '${run.namespace}/${run.project}/${run.job}' as $status in state database")
+        logger.info(s"Mark '${run.phase}' job '${run.namespace}/${run.project}/${run.job}' as $status in history database")
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
+        val measurements = metrics.flatMap {
+            case gauge:GaugeMetric => Some(Measurement(gauge.name, now.toInstant.atZone(ZoneId.of("UTC")), gauge.labels, gauge.value))
+            case _ => None
+        }
         withSession{ repository =>
-            // Library.setState(run.copy(end_ts = now, status=status))
             repository.setJobStatus(run.copy(end_ts = now, status=status.upper))
+            repository.insertJobMetrics(run, measurements)
         }
     }
 
@@ -142,7 +160,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             null,
             null
         )
-        logger.debug(s"Checking state of target ${run.namespace}/${run.project}/${run.target} in state database")
+        logger.debug(s"Checking state of target '${run.namespace}/${run.project}/${run.target}' in history database")
         withSession { repository =>
             repository.getTargetState(run, target.partitions)
         }
@@ -169,7 +187,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             Status.RUNNING.upper
         )
 
-        logger.debug(s"Start '$phase' target '${run.namespace}/${run.project}/${run.target}' in state database")
+        logger.debug(s"Start '$phase' target '${run.namespace}/${run.project}/${run.target}' in history database")
         withSession { repository =>
             repository.insertTargetRun(run, instance.partitions)
         }
@@ -183,7 +201,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
     override def finishTarget(token:TargetToken, result: TargetResult) : Unit = {
         val status = result.status
         val run = token.asInstanceOf[TargetRun]
-        logger.info(s"Mark '${run.phase}' target '${run.namespace}/${run.project}/${run.target}' as $status in state database")
+        logger.info(s"Mark '${run.phase}' target '${run.namespace}/${run.project}/${run.target}' as $status in history database")
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession{ repository =>
@@ -198,7 +216,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       * @param offset
       * @return
       */
-    override def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = {
+    override def findJobStates(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = {
         withSession { repository =>
             repository.findJob(query, order, limit, offset)
         }
@@ -211,7 +229,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       * @param offset
       * @return
       */
-    override def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = {
+    override def findTargetStates(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = {
         withSession { repository =>
             repository.findTarget(query, order, limit, offset)
         }

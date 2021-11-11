@@ -53,7 +53,7 @@ class SaveCommand extends Command {
         val task = FileTarget(context, MappingOutputIdentifier(mapping), new Path(location), format, splitSettings(options).toMap)
 
         try {
-            task.execute(session.execution, Phase.BUILD)
+            task.execute(session.execution, Phase.BUILD).rethrow()
             true
         }
         catch {

@@ -44,7 +44,7 @@ class CountCommand extends Command {
         val task = CountTarget(context, MappingOutputIdentifier(mapping))
 
         Try {
-            task.execute(session.execution, Phase.BUILD)
+            task.execute(session.execution, Phase.BUILD).rethrow()
         } match {
             case Success(_) =>
                 logger.info("Successfully counted  mapping")
@@ -53,7 +53,7 @@ class CountCommand extends Command {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 false
             case Failure(NonFatal(e)) =>
-                logger.error(s"Caught exception while counting mapping '$mapping", e)
+                logger.error(s"Caught exception while counting mapping '$mapping'", e)
                 false
         }
     }

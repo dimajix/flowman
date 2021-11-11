@@ -38,26 +38,46 @@ object SqlParser {
      * @param sql
      * @return
      */
-    def resolveDependencies(sql:String) : Seq[String] = {
+    def resolveDependencies(sql:String) : Set[String] = {
         val plan = parsePlan(sql)
         resolveDependencies(plan)
     }
 
-    def resolveDependencies(plan:LogicalPlan) : Seq[String] = {
-        val cteNames = plan
-            .collect { case With(_,cteRelations) => cteRelations.map(kv => kv._1)}
-            .flatten
+    def resolveDependencies(plan:LogicalPlan) : Set[String] = {
+        // Do not use LogicalPlan.collectWithSubqueries to provide compatibility with Spark 2.4
+        def collectAllSubqueries(plan:LogicalPlan) : Seq[LogicalPlan] = {
+            val subqueries = plan.flatMap(_.subqueries)
+            subqueries ++ subqueries.flatMap(collectAllSubqueries(_))
+        }
+        val allQueries = plan +: collectAllSubqueries(plan)
+
+        val cteNames =
+            allQueries.flatMap (
+                _.collect { case With(_, cteRelations) =>
+                    cteRelations.map(kv => kv._1)
+                }
+                .flatten
+            )
             .toSet
-        val cteDependencies = plan
-            .collect { case With(_,cteRelations) =>
-                cteRelations
-                    .map(kv => kv._2.child)
-                    .flatMap(resolveDependencies)
-                    .filter(!cteNames.contains(_))
-            }
-            .flatten
+
+        val cteDependencies =
+            allQueries.flatMap (
+                _.collect { case With(_,cteRelations) =>
+                    cteRelations
+                        .map(kv => kv._2.child)
+                        .flatMap(resolveDependencies)
+                        .filter(!cteNames.contains(_))
+                }
+                .flatten
+            )
             .toSet
-        val tables = plan.collect { case p:UnresolvedRelation if !cteNames.contains(p.tableName) => p.tableName }.toArray
-        (tables ++ cteDependencies).distinct
+
+        val tables =
+            allQueries.flatMap (
+                _.collect { case p:UnresolvedRelation if !cteNames.contains(p.tableName) => p.tableName }
+            )
+            .toSet
+
+        tables ++ cteDependencies
     }
 }

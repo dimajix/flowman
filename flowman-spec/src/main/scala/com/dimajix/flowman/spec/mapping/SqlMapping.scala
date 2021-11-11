@@ -65,7 +65,7 @@ extends BaseMapping {
       * @return
       */
     override def inputs : Seq[MappingOutputIdentifier] = {
-        SqlParser.resolveDependencies(statement).map(MappingOutputIdentifier.parse)
+        SqlParser.resolveDependencies(statement).map(MappingOutputIdentifier.parse).toSeq
     }
 
     private def statement : String = {

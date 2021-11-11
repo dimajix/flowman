@@ -17,6 +17,7 @@
 package com.dimajix.flowman.history
 
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.metric.Metric
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.JobResult
@@ -42,6 +43,13 @@ class NullStateStore extends StateStore {
     override def getJobState(batch:JobInstance) : Option[JobState] = None
 
     /**
+     * Returns all metrics belonging to a specific job instance
+     * @param jobId
+     * @return
+     */
+    override def getJobMetrics(jobId:String) : Seq[Measurement] = Seq()
+
+    /**
       * Starts the run and returns a token, which can be anything
       * @param batch
       * @return
@@ -53,7 +61,7 @@ class NullStateStore extends StateStore {
       * @param token
       * @param status
       */
-    override def finishJob(token:JobToken, result:JobResult) : Unit = {}
+    override def finishJob(token:JobToken, result:JobResult, metrics:Seq[Metric]=Seq()) : Unit = {}
 
     /**
       * Returns the state of a target
@@ -83,7 +91,7 @@ class NullStateStore extends StateStore {
       * @param offset
       * @return
       */
-    override def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = Seq()
+    override def findJobStates(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = Seq()
 
     /**
       * Returns a list of job matching the query criteria
@@ -92,5 +100,5 @@ class NullStateStore extends StateStore {
       * @param offset
       * @return
       */
-    override def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = Seq()
+    override def findTargetStates(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = Seq()
 }

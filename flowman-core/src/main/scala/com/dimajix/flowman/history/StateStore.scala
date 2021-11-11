@@ -22,6 +22,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Token
 import com.dimajix.flowman.history
+import com.dimajix.flowman.metric.Metric
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.JobResult
@@ -42,6 +43,13 @@ abstract class StateStore {
     def getJobState(job:JobInstance) : Option[JobState]
 
     /**
+     * Returns all metrics belonging to a specific job instance
+     * @param jobId
+     * @return
+     */
+    def getJobMetrics(jobId:String) : Seq[Measurement]
+
+    /**
       * Starts the run and returns a token, which can be anything
       * @param job
       * @return
@@ -53,7 +61,7 @@ abstract class StateStore {
       * @param token The token returned by startJob
       * @param status
       */
-    def finishJob(token:JobToken, result:JobResult) : Unit
+    def finishJob(token:JobToken, result:JobResult, metrics:Seq[Metric]=Seq()) : Unit
 
     /**
       * Returns the state of a specific target on its last run, or None if no information is available
@@ -83,7 +91,7 @@ abstract class StateStore {
       * @param offset
       * @return
       */
-    def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState]
+    def findJobStates(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState]
 
     /**
       * Returns a list of job matching the query criteria
@@ -92,7 +100,7 @@ abstract class StateStore {
       * @param offset
       * @return
       */
-    def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState]
+    def findTargetStates(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState]
 }
 
 
@@ -105,11 +113,13 @@ final class StateStoreAdaptorListener(store:StateStore) extends AbstractExecutio
     import StateStoreAdaptorListener._
 
     override def startJob(execution:Execution, job:Job, instance: JobInstance, phase: Phase, parent:Option[Token]): com.dimajix.flowman.execution.JobToken = {
+        execution.metrics.resetMetrics()
         StateStoreJobToken(store.startJob(job, instance, phase))
     }
     override def finishJob(execution:Execution, token: com.dimajix.flowman.execution.JobToken, result: JobResult): Unit = {
+        val metrics = execution.metrics.metrics
         val t = token.asInstanceOf[StateStoreJobToken].token
-        store.finishJob(t, result)
+        store.finishJob(t, result, metrics)
     }
     override def startTarget(execution:Execution, target:Target, instance: TargetInstance, phase: Phase, parent: Option[com.dimajix.flowman.execution.Token]): com.dimajix.flowman.execution.TargetToken = {
         val t = parent.map(_.asInstanceOf[StateStoreJobToken].token)

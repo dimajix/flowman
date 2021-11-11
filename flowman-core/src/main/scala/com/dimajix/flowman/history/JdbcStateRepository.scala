@@ -54,6 +54,18 @@ private[history] object JdbcStateRepository {
         value:String
     )
 
+    case class JobMetricLabel(
+        metric_id:Long,
+        name:String,
+        value:String
+    )
+    case class JobMetric(
+        id:Long,
+        job_id:Long,
+        name:String,
+        value:Double
+    )
+
     case class TargetRun(
         id:Long,
         job_id:Option[Long],
@@ -100,6 +112,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     val jobRuns = TableQuery[JobRuns]
     val jobArgs = TableQuery[JobArguments]
+    val jobMetrics = TableQuery[JobMetrics]
+    val jobMetricLabels = TableQuery[JobMetricLabels]
     val targetRuns = TableQuery[TargetRuns]
     val targetPartitions = TableQuery[TargetPartitions]
 
@@ -126,9 +140,32 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         def value = column[String]("value")
 
         def pk = primaryKey("JOB_ARGUMENT_PK", (job_id, name))
-        def batch = foreignKey("JOB_ARGUMENT_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+        def job = foreignKey("JOB_ARGUMENT_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
         def * = (job_id, name, value) <> (JobArgument.tupled, JobArgument.unapply)
+    }
+
+    class JobMetrics(tag: Tag) extends Table[JobMetric](tag, "JOB_METRIC") {
+        def id = column[Long]("metric_id", O.PrimaryKey, O.AutoInc)
+        def job_id = column[Long]("job_id")
+        def name = column[String]("name")
+        def value = column[Double]("value")
+
+        def job = foreignKey("JOB_METRIC_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+
+        def * = (id, job_id, name, value) <> (JobMetric.tupled, JobMetric.unapply)
+    }
+
+    class JobMetricLabels(tag: Tag) extends Table[JobMetricLabel](tag, "JOB_METRIC_LABEL") {
+        def metric_id = column[Long]("metric_id")
+        def name = column[String]("name")
+        def value = column[String]("value")
+
+        def pk = primaryKey("JOB_METRIC_LABEL_PK", (metric_id, name))
+        def metric = foreignKey("JOB_METRIC_LABEL_JOB_METRIC_FK", metric_id, jobMetrics)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+        def idx = index("JOB_METRIC_LABEL_IDX", (name, value), unique = false)
+
+        def * = (metric_id, name, value) <> (JobMetricLabel.tupled, JobMetricLabel.unapply)
     }
 
     class TargetRuns(tag: Tag) extends Table[TargetRun](tag, "TARGET_RUN") {
@@ -178,7 +215,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     def create() : Unit = {
         import scala.concurrent.ExecutionContext.Implicits.global
-        val tables = Seq(jobRuns, jobArgs, targetRuns, targetPartitions)
+        val tables = Seq(jobRuns, jobArgs, jobMetrics, jobMetricLabels, targetRuns, targetPartitions)
 
         val existing = db.run(profile.defaultTables)
         val query = existing.flatMap( v => {
@@ -240,6 +277,34 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         Await.result(db.run(argsQuery), Duration.Inf)
 
         runResult
+    }
+
+    def insertJobMetrics(run:JobRun, metrics:Seq[Measurement]) : Unit = {
+        metrics.foreach { m =>
+            val jobMetric = JobMetric(0, run.id, m.name, m.value)
+            val jmQuery = (jobMetrics returning jobMetrics.map(_.id) into((jm,id) => jm.copy(id=id))) += jobMetric
+            val jmResult = Await.result(db.run(jmQuery), Duration.Inf)
+
+            val labels = m.labels.map(l => JobMetricLabel(jmResult.id, l._1, l._2))
+            val mlQuery = jobMetricLabels ++= labels
+            Await.result(db.run(mlQuery), Duration.Inf)
+        }
+    }
+
+    def getJobMetrics(jobId:Long) : Seq[Measurement] = {
+        val jq = jobRuns.filter(_.id === jobId)
+        val job = Await.result(db.run(jq.result), Duration.Inf).head
+
+        val q = jobMetrics.filter(_.job_id === jobId)
+            .joinLeft(jobMetricLabels).on(_.id === _.metric_id)
+        Await.result(db.run(q.result), Duration.Inf)
+            .groupBy(_._1.id)
+            .map { g =>
+                val metric = g._2.head._1
+                val labels = g._2.flatMap(_._2).map(kv => kv.name -> kv.value).toMap
+                Measurement(metric.name, job.end_ts.toInstant.atZone(ZoneId.of("UTC")), labels, metric.value)
+            }
+            .toSeq
     }
 
     def findJob(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = {

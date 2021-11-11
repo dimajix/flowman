@@ -55,7 +55,7 @@ class SearchTargetHistoryCommand extends Command {
             status = Some(status).filter(_.nonEmpty).map(Status.ofString),
             phase = Some(phase).filter(_.nonEmpty).map(Phase.ofString)
         )
-        val targets = session.history.findTargets(query, Seq(TargetOrder.BY_DATETIME), limit, 0)
+        val targets = session.history.findTargetStates(query, Seq(TargetOrder.BY_DATETIME), limit, 0)
         ConsoleUtils.showTable(targets, Seq("id", "jobId", "namespace", "project", "target", "partitions", "phase", "status", "start_dt", "end_dt"))
         true
     }

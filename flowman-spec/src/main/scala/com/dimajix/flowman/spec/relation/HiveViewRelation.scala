@@ -77,7 +77,7 @@ case class HiveViewRelation(
     override def requires : Set[ResourceIdentifier] = {
         val db = database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
         val other = mapping.map(m => MappingUtils.requires(context, m.mapping))
-            .orElse(sql.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHiveTable(t)).toSet))
+            .orElse(sql.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHiveTable(t))))
             .getOrElse(Set())
         db ++ other
     }

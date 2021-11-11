@@ -56,7 +56,7 @@ class TargetHistoryService(history:StateStore) {
     ))
     def listTargetStates() : server.Route = {
         val query = TargetQuery()
-        val jobs = history.findTargets(query, Seq(TargetOrder.BY_DATETIME.desc()), 100, 0)
+        val jobs = history.findTargetStates(query, Seq(TargetOrder.BY_DATETIME.desc()), 100, 0)
         complete(jobs.map(Converter.ofSpec))
     }
 
@@ -71,7 +71,7 @@ class TargetHistoryService(history:StateStore) {
     ))
     def listTargetStates(@ApiParam(hidden = true) project:String) : server.Route = {
         val query = TargetQuery(project=Some(project))
-        val jobs = history.findTargets(query, Seq(TargetOrder.BY_DATETIME.desc()), 100, 0)
+        val jobs = history.findTargetStates(query, Seq(TargetOrder.BY_DATETIME.desc()), 100, 0)
         complete(jobs.map(Converter.ofSpec))
     }
 
@@ -92,7 +92,7 @@ class TargetHistoryService(history:StateStore) {
             project=Some(project),
             name=Some(target)
         )
-        val jobs = history.findTargets(query, Seq(TargetOrder.BY_DATETIME.desc()), 100, 0)
+        val jobs = history.findTargetStates(query, Seq(TargetOrder.BY_DATETIME.desc()), 100, 0)
         complete(jobs.map(Converter.ofSpec))
     }
 

@@ -101,7 +101,7 @@ object ResultWrapper {
         }
     }
 }
-sealed abstract class ResultWrapper(result:Result) {
+sealed abstract class ResultWrapper(result:Result[_]) {
     def getName() : String = result.name
     def getCategory() : String = result.category
     def getKind() : String = result.kind

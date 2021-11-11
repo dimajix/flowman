@@ -55,7 +55,7 @@ class JobHistoryService(history:StateStore) {
     ))
     def listJobStates() : server.Route = {
         val query = JobQuery()
-        val jobs = history.findJobs(query, Seq(JobOrder.BY_DATETIME.desc()), 100, 0)
+        val jobs = history.findJobStates(query, Seq(JobOrder.BY_DATETIME.desc()), 100, 0)
         complete(jobs.map(Converter.ofSpec))
     }
 
@@ -70,7 +70,7 @@ class JobHistoryService(history:StateStore) {
     ))
     def listJobStates(@ApiParam(hidden = true) project:String) : server.Route = {
         val query = JobQuery(project=Some(project))
-        val jobs = history.findJobs(query, Seq(JobOrder.BY_DATETIME.desc()), 100, 0)
+        val jobs = history.findJobStates(query, Seq(JobOrder.BY_DATETIME.desc()), 100, 0)
         complete(jobs.map(Converter.ofSpec))
     }
 
@@ -91,7 +91,7 @@ class JobHistoryService(history:StateStore) {
             project=Some(project),
             name=Some(job)
         )
-        val jobs = history.findJobs(query, Seq(JobOrder.BY_DATETIME.desc()), 100, 0)
+        val jobs = history.findJobStates(query, Seq(JobOrder.BY_DATETIME.desc()), 100, 0)
         complete(jobs.map(Converter.ofSpec))
     }
 

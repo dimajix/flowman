@@ -62,7 +62,7 @@ sealed class PhaseCommand(phase:Phase) extends Command {
             context.getJob(JobIdentifier(job))
         }
         match {
-            case Failure(NonFatal(e)) =>
+            case Failure(e) =>
                 logger.error(s"Error instantiating job '$job': ${e.getMessage()}")
                 false
             case Success(job) =>

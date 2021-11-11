@@ -55,15 +55,13 @@ class ShowCommand extends Command {
         val columns = ParserUtils.parseDelimitedList(this.columns)
         val task = ConsoleTarget(context, MappingOutputIdentifier(mapping), limit, columns, !noHeader, csv)
 
-        Try {
-            task.execute(session.execution, Phase.BUILD).rethrow()
-        } match {
+        task.execute(session.execution, Phase.BUILD).toTry match {
             case Success(_) =>
                 true
             case Failure(ex:NoSuchMappingException) =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 false
-            case Failure(NonFatal(e)) =>
+            case Failure(e) =>
                 logger.error(s"Caught exception while dumping mapping '$mapping'", e)
                 false
         }

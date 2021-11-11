@@ -101,7 +101,8 @@ case class TemplateTarget(
     }
 
     /**
-     * Executes a specific phase of this target
+     * Executes a specific phase of this target. This method is should not throw a non-fatal exception, instead it
+     * should wrap any exception in the TargetResult
      *
      * @param execution
      * @param phase

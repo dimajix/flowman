@@ -28,6 +28,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.target.CountTarget
@@ -43,16 +44,14 @@ class CountCommand extends Command {
     override def execute(session: Session, project: Project, context:Context) : Boolean = {
         val task = CountTarget(context, MappingOutputIdentifier(mapping))
 
-        Try {
-            task.execute(session.execution, Phase.BUILD).rethrow()
-        } match {
+        task.execute(session.execution, Phase.BUILD).toTry match {
             case Success(_) =>
                 logger.info("Successfully counted  mapping")
                 true
             case Failure(ex:NoSuchMappingException) =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 false
-            case Failure(NonFatal(e)) =>
+            case Failure(e) =>
                 logger.error(s"Caught exception while counting mapping '$mapping'", e)
                 false
         }

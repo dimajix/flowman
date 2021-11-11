@@ -52,15 +52,13 @@ class SaveCommand extends Command {
     override def execute(session: Session, project: Project, context:Context) : Boolean = {
         val task = FileTarget(context, MappingOutputIdentifier(mapping), new Path(location), format, splitSettings(options).toMap)
 
-        try {
-            task.execute(session.execution, Phase.BUILD).rethrow()
-            true
-        }
-        catch {
-            case ex:NoSuchMappingException =>
+        task.execute(session.execution, Phase.BUILD).toTry match {
+            case Success(_) =>
+                true
+            case Failure(ex:NoSuchMappingException) =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 false
-            case NonFatal(e) =>
+            case Failure(e) =>
                 logger.error(s"Caught exception while save mapping '$mapping'", e)
                 false
         }

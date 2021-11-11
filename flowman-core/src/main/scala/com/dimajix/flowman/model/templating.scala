@@ -90,7 +90,7 @@ final case class AssertionWrapper(assertion:Assertion) {
 
 
 object ResultWrapper {
-    def of(result:Result) : AnyRef = {
+    def of(result:Result[_]) : AnyRef = {
         result match {
             case r:LifecycleResult => LifecycleResultWrapper(r)
             case r:TestResult => TestResultWrapper(r)

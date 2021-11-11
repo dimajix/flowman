@@ -95,6 +95,12 @@ sealed abstract class Result[T <: Result[T]] { this:T =>
     def numSuccesses : Int = children.count(_.success)
     def numExceptions : Int = children.count(_.exception.isDefined) + (if (exception.isDefined) 1 else 0)
 
+    def toTry : Try[Status] = {
+        if (exception.nonEmpty)
+            Failure(exception.get)
+        else
+            Success(status)
+    }
     /**
      * Rethrows any stored exception
      * @return
@@ -140,7 +146,7 @@ object LifecycleResult {
             endTime=Instant.now()
         )
 }
-case class LifecycleResult(
+final case class LifecycleResult(
     job: Job,
     instance: JobInstance,
     lifecycle: Seq[Phase],
@@ -200,7 +206,7 @@ object JobResult {
             endTime=Instant.now()
         )
 }
-case class JobResult(
+final case class JobResult(
     job: Job,
     instance : JobInstance,
     phase: Phase,
@@ -292,7 +298,7 @@ object TargetResult {
         }
     }
 }
-case class TargetResult(
+final case class TargetResult(
     target: Target,
     instance : TargetInstance,
     phase: Phase,
@@ -330,7 +336,7 @@ object TestResult {
             endTime=Instant.now()
         )
 }
-case class TestResult(
+final case class TestResult(
     test: Test,
     instance : TestInstance,
     override val children : Seq[Result[_]],
@@ -393,7 +399,7 @@ object AssertionResult {
         }
     }
 }
-case class AssertionResult(
+final case class AssertionResult(
     assertion: Assertion,
     override val children : Seq[AssertionTestResult],
     override val exception: Option[Throwable] = None,
@@ -455,7 +461,7 @@ object AssertionTestResult {
         }
     }
 }
-case class AssertionTestResult(
+final case class AssertionTestResult(
     override val name:String,
     override val description:Option[String],
     override val success:Boolean,

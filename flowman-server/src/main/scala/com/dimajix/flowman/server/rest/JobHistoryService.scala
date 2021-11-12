@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019-2021 Kaya Kupferschmidt
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dimajix.flowman.server.rest
 
 import akka.http.scaladsl.server
@@ -6,7 +22,6 @@ import io.swagger.annotations.Api
 import io.swagger.annotations.ApiImplicitParam
 import io.swagger.annotations.ApiImplicitParams
 import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
 import javax.ws.rs.Path
@@ -18,91 +33,57 @@ import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
 
 
-@Api(value = "/job-history", produces = "application/json", consumes = "application/json")
-@Path("/job-history")
+@Api(value = "/history", produces = "application/json", consumes = "application/json")
+@Path("/history")
 class JobHistoryService(history:StateStore) {
     import akka.http.scaladsl.server.Directives._
     import com.dimajix.flowman.server.model.JsonSupport._
 
-    def routes : Route = pathPrefix("job-history") {(
-        pathEndOrSingleSlash {
-            parameterMap { params =>
-                listJobStates()
+    def routes : Route = (
+        pathPrefix("job") {(
+            path(Segment) { job =>
+                getJobState(job)
             }
-        }
-        ~
-        pathPrefix(Segment) { project => (
-            pathEndOrSingleSlash {
-                parameterMap { params =>
-                    listJobStates(project)
-                }
-            }
-            ~
-            pathPrefix(Segment) { job => (
-                pathEndOrSingleSlash {
-                    parameterMap { params =>
-                        listJobStates(project, job)
-                    }
-                }
-            )}
         )}
-    )}
+        ~
+        pathPrefix("jobs") {(
+            pathEnd {
+                parameters(('project.?, 'job.?)) { (project,job) =>
+                    listJobStates(project, job)
+                }
+            }
+        )}
+    )
 
-    @Path("/")
-    @ApiOperation(value = "Retrieve general information about a job", nickname = "getAllJobStates", httpMethod = "GET")
+    @Path("/jobs")
+    @ApiOperation(value = "Retrieve general information about multiple job runs", nickname = "listJobStates", httpMethod = "GET")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "project", value = "Project name", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "job", value = "Job name", required = false,
+            dataType = "string", paramType = "query")
+    ))
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobState])
     ))
-    def listJobStates() : server.Route = {
-        val query = JobQuery()
-        val jobs = history.findJobStates(query, Seq(JobOrder.BY_DATETIME.desc()), 100, 0)
+    def listJobStates(project:Option[String], job:Option[String]) : server.Route = {
+        val query = JobQuery(project=project, job=job)
+        val jobs = history.findJobStates(query, Seq(JobOrder.BY_DATETIME.desc()), 1000, 0)
         complete(jobs.map(Converter.ofSpec))
     }
 
-    @Path("/{project}")
-    @ApiOperation(value = "Retrieve general information about a job", nickname = "getAllProjectJobsStates", httpMethod = "GET")
+    @Path("/job")
+    @ApiOperation(value = "Retrieve general information about a job run", nickname = "getJobState", httpMethod = "GET")
     @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "project", value = "Project name", required = true,
+        new ApiImplicitParam(name = "job", value = "Job ID", required = true,
             dataType = "string", paramType = "path")
     ))
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobState])
     ))
-    def listJobStates(@ApiParam(hidden = true) project:String) : server.Route = {
-        val query = JobQuery(project=Some(project))
-        val jobs = history.findJobStates(query, Seq(JobOrder.BY_DATETIME.desc()), 100, 0)
-        complete(jobs.map(Converter.ofSpec))
-    }
-
-    @Path("/{project}/{job}")
-    @ApiOperation(value = "Retrieve general information about a job", nickname = "getProjectJobState", httpMethod = "GET")
-    @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "project", value = "Project name", required = true,
-            dataType = "string", paramType = "path"),
-        new ApiImplicitParam(name = "job", value = "Job name", required = true,
-            dataType = "string", paramType = "path")
-    ))
-    @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobState])
-    ))
-    def listJobStates(@ApiParam(hidden = true) project:String,
-                      @ApiParam(hidden = true) job:String) : server.Route = {
-        val query = JobQuery(
-            project=Some(project),
-            name=Some(job)
-        )
-        val jobs = history.findJobStates(query, Seq(JobOrder.BY_DATETIME.desc()), 100, 0)
-        complete(jobs.map(Converter.ofSpec))
-    }
-
-    private def parseQuery(params:Map[String,String]) = {
-        params.get("from")
-        params.get("to")
-        params.get("state")
-        params.get("id")
-        params.get("name")
-        params.get("parent_name")
-        params.get("parent_id")
-        params.flatMap(kv => "p\\[(.+)\\]".r.unapplySeq(kv._1).flatMap(_.headOption).map(k => (k,kv._2)))
+    def getJobState(jobId:String) : server.Route = {
+        val query = JobQuery(id=Some(jobId))
+        val job = history.findJobStates(query).headOption
+        complete(job.map(Converter.ofSpec))
     }
 }

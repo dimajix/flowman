@@ -26,21 +26,22 @@ import com.dimajix.flowman.execution.Status
   * The TargetQuery encapsulates a query for retrieving all targets matching the given criteria
   * @param namespace
   * @param project
-  * @param name
+  * @param target
   * @param status
-  * @param jobName
+  * @param job
   * @param jobId
   * @param from
   * @param to
   * @param partitions
   */
 final case class TargetQuery(
+    id:Option[String] = None,
     namespace:Option[String] = None,
     project:Option[String] = None,
-    name:Option[String] = None,
+    target:Option[String] = None,
     status:Option[Status] = None,
     phase:Option[Phase] = None,
-    jobName:Option[String] = None,
+    job:Option[String] = None,
     jobId:Option[String] = None,
     from:Option[ZonedDateTime] = None,
     to:Option[ZonedDateTime] = None,

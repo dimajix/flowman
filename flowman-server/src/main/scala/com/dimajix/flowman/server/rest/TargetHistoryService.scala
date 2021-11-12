@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019-2021 Kaya Kupferschmidt
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dimajix.flowman.server.rest
 
 import akka.http.scaladsl.server
@@ -6,13 +22,10 @@ import io.swagger.annotations.Api
 import io.swagger.annotations.ApiImplicitParam
 import io.swagger.annotations.ApiImplicitParams
 import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
 import javax.ws.rs.Path
 
-import com.dimajix.flowman.history.JobOrder
-import com.dimajix.flowman.history.JobQuery
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.TargetOrder
 import com.dimajix.flowman.history.TargetQuery
@@ -20,90 +33,63 @@ import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
 
 
-@Api(value = "/target-history", produces = "application/json", consumes = "application/json")
-@Path("/target-history")
+@Api(value = "/history", produces = "application/json", consumes = "application/json")
+@Path("/history")
 class TargetHistoryService(history:StateStore) {
     import akka.http.scaladsl.server.Directives._
-
     import com.dimajix.flowman.server.model.JsonSupport._
 
-    def routes : Route = pathPrefix("target-history") {(
-        pathEndOrSingleSlash {
-            listTargetStates()
-        }
-        ~
-        pathPrefix(Segment) { project => (
-            pathEndOrSingleSlash {
-                parameterMap { params =>
-                    listTargetStates(project)
-                }
+    def routes : Route = (
+        pathPrefix("target") {(
+            path(Segment) { target =>
+                getTargetState(target)
             }
+            )}
             ~
-            pathPrefix(Segment) { target => (
-                pathEndOrSingleSlash {
-                    parameterMap { params =>
-                        listTargetStates(project, target)
+            pathPrefix("targets") {(
+                pathEnd {
+                    parameters(('project.?, 'job.?, 'target.?)) { (project,job,target) =>
+                        listTargetStates(project, job,target)
                     }
                 }
             )}
-        )}
-    )}
-
-    @Path("/")
-    @ApiOperation(value = "Retrieve general information about a job", nickname = "getAllTaretStates", httpMethod = "GET")
-    @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Target information", response = classOf[model.JobState])
-    ))
-    def listTargetStates() : server.Route = {
-        val query = TargetQuery()
-        val jobs = history.findTargetStates(query, Seq(TargetOrder.BY_DATETIME.desc()), 100, 0)
-        complete(jobs.map(Converter.ofSpec))
-    }
-
-    @Path("/{project}")
-    @ApiOperation(value = "Retrieve general information about a job", nickname = "getAllProjectTargetStates", httpMethod = "GET")
-    @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "project", value = "Project name", required = true,
-            dataType = "string", paramType = "path")
-    ))
-    @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Target information", response = classOf[model.JobState])
-    ))
-    def listTargetStates(@ApiParam(hidden = true) project:String) : server.Route = {
-        val query = TargetQuery(project=Some(project))
-        val jobs = history.findTargetStates(query, Seq(TargetOrder.BY_DATETIME.desc()), 100, 0)
-        complete(jobs.map(Converter.ofSpec))
-    }
-
-    @Path("/{project}/{target}")
-    @ApiOperation(value = "Retrieve general information about a job", nickname = "getProjectTargetState", httpMethod = "GET")
-    @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "project", value = "Project name", required = true,
-            dataType = "string", paramType = "path"),
-        new ApiImplicitParam(name = "target", value = "Target name", required = true,
-            dataType = "string", paramType = "path")
-    ))
-    @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Target information", response = classOf[model.JobState])
-    ))
-    def listTargetStates(@ApiParam(hidden = true) project:String,
-                         @ApiParam(hidden = true) target:String) : server.Route = {
-        val query = TargetQuery(
-            project=Some(project),
-            name=Some(target)
         )
-        val jobs = history.findTargetStates(query, Seq(TargetOrder.BY_DATETIME.desc()), 100, 0)
-        complete(jobs.map(Converter.ofSpec))
+
+    @Path("/targets")
+    @ApiOperation(value = "Retrieve general information about a job", nickname = "getAllTaretStates", httpMethod = "GET")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "project", value = "Project name", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "job", value = "Job name", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "target", value = "Target name", required = false,
+            dataType = "string", paramType = "query")
+    ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Target information", response = classOf[model.JobState])
+    ))
+    def listTargetStates(project:Option[String], job:Option[String], target:Option[String]) : server.Route = {
+        val query = TargetQuery(
+            project = project,
+            job = job,
+            target = target
+        )
+        val targets = history.findTargetStates(query, Seq(TargetOrder.BY_DATETIME.desc()), 100, 0)
+        complete(targets.map(Converter.ofSpec))
     }
 
-    private def parseQuery(params:Map[String,String]) = {
-        params.get("from")
-        params.get("to")
-        params.get("state")
-        params.get("id")
-        params.get("name")
-        params.get("parent_name")
-        params.get("parent_id")
-        params.flatMap(kv => "p\\[(.+)\\]".r.unapplySeq(kv._1).flatMap(_.headOption).map(k => (k,kv._2)))
+    @Path("/target")
+    @ApiOperation(value = "Retrieve general information about a target run", nickname = "getTargetState", httpMethod = "GET")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "target", value = "Target ID", required = true,
+            dataType = "string", paramType = "path")
+    ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Target information", response = classOf[model.TargetState])
+    ))
+    def getTargetState(targetId:String) : server.Route = {
+        val query = TargetQuery(id=Some(targetId))
+        val target = history.findTargetStates(query).headOption
+        complete(target.map(Converter.ofSpec))
     }
 }

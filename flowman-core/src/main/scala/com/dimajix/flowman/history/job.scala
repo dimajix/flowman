@@ -26,16 +26,17 @@ import com.dimajix.flowman.execution.Status
   * The JobQuery object is used to retrieve a list of jobs matching the given critera
   * @param namespace
   * @param project
-  * @param name
+  * @param job
   * @param status
   * @param from
   * @param to
   * @param args
   */
 final case class JobQuery(
+    id:Option[String] = None,
     namespace:Option[String] = None,
     project:Option[String] = None,
-    name:Option[String] = None,
+    job:Option[String] = None,
     status:Option[Status] = None,
     phase:Option[Phase] = None,
     from:Option[ZonedDateTime] = None,

@@ -49,14 +49,14 @@ class SearchTargetHistoryCommand extends Command {
         val query = TargetQuery(
             namespace = session.namespace.map(_.name),
             project = Some(this.project).filter(_.nonEmpty).orElse(Some(project.name)),
-            jobName = Some(job).filter(_.nonEmpty),
+            job = Some(job).filter(_.nonEmpty),
             jobId = Some(jobId).filter(_.nonEmpty),
-            name = Some(target).filter(_.nonEmpty),
+            target = Some(target).filter(_.nonEmpty),
             status = Some(status).filter(_.nonEmpty).map(Status.ofString),
             phase = Some(phase).filter(_.nonEmpty).map(Phase.ofString)
         )
         val targets = session.history.findTargetStates(query, Seq(TargetOrder.BY_DATETIME), limit, 0)
-        ConsoleUtils.showTable(targets, Seq("id", "jobId", "namespace", "project", "target", "partitions", "phase", "status", "start_dt", "end_dt"))
+        ConsoleUtils.showTable(targets, Seq("id", "jobId", "namespace", "project", "version", "target", "partitions", "phase", "status", "start_dt", "end_dt"))
         true
     }
 }

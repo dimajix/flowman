@@ -57,9 +57,11 @@ class Server(
                     ~
                     namespaceService.routes
                     ~
-                    jobHistoryService.routes
-                    ~
-                    targetHistoryService.routes
+                    pathPrefix("history") {(
+                        jobHistoryService.routes
+                        ~
+                        targetHistoryService.routes
+                    )}
                 )}
                 ~
                 pathPrefix("swagger") {(

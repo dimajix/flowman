@@ -27,6 +27,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.metric.FixedGaugeMetric
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.JobResult
@@ -360,15 +361,21 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
             .setName("j1")
             .build()
         val instance = JobInstance("default", "p1", "j1")
+        val metrics = Measurement.ofMetrics(Seq(
+            FixedGaugeMetric("num_records", Map("project" -> "great", "namespace" -> "default", "param" -> "1"), 1.0),
+            FixedGaugeMetric("num_records", Map("project" -> "great", "namespace" -> "default", "param" -> "2"), 2.0),
+            FixedGaugeMetric("time", Map("project" -> "great", "namespace" -> "default"), 3.0)
+        ))
 
         store.getJobState(instance) should be(None)
         val token = store.startJob(job, instance, Phase.BUILD)
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be(Some(Status.RUNNING))
-        store.finishJob(token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS))
+        store.finishJob(token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS), metrics)
         store.getJobState(instance).map(_.phase) should be(Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be(Some(Status.SUCCESS))
 
-        // TODO!!!
+        val jobId = store.findJobStates(JobQuery()).head.id
+        store.getJobMetrics(jobId).sortBy(_.value) should be (metrics.sortBy(_.value))
     }
 }

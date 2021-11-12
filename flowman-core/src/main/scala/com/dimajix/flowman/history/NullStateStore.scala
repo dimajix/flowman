@@ -61,7 +61,7 @@ class NullStateStore extends StateStore {
       * @param token
       * @param status
       */
-    override def finishJob(token:JobToken, result:JobResult, metrics:Seq[Metric]=Seq()) : Unit = {}
+    override def finishJob(token:JobToken, result:JobResult, metrics:Seq[Measurement]=Seq()) : Unit = {}
 
     /**
       * Returns the state of a target
@@ -91,7 +91,7 @@ class NullStateStore extends StateStore {
       * @param offset
       * @return
       */
-    override def findJobStates(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = Seq()
+    override def findJobStates(query:JobQuery, order:Seq[JobOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[JobState] = Seq()
 
     /**
       * Returns a list of job matching the query criteria
@@ -100,5 +100,5 @@ class NullStateStore extends StateStore {
       * @param offset
       * @return
       */
-    override def findTargetStates(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = Seq()
+    override def findTargetStates(query:TargetQuery, order:Seq[TargetOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[TargetState] = Seq()
 }

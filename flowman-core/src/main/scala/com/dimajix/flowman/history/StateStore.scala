@@ -61,7 +61,7 @@ abstract class StateStore {
       * @param token The token returned by startJob
       * @param status
       */
-    def finishJob(token:JobToken, result:JobResult, metrics:Seq[Metric]=Seq()) : Unit
+    def finishJob(token:JobToken, result:JobResult, metrics:Seq[Measurement]=Seq()) : Unit
 
     /**
       * Returns the state of a specific target on its last run, or None if no information is available
@@ -91,7 +91,7 @@ abstract class StateStore {
       * @param offset
       * @return
       */
-    def findJobStates(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState]
+    def findJobStates(query:JobQuery, order:Seq[JobOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[JobState]
 
     /**
       * Returns a list of job matching the query criteria
@@ -100,7 +100,7 @@ abstract class StateStore {
       * @param offset
       * @return
       */
-    def findTargetStates(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState]
+    def findTargetStates(query:TargetQuery, order:Seq[TargetOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[TargetState]
 }
 
 
@@ -117,7 +117,7 @@ final class StateStoreAdaptorListener(store:StateStore) extends AbstractExecutio
         StateStoreJobToken(store.startJob(job, instance, phase))
     }
     override def finishJob(execution:Execution, token: com.dimajix.flowman.execution.JobToken, result: JobResult): Unit = {
-        val metrics = execution.metrics.metrics
+        val metrics = Measurement.ofMetrics(execution.metrics.metrics)
         val t = token.asInstanceOf[StateStoreJobToken].token
         store.finishJob(t, result, metrics)
     }

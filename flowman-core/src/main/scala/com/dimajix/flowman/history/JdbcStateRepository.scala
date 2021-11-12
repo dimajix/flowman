@@ -63,6 +63,7 @@ private[history] object JdbcStateRepository {
         id:Long,
         job_id:Long,
         name:String,
+        ts:Timestamp,
         value:Double
     )
 
@@ -149,11 +150,12 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         def id = column[Long]("metric_id", O.PrimaryKey, O.AutoInc)
         def job_id = column[Long]("job_id")
         def name = column[String]("name")
+        def ts = column[Timestamp]("ts")
         def value = column[Double]("value")
 
         def job = foreignKey("JOB_METRIC_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-        def * = (id, job_id, name, value) <> (JobMetric.tupled, JobMetric.unapply)
+        def * = (id, job_id, name, ts, value) <> (JobMetric.tupled, JobMetric.unapply)
     }
 
     class JobMetricLabels(tag: Tag) extends Table[JobMetricLabel](tag, "JOB_METRIC_LABEL") {
@@ -281,7 +283,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     def insertJobMetrics(run:JobRun, metrics:Seq[Measurement]) : Unit = {
         metrics.foreach { m =>
-            val jobMetric = JobMetric(0, run.id, m.name, m.value)
+            val jobMetric = JobMetric(0, run.id, m.name, new Timestamp(m.ts.toInstant.toEpochMilli), m.value)
             val jmQuery = (jobMetrics returning jobMetrics.map(_.id) into((jm,id) => jm.copy(id=id))) += jobMetric
             val jmResult = Await.result(db.run(jmQuery), Duration.Inf)
 
@@ -292,9 +294,11 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     }
 
     def getJobMetrics(jobId:Long) : Seq[Measurement] = {
+        // Ensure that job actually exists
         val jq = jobRuns.filter(_.id === jobId)
-        val job = Await.result(db.run(jq.result), Duration.Inf).head
+        Await.result(db.run(jq.result), Duration.Inf).head
 
+        // Now query metrics
         val q = jobMetrics.filter(_.job_id === jobId)
             .joinLeft(jobMetricLabels).on(_.id === _.metric_id)
         Await.result(db.run(q.result), Duration.Inf)
@@ -302,7 +306,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .map { g =>
                 val metric = g._2.head._1
                 val labels = g._2.flatMap(_._2).map(kv => kv.name -> kv.value).toMap
-                Measurement(metric.name, job.end_ts.toInstant.atZone(ZoneId.of("UTC")), labels, metric.value)
+                Measurement(metric.name, metric.ts.toInstant.atZone(ZoneId.of("UTC")), labels, metric.value)
             }
             .toSeq
     }

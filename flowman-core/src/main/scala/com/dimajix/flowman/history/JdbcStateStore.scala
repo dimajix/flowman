@@ -125,19 +125,15 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       *
       * @param token
       */
-    override def finishJob(token:JobToken, result: JobResult, metrics:Seq[Metric]=Seq()) : Unit = {
+    override def finishJob(token:JobToken, result: JobResult, metrics:Seq[Measurement]=Seq()) : Unit = {
         val status = result.status
         val run = token.asInstanceOf[JobRun]
         logger.info(s"Mark '${run.phase}' job '${run.namespace}/${run.project}/${run.job}' as $status in history database")
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
-        val measurements = metrics.flatMap {
-            case gauge:GaugeMetric => Some(Measurement(gauge.name, now.toInstant.atZone(ZoneId.of("UTC")), gauge.labels, gauge.value))
-            case _ => None
-        }
         withSession{ repository =>
             repository.setJobStatus(run.copy(end_ts = now, status=status.upper))
-            repository.insertJobMetrics(run, measurements)
+            repository.insertJobMetrics(run, metrics)
         }
     }
 
@@ -216,7 +212,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       * @param offset
       * @return
       */
-    override def findJobStates(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = {
+    override def findJobStates(query:JobQuery, order:Seq[JobOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[JobState] = {
         withSession { repository =>
             repository.findJob(query, order, limit, offset)
         }
@@ -229,7 +225,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       * @param offset
       * @return
       */
-    override def findTargetStates(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = {
+    override def findTargetStates(query:TargetQuery, order:Seq[TargetOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[TargetState] = {
         withSession { repository =>
             repository.findTarget(query, order, limit, offset)
         }

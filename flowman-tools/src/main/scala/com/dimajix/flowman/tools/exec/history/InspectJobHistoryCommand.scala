@@ -39,19 +39,22 @@ class InspectJobHistoryCommand extends Command {
         session.history.findJobStates(query).headOption match {
             case Some(job) =>
                 println(s"Job run id: ${job.id}")
-                println(s"Namespace: ${job.namespace}")
-                println(s"Project: ${job.project}")
-                println(s"Version ${job.version}")
-                println(s"Job: ${job.job}")
-                println(s"Phase: ${job.phase}")
-                println(s"Status: ${job.status}")
-                println(s"Start date: ${job.startDateTime}")
-                println(s"End date: ${job.endDateTime}")
-                println(s"Arguments: ${job.args}")
+                println(s"  Namespace: ${job.namespace}")
+                println(s"  Project: ${job.project}")
+                println(s"  Project version: ${job.version}")
+                println(s"  Job name: ${job.job}")
+                println(s"  Phase: ${job.phase}")
+                println(s"  Status: ${job.status}")
+                println(s"  Start date: ${job.startDateTime.map(_.toString).getOrElse("")}")
+                println(s"  End date: ${job.endDateTime.map(_.toString).getOrElse("")}")
+                println(s"Job arguments:")
+                job.args.foreach { m =>
+                    println(s"  ${m._1} = ${m._2}")
+                }
                 val metrics = session.history.getJobMetrics(job.id)
                 println("Job execution metrics:")
                 metrics.foreach { m =>
-                    println(s"  ${m.name} ts=${m.ts} labels=${m.labels} value=${m.value}")
+                    println(s"  ${m.name} ts=${m.ts} labels=${m.labels.map(kv => kv._1 + "=" + kv._2).mkString("(",",",")")} value=${m.value}")
                 }
                 true
             case None =>

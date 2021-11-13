@@ -39,17 +39,20 @@ class InspectTargetHistoryCommand extends Command {
         )
         session.history.findTargetStates(query).headOption match {
             case Some(target) =>
-                println(s"Job run id: ${target.jobId}")
                 println(s"Target run id: ${target.id}")
-                println(s"Namespace: ${target.namespace}")
-                println(s"Project: ${target.project}")
-                println(s"Version ${target.version}")
-                println(s"Target: ${target.target}")
-                println(s"Phase: ${target.phase}")
-                println(s"Status: ${target.status}")
-                println(s"Start date: ${target.startDateTime}")
-                println(s"End date: ${target.endDateTime}")
-                println(s"Partitions: ${target.partitions}")
+                println(s"  Job run id: ${target.jobId}")
+                println(s"  Namespace: ${target.namespace}")
+                println(s"  Project: ${target.project}")
+                println(s"  Project version: ${target.version}")
+                println(s"  Target name: ${target.target}")
+                println(s"  Phase: ${target.phase}")
+                println(s"  Status: ${target.status}")
+                println(s"  Start date: ${target.startDateTime.map(_.toString).getOrElse("")}")
+                println(s"  End date: ${target.endDateTime.map(_.toString).getOrElse("")}")
+                println(s"Target partitions:")
+                target.partitions.foreach { m =>
+                    println(s"  ${m._1} = ${m._2}")
+                }
                 true
             case None =>
                 logger.error(s"Cannot find target run with id '$targetId'")

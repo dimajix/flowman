@@ -199,6 +199,10 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         store.getJobState(instance).map(_.status) should be(Some(Status.SUCCESS))
         store.getJobState(instance.copy(args = Map("p1" -> "v2"))) should be(None)
         store.getJobState(instance.copy(args = Map("p2" -> "v1"))) should be(None)
+
+        store.findJobStates(JobQuery()).map(_.phase) should be (Seq(Phase.BUILD))
+        store.findJobStates(JobQuery()).map(_.status) should be (Seq(Status.SUCCESS))
+        store.findJobStates(JobQuery()).map(_.args) should be (Seq(Map("p1" -> "v1")))
     }
 
 
@@ -319,10 +323,15 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         store.finishTarget(token, TargetResult(target, Phase.BUILD, Status.SUCCESS))
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v1"))).map(_.phase) should be(Some(Phase.BUILD))
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v1"))).map(_.status) should be(Some(Status.SUCCESS))
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v1"))).map(_.partitions) should be(Some(Map("p1" -> "v1")))
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v2"))) should be(None)
         store.getTargetState(instance.copy(partitions = Map("p2" -> "v1"))) should be(None)
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(None)
         store.getTargetState(instance) should be(None)
+
+        store.findTargetStates(TargetQuery()).map(_.phase) should be (Seq(Phase.BUILD))
+        store.findTargetStates(TargetQuery()).map(_.status) should be (Seq(Status.SUCCESS))
+        store.findTargetStates(TargetQuery()).map(_.partitions) should be (Seq(Map("p1" -> "v1")))
     }
 
     it should "support multi value target partitions" in {
@@ -344,9 +353,14 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         store.finishTarget(token, TargetResult(target, Phase.BUILD, Status.SUCCESS))
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))).map(_.phase) should be(Some(Phase.BUILD))
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))).map(_.status) should be(Some(Status.SUCCESS))
+        store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))).map(_.partitions) should be(Some(Map("p1" -> "v1", "p2" -> "v2")))
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v2", "p2" -> "v2"))) should be(None)
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v2"))) should be(None)
         store.getTargetState(instance) should be(None)
+
+        store.findTargetStates(TargetQuery()).map(_.phase) should be (Seq(Phase.BUILD))
+        store.findTargetStates(TargetQuery()).map(_.status) should be (Seq(Status.SUCCESS))
+        store.findTargetStates(TargetQuery()).map(_.partitions) should be (Seq(Map("p1" -> "v1", "p2" -> "v2")))
     }
 
     it should "support metrics" in {

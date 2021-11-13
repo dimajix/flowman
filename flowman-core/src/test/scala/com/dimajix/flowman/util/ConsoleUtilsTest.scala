@@ -39,7 +39,6 @@ object ConsoleUtilsTest {
     )
 }
 class ConsoleUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    import ConsoleUtilsTest.JobState
 
     val inputJson =
         """
@@ -69,17 +68,5 @@ class ConsoleUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val df = spark.read.json(inputDs)
 
         ConsoleUtils.showDataFrame(df, csv=false)
-    }
-
-    it should "correctly format a list of JobStates" in {
-        val columns = Seq("id", "namespace", "project", "job", "phase", "args", "status", "start_dt", "end_dt")
-        val records = Seq(JobState("123", "default", "p1", "some_job", Phase.BUILD, Map("arg1" -> "val1"), Status.SUCCESS, None, None))
-        val result = ConsoleUtils.showTableString(records, columns)
-        result should be ("""+---+---------+-------+--------+-----+---------+-------+--------+------+
-                            || id|namespace|project|     job|phase|     args| status|start_dt|end_dt|
-                            |+---+---------+-------+--------+-----+---------+-------+--------+------+
-                            ||123|  default|     p1|some_job|BUILD|arg1=val1|SUCCESS|        |      |
-                            |+---+---------+-------+--------+-----+---------+-------+--------+------+
-                            |""".stripMargin)
     }
 }

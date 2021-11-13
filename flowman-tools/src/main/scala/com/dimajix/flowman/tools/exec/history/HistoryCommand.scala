@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.shell.history
+package com.dimajix.flowman.tools.exec.history
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.spi.SubCommand
@@ -25,11 +25,11 @@ import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.exec.NestedCommand
 
 
-class TargetHistoryCommand extends NestedCommand {
+class HistoryCommand extends NestedCommand {
     @Argument(required=true,index=0,metaVar="<subcommand>",usage="the subcommand to run",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
-        new SubCommand(name="search",impl=classOf[SearchTargetHistoryCommand])
+        new SubCommand(name="job",impl=classOf[JobHistoryCommand]),
+        new SubCommand(name="target",impl=classOf[TargetHistoryCommand])
     ))
     override var command:Command = _
-
 }

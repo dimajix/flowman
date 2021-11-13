@@ -18,6 +18,7 @@ package com.dimajix.flowman.history
 
 import java.sql.Timestamp
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.Locale
 import java.util.Properties
 
@@ -327,6 +328,24 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             else
                 slick.ast.Ordering(slick.ast.Ordering.Desc)
         }
+        val ordering =
+            (l:JobState, r:JobState) => {
+                order.map { o =>
+                    val result = o.column match {
+                        case JobOrderColumn.BY_DATETIME => cmpOpt(l.startDateTime, r.startDateTime)(cmpDt)
+                        case JobOrderColumn.BY_ID => cmpStr(l.id, r.id)
+                        case JobOrderColumn.BY_NAME => cmpStr(l.job, r.job)
+                        case JobOrderColumn.BY_PHASE => cmpStr(l.phase.toString, r.phase.toString)
+                        case JobOrderColumn.BY_STATUS => cmpStr(l.status.toString, r.status.toString)
+                    }
+                    if (o.isAscending)
+                        result
+                    else
+                        -result
+                }
+                .find(_ != 0)
+                .exists(_ < 0)
+            }
 
         val q = query.args.foldLeft(jobRuns.map(identity))((q, kv) => q
                 .join(jobArgs).on(_.id === _.job_id)
@@ -341,23 +360,32 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .optionalFilter(query.phase)(_.phase === _.toString)
             .optionalFilter(query.from)((e,v) => e.start_ts >= Timestamp.from(v.toInstant))
             .optionalFilter(query.to)((e,v) => e.start_ts <= Timestamp.from(v.toInstant))
+            .sorted(job => new slick.lifted.Ordered(order.map(o => (mapOrderColumn(o)(job).toNode, mapOrderDirection(o))).toVector))
             .drop(offset)
             .take(limit)
-            .sorted(job => new slick.lifted.Ordered(order.map(o => (mapOrderColumn(o)(job).toNode, mapOrderDirection(o))).toVector))
+            .joinLeft(jobArgs).on(_.id === _.job_id)
 
         Await.result(db.run(q.result), Duration.Inf)
-            .map(state => JobState(
-                state.id.toString,
-                state.namespace,
-                state.project,
-                state.version,
-                state.job,
-                Phase.ofString(state.phase),
-                Map(),
-                Status.ofString(state.status),
-                Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
-                Option(state.end_ts).map(_.toInstant.atZone(ZoneId.of("UTC")))
-            ))
+            .groupBy(_._1.id)
+            .values
+            .map { states =>
+                val state = states.head._1
+                val args = states.flatMap(_._2)
+                JobState(
+                    state.id.toString,
+                    state.namespace,
+                    state.project,
+                    state.version,
+                    state.job,
+                    Phase.ofString(state.phase),
+                    args.map(a => a.name -> a.value).toMap,
+                    Status.ofString(state.status),
+                    Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
+                    Option(state.end_ts).map(_.toInstant.atZone(ZoneId.of("UTC")))
+                )
+            }
+            .toSeq
+            .sortWith(ordering)
     }
 
     def getTargetState(target:TargetRun, partitions:Map[String,String]) : Option[TargetState] = {
@@ -430,6 +458,24 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             else
                 slick.ast.Ordering(slick.ast.Ordering.Desc)
         }
+        val ordering =
+            (l:TargetState, r:TargetState) => {
+                order.map { o =>
+                    val result = o.column match {
+                        case TargetOrderColumn.BY_DATETIME => cmpOpt(l.startDateTime, r.startDateTime)(cmpDt)
+                        case TargetOrderColumn.BY_ID => cmpStr(l.id, r.id)
+                        case TargetOrderColumn.BY_NAME => cmpStr(l.target, r.target)
+                        case TargetOrderColumn.BY_PHASE => cmpStr(l.phase.toString, r.phase.toString)
+                        case TargetOrderColumn.BY_STATUS => cmpStr(l.status.toString, r.status.toString)
+                    }
+                    if (o.isAscending)
+                        result
+                    else
+                        -result
+                }
+                .find(_ != 0)
+                .exists(_ < 0)
+            }
 
         val q = query.partitions.foldLeft(targetRuns.map(identity))((q, kv) => q
             .join(targetPartitions).on(_.id === _.target_id)
@@ -445,23 +491,59 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .optionalFilter2(query.jobId)((e,v) => e.job_id === v.toLong)
             .optionalFilter(query.from)((e,v) => e.start_ts >= Timestamp.from(v.toInstant))
             .optionalFilter(query.to)((e,v) => e.start_ts <= Timestamp.from(v.toInstant))
+            .sorted(job => new slick.lifted.Ordered(order.map(o => (mapOrderColumn(o)(job).toNode, mapOrderDirection(o))).toVector))
             .drop(offset)
             .take(limit)
-            .sorted(job => new slick.lifted.Ordered(order.map(o => (mapOrderColumn(o)(job).toNode, mapOrderDirection(o))).toVector))
+            .joinLeft(targetPartitions).on(_.id === _.target_id)
 
         Await.result(db.run(q.result), Duration.Inf)
-            .map(state => TargetState(
-                state.id.toString,
-                state.job_id.map(_.toString),
-                state.namespace,
-                state.project,
-                state.version,
-                state.target,
-                Map(),
-                Phase.ofString(state.phase),
-                Status.ofString(state.status),
-                Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
-                Option(state.end_ts).map(_.toInstant.atZone(ZoneId.of("UTC")))
-            ))
+            .groupBy(_._1.id)
+            .values
+            .map { states =>
+                val state = states.head._1
+                val partitions = states.flatMap(_._2)
+                TargetState(
+                    state.id.toString,
+                    state.job_id.map(_.toString),
+                    state.namespace,
+                    state.project,
+                    state.version,
+                    state.target,
+                    partitions.map(t => t.name -> t.value).toMap,
+                    Phase.ofString(state.phase),
+                    Status.ofString(state.status),
+                    Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
+                    Option(state.end_ts).map(_.toInstant.atZone(ZoneId.of("UTC")))
+                )
+            }
+            .toSeq
+            .sortWith(ordering)
+    }
+
+    private def cmpOpt[T](l:Option[T],r:Option[T])(lt:(T,T) => Int) : Int = {
+        if (l.isEmpty && r.isEmpty)
+            0
+        else if (l.isEmpty)
+            -1
+        else if (r.isEmpty)
+            1
+        else
+            lt(l.get, r.get)
+    }
+    private def cmpStr(l:String, r:String) : Int = {
+        if (l < r)
+            -1
+        else if (l == r)
+            0
+        else
+            1
+    }
+    private def cmpDt(l:ZonedDateTime, r:ZonedDateTime) : Int = {
+        if (l == r)
+            0
+        else if (l.isBefore(r))
+            -1
+        else
+            1
     }
 }

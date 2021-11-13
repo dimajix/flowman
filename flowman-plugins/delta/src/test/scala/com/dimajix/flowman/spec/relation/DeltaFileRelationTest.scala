@@ -36,6 +36,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.PartitionField
@@ -100,23 +101,27 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Field("int_col", ftypes.IntegerType)
         ))
 
-        // == Create ===================================================================
+        // == Create ==================================================================================================
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
         relation.create(execution, false)
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
 
         // Try to create relation, although it already exists
         a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
         relation.create(execution, true)
 
-        // == Read ===================================================================
+        // == Read ====================================================================================================
         relation.read(execution, None, Map()).count() should be (0)
 
-        // == Write ===================================================================
+        // == Write ===================================================================================================
         val schema = StructType(Seq(
             StructField("str_col", StringType),
             StructField("char_col", StringType),
@@ -129,32 +134,36 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.write(execution, df, Map())
         relation.loaded(execution, Map()) should be (Yes)
 
-        // == Read ===================================================================
+        // == Read ====================================================================================================
         val df2 = relation.read(execution, None, Map())
         val rows_1 = Seq(
             Row("v1", 21)
         )
         checkAnswer(df2, rows_1)
 
-        // == Truncate ===================================================================
+        // == Truncate ================================================================================================
         relation.truncate(execution)
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
 
-        // == Read ===================================================================
+        // == Read ====================================================================================================
         relation.read(execution, None, Map()).count() should be (0)
         relation.read(execution, None, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType)
         )))
 
-        // == Destroy ===================================================================
+        // == Destroy =================================================================================================
         relation.exists(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.destroy(execution)
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
 
         an[FileNotFoundException] shouldBe thrownBy(relation.destroy(execution))
@@ -191,10 +200,14 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create ================================================================================================
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
         relation.create(execution, false)
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
@@ -264,6 +277,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.truncate(execution, Map("part" -> SingleValue("p0")))
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
@@ -282,6 +297,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.truncate(execution)
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
@@ -302,6 +319,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
 
         an[FileNotFoundException] shouldBe thrownBy(relation.destroy(execution))
@@ -334,6 +353,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution) should be (No)
         relation.create(execution)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution) should be (No)
 
         // == Write ==================================================================================================
@@ -393,6 +414,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Overwrite ==============================================================================================
         relation.write(execution, df, Map(), OutputMode.OVERWRITE)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
         // == Read ==================================================================================================
         relation.loaded(execution) should be (Yes)
@@ -407,6 +430,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Destroy ===============================================================================================
         relation.destroy(execution)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
@@ -450,9 +475,13 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create ================================================================================================
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
         relation.create(execution, false)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
@@ -506,6 +535,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
     }
 
@@ -695,10 +726,14 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create =================================================================================================
         location.exists() should be (false)
         relation0.exists(execution) should be (No)
+        relation0.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation0.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation0.loaded(execution, Map()) should be (No)
         relation0.create(execution, false)
         location.exists() should be (true)
         relation0.exists(execution) should be (Yes)
+        relation0.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation0.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation0.loaded(execution, Map()) should be (No)
         relation0.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation0.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
@@ -715,6 +750,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.schema should be (None)
         relation.fields should be (Seq(Field("part", ftypes.StringType, false)))
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
@@ -777,6 +814,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Check =================================================================================================
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
@@ -797,6 +836,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Check =================================================================================================
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
@@ -816,6 +857,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Check =================================================================================================
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
     }
 

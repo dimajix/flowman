@@ -127,6 +127,14 @@ case class NullRelation(
       */
     override def exists(execution:Execution) : Trilean = true
 
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     * @param execution
+     * @return
+     */
+    override def conforms(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED) : Trilean = true
+
     override def create(execution: Execution, ifNotExists:Boolean=false): Unit = {
         require(execution != null)
     }

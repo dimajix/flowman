@@ -33,6 +33,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -208,6 +209,36 @@ case class DeltaTableRelation(
         execution.catalog.tableExists(tableIdentifier)
     }
 
+
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        val catalog = execution.catalog
+        if (catalog.tableExists(tableIdentifier)) {
+            val table = catalog.getTable(tableIdentifier)
+            if (table.tableType == CatalogTableType.VIEW) {
+                false
+            }
+            else if (schema.nonEmpty) {
+                val table = loadDeltaTable(execution)
+                val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
+                val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
+                !TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
+            }
+            else {
+                true
+            }
+        }
+        else {
+            false
+        }
+    }
+
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
@@ -316,7 +347,7 @@ case class DeltaTableRelation(
         require(execution != null)
 
         val catalog = execution.catalog
-        if (schema.nonEmpty && catalog.tableExists(tableIdentifier)) {
+        if (catalog.tableExists(tableIdentifier)) {
             val table = catalog.getTable(tableIdentifier)
             if (table.tableType == CatalogTableType.VIEW) {
                 migrationStrategy match {
@@ -331,7 +362,7 @@ case class DeltaTableRelation(
                         create(execution, false)
                 }
             }
-            else {
+            else if (schema.nonEmpty) {
                 migrateInternal(execution, migrationPolicy, migrationStrategy)
             }
         }

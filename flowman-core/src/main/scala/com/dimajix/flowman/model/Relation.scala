@@ -209,6 +209,14 @@ trait Relation extends Instance {
     def exists(execution:Execution) : Trilean
 
     /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     * @param execution
+     * @return
+     */
+    def conforms(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED) : Trilean
+
+    /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition
@@ -403,6 +411,22 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      */
     protected def outputSchema(execution:Execution) : Option[org.apache.spark.sql.types.StructType] = {
         schema.map(_.catalogSchema)
+    }
+
+    /**
+     * Returns the full schema including partition columns
+     * @return
+     */
+    protected def fullSchema : Option[StructType] = {
+        schema.map { schema =>
+            val schemaFieldNames = SetIgnoreCase(schema.fields.map(_.name))
+            val partitionFieldNames = SetIgnoreCase(partitions.map(_.name))
+            val schemaFields = schema.fields.map {
+                case f:Field if partitionFieldNames.contains(f.name) => f.copy(nullable = false)
+                case f => f
+            }
+            StructType(schemaFields ++ partitions.filter(p => !schemaFieldNames.contains(p.name)).map(_.field))
+        }
     }
 
     /**

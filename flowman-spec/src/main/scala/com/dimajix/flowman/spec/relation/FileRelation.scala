@@ -331,6 +331,17 @@ case class FileRelation(
     }
 
     /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        exists(execution)
+    }
+
+    /**
       * This method will create the given directory as specified in "location"
       * @param execution
       */

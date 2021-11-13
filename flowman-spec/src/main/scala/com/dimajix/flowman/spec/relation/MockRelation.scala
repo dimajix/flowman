@@ -146,6 +146,15 @@ case class MockRelation(
     override def exists(execution: Execution): Trilean = _exists
 
     /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = true
+
+    /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition

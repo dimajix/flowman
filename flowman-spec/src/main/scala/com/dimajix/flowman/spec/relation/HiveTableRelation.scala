@@ -333,6 +333,42 @@ case class HiveTableRelation(
         }
     }
 
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        val catalog = execution.catalog
+        if (catalog.tableExists(tableIdentifier)) {
+            if (schema.nonEmpty) {
+                val table = catalog.getTable(tableIdentifier)
+                if (table.tableType == CatalogTableType.VIEW) {
+                    false
+                }
+                else {
+                    val sourceSchema = com.dimajix.flowman.types.StructType.of(table.dataSchema)
+                    val targetSchema = {
+                        val dataSchema = com.dimajix.flowman.types.StructType(schema.get.fields)
+                        if (hiveVarcharSupported)
+                            dataSchema
+                        else
+                            SchemaUtils.replaceCharVarchar(dataSchema)
+                    }
+
+                    !TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
+                }
+            }
+            else {
+                true
+            }
+        }
+        else {
+            false
+        }
+    }
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a

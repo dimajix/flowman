@@ -91,7 +91,7 @@ abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation w
     protected def migrateInternal(execution: Execution, migrationPolicy: MigrationPolicy, migrationStrategy: MigrationStrategy): Unit = {
         val table = loadDeltaTable(execution)
         val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
-        val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(com.dimajix.flowman.types.StructType(schema.get.fields))
+        val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
 
         val requiresMigration = TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
 

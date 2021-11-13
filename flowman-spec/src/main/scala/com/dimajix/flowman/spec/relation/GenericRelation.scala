@@ -113,6 +113,14 @@ case class GenericRelation(
      */
     override def exists(execution:Execution) : Trilean = Unknown
 
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = Unknown
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a

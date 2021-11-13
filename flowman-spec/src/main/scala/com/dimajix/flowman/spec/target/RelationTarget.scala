@@ -159,11 +159,8 @@ case class RelationTarget(
         phase match {
             case Phase.VALIDATE => No
             case Phase.CREATE =>
-                // Since an existing relation might need a migration, we return "unknown"
-                if (rel.exists(execution) == Yes)
-                    Unknown
-                else
-                    Yes
+                val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
+                !rel.conforms(execution, migrationPolicy)
             case Phase.BUILD if mapping.nonEmpty =>
                 if (mode == OutputMode.APPEND) {
                     Yes
@@ -203,10 +200,12 @@ case class RelationTarget(
 
         val rel = relation.value
         if (rel.exists(execution) == Yes) {
-            logger.info(s"Migrating existing relation '${relation.identifier}'")
             val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
-            val migrationStrategy = MigrationStrategy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_STRATEGY))
-            rel.migrate(execution, migrationPolicy, migrationStrategy)
+            if (rel.conforms(execution, migrationPolicy) != Yes) {
+                logger.info(s"Migrating existing relation '${relation.identifier}'")
+                val migrationStrategy = MigrationStrategy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_STRATEGY))
+                rel.migrate(execution, migrationPolicy, migrationStrategy)
+            }
         }
         else {
             logger.info(s"Creating relation '${relation.identifier}'")

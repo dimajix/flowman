@@ -64,15 +64,15 @@ final case class TargetState(
 )
 
 
-sealed case class TargetOrderColumn()
+sealed abstract class TargetOrderColumn
 object TargetOrderColumn {
-    object BY_DATETIME extends TargetOrderColumn
-    object BY_NAME extends TargetOrderColumn
-    object BY_ID extends TargetOrderColumn
-    object BY_STATUS extends TargetOrderColumn
-    object BY_PHASE extends TargetOrderColumn
-    object BY_PARENT_NAME extends TargetOrderColumn
-    object BY_PARENT_ID extends TargetOrderColumn
+    case object BY_DATETIME extends TargetOrderColumn
+    case object BY_NAME extends TargetOrderColumn
+    case object BY_ID extends TargetOrderColumn
+    case object BY_STATUS extends TargetOrderColumn
+    case object BY_PHASE extends TargetOrderColumn
+    case object BY_PARENT_NAME extends TargetOrderColumn
+    case object BY_PARENT_ID extends TargetOrderColumn
 }
 
 object TargetOrder {

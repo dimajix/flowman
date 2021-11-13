@@ -114,9 +114,13 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
         relation.create(execution, false)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (true)
 
@@ -174,6 +178,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Truncate ===================================================================
         relation.truncate(execution)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
 
         // == Read ===================================================================
@@ -188,6 +194,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map()) should be (No)
         relation.destroy(execution)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (false)
 
@@ -741,9 +749,13 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Create =================================================================================================
         relation0.exists(execution) should be (No)
+        relation0.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation0.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation0.loaded(execution, Map()) should be (No)
         relation0.create(execution, false)
         relation0.exists(execution) should be (Yes)
+        relation0.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation0.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation0.loaded(execution, Map()) should be (No)
         relation0.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation0.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
@@ -760,6 +772,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.schema should be (None)
         relation.fields should be (Seq(Field("part", ftypes.StringType, false)))
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
@@ -841,6 +855,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Check =================================================================================================
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
@@ -860,6 +876,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Check =================================================================================================
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
     }
 
@@ -1163,6 +1181,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Create =================================================================================================
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (false)
         rel_1.create(execution, false)
+        rel_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        rel_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (true)
 
         rel_1.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
@@ -1199,7 +1219,14 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         )))
 
         // == Migrate ================================================================================================
+        rel_2.exists(execution) should be (Yes)
+        rel_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        rel_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
         rel_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        rel_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        rel_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        rel_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        rel_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         rel_2.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
             Field("c0", com.dimajix.flowman.types.IntegerType),
             Field("c1", com.dimajix.flowman.types.DoubleType),
@@ -1267,6 +1294,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Create =================================================================================================
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (false)
         rel_1.create(execution, false)
+        rel_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        rel_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (true)
 
         rel_1.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
@@ -1294,7 +1323,13 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         )))
 
         // == Migrate ================================================================================================
+        rel_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        rel_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
         rel_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        rel_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        rel_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        rel_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        rel_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         rel_2.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
             Field("c0", com.dimajix.flowman.types.IntegerType),
             Field("c2", com.dimajix.flowman.types.StringType, nullable=true)
@@ -1352,6 +1387,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Create =================================================================================================
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (false)
         rel_1.create(execution, false)
+        rel_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        rel_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (true)
 
         rel_1.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
@@ -1379,9 +1416,15 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         )))
 
         // == Migrate ================================================================================================
+        rel_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        rel_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
         a[MigrationFailedException] should be thrownBy(rel_2.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.FAIL))
         a[MigrationFailedException] should be thrownBy(rel_2.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER))
         rel_2.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER_REPLACE)
+        rel_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        rel_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        rel_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        rel_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         rel_2.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
             Field("c0", com.dimajix.flowman.types.IntegerType),
             Field("c2", com.dimajix.flowman.types.DoubleType)

@@ -232,6 +232,15 @@ case class KafkaRelation(
     override def exists(execution: Execution): Trilean = Unknown
 
     /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = Unknown
+
+    /**
      * Verify if the corresponding physical backend of this relation already exists
      * @param execution
      */

@@ -132,6 +132,17 @@ class ProvidedRelation(
         execution.spark.catalog.tableExists(table)
     }
 
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        exists(execution)
+    }
+
     override def create(execution: Execution, ifNotExists:Boolean=false): Unit = {
         if (!ifNotExists && exists(execution) == No)
             throw new UnsupportedOperationException(s"Cannot create provided table '$table' in relation '$identifier'")

@@ -170,7 +170,8 @@ object SchemaUtils {
 
     /**
      * This will normalize a given schema in the sense that all field names are converted to lowercase and all
-     * metadata is stripped except the comments
+     * metadata is stripped except the comments. The function will also replace all CHAR and VARCHAR columns to
+     * STRING columns.
      * @param schema
      * @return
      */
@@ -186,6 +187,8 @@ object SchemaUtils {
             case struct:StructType => normalize(struct)
             case array:ArrayType => ArrayType(normalize(array.elementType),array.containsNull)
             case map:MapType => MapType(normalize(map.keyType), normalize(map.valueType), map.valueContainsNull)
+            case _:CharType => StringType
+            case _:VarcharType => StringType
             case dt:DataType => dt
         }
     }

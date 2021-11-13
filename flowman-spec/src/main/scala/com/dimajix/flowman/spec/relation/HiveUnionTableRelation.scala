@@ -29,6 +29,7 @@ import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
+import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -345,6 +346,69 @@ case class HiveUnionTableRelation(
 
         val catalog = execution.catalog
         catalog.tableExists(viewIdentifier)
+    }
+
+
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        val catalog = execution.catalog
+        if (catalog.tableExists(viewIdentifier)) {
+            val catalog = execution.catalog
+            val sourceSchema = schema.get.catalogSchema
+            val allTables = listTables(execution)
+
+            // 1. Find all tables
+            // 2. Find appropriate table
+            val target = allTables
+                .find { id =>
+                    val table = catalog.getTable(id)
+                    val targetSchema = table.dataSchema
+                    val targetFieldsByName = MapIgnoreCase(targetSchema.map(f => (f.name, f)))
+
+                    sourceSchema.forall { field =>
+                        targetFieldsByName.get(field.name)
+                            .forall(tgt => SchemaUtils.isCompatible(field, tgt))
+                    }
+                }
+
+            val needsMigration = target match {
+                case Some(id) =>
+                    // 3. If found:
+                    //  3.1 Migrate table (add new columns)
+                    val table = catalog.getTable(id)
+                    val targetSchema = table.dataSchema
+                    val targetFields = SetIgnoreCase(targetSchema.map(f => f.name))
+
+                    val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name))
+                    if (missingFields.nonEmpty) {
+                        true
+                    }
+                    else {
+                        false
+                    }
+
+                case None =>
+                    // 3. If not found:
+                    //  3.2 Create new table
+                    true
+            }
+
+            if (needsMigration) {
+                No
+            }
+            else {
+                val hiveViewRelation = viewRelationFromTables(execution)
+                hiveViewRelation.conforms(execution, MigrationPolicy.RELAXED)
+            }
+        } else {
+            false
+        }
     }
 
     /**

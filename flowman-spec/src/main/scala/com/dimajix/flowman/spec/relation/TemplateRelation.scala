@@ -169,9 +169,17 @@ case class TemplateRelation(
       * @return
       */
     override def exists(execution: Execution): Trilean = {
-        require(execution != null)
-
         relationInstance.exists(execution)
+    }
+
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     * @param execution
+     * @return
+     */
+    def conforms(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED) : Trilean = {
+        relationInstance.conforms(execution, migrationPolicy)
     }
 
     /**
@@ -181,8 +189,6 @@ case class TemplateRelation(
       * @param execution
       */
     override def create(execution: Execution, ifNotExists: Boolean): Unit = {
-        require(execution != null)
-
         relationInstance.create(execution, ifNotExists)
     }
 
@@ -193,8 +199,6 @@ case class TemplateRelation(
       * @param execution
       */
     override def destroy(execution: Execution, ifExists: Boolean): Unit = {
-        require(execution != null)
-
         relationInstance.destroy(execution, ifExists)
     }
 
@@ -204,8 +208,6 @@ case class TemplateRelation(
       * @param execution
       */
     override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {
-        require(execution != null)
-
         relationInstance.migrate(execution, migrationPolicy, migrationStrategy)
     }
 

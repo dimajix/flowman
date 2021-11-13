@@ -193,6 +193,7 @@ case class JdbcRelation(
 
         // Write partition into DataBase
         if (partition.isEmpty) {
+            // TODO: Maybe we should perform a truncate followed by an append. Otherwise Spark will actually recreate the table
             doWrite(execution, dfExt, mode.batchMode)
         }
         else {
@@ -270,11 +271,46 @@ case class JdbcRelation(
     override def exists(execution:Execution) : Trilean = {
         require(execution != null)
 
-        withConnection{ (con,options) =>
-            JdbcUtils.tableExists(con, tableIdentifier, options)
+        if (query.nonEmpty) {
+            true
+        }
+        else {
+            withConnection { (con, options) =>
+                JdbcUtils.tableExists(con, tableIdentifier, options)
+            }
         }
     }
 
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        // Only try migration if schema is explicitly specified
+        if (query.nonEmpty) {
+            true
+        }
+        else {
+            withConnection { (con, options) =>
+                if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
+                    if (schema.nonEmpty) {
+                        val targetSchema = fullSchema.get
+                        val currentSchema = JdbcUtils.getSchema(con, tableIdentifier, options)
+                        !TableChange.requiresMigration(currentSchema, targetSchema, migrationPolicy)
+                    }
+                    else {
+                        true
+                    }
+                }
+                else {
+                    false
+                }
+            }
+        }
+    }
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
@@ -356,9 +392,8 @@ case class JdbcRelation(
         // Only try migration if schema is explicitly specified
         if (schema.isDefined) {
             withConnection { (con, options) =>
-                val dialect = SqlDialects.get(options.url)
                 if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                    val targetSchema = FlowmanStructType(schema.get.fields)
+                    val targetSchema = fullSchema.get
                     val currentSchema = JdbcUtils.getSchema(con, tableIdentifier, options)
                     if (TableChange.requiresMigration(currentSchema, targetSchema, migrationPolicy)) {
                         doMigration(currentSchema, targetSchema, migrationPolicy, migrationStrategy)

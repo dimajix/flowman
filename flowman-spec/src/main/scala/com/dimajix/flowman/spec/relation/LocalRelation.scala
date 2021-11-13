@@ -28,6 +28,7 @@ import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
+import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -218,6 +219,16 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         new File(localDirectory).exists()
     }
 
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        exists(execution)
+    }
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a

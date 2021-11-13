@@ -33,6 +33,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
@@ -206,6 +207,31 @@ case class DeltaFileRelation(
      */
     override def exists(execution: Execution): Trilean = {
         DeltaTable.isDeltaTable(execution.spark, location.toString)
+    }
+
+
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        if (exists(execution) == Yes) {
+            if (schema.nonEmpty) {
+                val table = loadDeltaTable(execution)
+                val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
+                val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
+                !TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
+            }
+            else {
+                true
+            }
+        }
+        else {
+            false
+        }
     }
 
     /**

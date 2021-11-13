@@ -59,13 +59,13 @@ final case class JobState(
 )
 
 
-sealed case class JobOrderColumn()
+sealed abstract class JobOrderColumn
 object JobOrderColumn {
-    object BY_DATETIME extends JobOrderColumn
-    object BY_NAME extends JobOrderColumn
-    object BY_ID extends JobOrderColumn
-    object BY_STATUS extends JobOrderColumn
-    object BY_PHASE extends JobOrderColumn
+    case object BY_DATETIME extends JobOrderColumn
+    case object BY_NAME extends JobOrderColumn
+    case object BY_ID extends JobOrderColumn
+    case object BY_STATUS extends JobOrderColumn
+    case object BY_PHASE extends JobOrderColumn
 }
 
 object JobOrder {

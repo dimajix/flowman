@@ -95,6 +95,35 @@ case class HiveViewRelation(
     }
 
     /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        val catalog = execution.catalog
+        if (catalog.tableExists(tableIdentifier)) {
+            val newSelect = getSelect(execution)
+            val curTable = catalog.getTable(tableIdentifier)
+            // Check if current table is a VIEW or a table
+            if (curTable.tableType == CatalogTableType.VIEW) {
+                // Check that both SQL and schema are correct
+                val curTable = catalog.getTable(tableIdentifier)
+                val curSchema = SchemaUtils.normalize(curTable.schema)
+                val newSchema = SchemaUtils.normalize(catalog.spark.sql(newSelect).schema)
+                curTable.viewText.get == newSelect && curSchema == newSchema
+            }
+            else {
+                false
+            }
+        }
+        else {
+            false
+        }
+    }
+
+    /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
      * [[write]] is required for getting up-to-date contents. A [[write]] with output mode
      * [[OutputMode.ERROR_IF_EXISTS]] then should not throw an error but create the corresponding partition

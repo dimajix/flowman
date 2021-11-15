@@ -37,7 +37,6 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
 
         val start = Instant.now()
         val targets = Seq()
-        val target = mock[Target]
 
         val executor = new ParallelExecutor
         val result = executor.execute(execution, context, Phase.BUILD, targets, _ => true, keepGoing = false) {

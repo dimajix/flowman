@@ -59,17 +59,17 @@ case class DummyTarget(
 }
 
 
-class SimpleSchedulerTest extends AnyFlatSpec with Matchers {
+class DependencySchedulerTest extends AnyFlatSpec with Matchers {
     private def sort(targets:Seq[Target], phase:Phase) : Seq[Target] = {
-        val scheduler = new SimpleScheduler
+        val scheduler = new DependencyScheduler
         Scheduler.sort(scheduler, targets, phase, (_:Target) => true)
     }
     private def sort(targets:Seq[Target], phase:Phase, filter:(Target) => Boolean) : Seq[Target] = {
-        val scheduler = new SimpleScheduler
+        val scheduler = new DependencyScheduler
         Scheduler.sort(scheduler, targets, phase, filter)
     }
 
-    "The SimpleScheduler" should "work with simple resources" in {
+    "The DependencyScheduler" should "work with simple resources" in {
         val session = Session.builder()
             .disableSpark()
             .build()

@@ -42,8 +42,11 @@ Configure the executor to use. The default `SimpleExecutor` will process all tar
 - `flowman.execution.executor.parallelism` *(type: int)* *(default: 4)*
 The number of targets to be executed in parallel, when the `ParallelExecutor` is used.
 
-- `flowman.execution.scheduler.class` *(type: class)* *(default: `com.dimajix.flowman.execution.SimpleScheduler`)*
-  Configure the scheduler to use. The default `SimpleScheduler` will sort all targets according to their dependency.
+- `flowman.execution.scheduler.class` *(type: class)* *(default: `com.dimajix.flowman.execution.DependencyScheduler`)*
+  Configure the scheduler to use, which essentially decides which target to build next.
+  - The default `DependencyScheduler` will sort all targets according to their dependency.
+  - The simpler `ManualScheduler` will simply respect the order of targets as specified in a job. This may not work
+    well with parallel execution if targets have dependencies.
 
 - `flowman.spark.eagerCache` *(type: boolean)* *(default: `false`)*
 Turns on automatic eager caching of Spark jobs that reference a single cached DataFrame multiple times. This is to

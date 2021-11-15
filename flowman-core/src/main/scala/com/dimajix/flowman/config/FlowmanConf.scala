@@ -29,7 +29,7 @@ import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.SimpleExecutor
-import com.dimajix.flowman.execution.SimpleScheduler
+import com.dimajix.flowman.execution.DependencyScheduler
 import com.dimajix.flowman.execution.Scheduler
 import com.dimajix.spark.features
 
@@ -90,7 +90,7 @@ object FlowmanConf {
     val EXECUTION_SCHEDULER_CLASS = buildConf("flowman.execution.scheduler.class")
         .doc("Class name for scheduling targets")
         .classConf(classOf[Scheduler])
-        .createWithDefault(classOf[SimpleScheduler])
+        .createWithDefault(classOf[DependencyScheduler])
 
     val DEFAULT_RELATION_MIGRATION_POLICY = buildConf("flowman.default.relation.migrationPolicy")
         .doc("Default migration policy. Allowed values are 'relaxed' and 'strict'")

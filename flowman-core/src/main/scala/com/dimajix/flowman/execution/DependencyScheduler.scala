@@ -26,8 +26,8 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 
 
-class SimpleScheduler extends Scheduler {
-    private val logger = LoggerFactory.getLogger(classOf[SimpleScheduler])
+class DependencyScheduler extends Scheduler {
+    private val logger = LoggerFactory.getLogger(classOf[DependencyScheduler])
 
     // Map containing all dependencies of all targets. Each entry represents the list of dependencies which
     // have to be executed before the target itself
@@ -114,7 +114,12 @@ class SimpleScheduler extends Scheduler {
 
             // Check for cyclic dependencies: No candidates found, but dependencies non-empty and no running targets
             if (candidates.isEmpty && dependencies.nonEmpty && running.isEmpty) {
-                val deps = dependencies.map { case(k,v) => s"  ${k.identifier}  depends on  ${v.map(_.identifier.toString).mkString(", ")}"}.mkString("\n")
+                val deps = dependencies.map { case(k,v) =>
+                    s"""  ${k.identifier}
+                       |     depends on  ${v.map(_.identifier.toString).mkString(", ")}
+                       |     provides ${k.provides(phase).mkString(", ")}
+                       |     requires  ${k.requires(phase).mkString(", ")}""".stripMargin
+                }.mkString("\n")
                 throw new RuntimeException(s"Cannot create target order, probably due to cyclic dependencies.\n$deps")
             }
 

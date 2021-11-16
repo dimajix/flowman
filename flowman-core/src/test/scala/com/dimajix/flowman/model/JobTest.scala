@@ -224,12 +224,14 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             .setParameters(Seq(Job.Parameter("p1", IntegerType)))
             .addParameter("p3", StringType)
             .setEnvironment(Map("env1" -> "eval_1", "env2" -> "eval_2", "p2" -> "17"))
+            .setTargets(Seq(TargetIdentifier("t2"),TargetIdentifier("t7"),TargetIdentifier("t1"),TargetIdentifier("t3")))
             .build()
         val parent = Job.builder(context)
             .setProperties(Job.Properties(context, "parent_job"))
             .setDescription("Some parent job")
             .setParameters(Seq(Job.Parameter("p1", IntegerType), Job.Parameter("p2", IntegerType), Job.Parameter("p4", IntegerType)))
             .setEnvironment(Map("env1" -> "parent_val_1", "env4" -> "parent_val_4"))
+            .setTargets(Seq(TargetIdentifier("t3"),TargetIdentifier("t4"),TargetIdentifier("t6"),TargetIdentifier("t5")))
             .build()
 
         val result = Job.merge(job, Seq(parent))
@@ -239,6 +241,15 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             Job.Parameter("p1", IntegerType),
             Job.Parameter("p4", IntegerType),
             Job.Parameter("p3", StringType)
+        ))
+        result.targets should be (Seq(
+            TargetIdentifier("t3"),
+            TargetIdentifier("t4"),
+            TargetIdentifier("t6"),
+            TargetIdentifier("t5"),
+            TargetIdentifier("t2"),
+            TargetIdentifier("t7"),
+            TargetIdentifier("t1")
         ))
         result.environment should be (Map(
             "env1" -> "eval_1",

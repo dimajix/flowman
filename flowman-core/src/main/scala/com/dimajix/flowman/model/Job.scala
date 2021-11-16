@@ -219,9 +219,9 @@ object Job {
             .reduceOption((envs, elems) => envs ++ elems)
             .getOrElse(Map())
         val parentTargets = parents
-            .map(job => job.targets.toSet)
+            .map(job => job.targets)
             .reduceOption((targets, elems) => targets ++ elems)
-            .getOrElse(Set())
+            .getOrElse(Seq())
         val parentHooks = parents
             .map(job => job.hooks)
             .reduceOption((hooks, elems) => hooks ++ elems)
@@ -234,7 +234,7 @@ object Job {
 
         val allParameters = parentParameters -- allEnvironment.keySet ++ job.parameters.map(p => (p.name,p)).toMap
 
-        val allTargets = parentTargets ++ job.targets
+        val allTargets = (parentTargets ++ job.targets).distinct
 
         val allHooks = parentHooks ++ job.hooks
 
@@ -244,7 +244,7 @@ object Job {
             job.instanceProperties,
             allParameters.values.toSeq,
             allEnvironment,
-            allTargets.toSeq,
+            allTargets,
             allMetrics,
             allHooks
         )

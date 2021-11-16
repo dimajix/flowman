@@ -17,6 +17,7 @@
 package com.dimajix.flowman.execution
 
 import scala.annotation.tailrec
+import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
@@ -243,7 +244,7 @@ class DependencyScheduler extends Scheduler {
                 t.provides(phase).map(id => (id,t))
             }
             catch {
-                case ex:Exception => throw new RuntimeException(s"Caught exception while resolving provided resources of target '${t.identifier}'", ex)
+                case NonFatal(ex) => throw new ExecutionException(s"Caught exception while resolving provided resources of target '${t.identifier}'", ex)
             }
         )
 
@@ -261,7 +262,7 @@ class DependencyScheduler extends Scheduler {
                     )
             }
             catch {
-                case ex:Exception => throw new RuntimeException(s"Caught exception while resolving required resources of target '${t.identifier}'", ex)
+                case NonFatal(ex) => throw new ExecutionException(s"Caught exception while resolving required resources of target '${t.identifier}'", ex)
             }
         })
     }

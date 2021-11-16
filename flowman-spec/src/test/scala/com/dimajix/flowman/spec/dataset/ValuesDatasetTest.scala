@@ -126,7 +126,7 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         an[UnsupportedOperationException] should be thrownBy(dataset.clean(executor))
         an[UnsupportedOperationException] should be thrownBy(dataset.write(executor, spark.emptyDataFrame))
 
-        val df = dataset.read(executor, None)
+        val df = dataset.read(executor)
         df.schema should be (schema.sparkType)
         df.collect() should be (Seq(
             Row("lala", 12),
@@ -162,44 +162,11 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         an[UnsupportedOperationException] should be thrownBy(dataset.clean(executor))
         an[UnsupportedOperationException] should be thrownBy(dataset.write(executor, spark.emptyDataFrame))
 
-        val df = dataset.read(executor, None)
+        val df = dataset.read(executor)
         df.schema should be (schema.sparkType)
         df.collect() should be (Seq(
             Row("lala", 12),
             Row("lolo", 13),
-            Row(null,null)
-        ))
-    }
-
-    it should "create a DataFrame with specified schema" in {
-        val schema = new StructType(Seq(
-            Field("str_col", StringType),
-            Field("int_col", IntegerType)
-        ))
-
-        val session = Session.builder().withSparkSession(spark).build()
-        val context = session.context
-        val executor = session.execution
-
-        val dataset = ValuesDataset(
-            Dataset.Properties(context, "const"),
-            columns = schema.fields,
-            records = Seq(
-                ArrayRecord("lala","12"),
-                ArrayRecord("lolo","13"),
-                ArrayRecord("",null)
-            )
-        )
-
-        val readSchema = org.apache.spark.sql.types.StructType(Seq(
-            org.apache.spark.sql.types.StructField("str_col", org.apache.spark.sql.types.StringType),
-            org.apache.spark.sql.types.StructField("other_col", org.apache.spark.sql.types.DoubleType)
-        ))
-        val df = dataset.read(executor, Some(readSchema))
-        df.schema should be (readSchema)
-        df.collect() should be (Seq(
-            Row("lala", null),
-            Row("lolo", null),
             Row(null,null)
         ))
     }

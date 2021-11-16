@@ -92,7 +92,7 @@ class GenericRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         relation.fields should be (schema.fields)
 
         // Verify read operation
-        val df = relation.read(executor, None)
+        val df = relation.read(executor)
         df.schema should be (StructType(
             StructField("f1", StringType) ::
                 StructField("f2", StringType) ::

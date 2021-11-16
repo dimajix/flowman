@@ -673,7 +673,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Read ====================================================================================================
         spark.read.table("default.lala_0010").count() should be(0)
-        relation.read(execution, None).count() should be (0)
+        relation.read(execution).count() should be (0)
 
         // == Write ===================================================================================================
         val df = spark.createDataFrame(Seq(("s1", 27), ("s2", 31)))
@@ -687,7 +687,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Read ====================================================================================================
         spark.read.table("default.lala_0010").count() should be(2)
-        relation.read(execution, None).count() should be (2)
+        relation.read(execution).count() should be (2)
 
         // == Overwrite ===============================================================================================
         relation.write(execution, df)
@@ -696,7 +696,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Read ====================================================================================================
         spark.read.table("default.lala_0010").count() should be(2)
-        relation.read(execution, None).count() should be (2)
+        relation.read(execution).count() should be (2)
 
         // == Truncate ================================================================================================
         relation.truncate(execution)
@@ -709,7 +709,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Read ====================================================================================================
         spark.read.table("default.lala_0010").count() should be(0)
-        relation.read(execution, None).count() should be (0)
+        relation.read(execution).count() should be (0)
 
         // == Destroy =================================================================================================
         relation.destroy(execution)
@@ -768,7 +768,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Read ====================================================================================================
         spark.read.table("default.lala_0011").count() should be(0)
-        relation.read(execution, None).count() should be (0)
+        relation.read(execution).count() should be (0)
 
         // == Write ===================================================================================================
         val df = spark.createDataFrame(Seq(("s1", 27), ("s2", 31)))
@@ -780,7 +780,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Read ====================================================================================================
         spark.read.table("default.lala_0011").count() should be(2)
-        relation.read(execution, None).count() should be (2)
+        relation.read(execution).count() should be (2)
 
         // == Truncate ================================================================================================
         relation.truncate(execution)
@@ -792,7 +792,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Read ====================================================================================================
         spark.read.table("default.lala_0011").count() should be(0)
-        relation.read(execution, None).count() should be (0)
+        relation.read(execution).count() should be (0)
 
         // == Destroy =================================================================================================
         relation.destroy(execution)
@@ -905,12 +905,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("spart" -> SingleValue("p1"))).count() should be (0)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (1)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
-        relation.read(execution, None, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("spart" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("spart" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (1)
+        relation.read(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
+        relation.read(execution, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (0)
 
         // == Overwrite =============================================================================================
         relation.write(execution, df, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23")))
@@ -922,12 +922,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("spart" -> SingleValue("p1"))).count() should be (0)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (1)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
-        relation.read(execution, None, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("spart" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("spart" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (1)
+        relation.read(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
+        relation.read(execution, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (0)
 
         // == Write ==================================================================================================
         relation.write(execution, df, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23")))
@@ -939,12 +939,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))) should be (Yes)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).count() should be (2)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("spart" -> SingleValue("p1"))).count() should be (1)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (1)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
-        relation.read(execution, None, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (1)
+        relation.read(execution, Map()).count() should be (2)
+        relation.read(execution, Map("spart" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("spart" -> SingleValue("p1"))).count() should be (1)
+        relation.read(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (1)
+        relation.read(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
+        relation.read(execution, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (1)
 
         // == Truncate ==============================================================================================
         relation.truncate(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23")))
@@ -962,12 +962,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         spark.read.table("default.lala_0012").count() should be(1)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("spart" -> SingleValue("p1"))).count() should be (1)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (0)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
-        relation.read(execution, None, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (1)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("spart" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("spart" -> SingleValue("p1"))).count() should be (1)
+        relation.read(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (0)
+        relation.read(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
+        relation.read(execution, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (1)
 
         // == Truncate ===============================================================================================
         relation.truncate(execution)
@@ -985,12 +985,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         spark.read.table("default.lala_0012").count() should be(0)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("spart" -> SingleValue("p1"))).count() should be (0)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (0)
-        relation.read(execution, None, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
-        relation.read(execution, None, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("spart" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("spart" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("23"))).count() should be (0)
+        relation.read(execution, Map("spart" -> SingleValue("p0"), "ipart" -> SingleValue("24"))).count() should be (0)
+        relation.read(execution, Map("spart" -> SingleValue("p1"), "ipart" -> SingleValue("23"))).count() should be (0)
 
         // == Destroy ================================================================================================
         relation.destroy(execution)
@@ -1047,32 +1047,32 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Read ==================================================================================================
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, Map()).count() should be (4)
 
         // == Append ================================================================================================
         relation.write(execution, df, Map(), OutputMode.APPEND)
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (8)
+        relation.read(execution, Map()).count() should be (8)
 
         // == Overwrite =============================================================================================
         relation.write(execution, df, Map(), OutputMode.OVERWRITE)
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, Map()).count() should be (4)
 
         // == IfNotExists ===========================================================================================
         relation.write(execution, df.union(df), Map(), OutputMode.IGNORE_IF_EXISTS)
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, Map()).count() should be (4)
 
         // == Truncate =============================================================================================
         relation.truncate(execution)
         relation.loaded(execution) should be (No)
-        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
 
         // == IfNotExists ===========================================================================================
         relation.write(execution, df.union(df), Map(), OutputMode.IGNORE_IF_EXISTS)
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (8)
+        relation.read(execution, Map()).count() should be (8)
 
         // == FailIfExists ==========================================================================================
         a[TableAlreadyExistsException] should be thrownBy(relation.write(execution, df, Map(), OutputMode.ERROR_IF_EXISTS))
@@ -1080,12 +1080,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Truncate =============================================================================================
         relation.truncate(execution)
         relation.loaded(execution) should be (No)
-        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
 
         // == FailIfExists ==========================================================================================
         relation.write(execution, df, Map(), OutputMode.ERROR_IF_EXISTS)
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, Map()).count() should be (4)
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
@@ -1138,54 +1138,54 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Append ================================================================================================
         relation.write(execution, df, Map("part" -> SingleValue("p0")), OutputMode.APPEND)
         relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (8)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (8)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (8)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (8)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Overwrite =============================================================================================
         relation.write(execution, df, Map("part" -> SingleValue("p0")), OutputMode.OVERWRITE)
         relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == IfNotExists ===========================================================================================
         relation.write(execution, df.union(df), Map("part" -> SingleValue("p0")), OutputMode.IGNORE_IF_EXISTS)
         relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Truncate =============================================================================================
         relation.truncate(execution, Map("part" -> SingleValue("p0")))
         relation.loaded(execution) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == IfNotExists ===========================================================================================
         relation.write(execution, df.union(df), Map("part" -> SingleValue("p0")), OutputMode.IGNORE_IF_EXISTS)
         relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (8)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (8)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (8)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (8)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == FailIfExists ==========================================================================================
         a[PartitionAlreadyExistsException] should be thrownBy(relation.write(execution, df, Map("part" -> SingleValue("p0")), OutputMode.ERROR_IF_EXISTS))
@@ -1195,18 +1195,18 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == FailIfExists ==========================================================================================
         relation.write(execution, df, Map("part" -> SingleValue("p0")), OutputMode.ERROR_IF_EXISTS)
         relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
@@ -1260,10 +1260,10 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
-        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (0)
 
         // == Write ==================================================================================================
         relation.write(execution, df, Map(), OutputMode.APPEND)
@@ -1273,10 +1273,10 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (8)
-        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (6)
-        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (2)
-        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (8)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (6)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (0)
 
         // == Overwrite ==============================================================================================
         val rdd2 = spark.sparkContext.parallelize(Seq(
@@ -1294,11 +1294,11 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("4"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (6)
-        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
-        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (2)
-        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("4"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (6)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("4"))).count() should be (0)
 
         // == Overwrite ==============================================================================================
         relation.write(execution, df, Map(), OutputMode.OVERWRITE)
@@ -1308,10 +1308,10 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
-        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (0)
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
@@ -1365,12 +1365,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
 
         // == Inspect ================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("f1", IntegerType),
             StructField("f2", DoubleType),
             StructField("part", StringType)
         )))
-        relation.read(execution, None, Map("part" ->  SingleValue("p0"))).schema should be (StructType(Seq(
+        relation.read(execution, Map("part" ->  SingleValue("p0"))).schema should be (StructType(Seq(
             StructField("f1", IntegerType),
             StructField("f2", DoubleType),
             StructField("part", StringType)
@@ -1388,17 +1388,17 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.write(execution, df, Map("part" -> SingleValue("p0")))
 
         // == Inspect ================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("f1", IntegerType),
             StructField("f2", DoubleType),
             StructField("part", StringType)
         )))
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).schema should be (StructType(Seq(
+        relation.read(execution, Map("part" -> SingleValue("p0"))).schema should be (StructType(Seq(
             StructField("f1", IntegerType),
             StructField("f2", DoubleType),
             StructField("part", StringType)
         )))
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).schema should be (StructType(Seq(
+        relation.read(execution, Map("part" -> SingleValue("p1"))).schema should be (StructType(Seq(
             StructField("f1", IntegerType),
             StructField("f2", DoubleType),
             StructField("part", StringType)
@@ -1408,9 +1408,9 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Destroy ================================================================================================
         relation.destroy(execution)
@@ -1505,7 +1505,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val rows_1 = Seq(
             Row("v1", 21, "str")
         )
-        checkAnswer(relation_2.read(execution, None, Map()), rows_1)
+        checkAnswer(relation_2.read(execution, Map()), rows_1)
 
         // == Destroy =================================================================================================
         relation_2.destroy(execution)
@@ -1590,7 +1590,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Row("2345", "1234", "1234567"),
             Row("2345", "1234", "1234567")
         )
-        checkAnswer(relation.read(execution, None, Map()), rows)
+        checkAnswer(relation.read(execution, Map()), rows)
 
         // == Destroy =================================================================================================
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
@@ -1738,9 +1738,9 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val rows_2 = Seq(
             Row("v2", 22, "lala", "part_2")
         )
-        checkAnswer(relation_2.read(execution, None, Map()), rows_1 ++ rows_2)
-        checkAnswer(relation_2.read(execution, None, Map("partition_col" -> SingleValue("part_1"))), rows_1)
-        checkAnswer(relation_2.read(execution, None, Map("partition_col" -> SingleValue("part_2"))), rows_2)
+        checkAnswer(relation_2.read(execution, Map()), rows_1 ++ rows_2)
+        checkAnswer(relation_2.read(execution, Map("partition_col" -> SingleValue("part_1"))), rows_1)
+        checkAnswer(relation_2.read(execution, Map("partition_col" -> SingleValue("part_2"))), rows_2)
 
         // == Overwrite ===============================================================================================
         val rdd_2a = spark.sparkContext.parallelize(Seq(
@@ -1753,9 +1753,9 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val rows_2a = Seq(
             Row("v3", 23, "lala", "part_2")
         )
-        checkAnswer(relation_2.read(execution, None, Map()), rows_1 ++ rows_2a)
-        checkAnswer(relation_2.read(execution, None, Map("partition_col" -> SingleValue("part_1"))), rows_1)
-        checkAnswer(relation_2.read(execution, None, Map("partition_col" -> SingleValue("part_2"))), rows_2a)
+        checkAnswer(relation_2.read(execution, Map()), rows_1 ++ rows_2a)
+        checkAnswer(relation_2.read(execution, Map("partition_col" -> SingleValue("part_1"))), rows_1)
+        checkAnswer(relation_2.read(execution, Map("partition_col" -> SingleValue("part_2"))), rows_2a)
 
         // == Destroy =================================================================================================
         relation_2.destroy(execution)

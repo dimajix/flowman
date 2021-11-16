@@ -178,7 +178,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
         ))
         relation.describe(executor) should be (StructType(schema.fields))
 
-        val df = relation.read(executor, None)
+        val df = relation.read(executor)
         df.schema should be (schema.sparkType)
         df.collect() should be (Seq(
             Row("lala", 12),
@@ -228,7 +228,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
         ))
         relation.describe(executor) should be (StructType(schema.fields))
 
-        val df = relation.read(executor, None)
+        val df = relation.read(executor)
         df.schema should be (schema.sparkType)
         df.collect() should be (Seq(
             Row("lala", 12),

@@ -24,11 +24,9 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
-import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -47,7 +45,6 @@ import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.UtcTimestamp
-import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.sql.local.implicits._
 
 
@@ -114,13 +111,11 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       * Reads data from the relation, possibly from specific partitions
       *
       * @param execution
-      * @param schema     - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(execution: Execution, partitions: Map[String, FieldValue]): DataFrame = {
         require(execution != null)
-        require(schema != null)
         require(partitions != null)
 
         requireValidPartitionKeys(partitions)
@@ -146,8 +141,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, toLit(p._2)))
         }
 
-        val allData = data.reduce(_ union _)
-        SchemaUtils.applySchema(allData, schema)
+        data.reduce(_ union _)
     }
 
     /**

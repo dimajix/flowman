@@ -116,7 +116,7 @@ case class CopyTarget(
 
         logger.info(s"Copying dataset ${source.name} to ${target.name}")
 
-        val dfIn = source.read(executor, None)
+        val dfIn = source.read(executor)
         val data =
             if (parallelism <= 0)
                 dfIn

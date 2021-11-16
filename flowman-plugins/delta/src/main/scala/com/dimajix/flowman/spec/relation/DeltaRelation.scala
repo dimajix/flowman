@@ -58,9 +58,8 @@ abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation w
      * @param schema
      * @return
      */
-    protected def readStreamFrom(execution: Execution, location: Path, schema: Option[StructType]): DataFrame = {
-        val df = streamReader(execution, "delta", options).load(location.toString)
-        SchemaUtils.applySchema(df, schema)
+    protected def readStreamFrom(execution: Execution, location: Path): DataFrame = {
+        streamReader(execution, "delta", options).load(location.toString)
     }
 
     /**

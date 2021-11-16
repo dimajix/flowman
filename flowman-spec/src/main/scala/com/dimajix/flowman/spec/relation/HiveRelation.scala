@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.relation
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.TableIdentifier
-import org.apache.spark.sql.types.StructType
 import org.slf4j.Logger
 
 import com.dimajix.common.Trilean
@@ -26,7 +25,6 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionedRelation
 import com.dimajix.flowman.types.FieldValue
-import com.dimajix.spark.sql.SchemaUtils
 
 
 abstract class HiveRelation extends BaseRelation with PartitionedRelation {
@@ -44,18 +42,15 @@ abstract class HiveRelation extends BaseRelation with PartitionedRelation {
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue] = Map()): DataFrame = {
+    override def read(execution: Execution, partitions: Map[String, FieldValue] = Map()): DataFrame = {
         require(execution != null)
-        require(schema != null)
         require(partitions != null)
 
         logger.info(s"Reading Hive relation '$identifier' from table $tableIdentifier using partition values $partitions")
 
         val reader = execution.spark.read
         val tableDf = reader.table(tableIdentifier.unquotedString)
-        val df = filterPartition(tableDf, partitions)
-
-        SchemaUtils.applySchema(df, schema)
+        filterPartition(tableDf, partitions)
     }
 
     /**

@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.relation
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
@@ -35,7 +34,6 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.spark.sql.SchemaUtils
 
 
 case class GenericRelation(
@@ -78,15 +76,14 @@ case class GenericRelation(
      * @param partitions - List of partitions. If none are specified, all the data will be read
      * @return
      */
-    override def read(execution:Execution, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+    override def read(execution:Execution, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         require(execution != null)
         require(schema != null)
         require(partitions != null)
 
         logger.info(s"Reading generic relation '$identifier'")
 
-        val data = reader(execution, format, options).load()
-        SchemaUtils.applySchema(data, schema)
+        reader(execution, format, options).load()
     }
 
     /**

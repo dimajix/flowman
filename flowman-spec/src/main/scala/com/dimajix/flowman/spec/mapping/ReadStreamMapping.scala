@@ -80,7 +80,7 @@ case class ReadStreamMapping (
         logger.info(s"Reading from streaming relation '${relation.identifier}' with filter '${filter.getOrElse("")}'")
 
         val rel = relation.value
-        val df = rel.readStream(execution, schema)
+        val df = rel.readStream(execution)
 
         // Apply optional filter
         val result = filter.map(df.filter).getOrElse(df)

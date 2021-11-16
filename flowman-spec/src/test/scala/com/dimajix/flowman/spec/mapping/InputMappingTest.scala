@@ -36,6 +36,13 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |relations:
               |  empty:
               |    kind: null
+              |    schema:
+              |      kind: embedded
+              |      fields:
+              |        - name: col1
+              |          type: string
+              |        - name: col2
+              |          type: Integer
               |mappings:
               |  empty:
               |    kind: read

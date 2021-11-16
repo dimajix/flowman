@@ -179,14 +179,9 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
         relation.fields should be (schema.fields)
         relation.describe(executor) should be (new StructType(schema.fields))
 
-        val df1 = relation.read(executor, None, Map())
+        val df1 = relation.read(executor, Map())
         df1.schema should be (new StructType(schema.fields).sparkType)
         df1.count() should be (0)
-
-        val readSchema = StructType(Seq(Field("int_col", IntegerType)))
-        val df2 = relation.read(executor, Some(readSchema.sparkType))
-        df2.schema should be (readSchema.sparkType)
-        df2.count() should be (0)
     }
 
     it should "work nicely with overrides" in {
@@ -277,7 +272,7 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
         (baseRelationTemplate.instantiate _).expects(context).returns(baseRelation)
         (baseRelation.schema _).expects().anyNumberOfTimes().returns(Some(schema))
         (baseRelation.partitions _).expects().anyNumberOfTimes().returns(Seq())
-        val df = relation.read(executor, None, Map())
+        val df = relation.read(executor, Map())
         df.schema should be (new StructType(schema.fields).sparkType)
         df.collect() should be (Seq(
             Row("lala", 12),

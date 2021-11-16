@@ -110,20 +110,17 @@ case class DeltaFileRelation(
      * Reads data from the relation, possibly from specific partitions
      *
      * @param execution
-     * @param schema     - the schema to read. If none is specified, all available columns will be read
      * @param partitions - List of partitions. If none are specified, all the data will be read
      * @return
      */
-    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(execution: Execution, partitions: Map[String, FieldValue]): DataFrame = {
         logger.info(s"Reading Delta file relation '$identifier' at '$location' using partition values $partitions")
 
         val tableDf = execution.spark.read
             .options(options)
             .format("delta")
             .load(location.toString)
-        val df = filterPartition(tableDf, partitions)
-
-        SchemaUtils.applySchema(df, schema)
+        filterPartition(tableDf, partitions)
     }
 
     /**
@@ -180,9 +177,9 @@ case class DeltaFileRelation(
      * @param schema
      * @return
      */
-    override def readStream(execution: Execution, schema: Option[StructType]): DataFrame = {
+    override def readStream(execution: Execution): DataFrame = {
         logger.info(s"Streaming from Delta file relation '$identifier' at '$location'")
-        readStreamFrom(execution, location, schema)
+        readStreamFrom(execution, location)
     }
 
     /**

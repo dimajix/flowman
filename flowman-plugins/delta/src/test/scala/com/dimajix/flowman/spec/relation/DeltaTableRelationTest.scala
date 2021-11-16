@@ -129,11 +129,11 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.create(execution, true)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType)
         )))
-        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
 
         // Inspect Hive table
         val table_1 = session.catalog.getTable(TableIdentifier("delta_table", Some("default")))
@@ -158,11 +158,11 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map()) should be (Yes)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType)
         )))
-        val df2 = relation.read(execution, None, Map())
+        val df2 = relation.read(execution, Map())
         val rows_1 = Seq(
             Row("v1", 21)
         )
@@ -173,7 +173,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map()) should be (Yes)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).count() should be (1)
+        relation.read(execution, Map()).count() should be (1)
 
         // == Truncate ===================================================================
         relation.truncate(execution)
@@ -183,11 +183,11 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map()) should be (No)
 
         // == Read ===================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType)
         )))
-        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
 
         // == Destroy ===================================================================
         relation.exists(execution) should be (Yes)
@@ -258,14 +258,14 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         table_1.partitionSchema should be (StructType(Seq()))
 
         // == Read ==================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Write =================================================================================================
         val schema = StructType(Seq(
@@ -283,14 +283,14 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read ==================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Overwrite =============================================================================================
         relation.write(execution, df, Map("part" -> SingleValue("p0")))
@@ -299,9 +299,9 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read ==================================================================================================
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Write =================================================================================================
         relation.write(execution, df, Map("part" -> SingleValue("p1")))
@@ -310,9 +310,9 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
 
         // == Read ==================================================================================================
-        relation.read(execution, None, Map()).count() should be (2)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (1)
+        relation.read(execution, Map()).count() should be (2)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (1)
 
         // == Truncate ==============================================================================================
         relation.truncate(execution, Map("part" -> SingleValue("p0")))
@@ -323,14 +323,14 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
 
         // == Read ==================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (1)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (1)
 
         // == Truncate ===============================================================================================
         relation.truncate(execution)
@@ -341,14 +341,14 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Destroy ================================================================================================
         relation.exists(execution) should be (Yes)
@@ -405,10 +405,10 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
-        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (0)
 
         // == Write ==================================================================================================
         relation.write(execution, df, Map(), OutputMode.APPEND)
@@ -418,10 +418,10 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (8)
-        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (6)
-        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (2)
-        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (8)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (6)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (0)
 
         // == Overwrite ==============================================================================================
         val rdd2 = spark.sparkContext.parallelize(Seq(
@@ -439,11 +439,11 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         //        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         //        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (Yes)
         //        relation.loaded(execution, Map("part" -> SingleValue("4"))) should be (No)
-        //        relation.read(execution, None, Map()).count() should be (6)
-        //        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
-        //        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (2)
-        //        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (1)
-        //        relation.read(execution, None, Map("part" -> SingleValue("4"))).count() should be (0)
+        //        relation.read(execution, Map()).count() should be (6)
+        //        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (3)
+        //        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (2)
+        //        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (1)
+        //        relation.read(execution, Map("part" -> SingleValue("4"))).count() should be (0)
 
         // == Overwrite ==============================================================================================
         relation.write(execution, df, Map(), OutputMode.OVERWRITE)
@@ -453,10 +453,10 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
-        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (0)
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
@@ -513,19 +513,19 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).schema should be (StructType(Seq(
+        relation.read(execution, Map("part" -> SingleValue("p0"))).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Write ==================================================================================================
         val schema = StructType(Seq(
@@ -543,19 +543,19 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).schema should be (StructType(Seq(
+        relation.read(execution, Map("part" -> SingleValue("p0"))).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Destroy ================================================================================================
         relation.destroy(execution)
@@ -590,7 +590,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (No)
-        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
 
         // == Write ==================================================================================================
         val schema = StructType(Seq(
@@ -606,14 +606,14 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (1)
+        relation.read(execution, Map()).count() should be (1)
 
         // == Append =================================================================================================
         relation.write(execution, df, Map(), OutputMode.APPEND)
 
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (2)
+        relation.read(execution, Map()).count() should be (2)
 
         // == Destroy ================================================================================================
         relation.destroy(execution)
@@ -650,7 +650,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (No)
-        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
 
         // == Write ==================================================================================================
         val schema = StructType(Seq(
@@ -666,18 +666,18 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Append =================================================================================================
         relation.write(execution, df, Map("part" -> SingleValue("p0")), OutputMode.APPEND)
 
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (2)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (2)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (2)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (2)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Append =================================================================================================
         val schema2 = StructType(Seq(
@@ -697,7 +697,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
         checkAnswer(
-            relation.read(execution, None, Map()),
+            relation.read(execution, Map()),
             Seq(
                 Row("v1", 21, "p0"),
                 Row("v1", 21, "p0"),
@@ -706,7 +706,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p0"))),
+            relation.read(execution, Map("part" -> SingleValue("p0"))),
             Seq(
                 Row("v1", 21, "p0"),
                 Row("v1", 21, "p0"),
@@ -714,7 +714,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p1"))),
+            relation.read(execution, Map("part" -> SingleValue("p1"))),
             Seq(
                 Row("v2", 23, "p1")
             )
@@ -779,14 +779,14 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read =================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Write =================================================================================================
         val schema = StructType(Seq(
@@ -806,14 +806,14 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read ==================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Write external ========================================================================================
         relation.write(execution, df, Map("part" -> SingleValue("p1")))
@@ -822,14 +822,14 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
 
         // == Read ==================================================================================================
-        relation0.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation0.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation0.read(execution, None, Map()).count() should be (2)
-        relation0.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
-        relation0.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (1)
+        relation0.read(execution, Map()).count() should be (2)
+        relation0.read(execution, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation0.read(execution, Map("part" -> SingleValue("p1"))).count() should be (1)
 
         // == Truncate =============================================================================================
         relation0.truncate(execution, Map("part" -> SingleValue("p0")))
@@ -841,14 +841,14 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
 
         // == Read ==================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (1)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (1)
 
         // == Truncate ==============================================================================================
         relation0.truncate(execution)
@@ -862,14 +862,14 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read =================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Destroy ===============================================================================================
         relation0.destroy(execution)
@@ -924,7 +924,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (Yes)
         checkAnswer(
-            relation.read(execution, None, Map()),
+            relation.read(execution, Map()),
             Seq(
                 Row("id-1", "v1", 1),
                 Row("id-1", "v2", 1),
@@ -943,7 +943,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (Yes)
         checkAnswer(
-            relation.read(execution, None, Map()),
+            relation.read(execution, Map()),
             Seq(
                 Row("id-1", "v11", 2),
                 Row("id-1", "v11", 2),
@@ -990,7 +990,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
 
         // == Write ==================================================================================================
         val schema = StructType(Seq(
@@ -1012,7 +1012,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (No)
         checkAnswer(
-            relation.read(execution, None, Map()),
+            relation.read(execution, Map()),
             Seq(
                 Row("id-1", "v1", 1, "p0"),
                 Row("id-1", "v2", 1, "p0"),
@@ -1020,7 +1020,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p0"))),
+            relation.read(execution, Map("part" -> SingleValue("p0"))),
             Seq(
                 Row("id-1", "v1", 1, "p0"),
                 Row("id-1", "v2", 1, "p0"),
@@ -1028,7 +1028,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p1"))),
+            relation.read(execution, Map("part" -> SingleValue("p1"))),
             Seq()
         )
 
@@ -1046,7 +1046,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (No)
         checkAnswer(
-            relation.read(execution, None, Map()),
+            relation.read(execution, Map()),
             Seq(
                 Row("id-1", "v11", 2, "p0"),
                 Row("id-1", "v11", 2, "p0"),
@@ -1055,7 +1055,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p0"))),
+            relation.read(execution, Map("part" -> SingleValue("p0"))),
             Seq(
                 Row("id-1", "v11", 2, "p0"),
                 Row("id-1", "v11", 2, "p0"),
@@ -1064,7 +1064,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p1"))),
+            relation.read(execution, Map("part" -> SingleValue("p1"))),
             Seq()
         )
 
@@ -1082,7 +1082,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (No)
         checkAnswer(
-            relation.read(execution, None, Map()),
+            relation.read(execution, Map()),
             Seq(
                 Row("id-1", "v11", 2, "p0"),
                 Row("id-1", "v11", 2, "p0"),
@@ -1093,7 +1093,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p0"))),
+            relation.read(execution, Map("part" -> SingleValue("p0"))),
             Seq(
                 Row("id-1", "v11", 2, "p0"),
                 Row("id-1", "v11", 2, "p0"),
@@ -1102,7 +1102,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p1"))),
+            relation.read(execution, Map("part" -> SingleValue("p1"))),
             Seq(
                 Row("id-1", "v12", 3, "p1"),
                 Row("id-3", "v22", 3, "p1")
@@ -1129,7 +1129,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (Yes)
         checkAnswer(
-            relation.read(execution, None, Map()),
+            relation.read(execution, Map()),
             Seq(
                 Row("id-1", "v13", 4, "p0"),
                 Row("id-1", "v13", 4, "p0"),
@@ -1498,7 +1498,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Read ==================================================================================================
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, Map()).count() should be (4)
 
         // == Write ==================================================================================================
         val df2 = StreamingUtils.createSingleTriggerStreamingDF(df0, 1)
@@ -1507,7 +1507,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Read ==================================================================================================
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (8)
+        relation.read(execution, Map()).count() should be (8)
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
@@ -1564,10 +1564,10 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
-        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (0)
 
         // == Write ==================================================================================================
         val df2 = StreamingUtils.createSingleTriggerStreamingDF(df0, 1)
@@ -1579,10 +1579,10 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (8)
-        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (6)
-        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (2)
-        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (8)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (6)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (0)
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)

@@ -29,7 +29,6 @@ import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
-import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -55,7 +54,6 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.spark.sql.catalyst.SqlBuilder
-import com.dimajix.spark.sql.{SchemaUtils => SparkSchemaUtils}
 
 
 object HiveUnionTableRelation {
@@ -210,21 +208,17 @@ case class HiveUnionTableRelation(
       * Reads data from the relation, possibly from specific partitions
       *
       * @param execution
-      * @param schema     - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(execution: Execution, partitions: Map[String, FieldValue]): DataFrame = {
         require(execution != null)
-        require(schema != null)
         require(partitions != null)
 
         logger.info(s"Reading from Hive union relation '$identifier' from UNION VIEW $viewIdentifier using partition values $partitions")
 
         val tableDf = execution.spark.read.table(viewIdentifier.unquotedString)
-        val df = filterPartition(tableDf, partitions)
-
-        SparkSchemaUtils.applySchema(df, schema)
+        filterPartition(tableDf, partitions)
     }
 
     /**

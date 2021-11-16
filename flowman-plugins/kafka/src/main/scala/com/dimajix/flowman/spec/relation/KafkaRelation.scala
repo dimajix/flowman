@@ -49,7 +49,6 @@ import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.TimestampType
-import com.dimajix.spark.sql.SchemaUtils
 
 
 case class KafkaRelation(
@@ -134,7 +133,7 @@ case class KafkaRelation(
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(execution: Execution, partitions: Map[String, FieldValue]): DataFrame = {
         require(execution != null)
         require(schema != null)
         require(partitions != null)
@@ -148,9 +147,7 @@ case class KafkaRelation(
             .option("kafka.bootstrap.servers", hosts)
             .option("startingOffsets", startOffset)
             .option("endingOffsets", endOffset)
-        val df = reader.load()
-
-        SchemaUtils.applySchema(df, schema)
+        reader.load()
     }
 
     /**
@@ -186,7 +183,7 @@ case class KafkaRelation(
       * @param schema
       * @return
       */
-    override def readStream(execution: Execution, schema: Option[StructType]): DataFrame = {
+    override def readStream(execution: Execution): DataFrame = {
         require(execution != null)
         require(schema != null)
 
@@ -199,9 +196,7 @@ case class KafkaRelation(
             .option("subscribe", topics)
             .option("kafka.bootstrap.servers", hosts)
             .option("startingOffsets", startOffset)
-        val df = reader.load()
-
-        SchemaUtils.applySchema(df, schema)
+        reader.load()
     }
 
     /**

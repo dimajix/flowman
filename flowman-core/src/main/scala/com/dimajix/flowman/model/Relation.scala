@@ -152,11 +152,10 @@ trait Relation extends Instance {
       * Reads data from the relation, possibly from specific partitions
       *
       * @param execution
-      * @param schema - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    def read(execution:Execution, schema:Option[org.apache.spark.sql.types.StructType] = None, partitions:Map[String,FieldValue] = Map()) : DataFrame
+    def read(execution:Execution, partitions:Map[String,FieldValue] = Map()) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition
@@ -188,7 +187,7 @@ trait Relation extends Instance {
       * @param schema
       * @return
       */
-    def readStream(execution:Execution, schema:Option[org.apache.spark.sql.types.StructType]) : DataFrame = ???
+    def readStream(execution:Execution) : DataFrame = ???
 
     /**
       * Writes data to a streaming sink
@@ -310,7 +309,7 @@ abstract class BaseRelation extends AbstractInstance with Relation {
         }
         else {
             // Otherwise let Spark infer the schema
-            val df = read(execution, None)
+            val df = read(execution)
             StructType.of(df.schema)
         }
     }

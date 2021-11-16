@@ -105,16 +105,14 @@ case class TemplateRelation(
       * Reads data from the relation, possibly from specific partitions
       *
       * @param execution
-      * @param schema     - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(execution: Execution, partitions: Map[String, FieldValue]): DataFrame = {
         require(execution != null)
-        require(schema != null)
         require(partitions != null)
 
-        relationInstance.read(execution, schema, partitions)
+        relationInstance.read(execution, partitions)
     }
 
     /**

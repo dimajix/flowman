@@ -82,13 +82,11 @@ case class MockRelation(
      * Reads data from the relation, possibly from specific partitions
      *
      * @param execution
-     * @param schema     - the schema to read. If none is specified, all available columns will be read
      * @param partitions - List of partitions. If none are specified, all the data will be read
      * @return
      */
-    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(execution: Execution, partitions: Map[String, FieldValue]): DataFrame = {
         require(execution != null)
-        require(schema != null)
         require(partitions != null)
 
         if (records.nonEmpty) {
@@ -96,11 +94,10 @@ case class MockRelation(
                 .getOrElse(throw new IllegalArgumentException("Cannot mock relation with records without schema information"))
 
             val values = records.map(_.toArray(fullSchema))
-            val df = DataFrameBuilder.ofStringValues(execution.spark, values, fullSchema.sparkType)
-            SchemaUtils.applySchema(df, schema)
+            DataFrameBuilder.ofStringValues(execution.spark, values, fullSchema.sparkType)
         }
         else {
-            val readSchema = schema.orElse(inputSchema)
+            val readSchema = inputSchema
                 .getOrElse(throw new IllegalArgumentException("Mock relation either needs own schema or a desired input schema"))
 
             DataFrameBuilder.ofSchema(execution.spark, readSchema)

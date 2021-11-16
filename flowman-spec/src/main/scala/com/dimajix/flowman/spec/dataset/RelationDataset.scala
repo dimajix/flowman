@@ -95,9 +95,9 @@ case class RelationDataset(
       * @param schema - the schema to read. If none is specified, all available columns will be read
       * @return
       */
-    override def read(execution: Execution, schema: Option[org.apache.spark.sql.types.StructType]): DataFrame = {
+    override def read(execution: Execution): DataFrame = {
         val instance = relation.value
-        instance.read(execution, schema, partition)
+        instance.read(execution, partition)
     }
 
     /**

@@ -22,7 +22,6 @@ import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
-import com.dimajix.flowman.model.Connection.Properties
 import com.dimajix.flowman.types.StructType
 
 
@@ -93,7 +92,7 @@ trait Dataset extends Instance {
       * @param schema - the schema to read. If none is specified, all available columns will be read
       * @return
       */
-    def read(execution:Execution, schema:Option[org.apache.spark.sql.types.StructType]) : DataFrame
+    def read(execution:Execution) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition

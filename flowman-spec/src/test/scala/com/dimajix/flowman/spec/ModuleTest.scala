@@ -59,6 +59,13 @@ class ModuleTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |relations:
               |  empty:
               |    kind: null
+              |    schema:
+              |      kind: embedded
+              |      fields:
+              |        - name: col1
+              |          type: string
+              |        - name: col2
+              |          type: Integer
               |
               |targets:
               |  blackhole:
@@ -69,9 +76,6 @@ class ModuleTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |  input:
               |    kind: read
               |    relation: empty
-              |    columns:
-              |      col1: String
-              |      col2: Integer
               |
               |jobs:
               |  default:

@@ -123,9 +123,8 @@ case class FileRelation(
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(execution:Execution, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+    override def read(execution:Execution, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         require(execution != null)
-        require(schema != null)
         require(partitions != null)
 
         requireValidPartitionKeys(partitions)
@@ -159,8 +158,7 @@ case class FileRelation(
             // Add partitions values as columns
             partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, toLit(p._2)))
         }
-        val allData = data.reduce(_ union _)
-        SchemaUtils.applySchema(allData, schema)
+        data.reduce(_ union _)
     }
 
     /**
@@ -249,11 +247,10 @@ case class FileRelation(
      * @param schema
      * @return
      */
-    override def readStream(execution: Execution, schema: Option[StructType]): DataFrame = {
+    override def readStream(execution: Execution): DataFrame = {
         logger.info(s"Streaming from file relation '$identifier' at '$location'")
 
-        val df = streamReader(execution, format, options).load(location.toString)
-        SchemaUtils.applySchema(df, schema)
+        streamReader(execution, format, options).load(location.toString)
     }
 
     /**

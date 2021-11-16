@@ -96,7 +96,7 @@ case class FileDataset(
       * @param schema - the schema to read. If none is specified, all available columns will be read
       * @return
       */
-    override def read(execution: Execution, schema: Option[org.apache.spark.sql.types.StructType]): DataFrame = {
+    override def read(execution: Execution): DataFrame = {
         require(execution != null)
 
         val baseReader = execution.spark.read
@@ -109,14 +109,12 @@ case class FileDataset(
         // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
         // underlying format implementation
         val providingClass = DataSource.lookupDataSource(format, execution.spark.sessionState.conf)
-        val df = providingClass.getDeclaredConstructor().newInstance() match {
+        providingClass.getDeclaredConstructor().newInstance() match {
             case _: RelationProvider => reader.load(location.toString)
             case _: SchemaRelationProvider => reader.load(location.toString)
             case _: FileFormat => reader.load(Seq(location.toString):_*)
             case _ => reader.load(location.toString)
         }
-
-        SchemaUtils.applySchema(df, schema)
     }
 
     /**

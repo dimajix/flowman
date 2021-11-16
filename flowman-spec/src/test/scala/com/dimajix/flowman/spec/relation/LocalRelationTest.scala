@@ -339,13 +339,13 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         relation.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
 
         // ===== Read =============================================================================================
-        val df1 = relation.read(executor, None, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1")))
+        val df1 = relation.read(executor, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1")))
         df1.as[(String,Int,Int)].collect().sorted should be (Seq(
             ("p1=1/p2=1/111.txt",1,1),
             ("p1=1/p2=1/112.txt",1,1)
         ))
 
-        val df2 = relation.read(executor, None, Map("p1" -> SingleValue("1")))
+        val df2 = relation.read(executor, Map("p1" -> SingleValue("1")))
         df2.as[(String,Int)].collect().sorted should be (Seq(
             ("p1=1/p2=1/111.txt",1),
             ("p1=1/p2=1/112.txt",1),
@@ -353,7 +353,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
             ("p1=1/p2=2/122.txt",1)
         ))
 
-        val df3 = relation.read(executor, None, Map("p2" -> SingleValue("1")))
+        val df3 = relation.read(executor, Map("p2" -> SingleValue("1")))
         df3.as[(String,Int)].collect().sorted should be (Seq(
             ("p1=1/p2=1/111.txt",1),
             ("p1=1/p2=1/112.txt",1),
@@ -361,7 +361,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
             ("p1=2/p2=1/212.txt",1)
         ))
 
-        val df4 = relation.read(executor, None, Map())
+        val df4 = relation.read(executor, Map())
         df4.as[String].collect().sorted should be (Seq(
             ("p1=1/p2=1/111.txt"),
             ("p1=1/p2=1/112.txt"),
@@ -380,7 +380,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         relation.truncate(executor, Map("p2" -> SingleValue("1")))
         relation.exists(executor) should be (Yes)
         relation.loaded(executor, Map("p2" -> SingleValue("1"))) should be (No)
-        val df5 = relation.read(executor, None, Map())
+        val df5 = relation.read(executor, Map())
         df5.as[String].collect().sorted should be (Seq(
             ("p1=1/p2=2/121.txt"),
             ("p1=1/p2=2/122.txt"),

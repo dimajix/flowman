@@ -62,7 +62,6 @@ import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.{StructType => FlowmanStructType}
-import com.dimajix.spark.sql.SchemaUtils
 
 
 case class JdbcRelation(
@@ -135,12 +134,10 @@ case class JdbcRelation(
     /**
       * Reads the configured table from the source
       * @param execution
-      * @param schema
       * @return
       */
-    override def read(execution:Execution, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+    override def read(execution:Execution, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         require(execution != null)
-        require(schema != null)
         require(partitions != null)
 
         // Get Connection
@@ -167,8 +164,7 @@ case class JdbcRelation(
         // explicit schema specification of the relation
         val schemaDf = applyInputSchema(tableDf)
 
-        val df = filterPartition(schemaDf, partitions)
-        SchemaUtils.applySchema(df, schema)
+        filterPartition(schemaDf, partitions)
     }
 
     /**

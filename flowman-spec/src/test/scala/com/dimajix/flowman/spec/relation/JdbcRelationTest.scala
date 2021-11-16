@@ -190,7 +190,7 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             result.next() should be (false)
         }
 
-        relation.read(execution, None).count() should be (0)
+        relation.read(execution).count() should be (0)
 
         // == Write ===================================================================================================
         // Write records
@@ -200,29 +200,29 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
 
-        relation.read(execution, None).count() should be (2)
+        relation.read(execution).count() should be (2)
 
         // Append records
         relation.write(execution, df, mode=OutputMode.APPEND)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
-        relation.read(execution, None).count() should be (4)
+        relation.read(execution).count() should be (4)
 
         // Try write records
         relation.write(execution, df, mode=OutputMode.IGNORE_IF_EXISTS)
-        relation.read(execution, None).count() should be (4)
+        relation.read(execution).count() should be (4)
 
         relation.truncate(execution)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
-        relation.read(execution, None).count() should be (0)
+        relation.read(execution).count() should be (0)
 
         relation.write(execution, df, mode=OutputMode.IGNORE_IF_EXISTS)
-        relation.read(execution, None).count() should be (0)
+        relation.read(execution).count() should be (0)
 
         // Try write records
         an[Exception] shouldBe thrownBy(relation.write(execution, df, mode=OutputMode.ERROR_IF_EXISTS))
-        relation.read(execution, None).count() should be (0)
+        relation.read(execution).count() should be (0)
 
         // == Truncate ================================================================================================
         relation.truncate(execution)
@@ -310,7 +310,7 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         }
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (0)
+        relation.read(execution).count() should be (0)
 
         // == Write ==================================================================================================
         relation.write(execution, df, mode=OutputMode.OVERWRITE, partition=Map("p_col" -> SingleValue("1")))
@@ -321,9 +321,9 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("1"))).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(execution).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("1"))).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // == Overwrite ==============================================================================================
         relation.write(execution, df, mode=OutputMode.OVERWRITE, partition=Map("p_col" -> SingleValue("1")))
@@ -331,9 +331,9 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("1"))).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(execution).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("1"))).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // == Write ==================================================================================================
         relation.write(execution, df, mode=OutputMode.OVERWRITE, partition=Map("p_col" -> SingleValue("2")))
@@ -341,10 +341,10 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (4)
-        relation.read(execution, None, Map("p_col" -> SingleValue("1"))).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(execution).count() should be (4)
+        relation.read(execution, Map("p_col" -> SingleValue("1"))).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // == Append==================================================================================================
         relation.write(execution, df, mode=OutputMode.APPEND, partition=Map("p_col" -> SingleValue("1")))
@@ -352,10 +352,10 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (6)
-        relation.read(execution, None, Map("p_col" -> SingleValue("1"))).count() should be (4)
-        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(execution).count() should be (6)
+        relation.read(execution, Map("p_col" -> SingleValue("1"))).count() should be (4)
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // == Try Write ==============================================================================================
         relation.write(execution, df, mode=OutputMode.IGNORE_IF_EXISTS, partition=Map("p_col" -> SingleValue("1")))
@@ -363,10 +363,10 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (6)
-        relation.read(execution, None, Map("p_col" -> SingleValue("1"))).count() should be (4)
-        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(execution).count() should be (6)
+        relation.read(execution, Map("p_col" -> SingleValue("1"))).count() should be (4)
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // == Try Write ==============================================================================================
         relation.write(execution, df, mode=OutputMode.IGNORE_IF_EXISTS, partition=Map("p_col" -> SingleValue("3")))
@@ -374,17 +374,17 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (8)
-        relation.read(execution, None, Map("p_col" -> SingleValue("1"))).count() should be (4)
-        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("3"))).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(execution).count() should be (8)
+        relation.read(execution, Map("p_col" -> SingleValue("1"))).count() should be (4)
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("3"))).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // == Try Write ==============================================================================================
         an[Exception] shouldBe thrownBy(relation.write(execution, df, mode=OutputMode.ERROR_IF_EXISTS))
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (8)
+        relation.read(execution).count() should be (8)
 
         // == Truncate ===============================================================================================
         relation.truncate(execution, Map("p_col" -> SingleValue("2")))
@@ -396,11 +396,11 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (6)
-        relation.read(execution, None, Map("p_col" -> SingleValue("1"))).count() should be (4)
-        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (0)
-        relation.read(execution, None, Map("p_col" -> SingleValue("3"))).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(execution).count() should be (6)
+        relation.read(execution, Map("p_col" -> SingleValue("1"))).count() should be (4)
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (0)
+        relation.read(execution, Map("p_col" -> SingleValue("3"))).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // == Truncate ===============================================================================================
         relation.truncate(execution)
@@ -412,10 +412,10 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (0)
-        relation.read(execution, None, Map("p_col" -> SingleValue("1"))).count() should be (0)
-        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (0)
-        relation.read(execution, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(execution).count() should be (0)
+        relation.read(execution, Map("p_col" -> SingleValue("1"))).count() should be (0)
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (0)
+        relation.read(execution, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // == Destroy ================================================================================================
         relation.destroy(execution)
@@ -499,7 +499,7 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         }
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (0)
+        relation.read(execution).count() should be (0)
 
         // == Write ==================================================================================================
         relation.write(execution, df, mode=OutputMode.OVERWRITE)
@@ -511,10 +511,10 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("p_col" -> SingleValue("999"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (3)
-        relation.read(execution, None, Map("p_col" -> SingleValue("1"))).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (1)
-        relation.read(execution, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(execution).count() should be (3)
+        relation.read(execution, Map("p_col" -> SingleValue("1"))).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // == Append==================================================================================================
         relation.write(execution, df, mode=OutputMode.APPEND)
@@ -522,10 +522,10 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (6)
-        relation.read(execution, None, Map("p_col" -> SingleValue("1"))).count() should be (4)
-        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(execution).count() should be (6)
+        relation.read(execution, Map("p_col" -> SingleValue("1"))).count() should be (4)
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // == Overwrite ==============================================================================================
         relation.write(execution, df, mode=OutputMode.OVERWRITE)
@@ -533,10 +533,10 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (3)
-        relation.read(execution, None, Map("p_col" -> SingleValue("1"))).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (1)
-        relation.read(execution, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(execution).count() should be (3)
+        relation.read(execution, Map("p_col" -> SingleValue("1"))).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // == Try Write ==============================================================================================
         relation.write(execution, df, mode=OutputMode.IGNORE_IF_EXISTS)
@@ -544,10 +544,10 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (3)
-        relation.read(execution, None, Map("p_col" -> SingleValue("1"))).count() should be (2)
-        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (1)
-        relation.read(execution, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(execution).count() should be (3)
+        relation.read(execution, Map("p_col" -> SingleValue("1"))).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // == Try Write ==============================================================================================
         an[Exception] shouldBe thrownBy(relation.write(execution, df, mode=OutputMode.ERROR_IF_EXISTS))
@@ -562,10 +562,10 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None).count() should be (0)
-        relation.read(execution, None, Map("p_col" -> SingleValue("1"))).count() should be (0)
-        relation.read(execution, None, Map("p_col" -> SingleValue("2"))).count() should be (0)
-        relation.read(execution, None, Map("p_col" -> SingleValue("999"))).count() should be (0)
+        relation.read(execution).count() should be (0)
+        relation.read(execution, Map("p_col" -> SingleValue("1"))).count() should be (0)
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (0)
+        relation.read(execution, Map("p_col" -> SingleValue("999"))).count() should be (0)
 
         // == Destroy ================================================================================================
         relation.destroy(execution)
@@ -638,8 +638,8 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         // == Read ===================================================================================================
         // Spark up until 2.4.3 has problems with Derby
         if (spark.version > "2.4.3") {
-            relation_t0.read(execution, None).count() should be(2)
-            relation_t1.read(execution, None).count() should be(2)
+            relation_t0.read(execution).count() should be(2)
+            relation_t1.read(execution).count() should be(2)
         }
 
         // == Destroy ================================================================================================

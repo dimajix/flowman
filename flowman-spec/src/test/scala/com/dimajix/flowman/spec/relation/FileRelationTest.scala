@@ -1156,6 +1156,58 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution) should be (No)
     }
 
+    it should "invalidate any file caches when writing" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val location = Paths.get(tempDir.toString, "some_file_table_456")
+        val relation = FileRelation(
+            Relation.Properties(context, "rel_1"),
+            location = new Path(location.toUri),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.IntegerType),
+                    Field("f2", com.dimajix.flowman.types.DoubleType),
+                    Field("f3", com.dimajix.flowman.types.StringType)
+                )
+            ))
+        )
+
+        // == Create ================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution) should be (No)
+
+        // == Write =================================================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row(null, null, null),
+            Row(234, 123.0, ""),
+            Row(2345, 1234.0, "1234567"),
+            Row(23456, 12345.0, "1234567")
+        ))
+        val df = spark.createDataFrame(rdd, relation.schema.get.catalogSchema)
+        relation.write(execution, df, Map())
+
+        // == Read ==================================================================================================
+        val df2 = relation.read(execution, Map())
+        df2.count() should be (4)
+
+        // == Overwrite =============================================================================================
+        relation.write(execution, df, Map(), OutputMode.OVERWRITE)
+
+        // == Read ==================================================================================================
+        df2.count() should be (4)
+
+        // == Destroy ===============================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
+    }
+
     it should "support mapping schemas" in {
         val outputPath = Paths.get(tempDir.toString, "csv", "test")
         val spec =

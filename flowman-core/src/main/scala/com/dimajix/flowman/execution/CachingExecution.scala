@@ -34,6 +34,7 @@ import com.dimajix.common.IdentityHashMap
 import com.dimajix.common.SynchronizedMap
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.StructType
 
 
@@ -64,6 +65,15 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
                 ce.schemaCache
             case _ =>
                 SynchronizedMap(IdentityHashMap[Mapping,TrieMap[String,StructType]]())
+        }
+    }
+
+    private val resources:mutable.ListBuffer[(ResourceIdentifier,() => Unit)] = {
+        parent match {
+            case Some(ce: CachingExecution) if !isolated =>
+                ce.resources
+            case _ =>
+                mutable.ListBuffer[(ResourceIdentifier,() => Unit)]()
         }
     }
 
@@ -125,6 +135,28 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
     }
 
     /**
+     * Registers a refresh function associated with a [[ResourceIdentifier]]
+     * @param key
+     * @param refresh
+     */
+    override def addResource(key:ResourceIdentifier)(refresh: => Unit) : Unit = {
+        resources.synchronized {
+            resources.append((key,() => refresh))
+        }
+    }
+
+    /**
+     * Invokes all refresh functions associated with a [[ResourceIdentifier]]
+     * @param key
+     */
+    override def refreshResource(key:ResourceIdentifier) : Unit = {
+        resources.synchronized {
+            resources.filter(kv => kv._1.contains(key) || key.contains(kv._1)).foreach(_._2())
+        }
+        parent.foreach(_.refreshResource(key))
+    }
+
+    /**
      * Releases all DataFrames and all caches of DataFrames which have been created within this scope. This method
      * will not cleanup the parent Execution (if any).
      */
@@ -138,6 +170,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
             frameCache.values.foreach(_.values.foreach(_.unpersist(true)))
             frameCache.clear()
             schemaCache.clear()
+            resources.clear()
         }
     }
 

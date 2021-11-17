@@ -158,7 +158,15 @@ case class FileRelation(
             // Add partitions values as columns
             partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, toLit(p._2)))
         }
-        data.reduce(_ union _)
+
+        val df = data.reduce(_ union _)
+
+        // Install callback to refresh DataFrame when data is overwritten
+        execution.addResource(ResourceIdentifier.ofFile(location)) {
+            df.queryExecution.logical.refresh()
+        }
+
+        df
     }
 
     /**
@@ -176,6 +184,8 @@ case class FileRelation(
             doWriteDynamicPartitions(execution, df, mode)
         else
             doWriteStaticPartitions(execution, df, partition, mode)
+
+        execution.refreshResource(ResourceIdentifier.ofFile(location))
     }
     private def doWriteDynamicPartitions(execution:Execution, df:DataFrame,  mode:OutputMode) : Unit = {
         val outputPath = collector.root

@@ -109,12 +109,19 @@ case class FileDataset(
         // load(single_file) will set the "path" option, while load(multiple_files) needs direct support from the
         // underlying format implementation
         val providingClass = DataSource.lookupDataSource(format, execution.spark.sessionState.conf)
-        providingClass.getDeclaredConstructor().newInstance() match {
+        val df = providingClass.getDeclaredConstructor().newInstance() match {
             case _: RelationProvider => reader.load(location.toString)
             case _: SchemaRelationProvider => reader.load(location.toString)
             case _: FileFormat => reader.load(Seq(location.toString):_*)
             case _ => reader.load(location.toString)
         }
+
+        // Install callback to refresh DataFrame when data is overwritten
+        execution.addResource(ResourceIdentifier.ofFile(location)) {
+            df.queryExecution.logical.refresh()
+        }
+
+        df
     }
 
     /**
@@ -131,6 +138,8 @@ case class FileDataset(
             .format(format)
             .mode(mode.batchMode)
             .save(location.toString)
+
+        execution.refreshResource(ResourceIdentifier.ofFile(location))
     }
 
     /**

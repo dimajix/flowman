@@ -33,6 +33,7 @@ import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.types.StructType
@@ -156,6 +157,19 @@ abstract class Execution {
 
         mapping.describe(this, deps)
     }
+
+    /**
+     * Registers a refresh function associated with a [[ResourceIdentifier]]
+     * @param key
+     * @param refresh
+     */
+    def addResource(key:ResourceIdentifier)(refresh: => Unit) : Unit
+
+    /**
+     * Invokes all refresh functions associated with a [[ResourceIdentifier]]
+     * @param key
+     */
+    def refreshResource(key:ResourceIdentifier) : Unit
 
     /**
       * Releases any temporary tables

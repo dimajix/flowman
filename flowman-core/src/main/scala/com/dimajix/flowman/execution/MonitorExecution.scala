@@ -37,6 +37,7 @@ import com.dimajix.flowman.model.JobInstance
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.types.StructType
@@ -113,6 +114,9 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
      * @return
      */
     override def describe(mapping: Mapping, output: String): StructType = parent.describe(mapping, output)
+
+    override def addResource(key:ResourceIdentifier)(refresh: => Unit) : Unit = parent.addResource(key)(refresh)
+    override def refreshResource(key:ResourceIdentifier) : Unit = parent.refreshResource(key)
 
     /**
      * Releases any temporary tables

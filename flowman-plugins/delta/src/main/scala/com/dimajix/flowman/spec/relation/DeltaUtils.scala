@@ -122,7 +122,7 @@ object DeltaUtils {
         if (keyColumns.isEmpty)
             throw new IllegalArgumentException(s"Cannot perform upsert operation without primary key")
 
-        val keyCondition = keyColumns.map(k => col("relation." + k) === col("df." + k))
+        val keyCondition = keyColumns.map(k => col("relation." + k) <=> col("df." + k))
         val partitionCondition = partitionSpec.values.map { case (k, v) => (col("relation." + k) === lit(v)) }
         val mergeCondition = (keyCondition ++ partitionCondition).reduce(_ && _)
         table.as("relation")

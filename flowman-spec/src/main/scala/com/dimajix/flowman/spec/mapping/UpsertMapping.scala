@@ -70,7 +70,7 @@ case class UpsertMapping(
         val projectedUpdates = conformer.transform(filteredUpdates)
 
         // Perform update operation
-        val joinCondition = keyColumns.map(col => inputDf(col) === updatesDf(col)).reduce(_ && _)
+        val joinCondition = keyColumns.map(col => inputDf(col) <=> updatesDf(col)).reduce(_ && _)
         val result = inputDf.join(updatesDf, joinCondition, "left_anti")
             .union(projectedUpdates)
 

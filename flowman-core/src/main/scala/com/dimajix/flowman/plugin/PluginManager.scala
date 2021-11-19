@@ -38,19 +38,22 @@ class PluginManager {
     private val logger = LoggerFactory.getLogger(classOf[PluginManager])
 
     private var _pluginDir:File = new File("")
-    private var _sparkContext:SparkContext = _
     private val _plugins:mutable.Map[String,Plugin] = mutable.Map()
+    private val classLoader = {
+        // Replaced class loader
+        val curLoader = Thread.currentThread().getContextClassLoader()
+        try {
+            curLoader.asInstanceOf[URLClassLoader]
+        } catch {
+            case _:ClassCastException =>
+                val loader = new URLClassLoader(Array(), curLoader)
+                Thread.currentThread().setContextClassLoader(loader)
+                loader
+        }
+    }
 
     def withPluginDir(dir:File) : PluginManager = {
         _pluginDir = dir
-        this
-    }
-    def withSparkSession(session:SparkSession) : PluginManager = {
-        _sparkContext = session.sparkContext
-        this
-    }
-    def withSparkContext(context:SparkContext) : PluginManager = {
-        _sparkContext = context
         this
     }
 
@@ -85,7 +88,7 @@ class PluginManager {
         }.distinct
 
         // Extend classpath
-        val classLoader = classOf[PluginManager].getClassLoader.asInstanceOf[URLClassLoader]
+        //val classLoader =  Thread.currentThread().getContextClassLoader().asInstanceOf[URLClassLoader]
         try {
             val method = classOf[URLClassLoader].getDeclaredMethod("addURL", classOf[URL])
             method.setAccessible(true)

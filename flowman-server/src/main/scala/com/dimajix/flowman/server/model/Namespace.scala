@@ -17,7 +17,7 @@
 package com.dimajix.flowman.server.model
 
 
-case class Namespace(
+final case class Namespace(
     name:String,
     environment: Map[String,String],
     config: Map[String,String],

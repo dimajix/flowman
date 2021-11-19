@@ -5,13 +5,14 @@ import Namespace from './views/Namespace.vue'
 import System from './views/System.vue'
 import JobHistory from './views/JobHistory.vue'
 import TargetHistory from './views/TargetHistory.vue'
+import Metrics from './views/Metrics.vue'
 
 Vue.use(Router)
 
 export default new Router({
   routes: [
     {
-      path: '/',
+      path: '/home',
       name: 'home',
       component: Home
     },
@@ -34,6 +35,11 @@ export default new Router({
       path: '/target-history',
       name: 'target-history',
       component: TargetHistory
+    },
+    {
+      path: '/metrics',
+      name: 'metrics',
+      component: Metrics
     }
   ]
 })

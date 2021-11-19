@@ -21,6 +21,14 @@ import com.dimajix.flowman.model
 
 
 object Converter {
+    def ofSpec(ms:history.Measurement) : Measurement = {
+        Measurement(
+            ms.name,
+            ms.ts,
+            ms.labels,
+            ms.value
+        )
+    }
     def ofSpec(ns:model.Namespace) : Namespace = {
         Namespace(
             ns.name,
@@ -32,16 +40,7 @@ object Converter {
         )
     }
 
-    def ofSpec(job:model.Job) : Job = {
-        Job(
-            job.name,
-            job.description,
-            job.parameters.map(_.name),
-            job.environment
-        )
-    }
-
-    def ofSpec(jobState:history.JobState) : JobState = {
+    def ofSpec(jobState:history.JobState, measurements:Seq[history.Measurement]=Seq()) : JobState = {
         JobState(
             jobState.id,
             jobState.namespace,
@@ -51,7 +50,8 @@ object Converter {
             jobState.args,
             jobState.status.toString,
             jobState.startDateTime,
-            jobState.endDateTime
+            jobState.endDateTime,
+            measurements.map(ofSpec)
         )
     }
 

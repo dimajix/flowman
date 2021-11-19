@@ -20,15 +20,13 @@
 <script>
   export default {
     props: {
-      projectName: {
-      }
     },
 
     data: () => ({
       targets: [],
       loading: false,
       headers: [
-        { text: 'Run ID', value: 'id' },
+        { text: 'Target Run ID', value: 'id' },
         { text: 'Job Run ID', value: 'jobId' },
         { text: 'Project Name', value: 'project' },
         { text: 'Target Name', value: 'target' },

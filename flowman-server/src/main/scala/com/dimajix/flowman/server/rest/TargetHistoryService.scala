@@ -26,6 +26,8 @@ import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
 import javax.ws.rs.Path
 
+import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.TargetOrder
 import com.dimajix.flowman.history.TargetQuery
@@ -48,8 +50,8 @@ class TargetHistoryService(history:StateStore) {
             ~
             pathPrefix("targets") {(
                 pathEnd {
-                    parameters(('project.?, 'job.?, 'target.?)) { (project,job,target) =>
-                        listTargetStates(project, job,target)
+                    parameters(('project.?, 'job.?, 'target.?, 'phase.?, 'status.?)) { (project,job,target,phase,status) =>
+                        listTargetStates(project, job, target, phase, status)
                     }
                 }
             )}
@@ -63,16 +65,22 @@ class TargetHistoryService(history:StateStore) {
         new ApiImplicitParam(name = "job", value = "Job name", required = false,
             dataType = "string", paramType = "query"),
         new ApiImplicitParam(name = "target", value = "Target name", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "phase", value = "Execution phase", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "status", value = "Execution status", required = false,
             dataType = "string", paramType = "query")
     ))
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Target information", response = classOf[model.JobState])
     ))
-    def listTargetStates(project:Option[String], job:Option[String], target:Option[String]) : server.Route = {
+    def listTargetStates(project:Option[String], job:Option[String], target:Option[String], phase:Option[String], status:Option[String]) : server.Route = {
         val query = TargetQuery(
-            project = project,
-            job = job,
-            target = target
+            project=project,
+            job=job,
+            target=target,
+            phase=phase.map(Phase.ofString),
+            status=status.map(Status.ofString)
         )
         val targets = history.findTargetStates(query, Seq(TargetOrder.BY_DATETIME.desc()), 100, 0)
         complete(targets.map(Converter.ofSpec))

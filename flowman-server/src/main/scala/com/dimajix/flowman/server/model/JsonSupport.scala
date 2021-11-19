@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.server.model
 
-import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -44,8 +43,8 @@ trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
     }
 
     implicit val namespaceFormat: RootJsonFormat[Namespace] = jsonFormat6(Namespace)
-    implicit val jobFormat: RootJsonFormat[Job] = jsonFormat4(Job)
-    implicit val jobStateFormat: RootJsonFormat[JobState] = jsonFormat9(JobState)
+    implicit val measurementFormat: RootJsonFormat[Measurement] = jsonFormat4(Measurement)
+    implicit val jobStateFormat: RootJsonFormat[JobState] = jsonFormat10(JobState)
     implicit val targetStateFormat: RootJsonFormat[TargetState] = jsonFormat10(TargetState)
 }
 

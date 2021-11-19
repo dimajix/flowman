@@ -26,6 +26,8 @@ import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
 import javax.ws.rs.Path
 
+import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history.JobOrder
 import com.dimajix.flowman.history.JobQuery
 import com.dimajix.flowman.history.StateStore
@@ -48,8 +50,8 @@ class JobHistoryService(history:StateStore) {
         ~
         pathPrefix("jobs") {(
             pathEnd {
-                parameters(('project.?, 'job.?)) { (project,job) =>
-                    listJobStates(project, job)
+                parameters(('project.?, 'job.?, 'phase.?, 'status.?)) { (project,job,phase,status) =>
+                    listJobStates(project, job, phase, status)
                 }
             }
         )}
@@ -61,15 +63,23 @@ class JobHistoryService(history:StateStore) {
         new ApiImplicitParam(name = "project", value = "Project name", required = false,
             dataType = "string", paramType = "query"),
         new ApiImplicitParam(name = "job", value = "Job name", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "phase", value = "Execution phase", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "status", value = "Execution status", required = false,
             dataType = "string", paramType = "query")
     ))
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobState])
     ))
-    def listJobStates(project:Option[String], job:Option[String]) : server.Route = {
-        val query = JobQuery(project=project, job=job)
+    def listJobStates(project:Option[String], job:Option[String], phase:Option[String], status:Option[String]) : server.Route = {
+        val query = JobQuery(
+            project=project, job=job,
+            phase=phase.map(Phase.ofString),
+            status=status.map(Status.ofString)
+        )
         val jobs = history.findJobStates(query, Seq(JobOrder.BY_DATETIME.desc()), 1000, 0)
-        complete(jobs.map(Converter.ofSpec))
+        complete(jobs.map(j => Converter.ofSpec(j)))
     }
 
     @Path("/job")
@@ -84,6 +94,9 @@ class JobHistoryService(history:StateStore) {
     def getJobState(jobId:String) : server.Route = {
         val query = JobQuery(id=Some(jobId))
         val job = history.findJobStates(query).headOption
-        complete(job.map(Converter.ofSpec))
+        complete(job.map { j =>
+            val metrics = history.getJobMetrics(j.id)
+            Converter.ofSpec(j, metrics)
+        })
     }
 }

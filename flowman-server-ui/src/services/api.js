@@ -9,6 +9,11 @@ export default {
           .then(response => response.data)
       },
 
+      getJobDetails(job) {
+        return axios.get('/api/history/job/' + job)
+          .then(response => response.data)
+      },
+
       getAllJobsHistory() {
         return axios.get('/api/history/jobs')
           .then(response => response.data)

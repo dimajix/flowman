@@ -19,7 +19,7 @@ package com.dimajix.flowman.server.model
 import java.time.ZonedDateTime
 
 
-case class TargetState(
+final case class TargetState(
     id:String,
     jobId:Option[String],
     namespace:String,

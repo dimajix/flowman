@@ -30,5 +30,15 @@ final case class JobState(
     startDateTime:Option[ZonedDateTime] = None,
     endDateTime:Option[ZonedDateTime] = None,
     metrics:Seq[Measurement] = Seq()
-) {
-}
+)
+
+
+final case class JobStateList(
+    data:Seq[JobState],
+    total:Int
+)
+
+
+final case class JobStateCounts(
+    data:Map[String,Int]
+)

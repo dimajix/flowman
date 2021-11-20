@@ -30,5 +30,10 @@ final case class TargetState(
     status:String,
     startDateTime:Option[ZonedDateTime] = None,
     endDateTime:Option[ZonedDateTime] = None
-) {
-}
+)
+
+
+final case class TargetStateList(
+    data:Seq[TargetState],
+    total:Int
+)

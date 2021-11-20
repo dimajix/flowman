@@ -64,27 +64,27 @@ final case class TargetState(
 )
 
 
-sealed abstract class TargetOrderColumn
-object TargetOrderColumn {
-    case object BY_DATETIME extends TargetOrderColumn
-    case object BY_NAME extends TargetOrderColumn
-    case object BY_ID extends TargetOrderColumn
-    case object BY_STATUS extends TargetOrderColumn
-    case object BY_PHASE extends TargetOrderColumn
-    case object BY_PARENT_NAME extends TargetOrderColumn
-    case object BY_PARENT_ID extends TargetOrderColumn
+sealed abstract class TargetColumn
+object TargetColumn {
+    case object DATETIME extends TargetColumn
+    case object NAME extends TargetColumn
+    case object ID extends TargetColumn
+    case object STATUS extends TargetColumn
+    case object PHASE extends TargetColumn
+    case object PARENT_NAME extends TargetColumn
+    case object PARENT_ID extends TargetColumn
 }
 
 object TargetOrder {
-    final val BY_DATETIME = TargetOrder(TargetOrderColumn.BY_DATETIME)
-    final val BY_NAME = TargetOrder(TargetOrderColumn.BY_NAME)
-    final val BY_ID = TargetOrder(TargetOrderColumn.BY_ID)
-    final val BY_STATUS = TargetOrder(TargetOrderColumn.BY_STATUS)
-    final val BY_PHASE = TargetOrder(TargetOrderColumn.BY_PHASE)
-    final val BY_PARENT_NAME = TargetOrder(TargetOrderColumn.BY_PARENT_NAME)
-    final val BY_PARENT_ID = TargetOrder(TargetOrderColumn.BY_PARENT_ID)
+    final val BY_DATETIME = TargetOrder(TargetColumn.DATETIME)
+    final val BY_NAME = TargetOrder(TargetColumn.NAME)
+    final val BY_ID = TargetOrder(TargetColumn.ID)
+    final val BY_STATUS = TargetOrder(TargetColumn.STATUS)
+    final val BY_PHASE = TargetOrder(TargetColumn.PHASE)
+    final val BY_PARENT_NAME = TargetOrder(TargetColumn.PARENT_NAME)
+    final val BY_PARENT_ID = TargetOrder(TargetColumn.PARENT_ID)
 }
-final case class TargetOrder(column:TargetOrderColumn, isAscending:Boolean=true) {
+final case class TargetOrder(column:TargetColumn, isAscending:Boolean=true) {
     def asc() : TargetOrder  = copy(isAscending=true)
     def desc() : TargetOrder  = copy(isAscending=false)
 }

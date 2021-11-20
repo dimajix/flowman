@@ -24,6 +24,7 @@
 
     data: () => ({
       targets: [],
+      total: 0,
       loading: false,
       headers: [
         { text: 'Target Run ID', value: 'id' },
@@ -46,7 +47,8 @@
         this.loading = true
         this.$api.getAllTargetsHistory()
           .then(response => {
-            this.targets = response
+            this.targets = response.data
+            this.total = response.total
             this.loading = false
           })
       }

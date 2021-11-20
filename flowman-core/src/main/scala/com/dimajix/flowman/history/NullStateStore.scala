@@ -93,6 +93,9 @@ class NullStateStore extends StateStore {
       */
     override def findJobStates(query:JobQuery, order:Seq[JobOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[JobState] = Seq()
 
+    override def countJobStates(query:JobQuery) : Int = 0
+    override def countJobStates(query:JobQuery, grouping:JobColumn) : Map[String,Int] = Map()
+
     /**
       * Returns a list of job matching the query criteria
       * @param query
@@ -101,4 +104,7 @@ class NullStateStore extends StateStore {
       * @return
       */
     override def findTargetStates(query:TargetQuery, order:Seq[TargetOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[TargetState] = Seq()
+
+    override def countTargetStates(query: TargetQuery): Int = 0
+    override def countTargetStates(query:TargetQuery, grouping:TargetColumn) : Map[String,Int] = Map()
 }

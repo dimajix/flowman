@@ -59,23 +59,23 @@ final case class JobState(
 )
 
 
-sealed abstract class JobOrderColumn
-object JobOrderColumn {
-    case object BY_DATETIME extends JobOrderColumn
-    case object BY_NAME extends JobOrderColumn
-    case object BY_ID extends JobOrderColumn
-    case object BY_STATUS extends JobOrderColumn
-    case object BY_PHASE extends JobOrderColumn
+sealed abstract class JobColumn
+object JobColumn {
+    case object DATETIME extends JobColumn
+    case object NAME extends JobColumn
+    case object ID extends JobColumn
+    case object STATUS extends JobColumn
+    case object PHASE extends JobColumn
 }
 
 object JobOrder {
-    final val BY_DATETIME = JobOrder(JobOrderColumn.BY_DATETIME)
-    final val BY_NAME = JobOrder(JobOrderColumn.BY_NAME)
-    final val BY_ID = JobOrder(JobOrderColumn.BY_ID)
-    final val BY_STATUS = JobOrder(JobOrderColumn.BY_STATUS)
-    final val BY_PHASE = JobOrder(JobOrderColumn.BY_PHASE)
+    final val BY_DATETIME = JobOrder(JobColumn.DATETIME)
+    final val BY_NAME = JobOrder(JobColumn.NAME)
+    final val BY_ID = JobOrder(JobColumn.ID)
+    final val BY_STATUS = JobOrder(JobColumn.STATUS)
+    final val BY_PHASE = JobOrder(JobColumn.PHASE)
 }
-final case class JobOrder(column:JobOrderColumn, isAscending:Boolean=true) {
+final case class JobOrder(column:JobColumn, isAscending:Boolean=true) {
     def asc() : JobOrder  = copy(isAscending=true)
     def desc() : JobOrder  = copy(isAscending=false)
 }

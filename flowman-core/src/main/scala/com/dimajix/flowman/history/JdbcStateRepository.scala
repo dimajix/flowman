@@ -312,42 +312,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .toSeq
     }
 
-    def findJob(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = {
-        def mapOrderColumn(order:JobOrder) : JobRuns => Rep[_] = {
-            order.column match {
-                case JobOrderColumn.BY_DATETIME => t => t.start_ts
-                case JobOrderColumn.BY_ID => t => t.id
-                case JobOrderColumn.BY_NAME => t => t.job
-                case JobOrderColumn.BY_PHASE => t => t.phase
-                case JobOrderColumn.BY_STATUS => t => t.status
-            }
-        }
-        def mapOrderDirection(order:JobOrder) : slick.ast.Ordering = {
-            if (order.isAscending)
-                slick.ast.Ordering(slick.ast.Ordering.Asc)
-            else
-                slick.ast.Ordering(slick.ast.Ordering.Desc)
-        }
-        val ordering =
-            (l:JobState, r:JobState) => {
-                order.map { o =>
-                    val result = o.column match {
-                        case JobOrderColumn.BY_DATETIME => cmpOpt(l.startDateTime, r.startDateTime)(cmpDt)
-                        case JobOrderColumn.BY_ID => cmpStr(l.id, r.id)
-                        case JobOrderColumn.BY_NAME => cmpStr(l.job, r.job)
-                        case JobOrderColumn.BY_PHASE => cmpStr(l.phase.toString, r.phase.toString)
-                        case JobOrderColumn.BY_STATUS => cmpStr(l.status.toString, r.status.toString)
-                    }
-                    if (o.isAscending)
-                        result
-                    else
-                        -result
-                }
-                .find(_ != 0)
-                .exists(_ < 0)
-            }
-
-        val q = query.args.foldLeft(jobRuns.map(identity))((q, kv) => q
+    private def queryJobs(query:JobQuery) : Query[JobRuns,JobRun,Seq]  = {
+        query.args.foldLeft(jobRuns.map(identity))((q, kv) => q
                 .join(jobArgs).on(_.id === _.job_id)
                 .filter(a => a._2.name === kv._1 && a._2.value === kv._2)
                 .map(xy => xy._1)
@@ -360,6 +326,44 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .optionalFilter(query.phase)(_.phase === _.toString)
             .optionalFilter(query.from)((e,v) => e.start_ts >= Timestamp.from(v.toInstant))
             .optionalFilter(query.to)((e,v) => e.start_ts <= Timestamp.from(v.toInstant))
+    }
+
+    def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = {
+        def mapOrderColumn(order:JobOrder) : JobRuns => Rep[_] = {
+            order.column match {
+                case JobColumn.DATETIME => t => t.start_ts
+                case JobColumn.ID => t => t.id
+                case JobColumn.NAME => t => t.job
+                case JobColumn.PHASE => t => t.phase
+                case JobColumn.STATUS => t => t.status
+            }
+        }
+        def mapOrderDirection(order:JobOrder) : slick.ast.Ordering = {
+            if (order.isAscending)
+                slick.ast.Ordering(slick.ast.Ordering.Asc)
+            else
+                slick.ast.Ordering(slick.ast.Ordering.Desc)
+        }
+        val ordering =
+            (l:JobState, r:JobState) => {
+                order.map { o =>
+                    val result = o.column match {
+                        case JobColumn.DATETIME => cmpOpt(l.startDateTime, r.startDateTime)(cmpDt)
+                        case JobColumn.ID => cmpStr(l.id, r.id)
+                        case JobColumn.NAME => cmpStr(l.job, r.job)
+                        case JobColumn.PHASE => cmpStr(l.phase.toString, r.phase.toString)
+                        case JobColumn.STATUS => cmpStr(l.status.toString, r.status.toString)
+                    }
+                    if (o.isAscending)
+                        result
+                    else
+                        -result
+                }
+                .find(_ != 0)
+                .exists(_ < 0)
+            }
+
+        val q = queryJobs(query)
             .sorted(job => new slick.lifted.Ordered(order.map(o => (mapOrderColumn(o)(job).toNode, mapOrderDirection(o))).toVector))
             .drop(offset)
             .take(limit)
@@ -386,6 +390,31 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             }
             .toSeq
             .sortWith(ordering)
+    }
+
+    def countJobs(query:JobQuery) : Int = {
+        val q = queryJobs(query)
+            .length
+
+        Await.result(db.run(q.result), Duration.Inf)
+    }
+
+    def countJobs(query:JobQuery, grouping:JobColumn) : Seq[(String,Int)] = {
+        def mapGroupingColumn(column:JobColumn) : JobRuns => Rep[String] = {
+            column match {
+                case JobColumn.DATETIME => t => t.start_ts.asColumnOf[String]
+                case JobColumn.ID => t => t.id.asColumnOf[String]
+                case JobColumn.NAME => t => t.job
+                case JobColumn.PHASE => t => t.phase
+                case JobColumn.STATUS => t => t.status
+            }
+        }
+
+        val q = queryJobs(query)
+            .groupBy(j => mapGroupingColumn(grouping)(j))
+            .map(kv => kv._1 -> kv._2.length)
+
+        Await.result(db.run(q.result), Duration.Inf)
     }
 
     def getTargetState(target:TargetRun, partitions:Map[String,String]) : Option[TargetState] = {
@@ -442,42 +471,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         runResult
     }
 
-    def findTarget(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = {
-        def mapOrderColumn(order:TargetOrder) : TargetRuns => Rep[_] = {
-            order.column match {
-                case TargetOrderColumn.BY_DATETIME => t => t.start_ts
-                case TargetOrderColumn.BY_ID => t => t.id
-                case TargetOrderColumn.BY_NAME => t => t.target
-                case TargetOrderColumn.BY_PHASE => t => t.phase
-                case TargetOrderColumn.BY_STATUS => t => t.status
-            }
-        }
-        def mapOrderDirection(order:TargetOrder) : slick.ast.Ordering = {
-            if (order.isAscending)
-                slick.ast.Ordering(slick.ast.Ordering.Asc)
-            else
-                slick.ast.Ordering(slick.ast.Ordering.Desc)
-        }
-        val ordering =
-            (l:TargetState, r:TargetState) => {
-                order.map { o =>
-                    val result = o.column match {
-                        case TargetOrderColumn.BY_DATETIME => cmpOpt(l.startDateTime, r.startDateTime)(cmpDt)
-                        case TargetOrderColumn.BY_ID => cmpStr(l.id, r.id)
-                        case TargetOrderColumn.BY_NAME => cmpStr(l.target, r.target)
-                        case TargetOrderColumn.BY_PHASE => cmpStr(l.phase.toString, r.phase.toString)
-                        case TargetOrderColumn.BY_STATUS => cmpStr(l.status.toString, r.status.toString)
-                    }
-                    if (o.isAscending)
-                        result
-                    else
-                        -result
-                }
-                .find(_ != 0)
-                .exists(_ < 0)
-            }
-
-        val q = query.partitions.foldLeft(targetRuns.map(identity))((q, kv) => q
+    private def queryTargets(query:TargetQuery) : Query[TargetRuns, TargetRun, Seq] = {
+        query.partitions.foldLeft(targetRuns.map(identity))((q, kv) => q
             .join(targetPartitions).on(_.id === _.target_id)
             .filter(a => a._2.name === kv._1 && a._2.value === kv._2)
             .map(xy => xy._1)
@@ -491,7 +486,47 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .optionalFilter2(query.jobId)((e,v) => e.job_id === v.toLong)
             .optionalFilter(query.from)((e,v) => e.start_ts >= Timestamp.from(v.toInstant))
             .optionalFilter(query.to)((e,v) => e.start_ts <= Timestamp.from(v.toInstant))
-            .sorted(job => new slick.lifted.Ordered(order.map(o => (mapOrderColumn(o)(job).toNode, mapOrderDirection(o))).toVector))
+    }
+
+    private def mapTargetColumn(column:TargetColumn) : TargetRuns => Rep[_] = {
+        column match {
+            case TargetColumn.DATETIME => t => t.start_ts
+            case TargetColumn.ID => t => t.id
+            case TargetColumn.NAME => t => t.target
+            case TargetColumn.PHASE => t => t.phase
+            case TargetColumn.STATUS => t => t.status
+        }
+    }
+
+
+    def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = {
+        def mapOrderDirection(order:TargetOrder) : slick.ast.Ordering = {
+            if (order.isAscending)
+                slick.ast.Ordering(slick.ast.Ordering.Asc)
+            else
+                slick.ast.Ordering(slick.ast.Ordering.Desc)
+        }
+        val ordering =
+            (l:TargetState, r:TargetState) => {
+                order.map { o =>
+                    val result = o.column match {
+                        case TargetColumn.DATETIME => cmpOpt(l.startDateTime, r.startDateTime)(cmpDt)
+                        case TargetColumn.ID => cmpStr(l.id, r.id)
+                        case TargetColumn.NAME => cmpStr(l.target, r.target)
+                        case TargetColumn.PHASE => cmpStr(l.phase.toString, r.phase.toString)
+                        case TargetColumn.STATUS => cmpStr(l.status.toString, r.status.toString)
+                    }
+                    if (o.isAscending)
+                        result
+                    else
+                        -result
+                }
+                .find(_ != 0)
+                .exists(_ < 0)
+            }
+
+        val q = queryTargets(query)
+            .sorted(job => new slick.lifted.Ordered(order.map(o => (mapTargetColumn(o.column)(job).toNode, mapOrderDirection(o))).toVector))
             .drop(offset)
             .take(limit)
             .joinLeft(targetPartitions).on(_.id === _.target_id)
@@ -518,6 +553,31 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             }
             .toSeq
             .sortWith(ordering)
+    }
+
+    def countTargets(query:TargetQuery) : Int = {
+        val q = queryTargets(query)
+            .length
+
+        Await.result(db.run(q.result), Duration.Inf)
+    }
+
+    def countTargets(query:TargetQuery, grouping:TargetColumn) : Seq[(String,Int)] = {
+        def mapGroupingColumn(column:TargetColumn) : TargetRuns => Rep[String] = {
+            column match {
+                case TargetColumn.DATETIME => t => t.start_ts.asColumnOf[String]
+                case TargetColumn.ID => t => t.id.asColumnOf[String]
+                case TargetColumn.NAME => t => t.target
+                case TargetColumn.PHASE => t => t.phase
+                case TargetColumn.STATUS => t => t.status
+            }
+        }
+
+        val q = queryTargets(query)
+            .groupBy(j => mapGroupingColumn(grouping)(j))
+            .map(kv => kv._1 -> kv._2.length)
+
+        Await.result(db.run(q.result), Duration.Inf)
     }
 
     private def cmpOpt[T](l:Option[T],r:Option[T])(lt:(T,T) => Int) : Int = {

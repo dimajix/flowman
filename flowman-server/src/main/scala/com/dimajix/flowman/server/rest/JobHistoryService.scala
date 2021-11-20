@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.server.rest
 
+import java.util.Locale
+
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Route
 import io.swagger.annotations.Api
@@ -28,11 +30,14 @@ import javax.ws.rs.Path
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.history.JobColumn
 import com.dimajix.flowman.history.JobOrder
 import com.dimajix.flowman.history.JobQuery
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
+import com.dimajix.flowman.server.model.JobStateCounts
+import com.dimajix.flowman.server.model.JobStateList
 
 
 @Api(value = "/history", produces = "application/json", consumes = "application/json")
@@ -48,10 +53,18 @@ class JobHistoryService(history:StateStore) {
             }
         )}
         ~
+        pathPrefix("job-counts") {(
+            pathEnd {
+                parameters(('project.?, 'job.?, 'phase.?, 'status.?, 'grouping)) { (project,job,phase,status,grouping) =>
+                    countJobs(project, job, phase, status, grouping)
+                }
+            }
+        )}
+        ~
         pathPrefix("jobs") {(
             pathEnd {
-                parameters(('project.?, 'job.?, 'phase.?, 'status.?)) { (project,job,phase,status) =>
-                    listJobStates(project, job, phase, status)
+                parameters(('project.?, 'job.?, 'phase.?, 'status.?, 'limit.as[Int].?, 'offset.as[Int].?)) { (project,job,phase,status,limit,offset) =>
+                    listJobStates(project, job, phase, status, limit, offset)
                 }
             }
         )}
@@ -67,19 +80,57 @@ class JobHistoryService(history:StateStore) {
         new ApiImplicitParam(name = "phase", value = "Execution phase", required = false,
             dataType = "string", paramType = "query"),
         new ApiImplicitParam(name = "status", value = "Execution status", required = false,
-            dataType = "string", paramType = "query")
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "limit", value = "Maximum number of entries to return", required = false,
+            dataType = "int", paramType = "query"),
+        new ApiImplicitParam(name = "offset", value = "Starting offset of entries to return", required = false,
+            dataType = "int", paramType = "query")
     ))
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobState])
+        new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobStateList])
     ))
-    def listJobStates(project:Option[String], job:Option[String], phase:Option[String], status:Option[String]) : server.Route = {
+    def listJobStates(project:Option[String], job:Option[String], phase:Option[String], status:Option[String], limit:Option[Int], offset:Option[Int]) : server.Route = {
         val query = JobQuery(
             project=project, job=job,
             phase=phase.map(Phase.ofString),
             status=status.map(Status.ofString)
         )
-        val jobs = history.findJobStates(query, Seq(JobOrder.BY_DATETIME.desc()), 1000, 0)
-        complete(jobs.map(j => Converter.ofSpec(j)))
+        val jobs = history.findJobStates(query, Seq(JobOrder.BY_DATETIME.desc()), limit.getOrElse(1000), offset.getOrElse(0))
+        val count = history.countJobStates(query)
+        complete(JobStateList(jobs.map(j => Converter.ofSpec(j)),count))
+    }
+
+    @Path("/job-counts")
+    @ApiOperation(value = "Retrieve grouped job counts", nickname = "countJobStates", httpMethod = "GET")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "project", value = "Project name", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "job", value = "Job name", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "phase", value = "Execution phase", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "status", value = "Execution status", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "grouping", value = "Grouping attribute", required = true,
+            dataType = "int", paramType = "query")
+    ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobStateList])
+    ))
+    def countJobs(project:Option[String], job:Option[String], phase:Option[String], status:Option[String], grouping:String) : server.Route = {
+        val query = JobQuery(
+            project=project, job=job,
+            phase=phase.map(Phase.ofString),
+            status=status.map(Status.ofString)
+        )
+        val g = grouping.toLowerCase(Locale.ROOT) match {
+            case "job" => JobColumn.NAME
+            case "name" => JobColumn.NAME
+            case "status" => JobColumn.STATUS
+            case "phase" => JobColumn.PHASE
+        }
+        val count = history.countJobStates(query, g)
+        complete(JobStateCounts(count))
     }
 
     @Path("/job")

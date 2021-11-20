@@ -14,6 +14,11 @@ export default {
           .then(response => response.data)
       },
 
+      getJobCounts(grouping) {
+        return axios.get('/api/history/job-counts?grouping=' + grouping)
+            .then(response => response.data)
+      },
+
       getAllJobsHistory() {
         return axios.get('/api/history/jobs')
           .then(response => response.data)

@@ -3,6 +3,9 @@
     fluid
   >
     <v-card>
+      <job-status-chart/>
+    </v-card>
+    <v-card>
       <v-card-title>Job History</v-card-title>
       <v-data-table
         dense
@@ -33,15 +36,17 @@
 
 <script>
   import JobHistoryDetails from "@/components/JobHistoryDetails";
+  import JobStatusChart from "@/components/JobStatusChart";
 
   export default {
-    components: {JobHistoryDetails},
+    components: {JobStatusChart, JobHistoryDetails},
     props: {
     },
 
     data: () => ({
       jobs: [],
-      expanded: [321],
+      expanded: [],
+      total: 0,
       loading: false,
       headers: [
         { text: 'Job Run ID', value: 'id' },
@@ -88,8 +93,9 @@
         this.$api.getAllJobsHistory()
           .then(response => {
             this.title = "Job History"
-            this.jobs = response
-            this.expanded = [321]
+            this.jobs = response.data
+            this.total = response.total
+            this.expanded = []
             this.loading = false
           })
       }

@@ -214,20 +214,47 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       */
     override def findJobStates(query:JobQuery, order:Seq[JobOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[JobState] = {
         withSession { repository =>
-            repository.findJob(query, order, limit, offset)
+            repository.findJobs(query, order, limit, offset)
+        }
+    }
+
+
+    override def countJobStates(query: JobQuery): Int = {
+        withSession { repository =>
+            repository.countJobs(query)
+        }
+    }
+
+
+    override def countJobStates(query: JobQuery, grouping: JobColumn): Map[String, Int] = {
+        withSession { repository =>
+            repository.countJobs(query, grouping).toMap
         }
     }
 
     /**
       * Returns a list of job matching the query criteria
-      * @param query
+     *
+     * @param query
       * @param limit
       * @param offset
       * @return
       */
     override def findTargetStates(query:TargetQuery, order:Seq[TargetOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[TargetState] = {
         withSession { repository =>
-            repository.findTarget(query, order, limit, offset)
+            repository.findTargets(query, order, limit, offset)
+        }
+    }
+
+    override def countTargetStates(query: TargetQuery): Int = {
+        withSession { repository =>
+            repository.countTargets(query)
+        }
+    }
+
+    override def countTargetStates(query: TargetQuery, grouping: TargetColumn): Map[String, Int] = {
+        withSession { repository =>
+            repository.countTargets(query, grouping).toMap
         }
     }
 

@@ -19,22 +19,12 @@ export default {
             .then(response => response.data)
       },
 
-      getAllJobsHistory() {
+      getJobsHistory() {
         return axios.get('/api/history/jobs')
           .then(response => response.data)
       },
 
-      getAllProjectJobsHistory(project) {
-        return axios.get('/api/history/jobs?project=' + project)
-          .then(response => response.data)
-      },
-
-      getProjectJobHistory(project, job) {
-        return axios.get('/api/history/jobs?project=' + project + '&job=' + job)
-          .then(response => response.data)
-      },
-
-      getAllTargetsHistory() {
+      getTargetsHistory() {
         return axios.get('/api/history/targets')
           .then(response => response.data)
       },
@@ -48,11 +38,6 @@ export default {
         return axios.get('/api/history/targets?jobId=' + job)
           .then(response => response.data)
       },
-
-      getProjectTargetsHistory(project, target) {
-        return axios.get('/api/history/targets?project=' + project + '&target=' + target)
-          .then(response => response.data)
-      }
     };
 
     Vue.prototype.$api = api

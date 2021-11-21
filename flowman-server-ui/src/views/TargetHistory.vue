@@ -3,6 +3,25 @@
     fluid
   >
     <v-card>
+      <v-row>
+        <v-col cols="3">
+          <project-selector/>
+        </v-col>
+        <v-col cols="2">
+          <job-selector/>
+        </v-col>
+        <v-col cols="3">
+          <target-selector/>
+        </v-col>
+        <v-col cols="2">
+          <phase-selector/>
+        </v-col>
+        <v-col cols="2">
+          <status-selector/>
+        </v-col>
+      </v-row>
+    </v-card>
+    <v-card>
       <target-charts/>
     </v-card>
     <v-card>
@@ -22,9 +41,14 @@
 
 <script>
   import TargetCharts from "@/components/TargetCharts";
+  import ProjectSelector from "@/components/ProjectSelector";
+  import JobSelector from "@/components/JobSelector";
+  import PhaseSelector from "@/components/PhaseSelector";
+  import StatusSelector from "@/components/StatusSelector";
+  import TargetSelector from "@/components/TargetSelector";
 
   export default {
-    components: {TargetCharts},
+    components: {TargetCharts, ProjectSelector, JobSelector, PhaseSelector, StatusSelector, TargetSelector},
     props: {
     },
 
@@ -53,7 +77,7 @@
     methods: {
       getData() {
         this.loading = true
-        this.$api.getAllTargetsHistory()
+        this.$api.getTargetsHistory()
           .then(response => {
             this.targets = response.data
             this.total = response.total

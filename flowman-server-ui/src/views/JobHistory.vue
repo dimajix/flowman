@@ -3,6 +3,22 @@
     fluid
   >
     <v-card>
+      <v-row>
+        <v-col cols="3">
+          <project-selector/>
+        </v-col>
+        <v-col cols="3">
+          <job-selector/>
+        </v-col>
+        <v-col cols="3">
+          <phase-selector/>
+        </v-col>
+        <v-col cols="3">
+          <status-selector/>
+        </v-col>
+      </v-row>
+    </v-card>
+    <v-card>
       <job-charts/>
     </v-card>
     <v-card>
@@ -37,9 +53,13 @@
 <script>
   import JobHistoryDetails from "@/components/JobHistoryDetails";
   import JobCharts from "@/components/JobCharts";
+  import ProjectSelector from "@/components/ProjectSelector";
+  import JobSelector from "@/components/JobSelector";
+  import PhaseSelector from "@/components/PhaseSelector";
+  import StatusSelector from "@/components/StatusSelector";
 
   export default {
-    components: {JobCharts, JobHistoryDetails},
+    components: {JobCharts, JobHistoryDetails, ProjectSelector, JobSelector, PhaseSelector, StatusSelector},
     props: {
     },
 
@@ -92,7 +112,7 @@
 
       getData() {
         this.loading = true
-        this.$api.getAllJobsHistory()
+        this.$api.getJobsHistory()
           .then(response => {
             this.title = "Job History"
             this.jobs = response.data

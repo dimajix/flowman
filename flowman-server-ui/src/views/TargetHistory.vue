@@ -36,11 +36,13 @@
         { text: 'Target Run ID', value: 'id' },
         { text: 'Job Run ID', value: 'jobId' },
         { text: 'Project Name', value: 'project' },
+        { text: 'Project Version', value: 'version' },
         { text: 'Target Name', value: 'target' },
         { text: 'Build Phase', value: 'phase' },
         { text: 'Status', value: 'status' },
         { text: 'Started at', value: 'startDateTime' },
         { text: 'Finished at', value: 'endDateTime' },
+        { text: 'Error message', value: 'error' },
       ]
     }),
 

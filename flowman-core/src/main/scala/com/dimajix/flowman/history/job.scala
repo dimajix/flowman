@@ -55,7 +55,8 @@ final case class JobState(
     args:Map[String,String],
     status:Status,
     startDateTime:Option[ZonedDateTime] = None,
-    endDateTime:Option[ZonedDateTime] = None
+    endDateTime:Option[ZonedDateTime] = None,
+    error:Option[String] = None
 )
 
 

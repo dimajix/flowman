@@ -22,6 +22,9 @@
           <th class="text-left">
             End
           </th>
+          <th class="text-left">
+            Error
+          </th>
         </tr>
         </thead>
         <tbody>
@@ -33,6 +36,7 @@
           <td><v-icon>{{ getIcon(item.status) }}</v-icon> {{ item.status }}</td>
           <td>{{ item.startDateTime }}</td>
           <td>{{ item.endDateTime }}</td>
+          <td>{{ item.error }}</td>
         </tr>
         </tbody>
       </template>

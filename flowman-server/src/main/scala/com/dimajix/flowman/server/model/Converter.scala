@@ -45,12 +45,14 @@ object Converter {
             jobState.id,
             jobState.namespace,
             jobState.project,
+            jobState.version,
             jobState.job,
             jobState.phase.toString,
             jobState.args,
             jobState.status.toString,
             jobState.startDateTime,
             jobState.endDateTime,
+            jobState.error,
             measurements.map(ofSpec)
         )
     }
@@ -61,12 +63,14 @@ object Converter {
             state.jobId,
             state.namespace,
             state.project,
+            state.version,
             state.target,
             state.partitions,
             state.phase.toString,
             state.status.toString,
             state.startDateTime,
-            state.endDateTime
+            state.endDateTime,
+            state.error
         )
     }
 }

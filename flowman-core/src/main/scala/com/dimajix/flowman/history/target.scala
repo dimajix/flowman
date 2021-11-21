@@ -60,7 +60,8 @@ final case class TargetState(
     phase:Phase,
     status:Status,
     startDateTime:Option[ZonedDateTime] = None,
-    endDateTime:Option[ZonedDateTime] = None
+    endDateTime:Option[ZonedDateTime] = None,
+    error:Option[String] = None
 )
 
 

@@ -73,9 +73,10 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             job.job,
             null,
             hashArgs(job),
+            None,
+            None,
             null,
-            null,
-            null
+            None
         )
         logger.debug(s"Checking last state of '${run.phase}' job '${run.namespace}/${run.project}/${run.job}' in history database")
         withSession { repository =>
@@ -109,9 +110,10 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             job.name,
             phase.upper,
             hashArgs(instance),
-            now,
-            new Timestamp(0),
-            Status.RUNNING.upper
+            Some(now),
+            None,
+            Status.RUNNING.upper,
+            None
         )
 
         logger.debug(s"Start '${phase}' job '${run.namespace}/${run.project}/${run.job}' in history database")
@@ -132,7 +134,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession{ repository =>
-            repository.setJobStatus(run.copy(end_ts = now, status=status.upper))
+            repository.setJobStatus(run.copy(end_ts = Some(now), status=status.upper, error=result.exception.map(_.toString)))
             repository.insertJobMetrics(run, metrics)
         }
     }
@@ -143,7 +145,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       * @return
       */
     override def getTargetState(target:TargetInstance) : Option[TargetState] = {
-        val run =  TargetRun(
+        val run = TargetRun(
             0,
             None,
             target.namespace,
@@ -152,9 +154,10 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             target.target,
             null,
             hashPartitions(target),
+            None,
+            None,
             null,
-            null,
-            null
+            None
         )
         logger.debug(s"Checking state of target '${run.namespace}/${run.project}/${run.target}' in history database")
         withSession { repository =>
@@ -178,9 +181,10 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             target.name,
             phase.upper,
             hashPartitions(instance),
-            now,
-            new Timestamp(0),
-            Status.RUNNING.upper
+            Some(now),
+            None,
+            Status.RUNNING.upper,
+            None
         )
 
         logger.debug(s"Start '$phase' target '${run.namespace}/${run.project}/${run.target}' in history database")
@@ -201,7 +205,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession{ repository =>
-            repository.setTargetStatus(run.copy(end_ts = now, status=status.upper))
+            repository.setTargetStatus(run.copy(end_ts = Some(now), status=status.upper, error=result.exception.map(_.toString)))
         }
     }
 

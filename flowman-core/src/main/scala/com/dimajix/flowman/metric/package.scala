@@ -62,13 +62,7 @@ package object metric {
     def withWallTime[T](registry: MetricSystem, metadata : Metadata, phase:Phase)(fn: => T) : T = {
         // Create and register bundle
         val metricName = metadata.category + "_runtime"
-        val bundleLabels = Map(
-            "category" -> metadata.category,
-            "kind" -> metadata.kind,
-            "namespace" -> metadata.namespace.getOrElse(""),
-            "project" -> metadata.project.getOrElse(""),
-            "phase" -> phase.toString
-        )
+        val bundleLabels = metadata.asMap + ("phase" -> phase.toString)
         val bundle = registry.getOrCreateBundle(Selector(Some(metricName), bundleLabels))(MultiMetricBundle(metricName, bundleLabels))
 
         // Create and register metric

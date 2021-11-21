@@ -44,9 +44,10 @@ private[history] object JdbcStateRepository {
         job:String,
         phase:String,
         args_hash:String,
-        start_ts:Timestamp,
-        end_ts:Timestamp,
-        status:String
+        start_ts:Option[Timestamp],
+        end_ts:Option[Timestamp],
+        status:String,
+        error:Option[String]
     ) extends JobToken
 
     case class JobArgument(
@@ -77,9 +78,10 @@ private[history] object JdbcStateRepository {
         target:String,
         phase:String,
         partitions_hash:String,
-        start_ts:Timestamp,
-        end_ts:Timestamp,
-        status:String
+        start_ts:Option[Timestamp],
+        end_ts:Option[Timestamp],
+        status:String,
+        error:Option[String]
     ) extends TargetToken
 
     case class TargetPartition(
@@ -127,13 +129,14 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         def job = column[String]("job")
         def phase = column[String]("phase")
         def args_hash = column[String]("args_hash")
-        def start_ts = column[Timestamp]("start_ts")
-        def end_ts = column[Timestamp]("end_ts")
+        def start_ts = column[Option[Timestamp]]("start_ts")
+        def end_ts = column[Option[Timestamp]]("end_ts")
         def status = column[String]("status")
+        def error = column[Option[String]]("error")
 
         def idx = index("JOB_RUN_IDX", (namespace, project, job, phase, args_hash, status), unique = false)
 
-        def * = (id, namespace, project, version, job, phase, args_hash, start_ts, end_ts, status) <> (JobRun.tupled, JobRun.unapply)
+        def * = (id, namespace, project, version, job, phase, args_hash, start_ts, end_ts, status, error) <> (JobRun.tupled, JobRun.unapply)
     }
 
     class JobArguments(tag: Tag) extends Table[JobArgument](tag, "JOB_ARGUMENT") {
@@ -180,14 +183,15 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         def target = column[String]("target")
         def phase = column[String]("phase")
         def partitions_hash = column[String]("partitions_hash")
-        def start_ts = column[Timestamp]("start_ts")
-        def end_ts = column[Timestamp]("end_ts")
+        def start_ts = column[Option[Timestamp]]("start_ts")
+        def end_ts = column[Option[Timestamp]]("end_ts")
         def status = column[String]("status")
+        def error = column[Option[String]]("error")
 
         def idx = index("TARGET_RUN_IDX", (namespace, project, target, phase, partitions_hash, status), unique = false)
         def job = foreignKey("TARGET_RUN_JOB_RUN_FK", job_id, jobRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
-        def * = (id, job_id, namespace, project, version, target, phase, partitions_hash, start_ts, end_ts, status) <> (TargetRun.tupled, TargetRun.unapply)
+        def * = (id, job_id, namespace, project, version, target, phase, partitions_hash, start_ts, end_ts, status, error) <> (TargetRun.tupled, TargetRun.unapply)
     }
 
     class TargetPartitions(tag: Tag) extends Table[TargetPartition](tag, "TARGET_PARTITION") {
@@ -261,13 +265,14 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             Phase.ofString(state.phase),
             args,
             Status.ofString(state.status),
-            Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
-            Option(state.end_ts).map(_.toInstant.atZone(ZoneId.of("UTC")))
+            state.start_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
+            state.end_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
+            state.error
         ))
     }
 
     def setJobStatus(run:JobRun) : Unit = {
-        val q = jobRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status)).update((run.end_ts, run.status))
+        val q = jobRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status, r.error)).update((run.end_ts, run.status, run.error))
         Await.result(db.run(q), Duration.Inf)
     }
 
@@ -324,8 +329,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .optionalFilter(query.job)(_.job === _)
             .optionalFilter(query.status)(_.status === _.toString)
             .optionalFilter(query.phase)(_.phase === _.toString)
-            .optionalFilter(query.from)((e,v) => e.start_ts >= Timestamp.from(v.toInstant))
-            .optionalFilter(query.to)((e,v) => e.start_ts <= Timestamp.from(v.toInstant))
+            .optionalFilter(query.from)((e,v) => e.start_ts.getOrElse(new Timestamp(0)) >= Timestamp.from(v.toInstant))
+            .optionalFilter(query.to)((e,v) => e.start_ts.getOrElse(new Timestamp(0)) <= Timestamp.from(v.toInstant))
     }
 
     def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = {
@@ -385,8 +390,9 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                     Phase.ofString(state.phase),
                     args.map(a => a.name -> a.value).toMap,
                     Status.ofString(state.status),
-                    Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
-                    Option(state.end_ts).map(_.toInstant.atZone(ZoneId.of("UTC")))
+                    state.start_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
+                    state.end_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
+                    state.error
                 )
             }
             .toSeq
@@ -452,13 +458,14 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             parts,
             Phase.ofString(state.phase),
             Status.ofString(state.status),
-            Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
-            Option(state.end_ts).map(_.toInstant.atZone(ZoneId.of("UTC")))
+            state.start_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
+            state.end_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
+            state.error
         ))
     }
 
     def setTargetStatus(run:TargetRun) : Unit = {
-        val q = targetRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status)).update((run.end_ts, run.status))
+        val q = targetRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status, r.error)).update((run.end_ts, run.status, run.error))
         Await.result(db.run(q), Duration.Inf)
     }
 
@@ -486,8 +493,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .optionalFilter(query.status)(_.status === _.toString)
             .optionalFilter(query.phase)(_.phase === _.toString)
             .optionalFilter2(query.jobId)((e,v) => e.job_id === v.toLong)
-            .optionalFilter(query.from)((e,v) => e.start_ts >= Timestamp.from(v.toInstant))
-            .optionalFilter(query.to)((e,v) => e.start_ts <= Timestamp.from(v.toInstant))
+            .optionalFilter(query.from)((e,v) => e.start_ts.getOrElse(new Timestamp(0)) >= Timestamp.from(v.toInstant))
+            .optionalFilter(query.to)((e,v) => e.start_ts.getOrElse(new Timestamp(0)) <= Timestamp.from(v.toInstant))
     }
 
     private def mapTargetColumn(column:TargetColumn) : TargetRuns => Rep[_] = {
@@ -553,8 +560,9 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                     partitions.map(t => t.name -> t.value).toMap,
                     Phase.ofString(state.phase),
                     Status.ofString(state.status),
-                    Option(state.start_ts).map(_.toInstant.atZone(ZoneId.of("UTC"))),
-                    Option(state.end_ts).map(_.toInstant.atZone(ZoneId.of("UTC")))
+                    state.start_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
+                    state.end_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
+                    state.error
                 )
             }
             .toSeq

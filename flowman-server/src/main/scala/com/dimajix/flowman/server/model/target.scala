@@ -19,26 +19,28 @@ package com.dimajix.flowman.server.model
 import java.time.ZonedDateTime
 
 
-final case class JobState(
+final case class TargetState(
     id:String,
+    jobId:Option[String],
     namespace:String,
     project:String,
-    job:String,
+    version:String,
+    target:String,
+    partitions:Map[String,String],
     phase:String,
-    args:Map[String,String],
     status:String,
     startDateTime:Option[ZonedDateTime] = None,
     endDateTime:Option[ZonedDateTime] = None,
-    metrics:Seq[Measurement] = Seq()
+    error:Option[String] = None
 )
 
 
-final case class JobStateList(
-    data:Seq[JobState],
+final case class TargetStateList(
+    data:Seq[TargetState],
     total:Int
 )
 
 
-final case class JobStateCounts(
+final case class TargetStateCounts(
     data:Map[String,Int]
 )

@@ -51,11 +51,13 @@
       headers: [
         { text: 'Job Run ID', value: 'id' },
         { text: 'Project Name', value: 'project' },
+        { text: 'Project Version', value: 'version' },
         { text: 'Job Name', value: 'job' },
         { text: 'Build Phase', value: 'phase' },
         { text: 'Status', value: 'status' },
         { text: 'Started at', value: 'startDateTime' },
         { text: 'Finished at', value: 'endDateTime' },
+        { text: 'Error message', value: 'error' },
       ]
     }),
 

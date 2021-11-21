@@ -58,16 +58,16 @@ class TargetHistoryService(history:StateStore) {
         ~
         pathPrefix("target-counts") {(
             pathEnd {
-                parameters(('project.?, 'job.?, 'target.?, 'phase.?, 'status.?, 'grouping)) { (project,job,target,phase,status,grouping) =>
-                    countTargets(project, job, target, phase, status, grouping)
+                parameters(('project.?, 'job.?, 'jobId.?, 'target.?, 'phase.?, 'status.?, 'grouping)) { (project,job,jobId,target,phase,status,grouping) =>
+                    countTargets(project, job, target, jobId, phase, status, grouping)
                 }
             }
         )}
         ~
         pathPrefix("targets") {(
             pathEnd {
-                parameters(('project.?, 'job.?, 'target.?, 'phase.?, 'status.?, 'limit.as[Int].?, 'offset.as[Int].?)) { (project,job,target,phase,status,limit,offset) =>
-                    listTargetStates(project, job, target, phase, status,limit,offset)
+                parameters(('project.?, 'job.?, 'jobId.?, 'target.?, 'phase.?, 'status.?, 'limit.as[Int].?, 'offset.as[Int].?)) { (project,job,jobId,target,phase,status,limit,offset) =>
+                    listTargetStates(project, job, target, jobId, phase, status,limit,offset)
                 }
             }
         )}
@@ -82,6 +82,8 @@ class TargetHistoryService(history:StateStore) {
             dataType = "string", paramType = "query"),
         new ApiImplicitParam(name = "target", value = "Target name", required = false,
             dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "jobId", value = "Parent job id", required = false,
+            dataType = "string", paramType = "query"),
         new ApiImplicitParam(name = "phase", value = "Execution phase", required = false,
             dataType = "string", paramType = "query"),
         new ApiImplicitParam(name = "status", value = "Execution status", required = false,
@@ -94,10 +96,11 @@ class TargetHistoryService(history:StateStore) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Target information", response = classOf[model.TargetStateList])
     ))
-    def listTargetStates(project:Option[String], job:Option[String], target:Option[String], phase:Option[String], status:Option[String], limit:Option[Int], offset:Option[Int]) : server.Route = {
+    def listTargetStates(project:Option[String], job:Option[String], target:Option[String], jobId:Option[String], phase:Option[String], status:Option[String], limit:Option[Int], offset:Option[Int]) : server.Route = {
         val query = TargetQuery(
             project=project,
             job=job,
+            jobId=jobId,
             target=target,
             phase=phase.map(Phase.ofString),
             status=status.map(Status.ofString)
@@ -116,6 +119,8 @@ class TargetHistoryService(history:StateStore) {
             dataType = "string", paramType = "query"),
         new ApiImplicitParam(name = "job", value = "Parent job name", required = false,
             dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "jobId", value = "Parent job id", required = false,
+            dataType = "string", paramType = "query"),
         new ApiImplicitParam(name = "phase", value = "Execution phase", required = false,
             dataType = "string", paramType = "query"),
         new ApiImplicitParam(name = "status", value = "Execution status", required = false,
@@ -126,11 +131,12 @@ class TargetHistoryService(history:StateStore) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Target information", response = classOf[model.TargetStateList])
     ))
-    def countTargets(project:Option[String], target:Option[String], job:Option[String], phase:Option[String], status:Option[String], grouping:String) : server.Route = {
+    def countTargets(project:Option[String], target:Option[String], job:Option[String], jobId:Option[String], phase:Option[String], status:Option[String], grouping:String) : server.Route = {
         val query = TargetQuery(
             project=project,
             target=target,
             job=job,
+            jobId=jobId,
             phase=phase.map(Phase.ofString),
             status=status.map(Status.ofString)
         )

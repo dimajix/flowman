@@ -44,8 +44,8 @@ export default {
           .then(response => response.data)
       },
 
-      getAllProjectTargetsHistory(project) {
-        return axios.get('/api/history/targets?project=' + project)
+      getJobTargets(job) {
+        return axios.get('/api/history/targets?jobId=' + job)
           .then(response => response.data)
       },
 

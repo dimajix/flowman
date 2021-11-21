@@ -3,7 +3,7 @@
     fluid
   >
     <v-card>
-      <target-status-chart/>
+      <target-charts/>
     </v-card>
     <v-card>
       <v-card-title>Target History</v-card-title>
@@ -21,10 +21,10 @@
 </template>
 
 <script>
-  import TargetStatusChart from "@/components/TargetStatusChart";
+  import TargetCharts from "@/components/TargetCharts";
 
   export default {
-    components: {TargetStatusChart},
+    components: {TargetCharts},
     props: {
     },
 

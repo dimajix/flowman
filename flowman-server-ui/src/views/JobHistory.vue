@@ -3,7 +3,7 @@
     fluid
   >
     <v-card>
-      <job-status-chart/>
+      <job-charts/>
     </v-card>
     <v-card>
       <v-card-title>Job History</v-card-title>
@@ -36,10 +36,10 @@
 
 <script>
   import JobHistoryDetails from "@/components/JobHistoryDetails";
-  import JobStatusChart from "@/components/JobStatusChart";
+  import JobCharts from "@/components/JobCharts";
 
   export default {
-    components: {JobStatusChart, JobHistoryDetails},
+    components: {JobCharts, JobHistoryDetails},
     props: {
     },
 

@@ -12,6 +12,7 @@
 
 <script>
 import PieChart from "@/charts/PieChart.js";
+import Gradient from "javascript-color-gradient";
 
 export default {
   name: 'TargetProjectChart',
@@ -30,14 +31,8 @@ export default {
           align: 'center'
         },
       },
-      statusData: {},
-      statusLoaded: false,
-      phaseData: {},
-      phaseLoaded: false,
       projectData: {},
       projectLoaded: false,
-      targetData: {},
-      targetLoaded: false
     };
   },
 
@@ -50,11 +45,15 @@ export default {
       this.projectLoaded = false
       this.$api.getJobCounts('project')
         .then(response => {
+          const colorGradient = new Gradient();
+          colorGradient.setGradient("#407060", "#9090e0");
+          colorGradient.setMidpoint(Object.values(response.data).length);
+
           this.projectData = {
             labels: Object.keys(response.data),
             datasets: [
               {
-                backgroundColor: ["#11B883", "#00D8FF", "#E46651", "#E42651", "#E46611", "#846651"],
+                backgroundColor: colorGradient.getArray(),
                 data: Object.values(response.data)
               }
             ]

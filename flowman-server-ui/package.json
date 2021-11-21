@@ -11,6 +11,7 @@
     "axios": "^0.21.4",
     "chart.js": "^2.9.4",
     "core-js": "^3.18.2",
+    "javascript-color-gradient": "^1.3.2",
     "vue": "^2.6.14",
     "vue-chartjs": "^3.5.1",
     "vue-router": "^3.5.0",

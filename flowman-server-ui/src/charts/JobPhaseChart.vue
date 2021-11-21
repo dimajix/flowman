@@ -43,15 +43,15 @@ export default {
       this.$api.getJobCounts('phase')
         .then(response => {
           this.phaseData = {
-            labels: ["Verify", "Create", "Build", "Validate", "Truncate", "Destroy"],
+            labels: ["Validate", "Create", "Build", "Verify", "Truncate", "Destroy"],
             datasets: [
               {
-                backgroundColor: ["#11B883", "#00D8FF", "#E46651", "#E42651", "#E46611", "#846651"],
+                backgroundColor: ["#ffde09", "#daff00", "#00ff4e", "#00ffcd", "#e009ff", "#ff2800"],
                 data: [
-                  response.data["VERIFY"],
+                  response.data["VALIDATE"],
                   response.data["CREATE"],
                   response.data["BUILD"],
-                  response.data["VALIDATE"],
+                  response.data["VERIFY"],
                   response.data["TRUNCATE"],
                   response.data["DESTROY"]
                 ]

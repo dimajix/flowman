@@ -49,6 +49,7 @@ trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
     implicit val jobStateCountsFormat: RootJsonFormat[JobStateCounts] = jsonFormat1(JobStateCounts)
     implicit val targetStateFormat: RootJsonFormat[TargetState] = jsonFormat10(TargetState)
     implicit val targetStateListFormat: RootJsonFormat[TargetStateList] = jsonFormat2(TargetStateList)
+    implicit val targetStateCountsFormat: RootJsonFormat[TargetStateCounts] = jsonFormat1(TargetStateCounts)
 }
 
 

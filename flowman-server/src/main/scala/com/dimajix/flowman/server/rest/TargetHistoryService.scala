@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.server.rest
 
+import java.util.Locale
+
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Route
 import io.swagger.annotations.Api
@@ -28,11 +30,16 @@ import javax.ws.rs.Path
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.history.JobColumn
+import com.dimajix.flowman.history.JobQuery
 import com.dimajix.flowman.history.StateStore
+import com.dimajix.flowman.history.TargetColumn
 import com.dimajix.flowman.history.TargetOrder
 import com.dimajix.flowman.history.TargetQuery
 import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
+import com.dimajix.flowman.server.model.JobStateCounts
+import com.dimajix.flowman.server.model.TargetStateCounts
 import com.dimajix.flowman.server.model.TargetStateList
 
 
@@ -47,16 +54,24 @@ class TargetHistoryService(history:StateStore) {
             path(Segment) { target =>
                 getTargetState(target)
             }
-            )}
-            ~
-            pathPrefix("targets") {(
-                pathEnd {
-                    parameters(('project.?, 'job.?, 'target.?, 'phase.?, 'status.?, 'limit.as[Int].?, 'offset.as[Int].?)) { (project,job,target,phase,status,limit,offset) =>
-                        listTargetStates(project, job, target, phase, status,limit,offset)
-                    }
+        )}
+        ~
+        pathPrefix("target-counts") {(
+            pathEnd {
+                parameters(('project.?, 'job.?, 'target.?, 'phase.?, 'status.?, 'grouping)) { (project,job,target,phase,status,grouping) =>
+                    countTargets(project, job, target, phase, status, grouping)
                 }
-            )}
-        )
+            }
+        )}
+        ~
+        pathPrefix("targets") {(
+            pathEnd {
+                parameters(('project.?, 'job.?, 'target.?, 'phase.?, 'status.?, 'limit.as[Int].?, 'offset.as[Int].?)) { (project,job,target,phase,status,limit,offset) =>
+                    listTargetStates(project, job, target, phase, status,limit,offset)
+                }
+            }
+        )}
+    )
 
     @Path("/targets")
     @ApiOperation(value = "Retrieve general information about a job", nickname = "getAllTaretStates", httpMethod = "GET")
@@ -90,6 +105,45 @@ class TargetHistoryService(history:StateStore) {
         val targets = history.findTargetStates(query, Seq(TargetOrder.BY_DATETIME.desc()), limit.getOrElse(1000), offset.getOrElse(0))
         val count = history.countTargetStates(query)
         complete(TargetStateList(targets.map(Converter.ofSpec), count))
+    }
+
+    @Path("/target-counts")
+    @ApiOperation(value = "Retrieve grouped target counts", nickname = "countTargetStates", httpMethod = "GET")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "project", value = "Project name", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "target", value = "Target name", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "job", value = "Parent job name", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "phase", value = "Execution phase", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "status", value = "Execution status", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "grouping", value = "Grouping attribute", required = true,
+            dataType = "int", paramType = "query")
+    ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Target information", response = classOf[model.TargetStateList])
+    ))
+    def countTargets(project:Option[String], target:Option[String], job:Option[String], phase:Option[String], status:Option[String], grouping:String) : server.Route = {
+        val query = TargetQuery(
+            project=project,
+            target=target,
+            job=job,
+            phase=phase.map(Phase.ofString),
+            status=status.map(Status.ofString)
+        )
+        val g = grouping.toLowerCase(Locale.ROOT) match {
+            case "project" => TargetColumn.PROJECT
+            case "target" => TargetColumn.NAME
+            case "name" => TargetColumn.NAME
+            case "job" => TargetColumn.PARENT_NAME
+            case "status" => TargetColumn.STATUS
+            case "phase" => TargetColumn.PHASE
+        }
+        val count = history.countTargetStates(query, g)
+        complete(TargetStateCounts(count))
     }
 
     @Path("/target")

@@ -124,6 +124,7 @@ class JobHistoryService(history:StateStore) {
             status=status.map(Status.ofString)
         )
         val g = grouping.toLowerCase(Locale.ROOT) match {
+            case "project" => JobColumn.PROJECT
             case "job" => JobColumn.NAME
             case "name" => JobColumn.NAME
             case "status" => JobColumn.STATUS

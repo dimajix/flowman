@@ -62,6 +62,7 @@ final case class JobState(
 sealed abstract class JobColumn
 object JobColumn {
     case object DATETIME extends JobColumn
+    case object PROJECT extends JobColumn
     case object NAME extends JobColumn
     case object ID extends JobColumn
     case object STATUS extends JobColumn
@@ -70,6 +71,7 @@ object JobColumn {
 
 object JobOrder {
     final val BY_DATETIME = JobOrder(JobColumn.DATETIME)
+    final val BY_PROJECT = JobOrder(JobColumn.PROJECT)
     final val BY_NAME = JobOrder(JobColumn.NAME)
     final val BY_ID = JobOrder(JobColumn.ID)
     final val BY_STATUS = JobOrder(JobColumn.STATUS)

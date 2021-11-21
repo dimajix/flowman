@@ -2,38 +2,38 @@
   <v-container fluid>
     <v-row dense no-gutters>
       <v-col cols="3">
-        <v-subheader class="title" inset>Job Status</v-subheader>
+        <v-subheader class="title" inset>Target Status</v-subheader>
         <pie-chart
-          height="160"
+          height=160
           v-if="statusLoaded"
           :data="statusData"
           :options="chartOptions">
         </pie-chart>
       </v-col>
-      <v-col  cols="3">
-        <v-subheader class="title" inset>Job Phase</v-subheader>
+      <v-col cols="3">
+        <v-subheader class="title" inset>Target Phase</v-subheader>
         <pie-chart
-          height="160"
+          height=160
           v-if="phaseLoaded"
           :data="phaseData"
           :options="chartOptions">
         </pie-chart>
       </v-col>
-      <v-col  cols="3">
+      <v-col cols="3">
         <v-subheader class="title" inset>Project Name</v-subheader>
         <pie-chart
-          height="160"
+          height=160
           v-if="projectLoaded"
           :data="projectData"
           :options="chartOptions">
         </pie-chart>
       </v-col>
-      <v-col  cols="3">
-        <v-subheader class="title" inset>Job Name</v-subheader>
+      <v-col cols="3">
+        <v-subheader class="title" inset>Target Name</v-subheader>
         <pie-chart
-          height="160"
-          v-if="jobLoaded"
-          :data="jobData"
+          height=160
+          v-if="targetLoaded"
+          :data="targetData"
           :options="chartOptions">
         </pie-chart>
       </v-col>
@@ -45,7 +45,7 @@
 import PieChart from "@/charts/PieChart.js";
 
 export default {
-  name: 'JobStatusChart',
+  name: 'TargetStatusChart',
   components: {
     PieChart
   },
@@ -67,8 +67,8 @@ export default {
       phaseLoaded: false,
       projectData: {},
       projectLoaded: false,
-      jobData: {},
-      jobLoaded: false
+      targetData: {},
+      targetLoaded: false
     };
   },
 
@@ -79,13 +79,13 @@ export default {
   methods: {
     getData() {
       this.statusLoaded = false
-      this.$api.getJobCounts('status')
+      this.$api.getTargetCounts('status')
         .then(response => {
           this.statusData = {
             labels: ["Success", "Skipped", "Failed"],
             datasets: [
               {
-                backgroundColor: ["#41B883", "#00D8FF", "#E42651"],
+                backgroundColor: ["#41B883", "#00D8FF", "#E46651"],
                 data: [response.data["SUCCESS"],  response.data["SKIPPED"], response.data["FAILED"]]
               }
             ]
@@ -94,7 +94,7 @@ export default {
         })
 
       this.phaseLoaded = false
-      this.$api.getJobCounts('phase')
+      this.$api.getTargetCounts('phase')
         .then(response => {
           this.phaseData = {
             labels: ["Verify", "Create", "Build", "Validate", "Truncate", "Destroy"],
@@ -130,10 +130,10 @@ export default {
           this.projectLoaded = true
         })
 
-      this.jobLoaded = false
-      this.$api.getJobCounts('job')
+      this.targetLoaded = false
+      this.$api.getTargetCounts('target')
         .then(response => {
-          this.jobData = {
+          this.targetData = {
             labels: Object.keys(response.data),
             datasets: [
               {
@@ -142,7 +142,7 @@ export default {
               }
             ]
           }
-          this.jobLoaded = true
+          this.targetLoaded = true
         })
     }
   }

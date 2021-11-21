@@ -333,6 +333,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             order.column match {
                 case JobColumn.DATETIME => t => t.start_ts
                 case JobColumn.ID => t => t.id
+                case JobColumn.PROJECT => t => t.project
                 case JobColumn.NAME => t => t.job
                 case JobColumn.PHASE => t => t.phase
                 case JobColumn.STATUS => t => t.status
@@ -404,6 +405,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             column match {
                 case JobColumn.DATETIME => t => t.start_ts.asColumnOf[String]
                 case JobColumn.ID => t => t.id.asColumnOf[String]
+                case JobColumn.PROJECT => t => t.project
                 case JobColumn.NAME => t => t.job
                 case JobColumn.PHASE => t => t.phase
                 case JobColumn.STATUS => t => t.status
@@ -492,9 +494,11 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         column match {
             case TargetColumn.DATETIME => t => t.start_ts
             case TargetColumn.ID => t => t.id
+            case TargetColumn.PROJECT => t => t.project
             case TargetColumn.NAME => t => t.target
             case TargetColumn.PHASE => t => t.phase
             case TargetColumn.STATUS => t => t.status
+            case TargetColumn.PARENT_ID => t => t.job_id
         }
     }
 
@@ -512,9 +516,11 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                     val result = o.column match {
                         case TargetColumn.DATETIME => cmpOpt(l.startDateTime, r.startDateTime)(cmpDt)
                         case TargetColumn.ID => cmpStr(l.id, r.id)
+                        case TargetColumn.PROJECT => cmpStr(l.project, r.project)
                         case TargetColumn.NAME => cmpStr(l.target, r.target)
                         case TargetColumn.PHASE => cmpStr(l.phase.toString, r.phase.toString)
                         case TargetColumn.STATUS => cmpStr(l.status.toString, r.status.toString)
+                        case TargetColumn.PARENT_ID => cmpOpt(l.jobId, r.jobId)(cmpStr)
                     }
                     if (o.isAscending)
                         result
@@ -567,9 +573,11 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             column match {
                 case TargetColumn.DATETIME => t => t.start_ts.asColumnOf[String]
                 case TargetColumn.ID => t => t.id.asColumnOf[String]
+                case TargetColumn.PROJECT => t => t.project
                 case TargetColumn.NAME => t => t.target
                 case TargetColumn.PHASE => t => t.phase
                 case TargetColumn.STATUS => t => t.status
+                case TargetColumn.PARENT_ID => t => t.job_id.asColumnOf[String]
             }
         }
 

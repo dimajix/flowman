@@ -39,6 +39,11 @@ export default {
           .then(response => response.data)
       },
 
+      getTargetCounts(grouping) {
+        return axios.get('/api/history/target-counts?grouping=' + grouping)
+          .then(response => response.data)
+      },
+
       getAllProjectTargetsHistory(project) {
         return axios.get('/api/history/targets?project=' + project)
           .then(response => response.data)

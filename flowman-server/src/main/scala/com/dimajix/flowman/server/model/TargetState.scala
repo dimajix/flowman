@@ -37,3 +37,8 @@ final case class TargetStateList(
     data:Seq[TargetState],
     total:Int
 )
+
+
+final case class TargetStateCounts(
+    data:Map[String,Int]
+)

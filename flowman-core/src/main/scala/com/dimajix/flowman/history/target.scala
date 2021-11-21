@@ -67,6 +67,7 @@ final case class TargetState(
 sealed abstract class TargetColumn
 object TargetColumn {
     case object DATETIME extends TargetColumn
+    case object PROJECT extends TargetColumn
     case object NAME extends TargetColumn
     case object ID extends TargetColumn
     case object STATUS extends TargetColumn
@@ -77,6 +78,7 @@ object TargetColumn {
 
 object TargetOrder {
     final val BY_DATETIME = TargetOrder(TargetColumn.DATETIME)
+    final val BY_PROJECT = TargetOrder(TargetColumn.PROJECT)
     final val BY_NAME = TargetOrder(TargetColumn.NAME)
     final val BY_ID = TargetOrder(TargetColumn.ID)
     final val BY_STATUS = TargetOrder(TargetColumn.STATUS)

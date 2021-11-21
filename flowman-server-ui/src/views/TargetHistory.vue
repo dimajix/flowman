@@ -3,6 +3,9 @@
     fluid
   >
     <v-card>
+      <target-status-chart/>
+    </v-card>
+    <v-card>
       <v-card-title>Target History</v-card-title>
       <v-data-table
         dense
@@ -18,7 +21,10 @@
 </template>
 
 <script>
+  import TargetStatusChart from "@/components/TargetStatusChart";
+
   export default {
+    components: {TargetStatusChart},
     props: {
     },
 

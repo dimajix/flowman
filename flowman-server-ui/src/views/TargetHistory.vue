@@ -2,42 +2,49 @@
   <v-container
     fluid
   >
-    <v-card>
-      <target-charts
-        v-model="filter"
-      />
-    </v-card>
-    <v-card>
-      <v-card-title>Target History</v-card-title>
-      <v-data-table
-        :headers="headers"
-        :items="targets"
-        :loading="loading"
-        :options.sync="options"
-        :server-items-length="total"
-        item-key="id"
-        class="elevation-1"
-        :footer-props="{
-          prevIcon: 'navigate_before',
-          nextIcon: 'navigate_next'
-        }"
-      >
-        <template v-slot:item.status="{ item }">
-          <v-icon>
-            {{ getIcon(item.status) }}
-          </v-icon>
-          {{ item.status }}
-        </template>
-        <template v-slot:item.partitions="{ item }">
-          <v-chip
-            v-for="p in Object.entries(item.partitions) "
-            :key="p"
+    <v-row>
+      <v-col cols="12">
+        <v-card shaped outlined elevation="2">
+          <target-charts
+            v-model="filter"
+          />
+        </v-card>
+      </v-col>
+
+      <v-col cols="12">
+        <v-card shaped outlined elevation="2">
+          <v-card-title>Target History</v-card-title>
+          <v-data-table
+            :headers="headers"
+            :items="targets"
+            :loading="loading"
+            :options.sync="options"
+            :server-items-length="total"
+            item-key="id"
+            class="elevation-1"
+            :footer-props="{
+              prevIcon: 'navigate_before',
+              nextIcon: 'navigate_next'
+            }"
           >
-            {{ p[0] }} : {{ p[1] }}
-          </v-chip>
-        </template>
-      </v-data-table>
-    </v-card>
+            <template v-slot:item.status="{ item }">
+              <v-icon>
+                {{ getIcon(item.status) }}
+              </v-icon>
+              {{ item.status }}
+            </template>
+            <template v-slot:item.partitions="{ item }">
+              <v-chip
+                v-for="p in Object.entries(item.partitions) "
+                :key="p"
+              >
+                {{ p[0] }} : {{ p[1] }}
+              </v-chip>
+            </template>
+          </v-data-table>
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -64,10 +71,10 @@
           {text: 'Target Name', value: 'target'},
           {text: 'Partition', value: 'partitions'},
           {text: 'Build Phase', value: 'phase'},
-          {text: 'Status', value: 'status'},
+          {text: 'Status', value: 'status', width:120},
           {text: 'Started at', value: 'startDateTime'},
           {text: 'Finished at', value: 'endDateTime'},
-          {text: 'Error message', value: 'error', width:100},
+          {text: 'Error message', value: 'error', width:160},
         ]
       }
     },

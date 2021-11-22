@@ -2,42 +2,49 @@
   <v-container
     fluid
   >
-    <v-card>
-      <job-charts
-        v-model="filter"
-      />
-    </v-card>
-    <v-card>
-      <v-card-title>Job History</v-card-title>
-      <v-data-table
-        :headers="headers"
-        :items="jobs"
-        :loading="loading"
-        :options.sync="options"
-        :server-items-length="total"
-        :expanded.sync="expanded"
-        show-expand
-        expand-icon="expand_more"
-        item-key="id"
-        @click:row="clickRow"
-        :footer-props="{
-          prevIcon: 'navigate_before',
-          nextIcon: 'navigate_next'
-        }"
-      >
-        <template v-slot:item.status="{ item }">
-          <v-icon>
-            {{ getIcon(item.status) }}
-          </v-icon>
-          {{ item.status }}
-        </template>
-        <template v-slot:expanded-item="{ item,headers }">
-          <td :colspan="headers.length">
-            <job-history-details :job="item.id"/>
-          </td>
-        </template>
-      </v-data-table>
-    </v-card>
+    <v-row>
+      <v-col cols="12">
+        <v-card shaped outlined elevation="2">
+          <job-charts
+            v-model="filter"
+          />
+        </v-card>
+      </v-col>
+
+      <v-col cols="12">
+        <v-card shaped outlined elevation="2">
+          <v-card-title>Job History</v-card-title>
+          <v-data-table
+            :headers="headers"
+            :items="jobs"
+            :loading="loading"
+            :options.sync="options"
+            :server-items-length="total"
+            :expanded.sync="expanded"
+            show-expand
+            expand-icon="expand_more"
+            item-key="id"
+            @click:row="clickRow"
+            :footer-props="{
+              prevIcon: 'navigate_before',
+              nextIcon: 'navigate_next'
+            }"
+          >
+            <template v-slot:item.status="{ item }">
+              <v-icon>
+                {{ getIcon(item.status) }}
+              </v-icon>
+              {{ item.status }}
+            </template>
+            <template v-slot:expanded-item="{ item,headers }">
+              <td :colspan="headers.length">
+                <job-history-details :job="item.id"/>
+              </td>
+            </template>
+          </v-data-table>
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -64,10 +71,10 @@
           { text: 'Project Version', value: 'version' },
           { text: 'Job Name', value: 'job' },
           { text: 'Build Phase', value: 'phase' },
-          { text: 'Status', value: 'status' },
+          { text: 'Status', value: 'status', width:120 },
           { text: 'Started at', value: 'startDateTime' },
           { text: 'Finished at', value: 'endDateTime' },
-          { text: 'Error message', value: 'error' },
+          { text: 'Error message', value: 'error', width:160 },
         ]
       }
     },

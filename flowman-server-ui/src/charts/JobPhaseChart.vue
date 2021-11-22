@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-subheader class="title" inset>Job Phase</v-subheader>
+    <v-subheader class="title" inset>Job Phases</v-subheader>
     <pie-chart
       height="160"
       v-if="loaded"
@@ -11,7 +11,7 @@
 
 <script>
 import PieChart from "@/charts/PieChart.js";
-import Filter from "@/charts/Filter";
+import Filter from "@/mixins/Filter.js";
 
 export default {
   name: 'JobPhaseChart',

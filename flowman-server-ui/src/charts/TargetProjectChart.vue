@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-subheader class="title" inset>Project Name</v-subheader>
+    <v-subheader class="title" inset>Project Names</v-subheader>
     <pie-chart
       height=160
       v-if="loaded"
@@ -12,7 +12,7 @@
 <script>
 import PieChart from "@/charts/PieChart.js";
 import Gradient from "javascript-color-gradient";
-import Filter from "@/charts/Filter";
+import Filter from "@/mixins/Filter.js";
 
 export default {
   name: 'TargetProjectChart',

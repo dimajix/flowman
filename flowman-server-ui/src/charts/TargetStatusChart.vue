@@ -11,7 +11,7 @@
 
 <script>
 import PieChart from "@/charts/PieChart.js";
-import Filter from "@/charts/Filter";
+import Filter from "@/mixins/Filter.js";
 
 export default {
   name: 'TargetStatusChart',

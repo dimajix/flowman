@@ -10,19 +10,31 @@
     <v-card>
       <v-card-title>Target History</v-card-title>
       <v-data-table
-        dense
         :headers="headers"
         :items="targets"
-        :items-per-page="25"
         :loading="loading"
+        :options.sync="options"
+        :server-items-length="total"
         item-key="id"
         class="elevation-1"
+        :footer-props="{
+          prevIcon: 'navigate_before',
+          nextIcon: 'navigate_next'
+        }"
       >
         <template v-slot:item.status="{ item }">
           <v-icon>
             {{ getIcon(item.status) }}
           </v-icon>
           {{ item.status }}
+        </template>
+        <template v-slot:item.partitions="{ item }">
+          <v-chip
+            v-for="p in Object.entries(item.partitions) "
+            :key="p"
+          >
+            {{ p[0] }} : {{ p[1] }}
+          </v-chip>
         </template>
       </v-data-table>
     </v-card>
@@ -31,63 +43,51 @@
 
 <script>
   import TargetCharts from "@/components/TargetCharts";
+  import Filter from "@/mixins/Filter.js";
 
   export default {
+    name: "TargetHistory",
+    mixins: [Filter],
     components: {TargetCharts},
-    props: {
-    },
 
     data() {
       return {
         targets: [],
         total: 0,
+        options: {},
         loading: false,
-        filter: {
-          projects: [],
-          jobs: [],
-          targets: [],
-          phases: [],
-          status: [],
-        },
         headers: [
           {text: 'Target Run ID', value: 'id'},
           {text: 'Job Run ID', value: 'jobId'},
           {text: 'Project Name', value: 'project'},
           {text: 'Project Version', value: 'version'},
           {text: 'Target Name', value: 'target'},
+          {text: 'Partition', value: 'partitions'},
           {text: 'Build Phase', value: 'phase'},
           {text: 'Status', value: 'status'},
           {text: 'Started at', value: 'startDateTime'},
           {text: 'Finished at', value: 'endDateTime'},
-          {text: 'Error message', value: 'error'},
+          {text: 'Error message', value: 'error', width:100},
         ]
       }
     },
 
-    computed: {
-      projectFilter() { return this.filter.projects },
-      jobFilter() { return this.filter.jobs },
-      targetFilter() { return this.filter.targets },
-      phaseFilter() { return this.filter.phases },
-      statusFilter() { return this.filter.status }
-    },
-
     watch: {
-      projectFilter: function () { this.getData() },
-      jobFilter: function () { this.getData() },
-      targetFilter: function () { this.getData() },
-      phaseFilter: function () { this.getData() },
-      statusFilter: function () { this.getData() },
-    },
-
-    mounted() {
-      this.getData()
+      options: {
+        handler () {
+          this.getData()
+        },
+        deep: true,
+      },
     },
 
     methods: {
       getData() {
+        const { page, itemsPerPage } = this.options
+        const offset = (page-1)*itemsPerPage
+
         this.loading = true
-        this.$api.getTargetsHistory(this.filter.projects, this.filter.jobs, this.filter.targets, this.filter.phases, this.filter.status)
+        this.$api.getTargetsHistory(this.filter.projects, this.filter.jobs, this.filter.targets, this.filter.phases, this.filter.status, offset, itemsPerPage)
           .then(response => {
             this.targets = response.data
             this.total = response.total

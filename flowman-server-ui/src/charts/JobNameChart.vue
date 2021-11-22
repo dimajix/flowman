@@ -11,7 +11,7 @@
 
 <script>
 import PieChart from "@/charts/PieChart.js";
-import Filter from "@/charts/Filter.js";
+import Filter from "@/mixins/Filter.js";
 import Gradient from "javascript-color-gradient";
 
 export default {

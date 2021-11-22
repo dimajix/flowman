@@ -10,15 +10,20 @@
     <v-card>
       <v-card-title>Job History</v-card-title>
       <v-data-table
-        dense
         :headers="headers"
         :items="jobs"
         :loading="loading"
+        :options.sync="options"
+        :server-items-length="total"
         :expanded.sync="expanded"
         show-expand
+        expand-icon="expand_more"
         item-key="id"
-        class="elevation-1"
         @click:row="clickRow"
+        :footer-props="{
+          prevIcon: 'navigate_before',
+          nextIcon: 'navigate_next'
+        }"
       >
         <template v-slot:item.status="{ item }">
           <v-icon>
@@ -39,22 +44,20 @@
 <script>
   import JobHistoryDetails from "@/components/JobHistoryDetails";
   import JobCharts from "@/components/JobCharts";
+  import Filter from "@/mixins/Filter.js";
 
   export default {
+    name: "JobHistory",
+    mixins: [Filter],
     components: {JobCharts, JobHistoryDetails},
 
     data() {
       return {
         jobs: [],
         expanded: [],
+        options: {},
         total: 0,
         loading: false,
-        filter: {
-          projects: [],
-          jobs: [],
-          phases: [],
-          status: [],
-        },
         headers: [
           { text: 'Job Run ID', value: 'id' },
           { text: 'Project Name', value: 'project' },
@@ -69,22 +72,13 @@
       }
     },
 
-    computed: {
-      projectFilter() { return this.filter.projects },
-      jobFilter() { return this.filter.jobs },
-      phaseFilter() { return this.filter.phases },
-      statusFilter() { return this.filter.status }
-    },
-
     watch: {
-      projectFilter: function () { this.getData() },
-      jobFilter: function () { this.getData() },
-      phaseFilter: function () { this.getData() },
-      statusFilter: function () { this.getData() },
-    },
-
-    mounted() {
-      this.getData()
+      options: {
+        handler () {
+          this.getData()
+        },
+        deep: true,
+      },
     },
 
     methods: {
@@ -113,8 +107,11 @@
       },
 
       getData() {
+        const { page, itemsPerPage } = this.options
+        const offset = (page-1)*itemsPerPage
+
         this.loading = true
-        this.$api.getJobsHistory(this.filter.projects, this.filter.jobs, this.filter.phases, this.filter.status)
+        this.$api.getJobsHistory(this.filter.projects, this.filter.jobs, this.filter.phases, this.filter.status, offset, itemsPerPage)
           .then(response => {
             this.title = "Job History"
             this.jobs = response.data

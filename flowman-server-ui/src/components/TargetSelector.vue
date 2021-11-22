@@ -1,18 +1,18 @@
 <template>
   <v-container fluid>
     <v-row align="center">
-      <v-col cols="2">
-        <v-subheader>Targets</v-subheader>
-      </v-col>
-      <v-col cols="9">
+      <v-col cols="11">
         <v-select
           v-model="value"
           :items="targets"
           chips
+          outlined
           label="Filter by Build Target"
           multiple
           clearable
           deletable-chips
+          append-icon="expand_more"
+          clear-icon="clear"
           @input='$emit("input", value)'
         ></v-select>
       </v-col>

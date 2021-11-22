@@ -6,12 +6,15 @@
     </v-card-title>
 
     <h3>Targets</h3>
-    <v-simple-table>
+    <v-simple-table dense>
       <template v-slot:default>
         <thead>
         <tr>
           <th class="text-left">
             Name
+          </th>
+          <th class="text-left">
+            Partition
           </th>
           <th class="text-left">
             Status
@@ -33,6 +36,14 @@
           :key="item.id"
         >
           <td>{{ item.target }}</td>
+          <td>
+            <v-chip small
+              v-for="p in Object.entries(item.partitions) "
+              :key="p"
+            >
+              {{ p[0] }} : {{ p[1] }}
+            </v-chip>
+          </td>
           <td><v-icon>{{ getIcon(item.status) }}</v-icon> {{ item.status }}</td>
           <td>{{ item.startDateTime }}</td>
           <td>{{ item.endDateTime }}</td>

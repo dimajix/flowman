@@ -4,64 +4,52 @@
       <v-col cols="3">
         <v-row>
           <target-project-chart
-            :project-filter="projectFilter"
-            :job-filter="jobFilter"
-            :target-filter="targetFilter"
-            :status-filter="statusFilter"
-            :phase-filter="phaseFilter"
+            :filter="filter"
           />
         </v-row>
         <v-row>
           <project-selector
-            v-model="projectFilter"
+            v-model="filter.projects"
+            @input='$emit("input", filter)'
           />
         </v-row>
       </v-col>
       <v-col cols="3">
         <v-row>
           <target-name-chart
-            :project-filter="projectFilter"
-            :job-filter="jobFilter"
-            :target-filter="targetFilter"
-            :status-filter="statusFilter"
-            :phase-filter="phaseFilter"
+            :filter="filter"
           />
         </v-row>
         <v-row>
           <target-selector
-            v-model="targetFilter"
+            v-model="filter.targets"
+            @input='$emit("input", filter)'
           />
         </v-row>
       </v-col>
       <v-col cols="3">
         <v-row>
         <target-phase-chart
-          :project-filter="projectFilter"
-          :job-filter="jobFilter"
-          :target-filter="targetFilter"
-          :status-filter="statusFilter"
-          :phase-filter="phaseFilter"
+          :filter="filter"
         />
         </v-row>
         <v-row>
           <phase-selector
-            v-model="phaseFilter"
+            v-model="filter.phases"
+            @input='$emit("input", filter)'
           />
         </v-row>
       </v-col>
       <v-col cols="3">
         <v-row>
           <target-status-chart
-            :project-filter="projectFilter"
-            :job-filter="jobFilter"
-            :target-filter="targetFilter"
-            :status-filter="statusFilter"
-            :phase-filter="phaseFilter"
+            :filter="filter"
           />
         </v-row>
         <v-row>
           <status-selector
-            v-model="statusFilter"
+            v-model="filter.status"
+            @input='$emit("input", filter)'
           />
         </v-row>
       </v-col>
@@ -94,11 +82,13 @@ export default {
 
   data() {
     return {
-      projectFilter: [],
-      jobFilter: [],
-      targetFilter: [],
-      phaseFilter: [],
-      statusFilter: [],
+      filter: {
+        jobs: [],
+        projects: [],
+        targets: [],
+        phases: [],
+        status: [],
+      }
     };
   },
 

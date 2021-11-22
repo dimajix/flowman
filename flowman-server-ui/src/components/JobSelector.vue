@@ -1,15 +1,22 @@
 <template>
   <v-container fluid>
-    <v-select
-      v-model="value"
-      :items="jobs"
-      chips
-      label="Filter by Job Name"
-      multiple
-      clearable
-      deletable-chips
-      @input='$emit("input", value)'
-    ></v-select>
+    <v-row align="center">
+      <v-col cols="2">
+        <v-subheader>Jobs</v-subheader>
+      </v-col>
+      <v-col cols="9">
+        <v-select
+          v-model="value"
+          :items="jobs"
+          chips
+          label="Filter by Job Name"
+          multiple
+          clearable
+          deletable-chips
+          @input='$emit("input", value)'
+        ></v-select>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 

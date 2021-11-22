@@ -4,11 +4,7 @@
   >
     <v-card>
       <target-charts
-        :project-filter="projectFilter"
-        :job-filter="jobFilter"
-        :target-filter="targetFilter"
-        :phase-filter="phaseFilter"
-        :status-filter="statusFilter"
+        v-model="filter"
       />
     </v-card>
     <v-card>
@@ -41,28 +37,48 @@
     props: {
     },
 
-    data: () => ({
-      targets: [],
-      total: 0,
-      loading: false,
-      jobFilter: [],
-      projectFilter: [],
-      targetFilter: [],
-      phaseFilter: [],
-      statusFilter: [],
-      headers: [
-        { text: 'Target Run ID', value: 'id' },
-        { text: 'Job Run ID', value: 'jobId' },
-        { text: 'Project Name', value: 'project' },
-        { text: 'Project Version', value: 'version' },
-        { text: 'Target Name', value: 'target' },
-        { text: 'Build Phase', value: 'phase' },
-        { text: 'Status', value: 'status' },
-        { text: 'Started at', value: 'startDateTime' },
-        { text: 'Finished at', value: 'endDateTime' },
-        { text: 'Error message', value: 'error' },
-      ]
-    }),
+    data() {
+      return {
+        targets: [],
+        total: 0,
+        loading: false,
+        filter: {
+          projects: [],
+          jobs: [],
+          targets: [],
+          phases: [],
+          status: [],
+        },
+        headers: [
+          {text: 'Target Run ID', value: 'id'},
+          {text: 'Job Run ID', value: 'jobId'},
+          {text: 'Project Name', value: 'project'},
+          {text: 'Project Version', value: 'version'},
+          {text: 'Target Name', value: 'target'},
+          {text: 'Build Phase', value: 'phase'},
+          {text: 'Status', value: 'status'},
+          {text: 'Started at', value: 'startDateTime'},
+          {text: 'Finished at', value: 'endDateTime'},
+          {text: 'Error message', value: 'error'},
+        ]
+      }
+    },
+
+    computed: {
+      projectFilter() { return this.filter.projects },
+      jobFilter() { return this.filter.jobs },
+      targetFilter() { return this.filter.targets },
+      phaseFilter() { return this.filter.phases },
+      statusFilter() { return this.filter.status }
+    },
+
+    watch: {
+      projectFilter: function () { this.getData() },
+      jobFilter: function () { this.getData() },
+      targetFilter: function () { this.getData() },
+      phaseFilter: function () { this.getData() },
+      statusFilter: function () { this.getData() },
+    },
 
     mounted() {
       this.getData()
@@ -71,7 +87,7 @@
     methods: {
       getData() {
         this.loading = true
-        this.$api.getTargetsHistory()
+        this.$api.getTargetsHistory(this.filter.projects, this.filter.jobs, this.filter.targets, this.filter.phases, this.filter.status)
           .then(response => {
             this.targets = response.data
             this.total = response.total

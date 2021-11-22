@@ -3,50 +3,33 @@
       <v-subheader class="title" inset>Job Status</v-subheader>
       <pie-chart
         height="160"
-        v-if="statusLoaded"
-        :data="statusData">
+        v-if="loaded"
+        :chart-data="status">
       </pie-chart>
   </v-container>
 </template>
 
 <script>
 import PieChart from "@/charts/PieChart.js";
+import Filter from "@/charts/Filter";
 
 export default {
   name: 'JobStatusChart',
+  mixins: [Filter],
   components: { PieChart },
-
-  props: {
-    projectFilter:  { type: Array },
-    jobFilter: { type: Array },
-    statusFilter: { type: Array },
-    phaseFilter: { type: Array },
-  },
 
   data() {
     return {
-      statusData: {},
-      statusLoaded: false,
+      loaded: false,
+      status: {},
     };
-  },
-
-  watch: {
-    projectFilter: function () { this.getData() },
-    jobFilter: function () { this.getData() },
-    statusFilter: function () { this.getData() },
-    phaseFilter: function () { this.getData() },
-  },
-
-  mounted() {
-    this.getData()
   },
 
   methods: {
     getData() {
-      this.statusLoaded = false
-      this.$api.getJobCounts('status', this.projectFilter, this.jobFilter, this.phaseFilter, this.statusFilter)
+      this.$api.getJobCounts('status', this.filter.projects, this.filter.jobs, this.filter.phases, this.filter.status)
         .then(response => {
-          this.statusData = {
+          this.status = {
             labels: ["Success", "Skipped", "Failed"],
             datasets: [
               {
@@ -55,7 +38,7 @@ export default {
               }
             ]
           }
-          this.statusLoaded = true
+          this.loaded = true
         })
     }
   }

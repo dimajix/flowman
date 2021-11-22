@@ -4,60 +4,52 @@
       <v-col  cols="3">
         <v-row>
           <job-project-chart
-            :job-filter="jobFilter"
-            :project-filter="projectFilter"
-            :status-filter="statusFilter"
-            :phase-filter="phaseFilter"
+            :filter="filter"
           />
         </v-row>
         <v-row>
           <project-selector
-            v-model="projectFilter"
+            v-model="filter.projects"
+            @input='$emit("input", filter)'
           />
         </v-row>
       </v-col>
       <v-col  cols="3">
         <v-row>
           <job-name-chart
-            :job-filter="jobFilter"
-            :project-filter="projectFilter"
-            :status-filter="statusFilter"
-            :phase-filter="phaseFilter"
+            :filter="filter"
           />
         </v-row>
         <v-row>
           <job-selector
-            v-model="jobFilter"
+            v-model="filter.jobs"
+            @input='$emit("input", filter)'
           />
         </v-row>
       </v-col>
       <v-col  cols="3">
         <v-row>
           <job-phase-chart
-            :job-filter="jobFilter"
-            :project-filter="projectFilter"
-            :status-filter="statusFilter"
-            :phase-filter="phaseFilter"
+            :filter="filter"
           />
         </v-row>
         <v-row>
           <phase-selector
-            v-model="phaseFilter"
+            v-model="filter.phases"
+            @input='$emit("input", filter)'
           />
         </v-row>
       </v-col>
       <v-col cols="3">
         <v-row>
           <job-status-chart
-            :job-filter="jobFilter"
-            :project-filter="projectFilter"
-            :status-filter="statusFilter"
-            :phase-filter="phaseFilter"
+            :filter="filter"
           />
         </v-row>
         <v-row>
           <status-selector
-            v-model="statusFilter"
+            v-model="filter.status"
+            @input='$emit("input", filter)'
           />
         </v-row>
       </v-col>
@@ -90,10 +82,12 @@ export default {
 
   data() {
     return {
-      jobFilter: [],
-      projectFilter: [],
-      phaseFilter: [],
-      statusFilter: [],
+      filter: {
+        jobs: [],
+        projects: [],
+        phases: [],
+        status: [],
+      }
     };
   },
 

@@ -3,52 +3,33 @@
     <v-subheader class="title" inset>Target Phase</v-subheader>
     <pie-chart
       height=160
-      v-if="phaseLoaded"
-      :data="phaseData">
+      v-if="loaded"
+      :chart-data="phases">
     </pie-chart>
   </v-container>
 </template>
 
 <script>
 import PieChart from "@/charts/PieChart.js";
+import Filter from "@/charts/Filter";
 
 export default {
   name: 'TargetPhaseChart',
+  mixins: [Filter],
   components: { PieChart  },
-
-  props: {
-    projectFilter:  { type: Array },
-    jobFilter: { type: Array },
-    targetFilter: { type: Array },
-    statusFilter: { type: Array },
-    phaseFilter: { type: Array },
-  },
 
   data() {
     return {
-      phaseData: {},
-      phaseLoaded: false,
+      loaded: false,
+      phases: {},
     };
-  },
-
-  watch: {
-    projectFilter: function () { this.getData() },
-    jobFilter: function () { this.getData() },
-    targetFilter: function () { this.getData() },
-    statusFilter: function () { this.getData() },
-    phaseFilter: function () { this.getData() },
-  },
-
-  mounted() {
-    this.getData()
   },
 
   methods: {
     getData() {
-      this.phaseLoaded = false
       this.$api.getTargetCounts('phase', this.projectFilter, this.jobFilter, this.targetFilter, this.phaseFilter, this.statusFilter)
         .then(response => {
-          this.phaseData = {
+          this.phases = {
             labels: ["Validate", "Create", "Build", "Verify", "Truncate", "Destroy"],
             datasets: [
               {
@@ -64,7 +45,7 @@ export default {
               }
             ]
           }
-          this.phaseLoaded = true
+          this.loaded = true
         })
     }
   }

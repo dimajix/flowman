@@ -3,8 +3,8 @@
     <v-subheader class="title" inset>Project Name</v-subheader>
     <pie-chart
       height="160"
-      v-if="projectLoaded"
-      :data="projectData">
+      v-if="loaded"
+      :chart-data="projects">
     </pie-chart>
   </v-container>
 </template>
@@ -12,46 +12,29 @@
 <script>
 import PieChart from "@/charts/PieChart.js";
 import Gradient from "javascript-color-gradient";
+import Filter from "@/charts/Filter";
 
 export default {
   name: 'JobProjectChart',
+  mixins: [Filter],
   components: { PieChart },
-
-  props: {
-    projectFilter:  { type: Array },
-    jobFilter: { type: Array },
-    statusFilter: { type: Array },
-    phaseFilter: { type: Array },
-  },
 
   data() {
     return {
-      projectData: {},
-      projectLoaded: false,
+      loaded: false,
+      projects: {},
     };
-  },
-
-  watch: {
-    projectFilter: function () { this.getData() },
-    jobFilter: function () { this.getData() },
-    statusFilter: function () { this.getData() },
-    phaseFilter: function () { this.getData() },
-  },
-
-  mounted() {
-    this.getData()
   },
 
   methods: {
     getData() {
-      this.projectLoaded = false
-      this.$api.getJobCounts('project', this.projectFilter, this.jobFilter, this.phaseFilter, this.statusFilter)
+      this.$api.getJobCounts('project', this.filter.projects, this.filter.jobs, this.filter.phases, this.filter.status)
         .then(response => {
           const colorGradient = new Gradient();
           colorGradient.setGradient("#407060", "#9090e0");
           colorGradient.setMidpoint(Object.values(response.data).length);
 
-          this.projectData = {
+          this.projects = {
             labels: Object.keys(response.data),
             datasets: [
               {
@@ -60,7 +43,7 @@ export default {
               }
             ]
           }
-          this.projectLoaded = true
+          this.loaded = true
         })
     }
   }

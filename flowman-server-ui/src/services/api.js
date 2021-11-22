@@ -19,13 +19,13 @@ export default {
             .then(response => response.data)
       },
 
-      getJobsHistory() {
-        return axios.get('/api/history/jobs')
+      getJobsHistory(projects=[], jobs=[], phase=[], status=[]) {
+        return axios.get('/api/history/jobs?project=' + projects.join(',') + "&job=" + jobs.join(',') + "&phase=" + phase.join(',') + "&status=" + status.join(','))
           .then(response => response.data)
       },
 
-      getTargetsHistory() {
-        return axios.get('/api/history/targets')
+      getTargetsHistory(projects=[], jobs=[], targets=[], phase=[], status=[]) {
+        return axios.get('/api/history/targets?&project=' + projects.join(',') + "&job=" + jobs.join(',') + "&target=" + targets.join(',') + "&phase=" + phase.join(',') + "&status=" + status.join(','))
           .then(response => response.data)
       },
 

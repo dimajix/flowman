@@ -4,10 +4,7 @@
   >
     <v-card>
       <job-charts
-        :project-filter="projectFilter"
-        :job-filter="jobFilter"
-        :phase-filter="phaseFilter"
-        :status-filter="statusFilter"
+        v-model="filter"
       />
     </v-card>
     <v-card>
@@ -46,27 +43,45 @@
   export default {
     components: {JobCharts, JobHistoryDetails},
 
-    data: () => ({
-      jobs: [],
-      expanded: [],
-      total: 0,
-      loading: false,
-      jobFilter: [],
-      projectFilter: [],
-      phaseFilter: [],
-      statusFilter: [],
-      headers: [
-        { text: 'Job Run ID', value: 'id' },
-        { text: 'Project Name', value: 'project' },
-        { text: 'Project Version', value: 'version' },
-        { text: 'Job Name', value: 'job' },
-        { text: 'Build Phase', value: 'phase' },
-        { text: 'Status', value: 'status' },
-        { text: 'Started at', value: 'startDateTime' },
-        { text: 'Finished at', value: 'endDateTime' },
-        { text: 'Error message', value: 'error' },
-      ]
-    }),
+    data() {
+      return {
+        jobs: [],
+        expanded: [],
+        total: 0,
+        loading: false,
+        filter: {
+          projects: [],
+          jobs: [],
+          phases: [],
+          status: [],
+        },
+        headers: [
+          { text: 'Job Run ID', value: 'id' },
+          { text: 'Project Name', value: 'project' },
+          { text: 'Project Version', value: 'version' },
+          { text: 'Job Name', value: 'job' },
+          { text: 'Build Phase', value: 'phase' },
+          { text: 'Status', value: 'status' },
+          { text: 'Started at', value: 'startDateTime' },
+          { text: 'Finished at', value: 'endDateTime' },
+          { text: 'Error message', value: 'error' },
+        ]
+      }
+    },
+
+    computed: {
+      projectFilter() { return this.filter.projects },
+      jobFilter() { return this.filter.jobs },
+      phaseFilter() { return this.filter.phases },
+      statusFilter() { return this.filter.status }
+    },
+
+    watch: {
+      projectFilter: function () { this.getData() },
+      jobFilter: function () { this.getData() },
+      phaseFilter: function () { this.getData() },
+      statusFilter: function () { this.getData() },
+    },
 
     mounted() {
       this.getData()
@@ -99,7 +114,7 @@
 
       getData() {
         this.loading = true
-        this.$api.getJobsHistory()
+        this.$api.getJobsHistory(this.filter.projects, this.filter.jobs, this.filter.phases, this.filter.status)
           .then(response => {
             this.title = "Job History"
             this.jobs = response.data

@@ -3,8 +3,8 @@
     <v-subheader class="title" inset>Target Name</v-subheader>
     <pie-chart
       height=160
-      v-if="targetLoaded"
-      :data="targetData">
+      v-if="loaded"
+      :chart-data="targets">
     </pie-chart>
   </v-container>
 </template>
@@ -12,48 +12,29 @@
 <script>
 import PieChart from "@/charts/PieChart.js";
 import Gradient from "javascript-color-gradient";
+import Filter from "@/charts/Filter";
 
 export default {
   name: 'TargetNameChart',
+  mixins: [Filter],
   components: { PieChart },
-
-  props: {
-    projectFilter:  { type: Array },
-    jobFilter: { type: Array },
-    targetFilter: { type: Array },
-    statusFilter: { type: Array },
-    phaseFilter: { type: Array },
-  },
 
   data() {
     return {
-      targetData: {},
-      targetLoaded: false
+      loaded: false,
+      targets: {},
     };
-  },
-
-  watch: {
-    projectFilter: function () { this.getData() },
-    jobFilter: function () { this.getData() },
-    targetFilter: function () { this.getData() },
-    statusFilter: function () { this.getData() },
-    phaseFilter: function () { this.getData() },
-  },
-
-  mounted() {
-    this.getData()
   },
 
   methods: {
     getData() {
-      this.targetLoaded = false
       this.$api.getTargetCounts('target', this.projectFilter, this.jobFilter, this.targetFilter, this.phaseFilter, this.statusFilter)
         .then(response => {
           const colorGradient = new Gradient();
           colorGradient.setGradient("#404060", "#9090e0");
           colorGradient.setMidpoint(Object.values(response.data).length);
 
-          this.targetData = {
+          this.targets = {
             labels: Object.keys(response.data),
             datasets: [
               {
@@ -62,7 +43,7 @@ export default {
               }
             ]
           }
-          this.targetLoaded = true
+          this.loaded = true
         })
     }
   }

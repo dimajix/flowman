@@ -33,12 +33,12 @@ import com.dimajix.flowman.execution.Status
   * @param args
   */
 final case class JobQuery(
-    id:Option[String] = None,
-    namespace:Option[String] = None,
-    project:Option[String] = None,
-    job:Option[String] = None,
-    status:Option[Status] = None,
-    phase:Option[Phase] = None,
+    id:Seq[String] = Seq(),
+    namespace:Seq[String] = Seq(),
+    project:Seq[String] = Seq(),
+    job:Seq[String] = Seq(),
+    status:Seq[Status] = Seq(),
+    phase:Seq[Phase] = Seq(),
     from:Option[ZonedDateTime] = None,
     to:Option[ZonedDateTime] = None,
     args:Map[String,String] = Map()

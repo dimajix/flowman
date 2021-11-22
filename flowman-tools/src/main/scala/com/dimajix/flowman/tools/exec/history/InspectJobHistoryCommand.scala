@@ -34,7 +34,7 @@ class InspectJobHistoryCommand extends Command {
 
     override def execute(session: Session, project: Project, context: Context): Boolean = {
         val query = JobQuery(
-            id = Some(jobId)
+            id = Seq(jobId)
         )
         session.history.findJobStates(query).headOption match {
             case Some(job) =>

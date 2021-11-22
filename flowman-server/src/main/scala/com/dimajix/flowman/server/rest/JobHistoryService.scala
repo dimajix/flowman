@@ -91,9 +91,10 @@ class JobHistoryService(history:StateStore) {
     ))
     def listJobStates(project:Option[String], job:Option[String], phase:Option[String], status:Option[String], limit:Option[Int], offset:Option[Int]) : server.Route = {
         val query = JobQuery(
-            project=project, job=job,
-            phase=phase.map(Phase.ofString),
-            status=status.map(Status.ofString)
+            project=split(project),
+            job=split(job),
+            phase=split(phase).map(Phase.ofString),
+            status=split(status).map(Status.ofString)
         )
         val jobs = history.findJobStates(query, Seq(JobOrder.BY_DATETIME.desc()), limit.getOrElse(1000), offset.getOrElse(0))
         val count = history.countJobStates(query)
@@ -119,9 +120,10 @@ class JobHistoryService(history:StateStore) {
     ))
     def countJobs(project:Option[String], job:Option[String], phase:Option[String], status:Option[String], grouping:String) : server.Route = {
         val query = JobQuery(
-            project=project, job=job,
-            phase=phase.map(Phase.ofString),
-            status=status.map(Status.ofString)
+            project=split(project),
+            job=split(job),
+            phase=split(phase).map(Phase.ofString),
+            status=split(status).map(Status.ofString)
         )
         val g = grouping.toLowerCase(Locale.ROOT) match {
             case "project" => JobColumn.PROJECT
@@ -144,11 +146,15 @@ class JobHistoryService(history:StateStore) {
         new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobState])
     ))
     def getJobState(jobId:String) : server.Route = {
-        val query = JobQuery(id=Some(jobId))
+        val query = JobQuery(id=Seq(jobId))
         val job = history.findJobStates(query).headOption
         complete(job.map { j =>
             val metrics = history.getJobMetrics(j.id)
             Converter.ofSpec(j, metrics)
         })
+    }
+
+    private def split(arg:Option[String]) : Seq[String] = {
+        arg.toSeq.flatMap(_.split(',')).map(_.trim).filter(_.nonEmpty)
     }
 }

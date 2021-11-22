@@ -98,12 +98,12 @@ class TargetHistoryService(history:StateStore) {
     ))
     def listTargetStates(project:Option[String], job:Option[String], target:Option[String], jobId:Option[String], phase:Option[String], status:Option[String], limit:Option[Int], offset:Option[Int]) : server.Route = {
         val query = TargetQuery(
-            project=project,
-            job=job,
-            jobId=jobId,
-            target=target,
-            phase=phase.map(Phase.ofString),
-            status=status.map(Status.ofString)
+            project=split(project),
+            job=split(job),
+            jobId=split(jobId),
+            target=split(target),
+            phase=split(phase).map(Phase.ofString),
+            status=split(status).map(Status.ofString)
         )
         val targets = history.findTargetStates(query, Seq(TargetOrder.BY_DATETIME.desc()), limit.getOrElse(1000), offset.getOrElse(0))
         val count = history.countTargetStates(query)
@@ -131,14 +131,14 @@ class TargetHistoryService(history:StateStore) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Target information", response = classOf[model.TargetStateList])
     ))
-    def countTargets(project:Option[String], target:Option[String], job:Option[String], jobId:Option[String], phase:Option[String], status:Option[String], grouping:String) : server.Route = {
+    def countTargets(project:Option[String], job:Option[String], target:Option[String], jobId:Option[String], phase:Option[String], status:Option[String], grouping:String) : server.Route = {
         val query = TargetQuery(
-            project=project,
-            target=target,
-            job=job,
-            jobId=jobId,
-            phase=phase.map(Phase.ofString),
-            status=status.map(Status.ofString)
+            project=split(project),
+            target=split(target),
+            job=split(job),
+            jobId=split(jobId),
+            phase=split(phase).map(Phase.ofString),
+            status=split(status).map(Status.ofString)
         )
         val g = grouping.toLowerCase(Locale.ROOT) match {
             case "project" => TargetColumn.PROJECT
@@ -162,8 +162,12 @@ class TargetHistoryService(history:StateStore) {
         new ApiResponse(code = 200, message = "Target information", response = classOf[model.TargetState])
     ))
     def getTargetState(targetId:String) : server.Route = {
-        val query = TargetQuery(id=Some(targetId))
+        val query = TargetQuery(id=Seq(targetId))
         val target = history.findTargetStates(query).headOption
         complete(target.map(Converter.ofSpec))
+    }
+
+    private def split(arg:Option[String]) : Seq[String] = {
+        arg.toSeq.flatMap(_.split(',')).map(_.trim).filter(_.nonEmpty)
     }
 }

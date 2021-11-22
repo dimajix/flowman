@@ -3,11 +3,20 @@ import { Doughnut, mixins } from "vue-chartjs";
 export default {
   extends: Doughnut,
   mixins: [ mixins.reactiveProp ],
-  props: ["data", "options"],
+  props: ["data"],
 
   mounted() {
     // this.chartData is created in the mixin.
     // If you want to pass options please create a local options object
-    this.renderChart(this.data, this.options);
+    let options = {
+        responsive: true,
+        maintainAspectRatio: true,
+        hoverBorderWidth: 20,
+        legend: {
+          position: 'right',
+          align: 'center'
+        },
+      }
+    this.renderChart(this.data, options);
   }
 };

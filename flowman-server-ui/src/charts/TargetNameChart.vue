@@ -4,8 +4,7 @@
     <pie-chart
       height=160
       v-if="targetLoaded"
-      :data="targetData"
-      :options="chartOptions">
+      :data="targetData">
     </pie-chart>
   </v-container>
 </template>
@@ -18,20 +17,27 @@ export default {
   name: 'TargetNameChart',
   components: { PieChart },
 
+  props: {
+    projectFilter:  { type: Array },
+    jobFilter: { type: Array },
+    targetFilter: { type: Array },
+    statusFilter: { type: Array },
+    phaseFilter: { type: Array },
+  },
+
   data() {
     return {
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: true,
-        hoverBorderWidth: 20,
-        legend: {
-          position: 'right',
-          align: 'center'
-        },
-      },
       targetData: {},
       targetLoaded: false
     };
+  },
+
+  watch: {
+    projectFilter: function () { this.getData() },
+    jobFilter: function () { this.getData() },
+    targetFilter: function () { this.getData() },
+    statusFilter: function () { this.getData() },
+    phaseFilter: function () { this.getData() },
   },
 
   mounted() {
@@ -41,7 +47,7 @@ export default {
   methods: {
     getData() {
       this.targetLoaded = false
-      this.$api.getTargetCounts('target')
+      this.$api.getTargetCounts('target', this.projectFilter, this.jobFilter, this.targetFilter, this.phaseFilter, this.statusFilter)
         .then(response => {
           const colorGradient = new Gradient();
           colorGradient.setGradient("#404060", "#9090e0");

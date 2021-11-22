@@ -212,9 +212,9 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             else
                 query
         }
-        def optionalFilter2[T](value:Option[T])(f:(E,T) => Rep[Option[Boolean]]) : Query[E,U,C] = {
+        def optionalFilter[T](value:Seq[T])(f:(E,Seq[T]) => Rep[Boolean]) : Query[E,U,C] = {
             if (value.nonEmpty)
-                query.filter(v => f(v,value.get))
+                query.filter(v => f(v,value))
             else
                 query
         }
@@ -323,12 +323,12 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                 .filter(a => a._2.name === kv._1 && a._2.value === kv._2)
                 .map(xy => xy._1)
             )
-            .optionalFilter(query.id)(_.id === _.toLong)
-            .optionalFilter(query.namespace)(_.namespace === _)
-            .optionalFilter(query.project)(_.project === _)
-            .optionalFilter(query.job)(_.job === _)
-            .optionalFilter(query.status)(_.status === _.toString)
-            .optionalFilter(query.phase)(_.phase === _.toString)
+            .optionalFilter(query.id)((l,r) => l.id.inSet(r.map(_.toLong)))
+            .optionalFilter(query.namespace)((l,r) => l.namespace.inSet(r))
+            .optionalFilter(query.project)((l,r) => l.project.inSet(r))
+            .optionalFilter(query.job)((l,r) => l.job.inSet(r))
+            .optionalFilter(query.status)((l,r) => l.status.inSet(r.map(_.toString)))
+            .optionalFilter(query.phase)((l,r) => l.phase.inSet(r.map(_.toString)))
             .optionalFilter(query.from)((e,v) => e.start_ts.getOrElse(new Timestamp(0)) >= Timestamp.from(v.toInstant))
             .optionalFilter(query.to)((e,v) => e.start_ts.getOrElse(new Timestamp(0)) <= Timestamp.from(v.toInstant))
     }
@@ -486,13 +486,13 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .filter(a => a._2.name === kv._1 && a._2.value === kv._2)
             .map(xy => xy._1)
         )
-            .optionalFilter(query.id)(_.id === _.toLong)
-            .optionalFilter(query.namespace)(_.namespace === _)
-            .optionalFilter(query.project)(_.project === _)
-            .optionalFilter(query.target)(_.target === _)
-            .optionalFilter(query.status)(_.status === _.toString)
-            .optionalFilter(query.phase)(_.phase === _.toString)
-            .optionalFilter2(query.jobId)((e,v) => e.job_id === v.toLong)
+            .optionalFilter(query.id)((l,r) => l.id.inSet(r.map(_.toLong)))
+            .optionalFilter(query.namespace)((l,r) => l.namespace.inSet(r))
+            .optionalFilter(query.project)((l,r) => l.project.inSet(r))
+            .optionalFilter(query.target)((l,r) => l.target.inSet(r))
+            .optionalFilter(query.status)((l,r) => l.status.inSet(r.map(_.toString)))
+            .optionalFilter(query.phase)((l,r) => l.phase.inSet(r.map(_.toString)))
+            .optionalFilter(query.jobId)((e,v) => e.job_id.inSet(v.map(_.toLong)).getOrElse(false))
             .optionalFilter(query.from)((e,v) => e.start_ts.getOrElse(new Timestamp(0)) >= Timestamp.from(v.toInstant))
             .optionalFilter(query.to)((e,v) => e.start_ts.getOrElse(new Timestamp(0)) <= Timestamp.from(v.toInstant))
     }

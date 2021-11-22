@@ -35,7 +35,7 @@ class InspectTargetHistoryCommand extends Command {
 
     override def execute(session: Session, project: Project, context: Context): Boolean = {
         val query = TargetQuery(
-            id = Some(targetId)
+            id = Seq(targetId)
         )
         session.history.findTargetStates(query).headOption match {
             case Some(target) =>

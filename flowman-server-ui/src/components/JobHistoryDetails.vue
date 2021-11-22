@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-card-title>
       <v-icon>gavel</v-icon>
-      Job '{{properties.project}}/{{properties.name}}' {{ properties.phase }} {{job}} status {{properties.status}}
+      Job '{{properties.project}}/{{properties.name}}' {{ properties.phase }} id {{job}} status {{properties.status}}
     </v-card-title>
 
     <h3>Targets</h3>

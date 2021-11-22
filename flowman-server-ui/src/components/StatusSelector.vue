@@ -1,13 +1,14 @@
 <template>
   <v-container fluid>
     <v-select
-      v-model="selection"
+      v-model="value"
       :items="status"
       chips
       label="Filter by Execution Status"
       multiple
       clearable
       deletable-chips
+      @input='$emit("input", value)'
     ></v-select>
   </v-container>
 </template>
@@ -17,12 +18,9 @@
 export default {
   name: 'StatusSelector',
 
-  props : {
-    selection: [],
-  },
-
   data() {
     return {
+      value: [],
       status: ["SUCCESS", "SKIPPED", "FAILED"],
     };
   },

@@ -14,8 +14,8 @@ export default {
           .then(response => response.data)
       },
 
-      getJobCounts(grouping) {
-        return axios.get('/api/history/job-counts?grouping=' + grouping)
+      getJobCounts(grouping, projects=[], jobs=[], phase=[], status=[]) {
+        return axios.get('/api/history/job-counts?grouping=' + grouping + "&project=" + projects.join(',') + "&job=" + jobs.join(',') + "&phase=" + phase.join(',') + "&status=" + status.join(','))
             .then(response => response.data)
       },
 
@@ -29,8 +29,8 @@ export default {
           .then(response => response.data)
       },
 
-      getTargetCounts(grouping) {
-        return axios.get('/api/history/target-counts?grouping=' + grouping)
+      getTargetCounts(grouping, projects=[], jobs=[], targets=[], phase=[], status=[]) {
+        return axios.get('/api/history/target-counts?grouping=' + grouping + "&project=" + projects.join(',') + "&job=" + jobs.join(',') + "&target=" + targets.join(',') + "&phase=" + phase.join(',') + "&status=" + status.join(','))
           .then(response => response.data)
       },
 

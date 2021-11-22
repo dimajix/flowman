@@ -4,8 +4,7 @@
     <pie-chart
       height="160"
       v-if="phaseLoaded"
-      :data="phaseData"
-      :options="chartOptions">
+      :data="phaseData">
     </pie-chart>
   </v-container>
 </template>
@@ -17,20 +16,25 @@ export default {
   name: 'JobPhaseChart',
   components: { PieChart },
 
+  props: {
+    projectFilter:  { type: Array },
+    jobFilter: { type: Array },
+    statusFilter: { type: Array },
+    phaseFilter: { type: Array },
+  },
+
   data() {
     return {
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: true,
-        hoverBorderWidth: 20,
-        legend: {
-          position: 'right',
-          align: 'center'
-        },
-      },
       phaseData: {},
       phaseLoaded: false,
     };
+  },
+
+  watch: {
+    projectFilter: function () { this.getData() },
+    jobFilter: function () { this.getData() },
+    statusFilter: function () { this.getData() },
+    phaseFilter: function () { this.getData() },
   },
 
   mounted() {
@@ -40,7 +44,7 @@ export default {
   methods: {
     getData() {
       this.phaseLoaded = false
-      this.$api.getJobCounts('phase')
+      this.$api.getJobCounts('phase', this.projectFilter, this.jobFilter, this.phaseFilter, this.statusFilter)
         .then(response => {
           this.phaseData = {
             labels: ["Validate", "Create", "Build", "Verify", "Truncate", "Destroy"],

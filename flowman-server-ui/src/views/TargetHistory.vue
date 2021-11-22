@@ -3,26 +3,13 @@
     fluid
   >
     <v-card>
-      <v-row>
-        <v-col cols="3">
-          <project-selector/>
-        </v-col>
-        <v-col cols="2">
-          <job-selector/>
-        </v-col>
-        <v-col cols="3">
-          <target-selector/>
-        </v-col>
-        <v-col cols="2">
-          <phase-selector/>
-        </v-col>
-        <v-col cols="2">
-          <status-selector/>
-        </v-col>
-      </v-row>
-    </v-card>
-    <v-card>
-      <target-charts/>
+      <target-charts
+        :project-filter="projectFilter"
+        :job-filter="jobFilter"
+        :target-filter="targetFilter"
+        :phase-filter="phaseFilter"
+        :status-filter="statusFilter"
+      />
     </v-card>
     <v-card>
       <v-card-title>Target History</v-card-title>
@@ -34,21 +21,23 @@
         :loading="loading"
         item-key="id"
         class="elevation-1"
-      ></v-data-table>
+      >
+        <template v-slot:item.status="{ item }">
+          <v-icon>
+            {{ getIcon(item.status) }}
+          </v-icon>
+          {{ item.status }}
+        </template>
+      </v-data-table>
     </v-card>
   </v-container>
 </template>
 
 <script>
   import TargetCharts from "@/components/TargetCharts";
-  import ProjectSelector from "@/components/ProjectSelector";
-  import JobSelector from "@/components/JobSelector";
-  import PhaseSelector from "@/components/PhaseSelector";
-  import StatusSelector from "@/components/StatusSelector";
-  import TargetSelector from "@/components/TargetSelector";
 
   export default {
-    components: {TargetCharts, ProjectSelector, JobSelector, PhaseSelector, StatusSelector, TargetSelector},
+    components: {TargetCharts},
     props: {
     },
 
@@ -56,6 +45,11 @@
       targets: [],
       total: 0,
       loading: false,
+      jobFilter: [],
+      projectFilter: [],
+      targetFilter: [],
+      phaseFilter: [],
+      statusFilter: [],
       headers: [
         { text: 'Target Run ID', value: 'id' },
         { text: 'Job Run ID', value: 'jobId' },
@@ -83,6 +77,21 @@
             this.total = response.total
             this.loading = false
           })
+      },
+
+      getIcon(status) {
+        if (status === "SUCCESS") {
+          return "done_all"
+        }
+        else if (status === "SKIPPED") {
+          return "fast_forward"
+        }
+        else if (status === "FAILED") {
+          return "error"
+        }
+        else {
+          return "warning_amber"
+        }
       }
     }
   }

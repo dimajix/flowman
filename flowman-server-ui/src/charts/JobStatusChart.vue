@@ -4,8 +4,7 @@
       <pie-chart
         height="160"
         v-if="statusLoaded"
-        :data="statusData"
-        :options="chartOptions">
+        :data="statusData">
       </pie-chart>
   </v-container>
 </template>
@@ -17,20 +16,25 @@ export default {
   name: 'JobStatusChart',
   components: { PieChart },
 
+  props: {
+    projectFilter:  { type: Array },
+    jobFilter: { type: Array },
+    statusFilter: { type: Array },
+    phaseFilter: { type: Array },
+  },
+
   data() {
     return {
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: true,
-        hoverBorderWidth: 20,
-        legend: {
-          position: 'right',
-          align: 'center'
-        },
-      },
       statusData: {},
       statusLoaded: false,
     };
+  },
+
+  watch: {
+    projectFilter: function () { this.getData() },
+    jobFilter: function () { this.getData() },
+    statusFilter: function () { this.getData() },
+    phaseFilter: function () { this.getData() },
   },
 
   mounted() {
@@ -40,7 +44,7 @@ export default {
   methods: {
     getData() {
       this.statusLoaded = false
-      this.$api.getJobCounts('status')
+      this.$api.getJobCounts('status', this.projectFilter, this.jobFilter, this.phaseFilter, this.statusFilter)
         .then(response => {
           this.statusData = {
             labels: ["Success", "Skipped", "Failed"],

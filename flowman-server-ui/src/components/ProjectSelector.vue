@@ -1,13 +1,14 @@
 <template>
   <v-container fluid>
     <v-select
-      v-model="selection"
+      v-model="value"
       :items="projects"
       chips
       label="Filter by Project Name"
       multiple
       clearable
       deletable-chips
+      @input='$emit("input", value)'
     ></v-select>
   </v-container>
 </template>
@@ -17,12 +18,9 @@
 export default {
   name: 'ProjectSelector',
 
-  props : {
-    selection: [],
-  },
-
   data() {
     return {
+      value: [],
       projects: [],
     };
   },

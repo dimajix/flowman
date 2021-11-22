@@ -46,15 +46,19 @@ class SearchJobHistoryCommand extends Command {
 
     override def execute(session: Session, project: Project, context: Context): Boolean = {
         val query = JobQuery(
-            namespace = session.namespace.map(_.name),
-            project = Some(this.project).filter(_.nonEmpty).orElse(Some(project.name)),
-            job = Some(job).filter(_.nonEmpty),
-            status = Some(status).filter(_.nonEmpty).map(Status.ofString),
-            phase = Some(phase).filter(_.nonEmpty).map(Phase.ofString),
-            args = splitSettings(this.args).toMap
+            namespace = session.namespace.map(_.name).toSeq,
+            project = split(Some(this.project).filter(_.nonEmpty).getOrElse(project.name)),
+            job = split(job),
+            status = split(status).map(Status.ofString),
+            phase = split(phase).map(Phase.ofString),
+            args = splitSettings(args).toMap
         )
         val jobs = session.history.findJobStates(query, Seq(JobOrder.BY_DATETIME), limit, 0)
         ConsoleUtils.showTable(jobs)
         true
+    }
+
+    private def split(arg:String) : Seq[String] = {
+        arg.split(',').map(_.trim).filter(_.nonEmpty)
     }
 }

@@ -1,13 +1,14 @@
 <template>
   <v-container fluid>
     <v-select
-      v-model="selection"
+      v-model="value"
       :items="phases"
       chips
       label="Filter by Build Phase"
       multiple
       clearable
       deletable-chips
+      @input='$emit("input", value)'
     ></v-select>
   </v-container>
 </template>
@@ -17,12 +18,9 @@
 export default {
   name: 'PhaseSelector',
 
-  props : {
-    selection: [],
-  },
-
   data() {
     return {
+      value: [],
       phases: ["VALIDATE", "CREATE", "BUILD", "VERIFY", "TRUNCATE", "DESTROY"],
     };
   },

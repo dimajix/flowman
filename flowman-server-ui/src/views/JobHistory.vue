@@ -3,23 +3,12 @@
     fluid
   >
     <v-card>
-      <v-row>
-        <v-col cols="3">
-          <project-selector/>
-        </v-col>
-        <v-col cols="3">
-          <job-selector/>
-        </v-col>
-        <v-col cols="3">
-          <phase-selector/>
-        </v-col>
-        <v-col cols="3">
-          <status-selector/>
-        </v-col>
-      </v-row>
-    </v-card>
-    <v-card>
-      <job-charts/>
+      <job-charts
+        :project-filter="projectFilter"
+        :job-filter="jobFilter"
+        :phase-filter="phaseFilter"
+        :status-filter="statusFilter"
+      />
     </v-card>
     <v-card>
       <v-card-title>Job History</v-card-title>
@@ -53,21 +42,19 @@
 <script>
   import JobHistoryDetails from "@/components/JobHistoryDetails";
   import JobCharts from "@/components/JobCharts";
-  import ProjectSelector from "@/components/ProjectSelector";
-  import JobSelector from "@/components/JobSelector";
-  import PhaseSelector from "@/components/PhaseSelector";
-  import StatusSelector from "@/components/StatusSelector";
 
   export default {
-    components: {JobCharts, JobHistoryDetails, ProjectSelector, JobSelector, PhaseSelector, StatusSelector},
-    props: {
-    },
+    components: {JobCharts, JobHistoryDetails},
 
     data: () => ({
       jobs: [],
       expanded: [],
       total: 0,
       loading: false,
+      jobFilter: [],
+      projectFilter: [],
+      phaseFilter: [],
+      statusFilter: [],
       headers: [
         { text: 'Job Run ID', value: 'id' },
         { text: 'Project Name', value: 'project' },

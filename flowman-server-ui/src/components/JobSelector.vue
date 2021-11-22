@@ -1,12 +1,12 @@
 <template>
   <v-container fluid>
     <v-row align="center">
-      <v-col cols="11">
+      <v-col cols="12">
         <v-select
           v-model="value"
           :items="jobs"
           chips
-          outlined
+          solo
           label="Filter by Job Name"
           multiple
           clearable

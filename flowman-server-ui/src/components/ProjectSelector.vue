@@ -1,12 +1,12 @@
 <template>
   <v-container fluid>
     <v-row align="center">
-      <v-col cols="11">
+      <v-col cols="12">
         <v-select
           v-model="value"
           :items="projects"
           chips
-          outlined
+          solo
           align="start"
           label="Filter by Project Name"
           multiple

@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.relation
 
 import java.io.FileNotFoundException
 import java.nio.file.FileAlreadyExistsException
+import java.nio.file.FileSystemException
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
@@ -363,7 +364,9 @@ case class FileRelation(
         }
         else {
             logger.info(s"Creating file relation '$identifier' at location '$location'")
-            fs.mkdirs(location)
+            if (!fs.mkdirs(location)) {
+                throw new FileSystemException(location.toString, "", "Cannot create directory.")
+            }
         }
     }
 

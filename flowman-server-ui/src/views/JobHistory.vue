@@ -31,10 +31,7 @@
             }"
           >
             <template v-slot:item.status="{ item }">
-              <v-icon>
-                {{ getIcon(item.status) }}
-              </v-icon>
-              {{ item.status }}
+              <status :status="item.status"/>
             </template>
             <template v-slot:expanded-item="{ item,headers }">
               <td :colspan="headers.length">
@@ -52,11 +49,12 @@
   import JobHistoryDetails from "@/components/JobHistoryDetails";
   import JobCharts from "@/components/JobCharts";
   import Filter from "@/mixins/Filter.js";
+  import Status from '@/components/Status.vue'
 
   export default {
     name: "JobHistory",
     mixins: [Filter],
-    components: {JobCharts, JobHistoryDetails},
+    components: {JobCharts, JobHistoryDetails,Status},
 
     data() {
       return {
@@ -95,21 +93,6 @@
           this.expanded.splice(index, 1)
         } else {
           this.expanded.push(item);
-        }
-      },
-
-      getIcon(status) {
-        if (status === "SUCCESS") {
-          return "done_all"
-        }
-        else if (status === "SKIPPED") {
-          return "fast_forward"
-        }
-        else if (status === "FAILED") {
-          return "error"
-        }
-        else {
-          return "warning_amber"
         }
       },
 

@@ -28,10 +28,7 @@
             }"
           >
             <template v-slot:item.status="{ item }">
-              <v-icon>
-                {{ getIcon(item.status) }}
-              </v-icon>
-              {{ item.status }}
+              <status :status="item.status"/>
             </template>
             <template v-slot:item.partitions="{ item }">
               <v-chip
@@ -51,11 +48,12 @@
 <script>
   import TargetCharts from "@/components/TargetCharts";
   import Filter from "@/mixins/Filter.js";
+  import Status from '@/components/Status.vue'
 
   export default {
     name: "TargetHistory",
     mixins: [Filter],
-    components: {TargetCharts},
+    components: {TargetCharts,Status},
 
     data() {
       return {
@@ -101,21 +99,6 @@
             this.loading = false
           })
       },
-
-      getIcon(status) {
-        if (status === "SUCCESS") {
-          return "done_all"
-        }
-        else if (status === "SKIPPED") {
-          return "fast_forward"
-        }
-        else if (status === "FAILED") {
-          return "error"
-        }
-        else {
-          return "warning_amber"
-        }
-      }
     }
   }
 </script>

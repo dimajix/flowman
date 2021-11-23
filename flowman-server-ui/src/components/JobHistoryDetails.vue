@@ -6,6 +6,38 @@
     </v-card-title>
 
     <h3>Targets</h3>
+    <!--
+    <v-timeline
+      align-top
+      dense
+    >
+      <v-timeline-item
+        v-for="item in Array.from(targets).reverse()"
+        :key="item.id"
+        right
+        small
+      >
+        <v-row>
+          <v-col cols="2">
+            {{ item.target }}
+          </v-col>
+          <v-col cols="3">
+            <v-chip small
+                    v-for="p in Object.entries(item.partitions) "
+                    :key="p"
+            >
+              {{ p[0] }} : {{ p[1] }}
+            </v-chip>
+          </v-col>
+          <v-col cols="1"><status :status="item.status"/></v-col>
+          <v-col cols="1">{{ item.startDateTime }}</v-col>
+          <v-col cols="1">{{ item.endDateTime }}</v-col>
+          <v-col cols="4">{{ item.error }}</v-col>
+        </v-row>
+      </v-timeline-item>
+    </v-timeline>
+    -->
+
     <v-simple-table dense>
       <template v-slot:default>
         <thead>
@@ -32,7 +64,7 @@
         </thead>
         <tbody>
         <tr
-          v-for="item in targets"
+          v-for="item in Array.from(targets).reverse()"
           :key="item.id"
         >
           <td>{{ item.target }}</td>
@@ -44,7 +76,7 @@
               {{ p[0] }} : {{ p[1] }}
             </v-chip>
           </td>
-          <td><v-icon>{{ getIcon(item.status) }}</v-icon> {{ item.status }}</td>
+          <td><status :status="item.status" small/></td>
           <td>{{ item.startDateTime }}</td>
           <td>{{ item.endDateTime }}</td>
           <td>{{ item.error }}</td>
@@ -92,8 +124,11 @@
 </template>
 
 <script>
+import Status from '@/components/Status.vue'
+
 export default {
   name: 'JobHistoryDetails',
+  components: {Status},
 
   props: {
     job: String
@@ -132,22 +167,6 @@ export default {
         this.targets = response.data
       })
     },
-
-    getIcon(status) {
-      if (status === "SUCCESS") {
-        return "done_all"
-      }
-      else if (status === "SKIPPED") {
-        return "fast_forward"
-      }
-      else if (status === "FAILED") {
-        return "error"
-      }
-      else {
-        return "warning_amber"
-      }
-    }
-  },
-
+  }
 }
 </script>

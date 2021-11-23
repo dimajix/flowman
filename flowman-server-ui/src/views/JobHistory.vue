@@ -30,6 +30,14 @@
               nextIcon: 'navigate_next'
             }"
           >
+            <template v-slot:item.args="{ item }">
+              <v-chip
+                v-for="p in Object.entries(item.args) "
+                :key="p"
+              >
+                {{ p[0] }} : {{ p[1] }}
+              </v-chip>
+            </template>
             <template v-slot:item.status="{ item }">
               <status :status="item.status"/>
             </template>
@@ -68,6 +76,7 @@
           { text: 'Project Name', value: 'project' },
           { text: 'Project Version', value: 'version' },
           { text: 'Job Name', value: 'job' },
+          { text: 'Parameters', value: 'args' },
           { text: 'Build Phase', value: 'phase' },
           { text: 'Status', value: 'status', width:120 },
           { text: 'Started at', value: 'startDateTime' },

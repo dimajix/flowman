@@ -28,6 +28,7 @@ import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.TargetInstance
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.splitSettings
 
@@ -42,6 +43,20 @@ case class TemplateTarget(
         .build()
     private val targetInstance = {
         project.get.targets(target.name).instantiate(templateContext)
+    }
+
+    /**
+     * Returns an instance representing this target with the context
+     * @return
+     */
+    override def instance : TargetInstance = {
+        val parent = targetInstance.instance
+        TargetInstance(
+            namespace.map(_.name).getOrElse(""),
+            project.map(_.name).getOrElse(""),
+            name,
+            parent.partitions
+        )
     }
 
     /**

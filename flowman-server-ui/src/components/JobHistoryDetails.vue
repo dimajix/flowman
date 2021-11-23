@@ -153,6 +153,7 @@ export default {
           namespace: response.namespace,
           project: response.project,
           name: response.job,
+          args: response.args,
           phase: response.phase,
           status: response.status,
           startDt: response.startDateTime,

@@ -53,7 +53,7 @@ class SearchJobHistoryCommand extends Command {
             phase = split(phase).map(Phase.ofString),
             args = splitSettings(args).toMap
         )
-        val jobs = session.history.findJobStates(query, Seq(JobOrder.BY_DATETIME), limit, 0)
+        val jobs = session.history.findJobs(query, Seq(JobOrder.BY_DATETIME), limit, 0)
         ConsoleUtils.showTable(jobs)
         true
     }

@@ -105,13 +105,13 @@ class TargetHistoryService(history:StateStore) {
             phase=split(phase).map(Phase.ofString),
             status=split(status).map(Status.ofString)
         )
-        val targets = history.findTargetStates(query, Seq(TargetOrder.BY_DATETIME.desc()), limit.getOrElse(1000), offset.getOrElse(0))
-        val count = history.countTargetStates(query)
+        val targets = history.findTargets(query, Seq(TargetOrder.BY_DATETIME.desc()), limit.getOrElse(1000), offset.getOrElse(0))
+        val count = history.countTargets(query)
         complete(TargetStateList(targets.map(Converter.ofSpec), count))
     }
 
     @Path("/target-counts")
-    @ApiOperation(value = "Retrieve grouped target counts", nickname = "countTargetStates", httpMethod = "GET")
+    @ApiOperation(value = "Retrieve grouped target counts", nickname = "countTargets", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "project", value = "Project name", required = false,
             dataType = "string", paramType = "query"),
@@ -148,7 +148,7 @@ class TargetHistoryService(history:StateStore) {
             case "status" => TargetColumn.STATUS
             case "phase" => TargetColumn.PHASE
         }
-        val count = history.countTargetStates(query, g)
+        val count = history.countTargets(query, g)
         complete(TargetStateCounts(count))
     }
 
@@ -163,7 +163,7 @@ class TargetHistoryService(history:StateStore) {
     ))
     def getTargetState(targetId:String) : server.Route = {
         val query = TargetQuery(id=Seq(targetId))
-        val target = history.findTargetStates(query).headOption
+        val target = history.findTargets(query).headOption
         complete(target.map(Converter.ofSpec))
     }
 

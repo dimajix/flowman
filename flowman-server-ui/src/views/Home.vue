@@ -37,11 +37,16 @@
             class="elevation-1"
             hide-default-footer
           >
+            <template v-slot:item.args="{ item }">
+              <v-chip
+                v-for="p in Object.entries(item.args) "
+                :key="p"
+              >
+                {{ p[0] }} : {{ p[1] }}
+              </v-chip>
+            </template>
             <template v-slot:item.status="{ item }">
-              <v-icon>
-                {{ getIcon(item.status) }}
-              </v-icon>
-              {{ item.status }}
+              <status :status="item.status"/>
             </template>
             <template v-slot:expanded-item="{ item,headers }">
               <td :colspan="headers.length">
@@ -64,10 +69,7 @@
             hide-default-footer
           >
             <template v-slot:item.status="{ item }">
-              <v-icon>
-                {{ getIcon(item.status) }}
-              </v-icon>
-              {{ item.status }}
+              <status :status="item.status"/>
             </template>
             <template v-slot:item.partitions="{ item }">
               <v-chip
@@ -89,6 +91,7 @@
   import TargetPhaseChart from "@/charts/TargetPhaseChart";
   import JobStatusChart from "@/charts/JobStatusChart";
   import JobPhaseChart from "@/charts/JobPhaseChart";
+  import Status from '@/components/Status.vue'
 
   export default {
     components: {
@@ -96,6 +99,7 @@
       JobStatusChart,
       TargetStatusChart,
       TargetPhaseChart,
+      Status,
     },
 
     data() {
@@ -117,6 +121,7 @@
         jobHeaders: [
           { text: 'Project Name', value: 'project' },
           { text: 'Job Name', value: 'job' },
+          { text: 'Parameters', value: 'args' },
           { text: 'Build Phase', value: 'phase' },
           { text: 'Status', value: 'status', width:120 },
           { text: 'Started at', value: 'startDateTime' },

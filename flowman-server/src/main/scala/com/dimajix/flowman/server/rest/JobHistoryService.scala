@@ -96,13 +96,13 @@ class JobHistoryService(history:StateStore) {
             phase=split(phase).map(Phase.ofString),
             status=split(status).map(Status.ofString)
         )
-        val jobs = history.findJobStates(query, Seq(JobOrder.BY_DATETIME.desc()), limit.getOrElse(1000), offset.getOrElse(0))
-        val count = history.countJobStates(query)
+        val jobs = history.findJobs(query, Seq(JobOrder.BY_DATETIME.desc()), limit.getOrElse(1000), offset.getOrElse(0))
+        val count = history.countJobs(query)
         complete(JobStateList(jobs.map(j => Converter.ofSpec(j)),count))
     }
 
     @Path("/job-counts")
-    @ApiOperation(value = "Retrieve grouped job counts", nickname = "countJobStates", httpMethod = "GET")
+    @ApiOperation(value = "Retrieve grouped job counts", nickname = "countJobs", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "project", value = "Project name", required = false,
             dataType = "string", paramType = "query"),
@@ -132,7 +132,7 @@ class JobHistoryService(history:StateStore) {
             case "status" => JobColumn.STATUS
             case "phase" => JobColumn.PHASE
         }
-        val count = history.countJobStates(query, g)
+        val count = history.countJobs(query, g)
         complete(JobStateCounts(count))
     }
 
@@ -147,7 +147,7 @@ class JobHistoryService(history:StateStore) {
     ))
     def getJobState(jobId:String) : server.Route = {
         val query = JobQuery(id=Seq(jobId))
-        val job = history.findJobStates(query).headOption
+        val job = history.findJobs(query).headOption
         complete(job.map { j =>
             val metrics = history.getJobMetrics(j.id)
             Converter.ofSpec(j, metrics)

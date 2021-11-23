@@ -36,7 +36,7 @@ class InspectJobHistoryCommand extends Command {
         val query = JobQuery(
             id = Seq(jobId)
         )
-        session.history.findJobStates(query).headOption match {
+        session.history.findJobs(query).headOption match {
             case Some(job) =>
                 println(s"Job run id: ${job.id}")
                 println(s"  Namespace: ${job.namespace}")

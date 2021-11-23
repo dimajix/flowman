@@ -200,9 +200,9 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         store.getJobState(instance.copy(args = Map("p1" -> "v2"))) should be(None)
         store.getJobState(instance.copy(args = Map("p2" -> "v1"))) should be(None)
 
-        store.findJobStates(JobQuery()).map(_.phase) should be (Seq(Phase.BUILD))
-        store.findJobStates(JobQuery()).map(_.status) should be (Seq(Status.SUCCESS))
-        store.findJobStates(JobQuery()).map(_.args) should be (Seq(Map("p1" -> "v1")))
+        store.findJobs(JobQuery()).map(_.phase) should be (Seq(Phase.BUILD))
+        store.findJobs(JobQuery()).map(_.status) should be (Seq(Status.SUCCESS))
+        store.findJobs(JobQuery()).map(_.args) should be (Seq(Map("p1" -> "v1")))
     }
 
 
@@ -329,9 +329,9 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(None)
         store.getTargetState(instance) should be(None)
 
-        store.findTargetStates(TargetQuery()).map(_.phase) should be (Seq(Phase.BUILD))
-        store.findTargetStates(TargetQuery()).map(_.status) should be (Seq(Status.SUCCESS))
-        store.findTargetStates(TargetQuery()).map(_.partitions) should be (Seq(Map("p1" -> "v1")))
+        store.findTargets(TargetQuery()).map(_.phase) should be (Seq(Phase.BUILD))
+        store.findTargets(TargetQuery()).map(_.status) should be (Seq(Status.SUCCESS))
+        store.findTargets(TargetQuery()).map(_.partitions) should be (Seq(Map("p1" -> "v1")))
     }
 
     it should "support multi value target partitions" in {
@@ -358,9 +358,9 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v2"))) should be(None)
         store.getTargetState(instance) should be(None)
 
-        store.findTargetStates(TargetQuery()).map(_.phase) should be (Seq(Phase.BUILD))
-        store.findTargetStates(TargetQuery()).map(_.status) should be (Seq(Status.SUCCESS))
-        store.findTargetStates(TargetQuery()).map(_.partitions) should be (Seq(Map("p1" -> "v1", "p2" -> "v2")))
+        store.findTargets(TargetQuery()).map(_.phase) should be (Seq(Phase.BUILD))
+        store.findTargets(TargetQuery()).map(_.status) should be (Seq(Status.SUCCESS))
+        store.findTargets(TargetQuery()).map(_.partitions) should be (Seq(Map("p1" -> "v1", "p2" -> "v2")))
     }
 
     it should "support metrics" in {
@@ -389,7 +389,7 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         store.getJobState(instance).map(_.phase) should be(Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be(Some(Status.SUCCESS))
 
-        val jobId = store.findJobStates(JobQuery()).head.id
+        val jobId = store.findJobs(JobQuery()).head.id
         store.getJobMetrics(jobId).sortBy(_.value) should be (metrics.sortBy(_.value))
     }
 }

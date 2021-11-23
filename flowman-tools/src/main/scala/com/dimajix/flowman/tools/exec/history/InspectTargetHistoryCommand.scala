@@ -37,7 +37,7 @@ class InspectTargetHistoryCommand extends Command {
         val query = TargetQuery(
             id = Seq(targetId)
         )
-        session.history.findTargetStates(query).headOption match {
+        session.history.findTargets(query).headOption match {
             case Some(target) =>
                 println(s"Target run id: ${target.id}")
                 println(s"  Job run id: ${target.jobId}")

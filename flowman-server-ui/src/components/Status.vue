@@ -28,10 +28,16 @@ export default {
       if (status === "SUCCESS") {
         return "#609040"
       }
+      else if (status === "SUCCESS_WITH_ERRORS") {
+        return "#B0B060"
+      }
+      else if (status === "RUNNING") {
+        return "#80B060"
+      }
       else if (status === "SKIPPED") {
         return "#406090"
       }
-      else if (status === "FAILED") {
+      else if (status === "FAILED" || status === "ABORTED") {
         return "#904060"
       }
       else {
@@ -43,10 +49,16 @@ export default {
       if (status === "SUCCESS") {
         return "done_all"
       }
+      else if (status === "SUCCESS_WITH_ERRORS") {
+        return "download_done"
+      }
+      else if (status === "RUNNING") {
+        return "directions_run"
+      }
       else if (status === "SKIPPED") {
         return "fast_forward"
       }
-      else if (status === "FAILED") {
+      else if (status === "FAILED" || status === "ABORTED") {
         return "error"
       }
       else {

@@ -91,10 +91,10 @@ abstract class StateStore {
       * @param offset
       * @return
       */
-    def findJobStates(query:JobQuery, order:Seq[JobOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[JobState]
+    def findJobs(query:JobQuery, order:Seq[JobOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[JobState]
 
-    def countJobStates(query:JobQuery) : Int
-    def countJobStates(query:JobQuery, grouping:JobColumn) : Map[String,Int]
+    def countJobs(query:JobQuery) : Int
+    def countJobs(query:JobQuery, grouping:JobColumn) : Map[String,Int]
 
     /**
       * Returns a list of job matching the query criteria
@@ -103,10 +103,10 @@ abstract class StateStore {
       * @param offset
       * @return
       */
-    def findTargetStates(query:TargetQuery, order:Seq[TargetOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[TargetState]
+    def findTargets(query:TargetQuery, order:Seq[TargetOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[TargetState]
 
-    def countTargetStates(query:TargetQuery) : Int
-    def countTargetStates(query:TargetQuery, grouping:TargetColumn) : Map[String,Int]
+    def countTargets(query:TargetQuery) : Int
+    def countTargets(query:TargetQuery, grouping:TargetColumn) : Map[String,Int]
 }
 
 

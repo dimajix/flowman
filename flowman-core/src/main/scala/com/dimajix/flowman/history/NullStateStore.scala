@@ -107,4 +107,6 @@ class NullStateStore extends StateStore {
 
     override def countTargets(query: TargetQuery): Int = 0
     override def countTargets(query:TargetQuery, grouping:TargetColumn) : Map[String,Int] = Map()
+
+    override def findJobMetrics(jobQuery: JobQuery, groupings: Seq[String]): Seq[MetricSeries] = Seq()
 }

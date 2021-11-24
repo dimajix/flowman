@@ -8,7 +8,6 @@
           chips
           solo
           label="Filter by Execution Status"
-          multiple
           clearable
           deletable-chips
           append-icon="expand_more"
@@ -28,7 +27,7 @@ export default {
   data() {
     return {
       value: [],
-      status: ["SUCCESS", "SKIPPED", "FAILED"],
+      status: ["SUCCESS", "SUCCESS_WITH_ERRORS", "SKIPPED", "FAILED"],
     };
   },
 

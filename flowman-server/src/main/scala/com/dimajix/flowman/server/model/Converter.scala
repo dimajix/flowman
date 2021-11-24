@@ -29,6 +29,19 @@ object Converter {
             ms.value
         )
     }
+
+    def ofSpec(ms:history.MetricSeries) : MetricSeries = {
+        MetricSeries(
+            ms.metric,
+            ms.namespace,
+            ms.project,
+            ms.job,
+            ms.phase,
+            ms.labels,
+            ms.measurements.map(m => ofSpec(m))
+        )
+    }
+
     def ofSpec(ns:model.Namespace) : Namespace = {
         Namespace(
             ns.name,

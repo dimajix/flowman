@@ -24,6 +24,7 @@ import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes.Found
+import akka.http.scaladsl.server.Directives.pathPrefix
 import akka.http.scaladsl.settings.ServerSettings
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
@@ -50,6 +51,7 @@ class Server(
         val namespaceService = new NamespaceService(session.namespace.get)
         val jobHistoryService = new JobHistoryService(session.history)
         val targetHistoryService = new TargetHistoryService(session.history)
+        val metricService = new MetricService(session.history)
 
         val route = (
                 pathPrefix("api") {(
@@ -61,6 +63,8 @@ class Server(
                         jobHistoryService.routes
                         ~
                         targetHistoryService.routes
+                        ~
+                        metricService.routes
                     )}
                 )}
                 ~

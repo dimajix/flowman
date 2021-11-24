@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,4 +24,18 @@ final case class Measurement(
     ts:ZonedDateTime,
     labels:Map[String,String],
     value:Double
+)
+
+final case class MetricSeries(
+    metric:String,
+    namespace:String,
+    project:String,
+    job:String,
+    phase:String,
+    labels:Map[String,String],
+    measurements:Seq[Measurement]
+)
+
+final case class MetricSeriesList(
+    data:Seq[MetricSeries]
 )

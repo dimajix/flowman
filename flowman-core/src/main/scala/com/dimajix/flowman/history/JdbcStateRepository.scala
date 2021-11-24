@@ -596,6 +596,50 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         Await.result(db.run(q.result), Duration.Inf)
     }
 
+    def findMetrics(jobQuery: JobQuery, groupings:Seq[String]) : Seq[MetricSeries] = {
+        // Select metrics according to jobQuery
+        val q0 = queryJobs(jobQuery)
+            .join(jobMetrics).on(_.id === _.job_id)
+            .map(_._2)
+
+        // Select metrics according to required grouping labels
+        val q1 = groupings.foldLeft(q0)((jm,g) =>
+            jm.join(jobMetricLabels).on(_.id === _.metric_id)
+                .filter(_._2.name === g)
+                .map(_._1)
+        )
+
+        // Join all labels to selected metrics
+        val q2 = q1
+            .join(jobMetricLabels).on(_.id === _.metric_id)
+            .join(jobRuns).on(_._1.job_id === _.id)
+            .map(x => (x._1._1, x._1._2, x._2))
+
+        Await.result(db.run(q2.result), Duration.Inf)
+            // Group by Job
+            .groupBy(m => (m._3.namespace, m._3.project, m._3.job, m._3.phase, m._1.name))
+            .flatMap { case (group,values) =>
+                val (namespace, project, job, phase, metric) = group
+
+                // Extract and attach all labels
+                val series = values.map(v => (v._1, v._2)).groupBy(_._1.id)
+                    .values
+                    .map { m =>
+                        val metric = m.head._1
+                        val labels = m.map(l => l._2.name -> l._2.value).toMap
+                        Measurement(metric.name, metric.ts.toInstant.atZone(ZoneId.of("UTC")), labels, metric.value)
+                    }
+                // Group by groupings
+                series.groupBy(m => groupings.map(m.labels))
+                    .map { case(group,values) =>
+                        val labels = groupings.zip(group).toMap
+                        MetricSeries(metric, namespace, project, job, phase, labels, values.toSeq.sortBy(_.ts.toInstant.toEpochMilli))
+                    }
+            }
+            .toSeq
+
+    }
+
     private def cmpOpt[T](l:Option[T],r:Option[T])(lt:(T,T) => Int) : Int = {
         if (l.isEmpty && r.isEmpty)
             0

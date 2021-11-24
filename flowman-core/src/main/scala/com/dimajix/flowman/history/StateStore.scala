@@ -36,79 +36,89 @@ abstract class TargetToken
 
 abstract class StateStore {
     /**
-      * Returns the state of a job, or None if no information is available
-      * @param job
-      * @return
-      */
-    def getJobState(job:JobInstance) : Option[JobState]
+     * Returns the state of a job, or None if no information is available
+     *
+     * @param job
+     * @return
+     */
+    def getJobState(job: JobInstance): Option[JobState]
 
     /**
      * Returns all metrics belonging to a specific job instance
+     *
      * @param jobId
      * @return
      */
-    def getJobMetrics(jobId:String) : Seq[Measurement]
+    def getJobMetrics(jobId: String): Seq[Measurement]
 
     /**
-      * Starts the run and returns a token, which can be anything
-      * @param job
-      * @return
-      */
-    def startJob(job:Job, instance: JobInstance, phase:Phase) : JobToken
+     * Starts the run and returns a token, which can be anything
+     *
+     * @param job
+     * @return
+     */
+    def startJob(job: Job, instance: JobInstance, phase: Phase): JobToken
 
     /**
-      * Sets the status of a job after it has been started
-      * @param token The token returned by startJob
-      * @param status
-      */
-    def finishJob(token:JobToken, result:JobResult, metrics:Seq[Measurement]=Seq()) : Unit
+     * Sets the status of a job after it has been started
+     *
+     * @param token The token returned by startJob
+     * @param status
+     */
+    def finishJob(token: JobToken, result: JobResult, metrics: Seq[Measurement] = Seq()): Unit
 
     /**
-      * Returns the state of a specific target on its last run, or None if no information is available
-      * @param target
-      * @return
-      */
-    def getTargetState(target:TargetInstance) : Option[TargetState]
+     * Returns the state of a specific target on its last run, or None if no information is available
+     *
+     * @param target
+     * @return
+     */
+    def getTargetState(target: TargetInstance): Option[TargetState]
 
     /**
-      * Starts the run and returns a token, which can be anything
-      * @param target
-      * @return
-      */
-    def startTarget(target:Target, instance:TargetInstance, phase:Phase, parent:Option[JobToken]) : TargetToken
+     * Starts the run and returns a token, which can be anything
+     *
+     * @param target
+     * @return
+     */
+    def startTarget(target: Target, instance: TargetInstance, phase: Phase, parent: Option[JobToken]): TargetToken
 
     /**
-      * Sets the status of a job after it has been started
-      * @param token The token returned by startJob
-      * @param status
-      */
-    def finishTarget(token:TargetToken, result:TargetResult) : Unit
+     * Sets the status of a job after it has been started
+     *
+     * @param token The token returned by startJob
+     * @param status
+     */
+    def finishTarget(token: TargetToken, result: TargetResult): Unit
 
     /**
-      * Returns a list of job matching the query criteria
-      * @param query
-      * @param limit
-      * @param offset
-      * @return
-      */
-    def findJobs(query:JobQuery, order:Seq[JobOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[JobState]
+     * Returns a list of job matching the query criteria
+     *
+     * @param query
+     * @param limit
+     * @param offset
+     * @return
+     */
+    def findJobs(query: JobQuery, order: Seq[JobOrder] = Seq(), limit: Int = 10000, offset: Int = 0): Seq[JobState]
 
-    def countJobs(query:JobQuery) : Int
-    def countJobs(query:JobQuery, grouping:JobColumn) : Map[String,Int]
+    def countJobs(query: JobQuery): Int
+    def countJobs(query: JobQuery, grouping: JobColumn): Map[String, Int]
 
     /**
-      * Returns a list of job matching the query criteria
-      * @param query
-      * @param limit
-      * @param offset
-      * @return
-      */
-    def findTargets(query:TargetQuery, order:Seq[TargetOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[TargetState]
+     * Returns a list of job matching the query criteria
+     *
+     * @param query
+     * @param limit
+     * @param offset
+     * @return
+     */
+    def findTargets(query: TargetQuery, order: Seq[TargetOrder] = Seq(), limit: Int = 10000, offset: Int = 0): Seq[TargetState]
 
-    def countTargets(query:TargetQuery) : Int
-    def countTargets(query:TargetQuery, grouping:TargetColumn) : Map[String,Int]
+    def countTargets(query: TargetQuery): Int
+    def countTargets(query: TargetQuery, grouping: TargetColumn): Map[String, Int]
+
+    def findJobMetrics(jobQuery: JobQuery, groupings: Seq[String]): Seq[MetricSeries]
 }
-
 
 
 object StateStoreAdaptorListener {

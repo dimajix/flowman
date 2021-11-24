@@ -262,6 +262,12 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         }
     }
 
+    override def findJobMetrics(jobQuery: JobQuery, groupings: Seq[String]): Seq[MetricSeries] = {
+        withSession { repository =>
+            repository.findMetrics(jobQuery, groupings)
+        }
+    }
+
     private def hashArgs(job:JobInstance) : String = {
          hashMap(job.args)
     }

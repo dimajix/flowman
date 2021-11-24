@@ -51,6 +51,16 @@ export default {
         return axios.get('/api/history/targets?jobId=' + job)
           .then(response => response.data)
       },
+
+      getJobsMetrics(projects=[], jobs=[], phase=[], status=[], groupings=[]) {
+        return axios.get('/api/history/metrics?project=' + projects.join(',')
+          + "&job=" + jobs.join(',')
+          + "&phase=" + phase.join(',')
+          + "&status=" + status.join(',')
+          + "&grouping=" + groupings.join(',')
+        )
+          .then(response => response.data)
+      },
     };
 
     Vue.prototype.$api = api

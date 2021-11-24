@@ -45,13 +45,11 @@ final case class Measurement(
 
 
 final case class MetricSeries(
+    metric:String,
     namespace:String,
     project:String,
-    version:String,
     job:String,
-    phase:Phase,
-    status:Status,
-    name:String,
+    phase:String,
     labels:Map[String,String],
     measurements:Seq[Measurement]
 )

@@ -57,10 +57,12 @@
     </v-row>
 
     <v-row
-      v-for="item in metrics"
-      :key="item.id"
     >
-      <v-col cols="12">
+      <v-col
+        v-for="item in metrics"
+        :key="item.id"
+        cols="6"
+      >
         <v-card>
           <v-card-title>Project '{{item.project}}' job '{{item.job}}' metric '{{item.metric}}'</v-card-title>
           <v-card-subtitle>{{item.phase}} {{item.labels.category}} of kind '{{item.labels.kind}}' with name '{{item.labels.name}}'</v-card-subtitle>
@@ -71,7 +73,7 @@
               smooth="8"
               :value="Array.from(item.measurements).map(m => m.value)"
               :labels="Array.from(item.measurements).map(m => m.value)"
-              label-size="2.2"
+              label-size="4.0"
               line-width="0.4"
               padding="6"
             ></v-sparkline>

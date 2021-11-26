@@ -42,11 +42,12 @@ import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.BaseHook
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
-import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobDigest
+import com.dimajix.flowman.model.JobLifecycle
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.hook.SimpleReportHook.ReporterAssertionToken
 import com.dimajix.flowman.spec.hook.SimpleReportHook.ReporterJobToken
@@ -168,7 +169,7 @@ case class SimpleReportHook(
      * @param job
      * @return
      */
-    override def startLifecycle(execution:Execution, job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken = {
+    override def startLifecycle(execution:Execution, job:Job, instance:JobLifecycle) : LifecycleToken = {
         val now = Instant.now()
         logger.info(s"Creating new report to $location")
         val output = newOutput()
@@ -202,19 +203,19 @@ case class SimpleReportHook(
      * @param job
      * @return
      */
-    override def startJob(execution:Execution, job: Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
+    override def startJob(execution:Execution, job: Job, instance: JobDigest, parent:Option[Token]): JobToken = {
         val now = Instant.now()
         val output = parent.flatMap {
             case ReporterLifecycleToken(output) => output
             case _ => newOutput()
         }
         output.foreach { p =>
-            printTitle(p, s"${phase} job ${job.identifier} at $now")
+            printTitle(p, s"${instance.phase} job ${job.identifier} at $now")
             if (parent.isEmpty) {
                 printEnvironment(p, job.context)
             }
         }
-        ReporterJobToken(phase, output)
+        ReporterJobToken(instance.phase, output)
     }
 
     /**
@@ -237,16 +238,16 @@ case class SimpleReportHook(
      * @param target
      * @return
      */
-    override def startTarget(execution:Execution, target: Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = {
+    override def startTarget(execution:Execution, target: Target, instance: TargetDigest, parent: Option[Token]): TargetToken = {
         val now = Instant.now()
         val output = parent.flatMap {
             case ReporterJobToken(_, output) => output
             case _ => None
         }
         output.foreach { p =>
-            printSubtitle(p, s"${phase} target ${target.identifier} at $now")
+            printSubtitle(p, s"${instance.phase} target ${target.identifier} at $now")
         }
-        ReporterTargetToken(phase, output)
+        ReporterTargetToken(instance.phase, output)
     }
 
     /**

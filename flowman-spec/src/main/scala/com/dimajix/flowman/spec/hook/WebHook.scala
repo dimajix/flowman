@@ -35,10 +35,10 @@ import com.dimajix.flowman.execution.Token
 import com.dimajix.flowman.model.BaseHook
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
-import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.hook.WebHook.DummyJobToken
 import com.dimajix.flowman.spec.hook.WebHook.DummyTargetToken
@@ -72,7 +72,7 @@ case class WebHook(
      * @param job
      * @return
      */
-    override def startJob(execution:Execution, job:Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
+    override def startJob(execution:Execution, job:Job, instance: JobDigest, parent:Option[Token]): JobToken = {
         val env = instance.asMap -- context.environment.keys
         invoke(jobStart, env)
         DummyJobToken(env)
@@ -103,7 +103,7 @@ case class WebHook(
      * @param target
      * @return
      */
-    override def startTarget(execution:Execution, target:Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken =  {
+    override def startTarget(execution:Execution, target:Target, instance: TargetDigest, parent: Option[Token]): TargetToken =  {
         val parentEnv = parent.map {
                 case t:DummyJobToken => t.env
                 case _ => Map()

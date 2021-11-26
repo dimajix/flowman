@@ -48,7 +48,7 @@ private[history] object JdbcStateRepository {
         end_ts:Option[Timestamp],
         status:String,
         error:Option[String]
-    ) extends JobToken
+    )
 
     case class JobArgument(
         job_id:Long,
@@ -82,10 +82,30 @@ private[history] object JdbcStateRepository {
         end_ts:Option[Timestamp],
         status:String,
         error:Option[String]
-    ) extends TargetToken
+    )
 
     case class TargetPartition(
         target_id:Long,
+        name:String,
+        value:String
+    )
+
+    case class GraphNode(
+        id:Long,
+        target_id:Long,
+        category:String,
+        kind:String,
+        name:String
+    )
+    case class GraphEdge(
+        id:Long,
+        input_id:Long,
+        output_id:Long,
+        action:String
+    )
+    case class GraphEdgeLabel(
+        id:Long,
+        edge_id:Long,
         name:String,
         value:String
     )
@@ -120,6 +140,10 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     val jobMetricLabels = TableQuery[JobMetricLabels]
     val targetRuns = TableQuery[TargetRuns]
     val targetPartitions = TableQuery[TargetPartitions]
+
+    val graphEdgeLabels = TableQuery[GraphEdgeLabels]
+    val graphEdges = TableQuery[GraphEdges]
+    val graphNodes = TableQuery[GraphNodes]
 
     class JobRuns(tag:Tag) extends Table[JobRun](tag, "JOB_RUN") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
@@ -205,6 +229,41 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         def * = (target_id, name, value) <> (TargetPartition.tupled, TargetPartition.unapply)
     }
 
+    class GraphEdgeLabels(tag:Tag) extends Table[GraphEdgeLabel](tag, "GRAPH_EDGE_LABEL") {
+        def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+        def edge_id = column[Long]("edge_id")
+        def name = column[String]("name")
+        def value = column[String]("value")
+
+        def edge = foreignKey("GRAPH_EDGE_LABEL_EDGE_FK", edge_id, graphEdges)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+
+        def * = (id, edge_id, name, value) <> (GraphEdgeLabel.tupled, GraphEdgeLabel.unapply)
+    }
+
+    class GraphEdges(tag:Tag) extends Table[GraphEdge](tag, "GRAPH_EDGE") {
+        def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+        def input_id = column[Long]("input_id")
+        def output_id = column[Long]("output_id")
+        def action = column[String]("action")
+
+        def input_node = foreignKey("GRAPH_EDGE_INPUT_FK", input_id, graphNodes)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+        def output_node = foreignKey("GRAPH_EDGE_OUTPUT_FK", output_id, graphNodes)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+
+        def * = (id, input_id, output_id, action) <> (GraphEdge.tupled, GraphEdge.unapply)
+    }
+
+    class GraphNodes(tag:Tag) extends Table[GraphNode](tag, "GRAPH_NODE") {
+        def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+        def job_id = column[Long]("job_id")
+        def category = column[String]("category")
+        def kind = column[String]("kind")
+        def name = column[String]("name")
+
+        def job = foreignKey("GRAPH_NODE_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+
+        def * = (id, job_id, category, kind, name) <> (GraphNode.tupled, GraphNode.unapply)
+    }
+
     implicit class QueryWrapper[E,U,C[_]] (query:Query[E, U, C]) {
         def optionalFilter[T](value:Option[T])(f:(E,T) => Rep[Boolean]) : Query[E,U,C] = {
             if (value.nonEmpty)
@@ -222,7 +281,17 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     def create() : Unit = {
         import scala.concurrent.ExecutionContext.Implicits.global
-        val tables = Seq(jobRuns, jobArgs, jobMetrics, jobMetricLabels, targetRuns, targetPartitions)
+        val tables = Seq(
+            jobRuns,
+            jobArgs,
+            jobMetrics,
+            jobMetricLabels,
+            targetRuns,
+            targetPartitions,
+            graphNodes,
+            graphEdges,
+            graphEdgeLabels
+        )
 
         val existing = db.run(profile.defaultTables)
         val query = existing.flatMap( v => {
@@ -356,6 +425,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                     val result = o.column match {
                         case JobColumn.DATETIME => cmpOpt(l.startDateTime, r.startDateTime)(cmpDt)
                         case JobColumn.ID => cmpStr(l.id, r.id)
+                        case JobColumn.PROJECT => cmpStr(l.project, r.project)
                         case JobColumn.NAME => cmpStr(l.job, r.job)
                         case JobColumn.PHASE => cmpStr(l.phase.toString, r.phase.toString)
                         case JobColumn.STATUS => cmpStr(l.status.toString, r.status.toString)
@@ -478,6 +548,21 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         Await.result(db.run(argsQuery), Duration.Inf)
 
         runResult
+    }
+
+    def insertJobGraph(run:JobRun, graph:Graph) : Unit = {
+        val dbNodes = graph.nodes.map(n => GraphNode(-1, run.id, n.category, n.kind, n.name))
+        val nodesQuery = (graphNodes returning graphNodes.map(_.id)) ++= dbNodes
+        val nodeIds = Await.result(db.run(nodesQuery), Duration.Inf)
+        val nodeIdToDbId = graph.nodes.map(_.id).zip(nodeIds).toMap
+
+        val dbEdges = graph.edges.map(e => GraphEdge(-1, nodeIdToDbId(e.input.id), nodeIdToDbId(e.output.id), e.action))
+        val edgesQuery = (graphEdges returning graphEdges.map(_.id)) ++= dbEdges
+        val edgeIds = Await.result(db.run(edgesQuery), Duration.Inf)
+
+        val dbLabels = graph.edges.zip(edgeIds).flatMap { case (e,id) => e.labels.flatMap(l => l._2.map(v => GraphEdgeLabel(-1, id, l._1, v))) }
+        val labelsQuery = graphEdgeLabels ++= dbLabels
+        Await.result(db.run(labelsQuery), Duration.Inf)
     }
 
     private def queryTargets(query:TargetQuery) : Query[TargetRuns, TargetRun, Seq] = {

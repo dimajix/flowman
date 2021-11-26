@@ -42,25 +42,40 @@ import com.dimajix.flowman.types.SingleValue
   * @param job
   * @param args
   */
-final case class JobInstance(
+final case class JobDigest(
     namespace:String,
     project:String,
     job:String,
+    phase:Phase,
     args:Map[String,String] = Map()
 ) {
-    require(namespace != null)
-    require(project != null)
-    require(job != null)
-    require(args != null)
-
     def asMap: Map[String, String] =
          Map(
+            "namespace" -> namespace,
+            "project" -> project,
+            "name" -> job,
+            "job" -> job,
+            "phase" -> phase.toString
+        ) ++ args
+}
+
+
+final case class JobLifecycle(
+    namespace:String,
+    project:String,
+    job:String,
+    phases:Seq[Phase],
+    args:Map[String,String] = Map()
+) {
+    def asMap: Map[String, String] =
+        Map(
             "namespace" -> namespace,
             "project" -> project,
             "name" -> job,
             "job" -> job
         ) ++ args
 }
+
 
 object Job {
     final case class Parameter(
@@ -276,18 +291,39 @@ final case class Job(
     def description : Option[String] = instanceProperties.description
 
     /**
-      * Returns a JobInstance used for state management
+      * Returns a JobDigest used for state management
       * @return
       */
-    def instance(args:Map[String,String]) : JobInstance = {
+    def digest(phase:Phase, args:Map[String,String]) : JobDigest = {
         val pargs = parameters.map(_.name).toSet
         if (args.keySet != pargs)
             throw new IllegalArgumentException(s"Argument mismatch for job '$identifier', expected: ${pargs.mkString(",")} received: ${args.keySet.mkString(",")}")
 
-        JobInstance(
+        JobDigest(
             namespace.map(_.name).getOrElse(""),
             project.map(_.name).getOrElse(""),
             name,
+            phase,
+            args
+        )
+    }
+
+    /**
+     * Returns a lifecycle representation of this job used for state management
+     * @param phases
+     * @param args
+     * @return
+     */
+    def lifecycle(phases:Seq[Phase], args:Map[String,String]) : JobLifecycle = {
+        val pargs = parameters.map(_.name).toSet
+        if (args.keySet != pargs)
+            throw new IllegalArgumentException(s"Argument mismatch for job '$identifier', expected: ${pargs.mkString(",")} received: ${args.keySet.mkString(",")}")
+
+        JobLifecycle(
+            namespace.map(_.name).getOrElse(""),
+            project.map(_.name).getOrElse(""),
+            name,
+            phases,
             args
         )
     }

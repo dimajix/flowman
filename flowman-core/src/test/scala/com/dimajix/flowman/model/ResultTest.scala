@@ -36,10 +36,10 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         val job = new Job(
             Job.Properties(context)
         )
-        val instance = job.instance(Map())
+        val instance = job.digest(Phase.BUILD, Map())
         val exception = new IllegalArgumentException()
 
-        val r1 = JobResult(job, instance, Phase.BUILD, Status.SUCCESS, Instant.now())
+        val r1 = JobResult(job, instance, Status.SUCCESS, Instant.now())
         r1.status should be (Status.SUCCESS)
         r1.success should be (true)
         r1.failure should be (false)
@@ -49,7 +49,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r1.numSuccesses should be (0)
         r1.numExceptions should be (0)
 
-        val r2 = JobResult(job, instance, Phase.BUILD, Status.FAILED, Instant.now())
+        val r2 = JobResult(job, instance, Status.FAILED, Instant.now())
         r2.status should be (Status.FAILED)
         r2.success should be (false)
         r2.failure should be (true)
@@ -59,7 +59,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r2.numSuccesses should be (0)
         r2.numExceptions should be (0)
 
-        val r3 = JobResult(job, instance, Phase.BUILD, Status.SKIPPED, Instant.now())
+        val r3 = JobResult(job, instance, Status.SKIPPED, Instant.now())
         r3.status should be (Status.SKIPPED)
         r3.success should be (false)
         r3.failure should be (false)
@@ -69,7 +69,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r3.numSuccesses should be (0)
         r3.numExceptions should be (0)
 
-        val r4 = JobResult(job, instance, Phase.BUILD, exception, Instant.now())
+        val r4 = JobResult(job, instance, exception, Instant.now())
         r4.status should be (Status.FAILED)
         r4.success should be (false)
         r4.failure should be (true)
@@ -89,10 +89,10 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         val job = new Job(
             Job.Properties(context)
         )
-        val instance = job.instance(Map())
+        val instance = job.digest(Phase.BUILD, Map())
         val exception = new IllegalArgumentException()
 
-        val r1 = JobResult(job, instance, Phase.BUILD, Seq(
+        val r1 = JobResult(job, instance, Seq(
             AssertionTestResult("a1", None, true, Instant.now()),
             AssertionTestResult("a2", None, true, Instant.now())
         ), Instant.now())
@@ -105,7 +105,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r1.numSuccesses should be (2)
         r1.numExceptions should be (0)
 
-        val r2 = JobResult(job, instance, Phase.BUILD, Seq(
+        val r2 = JobResult(job, instance, Seq(
             AssertionTestResult("a1", None, true, Instant.now()),
             AssertionTestResult("a2", None, false, Instant.now())
         ), Instant.now())
@@ -118,7 +118,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r2.numSuccesses should be (1)
         r2.numExceptions should be (0)
 
-        val r3 = JobResult(job, instance, Phase.BUILD, Seq(
+        val r3 = JobResult(job, instance, Seq(
             AssertionTestResult("a1", None, true, Instant.now()),
             AssertionTestResult("a2", None, exception, Instant.now())
         ), Instant.now())
@@ -134,7 +134,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
 
     "The TargetResult" should "count correctly without children" in {
         val target = mock[Target]
-        (target.instance _).expects().anyNumberOfTimes().returns(TargetInstance("", "", "", Map()))
+        (target.digest _).expects(Phase.BUILD).anyNumberOfTimes().returns(TargetDigest("", "", "", Phase.BUILD, Map()))
         val exception = new IllegalArgumentException()
 
         val r1 = TargetResult(target, Phase.BUILD, Status.SUCCESS, Instant.now())
@@ -180,7 +180,7 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
 
     it should "count correctly with children" in {
         val target = mock[Target]
-        (target.instance _).expects().anyNumberOfTimes().returns(TargetInstance("", "", "", Map()))
+        (target.digest _).expects(Phase.BUILD).anyNumberOfTimes().returns(TargetDigest("", "", "", Phase.BUILD, Map()))
         val exception = new IllegalArgumentException()
 
         val r1 = TargetResult(target, Phase.BUILD, Seq(

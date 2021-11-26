@@ -36,6 +36,7 @@ import com.dimajix.flowman.common.ThreadUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.Relation
@@ -45,6 +46,7 @@ import com.dimajix.flowman.spec.annotation.TargetType
 import com.dimajix.flowman.spec.relation.DeltaFileRelation
 import com.dimajix.flowman.spec.relation.DeltaTableRelation
 import com.dimajix.flowman.spec.relation.RelationReferenceSpec
+import com.dimajix.flowman.types.SingleValue
 
 
 case class DeltaVacuumTarget(
@@ -109,6 +111,16 @@ case class DeltaVacuumTarget(
         retentionTime match {
             case Some(duration) => deltaTable.vacuum(duration.toHours)
             case None => deltaTable.vacuum()
+        }
+    }
+
+    /**
+     * Creates all known links for building a descriptive graph of the whole data flow
+     * Params: linker - The linker object to use for creating new edges
+     */
+    override def link(linker: Linker, phase:Phase): Unit = {
+        if (phase == Phase.BUILD) {
+            linker.write(relation.identifier, Map())
         }
     }
 

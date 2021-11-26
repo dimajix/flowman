@@ -36,7 +36,7 @@ import com.dimajix.flowman.model.ProjectWrapper
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Test
@@ -152,7 +152,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (targetTemplate.instantiate _).expects(*).returns(target)
         (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier("target", "default"))
         (target.name _).expects().atLeastOnce().returns("target")
-        (target.instance _).expects().atLeastOnce().returns(TargetInstance("", "", "", Map()))
+        (target.digest _).expects(*).atLeastOnce().onCall((phase:Phase) => TargetDigest("", "", "", phase, Map()))
         (target.requires _).expects(*).atLeastOnce().returns(Set())
         (target.provides _).expects(*).atLeastOnce().returns(Set())
         (target.before _).expects().atLeastOnce().returns(Seq())
@@ -166,7 +166,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (fixtureTemplate.instantiate _).expects(*).returns(fixture)
         (fixture.identifier _).expects().atLeastOnce().returns(TargetIdentifier("fixture", "default"))
         (fixture.name _).expects().atLeastOnce().returns("fixture")
-        (fixture.instance _).expects().atLeastOnce().returns(TargetInstance("", "", "", Map()))
+        (fixture.digest _).expects(*).atLeastOnce().onCall((phase:Phase) => TargetDigest("", "", "", phase, Map()))
         (fixture.requires _).expects(*).atLeastOnce().returns(Set())
         (fixture.provides _).expects(*).atLeastOnce().returns(Set())
         (fixture.before _).expects().atLeastOnce().returns(Seq(TargetIdentifier("target", "default")))
@@ -271,7 +271,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (targetTemplate.instantiate _).expects(*).returns(target)
         (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier("target", "default"))
         (target.name _).expects().atLeastOnce().returns("target")
-        (target.instance _).expects().atLeastOnce().returns(TargetInstance("default", "project", "target"))
+        (target.digest _).expects(*).atLeastOnce().onCall((phase:Phase) => TargetDigest("default", "project", "target", phase))
         (target.requires _).expects(*).atLeastOnce().returns(Set())
         (target.provides _).expects(*).atLeastOnce().returns(Set())
         (target.before _).expects().atLeastOnce().returns(Seq())
@@ -285,7 +285,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (fixtureTemplate.instantiate _).expects(*).returns(fixture)
         (fixture.identifier _).expects().atLeastOnce().returns(TargetIdentifier("fixture", "default"))
         (fixture.name _).expects().atLeastOnce().returns("fixture")
-        (fixture.instance _).expects().atLeastOnce().returns(TargetInstance("default", "project", "fixture"))
+        (fixture.digest _).expects(*).atLeastOnce().onCall((phase:Phase) => TargetDigest("default", "project", "fixture", phase))
         (fixture.requires _).expects(*).atLeastOnce().returns(Set())
         (fixture.provides _).expects(*).atLeastOnce().returns(Set())
         (fixture.before _).expects().atLeastOnce().returns(Seq(TargetIdentifier("target", "default")))
@@ -357,7 +357,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (targetTemplate.instantiate _).expects(*).returns(target)
         (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier("target", "default"))
         (target.name _).expects().atLeastOnce().returns("target")
-        (target.instance _).expects().atLeastOnce().returns(TargetInstance("default", "project", "target"))
+        (target.digest _).expects(*).atLeastOnce().onCall((phase:Phase) => TargetDigest("default", "project", "target", phase))
         (target.requires _).expects(*).atLeastOnce().returns(Set())
         (target.provides _).expects(*).atLeastOnce().returns(Set())
         (target.before _).expects().atLeastOnce().returns(Seq())

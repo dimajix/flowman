@@ -24,10 +24,10 @@ import com.dimajix.flowman.execution.Token
 import com.dimajix.flowman.history
 import com.dimajix.flowman.metric.Metric
 import com.dimajix.flowman.model.Job
-import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 
 
@@ -41,7 +41,7 @@ abstract class StateStore {
      * @param job
      * @return
      */
-    def getJobState(job: JobInstance): Option[JobState]
+    def getJobState(job: JobDigest): Option[JobState]
 
     /**
      * Returns all metrics belonging to a specific job instance
@@ -57,7 +57,7 @@ abstract class StateStore {
      * @param job
      * @return
      */
-    def startJob(job: Job, instance: JobInstance, phase: Phase): JobToken
+    def startJob(job: Job, digest: JobDigest): JobToken
 
     /**
      * Sets the status of a job after it has been started
@@ -73,7 +73,14 @@ abstract class StateStore {
      * @param target
      * @return
      */
-    def getTargetState(target: TargetInstance): Option[TargetState]
+    def getTargetState(target: TargetDigest): Option[TargetState]
+
+    /**
+     * Returns an execution graph representing the logical data flow from sources into the target
+     * @param targetId
+     * @return
+     */
+    def getTargetGraph(targetId: String) : Option[TargetNode]
 
     /**
      * Starts the run and returns a token, which can be anything
@@ -81,7 +88,7 @@ abstract class StateStore {
      * @param target
      * @return
      */
-    def startTarget(target: Target, instance: TargetInstance, phase: Phase, parent: Option[JobToken]): TargetToken
+    def startTarget(target: Target, digest: TargetDigest, parent: Option[JobToken]): TargetToken
 
     /**
      * Sets the status of a job after it has been started
@@ -128,9 +135,9 @@ object StateStoreAdaptorListener {
 final class StateStoreAdaptorListener(store:StateStore) extends AbstractExecutionListener {
     import StateStoreAdaptorListener._
 
-    override def startJob(execution:Execution, job:Job, instance: JobInstance, phase: Phase, parent:Option[Token]): com.dimajix.flowman.execution.JobToken = {
+    override def startJob(execution:Execution, job:Job, instance: JobDigest, parent:Option[Token]): com.dimajix.flowman.execution.JobToken = {
         execution.metrics.resetMetrics()
-        StateStoreJobToken(store.startJob(job, instance, phase))
+        StateStoreJobToken(store.startJob(job, instance))
     }
     override def finishJob(execution:Execution, token: com.dimajix.flowman.execution.JobToken, result: JobResult): Unit = {
         val status = result.status.toString
@@ -139,9 +146,9 @@ final class StateStoreAdaptorListener(store:StateStore) extends AbstractExecutio
         val t = token.asInstanceOf[StateStoreJobToken].token
         store.finishJob(t, result, metrics)
     }
-    override def startTarget(execution:Execution, target:Target, instance: TargetInstance, phase: Phase, parent: Option[com.dimajix.flowman.execution.Token]): com.dimajix.flowman.execution.TargetToken = {
+    override def startTarget(execution:Execution, target:Target, instance: TargetDigest, parent: Option[com.dimajix.flowman.execution.Token]): com.dimajix.flowman.execution.TargetToken = {
         val t = parent.map(_.asInstanceOf[StateStoreJobToken].token)
-        StateStoreTargetToken(store.startTarget(target, instance, phase, t))
+        StateStoreTargetToken(store.startTarget(target, instance, t))
     }
     override def finishTarget(execution:Execution, token: com.dimajix.flowman.execution.TargetToken, result:TargetResult): Unit = {
         val t = token.asInstanceOf[StateStoreTargetToken].token

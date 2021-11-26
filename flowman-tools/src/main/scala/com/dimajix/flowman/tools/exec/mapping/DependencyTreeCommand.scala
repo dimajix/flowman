@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.graph.GraphBuilder
 import com.dimajix.flowman.model.MappingIdentifier
@@ -39,7 +40,7 @@ class DependencyTreeCommand extends Command {
     override def execute(session: Session, project: Project, context: Context): Boolean = {
         try {
             val mapping = context.getMapping(MappingIdentifier(this.mapping))
-            val graph = new GraphBuilder(context).addMapping(mapping).build()
+            val graph = new GraphBuilder(context, Phase.BUILD).addMapping(mapping).build()
             val node = graph.mapping(mapping)
             println(node.upstreamDependencyTree)
             true

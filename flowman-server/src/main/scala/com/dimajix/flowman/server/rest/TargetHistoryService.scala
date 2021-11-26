@@ -18,6 +18,8 @@ package com.dimajix.flowman.server.rest
 
 import java.util.Locale
 
+import scala.language.postfixOps
+
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Route
 import io.swagger.annotations.Api
@@ -30,15 +32,12 @@ import javax.ws.rs.Path
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.history.JobColumn
-import com.dimajix.flowman.history.JobQuery
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.TargetColumn
 import com.dimajix.flowman.history.TargetOrder
 import com.dimajix.flowman.history.TargetQuery
 import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
-import com.dimajix.flowman.server.model.JobStateCounts
 import com.dimajix.flowman.server.model.TargetStateCounts
 import com.dimajix.flowman.server.model.TargetStateList
 
@@ -47,6 +46,7 @@ import com.dimajix.flowman.server.model.TargetStateList
 @Path("/history")
 class TargetHistoryService(history:StateStore) {
     import akka.http.scaladsl.server.Directives._
+
     import com.dimajix.flowman.server.model.JsonSupport._
 
     def routes : Route = (

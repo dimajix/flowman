@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchTargetException
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.graph.GraphBuilder
 import com.dimajix.flowman.model.Project
@@ -39,7 +40,7 @@ class DependencyTreeCommand extends Command {
     override def execute(session: Session, project: Project, context: Context): Boolean = {
         try {
             val target = context.getTarget(TargetIdentifier(this.target))
-            val graph = new GraphBuilder(context).addTarget(target).build()
+            val graph = new GraphBuilder(context, Phase.BUILD).addTarget(target).build()
             val node = graph.target(target)
             println(node.upstreamDependencyTree)
             true

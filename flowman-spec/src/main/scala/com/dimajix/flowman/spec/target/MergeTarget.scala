@@ -43,7 +43,7 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.RelationReference
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.spec.relation.IdentifierRelationReferenceSpec
 import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 
@@ -69,19 +69,6 @@ case class MergeTarget(
     rebalance: Boolean = false
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[MergeTarget])
-
-    /**
-      * Returns an instance representing this target with the context
-      * @return
-      */
-    override def instance : TargetInstance = {
-        TargetInstance(
-            namespace.map(_.name).getOrElse(""),
-            project.map(_.name).getOrElse(""),
-            name,
-            Map()
-        )
-    }
 
     /**
      * Returns all phases which are implemented by this target in the execute method
@@ -154,9 +141,15 @@ case class MergeTarget(
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
-    override def link(linker: Linker): Unit = {
-        linker.input(mapping.mapping, mapping.output)
-        linker.write(relation.identifier, Map())
+    override def link(linker: Linker, phase:Phase): Unit = {
+        phase match {
+            case Phase.CREATE|Phase.DESTROY =>
+                linker.write(relation.identifier, Map())
+            case Phase.BUILD =>
+                linker.input(mapping.mapping, mapping.output)
+                linker.write(relation.identifier, Map())
+            case _ =>
+        }
     }
 
     /**

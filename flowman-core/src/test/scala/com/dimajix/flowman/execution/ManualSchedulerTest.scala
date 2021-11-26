@@ -30,7 +30,7 @@ import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -67,7 +67,7 @@ class ManualSchedulerTest extends AnyFlatSpec with Matchers with MockFactory wit
             (t.identifier _).expects().atLeastOnce().returns(TargetIdentifier("prj/" + name))
             (t.name _).expects().atLeastOnce().returns(name)
             (t.phases _).expects().atLeastOnce().returns(Set(Phase.BUILD))
-            (t.instance _).expects().atLeastOnce().returns(TargetInstance("default", "prj", name))
+            (t.digest _).expects(Phase.BUILD).atLeastOnce().returns(TargetDigest("default", "prj", name, Phase.BUILD))
             (t.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
             (t.dirty _).expects(*, Phase.BUILD).returns(Yes)
             (t,p)

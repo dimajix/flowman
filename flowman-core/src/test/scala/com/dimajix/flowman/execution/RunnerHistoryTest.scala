@@ -37,7 +37,7 @@ import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
@@ -53,11 +53,12 @@ object RunnerHistoryTest {
         instanceProperties: Target.Properties,
         partition: Map[String,String]
     ) extends BaseTarget {
-        override def instance: TargetInstance = {
-            TargetInstance(
+        override def digest(phase:Phase): TargetDigest = {
+            TargetDigest(
                 namespace.map(_.name).getOrElse(""),
                 project.map(_.name).getOrElse(""),
                 name,
+                phase,
                 partition
             )
         }
@@ -140,7 +141,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
 
     it should "correctly handle non-dirty targets" in {
         def genTarget(name:String, dirty:Trilean) : Context => Target = (ctx:Context) => {
-            val instance = TargetInstance("default", "default", name)
+            val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = stub[Target]
             (target.name _).when().returns(name)
             (target.before _).when().returns(Seq())
@@ -150,7 +151,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
             (target.requires _).when(*).returns(Set())
             (target.provides _).when(*).returns(Set())
             (target.identifier _).when().returns(TargetIdentifier(name))
-            (target.instance _).when().returns(instance)
+            (target.digest _).when(Phase.CREATE).returns(instance)
             (target.namespace _).when().returns(ctx.namespace)
             (target.project _).when().returns(ctx.project)
             (target.dirty _).when(*, Phase.CREATE).returns(dirty)

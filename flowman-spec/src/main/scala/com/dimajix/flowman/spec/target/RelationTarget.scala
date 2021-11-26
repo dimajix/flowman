@@ -45,7 +45,7 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.RelationReference
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.spec.relation.IdentifierRelationReferenceSpec
 import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.types.SingleValue
@@ -92,12 +92,16 @@ case class RelationTarget(
       * Returns an instance representing this target with the context
       * @return
       */
-    override def instance : TargetInstance = {
-        TargetInstance(
+    override def digest(phase:Phase) : TargetDigest = {
+        TargetDigest(
             namespace.map(_.name).getOrElse(""),
             project.map(_.name).getOrElse(""),
             name,
-            partition
+            phase,
+            phase match {
+                case Phase.BUILD|Phase.VERIFY|Phase.TRUNCATE => partition
+                case _ => Map()
+            }
         )
     }
 
@@ -178,16 +182,23 @@ case class RelationTarget(
         }
     }
 
-
     /**
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
-    override def link(linker: Linker): Unit = {
-        val partition = this.partition.mapValues(v => SingleValue(v))
-        if (mapping.nonEmpty)
-            linker.input(mapping.mapping, mapping.output)
-        linker.write(relation.identifier, partition)
+    override def link(linker: Linker, phase:Phase): Unit = {
+        phase match {
+            case Phase.CREATE|Phase.DESTROY =>
+                linker.write(relation.identifier, Map())
+            case Phase.BUILD if (mapping.nonEmpty) =>
+                val partition = this.partition.mapValues(v => SingleValue(v))
+                linker.input(mapping.mapping, mapping.output)
+                linker.write(relation.identifier, partition)
+            case Phase.TRUNCATE =>
+                val partition = this.partition.mapValues(v => SingleValue(v))
+                linker.write(relation.identifier, partition)
+            case _ =>
+        }
     }
 
     /**

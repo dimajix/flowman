@@ -125,20 +125,20 @@ sealed abstract class ResultWrapper(result:Result[_]) {
 
 final case class LifecycleResultWrapper(result:LifecycleResult) extends ResultWrapper(result) {
     def getJob() : JobWrapper = JobWrapper(result.job)
-    def getLifecycle() : java.util.List[String] = result.lifecycle.map(_.toString).asJava
+    def getLifecycle() : java.util.List[String] = result.lifecycle.phases.map(_.toString).asJava
 }
 
 
 final case class JobResultWrapper(result:JobResult) extends ResultWrapper(result) {
     def getDescription() : String = result.job.description.getOrElse("")
     def getJob() : JobWrapper = JobWrapper(result.job)
-    def getPhase() : String = result.phase.toString
+    def getPhase() : String = result.instance.phase.toString
 }
 
 
 final case class TargetResultWrapper(result:TargetResult) extends ResultWrapper(result) {
     def getTarget() : TargetWrapper = TargetWrapper(result.target)
-    def getPhase() : String = result.phase.toString
+    def getPhase() : String = result.instance.phase.toString
 }
 
 

@@ -16,13 +16,11 @@
 
 package com.dimajix.flowman.history
 
-import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.metric.Metric
 import com.dimajix.flowman.model.Job
-import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 
 
@@ -40,7 +38,7 @@ class NullStateStore extends StateStore {
       * @param batch
       * @return
       */
-    override def getJobState(batch:JobInstance) : Option[JobState] = None
+    override def getJobState(batch:JobDigest) : Option[JobState] = None
 
     /**
      * Returns all metrics belonging to a specific job instance
@@ -54,7 +52,7 @@ class NullStateStore extends StateStore {
       * @param batch
       * @return
       */
-    override def startJob(job:Job, instance:JobInstance, phase:Phase) : JobToken = DummyJobToken()
+    override def startJob(job:Job, digest:JobDigest) : JobToken = DummyJobToken()
 
     /**
       * Sets the status of a job after it has been started
@@ -68,14 +66,21 @@ class NullStateStore extends StateStore {
       * @param target
       * @return
       */
-    override def getTargetState(target:TargetInstance) : Option[TargetState] = None
+    override def getTargetState(target:TargetDigest) : Option[TargetState] = None
+
+    /**
+     * Returns an execution graph representing the logical data flow from sources into the target
+     * @param targetId
+     * @return
+     */
+    override def getTargetGraph(targetId: String) : Option[TargetNode] = None
 
     /**
       * Starts the run and returns a token, which can be anything
       * @param target
       * @return
       */
-    override def startTarget(target:Target, instance:TargetInstance, phase:Phase, parent:Option[JobToken]=None) : TargetToken = DummyTargetToken()
+    override def startTarget(target:Target, digest:TargetDigest, parent:Option[JobToken]=None) : TargetToken = DummyTargetToken()
 
     /**
       * Sets the status of a target after it has been started

@@ -39,11 +39,35 @@ sealed abstract class Node {
     def kind : String
     def name : String
 
+    /**
+     * List of incoming edges, i.e. the upstream nodes which provide input data
+     * @return
+     */
     def incoming : Seq[Edge] = inEdges
+
+    /**
+     * List of outgoing edges, i.e. downstream nodes which receive data from this node
+     * @return
+     */
     def outgoing : Seq[Edge] = outEdges
-    def parent : Option[Node] = _parent
+
+    /**
+     * Child nodes providing more detail. For example a "Mapping" node might contain detail information on individual
+     * columns, which would be logical children of the mapping.
+     * @return
+     */
     def children : Seq[Node] = _children
 
+    /**
+     * Optional parent node. For example a "Column" node might be a child of a "Mapping" node
+     * @return
+     */
+    def parent : Option[Node] = _parent
+
+    /**
+     * Create a nice string representation of the upstream dependency tree
+     * @return
+     */
     def upstreamDependencyTree : String = {
         label + "\n" + upstreamTreeRec
     }
@@ -60,7 +84,7 @@ sealed abstract class Node {
             }
         }
         val trees = incoming.map { child =>
-            child.action + "\n" + child.input.upstreamTreeRec
+            child.label + "\n" + child.input.upstreamTreeRec
         }
         val headChildren = trees.dropRight(1)
         val lastChild = trees.takeRight(1)
@@ -71,29 +95,29 @@ sealed abstract class Node {
     }
 }
 
-case class MappingRef(id:Int, mapping:Mapping) extends Node {
+final case class MappingRef(id:Int, mapping:Mapping) extends Node {
     override def category: String = "mapping"
     override def kind: String = mapping.kind
     override def name: String = mapping.name
 }
-case class TargetRef(id:Int, target:Target) extends Node {
+final case class TargetRef(id:Int, target:Target) extends Node {
     override def category: String = "target"
     override def kind: String = target.kind
     override def name: String = target.name
 }
-case class RelationRef(id:Int, relation:Relation) extends Node {
+final case class RelationRef(id:Int, relation:Relation) extends Node {
     override def category: String = "relation"
     override def kind: String = relation.kind
     override def name: String = relation.name
 
     def resources : Set[ResourceIdentifier] = relation.resources(Map()) ++ relation.provides
 }
-case class MappingColumn(id:Int, mapping: Mapping, output:String, column:String) extends Node {
+final case class MappingColumn(id:Int, mapping: Mapping, output:String, column:String) extends Node {
     override def category: String = "mapping_column"
     override def kind: String = "mapping_column"
     override def name: String = mapping.name + "." + output + "." + column
 }
-case class RelationColumn(id:Int, relation: Relation, column:String) extends Node {
+final case class RelationColumn(id:Int, relation: Relation, column:String) extends Node {
     override def category: String = "relation_column"
     override def kind: String = "relation_column"
     override def name: String = relation.name + "." + column

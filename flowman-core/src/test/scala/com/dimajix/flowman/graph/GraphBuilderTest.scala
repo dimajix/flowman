@@ -20,6 +20,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
@@ -57,7 +58,7 @@ class GraphBuilderTest extends AnyFlatSpec with Matchers with MockFactory {
         (mapping2.name _).expects().atLeastOnce().returns("m2")
         (mapping2.link _).expects(*).returns(Unit)
 
-        val graph = new GraphBuilder(context)
+        val graph = new GraphBuilder(context, Phase.BUILD)
             .addMapping(MappingIdentifier("m1"))
             .build()
 

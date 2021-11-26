@@ -114,30 +114,27 @@ sealed abstract class Result[T <: Result[T]] { this:T =>
 
 
 object LifecycleResult {
-    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], status:Status, startTime:Instant) : LifecycleResult =
+    def apply(job:Job, lifecycle: JobLifecycle, status:Status, startTime:Instant) : LifecycleResult =
         LifecycleResult(
             job,
-            instance,
             lifecycle,
             Seq(),
             status,
             startTime=startTime,
             endTime=Instant.now()
         )
-    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], children : Seq[Result[_]], startTime:Instant) : LifecycleResult =
+    def apply(job:Job, lifecycle: JobLifecycle, children : Seq[Result[_]], startTime:Instant) : LifecycleResult =
         LifecycleResult(
             job,
-            instance,
             lifecycle,
             children,
             Status.ofAll(children.map(_.status)),
             startTime=startTime,
             endTime=Instant.now()
         )
-    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], exception:Throwable, startTime:Instant) : LifecycleResult =
+    def apply(job:Job, lifecycle: JobLifecycle, exception:Throwable, startTime:Instant) : LifecycleResult =
         LifecycleResult(
             job,
-            instance,
             lifecycle,
             Seq(),
             Status.FAILED,
@@ -148,8 +145,7 @@ object LifecycleResult {
 }
 final case class LifecycleResult(
     job: Job,
-    instance: JobInstance,
-    lifecycle: Seq[Phase],
+    lifecycle: JobLifecycle,
     override val children : Seq[Result[_]],
     override val status: Status,
     override val exception: Option[Throwable] = None,
@@ -164,41 +160,37 @@ final case class LifecycleResult(
 
 
 object JobResult {
-    def apply(job:Job, instance: JobInstance, phase: Phase, status:Status) : JobResult =
+    def apply(job:Job, instance: JobDigest, status:Status) : JobResult =
         JobResult(
             job,
             instance,
-            phase,
             Seq(),
             status,
             startTime=Instant.now(),
             endTime=Instant.now()
         )
-    def apply(job:Job, instance: JobInstance, phase: Phase, status:Status, startTime:Instant) : JobResult =
+    def apply(job:Job, instance: JobDigest, status:Status, startTime:Instant) : JobResult =
         JobResult(
             job,
             instance,
-            phase,
             Seq(),
             status,
             startTime=startTime,
             endTime=Instant.now()
         )
-    def apply(job:Job, instance: JobInstance, phase: Phase, children : Seq[Result[_]], startTime:Instant) : JobResult =
+    def apply(job:Job, instance: JobDigest, children : Seq[Result[_]], startTime:Instant) : JobResult =
         JobResult(
             job,
             instance,
-            phase,
             children,
             Status.ofAll(children.map(_.status)),
             startTime=startTime,
             endTime=Instant.now()
         )
-    def apply(job:Job, instance: JobInstance, phase: Phase, exception:Throwable, startTime:Instant) : JobResult =
+    def apply(job:Job, instance: JobDigest, exception:Throwable, startTime:Instant) : JobResult =
         JobResult(
             job,
             instance,
-            phase,
             Seq(),
             Status.FAILED,
             Some(exception),
@@ -208,14 +200,14 @@ object JobResult {
 }
 final case class JobResult(
     job: Job,
-    instance : JobInstance,
-    phase: Phase,
+    instance : JobDigest,
     override val children : Seq[Result[_]],
     override val status: Status,
     override val exception: Option[Throwable] = None,
     override val startTime : Instant,
     override val endTime : Instant
 ) extends Result[JobResult] {
+    def phase : Phase = instance.phase
     override def name : String = job.name
     override def category : String = job.category
     override def kind : String = job.kind
@@ -227,8 +219,7 @@ object TargetResult {
     def apply(target:Target, phase: Phase, status:Status) : TargetResult =
         TargetResult(
             target,
-            target.instance,
-            phase,
+            target.digest(phase),
             Seq(),
             status,
             startTime=Instant.now(),
@@ -237,8 +228,7 @@ object TargetResult {
     def apply(target:Target, phase: Phase, status:Status, startTime:Instant) : TargetResult =
         TargetResult(
             target,
-            target.instance,
-            phase,
+            target.digest(phase),
             Seq(),
             status,
             startTime=startTime,
@@ -247,8 +237,7 @@ object TargetResult {
     def apply(target:Target, phase: Phase, children : Seq[Result[_]], startTime:Instant) : TargetResult =
         TargetResult(
             target,
-            target.instance,
-            phase,
+            target.digest(phase),
             children,
             Status.ofAll(children.map(_.status)),
             startTime=startTime,
@@ -257,8 +246,7 @@ object TargetResult {
     def apply(target:Target, phase: Phase, children : Seq[Result[_]], status:Status, startTime:Instant) : TargetResult =
         TargetResult(
             target,
-            target.instance,
-            phase,
+            target.digest(phase),
             children,
             status,
             startTime=startTime,
@@ -267,8 +255,7 @@ object TargetResult {
     def apply(target:Target, phase: Phase, children : Seq[Result[_]], exception:Throwable, startTime:Instant) : TargetResult =
         TargetResult(
             target,
-            target.instance,
-            phase,
+            target.digest(phase),
             children,
             Status.FAILED,
             Some(exception),
@@ -278,8 +265,7 @@ object TargetResult {
     def apply(target:Target, phase: Phase, exception:Throwable, startTime:Instant) : TargetResult =
         TargetResult(
             target,
-            target.instance,
-            phase,
+            target.digest(phase),
             Seq(),
             Status.FAILED,
             Some(exception),
@@ -300,14 +286,14 @@ object TargetResult {
 }
 final case class TargetResult(
     target: Target,
-    instance : TargetInstance,
-    phase: Phase,
+    instance : TargetDigest,
     override val children : Seq[Result[_]],
     override val status: Status,
     override val exception: Option[Throwable] = None,
     override val startTime : Instant = Instant.now(),
     override val endTime : Instant = Instant.now()
 ) extends Result[TargetResult] {
+    def phase : Phase = instance.phase
     override def name : String = target.name
     override def category : String = target.category
     override def kind : String = target.kind

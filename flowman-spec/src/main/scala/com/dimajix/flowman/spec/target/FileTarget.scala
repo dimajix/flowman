@@ -37,7 +37,7 @@ import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 
 
 object FileTarget {
@@ -72,11 +72,12 @@ case class FileTarget(
       *
       * @return
       */
-    override def instance: TargetInstance = {
-        TargetInstance(
+    override def digest(phase:Phase): TargetDigest = {
+        TargetDigest(
             namespace.map(_.name).getOrElse(""),
             project.map(_.name).getOrElse(""),
             name,
+            phase,
             Map("location" -> location.toString)
         )
     }

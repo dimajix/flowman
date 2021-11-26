@@ -35,23 +35,20 @@ import com.dimajix.spark.sql.functions.count_records
   * @param target
   * @param partitions
   */
-final case class TargetInstance(
+final case class TargetDigest(
     namespace:String,
     project:String,
     target:String,
+    phase:Phase,
     partitions:Map[String,String] = Map()
 ) {
-    require(namespace != null)
-    require(project != null)
-    require(target != null)
-    require(partitions != null)
-
     def asMap: Map[String, String] =
         Map(
             "namespace" -> namespace,
             "project" -> project,
             "name" -> target,
-            "target" -> target
+            "target" -> target,
+            "phase" -> phase.toString
         ) ++ partitions
 }
 
@@ -104,7 +101,7 @@ trait Target extends Instance {
       * Returns an instance representing this target with the context
       * @return
       */
-    def instance : TargetInstance
+    def digest(phase:Phase) : TargetDigest
 
     /**
       * Returns an explicit user defined list of targets to be executed after this target. I.e. this
@@ -160,7 +157,7 @@ trait Target extends Instance {
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
-    def link(linker:Linker) : Unit
+    def link(linker:Linker, phase:Phase) : Unit
 }
 
 
@@ -179,11 +176,12 @@ abstract class BaseTarget extends AbstractInstance with Target {
      * Returns an instance representing this target with the context
      * @return
      */
-    override def instance : TargetInstance = {
-        TargetInstance(
+    override def digest(phase:Phase) : TargetDigest = {
+        TargetDigest(
             namespace.map(_.name).getOrElse(""),
             project.map(_.name).getOrElse(""),
-            name
+            name,
+            phase
         )
     }
 
@@ -254,7 +252,7 @@ abstract class BaseTarget extends AbstractInstance with Target {
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
-    override def link(linker:Linker) : Unit = {}
+    override def link(linker:Linker, phase:Phase) : Unit = {}
 
     /**
      * Performs validation before execution. This might be a good point in time to validate any assumption on data

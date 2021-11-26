@@ -44,7 +44,7 @@ import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Result
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
@@ -216,8 +216,8 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                                 None
                         }
 
-                        val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
-                        LifecycleResult(job, instance, phases, results, startTime)
+                        val instance = job.lifecycle(phases, arguments.map { case (k, v) => k -> v.toString })
+                        LifecycleResult(job, instance, results, startTime)
                     }
                 }
             }
@@ -244,16 +244,16 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             val result =
                 execution.withMetrics(allMetrics) { execution =>
                     execution.monitorJob(job, arguments, phase) { execution =>
-                        val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
+                        val instance = job.digest(phase, arguments.map { case (k, v) => k -> v.toString })
                         try {
                             val results = executeJobTargets(execution, context, job, phase, targets, force, keepGoing, dryRun)
-                            JobResult(job, instance, phase, results, startTime)
+                            JobResult(job, instance, results, startTime)
                         }
                         catch {
                             case NonFatal(ex) =>
                                 // Primarily exceptions during target instantiation will be caught here
                                 logger.error(s"Caught exception during $title:", ex)
-                                JobResult(job, instance, phase, ex, startTime)
+                                JobResult(job, instance, ex, startTime)
                         }
                     }
                 }
@@ -308,7 +308,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         val forceDirty = force || execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY)
 
         // We need to check the target *before* we run code inside the monitor (which will mark the target as RUNNING)
-        val canSkip = !force && checkTarget(target.instance, phase)
+        val canSkip = !force && checkTarget(target.digest(phase))
 
         val startTime = Instant.now()
         execution.monitorTarget(target, phase) { execution =>
@@ -338,7 +338,9 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @param target
      * @return
      */
-    private def checkTarget(target:TargetInstance, phase:Phase) : Boolean = {
+    private def checkTarget(target:TargetDigest) : Boolean = {
+        val phase = target.phase
+
         def checkState(state:TargetState) : Boolean = {
             val lifecycle = Lifecycle.ofPhase(phase)
             if (!lifecycle.contains(state.phase)) {

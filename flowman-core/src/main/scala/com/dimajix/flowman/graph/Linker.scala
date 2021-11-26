@@ -23,7 +23,7 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-case class Linker private[graph](builder:GraphBuilder, context:Context, node:Node) {
+final case class Linker private[graph](builder:GraphBuilder, context:Context, node:Node) {
     def input(mapping: MappingIdentifier, output:String) : Linker = {
         val instance = context.getMapping(mapping)
         val in = builder.refMapping(instance)

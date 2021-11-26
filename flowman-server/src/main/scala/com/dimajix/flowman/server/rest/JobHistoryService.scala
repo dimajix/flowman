@@ -18,6 +18,8 @@ package com.dimajix.flowman.server.rest
 
 import java.util.Locale
 
+import scala.language.postfixOps
+
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Route
 import io.swagger.annotations.Api
@@ -44,6 +46,7 @@ import com.dimajix.flowman.server.model.JobStateList
 @Path("/history")
 class JobHistoryService(history:StateStore) {
     import akka.http.scaladsl.server.Directives._
+
     import com.dimajix.flowman.server.model.JsonSupport._
 
     def routes : Route = (

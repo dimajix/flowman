@@ -29,12 +29,12 @@ import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.metric.FixedGaugeMetric
 import com.dimajix.flowman.model.Job
-import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 
 
@@ -66,7 +66,7 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
             driver = "org.apache.derby.jdbc.EmbeddedDriver"
         )
 
-        val target = TargetInstance("default", "p1", "j1")
+        val target = TargetDigest("default", "p1", "j1", Phase.BUILD)
 
         val store1 = new JdbcStateStore(connection)
         store1.getTargetState(target) should be(None)
@@ -85,13 +85,13 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         val job = Job.builder(context)
             .setName("j1")
             .build()
-        val instance = JobInstance("default", "p1", "j1")
+        val instance = JobDigest("default", "p1", "j1", Phase.BUILD)
 
         store.getJobState(instance) should be (None)
-        val token = store.startJob(job, instance, Phase.BUILD)
+        val token = store.startJob(job, instance)
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS))
+        store.finishJob(token, JobResult(job, instance, Status.SUCCESS))
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.SUCCESS))
     }
@@ -107,20 +107,20 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         val job = Job.builder(context)
             .setName("j1")
             .build()
-        val instance = JobInstance("default", "p1", "j1")
+        val instance = JobDigest("default", "p1", "j1", Phase.BUILD)
 
         store.getJobState(instance) should be (None)
-        val token = store.startJob(job, instance, Phase.BUILD)
+        val token = store.startJob(job, instance)
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS))
+        store.finishJob(token, JobResult(job, instance, Status.SUCCESS))
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = store.startJob(job, instance, Phase.BUILD)
+        val token2 = store.startJob(job, instance)
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token2, JobResult(job, instance, Phase.BUILD, Status.FAILED))
+        store.finishJob(token2, JobResult(job, instance, Status.FAILED))
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.FAILED))
     }
@@ -136,41 +136,41 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         val job = Job.builder(context)
             .setName("j1")
             .build()
-        val instance = JobInstance("default", "p1", "j1")
+        val instance = JobDigest("default", "p1", "j1", Phase.BUILD)
 
         store.getJobState(instance) should be (None)
-        val token = store.startJob(job, instance, Phase.BUILD)
+        val token = store.startJob(job, instance)
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS))
+        store.finishJob(token, JobResult(job, instance, Status.SUCCESS))
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = store.startJob(job, instance, Phase.BUILD)
+        val token2 = store.startJob(job, instance)
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token2, JobResult(job, instance, Phase.BUILD, Status.SKIPPED))
+        store.finishJob(token2, JobResult(job, instance, Status.SKIPPED))
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token3 = store.startJob(job, instance, Phase.BUILD)
+        val token3 = store.startJob(job, instance)
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token3, JobResult(job, instance, Phase.BUILD, Status.FAILED))
+        store.finishJob(token3, JobResult(job, instance, Status.FAILED))
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.FAILED))
 
-        val token4 = store.startJob(job, instance, Phase.BUILD)
+        val token4 = store.startJob(job, instance)
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token4, JobResult(job, instance, Phase.BUILD, Status.SKIPPED))
+        store.finishJob(token4, JobResult(job, instance, Status.SKIPPED))
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.FAILED))
 
-        val token5 = store.startJob(job, instance, Phase.BUILD)
+        val token5 = store.startJob(job, instance)
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.RUNNING))
-        store.finishJob(token5, JobResult(job, instance, Phase.BUILD, Status.SUCCESS))
+        store.finishJob(token5, JobResult(job, instance, Status.SUCCESS))
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be (Some(Status.SUCCESS))
     }
@@ -186,15 +186,15 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         val job = Job.builder(context)
             .setName("j1")
             .build()
-        val instance = JobInstance("default", "p1", "j1", Map("p1" -> "v1"))
+        val instance = JobDigest("default", "p1", "j1", Phase.BUILD, Map("p1" -> "v1"))
 
         store.getJobState(instance) should be(None)
-        val token = store.startJob(job, instance, Phase.BUILD)
+        val token = store.startJob(job, instance)
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance.copy(args = Map())) should be(None)
         store.getJobState(instance.copy(args = Map("p1" -> "v3")))should be(None)
         store.getJobState(instance).map(_.status) should be(Some(Status.RUNNING))
-        store.finishJob(token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS))
+        store.finishJob(token, JobResult(job, instance, Status.SUCCESS))
         store.getJobState(instance).map(_.phase) should be(Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be(Some(Status.SUCCESS))
         store.getJobState(instance.copy(args = Map("p1" -> "v2"))) should be(None)
@@ -211,15 +211,15 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
 
         val namespace = Namespace(name="default")
         val project = Project(name="p1")
-        val instance = TargetInstance("default", "p1", "j1")
+        val instance = TargetDigest("default", "p1", "j1", Phase.BUILD)
         val target = mock[Target]
         (target.namespace _).expects().anyNumberOfTimes().returns(Some(namespace))
         (target.project _).expects().anyNumberOfTimes().returns(Some(project))
         (target.name _).expects().anyNumberOfTimes().returns("j1")
-        (target.instance _).expects().anyNumberOfTimes().returns(instance)
+        (target.digest _).expects(Phase.BUILD).anyNumberOfTimes().returns(instance)
 
         store.getTargetState(instance) should be (None)
-        val token = store.startTarget(target, instance, Phase.BUILD, None)
+        val token = store.startTarget(target, instance, None)
         store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
         store.finishTarget(token, TargetResult(target, Phase.BUILD, Status.SUCCESS))
@@ -232,22 +232,22 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
 
         val namespace = Namespace(name="default")
         val project = Project(name="p1")
-        val instance = TargetInstance("default", "p1", "j1")
+        val instance = TargetDigest("default", "p1", "j1", Phase.BUILD)
         val target = mock[Target]
         (target.namespace _).expects().anyNumberOfTimes().returns(Some(namespace))
         (target.project _).expects().anyNumberOfTimes().returns(Some(project))
         (target.name _).expects().anyNumberOfTimes().returns("j1")
-        (target.instance _).expects().anyNumberOfTimes().returns(instance)
+        (target.digest _).expects(Phase.BUILD).anyNumberOfTimes().returns(instance)
 
         store.getTargetState(instance) should be (None)
-        val token = store.startTarget(target, instance, Phase.BUILD, None)
+        val token = store.startTarget(target, instance, None)
         store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
         store.finishTarget(token, TargetResult(target, Phase.BUILD, Status.SUCCESS))
         store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getTargetState(instance).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = store.startTarget(target, instance, Phase.BUILD, None)
+        val token2 = store.startTarget(target, instance, None)
         store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
         store.finishTarget(token2, TargetResult(target, Phase.BUILD, Status.FAILED))
@@ -260,43 +260,43 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
 
         val namespace = Namespace(name="default")
         val project = Project(name="p1")
-        val instance = TargetInstance("default", "p1", "j1")
+        val instance = TargetDigest("default", "p1", "j1", Phase.BUILD)
         val target = mock[Target]
         (target.namespace _).expects().anyNumberOfTimes().returns(Some(namespace))
         (target.project _).expects().anyNumberOfTimes().returns(Some(project))
         (target.name _).expects().anyNumberOfTimes().returns("j1")
-        (target.instance _).expects().anyNumberOfTimes().returns(instance)
+        (target.digest _).expects(Phase.BUILD).anyNumberOfTimes().returns(instance)
 
         store.getTargetState(instance) should be (None)
-        val token = store.startTarget(target, instance, Phase.BUILD, None)
+        val token = store.startTarget(target, instance, None)
         store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
         store.finishTarget(token, TargetResult(target, Phase.BUILD, Status.SUCCESS))
         store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getTargetState(instance).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token2 = store.startTarget(target, instance, Phase.BUILD, None)
+        val token2 = store.startTarget(target, instance, None)
         store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
         store.finishTarget(token2, TargetResult(target, Phase.BUILD, Status.SKIPPED))
         store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getTargetState(instance).map(_.status) should be (Some(Status.SUCCESS))
 
-        val token3 = store.startTarget(target, instance, Phase.BUILD, None)
+        val token3 = store.startTarget(target, instance, None)
         store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
         store.finishTarget(token3, TargetResult(target, Phase.BUILD, Status.FAILED))
         store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getTargetState(instance).map(_.status) should be (Some(Status.FAILED))
 
-        val token4 = store.startTarget(target, instance, Phase.BUILD, None)
+        val token4 = store.startTarget(target, instance, None)
         store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
         store.finishTarget(token4, TargetResult(target, Phase.BUILD, Status.SKIPPED))
         store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getTargetState(instance).map(_.status) should be (Some(Status.FAILED))
 
-        val token5 = store.startTarget(target, instance, Phase.BUILD, None)
+        val token5 = store.startTarget(target, instance, None)
         store.getTargetState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getTargetState(instance).map(_.status) should be (Some(Status.RUNNING))
         store.finishTarget(token5, TargetResult(target, Phase.BUILD, Status.SUCCESS))
@@ -309,15 +309,15 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
 
         val namespace = Namespace(name="default")
         val project = Project(name="p1")
-        val instance = TargetInstance("default", "p1", "j1")
+        val instance = TargetDigest("default", "p1", "j1", Phase.BUILD)
         val target = mock[Target]
         (target.namespace _).expects().anyNumberOfTimes().returns(Some(namespace))
         (target.project _).expects().anyNumberOfTimes().returns(Some(project))
         (target.name _).expects().anyNumberOfTimes().returns("j1")
-        (target.instance _).expects().anyNumberOfTimes().returns(instance)
+        (target.digest _).expects(Phase.BUILD).anyNumberOfTimes().returns(instance)
 
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v1"))) should be(None)
-        val token = store.startTarget(target, instance.copy(partitions = Map("p1" -> "v1")), Phase.BUILD, None)
+        val token = store.startTarget(target, instance.copy(partitions = Map("p1" -> "v1")), None)
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v1"))).map(_.phase) should be(Some(Phase.BUILD))
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v1"))).map(_.status) should be(Some(Status.RUNNING))
         store.finishTarget(token, TargetResult(target, Phase.BUILD, Status.SUCCESS))
@@ -339,15 +339,15 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
 
         val namespace = Namespace(name="default")
         val project = Project(name="p1")
-        val instance = TargetInstance("default", "p1", "j1")
+        val instance = TargetDigest("default", "p1", "j1", Phase.BUILD)
         val target = mock[Target]
         (target.namespace _).expects().anyNumberOfTimes().returns(Some(namespace))
         (target.project _).expects().anyNumberOfTimes().returns(Some(project))
         (target.name _).expects().anyNumberOfTimes().returns("j1")
-        (target.instance _).expects().anyNumberOfTimes().returns(instance)
+        (target.digest _).expects(Phase.BUILD).anyNumberOfTimes().returns(instance)
 
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))) should be(None)
-        val token = store.startTarget(target, instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2")), Phase.BUILD, None)
+        val token = store.startTarget(target, instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2")), None)
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))).map(_.phase) should be(Some(Phase.BUILD))
         store.getTargetState(instance.copy(partitions = Map("p1" -> "v1", "p2" -> "v2"))).map(_.status) should be(Some(Status.RUNNING))
         store.finishTarget(token, TargetResult(target, Phase.BUILD, Status.SUCCESS))
@@ -374,7 +374,7 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         val job = Job.builder(context)
             .setName("j1")
             .build()
-        val instance = JobInstance("default", "p1", "j1")
+        val instance = JobDigest("default", "p1", "j1", Phase.BUILD)
         val metrics = Measurement.ofMetrics(Seq(
             FixedGaugeMetric("num_records", Map("project" -> "great", "namespace" -> "default", "param" -> "1"), 1.0),
             FixedGaugeMetric("num_records", Map("project" -> "great", "namespace" -> "default", "param" -> "2"), 2.0),
@@ -382,14 +382,37 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         ))
 
         store.getJobState(instance) should be(None)
-        val token = store.startJob(job, instance, Phase.BUILD)
+        val token = store.startJob(job, instance)
         store.getJobState(instance).map(_.phase) should be (Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be(Some(Status.RUNNING))
-        store.finishJob(token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS), metrics)
+        store.finishJob(token, JobResult(job, instance, Status.SUCCESS), metrics)
         store.getJobState(instance).map(_.phase) should be(Some(Phase.BUILD))
         store.getJobState(instance).map(_.status) should be(Some(Status.SUCCESS))
 
         val jobId = store.findJobs(JobQuery()).head.id
         store.getJobMetrics(jobId).sortBy(_.value) should be (metrics.sortBy(_.value))
+    }
+
+    it should "support graphs" in {
+        val store = newStateStore()
+
+        val namespace = Namespace(name="default")
+        val project = Project(name="p1")
+        val context = RootContext.builder(namespace)
+            .build()
+            .getProjectContext(project)
+        val job = Job.builder(context)
+            .setName("j1")
+            .build()
+
+        val jobInstance = JobDigest("default", "p1", "j1", Phase.BUILD)
+        val jobToken = store.startJob(job, jobInstance)
+/*
+        val targetInstance = TargetDigest("default", "p1", "t1")
+        val targetToken = store.startTarget(target, targetInstance, Phase.BUILD)
+        store.finishTarget(targetToken, TargetResult(target, Phase.BUILD, Status.SUCCESS))
+
+        store.finishJob(jobToken, JobResult(job, jobInstance, Phase.BUILD, Status.SUCCESS))
+        */
     }
 }

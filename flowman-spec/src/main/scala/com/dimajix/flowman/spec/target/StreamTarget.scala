@@ -132,9 +132,15 @@ case class StreamTarget(
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
-    override def link(linker: Linker): Unit = {
-        linker.input(mapping.mapping, mapping.output)
-        linker.write(relation.identifier, Map())
+    override def link(linker: Linker, phase:Phase): Unit = {
+        phase match {
+            case Phase.BUILD =>
+                linker.input(mapping.mapping, mapping.output)
+                linker.write(relation.identifier, Map())
+            case Phase.TRUNCATE|Phase.DESTROY =>
+                linker.write(relation.identifier, Map())
+            case _ =>
+        }
     }
 
     /**

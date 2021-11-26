@@ -18,6 +18,7 @@ package com.dimajix.flowman.graph
 
 import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Relation
@@ -26,11 +27,11 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 
 
-class GraphBuilder(context:Context) {
+final class GraphBuilder(context:Context, phase:Phase) {
     private val mappings:IdentityHashMap[Mapping,MappingRef] = IdentityHashMap()
     private val relations:IdentityHashMap[Relation,RelationRef] = IdentityHashMap()
     private val targets:IdentityHashMap[Target,TargetRef] = IdentityHashMap()
-    private var currentId:Int = 1
+    private var currentNodeId:Int = 1
 
     /**
      * Adds a single [[Mapping]] to the [[GraphBuilder]] and performs all required linking operations to connect the
@@ -104,7 +105,7 @@ class GraphBuilder(context:Context) {
         }
         else {
             // Create new node and *first* put it into map of known mappings
-            val node = MappingRef(nextId(), mapping)
+            val node = MappingRef(nextNodeId(), mapping)
             mappings.put(mapping, node)
             // Now recursively run the linking process on the newly created node
             val linker = Linker(this, mapping.context, node)
@@ -125,7 +126,7 @@ class GraphBuilder(context:Context) {
         }
         else {
             // Create new node and *first* put it into map of known relations
-            val node = RelationRef(nextId(), relation)
+            val node = RelationRef(nextNodeId(), relation)
             relations.put(relation, node)
             // Now recursively run the linking process on the newly created node
             val linker = Linker(this, relation.context, node)
@@ -146,11 +147,11 @@ class GraphBuilder(context:Context) {
         }
         else {
             // Create new node and *first* put it into map of known targets
-            val node = TargetRef(nextId(), target)
+            val node = TargetRef(nextNodeId(), target)
             targets.put(target, node)
             // Now recursively run the linking process on the newly created node
             val linker = Linker(this, target.context, node)
-            target.link(linker)
+            target.link(linker, phase)
             node
         }
     }
@@ -166,9 +167,9 @@ class GraphBuilder(context:Context) {
         targets.values.toList
     )
 
-    private def nextId() : Int = {
-        val result = currentId
-        currentId += 1
+    private def nextNodeId() : Int = {
+        val result = currentNodeId
+        currentNodeId += 1
         result
     }
 }

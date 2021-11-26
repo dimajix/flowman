@@ -24,6 +24,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.NoSuchMappingOutputException
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.graph.GraphBuilder
 import com.dimajix.flowman.graph.InputMapping
@@ -125,7 +126,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
         //(mappingTemplate1.instantiate _).expects(context).returns(mapping1)
         (mappingTemplate2.instantiate _).expects(context).returns(mapping2)
 
-        val graphBuilder = new GraphBuilder(context)
+        val graphBuilder = new GraphBuilder(context, Phase.BUILD)
         val ref1 = graphBuilder.refMapping(mapping1)
         val ref2 = graphBuilder.refMapping(mapping2)
 

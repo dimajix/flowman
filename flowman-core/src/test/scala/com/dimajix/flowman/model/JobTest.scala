@@ -20,6 +20,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.IntegerType
@@ -54,7 +55,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "env2" -> "eval_2"
         ))
 
-        val instance = job.instance(Map("p1" -> "val1", "p2" -> "val2", "p3" -> "val3"))
+        val instance = job.digest(Phase.BUILD, Map("p1" -> "val1", "p2" -> "val2", "p3" -> "val3"))
         instance.job should be ("some_job")
         instance.namespace should be ("")
         instance.project should be ("")
@@ -64,6 +65,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "name" -> "some_job",
             "namespace" -> "",
             "project" -> "",
+            "phase" -> "BUILD",
             "p1" -> "val1", "p2" -> "val2", "p3" -> "val3"
         ))
     }

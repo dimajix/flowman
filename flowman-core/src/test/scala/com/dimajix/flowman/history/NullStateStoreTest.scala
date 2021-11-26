@@ -26,10 +26,10 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Job
-import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 
 
@@ -37,34 +37,36 @@ class NullStateStoreTest extends AnyFlatSpec with Matchers with MockFactory {
     "The NullStateStore" should "support batches" in {
         val context = RootContext.builder().build()
         val job = Job.builder(context).build()
-        val instance = JobInstance(
+        val instance = JobDigest(
             "default",
             "project",
             "job_01",
+            Phase.BUILD,
             Map()
         )
 
         val monitor = new NullStateStore
         monitor.getJobState(instance) should be (None)
-        val token = monitor.startJob(job, instance, Phase.BUILD)
+        val token = monitor.startJob(job, instance)
         monitor.getJobState(instance) should be (None)
-        monitor.finishJob(token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS, Instant.now()))
+        monitor.finishJob(token, JobResult(job, instance, Status.SUCCESS, Instant.now()))
         monitor.getJobState(instance) should be (None)
     }
 
     it should "support targets" in {
-        val instance = TargetInstance(
+        val instance = TargetDigest(
             "default",
             "project",
             "target_01",
+            Phase.BUILD,
             Map()
         )
         val target = mock[Target]
-        (target.instance _).expects().anyNumberOfTimes().returns(instance)
+        (target.digest _).expects(Phase.BUILD).anyNumberOfTimes().returns(instance)
 
         val monitor = new NullStateStore
         monitor.getTargetState(instance) should be (None)
-        val token = monitor.startTarget(target, instance, Phase.BUILD)
+        val token = monitor.startTarget(target, instance)
         monitor.getTargetState(instance) should be (None)
         monitor.finishTarget(token, TargetResult(target, Phase.BUILD, Status.SUCCESS))
         monitor.getTargetState(instance) should be (None)

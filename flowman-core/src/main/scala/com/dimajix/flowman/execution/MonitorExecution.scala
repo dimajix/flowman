@@ -33,7 +33,8 @@ import com.dimajix.flowman.metric.withWallTime
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.Job
-import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobDigest
+import com.dimajix.flowman.model.JobLifecycle
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.Mapping
@@ -158,10 +159,10 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
      * @return
      */
     override def monitorLifecycle(job: Job, arguments: Map[String, Any], lifecycle: Seq[Phase])(fn: Execution => LifecycleResult): LifecycleResult = {
-        def start(instance:JobInstance) : Seq[(ExecutionListener, LifecycleToken)] = {
+        def start(instance:JobLifecycle) : Seq[(ExecutionListener, LifecycleToken)] = {
             listeners.flatMap { case(hook,parent) =>
                 try {
-                    Some((hook, hook.startLifecycle(this, job, instance, lifecycle)))
+                    Some((hook, hook.startLifecycle(this, job, instance)))
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on startLifecycle: ${ex.toString}.")
@@ -182,9 +183,9 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
         }
 
         val startTime = Instant.now()
-        val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
+        val instance = job.lifecycle(lifecycle, arguments.map { case (k, v) => k -> v.toString })
         def failure() : LifecycleResult = {
-            LifecycleResult(job, instance, lifecycle, Status.FAILED, startTime)
+            LifecycleResult(job, instance, Status.FAILED, startTime)
         }
 
         val tokens = start(instance)
@@ -214,10 +215,10 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
      * @return
      */
     override def monitorJob(job: Job, arguments: Map[String, Any], phase: Phase)(fn: Execution => JobResult): JobResult = {
-        def start(instance:JobInstance) : Seq[(ExecutionListener, JobToken)] = {
+        def start(instance:JobDigest) : Seq[(ExecutionListener, JobToken)] = {
             listeners.flatMap { case(hook,parent) =>
                 try {
-                    Some((hook, hook.startJob(this, job, instance, phase, parent)))
+                    Some((hook, hook.startJob(this, job, instance, parent)))
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on startJob: ${ex.toString}.")
@@ -238,9 +239,9 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
         }
 
         val startTime = Instant.now()
-        val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
+        val instance = job.digest(phase, arguments.map { case (k, v) => k -> v.toString })
         def failure() : JobResult = {
-            JobResult(job, instance, phase, Status.FAILED, startTime)
+            JobResult(job, instance, Status.FAILED, startTime)
         }
 
         // Note that some hooks might reset all metrics (for example the StateStoreAdaptorListener)
@@ -278,7 +279,7 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
         def start() : Seq[(ExecutionListener, TargetToken)] = {
             listeners.flatMap { case(hook,parent) =>
                 try {
-                    Some((hook, hook.startTarget(this, target, target.instance, phase, parent)))
+                    Some((hook, hook.startTarget(this, target, target.digest(phase), parent)))
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on startTarget: ${ex.toString}.")

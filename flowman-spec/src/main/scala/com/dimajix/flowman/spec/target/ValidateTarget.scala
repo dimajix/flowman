@@ -38,7 +38,7 @@ import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.assertion.AssertionSpec
 
@@ -55,13 +55,14 @@ case class ValidateTarget(
      *
      * @return
      */
-    override def instance: TargetInstance = {
+    override def digest(phase:Phase): TargetDigest = {
         // Create a custom instance identifier with a timestamp, such that every run is a new instance. Otherwise
         // validation wouldn't be always executed in the presence of a state store.
-        TargetInstance(
+        TargetDigest(
             namespace.map(_.name).getOrElse(""),
             project.map(_.name).getOrElse(""),
             name,
+            phase,
             Map("validation_ts" -> Clock.systemUTC().millis().toString)
         )
     }

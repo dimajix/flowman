@@ -29,16 +29,23 @@ import slick.jdbc.DerbyProfile
 import slick.jdbc.H2Profile
 import slick.jdbc.MySQLProfile
 import slick.jdbc.PostgresProfile
+import slick.jdbc.SQLServerProfile
+import slick.jdbc.SQLiteProfile
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.graph.GraphBuilder
+import com.dimajix.flowman.history.JdbcStateRepository.JobRun
+import com.dimajix.flowman.history.JdbcStateRepository.TargetRun
+import com.dimajix.flowman.history.JdbcStateStore.JdbcJobToken
+import com.dimajix.flowman.history.JdbcStateStore.JdbcTargetToken
 import com.dimajix.flowman.metric.GaugeMetric
 import com.dimajix.flowman.metric.Metric
 import com.dimajix.flowman.model.Job
-import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 
 
@@ -51,6 +58,16 @@ object JdbcStateStore {
         password:Option[String] = None,
         properties: Map[String,String] = Map()
     )
+
+    case class JdbcTargetToken(
+        run:TargetRun,
+        parent:Option[JdbcJobToken]
+    ) extends TargetToken
+
+    case class JdbcJobToken(
+        run:JobRun,
+        graph:GraphBuilder
+    ) extends JobToken
 }
 
 
@@ -64,7 +81,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       * @param job
       * @return
       */
-    override def getJobState(job: JobInstance): Option[JobState] = {
+    override def getJobState(job: JobDigest): Option[JobState] = {
         val run = JobRun(
             0,
             job.namespace,
@@ -97,10 +114,10 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
 
     /**
       * Starts the run and returns a token, which can be anything
-      * @param instance
+      * @param digest
       * @return
       */
-    override def startJob(job:Job, instance:JobInstance, phase: Phase) : JobToken = {
+    override def startJob(job:Job, digest:JobDigest) : JobToken = {
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         val run =  JobRun(
             0,
@@ -108,18 +125,20 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             job.project.map(_.name).getOrElse(""),
             job.project.flatMap(_.version).getOrElse(""),
             job.name,
-            phase.upper,
-            hashArgs(instance),
+            digest.phase.upper,
+            hashArgs(digest),
             Some(now),
             None,
             Status.RUNNING.upper,
             None
         )
 
-        logger.debug(s"Start '${phase}' job '${run.namespace}/${run.project}/${run.job}' in history database")
-        withSession { repository =>
-            repository.insertJobRun(run, instance.args)
+        logger.debug(s"Start '${digest.phase}' job '${run.namespace}/${run.project}/${run.job}' in history database")
+        val run2 = withSession { repository =>
+            repository.insertJobRun(run, digest.args)
         }
+
+        JdbcJobToken(run2, new GraphBuilder(job.context, digest.phase))
     }
 
     /**
@@ -129,13 +148,16 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       */
     override def finishJob(token:JobToken, result: JobResult, metrics:Seq[Measurement]=Seq()) : Unit = {
         val status = result.status
-        val run = token.asInstanceOf[JobRun]
+        val jdbcToken = token.asInstanceOf[JdbcJobToken]
+        val run = jdbcToken.run
         logger.info(s"Mark '${run.phase}' job '${run.namespace}/${run.project}/${run.job}' as $status in history database")
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
+        val graph = Graph.ofGraph(jdbcToken.graph.build())
         withSession{ repository =>
             repository.setJobStatus(run.copy(end_ts = Some(now), status=status.upper, error=result.exception.map(_.toString)))
             repository.insertJobMetrics(run, metrics)
+            repository.insertJobGraph(run, graph)
         }
     }
 
@@ -144,7 +166,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       * @param target
       * @return
       */
-    override def getTargetState(target:TargetInstance) : Option[TargetState] = {
+    override def getTargetState(target:TargetDigest) : Option[TargetState] = {
         val run = TargetRun(
             0,
             None,
@@ -166,31 +188,41 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
     }
 
     /**
+     * Returns an execution graph representing the logical data flow from sources into the target
+     * @param targetId
+     * @return
+     */
+    override def getTargetGraph(targetId: String) : Option[TargetNode] = None
+
+    /**
       * Starts the run and returns a token, which can be anything
-      * @param instance
+      * @param digest
       * @return
       */
-    override def startTarget(target:Target, instance:TargetInstance, phase: Phase, parent:Option[JobToken]) : TargetToken = {
+    override def startTarget(target:Target, digest:TargetDigest, parent:Option[JobToken]) : TargetToken = {
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
+
+        val parentRun = parent.map(_.asInstanceOf[JdbcJobToken])
         val run =  TargetRun(
             0,
-            parent.map(_.asInstanceOf[JobRun].id),
+            parentRun.map(_.run.id),
             target.namespace.map(_.name).getOrElse(""),
             target.project.map(_.name).getOrElse(""),
             target.project.flatMap(_.version).getOrElse(""),
             target.name,
-            phase.upper,
-            hashPartitions(instance),
+            digest.phase.upper,
+            hashPartitions(digest),
             Some(now),
             None,
             Status.RUNNING.upper,
             None
         )
 
-        logger.debug(s"Start '$phase' target '${run.namespace}/${run.project}/${run.target}' in history database")
-        withSession { repository =>
-            repository.insertTargetRun(run, instance.partitions)
+        logger.debug(s"Start '${digest.phase}' target '${run.namespace}/${run.project}/${run.target}' in history database")
+        val run2 = withSession { repository =>
+            repository.insertTargetRun(run, digest.partitions)
         }
+        JdbcTargetToken(run2, parentRun)
     }
 
     /**
@@ -200,12 +232,20 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       */
     override def finishTarget(token:TargetToken, result: TargetResult) : Unit = {
         val status = result.status
-        val run = token.asInstanceOf[TargetRun]
+        val jdbcToken = token.asInstanceOf[JdbcTargetToken]
+        val run = jdbcToken.run
         logger.info(s"Mark '${run.phase}' target '${run.namespace}/${run.project}/${run.target}' as $status in history database")
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession{ repository =>
             repository.setTargetStatus(run.copy(end_ts = Some(now), status=status.upper, error=result.exception.map(_.toString)))
+        }
+
+        // Add target to Job's build graph
+        if (status != Status.SKIPPED) {
+            jdbcToken.parent.foreach {
+                _.graph.addTarget(result.target)
+            }
         }
     }
 
@@ -268,11 +308,11 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         }
     }
 
-    private def hashArgs(job:JobInstance) : String = {
+    private def hashArgs(job:JobDigest) : String = {
          hashMap(job.args)
     }
 
-    private def hashPartitions(target:TargetInstance) : String = {
+    private def hashPartitions(target:TargetDigest) : String = {
         hashMap(target.partitions)
     }
 
@@ -314,16 +354,20 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
     private def newRepository() : JdbcStateRepository = {
         // Get Connection
         val derbyPattern = """.*\.derby\..*""".r
+        val sqlitePattern = """.*\.sqlite\..*""".r
         val h2Pattern = """.*\.h2\..*""".r
         val mariadbPattern = """.*\.mariadb\..*""".r
         val mysqlPattern = """.*\.mysql\..*""".r
         val postgresqlPattern = """.*\.postgresql\..*""".r
+        val sqlserverPattern = """.*\.sqlserver\..*""".r
         val profile = connection.driver match {
             case derbyPattern() => DerbyProfile
+            case sqlitePattern() => SQLiteProfile
             case h2Pattern() => H2Profile
             case mysqlPattern() => MySQLProfile
             case mariadbPattern() => MySQLProfile
             case postgresqlPattern() => PostgresProfile
+            case sqlserverPattern() => SQLServerProfile
             case _ => throw new UnsupportedOperationException(s"Database with driver ${connection.driver} is not supported")
         }
 

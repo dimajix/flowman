@@ -113,8 +113,21 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
     }
 
     /**
+     * Returns the execution graph belonging to a specific job run
+     *
+     * @param jobId
+     * @return
+     */
+    override def getJobGraph(jobId: String): Option[Graph] = {
+        withSession { repository =>
+            repository.getJobGraph(jobId.toLong)
+        }
+    }
+
+    /**
       * Starts the run and returns a token, which can be anything
-      * @param digest
+     *
+     * @param digest
       * @return
       */
     override def startJob(job:Job, digest:JobDigest) : JobToken = {
@@ -187,12 +200,11 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         }
     }
 
-    /**
-     * Returns an execution graph representing the logical data flow from sources into the target
-     * @param targetId
-     * @return
-     */
-    override def getTargetGraph(targetId: String) : Option[TargetNode] = None
+    def getTargetState(targetId: String): TargetState = {
+        withSession { repository =>
+            repository.getTargetState(targetId.toLong)
+        }
+    }
 
     /**
       * Starts the run and returns a token, which can be anything

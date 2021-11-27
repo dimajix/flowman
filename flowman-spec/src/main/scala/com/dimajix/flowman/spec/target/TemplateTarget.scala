@@ -124,7 +124,8 @@ case class TemplateTarget(
      * @param phase
      */
     override def execute(execution: Execution, phase: Phase): TargetResult = {
-        targetInstance.execute(execution, phase)
+        val result = targetInstance.execute(execution, phase)
+        result.copy(target=this, instance=digest(phase))
     }
 
     /**

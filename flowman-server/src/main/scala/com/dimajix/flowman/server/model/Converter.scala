@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,31 @@ object Converter {
             ns.profiles.keys.toSeq,
             ns.connections.keys.toSeq,
             ns.plugins
+        )
+    }
+
+    def ofSpec(node:history.Node) : Node = {
+        Node(
+            node.id,
+            node.category,
+            node.kind,
+            node.name
+        )
+    }
+
+    def ofSpec(edge:history.Edge) : Edge = {
+        Edge(
+            edge.input.id,
+            edge.output.id,
+            edge.action,
+            edge.labels
+        )
+    }
+
+    def ofSpec(graph:history.Graph) : Graph = {
+        Graph(
+            graph.nodes.map(n => ofSpec(n)),
+            graph.edges.map(n => ofSpec(n))
         )
     }
 

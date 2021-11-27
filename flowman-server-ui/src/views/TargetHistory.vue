@@ -20,8 +20,11 @@
             :loading="loading"
             :options.sync="options"
             :server-items-length="total"
+            :expanded.sync="expanded"
+            show-expand
+            expand-icon="expand_more"
             item-key="id"
-            class="elevation-1"
+            @click:row="clickRow"
             :footer-props="{
               prevIcon: 'navigate_before',
               nextIcon: 'navigate_next'
@@ -38,6 +41,11 @@
                 {{ p[0] }} : {{ p[1] }}
               </v-chip>
             </template>
+            <template v-slot:expanded-item="{ item,headers }">
+              <td :colspan="headers.length">
+                <target-details :target="item.id"/>
+              </td>
+            </template>
           </v-data-table>
         </v-card>
       </v-col>
@@ -47,17 +55,19 @@
 
 <script>
   import TargetCharts from "@/components/TargetCharts";
+  import TargetDetails from "@/components/TargetDetails";
   import Filter from "@/mixins/Filter.js";
   import Status from '@/components/Status.vue'
 
   export default {
     name: "TargetHistory",
     mixins: [Filter],
-    components: {TargetCharts,Status},
+    components: {TargetCharts,TargetDetails,Status},
 
     data() {
       return {
         targets: [],
+        expanded: [],
         total: 0,
         options: {},
         loading: false,
@@ -87,6 +97,15 @@
     },
 
     methods: {
+      clickRow(item, event) {
+        if(event.isExpanded) {
+          const index = this.expanded.findIndex(i => i === item);
+          this.expanded.splice(index, 1)
+        } else {
+          this.expanded.push(item);
+        }
+      },
+
       getData() {
         const { page, itemsPerPage } = this.options
         const offset = (page-1)*itemsPerPage

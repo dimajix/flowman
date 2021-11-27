@@ -42,6 +42,16 @@ export default {
           .then(response => response.data)
       },
 
+      getTargetDetails(target) {
+        return axios.get('/api/history/target/' + target)
+          .then(response => response.data)
+      },
+
+      getTargetGraph(target) {
+        return axios.get('/api/history/target/' + target + '/graph')
+          .then(response => response.data)
+      },
+
       getTargetCounts(grouping, projects=[], jobs=[], targets=[], phase=[], status=[]) {
         return axios.get('/api/history/target-counts?grouping=' + grouping + "&project=" + projects.join(',') + "&job=" + jobs.join(',') + "&target=" + targets.join(',') + "&phase=" + phase.join(',') + "&status=" + status.join(','))
           .then(response => response.data)

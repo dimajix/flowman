@@ -43,7 +43,7 @@
             </template>
             <template v-slot:expanded-item="{ item,headers }">
               <td :colspan="headers.length">
-                <job-history-details :job="item.id"/>
+                <job-details :job="item.id"/>
               </td>
             </template>
           </v-data-table>
@@ -54,7 +54,7 @@
 </template>
 
 <script>
-  import JobHistoryDetails from "@/components/JobHistoryDetails";
+  import JobDetails from "@/components/JobDetails";
   import JobCharts from "@/components/JobCharts";
   import Filter from "@/mixins/Filter.js";
   import Status from '@/components/Status.vue'
@@ -62,7 +62,7 @@
   export default {
     name: "JobHistory",
     mixins: [Filter],
-    components: {JobCharts, JobHistoryDetails,Status},
+    components: {JobCharts, JobDetails,Status},
 
     data() {
       return {

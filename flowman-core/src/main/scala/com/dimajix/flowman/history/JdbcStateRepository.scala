@@ -22,6 +22,7 @@ import java.time.ZonedDateTime
 import java.util.Locale
 import java.util.Properties
 
+import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.language.higherKinds
@@ -386,6 +387,72 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .toSeq
     }
 
+    def insertJobGraph(run:JobRun, graph:Graph) : Unit = {
+        val dbNodes = graph.nodes.map(n => GraphNode(-1, run.id, n.category, n.kind, n.name))
+        val nodesQuery = (graphNodes returning graphNodes.map(_.id)) ++= dbNodes
+        val nodeIds = Await.result(db.run(nodesQuery), Duration.Inf)
+        val nodeIdToDbId = graph.nodes.map(_.id).zip(nodeIds).toMap
+
+        val dbEdges = graph.edges.map(e => GraphEdge(-1, nodeIdToDbId(e.input.id), nodeIdToDbId(e.output.id), e.action))
+        val edgesQuery = (graphEdges returning graphEdges.map(_.id)) ++= dbEdges
+        val edgeIds = Await.result(db.run(edgesQuery), Duration.Inf)
+
+        val dbLabels = graph.edges.zip(edgeIds).flatMap { case (e,id) => e.labels.flatMap(l => l._2.map(v => GraphEdgeLabel(-1, id, l._1, v))) }
+        val labelsQuery = graphEdgeLabels ++= dbLabels
+        Await.result(db.run(labelsQuery), Duration.Inf)
+    }
+
+    def getJobGraph(jobId:Long) : Option[Graph] = {
+        // Ensure that job actually exists
+        val jq = jobRuns.filter(_.id === jobId)
+        Await.result(db.run(jq.result), Duration.Inf).head
+
+        // Now retrieve graph nodes
+        val qn = graphNodes.filter(_.job_id === jobId)
+        val dbNodes = Await.result(db.run(qn.result), Duration.Inf)
+
+        // Only build graph if nodes are present, otherwise return None
+        if (dbNodes.nonEmpty) {
+            val graph = Graph.builder()
+            val nodesById = dbNodes.map { r =>
+                val node = r.category match {
+                    case "mapping" => graph.newMappingNode(r.name, r.kind)
+                    case "target" => graph.newTargetNode(r.name, r.kind)
+                    case "relation" => graph.newRelationNode(r.name, r.kind)
+                }
+                r.id -> node
+            }.toMap
+
+            val qe = graphEdges.filter(e => e.input_id.in(qn.map(_.id).distinct))
+                .joinLeft(graphEdgeLabels).on(_.id === _.edge_id)
+            val dbEdges = Await.result(db.run(qe.result), Duration.Inf)
+            dbEdges.groupBy(_._1.id).foreach { case (x,y) =>
+                val edge = y.head._1
+                val labels = y.flatMap(_._2)
+                    .map(l => l.name -> l.value)
+                    .groupBy(_._1)
+                    .map(l => l._1 -> l._2.map(_._2))
+
+                val inputNode = nodesById(edge.input_id)
+                val outputNode = nodesById(edge.output_id)
+                val edge2 = edge.action match {
+                    case "INPUT" =>
+                        InputMapping(inputNode.asInstanceOf[MappingNode], outputNode, labels("pin").head)
+                    case "READ" =>
+                        ReadRelation(inputNode.asInstanceOf[RelationNode], outputNode, labels)
+                    case "WRITE" =>
+                        WriteRelation(inputNode, outputNode.asInstanceOf[RelationNode], labels.map(kv => kv._1 -> kv._2.head))
+                }
+                graph.addEdge(edge2)
+            }
+
+            Some(graph.build())
+        }
+        else {
+            None
+        }
+    }
+
     private def queryJobs(query:JobQuery) : Query[JobRuns,JobRun,Seq]  = {
         query.args.foldLeft(jobRuns.map(identity))((q, kv) => q
                 .join(jobArgs).on(_.id === _.job_id)
@@ -496,7 +563,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     }
 
     def getTargetState(target:TargetRun, partitions:Map[String,String]) : Option[TargetState] = {
-        val latestId = targetRuns
+        val q = targetRuns
             .filter(tr => tr.namespace === target.namespace
                 && tr.project === target.project
                 && tr.target === target.target
@@ -506,19 +573,23 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .map(_.id)
             .max
 
+        Await.result(db.run(q.result), Duration.Inf)
+            .map { id => getTargetState(id) }
+    }
+
+    def getTargetState(targetId:Long) : TargetState = {
         // Finally select the run with the calculated ID
-        val q = targetRuns.filter(r => r.id === latestId)
-        val tgt = Await.result(db.run(q.result), Duration.Inf)
-            .headOption
+        val q = targetRuns.filter(r => r.id === targetId)
+        val state = Await.result(db.run(q.result), Duration.Inf)
+            .head
 
         // Retrieve target partitions
-        val qp = tgt.map(t => targetPartitions.filter(_.target_id === t.id))
-        val parts = qp.toSeq.flatMap(q =>
-            Await.result(db.run(q.result), Duration.Inf)
-                .map(a => (a.name, a.value))
-        ).toMap
+        val qp = targetPartitions.filter(_.target_id === state.id)
+        val parts = Await.result(db.run(qp.result), Duration.Inf)
+            .map(a => a.name -> a.value)
+            .toMap
 
-        tgt.map(state => TargetState(
+        TargetState(
             state.id.toString,
             state.job_id.map(_.toString),
             state.namespace,
@@ -531,7 +602,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             state.start_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
             state.end_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
             state.error
-        ))
+        )
     }
 
     def setTargetStatus(run:TargetRun) : Unit = {
@@ -548,21 +619,6 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         Await.result(db.run(argsQuery), Duration.Inf)
 
         runResult
-    }
-
-    def insertJobGraph(run:JobRun, graph:Graph) : Unit = {
-        val dbNodes = graph.nodes.map(n => GraphNode(-1, run.id, n.category, n.kind, n.name))
-        val nodesQuery = (graphNodes returning graphNodes.map(_.id)) ++= dbNodes
-        val nodeIds = Await.result(db.run(nodesQuery), Duration.Inf)
-        val nodeIdToDbId = graph.nodes.map(_.id).zip(nodeIds).toMap
-
-        val dbEdges = graph.edges.map(e => GraphEdge(-1, nodeIdToDbId(e.input.id), nodeIdToDbId(e.output.id), e.action))
-        val edgesQuery = (graphEdges returning graphEdges.map(_.id)) ++= dbEdges
-        val edgeIds = Await.result(db.run(edgesQuery), Duration.Inf)
-
-        val dbLabels = graph.edges.zip(edgeIds).flatMap { case (e,id) => e.labels.flatMap(l => l._2.map(v => GraphEdgeLabel(-1, id, l._1, v))) }
-        val labelsQuery = graphEdgeLabels ++= dbLabels
-        Await.result(db.run(labelsQuery), Duration.Inf)
     }
 
     private def queryTargets(query:TargetQuery) : Query[TargetRuns, TargetRun, Seq] = {

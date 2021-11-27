@@ -48,8 +48,17 @@ class NullStateStore extends StateStore {
     override def getJobMetrics(jobId:String) : Seq[Measurement] = Seq()
 
     /**
+     * Returns the execution graph belonging to a specific job run
+     *
+     * @param jobId
+     * @return
+     */
+    override def getJobGraph(jobId: String): Option[Graph] = None
+
+    /**
       * Starts the run and returns a token, which can be anything
-      * @param batch
+     *
+     * @param batch
       * @return
       */
     override def startJob(job:Job, digest:JobDigest) : JobToken = DummyJobToken()
@@ -67,13 +76,7 @@ class NullStateStore extends StateStore {
       * @return
       */
     override def getTargetState(target:TargetDigest) : Option[TargetState] = None
-
-    /**
-     * Returns an execution graph representing the logical data flow from sources into the target
-     * @param targetId
-     * @return
-     */
-    override def getTargetGraph(targetId: String) : Option[TargetNode] = None
+    override def getTargetState(targetId: String): TargetState = ???
 
     /**
       * Starts the run and returns a token, which can be anything

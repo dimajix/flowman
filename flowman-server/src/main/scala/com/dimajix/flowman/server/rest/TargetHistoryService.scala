@@ -51,9 +51,15 @@ class TargetHistoryService(history:StateStore) {
 
     def routes : Route = (
         pathPrefix("target") {(
-            path(Segment) { target =>
-                getTargetState(target)
-            }
+            pathPrefix(Segment) { target => (
+                pathEnd {
+                    getTargetState(target)
+                }
+                ~
+                path("graph") {
+                    getTargetGraph(target)
+                }
+            )}
         )}
         ~
         pathPrefix("target-counts") {(
@@ -165,6 +171,22 @@ class TargetHistoryService(history:StateStore) {
         val query = TargetQuery(id=Seq(targetId))
         val target = history.findTargets(query).headOption
         complete(target.map(Converter.ofSpec))
+    }
+
+    @Path("/target/{target}/graph")
+    @ApiOperation(value = "Retrieve a target graph", nickname = "getTargetGraph", httpMethod = "GET")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "target", value = "Target ID", required = true,
+            dataType = "string", paramType = "path")
+    ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Target graph", response = classOf[model.TargetState])
+    ))
+    def getTargetGraph(targetId:String) : server.Route = {
+        val state = history.getTargetState(targetId)
+        val jobGraph = history.getJobGraph(state.jobId.get)
+        val targetGraph = jobGraph.map(g => g.subgraph(g.nodes.filter(n => n.category == "target" && n.name == state.target).head))
+        complete(targetGraph.map(Converter.ofSpec))
     }
 
     private def split(arg:Option[String]) : Seq[String] = {

@@ -44,12 +44,19 @@ abstract class StateStore {
     def getJobState(job: JobDigest): Option[JobState]
 
     /**
-     * Returns all metrics belonging to a specific job instance
+     * Returns all metrics belonging to a specific job run
      *
      * @param jobId
      * @return
      */
     def getJobMetrics(jobId: String): Seq[Measurement]
+
+    /**
+     * Returns the execution graph belonging to a specific job run
+     * @param jobId
+     * @return
+     */
+    def getJobGraph(jobId: String) : Option[Graph]
 
     /**
      * Starts the run and returns a token, which can be anything
@@ -74,13 +81,7 @@ abstract class StateStore {
      * @return
      */
     def getTargetState(target: TargetDigest): Option[TargetState]
-
-    /**
-     * Returns an execution graph representing the logical data flow from sources into the target
-     * @param targetId
-     * @return
-     */
-    def getTargetGraph(targetId: String) : Option[TargetNode]
+    def getTargetState(targetId: String): TargetState
 
     /**
      * Starts the run and returns a token, which can be anything

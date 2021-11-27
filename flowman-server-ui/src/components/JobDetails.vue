@@ -127,7 +127,7 @@
 import Status from '@/components/Status.vue'
 
 export default {
-  name: 'JobHistoryDetails',
+  name: 'JobDetails',
   components: {Status},
 
   props: {

@@ -20,6 +20,7 @@ import scala.collection.mutable
 
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.history.Graph.builder
 import com.dimajix.flowman.{graph => g}
 import com.dimajix.flowman.model.Target
 
@@ -66,7 +67,7 @@ object Graph {
             node
         }
 
-        private def addNode(node:Node) : Unit = {
+        def addNode(node:Node) : Unit = {
             nodes.put(node.id, node)
         }
 
@@ -89,7 +90,7 @@ object Graph {
          */
         def build() : Graph = {
             Graph(
-                nodes.values.toSeq,
+                nodes.values.toList,
                 edges
             )
         }
@@ -163,7 +164,54 @@ object Graph {
     }
 }
 
-case class Graph(nodes:Seq[Node], edges:Seq[Edge])
+final case class Graph(nodes:Seq[Node], edges:Seq[Edge]) {
+    def subgraph(node:Node): Graph = {
+        val builder = Graph.builder()
+        val nodesById = mutable.Map[Int,Node]()
+        // IDs of processed nodes
+        val incomingIds = mutable.Set[Int]()
+        val outgoingIds = mutable.Set[Int]()
+
+        def replaceIncoming(node:Node) : Node = {
+            if (incomingIds.contains(node.id)) {
+                nodesById(node.id)
+            }
+            else {
+                val newNode = nodesById.getOrElseUpdate(node.id, node.withoutEdges)
+                builder.addNode(newNode)
+                incomingIds.add(newNode.id)
+                node.incoming.foreach { e =>
+                    val input = replaceIncoming(e.input)
+                    val edge = e.withNodes(input, newNode)
+                    builder.addEdge(edge)
+                }
+                newNode
+            }
+        }
+
+        def replaceOutgoing(node:Node) : Node = {
+            if (outgoingIds.contains(node.id)) {
+                nodesById(node.id)
+            }
+            else {
+                val newNode = nodesById.getOrElseUpdate(node.id, node.withoutEdges)
+                builder.addNode(newNode)
+                outgoingIds.add(newNode.id)
+                node.outgoing.foreach { e =>
+                    val output = replaceOutgoing(e.output)
+                    val edge = e.withNodes(newNode, output)
+                    builder.addEdge(edge)
+                }
+                newNode
+            }
+        }
+
+        replaceIncoming(node)
+        replaceOutgoing(node)
+
+        builder.build()
+    }
+}
 
 
 
@@ -186,6 +234,8 @@ sealed abstract class Node {
     def name : String
     def incoming: Seq[Edge] = _incoming
     def outgoing: Seq[Edge] = _outgoing
+
+    def withoutEdges : Node
 
     /**
      * Create a nice string representation of the upstream dependency tree
@@ -225,25 +275,28 @@ sealed abstract class Node {
 final case class TargetNode(
     override val id:Int,
     override val name:String,
-    override val kind:String,
+    override val kind:String
 ) extends Node {
     override def category: String = "target"
+    override def withoutEdges : Node = TargetNode(id, name, kind)
 }
 
 final case class MappingNode(
     override val id:Int,
     override val name:String,
-    override val kind:String,
+    override val kind:String
 ) extends Node {
     override def category: String = "mapping"
+    override def withoutEdges : Node = MappingNode(id, name, kind)
 }
 
 final case class RelationNode(
     override val id:Int,
     override val name:String,
-    override val kind:String,
+    override val kind:String
 ) extends Node {
     override def category: String = "relation"
+    override def withoutEdges : Node = RelationNode(id, name, kind)
 }
 
 
@@ -255,6 +308,8 @@ sealed abstract class Edge {
     def action : String
     def labels : Map[String,Seq[String]]
     def description : String
+
+    def withNodes(input:Node, output:Node) : Edge
 }
 
 final case class ReadRelation(
@@ -265,6 +320,8 @@ final case class ReadRelation(
     override def action: String = "READ"
     override def labels: Map[String,Seq[String]] = partitions
     override def description: String = s"$action from ${input.description} partitions=(${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")})"
+
+    override def withNodes(input: Node, output: Node): Edge = copy(input = input.asInstanceOf[RelationNode], output = output)
 }
 
 final case class InputMapping(
@@ -275,6 +332,8 @@ final case class InputMapping(
     override def action: String = "INPUT"
     override def labels: Map[String,Seq[String]] = Map("pin" -> Seq(pin))
     override def description: String = s"$action from ${input.description} output '$pin'"
+
+    override def withNodes(input: Node, output: Node): Edge = copy(input = input.asInstanceOf[MappingNode], output = output)
 }
 
 final case class WriteRelation(
@@ -285,4 +344,6 @@ final case class WriteRelation(
     override def action: String = "WRITE"
     override def labels: Map[String,Seq[String]] = partition.map { case(k,v) => k -> Seq(v) }
     override def description: String = s"$action from ${input.description} partition=(${partition.map(kv => kv._1 + "=" + kv._2).mkString(",")})"
+
+    override def withNodes(input: Node, output: Node): Edge = copy(input = input, output = output.asInstanceOf[RelationNode])
 }

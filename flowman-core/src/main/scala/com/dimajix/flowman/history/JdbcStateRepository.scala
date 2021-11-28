@@ -26,6 +26,7 @@ import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.language.higherKinds
+import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 import slick.jdbc.JdbcProfile
@@ -294,15 +295,20 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             graphEdgeLabels
         )
 
-        val existing = db.run(profile.defaultTables)
-        val query = existing.flatMap( v => {
-            val names = v.map(mt => mt.name.name.toLowerCase(Locale.ROOT))
-            val createIfNotExist = tables
-                .filter(table => !names.contains(table.baseTableRow.tableName.toLowerCase(Locale.ROOT)))
-                .map(_.schema.create)
-            db.run(DBIO.sequence(createIfNotExist))
-        })
-        Await.result(query, Duration.Inf)
+        try {
+            val existing = db.run(profile.defaultTables)
+            val query = existing.flatMap(v => {
+                val names = v.map(mt => mt.name.name.toLowerCase(Locale.ROOT))
+                val createIfNotExist = tables
+                    .filter(table => !names.contains(table.baseTableRow.tableName.toLowerCase(Locale.ROOT)))
+                    .map(_.schema.create)
+                db.run(DBIO.sequence(createIfNotExist))
+            })
+            Await.result(query, Duration.Inf)
+        }
+        catch {
+            case NonFatal(ex) => logger.error("Cannot connect to JDBC history database")
+        }
     }
 
     def getJobState(run:JobRun) : Option[JobState] = {

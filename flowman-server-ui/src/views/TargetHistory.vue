@@ -36,7 +36,7 @@
             <template v-slot:item.partitions="{ item }">
               <v-chip
                 v-for="p in Object.entries(item.partitions) "
-                :key="p"
+                :key="p[0]"
               >
                 {{ p[0] }} : {{ p[1] }}
               </v-chip>

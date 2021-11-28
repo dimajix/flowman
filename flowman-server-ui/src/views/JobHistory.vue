@@ -33,7 +33,7 @@
             <template v-slot:item.args="{ item }">
               <v-chip
                 v-for="p in Object.entries(item.args) "
-                :key="p"
+                :key="p[0]"
               >
                 {{ p[0] }} : {{ p[1] }}
               </v-chip>

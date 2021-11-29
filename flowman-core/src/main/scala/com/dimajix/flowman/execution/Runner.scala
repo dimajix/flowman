@@ -354,9 +354,16 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             }
         }
 
-        stateStore.getTargetState(target) match {
-            case Some(state:TargetState) => checkState(state)
-            case _ => false
+        try {
+            stateStore.getTargetState(target) match {
+                case Some(state: TargetState) => checkState(state)
+                case _ => false
+            }
+        }
+        catch {
+            case NonFatal(ex) =>
+                logger.error("Cannot retrieve status from history database.", ex)
+                false
         }
     }
 }

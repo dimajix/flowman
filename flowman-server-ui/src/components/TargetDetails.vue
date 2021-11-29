@@ -5,7 +5,7 @@
       Target '{{details.project}}/{{details.name}}' {{ details.phase }} id {{target}} status {{details.status}}
     </v-card-title>
     <v-card-text>
-      <screen ref="screen" :markers="[]" height="600">
+      <screen id="screen" ref="screen" :markers="[]" height="600">
         <edge v-for="edge in graph.edges" :data="edge" :nodes="graph.nodes" :key="edge.id">
         </edge>
 
@@ -27,6 +27,7 @@ import graph from 'vnodes/src/graph'
 import Screen from 'vnodes/src/components/Screen'
 import Node from 'vnodes/src/components/Node'
 import Edge from 'vnodes/src/components/Edge'
+
 
 export default {
   name: 'TargetDetails',
@@ -125,16 +126,16 @@ export default {
 
 
 <style>
-.node.mapping .content {
+#screen .node.mapping .content {
   background-color: mediumseagreen;
 }
-.node.target .content {
+#screen .node.target .content {
   background-color: thistle;
 }
-.node.relation .content {
+#screen .node.relation .content {
   background-color: lightsteelblue;
 }
-.node .content:hover {
+#screen .node .content:hover {
   background-color: lightcoral;
 }
 </style>

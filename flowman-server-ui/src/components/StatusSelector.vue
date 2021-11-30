@@ -8,6 +8,7 @@
           chips
           solo
           label="Filter by Execution Status"
+          multiple
           clearable
           deletable-chips
           append-icon="expand_more"

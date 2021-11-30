@@ -12,8 +12,8 @@
         <node v-for="node in graph.nodes" :data="node" :key="node.id" :class="node.category">
           <v-card-text>
             <v-container>
-              <v-row justify="center"><h4>{{node.category}}/{{node.kind}}</h4></v-row>
-              <v-row justify="center">{{node.name}}</v-row>
+              <v-row justify="center">{{node.category}}/{{node.kind}}</v-row>
+              <v-row justify="center"><h4>{{node.name}}</h4></v-row>
             </v-container>
           </v-card-text>
         </node>

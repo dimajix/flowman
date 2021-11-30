@@ -68,6 +68,16 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "phase" -> "BUILD",
             "p1" -> "val1", "p2" -> "val2", "p3" -> "val3"
         ))
+
+        job.metadata should be (Metadata(
+            None,
+            None,
+            "some_job",
+            None,
+            "job",
+            "job",
+            Map()
+        ))
     }
 
     "Job.arguments" should "parse arguments" in {

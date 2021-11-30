@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,17 @@ case class TemplateTarget(
         .withEnvironment(environment)
         .build()
     private val targetInstance = {
-        project.get.targets(target.name).instantiate(templateContext)
+        project.get.targets(target.name) match {
+            case spec:TargetSpec => spec.synchronized {
+                // Temporarily rename template, such that its instance will get the current name
+                val oldName = name
+                spec.name = name
+                val instance = spec.instantiate(templateContext)
+                spec.name = oldName
+                instance
+            }
+            case spec => spec.instantiate(templateContext)
+        }
     }
 
     /**

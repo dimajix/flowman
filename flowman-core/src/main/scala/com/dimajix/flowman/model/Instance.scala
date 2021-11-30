@@ -97,7 +97,7 @@ trait Instance {
             project.map(_.name),
             name,
             project.flatMap(_.version),
-            category.toString,
+            category.lower,
             kind,
             labels
         )

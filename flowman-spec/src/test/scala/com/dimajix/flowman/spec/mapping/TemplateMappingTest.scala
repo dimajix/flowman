@@ -54,6 +54,7 @@ class TemplateMappingTest extends AnyFlatSpec with Matchers {
         val mapping = context.getMapping(MappingIdentifier("template"))
         mapping should not be (null)
         mapping shouldBe a[TemplateMapping]
+        mapping.name should be ("template")
 
         mapping.inputs should be (Seq(MappingOutputIdentifier("lala")))
     }

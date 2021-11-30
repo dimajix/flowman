@@ -51,6 +51,29 @@ object MappingTest {
 }
 
 class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalSparkSession {
+    "Mappings" should "work" in {
+        val project = Project(
+            name = "project"
+        )
+        val session = Session.builder().disableSpark().build()
+        val context = session.getContext(project)
+
+        val mapping = new DummyMapping(
+            Mapping.Properties(context, "m1"),
+            Seq()
+        )
+
+        mapping.metadata should be (Metadata(
+            None,
+            Some("project"),
+            "m1",
+            None,
+            "mapping",
+            "",
+            Map()
+        ))
+    }
+
     "Mapping.output" should "return a MappingOutputIdentifier with a project" in {
         val project = Project(
             name = "project"

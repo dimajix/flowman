@@ -72,7 +72,7 @@ trait Template[T] extends Instance {
      * Returns the category of this resource
      * @return
      */
-    final override def category: String = "template"
+    final override def category: Category = Category.TEMPLATE
 
     /**
      * Returns an identifier for this target

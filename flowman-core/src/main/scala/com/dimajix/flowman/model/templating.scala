@@ -103,7 +103,7 @@ object ResultWrapper {
 }
 sealed abstract class ResultWrapper(result:Result[_]) {
     def getName() : String = result.name
-    def getCategory() : String = result.category
+    def getCategory() : String = result.category.toString
     def getKind() : String = result.kind
     def getChildren() : java.util.List[AnyRef] = result.children.map(ResultWrapper.of).asJava
     def getStatus() : String = result.status.toString

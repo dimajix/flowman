@@ -25,6 +25,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Relation
@@ -71,7 +72,7 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
         val relation = context.getRelation(RelationIdentifier("mock")).asInstanceOf[MockRelation]
         relation shouldBe a[MockRelation]
 
-        relation.category should be ("relation")
+        relation.category should be (Category.RELATION)
         relation.kind should be ("mock")
         relation.relation should be (RelationIdentifier("empty"))
         relation.records should be (Seq(
@@ -105,7 +106,7 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
         (mockRelationTemplate.instantiate _).expects(context).returns(mockRelation)
         val relation = context.getRelation(RelationIdentifier("mock"))
         relation shouldBe a[MockRelation]
-        relation.category should be ("relation")
+        relation.category should be (Category.RELATION)
 
         relation.requires should be (Set())
         relation.provides should be (Set())

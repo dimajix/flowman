@@ -89,7 +89,7 @@ trait Target extends Instance {
       * Returns the category of this resource
       * @return
       */
-    final override def category: String = "target"
+    final override def category: Category = Category.TARGET
 
     /**
       * Returns an identifier for this target

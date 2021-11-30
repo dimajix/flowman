@@ -58,7 +58,7 @@ trait Dataset extends Instance {
       *
       * @return
       */
-    override def category: String = "dataset"
+    override final def category: Category = Category.DATASET
 
     /**
       * Returns a list of physical resources produced by writing to this dataset

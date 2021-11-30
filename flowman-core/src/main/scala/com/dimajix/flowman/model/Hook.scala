@@ -61,7 +61,7 @@ trait Hook extends Instance with ExecutionListener {
      * Returns the category of this resource
      * @return
      */
-    final override def category: String = "hook"
+    final override def category: Category = Category.HOOK
 
     /**
      * Starts the run and returns a token, which can be anything

@@ -168,7 +168,7 @@ final case class Test(
     fixtures:Map[String,Prototype[Target]] = Map(),
     assertions:Map[String,Prototype[Assertion]] = Map()
 ) extends AbstractInstance {
-    override def category: String = "test"
+    override def category: Category = Category.TEST
     override def kind : String = "test"
 
    /**

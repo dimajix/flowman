@@ -24,6 +24,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -67,7 +68,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
         val mapping = context.getMapping(MappingIdentifier("fake")).asInstanceOf[ValuesMapping]
         mapping shouldBe a[ValuesMapping]
 
-        mapping.category should be ("mapping")
+        mapping.category should be (Category.MAPPING)
         mapping.kind should be ("values")
         mapping.identifier should be (MappingIdentifier("project/fake"))
         mapping.output should be (MappingOutputIdentifier("project/fake:main"))
@@ -104,7 +105,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
         val mapping = context.getMapping(MappingIdentifier("fake")).asInstanceOf[ValuesMapping]
         mapping shouldBe a[ValuesMapping]
 
-        mapping.category should be ("mapping")
+        mapping.category should be (Category.MAPPING)
         mapping.kind should be ("values")
         mapping.identifier should be (MappingIdentifier("project/fake"))
         mapping.output should be (MappingOutputIdentifier("project/fake:main"))

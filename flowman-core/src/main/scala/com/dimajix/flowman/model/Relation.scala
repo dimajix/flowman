@@ -84,7 +84,7 @@ trait Relation extends Instance {
       * Returns the category of this resource
       * @return
       */
-    final override def category: String = "relation"
+    final override def category: Category = Category.RELATION
 
     /**
       * Returns an identifier for this relation

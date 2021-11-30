@@ -76,7 +76,7 @@ object Result {
 
 sealed abstract class Result[T <: Result[T]] { this:T =>
     def name : String
-    def category : String
+    def category : Category
     def kind : String
     def description: Option[String]
     def children : Seq[Result[_]]
@@ -153,7 +153,7 @@ final case class LifecycleResult(
     override val endTime : Instant
 ) extends Result[LifecycleResult] {
     override def name : String = job.name
-    override def category : String = job.category
+    override def category : Category = job.category
     override def kind : String = job.kind
     override def description: Option[String] = job.description
 }
@@ -209,7 +209,7 @@ final case class JobResult(
 ) extends Result[JobResult] {
     def phase : Phase = instance.phase
     override def name : String = job.name
-    override def category : String = job.category
+    override def category : Category = job.category
     override def kind : String = job.kind
     override def description: Option[String] = job.description
 }
@@ -295,7 +295,7 @@ final case class TargetResult(
 ) extends Result[TargetResult] {
     def phase : Phase = instance.phase
     override def name : String = target.name
-    override def category : String = target.category
+    override def category : Category = target.category
     override def kind : String = target.kind
     override def description: Option[String] = None
 }
@@ -332,7 +332,7 @@ final case class TestResult(
     override val endTime : Instant
 ) extends Result[TestResult] {
     override def name : String = test.name
-    override def category : String = test.category
+    override def category : Category = test.category
     override def kind : String = test.kind
     override def description: Option[String] = test.description
 }
@@ -393,7 +393,7 @@ final case class AssertionResult(
     override val endTime : Instant
 ) extends Result[AssertionResult] {
     override def name : String = assertion.name
-    override def category : String = assertion.category
+    override def category : Category = assertion.category
     override def kind : String = assertion.kind
     override def description: Option[String] = assertion.description
 
@@ -455,7 +455,7 @@ final case class AssertionTestResult(
     override val startTime : Instant,
     override val endTime : Instant
 ) extends Result[AssertionTestResult] {
-    override def category: String = ""
+    override def category: Category = Category.ASSERTION_TEST
     override def kind: String = ""
     override def children: Seq[Result[_]] = Seq()
     override def status : Status = {

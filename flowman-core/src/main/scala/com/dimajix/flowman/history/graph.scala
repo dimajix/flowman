@@ -20,7 +20,8 @@ import scala.collection.mutable
 
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.history.Graph.builder
+import com.dimajix.flowman.graph.Action
+import com.dimajix.flowman.graph.Category
 import com.dimajix.flowman.{graph => g}
 import com.dimajix.flowman.model.Target
 
@@ -227,9 +228,9 @@ sealed abstract class Node {
      * Textual label for displaying
      * @return
      */
-    def description : String = s"($id) $category/$kind: '$name'"
+    def description : String = s"($id) ${category.lower}/$kind: '$name'"
 
-    def category : String
+    def category : Category
     def kind : String
     def name : String
     def incoming: Seq[Edge] = _incoming
@@ -277,7 +278,7 @@ final case class TargetNode(
     override val name:String,
     override val kind:String
 ) extends Node {
-    override def category: String = "target"
+    override def category: Category = Category.TARGET
     override def withoutEdges : Node = TargetNode(id, name, kind)
 }
 
@@ -286,7 +287,7 @@ final case class MappingNode(
     override val name:String,
     override val kind:String
 ) extends Node {
-    override def category: String = "mapping"
+    override def category: Category = Category.MAPPING
     override def withoutEdges : Node = MappingNode(id, name, kind)
 }
 
@@ -295,7 +296,7 @@ final case class RelationNode(
     override val name:String,
     override val kind:String
 ) extends Node {
-    override def category: String = "relation"
+    override def category: Category = Category.RELATION
     override def withoutEdges : Node = RelationNode(id, name, kind)
 }
 
@@ -305,7 +306,7 @@ final case class RelationNode(
 sealed abstract class Edge {
     def input : Node
     def output : Node
-    def action : String
+    def action : Action
     def labels : Map[String,Seq[String]]
     def description : String
 
@@ -317,7 +318,7 @@ final case class ReadRelation(
     override val output:Node,
     partitions:Map[String,Seq[String]] = Map()
 ) extends Edge {
-    override def action: String = "READ"
+    override def action: Action = Action.READ
     override def labels: Map[String,Seq[String]] = partitions
     override def description: String = s"$action from ${input.description} partitions=(${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")})"
 
@@ -329,7 +330,7 @@ final case class InputMapping(
     override val output:Node,
     pin:String = "main"
 ) extends Edge {
-    override def action: String = "INPUT"
+    override def action: Action = Action.INPUT
     override def labels: Map[String,Seq[String]] = Map("pin" -> Seq(pin))
     override def description: String = s"$action from ${input.description} output '$pin'"
 
@@ -341,7 +342,7 @@ final case class WriteRelation(
     override val output:RelationNode,
     partition:Map[String,String] = Map()
 ) extends Edge {
-    override def action: String = "WRITE"
+    override def action: Action = Action.WRITE
     override def labels: Map[String,Seq[String]] = partition.map { case(k,v) => k -> Seq(v) }
     override def description: String = s"$action from ${input.description} partition=(${partition.map(kv => kv._1 + "=" + kv._2).mkString(",")})"
 

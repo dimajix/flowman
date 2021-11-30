@@ -53,7 +53,7 @@ trait Connection extends Instance {
      *
      * @return
      */
-    final override def category: String = "connection"
+    final override def category: Category = Category.CONNECTION
 
     /**
      * Returns an identifier for this connection

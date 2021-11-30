@@ -51,7 +51,7 @@ object Assertion {
 
 
 trait Assertion extends Instance {
-    override def category: String = "assertion"
+    override final def category: Category = Category.ASSERTION
 
     /**
      * Returns a description of the assertion

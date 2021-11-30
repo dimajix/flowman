@@ -67,7 +67,7 @@ class GraphBuilderTest extends AnyFlatSpec with Matchers with MockFactory {
         val ref1 = nodes.find(_.name == "m1").head.asInstanceOf[MappingRef]
         val ref2 = nodes.find(_.name == "m2").head.asInstanceOf[MappingRef]
 
-        ref1.category should be ("mapping")
+        ref1.category should be (Category.MAPPING)
         ref1.kind should be ("m1_kind")
         ref1.name should be ("m1")
         ref1.mapping should be (mapping1)
@@ -76,7 +76,7 @@ class GraphBuilderTest extends AnyFlatSpec with Matchers with MockFactory {
         ))
         ref1.outgoing should be (Seq())
 
-        ref2.category should be ("mapping")
+        ref2.category should be (Category.MAPPING)
         ref2.kind should be ("m2_kind")
         ref2.name should be ("m2")
         ref2.mapping should be (mapping2)

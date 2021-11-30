@@ -275,7 +275,7 @@ final case class Job(
     metrics:Option[Prototype[MetricBoard]] = None,
     hooks:Seq[Prototype[Hook]] = Seq()
 ) extends AbstractInstance {
-    override def category: String = "job"
+    override def category: Category = Category.JOB
     override def kind : String = "job"
 
     /**

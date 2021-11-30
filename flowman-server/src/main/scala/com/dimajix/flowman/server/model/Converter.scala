@@ -56,7 +56,7 @@ object Converter {
     def ofSpec(node:history.Node) : Node = {
         Node(
             node.id,
-            node.category,
+            node.category.toString,
             node.kind,
             node.name
         )
@@ -66,7 +66,7 @@ object Converter {
         Edge(
             edge.input.id,
             edge.output.id,
-            edge.action,
+            edge.action.toString,
             edge.labels
         )
     }

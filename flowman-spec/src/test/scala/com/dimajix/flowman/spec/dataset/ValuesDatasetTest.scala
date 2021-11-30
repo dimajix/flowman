@@ -22,6 +22,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.ObjectMapper
@@ -54,7 +55,7 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         ds shouldBe a[ValuesDatasetSpec]
 
         val dataset = ds.instantiate(context).asInstanceOf[ValuesDataset]
-        dataset.category should be ("dataset")
+        dataset.category should be (Category.DATASET)
         dataset.kind should be ("values")
         dataset.records should be (Seq(
             ArrayRecord("a","1"),
@@ -87,7 +88,7 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
         val dataset = ds.instantiate(context).asInstanceOf[ValuesDataset]
 
-        dataset.category should be ("dataset")
+        dataset.category should be (Category.DATASET)
         dataset.kind should be ("values")
         dataset.records should be (Seq(
             ArrayRecord("a","12","3"),

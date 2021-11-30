@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.server.rest
 
+import scala.language.postfixOps
+
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Route
 import io.swagger.annotations.Api

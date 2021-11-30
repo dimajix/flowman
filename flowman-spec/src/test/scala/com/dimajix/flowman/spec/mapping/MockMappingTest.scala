@@ -24,6 +24,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -65,7 +66,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val mapping = context.getMapping(MappingIdentifier("mock")).asInstanceOf[MockMapping]
         mapping shouldBe a[MockMapping]
 
-        mapping.category should be ("mapping")
+        mapping.category should be (Category.MAPPING)
         mapping.kind should be ("mock")
         mapping.mapping should be (MappingIdentifier("empty"))
         mapping.output should be (MappingOutputIdentifier("project/mock:main"))
@@ -109,7 +110,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         (mockMappingTemplate.instantiate _).expects(context).returns(mockMapping)
         val mapping = context.getMapping(MappingIdentifier("mock"))
         mapping shouldBe a[MockMapping]
-        mapping.category should be ("mapping")
+        mapping.category should be (Category.MAPPING)
 
         (baseMappingTemplate.instantiate _).expects(context).returns(baseMapping)
         (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Seq("other", "error"))

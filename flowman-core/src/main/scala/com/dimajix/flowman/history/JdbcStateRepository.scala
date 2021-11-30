@@ -33,6 +33,8 @@ import slick.jdbc.JdbcProfile
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.graph.Action
+import com.dimajix.flowman.model.Category
 
 
 private[history] object JdbcStateRepository {
@@ -394,12 +396,12 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     }
 
     def insertJobGraph(run:JobRun, graph:Graph) : Unit = {
-        val dbNodes = graph.nodes.map(n => GraphNode(-1, run.id, n.category, n.kind, n.name))
+        val dbNodes = graph.nodes.map(n => GraphNode(-1, run.id, n.category.lower, n.kind, n.name))
         val nodesQuery = (graphNodes returning graphNodes.map(_.id)) ++= dbNodes
         val nodeIds = Await.result(db.run(nodesQuery), Duration.Inf)
         val nodeIdToDbId = graph.nodes.map(_.id).zip(nodeIds).toMap
 
-        val dbEdges = graph.edges.map(e => GraphEdge(-1, nodeIdToDbId(e.input.id), nodeIdToDbId(e.output.id), e.action))
+        val dbEdges = graph.edges.map(e => GraphEdge(-1, nodeIdToDbId(e.input.id), nodeIdToDbId(e.output.id), e.action.upper))
         val edgesQuery = (graphEdges returning graphEdges.map(_.id)) ++= dbEdges
         val edgeIds = Await.result(db.run(edgesQuery), Duration.Inf)
 
@@ -421,10 +423,11 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         if (dbNodes.nonEmpty) {
             val graph = Graph.builder()
             val nodesById = dbNodes.map { r =>
-                val node = r.category match {
-                    case "mapping" => graph.newMappingNode(r.name, r.kind)
-                    case "target" => graph.newTargetNode(r.name, r.kind)
-                    case "relation" => graph.newRelationNode(r.name, r.kind)
+                val node = Category.ofString(r.category) match {
+                    case Category.MAPPING => graph.newMappingNode(r.name, r.kind)
+                    case Category.TARGET => graph.newTargetNode(r.name, r.kind)
+                    case Category.RELATION => graph.newRelationNode(r.name, r.kind)
+                    case _ => throw new IllegalArgumentException(s"Unsupported tye ${r.category}")
                 }
                 r.id -> node
             }.toMap
@@ -441,12 +444,12 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
                 val inputNode = nodesById(edge.input_id)
                 val outputNode = nodesById(edge.output_id)
-                val edge2 = edge.action match {
-                    case "INPUT" =>
+                val edge2 = Action.ofString(edge.action) match {
+                    case Action.INPUT =>
                         InputMapping(inputNode.asInstanceOf[MappingNode], outputNode, labels("pin").head)
-                    case "READ" =>
+                    case Action.READ =>
                         ReadRelation(inputNode.asInstanceOf[RelationNode], outputNode, labels)
-                    case "WRITE" =>
+                    case Action.WRITE =>
                         WriteRelation(inputNode, outputNode.asInstanceOf[RelationNode], labels.map(kv => kv._1 -> kv._2.head))
                 }
                 graph.addEdge(edge2)

@@ -67,7 +67,7 @@ trait Mapping extends Instance {
       * Returns the category of this resource
       * @return
       */
-    final override def category: String = "mapping"
+    final override def category: Category = Category.MAPPING
 
     /**
       * Returns an identifier for this mapping

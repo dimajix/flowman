@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,8 +110,13 @@ case class JdbcRelation(
 
         requireValidPartitionKeys(partitions)
 
-        val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(table.getOrElse(""), database, p.toMap)).toSet
+        if (query.nonEmpty) {
+            Set()
+        }
+        else {
+            val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+            allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(table.get, database, p.toMap)).toSet
+        }
     }
 
     /**

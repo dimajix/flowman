@@ -18,6 +18,7 @@ package com.dimajix.flowman.graph
 
 import scala.collection.mutable
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
@@ -38,6 +39,9 @@ sealed abstract class Node {
     def category : Category
     def kind : String
     def name : String
+
+    def provides : Set[ResourceIdentifier]
+    def requires : Set[ResourceIdentifier]
 
     /**
      * List of incoming edges, i.e. the upstream nodes which provide input data
@@ -99,27 +103,35 @@ final case class MappingRef(id:Int, mapping:Mapping) extends Node {
     override def category: Category = Category.MAPPING
     override def kind: String = mapping.kind
     override def name: String = mapping.name
+    override def provides : Set[ResourceIdentifier] = Set()
+    override def requires : Set[ResourceIdentifier] = mapping.requires
 }
-final case class TargetRef(id:Int, target:Target) extends Node {
+final case class TargetRef(id:Int, target:Target, phase:Phase) extends Node {
     override def category: Category = Category.TARGET
     override def kind: String = target.kind
     override def name: String = target.name
+    override def provides : Set[ResourceIdentifier] = target.provides(phase)
+    override def requires : Set[ResourceIdentifier] = target.requires(phase)
 }
 final case class RelationRef(id:Int, relation:Relation) extends Node {
     override def category: Category = Category.RELATION
     override def kind: String = relation.kind
     override def name: String = relation.name
-
-    def resources : Set[ResourceIdentifier] = relation.resources(Map()) ++ relation.provides
+    override def provides : Set[ResourceIdentifier] = relation.provides
+    override def requires : Set[ResourceIdentifier] = relation.requires
 }
 
 final case class MappingColumn(id:Int, mapping: Mapping, output:String, column:String) extends Node {
     override def category: Category = Category.MAPPING_COLUMN
     override def kind: String = "mapping_column"
     override def name: String = mapping.name + "." + output + "." + column
+    override def provides : Set[ResourceIdentifier] = Set()
+    override def requires : Set[ResourceIdentifier] = Set()
 }
 final case class RelationColumn(id:Int, relation: Relation, column:String) extends Node {
     override def category: Category = Category.RELATION_COLUMN
     override def kind: String = "relation_column"
     override def name: String = relation.name + "." + column
+    override def provides : Set[ResourceIdentifier] = Set()
+    override def requires : Set[ResourceIdentifier] = Set()
 }

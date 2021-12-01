@@ -113,6 +113,18 @@ private[history] object JdbcStateRepository {
         name:String,
         value:String
     )
+    case class GraphResource(
+        id:Long,
+        node_id:Long,
+        direction:Char,
+        category:String,
+        name:String
+    )
+    case class GraphResourcePartition(
+        resource_id:Long,
+        name:String,
+        value:String
+    )
 }
 
 
@@ -148,6 +160,9 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     val graphEdgeLabels = TableQuery[GraphEdgeLabels]
     val graphEdges = TableQuery[GraphEdges]
     val graphNodes = TableQuery[GraphNodes]
+    val graphResources = TableQuery[GraphResources]
+    val graphResourcePartitions = TableQuery[GraphResourcePartitions]
+
 
     class JobRuns(tag:Tag) extends Table[JobRun](tag, "JOB_RUN") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
@@ -268,6 +283,30 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         def * = (id, job_id, category, kind, name) <> (GraphNode.tupled, GraphNode.unapply)
     }
 
+    class GraphResources(tag:Tag) extends Table[GraphResource](tag, "GRAPH_RESOURCE") {
+        def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+        def node_id = column[Long]("node_id")
+        def direction = column[Char]("direction")
+        def category = column[String]("category")
+        def name = column[String]("name")
+
+        def node = foreignKey("GRAPH_RESOURCE_NODE_FK", node_id, graphNodes)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+
+        def * = (id, node_id, direction, category, name) <> (GraphResource.tupled, GraphResource.unapply)
+    }
+
+    class GraphResourcePartitions(tag:Tag) extends Table[GraphResourcePartition](tag, "GRAPH_RESOURCE_PARTITION") {
+        def resource_id = column[Long]("resource_id")
+        def name = column[String]("name")
+        def value = column[String]("value")
+
+        def pk = primaryKey("GRAPH_RESOURCE_PARTITION_PK", (resource_id, name))
+        def resource = foreignKey("GRAPH_RESOURCE_PARTITION_RESOURCE_FK", resource_id, graphResources)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+
+        def * = (resource_id, name, value) <> (GraphResourcePartition.tupled, GraphResourcePartition.unapply)
+    }
+
+
     implicit class QueryWrapper[E,U,C[_]] (query:Query[E, U, C]) {
         def optionalFilter[T](value:Option[T])(f:(E,T) => Rep[Boolean]) : Query[E,U,C] = {
             if (value.nonEmpty)
@@ -294,7 +333,9 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             targetPartitions,
             graphNodes,
             graphEdges,
-            graphEdgeLabels
+            graphEdgeLabels,
+            graphResources,
+            graphResourcePartitions
         )
 
         try {
@@ -396,18 +437,34 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     }
 
     def insertJobGraph(run:JobRun, graph:Graph) : Unit = {
+        // Step 1: Insert nodes
         val dbNodes = graph.nodes.map(n => GraphNode(-1, run.id, n.category.lower, n.kind, n.name))
         val nodesQuery = (graphNodes returning graphNodes.map(_.id)) ++= dbNodes
         val nodeIds = Await.result(db.run(nodesQuery), Duration.Inf)
         val nodeIdToDbId = graph.nodes.map(_.id).zip(nodeIds).toMap
 
+        // Step 2: Insert edges
         val dbEdges = graph.edges.map(e => GraphEdge(-1, nodeIdToDbId(e.input.id), nodeIdToDbId(e.output.id), e.action.upper))
         val edgesQuery = (graphEdges returning graphEdges.map(_.id)) ++= dbEdges
         val edgeIds = Await.result(db.run(edgesQuery), Duration.Inf)
 
+        // Step 3: Insert edge labels
         val dbLabels = graph.edges.zip(edgeIds).flatMap { case (e,id) => e.labels.flatMap(l => l._2.map(v => GraphEdgeLabel(-1, id, l._1, v))) }
         val labelsQuery = graphEdgeLabels ++= dbLabels
         Await.result(db.run(labelsQuery), Duration.Inf)
+
+        // Step 4: Insert node resources
+        val dbResources = graph.nodes.flatMap { n =>
+               n.provides.map(r => (GraphResource(-1, nodeIdToDbId(n.id), 'O', r.category, r.name), r.partition)) ++
+                   n.requires.map(r => (GraphResource(-1, nodeIdToDbId(n.id), 'I', r.category, r.name), r.partition))
+            }
+        val resourceQuery = (graphResources returning graphResources.map(_.id)) ++= dbResources.map(_._1)
+        val resourceIds = Await.result(db.run(resourceQuery), Duration.Inf)
+
+        // Step 5: Insert node resource partitions
+        val dbResourcePartitions = dbResources.map(_._2).zip(resourceIds).flatMap(r => r._1.map(kv => GraphResourcePartition(r._2, kv._1, kv._2)))
+        val resourcePartitionsQuery = graphResourcePartitions ++= dbResourcePartitions
+        Await.result(db.run(resourcePartitionsQuery), Duration.Inf)
     }
 
     def getJobGraph(jobId:Long) : Option[Graph] = {
@@ -421,12 +478,29 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
         // Only build graph if nodes are present, otherwise return None
         if (dbNodes.nonEmpty) {
+            val qr = graphResources.filter(r => r.node_id.in(qn.map(_.id).distinct))
+                .joinLeft(graphResourcePartitions).on(_.id === _.resource_id)
+            val dbResources = Await.result(db.run(qr.result), Duration.Inf)
+            val resourcesById = dbResources.groupBy(_._1.node_id).map { case(nodeId,res) =>
+                val resources = res.groupBy(_._1.id).toSeq.map { case (resourceId,parts) =>
+                    val resource = parts.head._1
+                    val partitions = parts.flatMap(p => p._2).map(kv => kv.name -> kv.value).toMap
+                    resource.direction -> Resource(resource.category, resource.name, partitions)
+                }
+                val provides = resources.filter(_._1 == 'O').map(_._2)
+                val requires = resources.filter(_._1 == 'I').map(_._2)
+                nodeId -> ((provides, requires))
+            }
+
             val graph = Graph.builder()
             val nodesById = dbNodes.map { r =>
+                val resources = resourcesById.get(r.id)
+                val provides = resources.toSeq.flatMap(_._1)
+                val requires = resources.toSeq.flatMap(_._2)
                 val node = Category.ofString(r.category) match {
-                    case Category.MAPPING => graph.newMappingNode(r.name, r.kind)
-                    case Category.TARGET => graph.newTargetNode(r.name, r.kind)
-                    case Category.RELATION => graph.newRelationNode(r.name, r.kind)
+                    case Category.MAPPING => graph.newMappingNode(r.name, r.kind, requires)
+                    case Category.TARGET => graph.newTargetNode(r.name, r.kind, provides, requires)
+                    case Category.RELATION => graph.newRelationNode(r.name, r.kind, provides, requires)
                     case _ => throw new IllegalArgumentException(s"Unsupported tye ${r.category}")
                 }
                 r.id -> node

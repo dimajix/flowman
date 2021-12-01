@@ -38,8 +38,8 @@ object Graph {
          * @param kind
          * @return
          */
-        def newMappingNode(name:String, kind:String) : MappingNode = {
-            val node = MappingNode(nextNodeId(), name, kind)
+        def newMappingNode(name:String, kind:String, requires:Seq[Resource]) : MappingNode = {
+            val node = MappingNode(nextNodeId(), name, kind, Seq(), requires)
             addNode(node)
             node
         }
@@ -50,8 +50,8 @@ object Graph {
          * @param kind
          * @return
          */
-        def newTargetNode(name:String, kind:String) : TargetNode = {
-            val node = TargetNode(nextNodeId(), name, kind)
+        def newTargetNode(name:String, kind:String, provides:Seq[Resource], requires:Seq[Resource]) : TargetNode = {
+            val node = TargetNode(nextNodeId(), name, kind, provides, requires)
             addNode(node)
             node
         }
@@ -62,8 +62,8 @@ object Graph {
          * @param kind
          * @return
          */
-        def newRelationNode(name:String, kind:String) : RelationNode = {
-            val node = RelationNode(nextNodeId(), name, kind)
+        def newRelationNode(name:String, kind:String, provides:Seq[Resource], requires:Seq[Resource]) : RelationNode = {
+            val node = RelationNode(nextNodeId(), name, kind, provides, requires)
             addNode(node)
             node
         }
@@ -130,11 +130,16 @@ object Graph {
         val builder = Graph.builder()
         val nodesById = graph.nodes.map {
             case target:g.TargetRef =>
-                target.id -> builder.newTargetNode( target.name, target.kind)
+                val provides = target.provides.map(r => Resource(r.category, r.name, r.partition)).toSeq
+                val requires = target.requires.map(r => Resource(r.category, r.name, r.partition)).toSeq
+                target.id -> builder.newTargetNode(target.name, target.kind, provides, requires)
             case mapping:g.MappingRef =>
-                mapping.id -> builder.newMappingNode(mapping.name, mapping.kind)
+                val requires = mapping.requires.map(r => Resource(r.category, r.name, r.partition)).toSeq
+                mapping.id -> builder.newMappingNode(mapping.name, mapping.kind, requires)
             case relation:g.RelationRef =>
-                relation.id -> builder.newRelationNode(relation.name, relation.kind)
+                val provides = relation.provides.map(r => Resource(r.category, r.name, r.partition)).toSeq
+                val requires = relation.requires.map(r => Resource(r.category, r.name, r.partition)).toSeq
+                relation.id -> builder.newRelationNode(relation.name, relation.kind, provides, requires)
         }.toMap
 
         val relationsById = graph.nodes.collect {
@@ -215,6 +220,11 @@ final case class Graph(nodes:Seq[Node], edges:Seq[Edge]) {
 }
 
 
+final case class Resource(
+    category: String,
+    name: String,
+    partition: Map[String,String]
+)
 
 
 sealed abstract class Node {
@@ -235,6 +245,9 @@ sealed abstract class Node {
     def name : String
     def incoming: Seq[Edge] = _incoming
     def outgoing: Seq[Edge] = _outgoing
+
+    def provides: Seq[Resource]
+    def requires: Seq[Resource]
 
     def withoutEdges : Node
 
@@ -276,28 +289,34 @@ sealed abstract class Node {
 final case class TargetNode(
     override val id:Int,
     override val name:String,
-    override val kind:String
+    override val kind:String,
+    override val provides:Seq[Resource] = Seq(),
+    override val requires:Seq[Resource] = Seq()
 ) extends Node {
     override def category: Category = Category.TARGET
-    override def withoutEdges : Node = TargetNode(id, name, kind)
+    override def withoutEdges : Node = TargetNode(id, name, kind, provides, requires)
 }
 
 final case class MappingNode(
     override val id:Int,
     override val name:String,
-    override val kind:String
+    override val kind:String,
+    override val provides:Seq[Resource] = Seq(),
+    override val requires:Seq[Resource] = Seq()
 ) extends Node {
     override def category: Category = Category.MAPPING
-    override def withoutEdges : Node = MappingNode(id, name, kind)
+    override def withoutEdges : Node = MappingNode(id, name, kind, provides, requires)
 }
 
 final case class RelationNode(
     override val id:Int,
     override val name:String,
-    override val kind:String
+    override val kind:String,
+    override val provides:Seq[Resource] = Seq(),
+    override val requires:Seq[Resource] = Seq()
 ) extends Node {
     override def category: Category = Category.RELATION
-    override def withoutEdges : Node = RelationNode(id, name, kind)
+    override def withoutEdges : Node = RelationNode(id, name, kind, provides, requires)
 }
 
 

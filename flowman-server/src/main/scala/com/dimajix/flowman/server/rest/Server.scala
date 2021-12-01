@@ -31,6 +31,7 @@ import akka.stream.scaladsl.Sink
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.history.JobQuery
 
 
 class Server(
@@ -84,6 +85,9 @@ class Server(
                 ~
                 getFromResourceDirectory("META-INF/resources/webjars/flowman-server-ui")
             )
+
+        logger.info("Connecting to history backend")
+        session.history.countJobs(JobQuery())
 
         logger.info("Starting http server")
 

@@ -20,6 +20,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.Target
@@ -58,7 +59,7 @@ class NodeTest extends AnyFlatSpec with Matchers with MockFactory {
         val mapping2Node = MappingRef(4, mapping2)
         val mapping3Node = MappingRef(5, mapping3)
         val unionMappingNode = MappingRef(6, unionMapping)
-        val targetNode = TargetRef(7, target)
+        val targetNode = TargetRef(7, target, Phase.BUILD)
         val tgtRelationNode = RelationRef(8, tgtRelation)
 
         tgtRelationNode.inEdges.append(WriteRelation(targetNode, tgtRelationNode))

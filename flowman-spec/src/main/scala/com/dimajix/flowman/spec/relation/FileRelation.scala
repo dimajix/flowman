@@ -84,7 +84,7 @@ case class FileRelation(
       * @return
       */
     override def provides : Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofFile(location)
+        ResourceIdentifier.ofFile(collector.root)
     )
 
     /**
@@ -112,7 +112,7 @@ case class FileRelation(
             allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p))).toSet
         }
         else {
-            Set(ResourceIdentifier.ofFile(location))
+            Set(ResourceIdentifier.ofFile(collector.root))
         }
     }
 

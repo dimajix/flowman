@@ -128,6 +128,9 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val relation = context.getRelation(RelationIdentifier("local"))
         val fileRelation = relation.asInstanceOf[FileRelation]
         fileRelation.location should be (new Path(outputPath.toUri))
+        fileRelation.requires should be (Set())
+        fileRelation.provides should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
+        fileRelation.resources() should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
 
         // == Create =================================================================================================
         outputPath.toFile.exists() should be (false)
@@ -269,6 +272,11 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 PartitionField("p_col", com.dimajix.flowman.types.IntegerType)
             )
         )
+
+        relation.requires should be (Set())
+        relation.provides should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
+        relation.resources() should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=*").toUri))))
+        relation.resources(Map("p_col" -> SingleValue("22"))) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=22").toUri))))
 
         // == Inspect ===============================================================================================
         relation.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
@@ -438,6 +446,11 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 PartitionField("p_col", com.dimajix.flowman.types.IntegerType)
             )
         )
+        
+        relation.requires should be (Set())
+        relation.provides should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
+        relation.resources() should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=*").toUri))))
+        relation.resources(Map("p_col" -> SingleValue("22"))) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=22").toUri))))
 
         // ===== Create =============================================================================================
         outputPath.toFile.exists() should be (false)

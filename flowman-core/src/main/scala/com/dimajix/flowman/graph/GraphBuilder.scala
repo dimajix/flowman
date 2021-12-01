@@ -147,7 +147,7 @@ final class GraphBuilder(context:Context, phase:Phase) {
         }
         else {
             // Create new node and *first* put it into map of known targets
-            val node = TargetRef(nextNodeId(), target)
+            val node = TargetRef(nextNodeId(), target, phase)
             targets.put(target, node)
             // Now recursively run the linking process on the newly created node
             val linker = Linker(this, target.context, node)

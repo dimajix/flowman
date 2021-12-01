@@ -43,6 +43,9 @@
         <thead>
         <tr>
           <th class="text-left">
+            Run ID
+          </th>
+          <th class="text-left">
             Name
           </th>
           <th class="text-left">
@@ -67,6 +70,7 @@
           v-for="item in Array.from(targets).reverse()"
           :key="item.id"
         >
+          <td>{{ item.id }}</td>
           <td>{{ item.target }}</td>
           <td>
             <v-chip small

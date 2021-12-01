@@ -10,7 +10,11 @@
         </edge>
 
         <node v-for="node in graph.nodes" :data="node" :key="node.id" :class="node.category">
-          <v-card-text>
+          <v-card-text
+            @mouseenter="(e) => onMouseEnter(e, node)"
+            @mouseover="onMouseOver"
+            @mouseleave="onMouseLeave"
+          >
             <v-container>
               <v-row justify="center">{{node.category}}/{{node.kind}}</v-row>
               <v-row justify="center"><h4>{{node.name}}</h4></v-row>
@@ -18,6 +22,28 @@
           </v-card-text>
         </node>
       </screen>
+      <v-tooltip
+        v-model="showTooltip"
+        absolute
+        bottom
+        :position-x="tooltipX"
+        :position-y="tooltipY"
+      >
+        <v-container>
+          <v-row justify="center">{{tooltipNode.category}}/{{tooltipNode.kind}}</v-row>
+          <v-row justify="center"><h2>{{tooltipNode.name}}</h2></v-row>
+        </v-container>
+        <v-container>
+          <v-row><h3>Provides</h3></v-row>
+          <v-row>
+            <resource-table :resources="tooltipNode.provides"/>
+          </v-row>
+          <v-row><h3>Requires</h3></v-row>
+          <v-row>
+            <resource-table :resources="tooltipNode.requires"/>
+          </v-row>
+        </v-container>
+      </v-tooltip>
     </v-card-text>
   </v-container>
 </template>
@@ -27,11 +53,11 @@ import graph from 'vnodes/src/graph'
 import Screen from 'vnodes/src/components/Screen'
 import Node from 'vnodes/src/components/Node'
 import Edge from 'vnodes/src/components/Edge'
-
+import ResourceTable from "@/components/ResourceTable";
 
 export default {
   name: 'TargetDetails',
-  components: {Screen,Node,Edge},
+  components: {Screen,Node,Edge,ResourceTable},
 
   props: {
     target: String
@@ -42,6 +68,13 @@ export default {
       details: {},
       targetGraph: {},
       graph: new graph(),
+      showTooltip: false,
+      tooltipNode: {
+        requires: [],
+        provides: []
+      },
+      tooltipX: 0,
+      tooltipY: 0
     }
   },
 
@@ -72,6 +105,8 @@ export default {
             category: node.category,
             kind: node.kind,
             name: node.name,
+            provides: node.provides,
+            requires: node.requires
           })
         });
         response.edges.forEach(edge => {
@@ -120,6 +155,20 @@ export default {
       bottom += 50
       this.$refs.screen.zoomRect({ left, top, right, bottom }, { scale })
     },
+
+    onMouseEnter(e, node) {
+      this.tooltipX = e.clientX
+      this.tooltipY = e.clientY
+      this.showTooltip = true
+      this.tooltipNode = node
+    },
+    onMouseOver(e) {
+      this.tooltipX = e.clientX
+      this.tooltipY = e.clientY
+    },
+    onMouseLeave() {
+      this.showTooltip = false
+    }
   }
 }
 </script>

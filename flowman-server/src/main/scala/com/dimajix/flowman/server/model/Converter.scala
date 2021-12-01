@@ -53,12 +53,18 @@ object Converter {
         )
     }
 
+    def ofSpec(resource:history.Resource) : Resource = {
+        Resource(resource.category, resource.name, resource.partition)
+    }
+
     def ofSpec(node:history.Node) : Node = {
         Node(
             node.id,
             node.category.lower,
             node.kind,
-            node.name
+            node.name,
+            node.provides.map(r => ofSpec(r)),
+            node.requires.map(r => ofSpec(r))
         )
     }
 

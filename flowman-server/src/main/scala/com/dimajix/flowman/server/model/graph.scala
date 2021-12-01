@@ -17,11 +17,19 @@
 package com.dimajix.flowman.server.model
 
 
+final case class Resource(
+    category:String,
+    name:String,
+    partition:Map[String,String]
+)
+
 final case class Node(
     id:Int,
     category:String,
     kind:String,
-    name:String
+    name:String,
+    provides:Seq[Resource],
+    requires:Seq[Resource]
 )
 
 final case class Edge(

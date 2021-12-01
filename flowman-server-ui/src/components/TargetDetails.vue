@@ -33,14 +33,18 @@
           <v-row justify="center">{{tooltipNode.category}}/{{tooltipNode.kind}}</v-row>
           <v-row justify="center"><h2>{{tooltipNode.name}}</h2></v-row>
         </v-container>
-        <v-container>
+        <v-container fluid>
           <v-row><h3>Provides</h3></v-row>
           <v-row>
-            <resource-table :resources="tooltipNode.provides"/>
+            <v-col cols="12">
+              <resource-table :resources="tooltipNode.provides"/>
+            </v-col>
           </v-row>
           <v-row><h3>Requires</h3></v-row>
           <v-row>
-            <resource-table :resources="tooltipNode.requires"/>
+            <v-col cols="12">
+              <resource-table :resources="tooltipNode.requires"/>
+            </v-col>
           </v-row>
         </v-container>
       </v-tooltip>

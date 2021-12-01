@@ -46,13 +46,17 @@ case class FileDataset(
     schema:Option[Schema] = None
 ) extends AbstractInstance with Dataset {
     private val logger = LoggerFactory.getLogger(classOf[FileDataset])
-
+    private val qualifiedPath = {
+        val conf = context.hadoopConf
+        val fs = location.getFileSystem(conf)
+        location.makeQualified(fs.getUri, fs.getWorkingDirectory)
+    }
     /**
       * Returns a list of physical resources produced by writing to this dataset
       * @return
       */
     override def provides : Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofFile(location)
+        ResourceIdentifier.ofFile(qualifiedPath)
     )
 
     /**
@@ -60,7 +64,7 @@ case class FileDataset(
      * @return
      */
     override def requires : Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofFile(location)
+        ResourceIdentifier.ofFile(qualifiedPath)
     )
 
     /**
@@ -70,7 +74,7 @@ case class FileDataset(
       * @return
       */
     override def exists(execution: Execution): Trilean = {
-        val file = execution.fs.file(location)
+        val file = execution.fs.file(qualifiedPath)
         file.exists()
     }
 
@@ -82,9 +86,9 @@ case class FileDataset(
     override def clean(execution: Execution): Unit = {
         require(execution != null)
 
-        val file = execution.fs.file(location)
+        val file = execution.fs.file(qualifiedPath)
         if (file.exists()) {
-            logger.info(s"Deleting directory '$location' of dataset '$name")
+            logger.info(s"Deleting directory '$qualifiedPath' of dataset '$name")
             file.delete( true)
         }
     }
@@ -110,14 +114,14 @@ case class FileDataset(
         // underlying format implementation
         val providingClass = DataSource.lookupDataSource(format, execution.spark.sessionState.conf)
         val df = providingClass.getDeclaredConstructor().newInstance() match {
-            case _: RelationProvider => reader.load(location.toString)
-            case _: SchemaRelationProvider => reader.load(location.toString)
-            case _: FileFormat => reader.load(Seq(location.toString):_*)
-            case _ => reader.load(location.toString)
+            case _: RelationProvider => reader.load(qualifiedPath.toString)
+            case _: SchemaRelationProvider => reader.load(qualifiedPath.toString)
+            case _: FileFormat => reader.load(Seq(qualifiedPath.toString):_*)
+            case _ => reader.load(qualifiedPath.toString)
         }
 
         // Install callback to refresh DataFrame when data is overwritten
-        execution.addResource(ResourceIdentifier.ofFile(location)) {
+        execution.addResource(ResourceIdentifier.ofFile(qualifiedPath)) {
             df.queryExecution.logical.refresh()
         }
 
@@ -137,9 +141,9 @@ case class FileDataset(
             .options(options)
             .format(format)
             .mode(mode.batchMode)
-            .save(location.toString)
+            .save(qualifiedPath.toString)
 
-        execution.refreshResource(ResourceIdentifier.ofFile(location))
+        execution.refreshResource(ResourceIdentifier.ofFile(qualifiedPath))
     }
 
     /**

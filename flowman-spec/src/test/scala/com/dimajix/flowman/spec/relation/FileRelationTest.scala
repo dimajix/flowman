@@ -446,7 +446,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 PartitionField("p_col", com.dimajix.flowman.types.IntegerType)
             )
         )
-        
+
         relation.requires should be (Set())
         relation.provides should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
         relation.resources() should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=*").toUri))))

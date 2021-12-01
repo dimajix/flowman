@@ -29,8 +29,8 @@ import com.dimajix.flowman.hadoop.GlobPattern
 
 object ResourceIdentifier {
     def ofFile(file:Path) = GlobbingResourceIdentifier("file", file.toString)
-    def ofLocal(file:Path) = GlobbingResourceIdentifier("local", file.toUri.getPath)
-    def ofLocal(file:File) = GlobbingResourceIdentifier("local", file.toURI.getPath)
+    def ofLocal(file:Path) = GlobbingResourceIdentifier("local", new Path(file.toUri.getPath).toString)
+    def ofLocal(file:File) = GlobbingResourceIdentifier("local", new Path(file.toURI.getPath).toString)
     def ofHiveDatabase(database:String) = RegexResourceIdentifier("hiveDatabase", database)
     def ofHiveTable(table:String) = RegexResourceIdentifier("hiveTable", table)
     def ofHiveTable(table:String, database:Option[String]) = RegexResourceIdentifier("hiveTable", fqTable(table, database))

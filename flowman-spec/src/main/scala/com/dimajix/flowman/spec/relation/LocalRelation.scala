@@ -68,6 +68,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment.toMap)
             .build()
     }
+    lazy val qualifiedLocation:Path = collector.root
 
     /**
       * Returns the list of all resources which will be created by this relation.
@@ -75,7 +76,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       * @return
       */
     override def provides : Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofLocal(location)
+        ResourceIdentifier.ofLocal(qualifiedLocation)
     )
 
     /**
@@ -103,7 +104,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             allPartitions.map(p => ResourceIdentifier.ofLocal(collector.resolve(p))).toSet
         }
         else {
-            Set(ResourceIdentifier.ofLocal(location))
+            Set(ResourceIdentifier.ofLocal(qualifiedLocation))
         }
     }
 
@@ -126,9 +127,9 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             case _ => lit(value)
         }
 
-        logger.info(s"Reading local relation '$identifier' at '$location' ${pattern.map(p => s" with pattern '$p'").getOrElse("")} for partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(", ")})")
+        logger.info(s"Reading local relation '$identifier' at '$qualifiedLocation' ${pattern.map(p => s" with pattern '$p'").getOrElse("")} for partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(", ")})")
         val data = mapFiles(partitions) { (partition, paths) =>
-            logger.info(s"Local relation '$identifier' reads ${paths.size} files under location '${location}' in partition ${partition.spec}")
+            logger.info(s"Local relation '$identifier' reads ${paths.size} files under location '${qualifiedLocation}' in partition ${partition.spec}")
 
             val reader = execution.spark.readLocal.options(options)
             inputSchema.foreach(s => reader.schema(s))
@@ -264,7 +265,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         val path = new File(localDirectory)
         if (path.exists()) {
             if (!ifNotExists) {
-                throw new FileAlreadyExistsException(location.toString)
+                throw new FileAlreadyExistsException(qualifiedLocation.toString)
             }
         }
         else {
@@ -336,10 +337,10 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
     private def localDirectory = {
         if (pattern != null && pattern.nonEmpty) {
-            location.toUri.getPath
+            qualifiedLocation.toUri.getPath
         }
         else {
-            location.getParent.toUri.getPath
+            qualifiedLocation.getParent.toUri.getPath
         }
     }
 }

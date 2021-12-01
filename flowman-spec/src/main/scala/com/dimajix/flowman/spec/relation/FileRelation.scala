@@ -77,6 +77,7 @@ case class FileRelation(
             .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment.toMap)
             .build()
     }
+    lazy val qualifiedLocation:Path = collector.root
 
     /**
       * Returns the list of all resources which will be created by this relation.
@@ -84,7 +85,7 @@ case class FileRelation(
       * @return
       */
     override def provides : Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofFile(collector.root)
+        ResourceIdentifier.ofFile(qualifiedLocation)
     )
 
     /**
@@ -112,7 +113,7 @@ case class FileRelation(
             allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p))).toSet
         }
         else {
-            Set(ResourceIdentifier.ofFile(collector.root))
+            Set(ResourceIdentifier.ofFile(qualifiedLocation))
         }
     }
 
@@ -136,12 +137,12 @@ case class FileRelation(
             case _ => lit(value)
         }
 
-        logger.info(s"Reading file relation '$identifier' at '$location' ${pattern.map(p => s" with pattern '$p'").getOrElse("")} for partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(", ")})")
+        logger.info(s"Reading file relation '$identifier' at '$qualifiedLocation' ${pattern.map(p => s" with pattern '$p'").getOrElse("")} for partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(", ")})")
         val providingClass = DataSource.lookupDataSource(format, execution.spark.sessionState.conf)
         val multiPath =  SparkShim.relationSupportsMultiplePaths(providingClass)
 
         val data = mapFiles(partitions) { (partition, paths) =>
-            logger.info(s"File relation '$identifier' reads ${paths.size} files under location '${location}' in partition ${partition.spec}")
+            logger.info(s"File relation '$identifier' reads ${paths.size} files under location '${qualifiedLocation}' in partition ${partition.spec}")
 
             val pathNames = paths.map(_.toString)
             val reader = this.reader(execution, format, options)
@@ -163,7 +164,7 @@ case class FileRelation(
         val df = data.reduce(_ union _)
 
         // Install callback to refresh DataFrame when data is overwritten
-        execution.addResource(ResourceIdentifier.ofFile(location)) {
+        execution.addResource(ResourceIdentifier.ofFile(qualifiedLocation)) {
             df.queryExecution.logical.refresh()
         }
 
@@ -186,10 +187,10 @@ case class FileRelation(
         else
             doWriteStaticPartitions(execution, df, partition, mode)
 
-        execution.refreshResource(ResourceIdentifier.ofFile(location))
+        execution.refreshResource(ResourceIdentifier.ofFile(qualifiedLocation))
     }
     private def doWriteDynamicPartitions(execution:Execution, df:DataFrame,  mode:OutputMode) : Unit = {
-        val outputPath = collector.root
+        val outputPath = qualifiedLocation
         logger.info(s"Writing file relation '$identifier' to output location '$outputPath' as '$format' with mode '$mode' with dynamic partitions")
 
         if (pattern.nonEmpty)
@@ -259,9 +260,9 @@ case class FileRelation(
      * @return
      */
     override def readStream(execution: Execution): DataFrame = {
-        logger.info(s"Streaming from file relation '$identifier' at '$location'")
+        logger.info(s"Streaming from file relation '$identifier' at '$qualifiedLocation'")
 
-        streamReader(execution, format, options).load(location.toString)
+        streamReader(execution, format, options).load(qualifiedLocation.toString)
     }
 
     /**
@@ -272,7 +273,7 @@ case class FileRelation(
      * @return
      */
     override def writeStream(execution: Execution, df: DataFrame, mode: OutputMode, trigger: Trigger, checkpointLocation: Path): StreamingQuery = {
-        logger.info(s"Streaming to file relation '$identifier' at '$location'")
+        logger.info(s"Streaming to file relation '$identifier' at '$qualifiedLocation'")
 
         if (pattern.nonEmpty)
             throw new IllegalArgumentException(s"Pattern not supported in streaming mode for 'file' relation '$identifier'")
@@ -281,10 +282,10 @@ case class FileRelation(
         if (partitions.nonEmpty) {
             writer
                 .partitionBy(partitions.map(_.name):_*)
-                .start(location.toString)
+                .start(qualifiedLocation.toString)
         }
         else {
-            writer.start(location.toString)
+            writer.start(qualifiedLocation.toString)
         }
     }
 
@@ -334,8 +335,8 @@ case class FileRelation(
     override def exists(execution:Execution) : Trilean = {
         require(execution != null)
 
-        val fs = location.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
-        fs.exists(location)
+        val fs = qualifiedLocation.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
+        fs.exists(qualifiedLocation)
     }
 
     /**
@@ -356,16 +357,16 @@ case class FileRelation(
     override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
         require(execution != null)
 
-        val fs = location.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
-        if (fs.exists(location)) {
+        val fs = qualifiedLocation.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
+        if (fs.exists(qualifiedLocation)) {
             if (!ifNotExists) {
-                throw new FileAlreadyExistsException(location.toString)
+                throw new FileAlreadyExistsException(qualifiedLocation.toString)
             }
         }
         else {
-            logger.info(s"Creating file relation '$identifier' at location '$location'")
-            if (!fs.mkdirs(location)) {
-                throw new FileSystemException(location.toString, "", "Cannot create directory.")
+            logger.info(s"Creating file relation '$identifier' at location '$qualifiedLocation'")
+            if (!fs.mkdirs(qualifiedLocation)) {
+                throw new FileSystemException(qualifiedLocation.toString, "", "Cannot create directory.")
             }
         }
     }
@@ -415,15 +416,15 @@ case class FileRelation(
     override def destroy(execution:Execution, ifExists:Boolean) : Unit =  {
         require(execution != null)
 
-        val fs = location.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
-        if (!fs.exists(location)) {
+        val fs = qualifiedLocation.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
+        if (!fs.exists(qualifiedLocation)) {
             if (!ifExists) {
-                throw new FileNotFoundException(location.toString)
+                throw new FileNotFoundException(qualifiedLocation.toString)
             }
         }
         else {
-            logger.info(s"Destroying file relation '$identifier' by deleting directory '$location'")
-            fs.delete(location, true)
+            logger.info(s"Destroying file relation '$identifier' by deleting directory '$qualifiedLocation'")
+            fs.delete(qualifiedLocation, true)
         }
     }
 

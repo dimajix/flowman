@@ -125,7 +125,7 @@ class CopyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         target.provides(Phase.DESTROY) should be(Set())
 
         target.requires(Phase.CREATE) should be(Set())
-        target.requires(Phase.BUILD) should be(Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
+        target.requires(Phase.BUILD) should be(Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.requires(Phase.VERIFY) should be(Set())
         target.requires(Phase.TRUNCATE) should be(Set())
         target.requires(Phase.DESTROY) should be(Set())

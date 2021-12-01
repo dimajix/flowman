@@ -68,6 +68,9 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val localRelation = relation.asInstanceOf[LocalRelation]
         localRelation.location should be (new Path(outputPath.toUri))
         localRelation.pattern should be (Some("data.csv"))
+        localRelation.requires should be (Set())
+        localRelation.provides should be (Set(ResourceIdentifier.ofLocal(new Path(outputPath.toUri))))
+        localRelation.resources() should be (Set(ResourceIdentifier.ofLocal(new Path(outputPath.toUri))))
 
         // ===== Create =============================================================================================
         outputPath.toFile.exists() should be (false)
@@ -134,6 +137,9 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val localRelation = relation.asInstanceOf[LocalRelation]
         localRelation.location should be (new Path(tempDir.toURI.toString + "/csv/test/data.csv"))
         localRelation.pattern should be (None)
+        localRelation.requires should be (Set())
+        localRelation.provides should be (Set(ResourceIdentifier.ofLocal(new Path(tempDir.toURI.toString + "/csv/test/data.csv"))))
+        localRelation.resources() should be (Set(ResourceIdentifier.ofLocal(new Path(tempDir.toURI.toString + "/csv/test/data.csv"))))
 
         // ===== Create =============================================================================================
         relation.exists(executor) should be (No)
@@ -319,6 +325,10 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("local"))
+        relation.requires should be (Set())
+        relation.provides should be (Set(ResourceIdentifier.ofLocal(new Path(outputPath.toUri.toString))))
+        relation.provides should be (Set(ResourceIdentifier.ofLocal(new Path(outputPath.toUri))))
+        relation.provides should be (Set(ResourceIdentifier.ofLocal(outputPath.toFile)))
         relation.resources(Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1"))) should be (Set(
             ResourceIdentifier.ofLocal(new Path(outputPath.toUri.toString, "p1=1/p2=1/*"))
         ))

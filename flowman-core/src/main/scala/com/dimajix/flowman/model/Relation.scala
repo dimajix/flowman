@@ -99,14 +99,16 @@ trait Relation extends Instance {
     def description : Option[String]
 
     /**
-      * Returns the list of all resources which will be created by this relation.
+      * Returns the list of all resources which will be created by this relation. This method mainly refers to the
+      * CREATE and DESTROY execution phase.
       *
       * @return
       */
     def provides : Set[ResourceIdentifier]
 
     /**
-      * Returns the list of all resources which will be required by this relation for creation.
+      * Returns the list of all resources which will be required by this relation for creation. This method mainly
+      * refers to the CREATE and DESTROY execution phase.
       *
       * @return
       */
@@ -115,7 +117,7 @@ trait Relation extends Instance {
     /**
       * Returns the list of all resources which will are managed by this relation for reading or writing a specific
       * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
-      * partition is empty)
+      * partition is empty). This method mainly refers to the BUILD and TRUNCATE execution phase.
       * @param partitions
       * @return
       */

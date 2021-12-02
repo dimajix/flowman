@@ -78,6 +78,11 @@ case class JdbcRelation(
 
     def tableIdentifier : TableIdentifier = TableIdentifier(table.getOrElse(""), database)
 
+    if (query.nonEmpty && table.nonEmpty)
+        throw new IllegalArgumentException(s"JDBC relation '$identifier' cannot have both a table and a SQL query defined")
+    if (query.isEmpty && table.isEmpty)
+        throw new IllegalArgumentException(s"JDBC relation '$identifier' needs either a table or a SQL query defined")
+
 
     /**
       * Returns the list of all resources which will be created by this relation.
@@ -85,6 +90,8 @@ case class JdbcRelation(
       * @return
       */
     override def provides: Set[ResourceIdentifier] = {
+        // Only return a resource if a table is defined, which implies that this relation can be used for creating
+        // and destroying JDBC tables
         table.map(t => ResourceIdentifier.ofJdbcTable(t, database)).toSet
     }
 
@@ -94,6 +101,8 @@ case class JdbcRelation(
       * @return
       */
     override def requires: Set[ResourceIdentifier] = {
+        // Only return a resource if a table is defined, which implies that this relation can be used for creating
+        // and destroying JDBC tables
         database.map(db => ResourceIdentifier.ofJdbcDatabase(db)).toSet
     }
 
@@ -111,7 +120,7 @@ case class JdbcRelation(
         requireValidPartitionKeys(partitions)
 
         if (query.nonEmpty) {
-            Set()
+            Set(ResourceIdentifier.ofJdbcQuery(query.get))
         }
         else {
             val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)

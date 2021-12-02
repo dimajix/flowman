@@ -28,17 +28,32 @@ import com.dimajix.flowman.hadoop.GlobPattern
 
 
 object ResourceIdentifier {
-    def ofFile(file:Path) = GlobbingResourceIdentifier("file", file.toString)
-    def ofLocal(file:Path) = GlobbingResourceIdentifier("local", new Path(file.toUri.getPath).toString)
-    def ofLocal(file:File) = GlobbingResourceIdentifier("local", new Path(file.toURI.getPath).toString)
-    def ofHiveDatabase(database:String) = RegexResourceIdentifier("hiveDatabase", database)
-    def ofHiveTable(table:String) = RegexResourceIdentifier("hiveTable", table)
-    def ofHiveTable(table:String, database:Option[String]) = RegexResourceIdentifier("hiveTable", fqTable(table, database))
-    def ofHivePartition(table:String, database:Option[String], partition:Map[String,Any]) = RegexResourceIdentifier("hiveTablePartition", fqTable(table, database), partition.map { case(k,v) => k -> v.toString })
-    def ofJdbcDatabase(database:String) = RegexResourceIdentifier("jdbcDatabase", database)
-    def ofJdbcTable(table:String, database:Option[String]) = RegexResourceIdentifier("jdbcTable", fqTable(table, database))
-    def ofJdbcTablePartition(table:String, database:Option[String], partition:Map[String,Any]) = RegexResourceIdentifier("jdbcTablePartition", fqTable(table, database), partition.map { case(k,v) => k -> v.toString })
-    def ofURL(url:URL) = RegexResourceIdentifier("url", url.toString)
+    def ofFile(file:Path): GlobbingResourceIdentifier =
+        GlobbingResourceIdentifier("file", file.toString)
+    def ofLocal(file:Path): GlobbingResourceIdentifier =
+        GlobbingResourceIdentifier("local", new Path(file.toUri.getPath).toString)
+    def ofLocal(file:File): GlobbingResourceIdentifier =
+        GlobbingResourceIdentifier("local", new Path(file.toURI.getPath).toString)
+    def ofHiveDatabase(database:String): RegexResourceIdentifier =
+        RegexResourceIdentifier("hiveDatabase", database)
+    def ofHiveTable(table:String): RegexResourceIdentifier =
+        RegexResourceIdentifier("hiveTable", table)
+    def ofHiveTable(table:String, database:Option[String]): RegexResourceIdentifier =
+        RegexResourceIdentifier("hiveTable", fqTable(table, database))
+    def ofHivePartition(table:String, partition:Map[String,Any]): RegexResourceIdentifier =
+        RegexResourceIdentifier("hiveTablePartition", table, partition.map { case(k,v) => k -> v.toString })
+    def ofHivePartition(table:String, database:Option[String], partition:Map[String,Any]): RegexResourceIdentifier =
+        RegexResourceIdentifier("hiveTablePartition", fqTable(table, database), partition.map { case(k,v) => k -> v.toString })
+    def ofJdbcDatabase(database:String): RegexResourceIdentifier =
+        RegexResourceIdentifier("jdbcDatabase", database)
+    def ofJdbcTable(table:String, database:Option[String]): RegexResourceIdentifier =
+        RegexResourceIdentifier("jdbcTable", fqTable(table, database))
+    def ofJdbcQuery(query:String): SimpleResourceIdentifier =
+        SimpleResourceIdentifier("jdbcQuery", "<sql_query>")
+    def ofJdbcTablePartition(table:String, database:Option[String], partition:Map[String,Any]): RegexResourceIdentifier =
+        RegexResourceIdentifier("jdbcTablePartition", fqTable(table, database), partition.map { case(k,v) => k -> v.toString })
+    def ofURL(url:URL): RegexResourceIdentifier =
+        RegexResourceIdentifier("url", url.toString)
 
     private def fqTable(table:String, database:Option[String]) : String = database.map(_ + ".").getOrElse("") + table
 }
@@ -54,8 +69,8 @@ abstract class ResourceIdentifier {
     val name:String
     val partition:Map[String,String]
 
-    def isEmpty : Boolean = name.isEmpty
-    def nonEmpty : Boolean = name.nonEmpty
+    final def isEmpty : Boolean = name.isEmpty
+    final def nonEmpty : Boolean = name.nonEmpty
 
     /**
       * Create new ResourceIdentifiers by exploding the powerset of all partitions
@@ -84,10 +99,14 @@ abstract class ResourceIdentifier {
       * @param other
       * @return
       */
-    def contains(other:ResourceIdentifier) : Boolean = {
+    final def contains(other:ResourceIdentifier) : Boolean = {
         category == other.category &&
             containsName(other) &&
             containsPartition(other)
+    }
+
+    final def intersects(other:ResourceIdentifier) : Boolean = {
+        this.contains(other) || other.contains(this)
     }
 
     protected def containsName(other:ResourceIdentifier) : Boolean = {
@@ -135,8 +154,26 @@ extends ResourceIdentifier
     override def withPartition(partition:Map[String,String]) : ResourceIdentifier = copy(partition=partition)
 
     override protected def containsName(other:ResourceIdentifier) : Boolean = {
+        @tailrec
+        def isParent(parent:Path, child:Path) : Boolean = {
+            if (parent == child) {
+                true
+            }
+            else {
+                val c2 = child.getParent
+                if (c2 != null)
+                    isParent(parent, c2)
+                else
+                    false
+            }
+        }
+
         // Test simple case: Perfect match
         if (name == other.name) {
+            true
+        }
+        // Test if this is parent
+        else if (isParent(new Path(name), new Path(other.name))) {
             true
         }
         // Test if wildcards do match

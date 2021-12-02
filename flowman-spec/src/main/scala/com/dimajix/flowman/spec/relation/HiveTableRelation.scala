@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,6 +122,7 @@ case class HiveTableRelation(
 
         requireValidPartitionKeys(partition)
 
+        // Only return Hive table partitions!
         val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
         allPartitions.map(p => ResourceIdentifier.ofHivePartition(table, database, p.toMap)).toSet
     }

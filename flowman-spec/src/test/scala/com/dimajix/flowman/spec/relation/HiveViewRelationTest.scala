@@ -82,10 +82,9 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
     relation.provides should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
     relation.requires should be (Set(
         ResourceIdentifier.ofHiveDatabase("default"),
-        ResourceIdentifier.ofHiveTable("t0", Some("default")),
-        ResourceIdentifier.ofHivePartition("t0", Some("default"), Map())
+        ResourceIdentifier.ofHiveTable("t0", Some("default"))
     ))
-    relation.resources() should be (Set())
+    relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("t0", Some("default"), Map())))
 
     relation.exists(execution) should be (No)
     relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
@@ -172,11 +171,12 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
     relation.requires should be (Set(
       ResourceIdentifier.ofHiveDatabase("default"),
       ResourceIdentifier.ofHiveTable("t0", Some("default")),
-      ResourceIdentifier.ofHivePartition("t0", Some("default"), Map()),
-      ResourceIdentifier.ofHiveTable("t1", Some("default")),
-      ResourceIdentifier.ofHivePartition("t1", Some("default"), Map())
+      ResourceIdentifier.ofHiveTable("t1", Some("default"))
     ))
-    relation.resources() should be (Set())
+    relation.resources() should be (Set(
+        ResourceIdentifier.ofHivePartition("t0", Some("default"), Map()),
+        ResourceIdentifier.ofHivePartition("t1", Some("default"), Map())
+    ))
 
     relation.exists(execution) should be (No)
     relation.loaded(execution, Map()) should be (No)

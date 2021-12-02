@@ -46,6 +46,7 @@ import com.dimajix.flowman.model.ConnectionReference
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.ValueConnectionReference
 import com.dimajix.flowman.spec.ObjectMapper
@@ -171,6 +172,10 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM lala_001"""))
         }
 
+        relation.provides should be (Set(ResourceIdentifier.ofJdbcTable("lala_001", None)))
+        relation.requires should be (Set())
+        relation.resources() should be (Set(ResourceIdentifier.ofJdbcTablePartition("lala_001", None, Map())))
+
         // == Create ==================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
@@ -290,6 +295,11 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM lala_002"""))
         }
+
+        relation.provides should be (Set(ResourceIdentifier.ofJdbcTable("lala_002", None)))
+        relation.requires should be (Set())
+        relation.resources() should be (Set(ResourceIdentifier.ofJdbcTablePartition("lala_002", None, Map())))
+        relation.resources(Map("p_col" -> SingleValue("23"))) should be (Set(ResourceIdentifier.ofJdbcTablePartition("lala_002", None, Map("p_col" -> "23"))))
 
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
@@ -622,6 +632,10 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ))
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
+
+        relation_t1.provides should be (Set())
+        relation_t1.requires should be (Set())
+        relation_t1.resources() should be (Set(ResourceIdentifier.ofJdbcQuery("SELECT * FROM lala_004")))
 
         // == Create =================================================================================================
         relation_t0.create(execution)

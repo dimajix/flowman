@@ -126,7 +126,7 @@ case class RelationTarget(
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.provides
-            case Phase.BUILD if mapping.nonEmpty => rel.provides ++ rel.resources(partition)
+            case Phase.BUILD if mapping.nonEmpty => rel.resources(partition) // ++ rel.provides
             //case Phase.BUILD => rel.provides
             case _ => Set()
         }
@@ -141,7 +141,7 @@ case class RelationTarget(
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.requires
-            case Phase.BUILD if mapping.nonEmpty => rel.requires ++ MappingUtils.requires(context, mapping.mapping)
+            case Phase.BUILD if mapping.nonEmpty => MappingUtils.requires(context, mapping.mapping) // ++ rel.requires
             //case Phase.BUILD => rel.requires
             case _ => Set()
         }

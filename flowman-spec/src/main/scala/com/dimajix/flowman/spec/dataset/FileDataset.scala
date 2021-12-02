@@ -51,6 +51,7 @@ case class FileDataset(
         val fs = location.getFileSystem(conf)
         location.makeQualified(fs.getUri, fs.getWorkingDirectory)
     }
+
     /**
       * Returns a list of physical resources produced by writing to this dataset
       * @return

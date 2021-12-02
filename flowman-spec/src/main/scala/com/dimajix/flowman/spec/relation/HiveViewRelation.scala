@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.PartitionField
+import com.dimajix.flowman.model.RegexResourceIdentifier
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.FieldValue
@@ -58,7 +59,14 @@ case class HiveViewRelation(
       * @param partition
       * @return
       */
-    override def resources(partition: Map[String, FieldValue]): Set[ResourceIdentifier] = Set()
+    override def resources(partition: Map[String, FieldValue]): Set[ResourceIdentifier] = {
+        mapping.map(m => MappingUtils.requires(context, m.mapping))
+            .orElse(
+                // Only return Hive Table Partitions!
+                sql.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHivePartition(t, Map()).asInstanceOf[ResourceIdentifier]))
+            )
+            .getOrElse(Set())
+    }
 
     /**
       * Returns the list of all resources which will be created by this relation.
@@ -76,8 +84,17 @@ case class HiveViewRelation(
       */
     override def requires : Set[ResourceIdentifier] = {
         val db = database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
-        val other = mapping.map(m => MappingUtils.requires(context, m.mapping))
-            .orElse(sql.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHiveTable(t))))
+        val other = mapping.map {m =>
+                MappingUtils.requires(context, m.mapping)
+                    // Replace all Hive partitions with Hive tables
+                    .map {
+                        case RegexResourceIdentifier("hiveTablePartition", table, _) => ResourceIdentifier.ofHiveTable(table)
+                        case id => id
+                    }
+            }
+            .orElse {
+                sql.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHiveTable(t)))
+            }
             .getOrElse(Set())
         db ++ other
     }

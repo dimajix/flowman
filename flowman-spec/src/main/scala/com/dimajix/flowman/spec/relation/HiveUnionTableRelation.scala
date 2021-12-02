@@ -199,6 +199,7 @@ case class HiveUnionTableRelation(
 
         requireValidPartitionKeys(partition)
 
+        // Only return Hive table partitions!
         val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
         allPartitions.map(p => ResourceIdentifier.ofHivePartition(tablePrefix + "_[0-9]+", tableDatabase, p.toMap)).toSet
     }

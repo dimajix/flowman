@@ -257,7 +257,7 @@ class DependencyScheduler extends Scheduler {
                     .foreach(req =>
                         // ... identify all targets which produce the resource
                         producedResources
-                            .filter(res => req.contains(res._1))
+                            .filter(res => req.intersects(res._1))
                             .foreach(res => node += res._2)
                     )
             }

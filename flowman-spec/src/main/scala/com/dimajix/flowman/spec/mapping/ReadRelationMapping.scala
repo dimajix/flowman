@@ -58,7 +58,7 @@ case class ReadRelationMapping(
      */
     override def requires : Set[ResourceIdentifier] = {
         val rel = relation.value
-        rel.resources(partitions) ++ rel.requires ++ rel.provides
+        rel.resources(partitions) // ++ rel.requires ++ rel.provides
     }
 
     /**

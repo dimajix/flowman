@@ -166,16 +166,16 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     class JobRuns(tag:Tag) extends Table[JobRun](tag, "JOB_RUN") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-        def namespace = column[String]("namespace")
-        def project = column[String]("project")
-        def version = column[String]("version")
-        def job = column[String]("job")
-        def phase = column[String]("phase")
-        def args_hash = column[String]("args_hash")
+        def namespace = column[String]("namespace", O.Length(64))
+        def project = column[String]("project", O.Length(64))
+        def version = column[String]("version", O.Length(32))
+        def job = column[String]("job", O.Length(64))
+        def phase = column[String]("phase", O.Length(64))
+        def args_hash = column[String]("args_hash", O.Length(32))
         def start_ts = column[Option[Timestamp]]("start_ts")
         def end_ts = column[Option[Timestamp]]("end_ts")
-        def status = column[String]("status")
-        def error = column[Option[String]]("error")
+        def status = column[String]("status", O.Length(20))
+        def error = column[Option[String]]("error", O.Length(1022))
 
         def idx = index("JOB_RUN_IDX", (namespace, project, job, phase, args_hash, status), unique = false)
 
@@ -184,8 +184,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     class JobArguments(tag: Tag) extends Table[JobArgument](tag, "JOB_ARGUMENT") {
         def job_id = column[Long]("job_id")
-        def name = column[String]("name")
-        def value = column[String]("value")
+        def name = column[String]("name", O.Length(64))
+        def value = column[String]("value", O.Length(1022))
 
         def pk = primaryKey("JOB_ARGUMENT_PK", (job_id, name))
         def job = foreignKey("JOB_ARGUMENT_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
@@ -196,7 +196,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     class JobMetrics(tag: Tag) extends Table[JobMetric](tag, "JOB_METRIC") {
         def id = column[Long]("metric_id", O.PrimaryKey, O.AutoInc)
         def job_id = column[Long]("job_id")
-        def name = column[String]("name")
+        def name = column[String]("name", O.Length(64))
         def ts = column[Timestamp]("ts")
         def value = column[Double]("value")
 
@@ -207,8 +207,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     class JobMetricLabels(tag: Tag) extends Table[JobMetricLabel](tag, "JOB_METRIC_LABEL") {
         def metric_id = column[Long]("metric_id")
-        def name = column[String]("name")
-        def value = column[String]("value")
+        def name = column[String]("name", O.Length(64))
+        def value = column[String]("value", O.Length(64))
 
         def pk = primaryKey("JOB_METRIC_LABEL_PK", (metric_id, name))
         def metric = foreignKey("JOB_METRIC_LABEL_JOB_METRIC_FK", metric_id, jobMetrics)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
@@ -220,16 +220,16 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     class TargetRuns(tag: Tag) extends Table[TargetRun](tag, "TARGET_RUN") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def job_id = column[Option[Long]]("job_id")
-        def namespace = column[String]("namespace")
-        def project = column[String]("project")
-        def version = column[String]("version")
-        def target = column[String]("target")
-        def phase = column[String]("phase")
-        def partitions_hash = column[String]("partitions_hash")
+        def namespace = column[String]("namespace", O.Length(64))
+        def project = column[String]("project", O.Length(64))
+        def version = column[String]("version", O.Length(32))
+        def target = column[String]("target", O.Length(64))
+        def phase = column[String]("phase", O.Length(12))
+        def partitions_hash = column[String]("partitions_hash", O.Length(32))
         def start_ts = column[Option[Timestamp]]("start_ts")
         def end_ts = column[Option[Timestamp]]("end_ts")
-        def status = column[String]("status")
-        def error = column[Option[String]]("error")
+        def status = column[String]("status", O.Length(20))
+        def error = column[Option[String]]("error", O.Length(1022))
 
         def idx = index("TARGET_RUN_IDX", (namespace, project, target, phase, partitions_hash, status), unique = false)
         def job = foreignKey("TARGET_RUN_JOB_RUN_FK", job_id, jobRuns)(_.id.?, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
@@ -239,8 +239,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     class TargetPartitions(tag: Tag) extends Table[TargetPartition](tag, "TARGET_PARTITION") {
         def target_id = column[Long]("target_id")
-        def name = column[String]("name")
-        def value = column[String]("value")
+        def name = column[String]("name", O.Length(64))
+        def value = column[String]("value", O.Length(254))
 
         def pk = primaryKey("TARGET_PARTITION_PK", (target_id, name))
         def target = foreignKey("TARGET_PARTITION_TARGET_RUN_FK", target_id, targetRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
@@ -251,8 +251,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     class GraphEdgeLabels(tag:Tag) extends Table[GraphEdgeLabel](tag, "GRAPH_EDGE_LABEL") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def edge_id = column[Long]("edge_id")
-        def name = column[String]("name")
-        def value = column[String]("value")
+        def name = column[String]("name", O.Length(64))
+        def value = column[String]("value", O.Length(254))
 
         def edge = foreignKey("GRAPH_EDGE_LABEL_EDGE_FK", edge_id, graphEdges)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
@@ -263,7 +263,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def input_id = column[Long]("input_id")
         def output_id = column[Long]("output_id")
-        def action = column[String]("action")
+        def action = column[String]("action", O.Length(16))
 
         def input_node = foreignKey("GRAPH_EDGE_INPUT_FK", input_id, graphNodes)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
         def output_node = foreignKey("GRAPH_EDGE_OUTPUT_FK", output_id, graphNodes)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
@@ -274,9 +274,9 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     class GraphNodes(tag:Tag) extends Table[GraphNode](tag, "GRAPH_NODE") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def job_id = column[Long]("job_id")
-        def category = column[String]("category")
-        def kind = column[String]("kind")
-        def name = column[String]("name")
+        def category = column[String]("category", O.Length(16))
+        def kind = column[String]("kind", O.Length(64))
+        def name = column[String]("name", O.Length(64))
 
         def job = foreignKey("GRAPH_NODE_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
@@ -287,8 +287,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def node_id = column[Long]("node_id")
         def direction = column[Char]("direction")
-        def category = column[String]("category")
-        def name = column[String]("name")
+        def category = column[String]("category", O.Length(32))
+        def name = column[String]("name", O.Length(254))
 
         def node = foreignKey("GRAPH_RESOURCE_NODE_FK", node_id, graphNodes)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
@@ -297,8 +297,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     class GraphResourcePartitions(tag:Tag) extends Table[GraphResourcePartition](tag, "GRAPH_RESOURCE_PARTITION") {
         def resource_id = column[Long]("resource_id")
-        def name = column[String]("name")
-        def value = column[String]("value")
+        def name = column[String]("name", O.Length(64))
+        def value = column[String]("value", O.Length(254))
 
         def pk = primaryKey("GRAPH_RESOURCE_PARTITION_PK", (resource_id, name))
         def resource = foreignKey("GRAPH_RESOURCE_PARTITION_RESOURCE_FK", resource_id, graphResources)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)

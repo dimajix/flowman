@@ -25,6 +25,10 @@ object LogFilter {
         val loader = ServiceLoader.load(classOf[LogFilter])
         loader.iterator().asScala.toSeq
     }
+
+    def filter(filters:Seq[LogFilter], key:String, value:String) : Option[(String,String)] = {
+        filters.foldLeft(Option((key, value)))((kv, f) => kv.flatMap(kv => f.filterConfig(kv._1,kv._2)))
+    }
 }
 
 abstract class LogFilter {

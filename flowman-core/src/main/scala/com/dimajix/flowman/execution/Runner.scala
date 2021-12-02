@@ -137,8 +137,8 @@ private[execution] sealed class RunnerImpl {
 
     def logEnvironment(context:Context) : Unit = {
         logger.info("Environment:")
-        context.environment.toSeq.sortBy(_._1).foreach { keyValue =>
-            logFilters.foldLeft(Option(keyValue))((kv, f) => kv.flatMap(kv => f.filterConfig(kv._1,kv._2.toString)))
+        context.environment.toSeq.sortBy(_._1).foreach { case (key,value) =>
+            LogFilter.filter(logFilters, key, value.toString)
                 .foreach { case (key,value) => logger.info(s"  $key=$value") }
         }
         logger.info("")

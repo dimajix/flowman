@@ -60,6 +60,12 @@ private[history] object JdbcStateRepository {
         value:String
     )
 
+    case class JobEnvironment(
+        job_id:Long,
+        name:String,
+        value:String
+    )
+
     case class JobMetricLabel(
         metric_id:Long,
         name:String,
@@ -152,6 +158,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
 
     val jobRuns = TableQuery[JobRuns]
     val jobArgs = TableQuery[JobArguments]
+    val jobEnvironments = TableQuery[JobEnvironments]
     val jobMetrics = TableQuery[JobMetrics]
     val jobMetricLabels = TableQuery[JobMetricLabels]
     val targetRuns = TableQuery[TargetRuns]
@@ -191,6 +198,17 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         def job = foreignKey("JOB_ARGUMENT_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
         def * = (job_id, name, value) <> (JobArgument.tupled, JobArgument.unapply)
+    }
+
+    class JobEnvironments(tag: Tag) extends Table[JobEnvironment](tag, "JOB_ENVIRONMENT") {
+        def job_id = column[Long]("job_id")
+        def name = column[String]("name", O.Length(64))
+        def value = column[String]("value", O.Length(1022))
+
+        def pk = primaryKey("JOB_ENVIRONMENT_PK", (job_id, name))
+        def job = foreignKey("JOB_ENVIRONMENT_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+
+        def * = (job_id, name, value) <> (JobEnvironment.tupled, JobEnvironment.unapply)
     }
 
     class JobMetrics(tag: Tag) extends Table[JobMetric](tag, "JOB_METRIC") {
@@ -327,6 +345,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         val tables = Seq(
             jobRuns,
             jobArgs,
+            jobEnvironments,
             jobMetrics,
             jobMetricLabels,
             targetRuns,
@@ -395,7 +414,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         Await.result(db.run(q), Duration.Inf)
     }
 
-    def insertJobRun(run:JobRun, args:Map[String,String]) : JobRun = {
+    def insertJobRun(run:JobRun, args:Map[String,String], envs:Map[String,String]) : JobRun = {
         val runQuery = (jobRuns returning jobRuns.map(_.id) into((run, id) => run.copy(id=id))) += run
         val runResult = Await.result(db.run(runQuery), Duration.Inf)
 
@@ -403,12 +422,16 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         val argsQuery = jobArgs ++= runArgs
         Await.result(db.run(argsQuery), Duration.Inf)
 
+        val runEnvs = envs.map(kv => JobEnvironment(runResult.id, kv._1, kv._2))
+        val envsQuery = jobEnvironments ++= runEnvs
+        Await.result(db.run(envsQuery), Duration.Inf)
+
         runResult
     }
 
-    def insertJobMetrics(run:JobRun, metrics:Seq[Measurement]) : Unit = {
+    def insertJobMetrics(jobId:Long, metrics:Seq[Measurement]) : Unit = {
         metrics.foreach { m =>
-            val jobMetric = JobMetric(0, run.id, m.name, new Timestamp(m.ts.toInstant.toEpochMilli), m.value)
+            val jobMetric = JobMetric(0, jobId, m.name, new Timestamp(m.ts.toInstant.toEpochMilli), m.value)
             val jmQuery = (jobMetrics returning jobMetrics.map(_.id) into((jm,id) => jm.copy(id=id))) += jobMetric
             val jmResult = Await.result(db.run(jmQuery), Duration.Inf)
 
@@ -436,9 +459,21 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .toSeq
     }
 
-    def insertJobGraph(run:JobRun, graph:Graph) : Unit = {
+    def getJobEnvironment(jobId:Long) : Map[String,String] = {
+        // Ensure that job actually exists
+        val jq = jobRuns.filter(_.id === jobId)
+        Await.result(db.run(jq.result), Duration.Inf).head
+
+        // Now query metrics
+        val q = jobEnvironments.filter(_.job_id === jobId)
+        Await.result(db.run(q.result), Duration.Inf)
+            .map(e => e.name -> e.value)
+            .toMap
+    }
+
+    def insertJobGraph(jobId:Long, graph:Graph) : Unit = {
         // Step 1: Insert nodes
-        val dbNodes = graph.nodes.map(n => GraphNode(-1, run.id, n.category.lower, n.kind, n.name))
+        val dbNodes = graph.nodes.map(n => GraphNode(-1, jobId, n.category.lower, n.kind, n.name))
         val nodesQuery = (graphNodes returning graphNodes.map(_.id)) ++= dbNodes
         val nodeIds = Await.result(db.run(nodesQuery), Duration.Inf)
         val nodeIdToDbId = graph.nodes.map(_.id).zip(nodeIds).toMap

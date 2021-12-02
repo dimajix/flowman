@@ -47,6 +47,7 @@ import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
+import com.dimajix.flowman.spi.LogFilter
 
 
 
@@ -75,6 +76,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
     import JdbcStateRepository._
 
     private val logger = LoggerFactory.getLogger(classOf[JdbcStateStore])
+    private val logFilters = LogFilter.filters
 
     /**
       * Returns the state of a job, or None if no information is available
@@ -125,6 +127,18 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
     }
 
     /**
+     * Returns the execution environment of a specific job run
+     *
+     * @param jobId
+     * @return
+     */
+    override def getJobEnvironment(jobId: String): Map[String, String] = {
+        withSession { repository =>
+            repository.getJobEnvironment(jobId.toLong)
+        }
+    }
+
+    /**
       * Starts the run and returns a token, which can be anything
      *
      * @param digest
@@ -146,9 +160,15 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             None
         )
 
+        // Create redacted environment
+        val env = job.context.environment.toMap
+            .flatMap { case(key,value) =>
+                LogFilter.filter(logFilters, key, value.toString)
+            }
+
         logger.debug(s"Start '${digest.phase}' job '${run.namespace}/${run.project}/${run.job}' in history database")
         val run2 = withSession { repository =>
-            repository.insertJobRun(run, digest.args)
+            repository.insertJobRun(run, digest.args, env)
         }
 
         JdbcJobToken(run2, new GraphBuilder(job.context, digest.phase))
@@ -169,8 +189,8 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         val graph = Graph.ofGraph(jdbcToken.graph.build())
         withSession{ repository =>
             repository.setJobStatus(run.copy(end_ts = Some(now), status=status.upper, error=result.exception.map(_.toString)))
-            repository.insertJobMetrics(run, metrics)
-            repository.insertJobGraph(run, graph)
+            repository.insertJobMetrics(run.id, metrics)
+            repository.insertJobGraph(run.id, graph)
         }
     }
 

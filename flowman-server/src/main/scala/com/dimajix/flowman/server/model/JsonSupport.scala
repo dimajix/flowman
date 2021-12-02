@@ -46,6 +46,7 @@ trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
     implicit val measurementFormat: RootJsonFormat[Measurement] = jsonFormat4(Measurement)
     implicit val metricSeriesFormat: RootJsonFormat[MetricSeries] = jsonFormat7(MetricSeries)
     implicit val metricSeriesListFormat: RootJsonFormat[MetricSeriesList] = jsonFormat1(MetricSeriesList)
+    implicit val jobEnvironmentFormat: RootJsonFormat[JobEnvironment] = jsonFormat1(JobEnvironment)
     implicit val jobStateFormat: RootJsonFormat[JobState] = jsonFormat12(JobState)
     implicit val jobStateListFormat: RootJsonFormat[JobStateList] = jsonFormat2(JobStateList)
     implicit val jobStateCountsFormat: RootJsonFormat[JobStateCounts] = jsonFormat1(JobStateCounts)

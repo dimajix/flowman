@@ -59,6 +59,13 @@ abstract class StateStore {
     def getJobGraph(jobId: String) : Option[Graph]
 
     /**
+     * Returns the execution environment of a specific job run
+     * @param jobId
+     * @return
+     */
+    def getJobEnvironment(jobId: String) : Map[String,String]
+
+    /**
      * Starts the run and returns a token, which can be anything
      *
      * @param job

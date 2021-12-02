@@ -34,6 +34,10 @@ final case class JobState(
     metrics:Seq[Measurement] = Seq()
 )
 
+final case class JobEnvironment(
+    env:Map[String,String]
+)
+
 
 final case class JobStateList(
     data:Seq[JobState],

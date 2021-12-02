@@ -14,6 +14,11 @@ export default {
           .then(response => response.data)
       },
 
+      getJobEnvironment(job) {
+        return axios.get('/api/history/job/' + job + '/env')
+          .then(response => response.data)
+      },
+
       getJobCounts(grouping, projects=[], jobs=[], phase=[], status=[]) {
         return axios.get('/api/history/job-counts?grouping=' + grouping + "&project=" + projects.join(',') + "&job=" + jobs.join(',') + "&phase=" + phase.join(',') + "&status=" + status.join(','))
             .then(response => response.data)

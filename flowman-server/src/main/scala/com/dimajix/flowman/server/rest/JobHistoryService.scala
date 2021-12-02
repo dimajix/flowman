@@ -38,6 +38,7 @@ import com.dimajix.flowman.history.JobQuery
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
+import com.dimajix.flowman.server.model.JobEnvironment
 import com.dimajix.flowman.server.model.JobStateCounts
 import com.dimajix.flowman.server.model.JobStateList
 
@@ -51,9 +52,15 @@ class JobHistoryService(history:StateStore) {
 
     def routes : Route = (
         pathPrefix("job") {(
-            path(Segment) { job =>
-                getJobState(job)
-            }
+            pathPrefix(Segment) { job => (
+                pathEnd {
+                    getJobState(job)
+                }
+                ~
+                path("env") {
+                    getJobEnvironment(job)
+                }
+            )}
         )}
         ~
         pathPrefix("job-counts") {(
@@ -155,6 +162,22 @@ class JobHistoryService(history:StateStore) {
             val metrics = history.getJobMetrics(j.id)
             Converter.ofSpec(j, metrics)
         })
+    }
+
+    @Path("/job/{job}/env")
+    @ApiOperation(value = "Retrieve execution environment of a job run", nickname = "getJobEnvironment", httpMethod = "GET")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "job", value = "Job ID", required = true,
+            dataType = "string", paramType = "path")
+    ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Job environment", response = classOf[model.JobEnvironment])
+    ))
+    def getJobEnvironment(jobId:String) : server.Route = {
+        complete{
+            val env = history.getJobEnvironment(jobId)
+            JobEnvironment(env)
+        }
     }
 
     private def split(arg:Option[String]) : Seq[String] = {

@@ -56,6 +56,14 @@ class NullStateStore extends StateStore {
     override def getJobGraph(jobId: String): Option[Graph] = None
 
     /**
+     * Returns the execution environment of a specific job run
+     *
+     * @param jobId
+     * @return
+     */
+    override def getJobEnvironment(jobId: String): Map[String, String] = Map()
+
+    /**
       * Starts the run and returns a token, which can be anything
      *
      * @param batch

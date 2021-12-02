@@ -1,5 +1,5 @@
 <template>
-  <v-simple-table dense dark>
+  <v-simple-table dense dark height="160">
     <thead>
     <tr>
       <th class="text-left">

@@ -127,7 +127,7 @@ export default {
       properties: {},
       metrics: [],
       targets: [],
-      environment: {}
+      environment: []
     }
   },
 

@@ -4,7 +4,17 @@
       <v-icon>gavel</v-icon>
       Target '{{details.project}}/{{details.name}}' {{ details.phase }} id {{target}} status {{details.status}}
     </v-card-title>
-    <v-card-text>
+    <v-container fluid
+                 v-if="environment.length > 0"
+    >
+      <h3>Environment</h3>
+      <environment-table
+        :environment = "environment"
+      />
+    </v-container>
+
+    <v-container fluid>
+      <h3>Execution Graph</h3>
       <screen id="screen" ref="screen" :markers="[]" height="600">
         <edge v-for="edge in graph.edges" :data="edge" :nodes="graph.nodes" :key="edge.id">
         </edge>
@@ -50,7 +60,7 @@
           </v-row>
         </v-container>
       </v-tooltip>
-    </v-card-text>
+    </v-container>
   </v-container>
 </template>
 
@@ -60,10 +70,11 @@ import Screen from 'vnodes/src/components/Screen'
 import Node from 'vnodes/src/components/Node'
 import Edge from 'vnodes/src/components/Edge'
 import ResourceTable from "@/components/ResourceTable";
+import EnvironmentTable from '@/components/EnvironmentTable.vue'
 
 export default {
   name: 'TargetDetails',
-  components: {Screen,Node,Edge,ResourceTable},
+  components: {Screen,Node,Edge,ResourceTable,EnvironmentTable},
 
   props: {
     target: String
@@ -74,6 +85,7 @@ export default {
       details: {},
       targetGraph: {},
       graph: new graph(),
+      environment: [],
       showTooltip: false,
       tooltipNode: {
         requires: [],
@@ -92,7 +104,11 @@ export default {
     refresh() {
       this.$api.getTargetDetails(this.target).then(response => {
         this.details = response
+        return this.$api.getJobEnvironment(response.jobId)
+      }).then(response => {
+        this.environment = Object.entries(response.env)
       })
+
       this.$api.getTargetGraph(this.target).then(response => {
         this.targetGraph = response
 

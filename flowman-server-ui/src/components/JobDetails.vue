@@ -95,77 +95,28 @@
       v-if="environment.length > 0"
     >
       <h3>Environment</h3>
-      <v-simple-table dense>
-        <template v-slot:default>
-          <thead>
-          <tr>
-            <th class="text-left">
-              Name
-            </th>
-            <th class="text-left">
-              Value
-            </th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr
-            v-for="item in environment"
-            :key="item[0]"
-          >
-            <td>{{ item[0] }}</td>
-            <td>{{ item[1] }}</td>
-          </tr>
-          </tbody>
-        </template>
-      </v-simple-table>
+      <environment-table
+        :environment = "environment"
+      />
     </v-container>
 
     <v-container fluid>
       <h3>Metrics</h3>
-      <v-simple-table>
-        <template v-slot:default>
-          <thead>
-          <tr>
-            <th class="text-left">
-              Name
-            </th>
-            <th class="text-left">
-              Labels
-            </th>
-            <th class="text-left">
-              Value
-            </th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr
-            v-for="item in metrics.entries()"
-            :key="item[0]"
-          >
-            <td>{{ item[1].name }}</td>
-            <td>
-              <v-chip
-                v-for="p in Object.entries(item[1].labels) "
-                :key="p"
-              >
-                {{ p[0] }} : {{ p[1] }}
-              </v-chip>
-            </td>
-            <td>{{ item[1].value }}</td>
-          </tr>
-          </tbody>
-        </template>
-      </v-simple-table>
+      <metric-table
+        :metrics = "metrics"
+      />
     </v-container>
   </v-container>
 </template>
 
 <script>
 import Status from '@/components/Status.vue'
+import EnvironmentTable from '@/components/EnvironmentTable.vue'
+import MetricTable from '@/components/MetricTable.vue'
 
 export default {
   name: 'JobDetails',
-  components: {Status},
+  components: {Status,EnvironmentTable,MetricTable},
 
   props: {
     job: String
@@ -207,7 +158,7 @@ export default {
       })
 
       this.$api.getJobEnvironment(this.job).then(response => {
-        this.environment = Object.entries(response.env).sort((l,r) => l[0] >= r[0])
+        this.environment = Object.entries(response.env)
       })
     },
   }

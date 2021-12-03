@@ -24,15 +24,6 @@
         </v-list-item-title>
       </v-list-item>
 
-      <v-list-item :to="{name: 'namespace'}">
-        <v-list-item-action>
-          <v-icon>info</v-icon>
-        </v-list-item-action>
-        <v-list-item-title>
-          Namespace
-        </v-list-item-title>
-      </v-list-item>
-
       <v-list-item :to="{name: 'job-history'}">
         <v-list-item-action>
           <v-icon>history</v-icon>

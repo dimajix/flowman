@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-subheader class="title" inset>Job Phases</v-subheader>
+    <v-subheader class="title" inset>Phases</v-subheader>
     <pie-chart
       height="160"
       v-if="loaded"
@@ -33,7 +33,7 @@ export default {
             labels: ["Validate", "Create", "Build", "Verify", "Truncate", "Destroy"],
             datasets: [
               {
-                backgroundColor: ["#ffde09", "#daff00", "#00ff4e", "#00ffcd", "#e009ff", "#ff2800"],
+                backgroundColor: ["#ffd734", "#96be4f", "#41B883", "#00D8FF", "#b45b93", "#E42651"],
                 data: [
                   response.data["VALIDATE"],
                   response.data["CREATE"],

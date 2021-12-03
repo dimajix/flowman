@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-subheader class="title" inset>Target Status</v-subheader>
+    <v-subheader class="title" inset>Status</v-subheader>
     <pie-chart
       height=160
       v-if="loaded"

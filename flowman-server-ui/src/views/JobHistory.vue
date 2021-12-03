@@ -13,7 +13,14 @@
 
       <v-col cols="12">
         <v-card shaped outlined elevation="2">
-          <v-card-title>Job History</v-card-title>
+          <v-card-title>
+            Job History
+            <v-btn text rounded icon
+                   @click="refresh"
+            >
+              <v-icon>refresh</v-icon>
+            </v-btn>
+          </v-card-title>
           <v-data-table
             :headers="headers"
             :items="jobs"
@@ -103,6 +110,11 @@
         } else {
           this.expanded.push(item);
         }
+      },
+
+      refresh() {
+        this.options.page = 1
+        this.getData()
       },
 
       getData() {

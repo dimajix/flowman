@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-subheader class="title" inset>Project Names</v-subheader>
+    <v-subheader class="title" inset>Projects</v-subheader>
     <pie-chart
       height="160"
       v-if="loaded"

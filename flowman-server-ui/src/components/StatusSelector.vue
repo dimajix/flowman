@@ -28,7 +28,7 @@ export default {
   data() {
     return {
       value: [],
-      status: ["SUCCESS", "SUCCESS_WITH_ERRORS", "SKIPPED", "FAILED"],
+      status: ["SUCCESS", "SUCCESS_WITH_ERRORS", "SKIPPED", "FAILED", "RUNNING"],
     };
   },
 

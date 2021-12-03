@@ -39,7 +39,7 @@
                 <v-card-subtitle class="text-h6">Execution Status</v-card-subtitle>
                 <v-select
                   v-model="selectedStatus"
-                  :items="['SUCCESS', 'SUCCESS_WITH_ERRORS', 'SKIPPED', 'FAILED']"
+                  :items="['SUCCESS', 'SUCCESS_WITH_ERRORS', 'SKIPPED', 'FAILED', 'RUNNING']"
                   solo
                   multiple
                   chips
@@ -95,7 +95,7 @@ export default {
       projects: [],
       jobs: [],
       selectedProject: "",
-      selectedJob: "daily",
+      selectedJob: "",
       selectedPhase: "BUILD",
       selectedStatus: [],
       metrics: []
@@ -121,7 +121,7 @@ export default {
   mounted() {
     this.getProjectList()
     this.getJobList()
-    this.getMetricData()
+    //this.getMetricData()
   },
 
   methods: {

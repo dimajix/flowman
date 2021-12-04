@@ -46,7 +46,7 @@ export default {
             labels: ["Validate", "Create", "Build", "Verify", "Truncate", "Destroy"],
             datasets: [
               {
-                backgroundColor: ["#ffd734", "#96be4f", "#41B883", "#00D8FF", "#b45b93", "#E42651"],
+                backgroundColor: ["#d0d752", "#96be4f", "#41B883", "#00D8FF", "#b45b93", "#E42651"],
                 data: [
                   response.data["VALIDATE"],
                   response.data["CREATE"],
@@ -66,5 +66,4 @@ export default {
 </script>
 
 <style>
-
 </style>

@@ -38,11 +38,15 @@
               nextIcon: 'navigate_next'
             }"
           >
+            <template v-slot:item.phase="{ item }">
+              <phase :phase="item.phase"/>
+            </template>
             <template v-slot:item.status="{ item }">
               <status :status="item.status"/>
             </template>
             <template v-slot:item.partitions="{ item }">
               <v-chip
+                color="#aacccc"
                 v-for="p in Object.entries(item.partitions) "
                 :key="p[0]"
               >
@@ -66,11 +70,12 @@
   import TargetDetails from "@/components/TargetDetails";
   import Filter from "@/mixins/Filter.js";
   import Status from '@/components/Status.vue'
+  import Phase from '@/components/Phase.vue'
 
   export default {
     name: "TargetHistory",
     mixins: [Filter],
-    components: {TargetCharts,TargetDetails,Status},
+    components: {TargetCharts,TargetDetails,Phase,Status},
 
     data() {
       return {

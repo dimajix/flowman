@@ -75,6 +75,7 @@
             <td>{{ item.target }}</td>
             <td>
               <v-chip small
+                color="#aacccc"
                 v-for="p in Object.entries(item.partitions) "
                 :key="p"
               >

@@ -21,6 +21,7 @@ import java.time.ZonedDateTime
 
 final case class Measurement(
     name:String,
+    jobId:String,
     ts:ZonedDateTime,
     labels:Map[String,String],
     value:Double

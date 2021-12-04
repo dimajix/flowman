@@ -151,8 +151,8 @@ final class StateStoreAdaptorListener(store:StateStore) extends AbstractExecutio
         val status = result.status.toString
         val metrics = Measurement.ofMetrics(execution.metrics.metrics)
             .map(m => m.copy(labels = m.labels.updated("status", status)))
-        val t = token.asInstanceOf[StateStoreJobToken].token
-        store.finishJob(t, result, metrics)
+        val state = token.asInstanceOf[StateStoreJobToken]
+        store.finishJob(state.token, result, metrics)
     }
     override def startTarget(execution:Execution, target:Target, instance: TargetDigest, parent: Option[com.dimajix.flowman.execution.Token]): com.dimajix.flowman.execution.TargetToken = {
         val t = parent.map(_.asInstanceOf[StateStoreJobToken].token)

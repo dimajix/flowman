@@ -43,7 +43,7 @@ trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
     }
 
     implicit val namespaceFormat: RootJsonFormat[Namespace] = jsonFormat6(Namespace)
-    implicit val measurementFormat: RootJsonFormat[Measurement] = jsonFormat4(Measurement)
+    implicit val measurementFormat: RootJsonFormat[Measurement] = jsonFormat5(Measurement)
     implicit val metricSeriesFormat: RootJsonFormat[MetricSeries] = jsonFormat7(MetricSeries)
     implicit val metricSeriesListFormat: RootJsonFormat[MetricSeriesList] = jsonFormat1(MetricSeriesList)
     implicit val jobEnvironmentFormat: RootJsonFormat[JobEnvironment] = jsonFormat1(JobEnvironment)

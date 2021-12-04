@@ -39,11 +39,15 @@
           >
             <template v-slot:item.args="{ item }">
               <v-chip
+                color="#aabbcc"
                 v-for="p in Object.entries(item.args) "
                 :key="p[0]"
               >
                 {{ p[0] }} : {{ p[1] }}
               </v-chip>
+            </template>
+            <template v-slot:item.phase="{ item }">
+              <phase :phase="item.phase"/>
             </template>
             <template v-slot:item.status="{ item }">
               <status :status="item.status"/>
@@ -65,11 +69,12 @@
   import JobCharts from "@/components/JobCharts";
   import Filter from "@/mixins/Filter.js";
   import Status from '@/components/Status.vue'
+  import Phase from '@/components/Phase.vue'
 
   export default {
     name: "JobHistory",
     mixins: [Filter],
-    components: {JobCharts, JobDetails,Status},
+    components: {JobCharts, JobDetails,Phase,Status},
 
     data() {
       return {

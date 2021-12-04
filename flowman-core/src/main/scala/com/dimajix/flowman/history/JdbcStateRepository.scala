@@ -454,7 +454,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .map { g =>
                 val metric = g._2.head._1
                 val labels = g._2.flatMap(_._2).map(kv => kv.name -> kv.value).toMap
-                Measurement(metric.name, metric.ts.toInstant.atZone(ZoneId.of("UTC")), labels, metric.value)
+                Measurement(metric.name, metric.job_id.toString, metric.ts.toInstant.atZone(ZoneId.of("UTC")), labels, metric.value)
             }
             .toSeq
     }
@@ -886,7 +886,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                     .map { m =>
                         val metric = m.head._1
                         val labels = m.map(l => l._2.name -> l._2.value).toMap
-                        Measurement(metric.name, metric.ts.toInstant.atZone(ZoneId.of("UTC")), labels, metric.value)
+                        Measurement(metric.name, metric.job_id.toString, metric.ts.toInstant.atZone(ZoneId.of("UTC")), labels, metric.value)
                     }
                 // Group by groupings
                 series.groupBy(m => groupings.map(m.labels))

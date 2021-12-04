@@ -43,11 +43,11 @@ export default {
         .then(response => {
           this.status = {
             title: "Status",
-            labels: ["Success", "Skipped", "Failed"],
+            labels: ["Running", "Success", "Skipped", "Failed"],
             datasets: [
               {
-                backgroundColor: ["#41B883", "#00D8FF", "#E42651"],
-                data: [response.data["SUCCESS"],  response.data["SKIPPED"], response.data["FAILED"]]
+                backgroundColor: ["#90D070", "#70B050", "#80A0D0", "#E42651"],
+                data: [response.data["RUNNING"], response.data["SUCCESS"],  response.data["SKIPPED"], response.data["FAILED"]]
               }
             ]
           }

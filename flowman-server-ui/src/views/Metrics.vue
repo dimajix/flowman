@@ -150,14 +150,22 @@ export default {
           text: item.phase + " project '" + item.project + "' job '" + item.job + "'",
         },
         chart: {
-          id: item.metric
+          id: item.metric,
+          toolbar: {
+            show: false
+          }
         },
         tooltip: {
           x: {
             // eslint-disable-next-line no-unused-vars
             formatter: function(value, {series, seriesIndex, dataPointIndex, w}) {
-              let labels = Object.entries(item.measurements[dataPointIndex].labels).map(l => '<tr><td>' + l[0] + '</td><td>' + l[1] + '</td></tr>').reduce((l,r) => l + r, '')
-              return '<div class="subtitle-1 justify-center">' + value + '</div>' + '<div><table><tbody>' + labels + '</tbody></table></div>'
+              let measurement = item.measurements[dataPointIndex]
+              let labels = Object.entries(measurement.labels)
+                .sort((l,r) => l[0] >= r[0])
+                .map(l => '<tr><td>' + l[0] + '</td><td>' + l[1] + '</td></tr>').reduce((l,r) => l + r, '')
+              return '<div class="subtitle-1 text-center">' + value + '</div>' +
+                '<div class="subtitle-1 text-center"> Job ID: ' + measurement.jobId + '</div>' +
+                '<div><table><thead><tr><th class="text-left">Label</th><th class="text-left">Value</th></tr></thead><tbody>' + labels + '</tbody></table></div>'
             }
           }
         },

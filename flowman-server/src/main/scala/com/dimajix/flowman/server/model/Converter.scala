@@ -24,6 +24,7 @@ object Converter {
     def ofSpec(ms:history.Measurement) : Measurement = {
         Measurement(
             ms.name,
+            ms.jobId,
             ms.ts,
             ms.labels,
             ms.value

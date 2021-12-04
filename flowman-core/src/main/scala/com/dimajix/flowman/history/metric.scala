@@ -31,13 +31,14 @@ object Measurement {
     def ofMetrics(metrics:Seq[Metric]) : Seq[Measurement] = {
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         metrics.flatMap {
-            case gauge:GaugeMetric => Some(Measurement(gauge.name, now.toInstant.atZone(ZoneId.of("UTC")), gauge.labels, gauge.value))
+            case gauge:GaugeMetric => Some(Measurement(gauge.name, "", now.toInstant.atZone(ZoneId.of("UTC")), gauge.labels, gauge.value))
             case _ => None
         }
     }
 }
 final case class Measurement(
     name:String,
+    jobId:String,
     ts:ZonedDateTime,
     labels:Map[String,String],
     value:Double

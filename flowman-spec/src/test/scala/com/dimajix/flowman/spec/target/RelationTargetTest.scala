@@ -308,6 +308,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             .asInstanceOf[GaugeMetric]
 
         metric.value should be (2)
+        metric.labels should be (target.metadata.asMap + ("phase" -> Phase.BUILD.upper))
 
         target.execute(executor, Phase.BUILD)
         metric.value should be (4)

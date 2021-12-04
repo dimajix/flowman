@@ -46,11 +46,15 @@
           >
             <template v-slot:item.args="{ item }">
               <v-chip
+                color="#aabbcc"
                 v-for="p in Object.entries(item.args) "
                 :key="p[0]"
               >
                 {{ p[0] }} : {{ p[1] }}
               </v-chip>
+            </template>
+            <template v-slot:item.phase="{ item }">
+              <phase :phase="item.phase"/>
             </template>
             <template v-slot:item.status="{ item }">
               <status :status="item.status"/>
@@ -77,11 +81,15 @@
             class="elevation-1"
             hide-default-footer
           >
+            <template v-slot:item.phase="{ item }">
+              <phase :phase="item.phase"/>
+            </template>
             <template v-slot:item.status="{ item }">
               <status :status="item.status"/>
             </template>
             <template v-slot:item.partitions="{ item }">
               <v-chip
+                color="#aacccc"
                 v-for="p in Object.entries(item.partitions) "
                 :key="p[0]"
               >
@@ -100,7 +108,9 @@
   import TargetPhaseChart from "@/charts/TargetPhaseChart";
   import JobStatusChart from "@/charts/JobStatusChart";
   import JobPhaseChart from "@/charts/JobPhaseChart";
+  import Phase from '@/components/Phase.vue'
   import Status from '@/components/Status.vue'
+  import moment from "moment";
 
   export default {
     components: {
@@ -108,6 +118,7 @@
       JobStatusChart,
       TargetStatusChart,
       TargetPhaseChart,
+      Phase,
       Status,
     },
 
@@ -125,6 +136,7 @@
           {text: 'Status', value: 'status', width:120},
           {text: 'Started at', value: 'startDateTime'},
           {text: 'Finished at', value: 'endDateTime'},
+          {text: 'Duration', value: 'duration'},
           {text: 'Error message', value: 'error', width:160},
         ],
         jobHeaders: [
@@ -135,6 +147,7 @@
           { text: 'Status', value: 'status', width:120 },
           { text: 'Started at', value: 'startDateTime' },
           { text: 'Finished at', value: 'endDateTime' },
+          { text: 'Duration', value: 'duration' },
           { text: 'Error message', value: 'error', width:160 },
         ]
       }
@@ -165,12 +178,28 @@
         this.targetsLoading = true
         this.$api.getJobsHistory([], [], [], [], 0, 5)
           .then(response => {
+            let dateFormat = 'MMM D, YYYY HH:mm:ss'
+            response.data.forEach(item => {
+              let start = moment(item.startDateTime)
+              let end = moment(item.endDateTime)
+              item.startDateTime = start.format(dateFormat)
+              item.endDateTime = end.format(dateFormat)
+              item.duration = moment.duration(end.diff(start)).humanize()
+            })
             this.jobs = response.data
             this.jobsLoading = false
           })
 
         this.$api.getTargetsHistory([], [], [], [], [], 0, 5)
           .then(response => {
+            let dateFormat = 'MMM D, YYYY HH:mm:ss'
+            response.data.forEach(item => {
+              let start = moment(item.startDateTime)
+              let end = moment(item.endDateTime)
+              item.startDateTime = start.format(dateFormat)
+              item.endDateTime = end.format(dateFormat)
+              item.duration = moment.duration(end.diff(start)).humanize()
+            })
             this.targets = response.data
             this.targetsLoading = false
           })

@@ -64,19 +64,13 @@
         cols="6"
       >
         <v-card>
-          <v-card-title>Project '{{item.project}}' job '{{item.job}}' metric '{{item.metric}}'</v-card-title>
-          <v-card-subtitle>{{item.phase}} {{item.labels.category}} of kind '{{item.labels.kind}}' with name '{{item.labels.name}}'</v-card-subtitle>
-          <v-card-text>
-            <v-sparkline
-              height="30"
-              fill
-              smooth="8"
-              :value="Array.from(item.measurements).map(m => m.value)"
-              :labels="Array.from(item.measurements).map(m => m.value)"
-              label-size="4.0"
-              line-width="0.4"
-              padding="6"
-            ></v-sparkline>
+          <v-card-text class="pa-2 ma-0">
+            <apexchart
+              type="bar"
+              height="240"
+              :options="getApexOptions(item)"
+              :series="getApexSeries(item)">
+            </apexchart>
           </v-card-text>
         </v-card>
       </v-col>
@@ -85,7 +79,6 @@
 </template>
 
 <script>
-
 export default {
   name: 'Metrics',
 
@@ -98,7 +91,7 @@ export default {
       selectedJob: "",
       selectedPhase: "BUILD",
       selectedStatus: [],
-      metrics: []
+      metrics: [],
     };
   },
 
@@ -139,6 +132,60 @@ export default {
           this.selectedJob = this.jobs[0]
         })
     },
+    getApexSeries(item) {
+      return [{
+        name: item.metric,
+        data: item.measurements.map(i => i.value)
+      }]
+    },
+    getApexOptions(item) {
+      return {
+        title: {
+          text: item.metric + ' of ' + item.labels.category + " '"  +item.labels.kind + "/" + item.labels.name + "'",
+          style: {
+            fontSize: '18px',
+          },
+        },
+        subtitle: {
+          text: item.phase + " project '" + item.project + "' job '" + item.job + "'",
+        },
+        chart: {
+          id: item.metric
+        },
+        tooltip: {
+          x: {
+            // eslint-disable-next-line no-unused-vars
+            formatter: function(value, {series, seriesIndex, dataPointIndex, w}) {
+              let labels = Object.entries(item.measurements[dataPointIndex].labels).map(l => '<tr><td>' + l[0] + '</td><td>' + l[1] + '</td></tr>').reduce((l,r) => l + r, '')
+              return '<div class="subtitle-1 justify-center">' + value + '</div>' + '<div><table><tbody>' + labels + '</tbody></table></div>'
+            }
+          }
+        },
+        xaxis: {
+          categories: item.measurements.map(i => i.ts),
+          labels: {
+            show: true,
+            rotate: -45,
+            rotateAlways: false,
+            hideOverlappingLabels: true,
+            showDuplicates: false,
+            trim: true,
+            minHeight: undefined,
+            maxHeight: 60,
+            offsetX: 0,
+            offsetY: 0,
+            datetimeUTC: true,
+            datetimeFormatter: {
+              year: 'yyyy',
+              month: "MMM 'yy",
+              day: 'dd MMM',
+              hour: 'HH:mm',
+            },
+          },
+        },
+      }
+    },
+
     getMetricData() {
       this.loading = true
       this.$api.getJobsMetrics([this.selectedProject], [this.selectedJob], [this.selectedPhase], this.selectedStatus, ['category','kind','name'])
@@ -147,7 +194,6 @@ export default {
           this.loading = false
         })
     }
-
   }
 }
 </script>

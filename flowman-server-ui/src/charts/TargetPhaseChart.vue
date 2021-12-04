@@ -1,10 +1,11 @@
 <template>
   <v-container fluid>
-    <v-subheader class="title" inset>Phases</v-subheader>
     <pie-chart
-      height=160
+      :height="height"
       v-if="loaded"
-      :chart-data="phases">
+      :chart-data="phases"
+      :title-position="titlePosition"
+    >
     </pie-chart>
   </v-container>
 </template>
@@ -18,6 +19,17 @@ export default {
   mixins: [Filter],
   components: { PieChart  },
 
+  props: {
+    titlePosition: {
+      type: String,
+      default: () => 'top'
+    },
+    height: {
+      type: Number,
+      default: () => 180
+    }
+  },
+
   data() {
     return {
       loaded: false,
@@ -30,6 +42,7 @@ export default {
       this.$api.getTargetCounts('phase', this.projectFilter, this.jobFilter, this.targetFilter, this.phaseFilter, this.statusFilter)
         .then(response => {
           this.phases = {
+            title: "Phases",
             labels: ["Validate", "Create", "Build", "Verify", "Truncate", "Destroy"],
             datasets: [
               {

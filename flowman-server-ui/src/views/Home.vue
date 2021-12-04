@@ -2,30 +2,37 @@
   <v-container
     fluid
   >
-    <v-row>
-      <v-col cols="12">
+    <v-row dense>
+      <v-col cols="6">
         <v-card shaped outlined elevation="2">
-          <v-row>
-            <v-col cols="3">
-              <v-card-title>Job Status</v-card-title>
-              <job-status-chart/>
+          <v-card-title>Jobs</v-card-title>
+          <v-row dense>
+            <v-col cols="6">
+              <job-status-chart title-position="chartArea" height="160"/>
             </v-col>
-            <v-col cols="3">
-              <v-card-title>Job Phases</v-card-title>
-              <job-phase-chart/>
-            </v-col>
-            <v-col cols="3">
-              <v-card-title>Target Status</v-card-title>
-              <target-status-chart/>
-            </v-col>
-            <v-col cols="3">
-              <v-card-title>Target Phases</v-card-title>
-              <target-phase-chart/>
+            <v-col cols="6">
+              <job-phase-chart title-position="chartArea" height="160"/>
             </v-col>
           </v-row>
         </v-card>
       </v-col>
 
+      <v-col cols="6">
+        <v-card shaped outlined elevation="2">
+          <v-card-title>Targets</v-card-title>
+          <v-row>
+            <v-col cols="6">
+              <target-status-chart title-position="chartArea" height="160"/>
+            </v-col>
+            <v-col cols="6">
+              <target-phase-chart title-position="chartArea" height="160"/>
+            </v-col>
+          </v-row>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <v-row>
       <v-col cols="12">
         <v-card shaped outlined elevation="2">
           <v-card-title>Last 5 Jobs</v-card-title>
@@ -56,8 +63,10 @@
           </v-data-table>
         </v-card>
       </v-col>
+    </v-row>
 
-      <v-col cols="12">
+    <v-row>
+     <v-col cols="12">
         <v-card shaped>
           <v-card-title>Last 5 Targets</v-card-title>
           <v-data-table
@@ -169,3 +178,13 @@
     }
   }
 </script>
+
+
+<style>
+.side-tab {
+  position: fixed;
+  justify-content: center;
+  justify-self: center;
+  width: available;
+}
+</style>

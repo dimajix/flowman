@@ -1,10 +1,11 @@
 <template>
   <v-container fluid>
-    <v-subheader class="title" inset>Projects</v-subheader>
     <pie-chart
-      height="160"
+      :height="height"
       v-if="loaded"
-      :chart-data="projects">
+      :chart-data="projects"
+      :title-position="titlePosition"
+    >
     </pie-chart>
   </v-container>
 </template>
@@ -18,6 +19,17 @@ export default {
   name: 'JobProjectChart',
   mixins: [Filter],
   components: { PieChart },
+
+  props: {
+    titlePosition: {
+      type: String,
+      default: () => 'top'
+    },
+    height: {
+      type: Number,
+      default: () => 180
+    }
+  },
 
   data() {
     return {
@@ -35,6 +47,7 @@ export default {
           colorGradient.setMidpoint(Object.values(response.data).length);
 
           this.projects = {
+            title: "Projects",
             labels: Object.keys(response.data),
             datasets: [
               {

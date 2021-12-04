@@ -13,7 +13,7 @@
       </thead>
       <tbody>
       <tr
-        v-for="item in environment.sort((l,r) => l[0] >= r[0])"
+        v-for="item in Array.from(environment).sort((l,r) => l[0] >= r[0])"
         :key="item[0]"
       >
         <td>{{ item[0] }}</td>
@@ -30,7 +30,10 @@ export default {
   name: 'EnvironmentTable',
 
   props: {
-    environment: Array[String]
+    environment: {
+      type: Array[Array[String]],
+      default: () => []
+    }
   },
 }
 </script>

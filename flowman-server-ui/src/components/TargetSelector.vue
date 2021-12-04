@@ -51,7 +51,7 @@ export default {
     getData() {
       this.$api.getTargetCounts('target', this.projects)
         .then(response => {
-          this.targets =  Object.keys(response.data)
+          this.targets =  Object.keys(response.data).sort((l,r) => l >= r)
           this.value.splice(0, this.value.length)
         })
     }

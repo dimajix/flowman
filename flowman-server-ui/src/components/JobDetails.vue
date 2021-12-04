@@ -159,10 +159,12 @@ export default {
         this.metrics = response.metrics
       })
 
+      // eslint-disable-next-line no-unused-vars
       this.$api.getJobTargets(this.job).then(response => {
         this.targets = response.data
       })
 
+      // eslint-disable-next-line no-unused-vars
       this.$api.getJobEnvironment(this.job).then(response => {
         this.environment = Object.entries(response.env)
       })

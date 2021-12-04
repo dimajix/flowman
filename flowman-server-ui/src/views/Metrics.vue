@@ -79,6 +79,8 @@
 </template>
 
 <script>
+import moment from "moment";
+
 export default {
   name: 'Metrics',
 
@@ -170,7 +172,7 @@ export default {
           }
         },
         xaxis: {
-          categories: item.measurements.map(i => i.ts),
+          categories: item.measurements.map(i => moment(i.ts).format('YYYY-MM-DD HH:mm')),
           labels: {
             show: true,
             rotate: -45,

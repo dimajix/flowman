@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.server.model
 
+import java.time.Duration
 import java.time.ZonedDateTime
 
 
@@ -31,6 +32,7 @@ final case class TargetState(
     status:String,
     startDateTime:Option[ZonedDateTime] = None,
     endDateTime:Option[ZonedDateTime] = None,
+    duration:Option[Duration] = None,
     error:Option[String] = None
 )
 

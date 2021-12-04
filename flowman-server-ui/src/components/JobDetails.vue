@@ -62,6 +62,9 @@
               End
             </th>
             <th class="text-left">
+              Duration
+            </th>
+            <th class="text-left">
               Error
             </th>
           </tr>
@@ -83,8 +86,9 @@
               </v-chip>
             </td>
             <td><status :status="item.status" small/></td>
-            <td>{{ item.startDateTime }}</td>
-            <td>{{ item.endDateTime }}</td>
+            <td>{{ date(item.startDateTime) }}</td>
+            <td>{{ date(item.endDateTime) }}</td>
+            <td>{{ duration(item.duration) }}</td>
             <td>{{ item.error }}</td>
           </tr>
           </tbody>
@@ -114,6 +118,7 @@
 import Status from '@/components/Status.vue'
 import EnvironmentTable from '@/components/EnvironmentTable.vue'
 import MetricTable from '@/components/MetricTable.vue'
+import moment from "moment";
 
 export default {
   name: 'JobDetails',
@@ -162,6 +167,13 @@ export default {
         this.environment = Object.entries(response.env)
       })
     },
+
+    date(dt) {
+      return moment(dt).format('MMM D, YYYY HH:mm:ss')
+    },
+    duration(dt) {
+      return moment.duration(dt).humanize()
+    }
   }
 }
 </script>

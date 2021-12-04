@@ -70,6 +70,7 @@
   import Filter from "@/mixins/Filter.js";
   import Status from '@/components/Status.vue'
   import Phase from '@/components/Phase.vue'
+  import moment from "moment"
 
   export default {
     name: "JobHistory",
@@ -93,6 +94,7 @@
           { text: 'Status', value: 'status', width:120 },
           { text: 'Started at', value: 'startDateTime' },
           { text: 'Finished at', value: 'endDateTime' },
+          { text: 'Duration', value: 'duration' },
           { text: 'Error message', value: 'error', width:160 },
         ]
       }
@@ -129,6 +131,14 @@
         this.loading = true
         this.$api.getJobsHistory(this.filter.projects, this.filter.jobs, this.filter.phases, this.filter.status, offset, itemsPerPage)
           .then(response => {
+            let dateFormat = 'MMM D, YYYY HH:mm:ss'
+            response.data.forEach(item => {
+              let start = moment(item.startDateTime)
+              let end = moment(item.endDateTime)
+              item.startDateTime = start.format(dateFormat)
+              item.endDateTime = end.format(dateFormat)
+              item.duration = moment.duration(end.diff(start)).humanize()
+            })
             this.title = "Job History"
             this.jobs = response.data
             this.total = response.total

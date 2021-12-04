@@ -390,7 +390,7 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
         store.getJobState(instance).map(_.status) should be(Some(Status.SUCCESS))
 
         val jobId = store.findJobs(JobQuery()).head.id
-        store.getJobMetrics(jobId).sortBy(_.value) should be (metrics.sortBy(_.value))
+        store.getJobMetrics(jobId).sortBy(_.value).map(_.copy(jobId="")) should be (metrics.sortBy(_.value))
     }
 
     it should "support graphs" in {

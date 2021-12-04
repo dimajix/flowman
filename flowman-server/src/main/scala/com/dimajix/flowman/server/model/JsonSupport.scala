@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.server.model
 
+import java.time.Duration
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -30,14 +31,25 @@ import spray.json.RootJsonFormat
 
 trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
     implicit object ZonedDateTimeFormat extends JsonFormat[ZonedDateTime] {
-        final val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        final val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss[.S]")
         def write(value:ZonedDateTime) : JsString = {
             JsString(value.format(formatter))
         }
         def read(value:JsValue) : ZonedDateTime = {
             value match {
                 case JsString(dt) => ZonedDateTime.parse(dt, formatter)
-                case _ => throw DeserializationException("Not a boolean")
+                case _ => throw DeserializationException("Not a ZonedDateTime")
+            }
+        }
+    }
+    implicit object DurationFormat extends JsonFormat[Duration] {
+        def write(value:Duration) : JsString = {
+            JsString(value.toString)
+        }
+        def read(value:JsValue) : Duration = {
+            value match {
+                case JsString(dt) => Duration.parse(dt)
+                case _ => throw DeserializationException("Not a Duration")
             }
         }
     }
@@ -47,10 +59,10 @@ trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
     implicit val metricSeriesFormat: RootJsonFormat[MetricSeries] = jsonFormat7(MetricSeries)
     implicit val metricSeriesListFormat: RootJsonFormat[MetricSeriesList] = jsonFormat1(MetricSeriesList)
     implicit val jobEnvironmentFormat: RootJsonFormat[JobEnvironment] = jsonFormat1(JobEnvironment)
-    implicit val jobStateFormat: RootJsonFormat[JobState] = jsonFormat12(JobState)
+    implicit val jobStateFormat: RootJsonFormat[JobState] = jsonFormat13(JobState)
     implicit val jobStateListFormat: RootJsonFormat[JobStateList] = jsonFormat2(JobStateList)
     implicit val jobStateCountsFormat: RootJsonFormat[JobStateCounts] = jsonFormat1(JobStateCounts)
-    implicit val targetStateFormat: RootJsonFormat[TargetState] = jsonFormat12(TargetState)
+    implicit val targetStateFormat: RootJsonFormat[TargetState] = jsonFormat13(TargetState)
     implicit val targetStateListFormat: RootJsonFormat[TargetStateList] = jsonFormat2(TargetStateList)
     implicit val targetStateCountsFormat: RootJsonFormat[TargetStateCounts] = jsonFormat1(TargetStateCounts)
     implicit val resourceFormat: RootJsonFormat[Resource] = jsonFormat3(Resource)

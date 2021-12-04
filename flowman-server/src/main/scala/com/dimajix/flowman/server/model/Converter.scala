@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.server.model
 
+import java.time.Duration
+
 import com.dimajix.flowman.history
 import com.dimajix.flowman.model
 
@@ -97,6 +99,7 @@ object Converter {
             jobState.status.toString,
             jobState.startDateTime,
             jobState.endDateTime,
+            jobState.endDateTime.map(dt => Duration.between(jobState.startDateTime.getOrElse(dt), dt)),
             jobState.error,
             measurements.map(ofSpec)
         )
@@ -115,6 +118,7 @@ object Converter {
             state.status.toString,
             state.startDateTime,
             state.endDateTime,
+            state.endDateTime.map(dt => Duration.between(state.startDateTime.getOrElse(dt), dt)),
             state.error
         )
     }

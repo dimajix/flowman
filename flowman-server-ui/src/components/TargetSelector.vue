@@ -25,6 +25,16 @@
 export default {
   name: 'TargetSelector',
 
+  props: {
+    projects: {
+      type: Array,
+      default: () => []
+    }
+  },
+
+  watch: {
+    projects: function() { this.getData() }
+  },
 
   data() {
     return {
@@ -39,9 +49,10 @@ export default {
 
   methods: {
     getData() {
-      this.$api.getTargetCounts('target')
+      this.$api.getTargetCounts('target', this.projects)
         .then(response => {
           this.targets =  Object.keys(response.data)
+          this.value.splice(0, this.value.length)
         })
     }
   }

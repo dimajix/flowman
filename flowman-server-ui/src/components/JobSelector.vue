@@ -25,6 +25,17 @@
 export default {
   name: 'JobSelector',
 
+  props: {
+    projects: {
+      type: Array,
+      default: () => []
+    }
+  },
+
+  watch: {
+    projects: function() { this.getData() }
+  },
+
   data() {
     return {
       jobs: [],
@@ -38,9 +49,10 @@ export default {
 
   methods: {
     getData() {
-      this.$api.getJobCounts('job')
+      this.$api.getJobCounts('job', this.projects)
         .then(response => {
           this.jobs =  Object.keys(response.data)
+          this.value.splice(0, this.value.length)
         })
     }
   }

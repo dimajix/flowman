@@ -23,6 +23,7 @@
         <v-row>
           <job-selector
             v-model="filter.jobs"
+            :projects="filter.projects"
             @input='$emit("input", filter)'
           />
         </v-row>

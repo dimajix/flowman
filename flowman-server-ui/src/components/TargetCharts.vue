@@ -23,6 +23,7 @@
         <v-row>
           <target-selector
             v-model="filter.targets"
+            :projects="filter.projects"
             @input='$emit("input", filter)'
           />
         </v-row>

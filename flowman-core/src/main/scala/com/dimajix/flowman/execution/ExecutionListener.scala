@@ -23,6 +23,8 @@ import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobLifecycle
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
+import com.dimajix.flowman.model.Measure
+import com.dimajix.flowman.model.MeasureResult
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
@@ -34,6 +36,7 @@ abstract class JobToken extends Token
 abstract class TargetToken extends Token
 abstract class TestToken extends Token
 abstract class AssertionToken extends Token
+abstract class MeasureToken extends Token
 
 
 trait ExecutionListener {
@@ -92,6 +95,20 @@ trait ExecutionListener {
      * @param result
      */
     def finishAssertion(execution:Execution, token:AssertionToken, result:AssertionResult) : Unit
+
+    /**
+     * Starts the measure and returns a token, which can be anything
+     * @param measure
+     * @return
+     */
+    def startMeasure(execution:Execution, measure:Measure, parent:Option[Token]) : MeasureToken
+
+    /**
+     * Sets the status of a measure after it has been started
+     * @param token The token returned by startJob
+     * @param result
+     */
+    def finishMeasure(execution:Execution, token:MeasureToken, result:MeasureResult) : Unit
 }
 
 
@@ -104,4 +121,6 @@ abstract class AbstractExecutionListener extends ExecutionListener {
     override def finishTarget(execution:Execution, token: TargetToken, result: TargetResult): Unit = {}
     override def startAssertion(execution:Execution, assertion: Assertion, parent: Option[Token]): AssertionToken = new AssertionToken {}
     override def finishAssertion(execution:Execution, token: AssertionToken, result: AssertionResult): Unit = {}
+    override def startMeasure(execution:Execution, measure: Measure, parent: Option[Token]): MeasureToken = new MeasureToken {}
+    override def finishMeasure(execution:Execution, token: MeasureToken, result: MeasureResult): Unit = {}
 }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.dimajix.flowman.model
 
 import org.apache.spark.sql.DataFrame
@@ -21,7 +22,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 
 
-object Assertion {
+object Measure {
     object Properties {
         def apply(context: Context, name:String = "", kind:String = "") : Properties = {
             Properties(
@@ -50,17 +51,21 @@ object Assertion {
 }
 
 
-trait Assertion extends Instance {
-    override final def category: Category = Category.ASSERTION
+trait Measure extends Instance {
+    /**
+     * Returns the category of this resource
+     * @return
+     */
+    final override def category: Category = Category.MEASURE
 
     /**
-     * Returns a description of the assertion
+     * Returns a description of the measure
      * @return
      */
     def description : Option[String]
 
     /**
-     * Returns a list of physical resources required by this assertion. This list will only be non-empty for assertions
+     * Returns a list of physical resources required by this measure. This list will only be non-empty for assertions
      * which actually read from physical data.
      * @return
      */
@@ -73,20 +78,16 @@ trait Assertion extends Instance {
     def inputs : Seq[MappingOutputIdentifier]
 
     /**
-     * Executes this [[Assertion]] and returns a corresponding DataFrame. This method is allowed to  throw an exception,
-     * which will be caught and handled by the [[AssertionRunner]]. But of course it is more convenient if any
-     * exceptiosn are already caught and returned within the AssertionResult.
+     * Executes this [[Assertion]] and returns a corresponding DataFrame.
      *
      * @param execution
      * @param input
      * @return
      */
-    def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]) : AssertionResult
+    def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]) : MeasureResult
 }
-
-
-abstract class BaseAssertion extends AbstractInstance with Assertion {
-    protected override def instanceProperties : Assertion.Properties
+abstract class BaseMeasure extends AbstractInstance with Measure {
+    protected override def instanceProperties : Measure.Properties
 
     override def description: Option[String] = instanceProperties.description
 }

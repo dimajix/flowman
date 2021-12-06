@@ -18,12 +18,14 @@ package com.dimajix.flowman.spec.connection
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.ConnectionType
+import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
@@ -34,6 +36,7 @@ object ConnectionSpec extends TypeRegistry[ConnectionSpec] {
 /**
  * The ConnectionSpec class contains the raw specification values, which may require interpolation.
  */
+@JsonTypeResolver(classOf[CustomTypeResolverBuilder])
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl = classOf[JdbcConnectionSpec], visible = true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcConnectionSpec]),

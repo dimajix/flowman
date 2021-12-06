@@ -23,6 +23,7 @@ import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.LifecycleToken
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.ExecutionListener
+import com.dimajix.flowman.execution.MeasureToken
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.execution.TestToken
@@ -118,6 +119,20 @@ trait Hook extends Instance with ExecutionListener {
      * @param status
      */
     override def finishAssertion(execution:Execution, token:AssertionToken, result:AssertionResult) : Unit
+
+    /**
+     * Starts the measure and returns a token, which can be anything
+     * @param measure
+     * @return
+     */
+    override def startMeasure(execution:Execution, measure:Measure, parent:Option[Token]) : MeasureToken
+
+    /**
+     * Sets the status of a measure after it has been started
+     * @param token The token returned by startJob
+     * @param result
+     */
+    override def finishMeasure(execution:Execution, token:MeasureToken, result:MeasureResult) : Unit
 }
 
 
@@ -134,4 +149,6 @@ abstract class BaseHook extends AbstractInstance with Hook {
     override def finishTarget(execution:Execution, token: TargetToken, result:TargetResult): Unit = {}
     override def startAssertion(execution:Execution, assertion: Assertion, parent: Option[Token]): AssertionToken = new AssertionToken {}
     override def finishAssertion(execution:Execution, token: AssertionToken, result:AssertionResult): Unit = {}
+    override def startMeasure(execution:Execution, measure:Measure, parent:Option[Token]) : MeasureToken = new MeasureToken {}
+    override def finishMeasure(execution:Execution, token:MeasureToken, result:MeasureResult) : Unit = {}
 }

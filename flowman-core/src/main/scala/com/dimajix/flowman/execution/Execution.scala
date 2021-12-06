@@ -33,6 +33,8 @@ import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.Measure
+import com.dimajix.flowman.model.MeasureResult
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
@@ -122,7 +124,7 @@ abstract class Execution {
     }
 
     /**
-     * Executes an assertion from a TestSuite. This method ensures that all inputs are instantiated correctly
+     * Executes an [[Assertion]] from a TestSuite. This method ensures that all inputs are instantiated correctly
      * @param assertion
      * @return
      */
@@ -133,6 +135,20 @@ abstract class Execution {
             .toMap
 
         assertion.execute(this, inputs)
+    }
+
+    /**
+     * Executes a [[Measure]]. This method ensures that all inputs are instantiated correctly.
+     * @param measure
+     * @return
+     */
+    def measure(measure:Measure) : MeasureResult = {
+        val context = measure.context
+        val inputs = measure.inputs
+            .map(id => id -> instantiate(context.getMapping(id.mapping), id.output))
+            .toMap
+
+        measure.execute(this, inputs)
     }
 
     /**
@@ -234,4 +250,13 @@ abstract class Execution {
      * @return
      */
     def monitorAssertion(assertion:Assertion)(fn:Execution => AssertionResult) : AssertionResult = fn(this)
+
+    /**
+     * Monitors the execution of an assertion by calling appropriate listeners at the start and end.
+     * @param assertion
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def monitorMeasure(measure:Measure)(fn:Execution => MeasureResult) : MeasureResult = fn(this)
 }

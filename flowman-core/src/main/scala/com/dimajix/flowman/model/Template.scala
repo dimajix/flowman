@@ -154,3 +154,8 @@ abstract class BaseTemplate[T] extends AbstractInstance with Template[T] {
 trait RelationTemplate extends Template[Relation]
 trait MappingTemplate extends Template[Mapping]
 trait TargetTemplate extends Template[Target]
+trait AssertionTemplate extends Template[Assertion]
+trait DatasetTemplate extends Template[Dataset]
+trait SchemaTemplate extends Template[Schema]
+trait MeasureTemplate extends Template[Measure]
+trait ConnectionTemplate extends Template[Connection]

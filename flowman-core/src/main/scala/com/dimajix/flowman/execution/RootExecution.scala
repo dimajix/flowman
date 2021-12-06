@@ -29,6 +29,8 @@ import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
+import com.dimajix.flowman.model.Measure
+import com.dimajix.flowman.model.MeasureResult
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 
@@ -132,6 +134,10 @@ final class RootExecution(session:Session) extends CachingExecution(None, true) 
     }
 
     override def monitorAssertion(assertion:Assertion)(fn:Execution => AssertionResult) : AssertionResult = {
+        fn(this)
+    }
+
+    override def monitorMeasure(measure:Measure)(fn:Execution => MeasureResult) : MeasureResult = {
         fn(this)
     }
 }

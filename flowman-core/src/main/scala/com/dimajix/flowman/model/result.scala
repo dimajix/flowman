@@ -465,3 +465,64 @@ final case class AssertionTestResult(
             Status.FAILED
     }
 }
+
+
+object MeasureResult {
+    private val logger = LoggerFactory.getLogger(classOf[MeasureResult])
+
+    def apply(assertion: Measure, children : Seq[Measurement]) : MeasureResult =
+        MeasureResult(
+            assertion,
+            children,
+            None,
+            startTime=Instant.now(),
+            endTime=Instant.now()
+        )
+    def apply(measure: Measure, children : Seq[Measurement], startTime:Instant) : MeasureResult =
+        MeasureResult(
+            measure,
+            children,
+            None,
+            startTime=startTime,
+            endTime=Instant.now()
+        )
+
+    def of(measure: Measure)(fn: => Seq[Measurement]) : MeasureResult = {
+        val startTime = Instant.now()
+        Try(fn) match {
+            case Success(results) =>
+                MeasureResult(measure, results, None, startTime, Instant.now())
+            case Failure(exception) =>
+                logger.error(s"Caught exception while executing measure '${measure.name}': ", exception)
+                MeasureResult(measure, Seq(), Some(exception), startTime, Instant.now())
+        }
+    }
+}
+final case class MeasureResult(
+    measure: Measure,
+    measurements: Seq[Measurement],
+    override val exception: Option[Throwable] = None,
+    override val startTime : Instant,
+    override val endTime : Instant
+) extends Result[MeasureResult] {
+    override def name : String = measure.name
+    override def category : Category = measure.category
+    override def kind : String = measure.kind
+    override def children : Seq[Result[_]] = Seq()
+    override def description: Option[String] = measure.description
+
+    def withoutTime : MeasureResult = {
+        val ts = Instant.ofEpochSecond(0)
+        copy(
+            startTime=ts,
+            endTime=ts
+        )
+    }
+}
+
+
+final case class Measurement(
+    name:String,
+    labels:Map[String,String],
+    value:Double
+)

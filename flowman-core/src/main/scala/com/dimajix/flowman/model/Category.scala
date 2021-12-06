@@ -31,6 +31,7 @@ object Category {
     case object HOOK extends Category
     case object JOB extends Category
     case object MAPPING extends Category
+    case object MEASURE extends Category
     case object RELATION extends Category
     case object SCHEMA extends Category
     case object TARGET extends Category
@@ -47,6 +48,7 @@ object Category {
             case "hook" => HOOK
             case "job" => JOB
             case "mapping" => MAPPING
+            case "measure" => MEASURE
             case "relation" => RELATION
             case "schema" => SCHEMA
             case "target" => TARGET

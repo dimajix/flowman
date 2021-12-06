@@ -38,6 +38,8 @@ import com.dimajix.flowman.model.JobLifecycle
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.Measure
+import com.dimajix.flowman.model.MeasureResult
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
@@ -358,6 +360,60 @@ final class MonitorExecution(parent:Execution, listeners:Seq[(ExecutionListener,
         def failure() : AssertionResult = {
             // TODO: On shutdown, the assertion should be in FAILED state
             AssertionResult(assertion, Seq(), startTime)
+        }
+
+        val tokens = start()
+        withShutdownHook(finish(tokens, failure())) {
+            withTokens(tokens) { execution =>
+                val result = try {
+                    fn(execution)
+                } catch {
+                    case NonFatal(ex) =>
+                        finish(tokens, failure())
+                        throw ex
+                }
+                finish(tokens, result)
+                result
+            }
+        }
+    }
+
+    /**
+     * Monitors the execution of an measure by calling appropriate listeners at the start and end.
+     *
+     * @param measure
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    override def monitorMeasure(measure: Measure)(fn: Execution => MeasureResult): MeasureResult = {
+        def start() : Seq[(ExecutionListener, MeasureToken)] = {
+            listeners.flatMap { case(hook,parent) =>
+                try {
+                    Some((hook, hook.startMeasure(this, measure, parent)))
+                } catch {
+                    case NonFatal(ex) =>
+                        logger.warn(s"Execution listener threw exception on startMeasure: ${ex.toString}.")
+                        None
+                }
+            }
+        }
+
+        def finish(tokens:Seq[(ExecutionListener, MeasureToken)], result:MeasureResult) : Unit = {
+            tokens.foreach { case (listener, token)  =>
+                try {
+                    listener.finishMeasure(this, token, result)
+                } catch {
+                    case NonFatal(ex) =>
+                        logger.warn(s"Execution listener threw exception on finishMeasure: ${ex.toString}.")
+                }
+            }
+        }
+
+        val startTime = Instant.now()
+        def failure() : MeasureResult = {
+            // TODO: On shutdown, the measure should be in FAILED state
+            MeasureResult(measure, Seq(), startTime)
         }
 
         val tokens = start()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Kaya Kupferschmidt
+ * Copyright 2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.dataset
+package com.dimajix.flowman.spec.measure
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
@@ -23,52 +23,46 @@ import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.model.Dataset
-import com.dimajix.flowman.spec.Spec
-import com.dimajix.flowman.spec.annotation.DatasetType
+import com.dimajix.flowman.model.Measure
+import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.annotation.MeasureType
 import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
-object DatasetSpec extends TypeRegistry[DatasetSpec] {
+object MeasureSpec extends TypeRegistry[MeasureSpec] {
+    final class NameResolver extends NamedSpec.NameResolver[MeasureSpec]
 }
+
 
 @JsonTypeResolver(classOf[CustomTypeResolverBuilder])
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
 @JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "file", value = classOf[FileDatasetSpec]),
-    new JsonSubTypes.Type(name = "mapping", value = classOf[MappingDatasetSpec]),
-    new JsonSubTypes.Type(name = "relation", value = classOf[RelationDatasetSpec]),
-    new JsonSubTypes.Type(name = "values", value = classOf[ValuesDatasetSpec])
+    new JsonSubTypes.Type(name = "sql", value = classOf[SqlMeasureSpec])
 ))
-abstract class DatasetSpec extends Spec[Dataset] {
-    @JsonProperty(value="kind", required = true) protected var kind: String = _
+abstract class MeasureSpec  extends NamedSpec[Measure] {
+    @JsonProperty(value="description", required = false) private var description: Option[String] = None
 
-    override def instantiate(context:Context) : Dataset
+    override def instantiate(context: Context): Measure
 
-    /**
-      * Returns a set of common properties
-      * @param context
-      * @return
-      */
-    protected def instanceProperties(context:Context, name:String) : Dataset.Properties = {
+    override protected def instanceProperties(context:Context) : Measure.Properties = {
         require(context != null)
-        Dataset.Properties(
+        Measure.Properties(
             context,
             context.namespace,
             context.project,
-            kind + "(" + name + ")",
+            context.evaluate(name),
             kind,
-            Map()
+            context.evaluate(labels),
+            context.evaluate(description)
         )
     }
 }
 
 
-
-class DatasetSpecAnnotationHandler extends ClassAnnotationHandler {
-    override def annotation: Class[_] = classOf[DatasetType]
+class MeasureSpecAnnotationHandler extends ClassAnnotationHandler {
+    override def annotation: Class[_] = classOf[MeasureType]
 
     override def register(clazz: Class[_]): Unit =
-        DatasetSpec.register(clazz.getAnnotation(classOf[DatasetType]).kind(), clazz.asInstanceOf[Class[_ <: DatasetSpec]])
+        MeasureSpec.register(clazz.getAnnotation(classOf[MeasureType]).kind(), clazz.asInstanceOf[Class[_ <: MeasureSpec]])
 }

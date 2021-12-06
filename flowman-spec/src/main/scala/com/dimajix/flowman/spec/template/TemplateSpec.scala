@@ -36,8 +36,13 @@ import com.dimajix.flowman.model.Instance
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.spec.NamedSpec
+import com.dimajix.flowman.spec.assertion.AssertionSpec
+import com.dimajix.flowman.spec.connection.ConnectionSpec
+import com.dimajix.flowman.spec.dataset.DatasetSpec
 import com.dimajix.flowman.spec.mapping.MappingSpec
+import com.dimajix.flowman.spec.measure.MeasureSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
+import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spec.test.TestSpec
 import com.dimajix.flowman.types.FieldType
@@ -66,8 +71,13 @@ object TemplateSpec {
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible=true)
 @JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "relation", value = classOf[RelationTemplateSpec]),
+    new JsonSubTypes.Type(name = "assertion", value = classOf[AssertionTemplateSpec]),
+    new JsonSubTypes.Type(name = "connection", value = classOf[ConnectionTemplateSpec]),
+    new JsonSubTypes.Type(name = "dataset", value = classOf[DatasetTemplateSpec]),
     new JsonSubTypes.Type(name = "mapping", value = classOf[MappingTemplateSpec]),
+    new JsonSubTypes.Type(name = "measure", value = classOf[MeasureTemplateSpec]),
+    new JsonSubTypes.Type(name = "relation", value = classOf[RelationTemplateSpec]),
+    new JsonSubTypes.Type(name = "schema", value = classOf[SchemaTemplateSpec]),
     new JsonSubTypes.Type(name = "target", value = classOf[TargetTemplateSpec])
 ))
 abstract class TemplateSpec extends NamedSpec[Template[_]] {
@@ -96,11 +106,26 @@ class CustomTypeIdResolver(wrapped:TypeIdResolver, baseType:JavaType) extends Wr
     @throws[IOException]
     override def typeFromId(context: DatabindContext, id: String): JavaType = {
         if (id.startsWith("template/")) {
-            if (baseType.getRawClass  eq classOf[RelationSpec]) {
-                context.constructType(classOf[RelationTemplateInstanceSpec] )
+            if (baseType.getRawClass  eq classOf[AssertionSpec]) {
+                context.constructType(classOf[AssertionTemplateInstanceSpec] )
+            }
+            else if (baseType.getRawClass  eq classOf[ConnectionSpec]) {
+                context.constructType(classOf[ConnectionTemplateInstanceSpec] )
+            }
+            else if (baseType.getRawClass  eq classOf[DatasetSpec]) {
+                context.constructType(classOf[DatasetTemplateInstanceSpec] )
             }
             else if (baseType.getRawClass  eq classOf[MappingSpec]) {
                 context.constructType(classOf[MappingTemplateInstanceSpec] )
+            }
+            else if (baseType.getRawClass  eq classOf[MeasureSpec]) {
+                context.constructType(classOf[MeasureTemplateInstanceSpec] )
+            }
+            else if (baseType.getRawClass  eq classOf[RelationSpec]) {
+                context.constructType(classOf[RelationTemplateInstanceSpec] )
+            }
+            else if (baseType.getRawClass  eq classOf[SchemaSpec]) {
+                context.constructType(classOf[SchemaTemplateInstanceSpec] )
             }
             else if (baseType.getRawClass  eq classOf[TargetSpec]) {
                 context.constructType(classOf[TargetTemplateInstanceSpec] )

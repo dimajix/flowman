@@ -31,6 +31,8 @@ import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
+import com.dimajix.flowman.model.Measure
+import com.dimajix.flowman.model.MeasureResult
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 
@@ -109,4 +111,6 @@ class AnalyzingExecution(context: Context) extends CachingExecution(None, true) 
     override def monitorTarget(target: Target, phase: Phase)(fn: Execution => TargetResult): TargetResult = throw new UnsupportedOperationException
 
     override def monitorAssertion(assertion: Assertion)(fn: Execution => AssertionResult): AssertionResult = throw new UnsupportedOperationException
+
+    override def monitorMeasure(measure:Measure)(fn:Execution => MeasureResult) : MeasureResult = throw new UnsupportedOperationException
 }

@@ -8,6 +8,8 @@
 * Support embedded connection definitions
 * Much improved Flowman History Server
 * Fix wrong metric names with TemplateTarget
+* Implement more `template` types for `connection`, `schema`, `dataset`, `assertion` and `measure`
+* Implement new `measure` target for creating custom metrics for measuring data quality
 
 
 # Version 0.18.0 - 2021-10-13

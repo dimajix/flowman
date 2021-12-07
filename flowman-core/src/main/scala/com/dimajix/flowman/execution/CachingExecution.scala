@@ -56,7 +56,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
                 new ExecutionContextTaskSupport(ec)
         }
     }
-    private val parallelism = flowmanConf.getConf(FlowmanConf.EXECUTION_MAPPING_PARALLELISM)
+    private lazy val parallelism = flowmanConf.getConf(FlowmanConf.EXECUTION_MAPPING_PARALLELISM)
 
     private val frameCache:SynchronizedMap[Mapping,Map[String,DataFrame]] = {
         parent match {

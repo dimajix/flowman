@@ -46,7 +46,7 @@ import com.dimajix.spark.testing.LocalSparkSession
 object RunnerHistoryTest {
     object NullTarget {
         def apply(name:String, partition: Map[String,String] = Map()) : Context => NullTarget = {
-            ctx:Context => NullTarget(Target.Properties(ctx, name), ctx.evaluate(partition))
+            ctx:Context => NullTarget(Target.Properties(ctx, name, "null"), ctx.evaluate(partition))
         }
     }
     case class NullTarget(
@@ -144,6 +144,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
             val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = stub[Target]
             (target.name _).when().returns(name)
+            (target.kind _).when().returns("mock")
             (target.before _).when().returns(Seq())
             (target.after _).when().returns(Seq())
             (target.phases _).when().returns(Lifecycle.ALL.toSet)

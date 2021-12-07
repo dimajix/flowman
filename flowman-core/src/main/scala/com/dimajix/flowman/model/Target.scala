@@ -55,13 +55,13 @@ final case class TargetDigest(
 
 object Target {
     object Properties {
-        def apply(context: Context, name:String = "") : Properties = {
+        def apply(context: Context, name:String = "", kind:String="") : Properties = {
             Properties(
                 context,
                 context.namespace,
                 context.project,
                 name,
-                "",
+                kind,
                 Map(),
                 Seq(),
                 Seq()

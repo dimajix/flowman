@@ -39,6 +39,11 @@ Configure the executor to use. The default `SimpleExecutor` will process all tar
   sequentially. The alternative implementation `com.dimajix.flowman.execution.ParallelExecutor` will run multiple 
   targets in parallel (if they are not depending on each other)
   
+- `flowman.execution.executor.parallelism` *(type: int)* *(default: 1)*
+The number of mappings to be processed in parallel. Increasing this number may help in scenarios where many 
+relations are read from and their initial setup is slow (for example due to slow directory listings). With the
+default value of 1, the parallelism is completely disabled and a non-threaded code path is used instead.
+
 - `flowman.execution.executor.parallelism` *(type: int)* *(default: 4)*
 The number of targets to be executed in parallel, when the `ParallelExecutor` is used.
 

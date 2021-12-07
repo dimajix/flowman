@@ -10,6 +10,7 @@
 * Fix wrong metric names with TemplateTarget
 * Implement more `template` types for `connection`, `schema`, `dataset`, `assertion` and `measure`
 * Implement new `measure` target for creating custom metrics for measuring data quality
+* Add new config option `flowman.execution.mapping.parallelism`
 
 
 # Version 0.18.0 - 2021-10-13

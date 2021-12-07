@@ -89,6 +89,16 @@ final case class AssertionWrapper(assertion:Assertion) {
 }
 
 
+final case class MeasureWrapper(measure:Measure) {
+    def getName() : String = measure.name
+    def getDescription() : String = measure.description.getOrElse("")
+    def getProject() : ProjectWrapper = ProjectWrapper(measure.project)
+    def getNamespace() : NamespaceWrapper = NamespaceWrapper(measure.namespace)
+
+    override def toString: String = getName()
+}
+
+
 object ResultWrapper {
     def of(result:Result[_]) : AnyRef = {
         result match {
@@ -96,6 +106,7 @@ object ResultWrapper {
             case r:TestResult => TestResultWrapper(r)
             case r:JobResult => JobResultWrapper(r)
             case r:TargetResult => TargetResultWrapper(r)
+            case r:MeasureResult => MeasureResultWrapper(r)
             case r:AssertionResult => AssertionResultWrapper(r)
             case r:AssertionTestResult => AssertionTestResultWrapper(r)
         }
@@ -150,6 +161,11 @@ final case class TestResultWrapper(result:TestResult) extends ResultWrapper(resu
 
 final case class AssertionResultWrapper(result:AssertionResult) extends ResultWrapper(result) {
     def getAssertion() : AssertionWrapper = AssertionWrapper(result.assertion)
+}
+
+
+final case class MeasureResultWrapper(result:MeasureResult) extends ResultWrapper(result) {
+    def getMeasure() : MeasureWrapper = MeasureWrapper(result.measure)
 }
 
 

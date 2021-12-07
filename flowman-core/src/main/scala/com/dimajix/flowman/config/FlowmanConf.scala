@@ -91,6 +91,10 @@ object FlowmanConf {
         .doc("Class name for scheduling targets")
         .classConf(classOf[Scheduler])
         .createWithDefault(classOf[DependencyScheduler])
+    val EXECUTION_MAPPING_PARALLELISM = buildConf("flowman.execution.mapping.parallelism")
+        .doc("Parallelism of mapping instantiation")
+        .intConf
+        .createWithDefault(1)
 
     val DEFAULT_RELATION_MIGRATION_POLICY = buildConf("flowman.default.relation.migrationPolicy")
         .doc("Default migration policy. Allowed values are 'relaxed' and 'strict'")

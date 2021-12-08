@@ -155,7 +155,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
 
         // Transform any non-fatal exception in a DescribeMappingFailedException
         try {
-            logger.info(s"Describing mapping '${mapping.identifier}' for output ${output}")
+            logger.info(s"Describing mapping '${mapping.identifier}' for output '${output}'")
             mapping.describe(this, deps, output)
         }
         catch {

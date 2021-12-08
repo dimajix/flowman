@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.streaming.{OutputMode => StreamOutputMode}
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
@@ -395,16 +396,6 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     }
 
     /**
-     * Applies the input schema (or maybe even transforms it). This should include partitions only if they are
-     * required in read operations.
-     * @param df
-     * @return
-     */
-    protected def applyInputSchema(df:DataFrame) : DataFrame = {
-        SchemaUtils.applySchema(df, inputSchema, insertNulls=false)
-    }
-
-    /**
      * Returns the Spark schema as it is expected from the physical relation for write operations. The list is used
      * for output operations, i.e. for writing. This should include partitions only if they are required for write
      * operations.
@@ -427,6 +418,17 @@ abstract class BaseRelation extends AbstractInstance with Relation {
                 case f => f
             }
             StructType(schemaFields ++ partitions.filter(p => !schemaFieldNames.contains(p.name)).map(_.field))
+        }
+    }
+
+    protected def appendPartitionColumns(df:DataFrame) : DataFrame = {
+        val schemaFields = MapIgnoreCase(df.schema.fields.map(p => p.name -> p))
+
+        partitions.foldLeft(df) { case(df,p) =>
+            if (schemaFields.contains(p.name))
+                df
+            else
+                df.withColumn(p.name, lit(null).cast(p.sparkType))
         }
     }
 

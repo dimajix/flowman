@@ -62,6 +62,7 @@ import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.{StructType => FlowmanStructType}
+import com.dimajix.spark.sql.SchemaUtils
 
 
 case class JdbcRelation(
@@ -176,7 +177,7 @@ case class JdbcRelation(
 
         // Apply embedded schema, if it is specified. This will remove/cast any columns not present in the
         // explicit schema specification of the relation
-        val schemaDf = applyInputSchema(tableDf)
+        val schemaDf = SchemaUtils.applySchema(tableDf, inputSchema, insertNulls=false)
 
         filterPartition(schemaDf, partitions)
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,6 +150,10 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         // == Read ===================================================================================================
         relation.read(execution).count() should be (0)
+        relation.read(execution).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType)
+        )))
 
         // == Write ==================================================================================================
         val df = spark.createDataFrame(Seq(
@@ -301,11 +305,11 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         outputPath.toFile.exists() should be (true)
 
-        // == Inspect ================================================================================================
+        // == Read =================================================================================================
         relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
-            StructField("int_col", IntegerType)
-            //StructField("p_col", IntegerType)
+            StructField("int_col", IntegerType),
+            StructField("p_col", IntegerType)
         )))
         relation.read(execution, Map("p_col" ->  SingleValue("1"))).schema should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -334,8 +338,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         // == Inspect ================================================================================================
         relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
-            StructField("int_col", IntegerType)
-            //StructField("p_col", IntegerType)
+            StructField("int_col", IntegerType),
+            StructField("p_col", IntegerType)
         )))
         relation.read(execution, Map("p_col" ->  SingleValue("1"))).schema should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -347,6 +351,16 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.read(execution, Map()).count() should be (2)
         relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (2)
         relation.read(execution, Map("p_col" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", IntegerType)
+        )))
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", IntegerType, nullable=false)
+        )))
 
         // ===== Write =============================================================================================
         val df_p1 = relation.read(execution, Map("p_col" -> SingleValue("1")))
@@ -378,6 +392,21 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.read(execution, Map()).count() should be (4)
         relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (2)
         relation.read(execution, Map("p_col" -> SingleValue("3"))).count() should be (2)
+        relation.read(execution, Map()).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", IntegerType)
+        )))
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", IntegerType, false)
+        )))
+        relation.read(execution, Map("p_col" -> SingleValue("3"))).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", IntegerType, false)
+        )))
 
         // ===== Truncate =============================================================================================
         relation.exists(execution) should be (Yes)
@@ -465,6 +494,21 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         outputPath.toFile.exists() should be (true)
 
+        // == Read ===================================================================================================
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (0)
+        relation.read(execution, Map("p_col" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", IntegerType)
+        )))
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", IntegerType, false)
+        )))
+
         // ===== Write =============================================================================================
         val df = spark.createDataFrame(Seq(
             ("lala", 1),
@@ -489,6 +533,21 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.read(execution, Map()).count() should be (2)
         relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (2)
         relation.read(execution, Map("p_col" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", IntegerType)
+        )))
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", IntegerType)
+        )))
+        relation.read(execution, Map("p_col" -> SingleValue("3"))).schema should be (StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", IntegerType)
+        )))
 
         // ===== Write =============================================================================================
         val df_p1 = relation.read(execution, Map("p_col" -> SingleValue("1")))
@@ -496,7 +555,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         df_p1.schema should be (StructType(
             StructField("str_col", StringType, true) ::
                 StructField("int_col", IntegerType, true) ::
-                StructField("p_col", IntegerType, false) ::
+                StructField("p_col", IntegerType, true) ::
                 Nil
         ))
         val df_p2 = relation.read(execution, Map("p_col" -> SingleValue("2")))
@@ -504,7 +563,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         df_p1.schema should be (StructType(
             StructField("str_col", StringType, true) ::
                 StructField("int_col", IntegerType, true) ::
-                StructField("p_col", IntegerType, false) ::
+                StructField("p_col", IntegerType, true) ::
                 Nil
         ))
 
@@ -640,31 +699,31 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         ))
 
         val df2 = relation.read(execution, Map("p1" -> SingleValue("1")))
-        df2.as[(String,Int)].collect().sorted should be (Seq(
-            ("p1=1/p2=1/111.txt",1),
-            ("p1=1/p2=1/112.txt",1),
-            ("p1=1/p2=2/121.txt",1),
-            ("p1=1/p2=2/122.txt",1)
+        df2.as[(String,Int,Option[Int])].collect().sorted should be (Seq(
+            ("p1=1/p2=1/111.txt",1,None),
+            ("p1=1/p2=1/112.txt",1,None),
+            ("p1=1/p2=2/121.txt",1,None),
+            ("p1=1/p2=2/122.txt",1,None)
         ))
 
         val df3 = relation.read(execution, Map("p2" -> SingleValue("1")))
-        df3.as[(String,Int)].collect().sorted should be (Seq(
-            ("p1=1/p2=1/111.txt",1),
-            ("p1=1/p2=1/112.txt",1),
-            ("p1=2/p2=1/211.txt",1),
-            ("p1=2/p2=1/212.txt",1)
+        df3.as[(String,Int,Option[Int])].collect().sorted should be (Seq(
+            ("p1=1/p2=1/111.txt",1,None),
+            ("p1=1/p2=1/112.txt",1,None),
+            ("p1=2/p2=1/211.txt",1,None),
+            ("p1=2/p2=1/212.txt",1,None)
         ))
 
         val df4 = relation.read(execution, Map())
-        df4.as[String].collect().sorted should be (Seq(
-            ("p1=1/p2=1/111.txt"),
-            ("p1=1/p2=1/112.txt"),
-            ("p1=1/p2=2/121.txt"),
-            ("p1=1/p2=2/122.txt"),
-            ("p1=2/p2=1/211.txt"),
-            ("p1=2/p2=1/212.txt"),
-            ("p1=2/p2=2/221.txt"),
-            ("p1=2/p2=2/222.txt")
+        df4.as[(String,Option[Int],Option[Int])].collect().sorted should be (Seq(
+            ("p1=1/p2=1/111.txt",None,None),
+            ("p1=1/p2=1/112.txt",None,None),
+            ("p1=1/p2=2/121.txt",None,None),
+            ("p1=1/p2=2/122.txt",None,None),
+            ("p1=2/p2=1/211.txt",None,None),
+            ("p1=2/p2=1/212.txt",None,None),
+            ("p1=2/p2=2/221.txt",None,None),
+            ("p1=2/p2=2/222.txt",None,None)
         ))
 
         // == Truncate ===============================================================================================
@@ -672,11 +731,11 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         // == Read ===================================================================================================
         val df5 = relation.read(execution, Map())
-        df5.as[String].collect().sorted should be (Seq(
-            ("p1=1/p2=2/121.txt"),
-            ("p1=1/p2=2/122.txt"),
-            ("p1=2/p2=2/221.txt"),
-            ("p1=2/p2=2/222.txt")
+        df5.as[(String,Option[Int],Option[Int])].collect().sorted should be (Seq(
+            ("p1=1/p2=2/121.txt",None,None),
+            ("p1=1/p2=2/122.txt",None,None),
+            ("p1=2/p2=2/221.txt",None,None),
+            ("p1=2/p2=2/222.txt",None,None)
         ))
 
         // == Destroy ================================================================================================
@@ -751,11 +810,11 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         ))
 
         val df2 = relation.read(execution, Map())
-        df2.as[String].collect().sorted should be (Seq(
-            ("year=2016/month=1/111.txt"),
-            ("year=2016/month=1/112.txt"),
-            ("year=2016/month=2/121.txt"),
-            ("year=2016/month=2/122.txt")
+        df2.as[(String,Option[Int])].collect().sorted should be (Seq(
+            ("year=2016/month=1/111.txt",None),
+            ("year=2016/month=1/112.txt",None),
+            ("year=2016/month=2/121.txt",None),
+            ("year=2016/month=2/122.txt",None)
         ))
 
         relation.destroy(execution)
@@ -941,12 +1000,12 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.read(execution, Map("part" -> SingleValue("p0"))).schema should be (StructType(Seq(
             StructField("f1", IntegerType),
             StructField("f2", DoubleType),
-            StructField("part", StringType, nullable=false)
+            StructField("part", StringType)
         )))
         relation.read(execution, Map("part" -> SingleValue("p1"))).schema should be (StructType(Seq(
             StructField("f1", IntegerType),
             StructField("f2", DoubleType),
-            StructField("part", StringType, nullable=false)
+            StructField("part", StringType)
         )))
 
         // == Read ==================================================================================================

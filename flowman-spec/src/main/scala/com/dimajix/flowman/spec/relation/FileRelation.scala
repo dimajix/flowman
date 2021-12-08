@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
-import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
@@ -55,7 +55,6 @@ import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.UtcTimestamp
-import com.dimajix.spark.sql.SchemaUtils
 
 
 case class FileRelation(
@@ -131,13 +130,41 @@ case class FileRelation(
 
         requireValidPartitionKeys(partitions)
 
+        logger.info(s"Reading file relation '$identifier' at '$qualifiedLocation' ${pattern.map(p => s" with pattern '$p'").getOrElse("")} for partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(", ")})")
+
+        val useSpark = {
+            if (this.partitions.isEmpty) {
+                true
+            }
+            else if (this.pattern.nonEmpty) {
+                false
+            }
+            else {
+                val fs = location.getFileSystem(execution.hadoopConf)
+                FileUtils.isPartitionedData(fs, location)
+            }
+        }
+
+        // Add potentially missing partition columns
+        val df =
+            if (useSpark)
+                readSpark(execution, partitions)
+            else
+                readCustom(execution, partitions)
+
+        // Install callback to refresh DataFrame when data is overwritten
+        execution.addResource(ResourceIdentifier.ofFile(qualifiedLocation)) {
+            df.queryExecution.logical.refresh()
+        }
+
+        df
+    }
+    private def readCustom(execution:Execution, partitions:Map[String,FieldValue]) : DataFrame = {
         // Convert partition value to valid Spark literal
         def toLit(value:Any) : Column = value match {
             case v:UtcTimestamp => lit(v.toTimestamp())
             case _ => lit(value)
         }
-
-        logger.info(s"Reading file relation '$identifier' at '$qualifiedLocation' ${pattern.map(p => s" with pattern '$p'").getOrElse("")} for partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(", ")})")
         val providingClass = DataSource.lookupDataSource(format, execution.spark.sessionState.conf)
         val multiPath =  SparkShim.relationSupportsMultiplePaths(providingClass)
 
@@ -161,14 +188,21 @@ case class FileRelation(
             partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, toLit(p._2)))
         }
 
-        val df = data.reduce(_ union _)
+        val df1 = data.reduce(_ union _)
 
-        // Install callback to refresh DataFrame when data is overwritten
-        execution.addResource(ResourceIdentifier.ofFile(qualifiedLocation)) {
-            df.queryExecution.logical.refresh()
+        // Add potentially missing partition columns
+        appendPartitionColumns(df1)
+    }
+    private def readSpark(execution:Execution, partitions:Map[String,FieldValue]) : DataFrame = {
+        val df = this.reader(execution, format, options)
+                .load(location.toString)
+
+        // Filter partitions
+        val parts = MapIgnoreCase(this.partitions.map(p => p.name -> p))
+        partitions.foldLeft(df) { case(df,(pname, pvalue)) =>
+            val part = parts(pname)
+            df.filter(df(pname).isin(part.interpolate(pvalue).toSeq:_*))
         }
-
-        df
     }
 
     /**

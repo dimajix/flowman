@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,10 @@ import java.io.{File, FileOutputStream, PrintWriter}
 import java.nio.file.Paths
 
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.types.IntegerType
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.types.StructField
+import org.apache.spark.sql.types.StructType
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -289,15 +293,6 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
             out.close()
         }
 
-        mkPartitionFile("1","1","111.txt")
-        mkPartitionFile("1","1","112.txt")
-        mkPartitionFile("1","2","121.txt")
-        mkPartitionFile("1","2","122.txt")
-        mkPartitionFile("2","1","211.txt")
-        mkPartitionFile("2","1","212.txt")
-        mkPartitionFile("2","2","221.txt")
-        mkPartitionFile("2","2","222.txt")
-
         val spec =
             s"""
                |relations:
@@ -321,7 +316,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("local"))
@@ -343,77 +338,99 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         ))
 
         // ===== Create =============================================================================================
-        relation.exists(executor) should be (Yes)
-        relation.create(executor, true)
-        relation.exists(executor) should be (Yes)
-        relation.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation.exists(execution) should be (No)
+        relation.create(execution, true)
+        relation.exists(execution) should be (Yes)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
 
-        // ===== Read =============================================================================================
-        val df1 = relation.read(executor, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1")))
+        // == Read =================================================================================================
+        relation.read(execution, Map()).schema should be (StructType(Seq(
+            StructField("value", StringType),
+            StructField("p1", IntegerType),
+            StructField("p2", IntegerType)
+        )))
+        relation.read(execution, Map("p1" ->  SingleValue("1"))).schema should be (StructType(Seq(
+            StructField("value", StringType),
+            StructField("p1", IntegerType, false),
+            StructField("p2", IntegerType)
+        )))
+
+        // ===== Populate =============================================================================================
+        mkPartitionFile("1","1","111.txt")
+        mkPartitionFile("1","1","112.txt")
+        mkPartitionFile("1","2","121.txt")
+        mkPartitionFile("1","2","122.txt")
+        mkPartitionFile("2","1","211.txt")
+        mkPartitionFile("2","1","212.txt")
+        mkPartitionFile("2","2","221.txt")
+        mkPartitionFile("2","2","222.txt")
+
+        // ===== Read ================================================================================================
+        val df1 = relation.read(execution, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1")))
         df1.as[(String,Int,Int)].collect().sorted should be (Seq(
             ("p1=1/p2=1/111.txt",1,1),
             ("p1=1/p2=1/112.txt",1,1)
         ))
 
-        val df2 = relation.read(executor, Map("p1" -> SingleValue("1")))
-        df2.as[(String,Int)].collect().sorted should be (Seq(
-            ("p1=1/p2=1/111.txt",1),
-            ("p1=1/p2=1/112.txt",1),
-            ("p1=1/p2=2/121.txt",1),
-            ("p1=1/p2=2/122.txt",1)
+        val df2 = relation.read(execution, Map("p1" -> SingleValue("1")))
+        df2.as[(String,Int,Option[Int])].collect().sorted should be (Seq(
+            ("p1=1/p2=1/111.txt",1,None),
+            ("p1=1/p2=1/112.txt",1,None),
+            ("p1=1/p2=2/121.txt",1,None),
+            ("p1=1/p2=2/122.txt",1,None)
         ))
 
-        val df3 = relation.read(executor, Map("p2" -> SingleValue("1")))
-        df3.as[(String,Int)].collect().sorted should be (Seq(
-            ("p1=1/p2=1/111.txt",1),
-            ("p1=1/p2=1/112.txt",1),
-            ("p1=2/p2=1/211.txt",1),
-            ("p1=2/p2=1/212.txt",1)
+        val df3 = relation.read(execution, Map("p2" -> SingleValue("1")))
+        df3.as[(String,Int,Option[Int])].collect().sorted should be (Seq(
+            ("p1=1/p2=1/111.txt",1,None),
+            ("p1=1/p2=1/112.txt",1,None),
+            ("p1=2/p2=1/211.txt",1,None),
+            ("p1=2/p2=1/212.txt",1,None)
         ))
 
-        val df4 = relation.read(executor, Map())
-        df4.as[String].collect().sorted should be (Seq(
-            ("p1=1/p2=1/111.txt"),
-            ("p1=1/p2=1/112.txt"),
-            ("p1=1/p2=2/121.txt"),
-            ("p1=1/p2=2/122.txt"),
-            ("p1=2/p2=1/211.txt"),
-            ("p1=2/p2=1/212.txt"),
-            ("p1=2/p2=2/221.txt"),
-            ("p1=2/p2=2/222.txt")
+        val df4 = relation.read(execution, Map())
+        df4.as[(String,Option[Int],Option[Int])].collect().sorted should be (Seq(
+            ("p1=1/p2=1/111.txt",None,None),
+            ("p1=1/p2=1/112.txt",None,None),
+            ("p1=1/p2=2/121.txt",None,None),
+            ("p1=1/p2=2/122.txt",None,None),
+            ("p1=2/p2=1/211.txt",None,None),
+            ("p1=2/p2=1/212.txt",None,None),
+            ("p1=2/p2=2/221.txt",None,None),
+            ("p1=2/p2=2/222.txt",None,None)
         ))
 
         // ===== Truncate =============================================================================================
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (Yes)
-        relation.loaded(executor, Map("p2" -> SingleValue("1"))) should be (Yes)
-        relation.truncate(executor, Map("p2" -> SingleValue("1")))
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map("p2" -> SingleValue("1"))) should be (No)
-        val df5 = relation.read(executor, Map())
-        df5.as[String].collect().sorted should be (Seq(
-            ("p1=1/p2=2/121.txt"),
-            ("p1=1/p2=2/122.txt"),
-            ("p1=2/p2=2/221.txt"),
-            ("p1=2/p2=2/222.txt")
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("p2" -> SingleValue("1"))) should be (Yes)
+        relation.truncate(execution, Map("p2" -> SingleValue("1")))
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map("p2" -> SingleValue("1"))) should be (No)
+        val df5 = relation.read(execution, Map())
+        df5.as[(String,Option[Int],Option[Int])].collect().sorted should be (Seq(
+            ("p1=1/p2=2/121.txt",None,None),
+            ("p1=1/p2=2/122.txt",None,None),
+            ("p1=2/p2=2/221.txt",None,None),
+            ("p1=2/p2=2/222.txt",None,None)
         ))
 
-        relation.truncate(executor, Map("p2" -> SingleValue("1")))
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (Yes)
-        relation.loaded(executor, Map("p2" -> SingleValue("1"))) should be (No)
-        relation.loaded(executor, Map("p2" -> SingleValue("2"))) should be (Yes)
+        relation.truncate(execution, Map("p2" -> SingleValue("1")))
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("p2" -> SingleValue("1"))) should be (No)
+        relation.loaded(execution, Map("p2" -> SingleValue("2"))) should be (Yes)
 
-        relation.truncate(executor, Map())
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
-        relation.loaded(executor, Map("p2" -> SingleValue("1"))) should be (No)
-        relation.loaded(executor, Map("p2" -> SingleValue("2"))) should be (No)
+        relation.truncate(execution, Map())
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p2" -> SingleValue("1"))) should be (No)
+        relation.loaded(execution, Map("p2" -> SingleValue("2"))) should be (No)
 
         // ===== Destroy =============================================================================================
-        relation.destroy(executor)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
-        relation.loaded(executor, Map("p2" -> SingleValue("2"))) should be (No)
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p2" -> SingleValue("2"))) should be (No)
     }
 }

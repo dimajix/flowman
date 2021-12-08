@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,7 +142,10 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, toLit(p._2)))
         }
 
-        data.reduce(_ union _)
+        val df1 = data.reduce(_ union _)
+
+        // Add potentially missing partition columns
+        appendPartitionColumns(df1)
     }
 
     /**

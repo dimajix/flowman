@@ -83,6 +83,22 @@ object FileUtils {
         isValidFileData(fs, location, false)
     }
 
+    def isPartitionedData(fs:org.apache.hadoop.fs.FileSystem, location:Path) : Boolean = {
+        if (fs.exists(location)) {
+            val iter = fs.listStatusIterator(location)
+            var success = false
+            while(!success && iter.hasNext) {
+                val status = iter.next()
+                if (status.isDirectory && status.getPath.getName.contains("="))
+                    success = true
+            }
+            success
+        }
+        else {
+            false
+        }
+    }
+
     /**
      * Truncates a path, which means that wither all contents of a directory are removed (if the path points to a
      * directory) or that the file itself is deleted (if the path points to a file). The directory in the first case

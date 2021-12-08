@@ -25,6 +25,7 @@ import java.util.UUID
 
 import com.google.common.io.Resources
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.streaming.Trigger
@@ -132,6 +133,9 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         fileRelation.provides should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
         fileRelation.resources() should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
 
+        // == Read ===================================================================================================
+        an[AnalysisException] should be thrownBy(fileRelation.read(execution))
+
         // == Create =================================================================================================
         outputPath.toFile.exists() should be (false)
         relation.exists(execution) should be (No)
@@ -215,6 +219,9 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             )
         )
 
+        // == Read ===================================================================================================
+        an[AnalysisException] should be thrownBy(relation.read(execution))
+
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
@@ -296,6 +303,9 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Field("int_col", com.dimajix.flowman.types.IntegerType),
             Field("p_col", com.dimajix.flowman.types.IntegerType, nullable = false)
         ))
+
+        // == Read ===================================================================================================
+        a[FileNotFoundException] should be thrownBy(relation.read(execution))
 
         // ===== Create =============================================================================================
         outputPath.toFile.exists() should be (false)
@@ -488,6 +498,9 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.provides should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
         relation.resources() should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=*").toUri))))
         relation.resources(Map("p_col" -> SingleValue("22"))) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=22").toUri))))
+
+        // == Read ===================================================================================================
+        a[FileNotFoundException] should be thrownBy(relation.read(execution))
 
         // ===== Create =============================================================================================
         outputPath.toFile.exists() should be (false)

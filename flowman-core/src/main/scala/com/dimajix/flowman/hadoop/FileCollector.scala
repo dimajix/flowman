@@ -18,6 +18,8 @@ package com.dimajix.flowman.hadoop
 
 import java.io.{FileNotFoundException, StringWriter}
 
+import scala.annotation.tailrec
+
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.templating.Velocity
 import org.apache.hadoop.conf.Configuration
@@ -25,7 +27,6 @@ import org.apache.hadoop.fs.{FileStatus, Path, FileSystem => HadoopFileSystem}
 import org.apache.spark.sql.SparkSession
 import org.apache.velocity.VelocityContext
 import org.slf4j.LoggerFactory
-
 import scala.collection.parallel.ParIterable
 import scala.math.Ordering
 
@@ -127,19 +128,44 @@ case class FileCollector(
 ) {
     private val logger = LoggerFactory.getLogger(classOf[FileCollector])
 
-    private implicit val fileStatusOrder = new Ordering[FileStatus] {
+    private implicit val fileStatusOrder: Ordering[FileStatus] = new Ordering[FileStatus] {
         def compare(x: FileStatus, y: FileStatus): Int = x.getPath compareTo y.getPath
     }
 
     private val templateEngine = Velocity.newEngine()
     private val templateContext = Velocity.newContext()
-    private val qualifiedPath = {
-        val fs = path.getFileSystem(hadoopConf)
-        path.makeQualified(fs.getUri, fs.getWorkingDirectory)
-    }
+    private val fileSystem = path.getFileSystem(hadoopConf)
+    private val qualifiedPath = path.makeQualified(fileSystem.getUri, fileSystem.getWorkingDirectory)
     private val filePattern = pattern.orElse(Some(partitions.map(p => s"$p=$$$p").mkString("/"))).filter(_.nonEmpty)
 
     def root : Path = qualifiedPath
+    def fs : org.apache.hadoop.fs.FileSystem = fileSystem
+
+    /**
+     * Checks if the root location actually exists. If the root location is a glob pattern, this method will first
+     * walk up the path until no globbing component is found any more.
+     * @return
+     */
+    def exists() : Boolean = {
+        @tailrec
+        def walkUp(path:Path) : Path = {
+            if (path.getParent != null) {
+                val p = GlobPattern(path.toString)
+                if (p.hasWildcard) {
+                    walkUp(path.getParent)
+                }
+                else {
+                    path
+                }
+            }
+            else {
+                path
+            }
+        }
+
+        val parent = walkUp(path)
+        fileSystem.exists(parent)
+    }
 
     /**
      * Resolves the root location and performs any variable substitution of the pattern with default values.
@@ -346,8 +372,7 @@ case class FileCollector(
         requirePathAndPattern()
         requireValidPartitions(partitions)
 
-        val fs = qualifiedPath.getFileSystem(hadoopConf)
-        partitions.flatMap(p => fn(fs, resolve(p)))
+        partitions.flatMap(p => fn(fileSystem, resolve(p)))
     }
 
     /**
@@ -361,8 +386,7 @@ case class FileCollector(
         requirePathAndPattern()
         requireValidPartitions(partitions)
 
-        val fs = qualifiedPath.getFileSystem(hadoopConf)
-        partitions.map(p => fn(fs, resolve(p)))
+        partitions.map(p => fn(fileSystem, resolve(p)))
     }
 
     /**
@@ -376,31 +400,27 @@ case class FileCollector(
         requirePathAndPattern()
         requireValidPartitions(partition)
 
-        val fs = qualifiedPath.getFileSystem(hadoopConf)
-        fn(fs, resolve(partition))
+        fn(fileSystem, resolve(partition))
     }
 
     def map[T](fn:(HadoopFileSystem,Path) => T) : T = {
         requirePath()
 
-        val fs = qualifiedPath.getFileSystem(hadoopConf)
-        fn(fs,qualifiedPath)
+        fn(fileSystem,qualifiedPath)
     }
 
     def parFlatMap[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => Iterable[T]) : ParIterable[T] = {
         requirePathAndPattern()
         requireValidPartitions(partitions)
 
-        val fs = qualifiedPath.getFileSystem(hadoopConf)
-        partitions.par.flatMap(p => fn(fs, resolve(p)))
+        partitions.par.flatMap(p => fn(fileSystem, resolve(p)))
     }
 
     def parMap[T](partitions:Iterable[PartitionSpec])(fn:(HadoopFileSystem,Path) => T) : ParIterable[T] = {
         requirePathAndPattern()
         requireValidPartitions(partitions)
 
-        val fs = qualifiedPath.getFileSystem(hadoopConf)
-        partitions.par.map(p => fn(fs, resolve(p)))
+        partitions.par.map(p => fn(fileSystem, resolve(p)))
     }
 
     /**

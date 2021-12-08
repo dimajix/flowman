@@ -160,6 +160,9 @@ case class FileRelation(
         df
     }
     private def readCustom(execution:Execution, partitions:Map[String,FieldValue]) : DataFrame = {
+        if (!collector.exists())
+            throw new FileNotFoundException(s"Location '$qualifiedLocation' does match any existing directories and files")
+
         // Convert partition value to valid Spark literal
         def toLit(value:Any) : Column = value match {
             case v:UtcTimestamp => lit(v.toTimestamp())
@@ -195,7 +198,7 @@ case class FileRelation(
     }
     private def readSpark(execution:Execution, partitions:Map[String,FieldValue]) : DataFrame = {
         val df = this.reader(execution, format, options)
-                .load(location.toString)
+                .load(qualifiedLocation.toString)
 
         // Filter partitions
         val parts = MapIgnoreCase(this.partitions.map(p => p.name -> p))

@@ -256,6 +256,9 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
     }
 
     it should "support partitions" in {
+        val spark = this.spark
+        import spark.implicits._
+
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
         val context = session.context
@@ -335,7 +338,10 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (No)
 
-        // == Inspect ================================================================================================
+        // == Read ===================================================================================================
+        relation.read(execution, Map()).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, Map("p_col" -> SingleValue("3"))).count() should be (0)
         relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
@@ -346,21 +352,20 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             StructField("int_col", IntegerType),
             StructField("p_col", IntegerType, nullable=false)
         )))
-
-        // == Read ===================================================================================================
-        relation.read(execution, Map()).count() should be (2)
-        relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (2)
-        relation.read(execution, Map("p_col" -> SingleValue("3"))).count() should be (0)
-        relation.read(execution, Map()).schema should be (StructType(Seq(
-            StructField("str_col", StringType),
-            StructField("int_col", IntegerType),
-            StructField("p_col", IntegerType)
-        )))
         relation.read(execution, Map("p_col" -> SingleValue("2"))).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("p_col", IntegerType, nullable=false)
         )))
+
+        relation.read(execution, Map()).as[(String,Option[Int],Option[Int])].collect().sorted should be (Seq(
+            ("lala", Some(1), None),
+            ("lolo", Some(2), None)
+        ))
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).as[(String,Option[Int],Option[Int])].collect().sorted should be (Seq(
+            ("lala", Some(1), Some(2)),
+            ("lolo", Some(2), Some(2))
+        ))
 
         // ===== Write =============================================================================================
         val df_p1 = relation.read(execution, Map("p_col" -> SingleValue("1")))
@@ -456,6 +461,9 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
     }
 
     it should "support partitions without explicit pattern" in {
+        val spark = this.spark
+        import spark.implicits._
+
         val session = Session.builder().withSparkSession(spark).build()
         val execution = session.execution
         val context = session.context
@@ -533,6 +541,16 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.read(execution, Map()).count() should be (2)
         relation.read(execution, Map("p_col" -> SingleValue("2"))).count() should be (2)
         relation.read(execution, Map("p_col" -> SingleValue("3"))).count() should be (0)
+
+        relation.read(execution, Map()).as[(String,Option[Int],Option[Int])].collect().sorted should be (Seq(
+            ("lala", Some(1), Some(2)),
+            ("lolo", Some(2), Some(2))
+        ))
+        relation.read(execution, Map("p_col" -> SingleValue("2"))).as[(String,Option[Int],Option[Int])].collect().sorted should be (Seq(
+            ("lala", Some(1), Some(2)),
+            ("lolo", Some(2), Some(2))
+        ))
+
         relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),

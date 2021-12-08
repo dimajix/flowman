@@ -18,13 +18,13 @@ package com.dimajix.flowman.execution
 
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
-import scala.collection.parallel.ExecutionContextTaskSupport
+import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.TaskSupport
 import scala.concurrent.Await
-import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.concurrent.duration.Duration
+import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -35,9 +35,8 @@ import org.slf4j.Logger
 
 import com.dimajix.common.IdentityHashMap
 import com.dimajix.common.SynchronizedMap
-import com.dimajix.flowman.common.ThreadUtils.newThreadPool
+import com.dimajix.flowman.common.ThreadUtils
 import com.dimajix.flowman.config.FlowmanConf
-import com.dimajix.flowman.config.FlowmanConf.EXECUTION_MAPPING_PARALLELISM
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
@@ -51,9 +50,8 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
             case Some(ce:CachingExecution) if !isolated =>
                 ce.taskSupport
             case _ =>
-                val tp = newThreadPool("execution", parallelism)
-                val ec = ExecutionContext.fromExecutor(tp)
-                new ExecutionContextTaskSupport(ec)
+                val tp = ThreadUtils.newThreadPool("execution", parallelism)
+                new ForkJoinTaskSupport(tp)
         }
     }
     private lazy val parallelism = flowmanConf.getConf(FlowmanConf.EXECUTION_MAPPING_PARALLELISM)

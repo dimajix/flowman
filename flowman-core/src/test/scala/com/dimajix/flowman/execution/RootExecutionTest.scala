@@ -124,7 +124,7 @@ class RootExecutionTest extends AnyFlatSpec with MockFactory with Matchers with 
         val project = module.toProject("project")
         val session = Session.builder()
             .withSparkSession(spark)
-            .withConfig(FlowmanConf.EXECUTION_MAPPING_PARALLELISM.key, "8")
+            .withConfig(FlowmanConf.EXECUTION_MAPPING_PARALLELISM.key, "4")
             .withProject(project)
             .build()
 

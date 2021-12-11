@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
 package com.dimajix.flowman.testing;
 
 import com.dimajix.flowman.execution.Lifecycle;
-import com.dimajix.flowman.execution.Lifecycle$;
 import com.dimajix.flowman.execution.Phase;
-import com.dimajix.flowman.execution.Phase$;
 import com.google.common.io.Resources;
 import org.junit.jupiter.api.Test;
 

@@ -6,24 +6,34 @@
 
 ## What is Flowman
 
-Flowman is a Spark based ETL program that simplifies the act of writing data transformations.
-The main idea is that users write so called *specifications* in purely declarative YAML files
-instead of writing Spark jobs in Scala or Python. The main advantage of this approach is that
-many technical details of a correct and robust implementation are encapsulated and the user
-can concentrate on the data transformations themselves.
+Flowman is a Spark based *data build tool* that simplifies the act of writing data transformation application. Flowman
+can be seen as a ETL tool, with a strong focus on transformation and schema management. 
 
-In addition to writing and executing data transformations, Flowman can also be used for
-managing physical data models, i.e. Hive tables. Flowman can create such tables from a
-specification with the correct schema. This helps to keep all aspects (like transformations
-and schema information) in a single place managed by a single program.
+The main idea is that developers write so called *specifications* in purely declarative YAML files instead of writing 
+complex Spark jobs in Scala or Python. The main advantage of this approach is that many technical details of a correct 
+and robust implementation are encapsulated and the user can concentrate on the data transformations themselves.
 
-### Noteable Features
+In addition to writing and executing data transformations, Flowman can also be used for managing physical data models, 
+i.e. Hive tables but also JDBC tables. Flowman can create such tables from a specification with the correct schema, 
+and Flowman also provides mechanisms to automatically migrate these tables when the schema changes due to updates
+transformation logic (i.e. new columns are added).
 
-* Declarative syntax in YAML files
-* Data model management (Create and Destroy Hive tables or file based storage)
+This helps to keep all aspects (like transformations and schema information) in a single place managed by a single 
+application.
+
+[![Flowman Logo](images/flowman-logo.png)](https://flowman.io)
+
+### Notable Features
+
+* Declarative syntax in [YAML files](spec)
+* Full lifecycle management of data models (create, migrate and destroy Hive tables, JDBC tables or file based storage)
 * Flexible expression language
 * Jobs for managing build targets (like copying files or uploading data via sftp)
-* Powerful yet simple command line tool
+* Automatic dependency analysis to build targets in the correct order
+* Powerful yet simple [command line tool for batch execution](cli/flowexec.md)
+* Powerful [Command line tool for interactive data flow analysis](cli/flowshell.md)
+* [History server](cli/flowserver.mds) that provides an overview of past jobs and targets including lineage
+* [Metric system](cookbook/metrics.md) with the ability to publish these to servers like Prometheus
 * Extendable via Plugins
 
 
@@ -44,6 +54,7 @@ Flowman provides a command line utility (CLI) for running flows. Details are des
 following sections:
 
 * [Flowman Executor](cli/flowexec.md): Documentation of the Flowman Executor CLI
+* [Flowman Shell](cli/flowshell.md): Documentation of the Flowman Shell CLI
 * [Flowman Server](cli/flowserver.md): Documentation of the Flowman Server CLI
 
 

@@ -59,6 +59,7 @@ plugin configurations. We simply copy the provided template as follows:
 cp flowman/conf/default-namespace.yml.template flowman/conf/default-namespace.yml
 cp flowman/conf/flowman-env.sh.template flowman/conf/flowman-env.sh
 
+# Optionally provide AWS keys. The example will use anonymous access to S3 and does not require the keys
 export AWS_ACCESS_KEY_ID=<your aws access key>
 export AWS_SECRET_ACCESS_KEY=<your aws secret key>
 ```
@@ -67,8 +68,8 @@ That’s all we need to run the Flowman example.
 
 ## 3. Flowman Shell
 
-The example data is stored in a S3 bucket provided by myself. In order to access the data, you need to provide valid 
-AWS credentials in your environment:
+The example data is stored in a S3 bucket provided by myself. In order to access the data, you should provide valid 
+AWS credentials in your environment (not needed any more, since the example uses anonymous authentication):
 
 ```shell
 $ export AWS_ACCESS_KEY_ID=<your aws access key>

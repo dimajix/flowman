@@ -4,6 +4,7 @@ The Flowman History Server provides both a REST interface and a small UI which g
 targets executed in the past. In order to use the History Server, you need to configure a *history database* in
 the [Flowman namespace](../spec/namespace.md).
 
+![Flowman History Server](../images/history-server.png)
 
 ## Configuration
 The history database needs to be configured in the `default-namespace.yml` file and also (if used) in the

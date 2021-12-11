@@ -8,9 +8,8 @@ services:
       - http_proxy=${http_proxy}
       - https_proxy=${https_proxy}
       - SPARK_MASTER=local[10]
-      - HDFS_DEFAULT_FS=
-      - AWS_ACCESS_KEY_ID=
-      - AWS_SECRET_ACCESS_KEY=
-      - S3_ENDPOINT=s3.eu-central-1.amazonaws.com
-      - S3_PROXY_HOST=
-      - S3_PROXY_PORT=
+      #- AWS_ACCESS_KEY_ID=
+      #- AWS_SECRET_ACCESS_KEY=
+      #- S3_ENDPOINT=s3.eu-central-1.amazonaws.com
+      #- S3_PROXY_HOST=
+      #- S3_PROXY_PORT=-1

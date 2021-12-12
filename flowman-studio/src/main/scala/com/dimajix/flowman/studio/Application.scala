@@ -16,28 +16,79 @@
 
 package com.dimajix.flowman.studio
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
+import org.kohsuke.args4j.CmdLineException
+
 import com.dimajix.flowman.common.Logging
+import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.studio.rest.Server
+import com.dimajix.flowman.tools.Tool
 
 
 object Application {
     def main(args: Array[String]) : Unit = {
         Logging.init()
-
-        val server = new Application()
-        val result = server.run()
-        System.exit(if (result) 0 else 1)
+        Try {
+            run(args:_*)
+        }
+        match {
+            case Success (true) =>
+                System.exit(0)
+            case Success (false) =>
+                System.exit(1)
+            case Failure(ex:CmdLineException) =>
+                System.err.println(ex.getMessage)
+                ex.getParser.printUsage(System.err)
+                System.err.println
+                System.exit(1)
+            case Failure(exception) =>
+                exception.printStackTrace(System.err)
+                System.exit(1)
+        }
     }
 
+    def run(args: String*) : Boolean = {
+        val options = new Arguments(args.toArray)
+        // Check if only help is requested
+        if (options.help) {
+            options.printHelp(System.out)
+            true
+        }
+        else {
+            Logging.setSparkLogging(options.sparkLogging)
+
+            val server = new Application(options)
+            server.run()
+        }
+    }
 }
 
 
-class Application {
+class Application(options:Arguments) extends Tool {
     def run() : Boolean = {
-        val conf = Configuration.loadDefaults()
+        val config = splitSettings(options.config)
+        val environment = splitSettings(options.environment)
+        val session = createSession(
+            options.sparkMaster,
+            options.sparkName,
+            additionalConfigs = config.toMap,
+            additionalEnvironment = environment.toMap,
+            profiles = options.profiles
+        )
 
-        val server = new Server(conf)
+        val conf = Configuration.loadDefaults()
+            .setBindHost(options.bindHost)
+            .setBindPort(options.bindPort)
+            .setStudioId(options.studioId)
+            .setHubUrl(options.hubUrl)
+            .setHubSecret(options.hubSecret)
+        val server = new Server(conf, session)
         server.run()
+
+        session.shutdown()
 
         true
     }

@@ -15,17 +15,17 @@
       <v-btn class="ma-2"
         @click.stop="reloadProject()"
       >Reload Project</v-btn>
-      <sessions>
+      <session-selector>
         <template v-slot:activator="{ on, attrs }">
           <v-btn
             class="ma-2"
             v-bind="attrs"
             v-on="on"
           >
-            Switch Kernel & Project
+            Switch Session & Project
           </v-btn>
         </template>
-      </sessions>
+      </session-selector>
     </v-app-bar>
 
     <v-main>
@@ -126,7 +126,7 @@ import TargetProperties from '@/components/TargetProperties'
 import MappingProperties from '@/components/MappingProperties'
 import RelationProperties from '@/components/RelationProperties'
 import Flow from '@/components/Flow'
-import Sessions from '@/components/Sessions'
+import SessionSelector from '@/components/SessionSelector'
 
 export default {
   name: 'Workbench',
@@ -140,7 +140,7 @@ export default {
     LogOutput,
     MappingOutput,
     Flow,
-    Sessions
+    SessionSelector
   },
 
   data () {

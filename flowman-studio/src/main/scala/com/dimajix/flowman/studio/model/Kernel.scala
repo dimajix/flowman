@@ -16,26 +16,7 @@
 
 package com.dimajix.flowman.studio.model
 
-import java.time.ZonedDateTime
-
-
-case class KernelRegistrationRequest(
+case class StudioRegistrationRequest(
     id:String,
     url:String
-)
-
-case class Kernel(
-    id:String,
-    url:Option[String],
-    state:String
-)
-
-case class KernelList(
-    kernels:Seq[Kernel]
-)
-
-case class KernelLogMessage(
-    kernelId:String,
-    timestamp:ZonedDateTime,
-    message:String
 )

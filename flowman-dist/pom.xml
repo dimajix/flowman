@@ -28,7 +28,7 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}</outputDirectory>
-                            <filters>target/flowman-server-${project.version}-properties.properties,target/flowman-tools-${project.version}-properties.properties,target/flowman-studio-${project.version}-properties.properties,target/flowman-kernel-${project.version}-properties.properties</filters>
+                            <filters>target/flowman-server-${project.version}-properties.properties,target/flowman-tools-${project.version}-properties.properties,target/flowman-studio-${project.version}-properties.properties,target/flowman-hub-${project.version}-properties.properties</filters>
                             <resources>
                                 <resource>
                                     <directory>.</directory>
@@ -204,7 +204,7 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>com.dimajix.flowman</groupId>
-                                    <artifactId>flowman-kernel</artifactId>
+                                    <artifactId>flowman-studio-hub</artifactId>
                                     <version>${project.version}</version>
                                     <type>properties</type>
                                     <classifier>properties</classifier>

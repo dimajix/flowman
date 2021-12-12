@@ -493,9 +493,9 @@
         <module>flowman-tools</module>
         <module>flowman-server-ui</module>
         <module>flowman-server</module>
-        <module>flowman-kernel</module>
         <module>flowman-studio-ui</module>
         <module>flowman-studio</module>
+        <module>flowman-hub</module>
         <module>flowman-parent</module>
         <module>flowman-dist</module>
         <module>docker</module>

@@ -1,4 +1,4 @@
-# Version 0.19.0
+# Version 0.19.0 - 2021-12-13
 
 * Add build profile for Hadoop 3.3
 * Add build profile for Spark 3.2

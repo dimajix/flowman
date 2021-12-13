@@ -137,7 +137,7 @@ private[spark] class SequenceFileIterator(seqFile:SequenceFile.Reader, options:S
 
 
 private[spark] class SequenceFileOutputWriter(
-                 path: String,
+                 file: String,
                  context: TaskAttemptContext,
                  options: SequenceFileOptions) extends OutputWriter with Logging {
 
@@ -148,7 +148,7 @@ private[spark] class SequenceFileOutputWriter(
 
     private val writer = SequenceFile.createWriter(
         options.hadoopConf,
-        SequenceFile.Writer.file(new Path(path)),
+        SequenceFile.Writer.file(new Path(file)),
         SequenceFile.Writer.keyClass(keyConverter.writable),
         SequenceFile.Writer.valueClass(valueConverter.writable)
     )
@@ -162,4 +162,6 @@ private[spark] class SequenceFileOutputWriter(
     def close(): Unit = writer.close()
 
     def flush(): Unit = writer.hflush()
+
+    /*override*/ def path(): String = file
 }

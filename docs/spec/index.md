@@ -35,6 +35,7 @@ Flowman has a couple of different main entities, which are documented seperately
    connection/index
    test/index
    assertion/index
+   measure/index
    template/index
    metric/index
    hooks/index

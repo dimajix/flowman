@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,10 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.sql.Connection
 import java.sql.SQLInvalidAuthorizationSpecException
 import java.sql.SQLNonTransientConnectionException
 import java.sql.SQLNonTransientException
 import java.sql.Statement
-import java.util.Locale
 
 import scala.collection.mutable
 import scala.util.control.NonFatal
@@ -38,11 +36,6 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.TableChange
-import com.dimajix.flowman.catalog.TableChange.AddColumn
-import com.dimajix.flowman.catalog.TableChange.DropColumn
-import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
-import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
-import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -55,16 +48,17 @@ import com.dimajix.flowman.jdbc.SqlDialect
 import com.dimajix.flowman.jdbc.SqlDialects
 import com.dimajix.flowman.jdbc.TableDefinition
 import com.dimajix.flowman.model.BaseRelation
-import com.dimajix.flowman.model.ConnectionIdentifier
+import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.flowman.model.PartitionedRelation
+import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
+import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.spec.connection.JdbcConnection
-import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.{StructType => FlowmanStructType}
@@ -75,16 +69,20 @@ case class JdbcRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq(),
-    connection: ConnectionIdentifier,
+    connection: Reference[Connection],
     properties: Map[String,String] = Map(),
     database: Option[String] = None,
     table: Option[String] = None,
     query: Option[String] = None
 ) extends BaseRelation with PartitionedRelation with SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[JdbcRelation])
-    private lazy val jdbcConnection = context.getConnection(connection).asInstanceOf[JdbcConnection]
 
     def tableIdentifier : TableIdentifier = TableIdentifier(table.getOrElse(""), database)
+
+    if (query.nonEmpty && table.nonEmpty)
+        throw new IllegalArgumentException(s"JDBC relation '$identifier' cannot have both a table and a SQL query defined")
+    if (query.isEmpty && table.isEmpty)
+        throw new IllegalArgumentException(s"JDBC relation '$identifier' needs either a table or a SQL query defined")
 
 
     /**
@@ -93,6 +91,8 @@ case class JdbcRelation(
       * @return
       */
     override def provides: Set[ResourceIdentifier] = {
+        // Only return a resource if a table is defined, which implies that this relation can be used for creating
+        // and destroying JDBC tables
         table.map(t => ResourceIdentifier.ofJdbcTable(t, database)).toSet
     }
 
@@ -102,6 +102,8 @@ case class JdbcRelation(
       * @return
       */
     override def requires: Set[ResourceIdentifier] = {
+        // Only return a resource if a table is defined, which implies that this relation can be used for creating
+        // and destroying JDBC tables
         database.map(db => ResourceIdentifier.ofJdbcDatabase(db)).toSet
     }
 
@@ -118,8 +120,13 @@ case class JdbcRelation(
 
         requireValidPartitionKeys(partitions)
 
-        val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(table.getOrElse(""), database, p.toMap)).toSet
+        if (query.nonEmpty) {
+            Set(ResourceIdentifier.ofJdbcQuery(query.get))
+        }
+        else {
+            val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+            allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(table.get, database, p.toMap)).toSet
+        }
     }
 
     /**
@@ -142,12 +149,10 @@ case class JdbcRelation(
     /**
       * Reads the configured table from the source
       * @param execution
-      * @param schema
       * @return
       */
-    override def read(execution:Execution, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+    override def read(execution:Execution, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         require(execution != null)
-        require(schema != null)
         require(partitions != null)
 
         // Get Connection
@@ -172,10 +177,9 @@ case class JdbcRelation(
 
         // Apply embedded schema, if it is specified. This will remove/cast any columns not present in the
         // explicit schema specification of the relation
-        val schemaDf = applyInputSchema(tableDf)
+        val schemaDf = SchemaUtils.applySchema(tableDf, inputSchema, insertNulls=false)
 
-        val df = filterPartition(schemaDf, partitions)
-        SchemaUtils.applySchema(df, schema)
+        filterPartition(schemaDf, partitions)
     }
 
     /**
@@ -200,6 +204,7 @@ case class JdbcRelation(
 
         // Write partition into DataBase
         if (partition.isEmpty) {
+            // TODO: Maybe we should perform a truncate followed by an append. Otherwise Spark will actually recreate the table
             doWrite(execution, dfExt, mode.batchMode)
         }
         else {
@@ -277,11 +282,46 @@ case class JdbcRelation(
     override def exists(execution:Execution) : Trilean = {
         require(execution != null)
 
-        withConnection{ (con,options) =>
-            JdbcUtils.tableExists(con, tableIdentifier, options)
+        if (query.nonEmpty) {
+            true
+        }
+        else {
+            withConnection { (con, options) =>
+                JdbcUtils.tableExists(con, tableIdentifier, options)
+            }
         }
     }
 
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        // Only try migration if schema is explicitly specified
+        if (query.nonEmpty) {
+            true
+        }
+        else {
+            withConnection { (con, options) =>
+                if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
+                    if (schema.nonEmpty) {
+                        val targetSchema = fullSchema.get
+                        val currentSchema = JdbcUtils.getSchema(con, tableIdentifier, options)
+                        !TableChange.requiresMigration(currentSchema, targetSchema, migrationPolicy)
+                    }
+                    else {
+                        true
+                    }
+                }
+                else {
+                    false
+                }
+            }
+        }
+    }
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
@@ -323,7 +363,7 @@ case class JdbcRelation(
         }
     }
 
-    private def doCreate(con:Connection, options:JDBCOptions): Unit = {
+    private def doCreate(con:java.sql.Connection, options:JDBCOptions): Unit = {
         logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier with schema\n${this.schema.map(_.treeString).orNull}")
         if (this.schema.isEmpty) {
             throw new UnspecifiedSchemaException(identifier)
@@ -363,9 +403,8 @@ case class JdbcRelation(
         // Only try migration if schema is explicitly specified
         if (schema.isDefined) {
             withConnection { (con, options) =>
-                val dialect = SqlDialects.get(options.url)
                 if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                    val targetSchema = FlowmanStructType(schema.get.fields)
+                    val targetSchema = fullSchema.get
                     val currentSchema = JdbcUtils.getSchema(con, tableIdentifier, options)
                     if (TableChange.requiresMigration(currentSchema, targetSchema, migrationPolicy)) {
                         doMigration(currentSchema, targetSchema, migrationPolicy, migrationStrategy)
@@ -412,7 +451,7 @@ case class JdbcRelation(
             }
         }
 
-        def alter(migrations:Seq[TableChange], con:Connection, options:JDBCOptions) : Unit = {
+        def alter(migrations:Seq[TableChange], con:java.sql.Connection, options:JDBCOptions) : Unit = {
             logger.info(s"Migrating JDBC relation '$identifier', this will alter JDBC table $tableIdentifier. New schema:\n${targetSchema.treeString}")
             if (migrations.isEmpty)
                 logger.warn("Empty list of migrations - nothing to do")
@@ -425,7 +464,7 @@ case class JdbcRelation(
             }
         }
 
-        def recreate(con:Connection, options:JDBCOptions) : Unit = {
+        def recreate(con:java.sql.Connection, options:JDBCOptions) : Unit = {
             try {
                 logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier. New schema:\n${targetSchema.treeString}")
                 JdbcUtils.dropTable(con, tableIdentifier, options)
@@ -463,7 +502,7 @@ case class JdbcRelation(
     }
 
     private def createProperties() : (String,Map[String,String]) = {
-        val connection = jdbcConnection
+        val connection = this.connection.value.asInstanceOf[JdbcConnection]
         val props = mutable.Map[String,String]()
         props.put(JDBCOptions.JDBC_URL, connection.url)
         props.put(JDBCOptions.JDBC_DRIVER_CLASS, connection.driver)
@@ -476,7 +515,7 @@ case class JdbcRelation(
         (connection.url,props.toMap)
     }
 
-    private def withConnection[T](fn:(Connection,JDBCOptions) => T) : T = {
+    private def withConnection[T](fn:(java.sql.Connection,JDBCOptions) => T) : T = {
         val (url,props) = createProperties()
         logger.debug(s"Connecting to jdbc source at $url")
 
@@ -532,7 +571,7 @@ case class JdbcRelation(
 
 
 class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with SchemaRelationSpec {
-    @JsonProperty(value = "connection", required = true) private var connection: String = _
+    @JsonProperty(value = "connection", required = true) private var connection: ConnectionReferenceSpec = _
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
     @JsonProperty(value = "database", required = false) private var database: Option[String] = None
     @JsonProperty(value = "table", required = false) private var table: Option[String] = None
@@ -548,7 +587,7 @@ class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with Sc
             instanceProperties(context),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
-            ConnectionIdentifier.parse(context.evaluate(connection)),
+            connection.instantiate(context),
             context.evaluate(properties),
             database.map(context.evaluate).filter(_.nonEmpty),
             table.map(context.evaluate).filter(_.nonEmpty),

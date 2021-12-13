@@ -17,13 +17,13 @@
 package com.dimajix.flowman.common
 
 import java.lang.Thread.UncaughtExceptionHandler
-import java.util.concurrent.ForkJoinPool
-import java.util.concurrent.ForkJoinWorkerThread
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
+import scala.concurrent.forkjoin.ForkJoinPool
+import scala.concurrent.forkjoin.ForkJoinWorkerThread
 
 import org.slf4j.LoggerFactory
 

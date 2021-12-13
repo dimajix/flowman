@@ -20,6 +20,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.IntegerType
@@ -54,7 +55,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "env2" -> "eval_2"
         ))
 
-        val instance = job.instance(Map("p1" -> "val1", "p2" -> "val2", "p3" -> "val3"))
+        val instance = job.digest(Phase.BUILD, Map("p1" -> "val1", "p2" -> "val2", "p3" -> "val3"))
         instance.job should be ("some_job")
         instance.namespace should be ("")
         instance.project should be ("")
@@ -64,7 +65,18 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "name" -> "some_job",
             "namespace" -> "",
             "project" -> "",
+            "phase" -> "BUILD",
             "p1" -> "val1", "p2" -> "val2", "p3" -> "val3"
+        ))
+
+        job.metadata should be (Metadata(
+            None,
+            None,
+            "some_job",
+            None,
+            "job",
+            "job",
+            Map()
         ))
     }
 
@@ -224,12 +236,14 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             .setParameters(Seq(Job.Parameter("p1", IntegerType)))
             .addParameter("p3", StringType)
             .setEnvironment(Map("env1" -> "eval_1", "env2" -> "eval_2", "p2" -> "17"))
+            .setTargets(Seq(TargetIdentifier("t2"),TargetIdentifier("t7"),TargetIdentifier("t1"),TargetIdentifier("t3")))
             .build()
         val parent = Job.builder(context)
             .setProperties(Job.Properties(context, "parent_job"))
             .setDescription("Some parent job")
             .setParameters(Seq(Job.Parameter("p1", IntegerType), Job.Parameter("p2", IntegerType), Job.Parameter("p4", IntegerType)))
             .setEnvironment(Map("env1" -> "parent_val_1", "env4" -> "parent_val_4"))
+            .setTargets(Seq(TargetIdentifier("t3"),TargetIdentifier("t4"),TargetIdentifier("t6"),TargetIdentifier("t5")))
             .build()
 
         val result = Job.merge(job, Seq(parent))
@@ -239,6 +253,15 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             Job.Parameter("p1", IntegerType),
             Job.Parameter("p4", IntegerType),
             Job.Parameter("p3", StringType)
+        ))
+        result.targets should be (Seq(
+            TargetIdentifier("t3"),
+            TargetIdentifier("t4"),
+            TargetIdentifier("t6"),
+            TargetIdentifier("t5"),
+            TargetIdentifier("t2"),
+            TargetIdentifier("t7"),
+            TargetIdentifier("t1")
         ))
         result.environment should be (Map(
             "env1" -> "eval_1",

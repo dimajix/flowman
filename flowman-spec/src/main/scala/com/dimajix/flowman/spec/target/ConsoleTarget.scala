@@ -116,7 +116,7 @@ case class ConsoleTarget(
     override def build(executor:Execution) : Unit = {
         require(executor != null)
 
-        val dfIn = dataset.read(executor, None)
+        val dfIn = dataset.read(executor)
         val dfOut = if (columns.nonEmpty)
             dfIn.select(columns.map(c => dfIn(c)):_*)
         else

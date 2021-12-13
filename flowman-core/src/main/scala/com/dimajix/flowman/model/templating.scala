@@ -89,21 +89,32 @@ final case class AssertionWrapper(assertion:Assertion) {
 }
 
 
+final case class MeasureWrapper(measure:Measure) {
+    def getName() : String = measure.name
+    def getDescription() : String = measure.description.getOrElse("")
+    def getProject() : ProjectWrapper = ProjectWrapper(measure.project)
+    def getNamespace() : NamespaceWrapper = NamespaceWrapper(measure.namespace)
+
+    override def toString: String = getName()
+}
+
+
 object ResultWrapper {
-    def of(result:Result) : AnyRef = {
+    def of(result:Result[_]) : AnyRef = {
         result match {
             case r:LifecycleResult => LifecycleResultWrapper(r)
             case r:TestResult => TestResultWrapper(r)
             case r:JobResult => JobResultWrapper(r)
             case r:TargetResult => TargetResultWrapper(r)
+            case r:MeasureResult => MeasureResultWrapper(r)
             case r:AssertionResult => AssertionResultWrapper(r)
             case r:AssertionTestResult => AssertionTestResultWrapper(r)
         }
     }
 }
-sealed abstract class ResultWrapper(result:Result) {
+sealed abstract class ResultWrapper(result:Result[_]) {
     def getName() : String = result.name
-    def getCategory() : String = result.category
+    def getCategory() : String = result.category.toString
     def getKind() : String = result.kind
     def getChildren() : java.util.List[AnyRef] = result.children.map(ResultWrapper.of).asJava
     def getStatus() : String = result.status.toString
@@ -125,20 +136,20 @@ sealed abstract class ResultWrapper(result:Result) {
 
 final case class LifecycleResultWrapper(result:LifecycleResult) extends ResultWrapper(result) {
     def getJob() : JobWrapper = JobWrapper(result.job)
-    def getLifecycle() : java.util.List[String] = result.lifecycle.map(_.toString).asJava
+    def getLifecycle() : java.util.List[String] = result.lifecycle.phases.map(_.toString).asJava
 }
 
 
 final case class JobResultWrapper(result:JobResult) extends ResultWrapper(result) {
     def getDescription() : String = result.job.description.getOrElse("")
     def getJob() : JobWrapper = JobWrapper(result.job)
-    def getPhase() : String = result.phase.toString
+    def getPhase() : String = result.instance.phase.toString
 }
 
 
 final case class TargetResultWrapper(result:TargetResult) extends ResultWrapper(result) {
     def getTarget() : TargetWrapper = TargetWrapper(result.target)
-    def getPhase() : String = result.phase.toString
+    def getPhase() : String = result.instance.phase.toString
 }
 
 
@@ -150,6 +161,11 @@ final case class TestResultWrapper(result:TestResult) extends ResultWrapper(resu
 
 final case class AssertionResultWrapper(result:AssertionResult) extends ResultWrapper(result) {
     def getAssertion() : AssertionWrapper = AssertionWrapper(result.assertion)
+}
+
+
+final case class MeasureResultWrapper(result:MeasureResult) extends ResultWrapper(result) {
+    def getMeasure() : MeasureWrapper = MeasureWrapper(result.measure)
 }
 
 

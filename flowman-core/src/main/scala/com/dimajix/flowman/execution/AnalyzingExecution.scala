@@ -24,12 +24,15 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
+import com.dimajix.flowman.model.Measure
+import com.dimajix.flowman.model.MeasureResult
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 
@@ -99,6 +102,8 @@ class AnalyzingExecution(context: Context) extends CachingExecution(None, true) 
 
     override def withListeners[T](listeners: Seq[ExecutionListener])(fn: Execution => T): T = throw new UnsupportedOperationException
 
+    override def withMetrics[T](metrics: Option[MetricBoard])(fn: Execution => T): T = throw new UnsupportedOperationException
+
     override def monitorLifecycle(job: Job, arguments: Map[String, Any], phases: Seq[Phase])(fn: Execution => LifecycleResult): LifecycleResult = throw new UnsupportedOperationException
 
     override def monitorJob(job: Job, arguments: Map[String, Any], phase: Phase)(fn: Execution => JobResult): JobResult = throw new UnsupportedOperationException
@@ -106,4 +111,6 @@ class AnalyzingExecution(context: Context) extends CachingExecution(None, true) 
     override def monitorTarget(target: Target, phase: Phase)(fn: Execution => TargetResult): TargetResult = throw new UnsupportedOperationException
 
     override def monitorAssertion(assertion: Assertion)(fn: Execution => AssertionResult): AssertionResult = throw new UnsupportedOperationException
+
+    override def monitorMeasure(measure:Measure)(fn:Execution => MeasureResult) : MeasureResult = throw new UnsupportedOperationException
 }

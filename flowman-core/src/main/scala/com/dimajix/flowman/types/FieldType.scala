@@ -51,6 +51,7 @@ object FieldType {
             DurationType
         ).map(t => t.sqlType -> t).toMap ++
             Map(
+                "void" -> NullType,
                 "byte" -> ByteType,
                 "short" -> ShortType,
                 "long" -> LongType,

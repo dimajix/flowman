@@ -25,6 +25,7 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Relation
@@ -67,7 +68,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
         val relation = context.getRelation(RelationIdentifier("fake")).asInstanceOf[ValuesRelation]
         relation shouldBe a[ValuesRelation]
 
-        relation.category should be ("relation")
+        relation.category should be (Category.RELATION)
         relation.kind should be ("values")
         relation.provides should be (Set())
         relation.requires should be (Set())
@@ -108,7 +109,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
         val relation = context.getRelation(RelationIdentifier("fake")).asInstanceOf[ValuesRelation]
         relation shouldBe a[ValuesRelation]
 
-        relation.category should be ("relation")
+        relation.category should be (Category.RELATION)
         relation.kind should be ("values")
         relation.provides should be (Set())
         relation.requires should be (Set())
@@ -178,7 +179,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
         ))
         relation.describe(executor) should be (StructType(schema.fields))
 
-        val df = relation.read(executor, None)
+        val df = relation.read(executor)
         df.schema should be (schema.sparkType)
         df.collect() should be (Seq(
             Row("lala", 12),
@@ -228,7 +229,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
         ))
         relation.describe(executor) should be (StructType(schema.fields))
 
-        val df = relation.read(executor, None)
+        val df = relation.read(executor)
         df.schema should be (schema.sparkType)
         df.collect() should be (Seq(
             Row("lala", 12),

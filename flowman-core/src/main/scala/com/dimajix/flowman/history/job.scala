@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +26,19 @@ import com.dimajix.flowman.execution.Status
   * The JobQuery object is used to retrieve a list of jobs matching the given critera
   * @param namespace
   * @param project
-  * @param name
+  * @param job
   * @param status
   * @param from
   * @param to
   * @param args
   */
 final case class JobQuery(
-    namespace:Option[String] = None,
-    project:Option[String] = None,
-    name:Option[String] = None,
-    status:Option[Status] = None,
-    phase:Option[Phase] = None,
+    id:Seq[String] = Seq(),
+    namespace:Seq[String] = Seq(),
+    project:Seq[String] = Seq(),
+    job:Seq[String] = Seq(),
+    status:Seq[Status] = Seq(),
+    phase:Seq[Phase] = Seq(),
     from:Option[ZonedDateTime] = None,
     to:Option[ZonedDateTime] = None,
     args:Map[String,String] = Map()
@@ -48,31 +49,36 @@ final case class JobState(
     id:String,
     namespace:String,
     project:String,
+    version:String,
     job:String,
     phase:Phase,
     args:Map[String,String],
     status:Status,
     startDateTime:Option[ZonedDateTime] = None,
-    endDateTime:Option[ZonedDateTime] = None
+    endDateTime:Option[ZonedDateTime] = None,
+    error:Option[String] = None
 )
 
-sealed case class JobOrderColumn()
-object JobOrderColumn {
-    object BY_DATETIME extends JobOrderColumn
-    object BY_NAME extends JobOrderColumn
-    object BY_ID extends JobOrderColumn
-    object BY_STATUS extends JobOrderColumn
-    object BY_PHASE extends JobOrderColumn
+
+sealed abstract class JobColumn
+object JobColumn {
+    case object DATETIME extends JobColumn
+    case object PROJECT extends JobColumn
+    case object NAME extends JobColumn
+    case object ID extends JobColumn
+    case object STATUS extends JobColumn
+    case object PHASE extends JobColumn
 }
 
 object JobOrder {
-    final val BY_DATETIME = JobOrder(JobOrderColumn.BY_DATETIME)
-    final val BY_NAME = JobOrder(JobOrderColumn.BY_NAME)
-    final val BY_ID = JobOrder(JobOrderColumn.BY_ID)
-    final val BY_STATUS = JobOrder(JobOrderColumn.BY_STATUS)
-    final val BY_PHASE = JobOrder(JobOrderColumn.BY_PHASE)
+    final val BY_DATETIME = JobOrder(JobColumn.DATETIME)
+    final val BY_PROJECT = JobOrder(JobColumn.PROJECT)
+    final val BY_NAME = JobOrder(JobColumn.NAME)
+    final val BY_ID = JobOrder(JobColumn.ID)
+    final val BY_STATUS = JobOrder(JobColumn.STATUS)
+    final val BY_PHASE = JobOrder(JobColumn.PHASE)
 }
-final case class JobOrder(column:JobOrderColumn, isAscending:Boolean=true) {
+final case class JobOrder(column:JobColumn, isAscending:Boolean=true) {
     def asc() : JobOrder  = copy(isAscending=true)
     def desc() : JobOrder  = copy(isAscending=false)
 }

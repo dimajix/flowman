@@ -17,11 +17,10 @@
 package com.dimajix.flowman.dsl.target
 
 import com.dimajix.flowman.dsl.TargetGen
-import com.dimajix.flowman.execution.Environment
 import com.dimajix.flowman.execution.OutputMode
-import com.dimajix.flowman.model.IdentifierRelationReference
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.RelationReference
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.spec.target
 
@@ -38,7 +37,7 @@ case class RelationTarget(
         target.RelationTarget(
             props,
             mapping = mapping,
-            relation = IdentifierRelationReference(props.context, relation),
+            relation = RelationReference(props.context, relation),
             mode = mode,
             partition = partition,
             parallelism = parallelism,

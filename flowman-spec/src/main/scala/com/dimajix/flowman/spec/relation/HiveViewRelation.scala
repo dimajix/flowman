@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,12 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.PartitionField
+import com.dimajix.flowman.model.RegexResourceIdentifier
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.sql.SqlParser
 import com.dimajix.spark.sql.catalyst.SqlBuilder
 
@@ -57,7 +59,14 @@ case class HiveViewRelation(
       * @param partition
       * @return
       */
-    override def resources(partition: Map[String, FieldValue]): Set[ResourceIdentifier] = Set()
+    override def resources(partition: Map[String, FieldValue]): Set[ResourceIdentifier] = {
+        mapping.map(m => MappingUtils.requires(context, m.mapping))
+            .orElse(
+                // Only return Hive Table Partitions!
+                sql.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHivePartition(t, Map()).asInstanceOf[ResourceIdentifier]))
+            )
+            .getOrElse(Set())
+    }
 
     /**
       * Returns the list of all resources which will be created by this relation.
@@ -75,8 +84,17 @@ case class HiveViewRelation(
       */
     override def requires : Set[ResourceIdentifier] = {
         val db = database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
-        val other = mapping.map(m => MappingUtils.requires(context, m.mapping))
-            .orElse(sql.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHiveTable(t)).toSet))
+        val other = mapping.map {m =>
+                MappingUtils.requires(context, m.mapping)
+                    // Replace all Hive partitions with Hive tables
+                    .map {
+                        case RegexResourceIdentifier("hiveTablePartition", table, _) => ResourceIdentifier.ofHiveTable(table)
+                        case id => id
+                    }
+            }
+            .orElse {
+                sql.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHiveTable(t)))
+            }
             .getOrElse(Set())
         db ++ other
     }
@@ -91,6 +109,35 @@ case class HiveViewRelation(
       * @param partitions
       */
     override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
+    }
+
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        val catalog = execution.catalog
+        if (catalog.tableExists(tableIdentifier)) {
+            val newSelect = getSelect(execution)
+            val curTable = catalog.getTable(tableIdentifier)
+            // Check if current table is a VIEW or a table
+            if (curTable.tableType == CatalogTableType.VIEW) {
+                // Check that both SQL and schema are correct
+                val curTable = catalog.getTable(tableIdentifier)
+                val curSchema = SchemaUtils.normalize(curTable.schema)
+                val newSchema = SchemaUtils.normalize(catalog.spark.sql(newSelect).schema)
+                curTable.viewText.get == newSelect && curSchema == newSchema
+            }
+            else {
+                false
+            }
+        }
+        else {
+            false
+        }
     }
 
     /**
@@ -142,7 +189,9 @@ case class HiveViewRelation(
 
     private def migrateFromView(catalog:Catalog, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
         val curTable = catalog.getTable(tableIdentifier)
-        if (curTable.viewText.get != newSelect) {
+        val curSchema = SchemaUtils.normalize(curTable.schema)
+        val newSchema = SchemaUtils.normalize(catalog.spark.sql(newSelect).schema)
+        if (curTable.viewText.get != newSelect || curSchema != newSchema) {
             migrationStrategy match {
                 case MigrationStrategy.NEVER =>
                     logger.warn(s"Migration required for HiveView relation '$identifier' of Hive view $tableIdentifier, but migrations are disabled.")

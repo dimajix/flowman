@@ -86,8 +86,10 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(new Path(workingDirectory, "data/2016/02/01"))
             .build()
-        val files = collector.glob()
 
+        collector.exists() should be (true)
+
+        val files = collector.glob()
         files.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/02/01")
         ))
@@ -97,8 +99,10 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(new Path(workingDirectory, "data/2016/0*/0*"))
             .build()
-        val files = collector.glob()
 
+        collector.exists() should be (true)
+
+        val files = collector.glob()
         files.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03"),
             new Path(workingDirectory, "data/2016/01/04"),
@@ -110,10 +114,12 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "not return empty directories when using glob" in {
         val collector = FileCollector.builder(hadoopConf)
-            .path(new Path(workingDirectory, "data/2018/0*/0*"))
+            .path(new Path(workingDirectory, "data/2016/1*/0*"))
             .build()
-        val files = collector.glob()
 
+        collector.exists() should be (true)
+
+        val files = collector.glob()
         files.sortBy(_.toString) should be (Seq())
     }
 
@@ -121,8 +127,10 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val collector = FileCollector.builder(hadoopConf)
             .path(new Path(workingDirectory, "data/2016/0*/0*"))
             .build()
-        val files = collector.collect()
 
+        collector.exists() should be (true)
+
+        val files = collector.collect()
         files.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/0*/0*")
         ))
@@ -130,10 +138,12 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "not return empty directories when using collect" in {
         val collector = FileCollector.builder(hadoopConf)
-            .path(new Path(workingDirectory, "data/2018/0*/0*"))
+            .path(new Path(workingDirectory, "data/2016/1*/0*"))
             .build()
-        val files = collector.collect()
 
+        collector.exists() should be (true)
+
+        val files = collector.collect()
         files.sortBy(_.toString) should be (Seq())
     }
 
@@ -144,6 +154,8 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .partitionBy("year","month","day")
             .defaults(Map("year" -> "*", "month" -> "*", "day" -> "*"))
             .build()
+
+        collector.exists() should be (true)
 
         val files1 = collector.glob(Seq(PartitionSpec(Map("year" -> "2016", "month" -> "01", "day" -> "03"))))
         files1.toSeq.sortBy(_.toString) should be (Seq(
@@ -184,8 +196,10 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .pattern("data/$ts.format('yyyy/MM/dd')")
             .partitionBy("ts")
             .build()
-        val files = collector.glob(partitions)
 
+        collector.exists() should be (true)
+
+        val files = collector.glob(partitions)
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03"),
             new Path(workingDirectory, "data/2016/01/04"),
@@ -206,8 +220,10 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .pattern("data/$ts.format('yyyy/MM/dd')")
             .partitionBy("ts")
             .build()
-        val files = collector.glob(partitions)
 
+        collector.exists() should be (true)
+
+        val files = collector.glob(partitions)
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/04")
         ))
@@ -225,8 +241,10 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .pattern("data/$ts.format('yyyy/MM/dd')")
             .partitionBy("ts")
             .build()
-        val files = collector.glob(partitions)
 
+        collector.exists() should be (true)
+
+        val files = collector.glob(partitions)
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/04")
         ))
@@ -244,8 +262,10 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .pattern("data/$ts.format('yyyy/MM/dd')")
             .partitionBy("ts")
             .build()
-        val files = collector.glob(partitions)
 
+        collector.exists() should be (true)
+
+        val files = collector.glob(partitions)
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/04"),
             new Path(workingDirectory, "data/2016/01/05")
@@ -264,8 +284,10 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .pattern("""$ts.format("'data/'yyyy/MM/dd")""")
             .partitionBy("ts")
             .build()
-        val files = collector.glob(partitions)
 
+        collector.exists() should be (true)
+
+        val files = collector.glob(partitions)
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/04"),
             new Path(workingDirectory, "data/2016/01/05")
@@ -284,8 +306,10 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .pattern("""data/$ts.format("yyyy/MM/dd/HH'.seq'")""")
             .partitionBy("ts")
             .build()
-        val files = collector.glob(partitions)
 
+        collector.exists() should be (true)
+
+        val files = collector.glob(partitions)
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/05/01.seq")
         ))
@@ -303,8 +327,10 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .pattern("""data/$ts.format("yyyy/MM/dd/HH'.seq'")""")
             .partitionBy("ts")
             .build()
-        val files = collector.glob(partitions)
 
+        collector.exists() should be (true)
+
+        val files = collector.glob(partitions)
         files.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "data/2016/01/03/01.seq"),
             new Path(workingDirectory, "data/2016/01/03/02.seq"),
@@ -418,6 +444,8 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .defaults(Map("year" -> "*", "month" -> "*", "day" -> "*"))
             .build()
 
+        collector.exists() should be (true)
+
         val files1 = collector.glob(Seq(PartitionSpec(Map("year" -> "2016", "month" -> "1", "day" -> "3"))))
         files1.toSeq.sortBy(_.toString) should be (Seq(
             new Path(workingDirectory, "hive_data/year=2016/month=1/day=3")
@@ -452,7 +480,25 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
             .defaults(Map("year" -> "*", "month" -> "*", "day" -> "*"))
             .build()
 
+        collector.exists() should be (true)
+
         an[IllegalArgumentException] should be thrownBy(collector.glob(Seq(PartitionSpec(Map("ts" -> "2016")))))
         an[IllegalArgumentException] should be thrownBy(collector.collect(Seq(PartitionSpec(Map("ts" -> "2016")))))
+    }
+
+    it should "check for existing location" in {
+        val collector = FileCollector.builder(hadoopConf)
+            .path(new Path(workingDirectory, "no_such_dir"))
+            .build()
+
+        collector.exists() should be (false)
+    }
+
+    it should "check for existing location even with globbing"  in {
+        val collector = FileCollector.builder(hadoopConf)
+            .path(new Path(workingDirectory, "no_such_dir/*"))
+            .build()
+
+        collector.exists() should be (false)
     }
 }

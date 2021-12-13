@@ -33,7 +33,7 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.RangeValue
@@ -51,11 +51,12 @@ case class TruncateTarget(
      * Returns an instance representing this target with the context
      * @return
      */
-    override def instance : TargetInstance = {
-        TargetInstance(
+    override def digest(phase:Phase) : TargetDigest = {
+        TargetDigest(
             namespace.map(_.name).getOrElse(""),
             project.map(_.name).getOrElse(""),
             name,
+            phase,
             Map()
         )
     }
@@ -120,9 +121,11 @@ case class TruncateTarget(
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
-    override def link(linker: Linker): Unit = {
-        val rel = context.getRelation(relation)
-        resolvedPartitions(rel).foreach(p => linker.write(relation, p))
+    override def link(linker: Linker, phase:Phase): Unit = {
+        if (phase == Phase.BUILD) {
+            val rel = context.getRelation(relation)
+            resolvedPartitions(rel).foreach(p => linker.write(relation, p))
+        }
     }
 
     /**

@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.target
 
+import java.io.File
 import java.nio.file.Paths
 import java.util.UUID
 
@@ -107,11 +108,11 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         target.requires(Phase.TRUNCATE) should be (Set())
         target.requires(Phase.DESTROY) should be (Set())
 
-        target.provides(Phase.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
-        target.provides(Phase.BUILD) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
+        target.provides(Phase.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
+        target.provides(Phase.BUILD) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.VERIFY) should be (Set())
         target.provides(Phase.TRUNCATE) should be (Set())
-        target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
+        target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
     }
 
     it should "work without a mapping" in {
@@ -141,11 +142,11 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         target.requires(Phase.TRUNCATE) should be (Set())
         target.requires(Phase.DESTROY) should be (Set())
 
-        target.provides(Phase.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
+        target.provides(Phase.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.BUILD) should be (Set())
         target.provides(Phase.VERIFY) should be (Set())
         target.provides(Phase.TRUNCATE) should be (Set())
-        target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
+        target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
     }
 
     it should "support the whole lifecycle" in {
@@ -230,7 +231,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         target.execute(execution, Phase.CREATE)
         output.exists(execution) should be (Yes)
         output.loaded(execution) should be (No)
-        target.dirty(execution, Phase.CREATE) should be (Unknown)
+        target.dirty(execution, Phase.CREATE) should be (No)
         output.read(execution).count() should be (0)
 
         // == Build ==================================================================================================
@@ -307,6 +308,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             .asInstanceOf[GaugeMetric]
 
         metric.value should be (2)
+        metric.labels should be (target.metadata.asMap + ("phase" -> Phase.BUILD.upper))
 
         target.execute(executor, Phase.BUILD)
         metric.value should be (4)

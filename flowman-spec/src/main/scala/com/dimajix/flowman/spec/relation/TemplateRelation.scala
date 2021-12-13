@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,17 @@ case class TemplateRelation(
         .withEnvironment(environment)
         .build()
     private val relationInstance = {
-        project.get.relations(relation.name).instantiate(templateContext)
+        project.get.relations(relation.name) match {
+            case spec:RelationSpec => spec.synchronized {
+                // Temporarily rename template, such that its instance will get the current name
+                val oldName = name
+                spec.name = name
+                val instance = spec.instantiate(templateContext)
+                spec.name = oldName
+                instance
+            }
+            case spec => spec.instantiate(templateContext)
+        }
     }
 
     /**
@@ -105,16 +115,14 @@ case class TemplateRelation(
       * Reads data from the relation, possibly from specific partitions
       *
       * @param execution
-      * @param schema     - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(execution: Execution, partitions: Map[String, FieldValue]): DataFrame = {
         require(execution != null)
-        require(schema != null)
         require(partitions != null)
 
-        relationInstance.read(execution, schema, partitions)
+        relationInstance.read(execution, partitions)
     }
 
     /**
@@ -169,9 +177,17 @@ case class TemplateRelation(
       * @return
       */
     override def exists(execution: Execution): Trilean = {
-        require(execution != null)
-
         relationInstance.exists(execution)
+    }
+
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     * @param execution
+     * @return
+     */
+    def conforms(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED) : Trilean = {
+        relationInstance.conforms(execution, migrationPolicy)
     }
 
     /**
@@ -181,8 +197,6 @@ case class TemplateRelation(
       * @param execution
       */
     override def create(execution: Execution, ifNotExists: Boolean): Unit = {
-        require(execution != null)
-
         relationInstance.create(execution, ifNotExists)
     }
 
@@ -193,8 +207,6 @@ case class TemplateRelation(
       * @param execution
       */
     override def destroy(execution: Execution, ifExists: Boolean): Unit = {
-        require(execution != null)
-
         relationInstance.destroy(execution, ifExists)
     }
 
@@ -204,8 +216,6 @@ case class TemplateRelation(
       * @param execution
       */
     override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {
-        require(execution != null)
-
         relationInstance.migrate(execution, migrationPolicy, migrationStrategy)
     }
 

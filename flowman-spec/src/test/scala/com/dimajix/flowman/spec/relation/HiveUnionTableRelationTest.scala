@@ -58,6 +58,10 @@ import com.dimajix.spark.testing.QueryTest
 
 
 class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession with QueryTest {
+    implicit class Unqoute(str:String) {
+        def unqouted : String = str.replace("`", "")
+    }
+
     "The HiveUnionTableRelation" should "support the full lifecycle" in (if (hiveSupported) {
         val spec =
             """
@@ -83,7 +87,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -97,12 +101,16 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             Field("varchar_col", ftypes.VarcharType(10))
         ))
 
-        // == Create ===================================================================
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
-        relation.create(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
+        // == Create =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
 
@@ -158,43 +166,49 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         table.location.toString should not be ("")
 
         // Try to create relation, although it already exists
-        a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(executor))
-        relation.create(executor, true)
+        a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
+        relation.create(execution, true)
 
-        // == Migrate ===================================================================
-        relation.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        // == Migrate =================================================================================================
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
 
-        // == Write ===================================================================
+        // == Write ===================================================================================================
         val rdd = spark.sparkContext.parallelize(Seq(
             Row("v1", 21, "v3", "v4")
         ))
         val df = spark.createDataFrame(rdd, SchemaUtils.replaceCharVarchar(table.schema))
-        relation.write(executor, df, Map())
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (Yes)
+        relation.write(execution, df, Map())
+        relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
 
-        // == Read ===================================================================
-        checkAnswer(relation.read(executor, None), Seq(
+        // == Read ====================================================================================================
+        checkAnswer(relation.read(execution), Seq(
             Row("v1", 21, "v3        ", "v4")
         ))
 
-        // == Truncate ===================================================================
-        relation.truncate(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
+        // == Truncate ================================================================================================
+        relation.truncate(execution)
+        relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
 
-        // == Destroy ===================================================================
-        relation.destroy(executor)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
+        // == Destroy =================================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
 
-        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(executor))
-        relation.destroy(executor, true)
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
+        relation.destroy(execution, true)
     })
 
     it should "cast compatible types" in (if (hiveSupported) {
@@ -225,11 +239,11 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val executor = session.execution
         val context = session.getContext(project)
 
-        // == Create ===================================================================
+        // == Create ==================================================================================================
         val relation = context.getRelation(RelationIdentifier("t0"))
         relation.create(executor)
 
-        // == Write ===================================================================
+        // == Write ===================================================================================================
         val rdd = spark.sparkContext.parallelize(Seq(
             Row("v1", 21.toShort, true, "v4")
         ))
@@ -242,13 +256,13 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val df = spark.createDataFrame(rdd, schema)
         relation.write(executor, df, Map())
 
-        // == Read ===================================================================
+        // == Read ====================================================================================================
         val expected1 = Seq(
             Row("v1", 21, "true      ", "v4")
         )
-        checkAnswer(relation.read(executor, None), expected1)
+        checkAnswer(relation.read(executor), expected1)
 
-        // == Write ===================================================================
+        // == Write ===================================================================================================
         val rdd2 = spark.sparkContext.parallelize(Seq(
             Row("v2", 21.toShort, "v4")
         ))
@@ -260,7 +274,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val df2 = spark.createDataFrame(rdd2, schema2)
         relation.write(executor, df2, Map())
 
-        // == Write ===================================================================
+        // == Write ===================================================================================================
         val rdd3 = spark.sparkContext.parallelize(Seq(
             Row("21"),
             Row("some_string")
@@ -272,14 +286,14 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         //an[Exception] shouldBe thrownBy(relation.write(execution, incompatibleDf, Map()))
         relation.write(executor, incompatibleDf, Map())
 
-        // == Read ===================================================================
+        // == Read ====================================================================================================
         val expected2 = Seq(
             Row(null, 21, null, null),
             Row(null, null, null, null)
         )
-        checkAnswer(relation.read(executor, None), expected2)
+        checkAnswer(relation.read(executor), expected2)
 
-        // == Destroy ===================================================================
+        // == Destroy =================================================================================================
         relation.destroy(executor)
     })
 
@@ -307,7 +321,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
@@ -320,13 +334,15 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             Field("partition_col", ftypes.StringType, false)
         ))
 
-        // == Create ===================================================================
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
-        relation.loaded(executor, Map("partition_col" -> SingleValue("x"))) should be (No)
-        relation.create(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map("partition_col" -> SingleValue("x"))) should be (No)
+        // == Create ==================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("partition_col" -> SingleValue("x"))) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.loaded(execution, Map("partition_col" -> SingleValue("x"))) should be (No)
 
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
@@ -367,42 +383,46 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         )))
         table.location.toString should not be ("")
 
-        // == Migrate ===================================================================
-        relation.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        // == Migrate =================================================================================================
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
 
-        // == Write ===================================================================
+        // == Write ===================================================================================================
         val rdd = spark.sparkContext.parallelize(Seq(
             Row("v1", 21)
         ))
         val df = spark.createDataFrame(rdd, table.dataSchema)
-        relation.write(executor, df, Map("partition_col" -> SingleValue("part_1")))
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (Yes)
-        relation.loaded(executor, Map("partition_col" -> SingleValue("part_1"))) should be (Yes)
-        relation.loaded(executor, Map("partition_col" -> SingleValue("part_2"))) should be (No)
+        relation.write(execution, df, Map("partition_col" -> SingleValue("part_1")))
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("partition_col" -> SingleValue("part_1"))) should be (Yes)
+        relation.loaded(execution, Map("partition_col" -> SingleValue("part_2"))) should be (No)
 
-        // == Read ===================================================================
+        // == Read ====================================================================================================
         val rows = Seq(
             Row("v1", 21, "part_1")
         )
-        checkAnswer(relation.read(executor, None, Map()), rows)
-        checkAnswer(relation.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows)
-        checkAnswer(relation.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), Seq())
+        checkAnswer(relation.read(execution, Map()), rows)
+        checkAnswer(relation.read(execution, Map("partition_col" -> SingleValue("part_1"))), rows)
+        checkAnswer(relation.read(execution, Map("partition_col" -> SingleValue("part_2"))), Seq())
 
-        // == Truncate ===================================================================
-        relation.truncate(executor, Map("partition_col" -> SingleValue("part_1")))
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
-        relation.loaded(executor, Map("partition_col" -> SingleValue("part_1"))) should be (No)
+        // == Truncate ================================================================================================
+        relation.truncate(execution, Map("partition_col" -> SingleValue("part_1")))
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("partition_col" -> SingleValue("part_1"))) should be (No)
 
-        // == Destroy ===================================================================
-        relation.destroy(executor)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
-        relation.loaded(executor, Map("partition_col" -> SingleValue("part_1"))) should be (No)
+        // == Destroy =================================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("partition_col" -> SingleValue("part_1"))) should be (No)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
     })
@@ -445,32 +465,32 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
 
         // == Read ==================================================================================================
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, Map()).count() should be (4)
 
         // == Append ================================================================================================
         relation.write(execution, df, Map(), OutputMode.APPEND)
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (8)
+        relation.read(execution, Map()).count() should be (8)
 
         // == Overwrite =============================================================================================
         relation.write(execution, df, Map(), OutputMode.OVERWRITE)
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, Map()).count() should be (4)
 
         // == IfNotExists ===========================================================================================
         relation.write(execution, df.union(df), Map(), OutputMode.IGNORE_IF_EXISTS)
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, Map()).count() should be (4)
 
         // == Truncate =============================================================================================
         relation.truncate(execution)
         relation.loaded(execution) should be (No)
-        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
 
         // == IfNotExists ===========================================================================================
         relation.write(execution, df.union(df), Map(), OutputMode.IGNORE_IF_EXISTS)
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (8)
+        relation.read(execution, Map()).count() should be (8)
 
         // == FailIfExists ==========================================================================================
         a[TableAlreadyExistsException] should be thrownBy(relation.write(execution, df, Map(), OutputMode.ERROR_IF_EXISTS))
@@ -478,12 +498,12 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         // == Truncate =============================================================================================
         relation.truncate(execution)
         relation.loaded(execution) should be (No)
-        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
 
         // == FailIfExists ==========================================================================================
         relation.write(execution, df, Map(), OutputMode.ERROR_IF_EXISTS)
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, Map()).count() should be (4)
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
@@ -536,54 +556,54 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Append ================================================================================================
         relation.write(execution, df, Map("part" -> SingleValue("p0")), OutputMode.APPEND)
         relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (8)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (8)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (8)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (8)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Overwrite =============================================================================================
         relation.write(execution, df, Map("part" -> SingleValue("p0")), OutputMode.OVERWRITE)
         relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == IfNotExists ===========================================================================================
         relation.write(execution, df.union(df), Map("part" -> SingleValue("p0")), OutputMode.IGNORE_IF_EXISTS)
         relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Truncate =============================================================================================
         relation.truncate(execution, Map("part" -> SingleValue("p0")))
         relation.loaded(execution) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == IfNotExists ===========================================================================================
         relation.write(execution, df.union(df), Map("part" -> SingleValue("p0")), OutputMode.IGNORE_IF_EXISTS)
         relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (8)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (8)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (8)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (8)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == FailIfExists ==========================================================================================
         a[PartitionAlreadyExistsException] should be thrownBy(relation.write(execution, df, Map("part" -> SingleValue("p0")), OutputMode.ERROR_IF_EXISTS))
@@ -593,18 +613,18 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation.loaded(execution) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == FailIfExists ==========================================================================================
         relation.write(execution, df, Map("part" -> SingleValue("p0")), OutputMode.ERROR_IF_EXISTS)
         relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
@@ -653,7 +673,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation_1 = context.getRelation(RelationIdentifier("t1"))
@@ -666,11 +686,13 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             Field("partition_col", ftypes.StringType, false)
         ))
 
-        // == Create ===================================================================
+        // == Create ==================================================================================================
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
-        relation_1.create(executor)
+        relation_1.create(execution)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
@@ -707,16 +729,22 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             StructField("partition_col", StringType, nullable = false)
         )))
 
-        // == Write ===================================================================
+        // == Write ===================================================================================================
         val rdd = spark.sparkContext.parallelize(Seq(
             Row("v1", 21)
         ))
         val df = spark.createDataFrame(rdd, table_1.dataSchema)
-        relation_1.write(executor, df, Map("partition_col" -> SingleValue("part_1")))
+        relation_1.write(execution, df, Map("partition_col" -> SingleValue("part_1")))
 
-        // == Migrate ===================================================================
+        // == Migrate =================================================================================================
         val relation_2 = context.getRelation(RelationIdentifier("t2"))
-        relation_2.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
@@ -782,41 +810,47 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             StructField("partition_col", StringType, nullable = false)
         )))
 
-        // == Write ===================================================================
+        // == Write ===================================================================================================
         val rdd_2 = spark.sparkContext.parallelize(Seq(
             Row("v2", 22, "lala")
         ))
         val df2 = spark.createDataFrame(rdd_2, SchemaUtils.replaceCharVarchar(table_2.dataSchema))
-        relation_2.write(executor, df2, Map("partition_col" -> SingleValue("part_2")))
+        relation_2.write(execution, df2, Map("partition_col" -> SingleValue("part_2")))
 
-        // == Read ===================================================================
+        // == Read ====================================================================================================
         val rows_1 = Seq(
             Row("v1", null, 21, "part_1")
         )
         val rows_2 = Seq(
             Row("v2", "lala      ", 22, "part_2")
         )
-        checkAnswer(relation_2.read(executor, None, Map()), rows_1 ++ rows_2)
-        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows_1)
-        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), rows_2)
+        checkAnswer(relation_2.read(execution, Map()), rows_1 ++ rows_2)
+        checkAnswer(relation_2.read(execution, Map("partition_col" -> SingleValue("part_1"))), rows_1)
+        checkAnswer(relation_2.read(execution, Map("partition_col" -> SingleValue("part_2"))), rows_2)
 
-        // == Overwrite ===================================================================
+        // == Overwrite ===============================================================================================
         val rdd_2a = spark.sparkContext.parallelize(Seq(
             Row("v3", 23, "lala")
         ))
         val df2a = spark.createDataFrame(rdd_2a, SchemaUtils.replaceCharVarchar(table_2.dataSchema))
-        relation_2.write(executor, df2a, Map("partition_col" -> SingleValue("part_2")))
+        relation_2.write(execution, df2a, Map("partition_col" -> SingleValue("part_2")))
 
-        // == Read ===================================================================
+        // == Read ====================================================================================================
         val rows_2a = Seq(
             Row("v3", "lala      ", 23, "part_2")
         )
-        checkAnswer(relation_2.read(executor, None, Map()), rows_1 ++ rows_2a)
-        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows_1)
-        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), rows_2a)
+        checkAnswer(relation_2.read(execution, Map()), rows_1 ++ rows_2a)
+        checkAnswer(relation_2.read(execution, Map("partition_col" -> SingleValue("part_1"))), rows_1)
+        checkAnswer(relation_2.read(execution, Map("partition_col" -> SingleValue("part_2"))), rows_2a)
 
-        // == Destroy ===================================================================
-        relation_2.destroy(executor)
+        // == Destroy =================================================================================================
+        relation_2.destroy(execution)
+        relation_1.exists(execution) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.exists(execution) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
     })
@@ -860,7 +894,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation_1 = context.getRelation(RelationIdentifier("t1"))
@@ -873,11 +907,13 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             Field("partition_col", ftypes.StringType, false)
         ))
 
-        // == Create ===================================================================
+        // == Create ==================================================================================================
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
-        relation_1.create(executor)
+        relation_1.create(execution)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
@@ -914,16 +950,22 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             StructField("partition_col", StringType, nullable = false)
         )))
 
-        // == Write ===================================================================
+        // == Write ===================================================================================================
         val rdd_1 = spark.sparkContext.parallelize(Seq(
             Row("v1", 21)
         ))
         val df_1 = spark.createDataFrame(rdd_1, table_1.dataSchema)
-        relation_1.write(executor, df_1, Map("partition_col" -> SingleValue("part_1")))
+        relation_1.write(execution, df_1, Map("partition_col" -> SingleValue("part_1")))
 
-        // == Migrate ===================================================================
+        // == Migrate =================================================================================================
         val relation_2 = context.getRelation(RelationIdentifier("t2"))
-        relation_2.migrate(executor, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
@@ -962,44 +1004,44 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             StructField("partition_col", StringType, nullable = false)
         )))
 
-        // == Write ===================================================================
+        // == Write ===================================================================================================
         val rdd_2 = spark.sparkContext.parallelize(Seq(
             Row("v2", true)
         ))
         val df_2 = spark.createDataFrame(rdd_2, table_2.dataSchema)
-        relation_2.write(executor, df_2, Map("partition_col" -> SingleValue("part_2")))
+        relation_2.write(execution, df_2, Map("partition_col" -> SingleValue("part_2")))
 
-        // == Read ===================================================================
+        // == Read ====================================================================================================
         val rows_1 = Seq(
             Row("v1", null, "part_1")
         )
         val rows_2 = Seq(
             Row("v2", true, "part_2")
         )
-        checkAnswer(relation_2.read(executor, None, Map()), rows_1 ++ rows_2)
-        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows_1)
-        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), rows_2)
+        checkAnswer(relation_2.read(execution, Map()), rows_1 ++ rows_2)
+        checkAnswer(relation_2.read(execution, Map("partition_col" -> SingleValue("part_1"))), rows_1)
+        checkAnswer(relation_2.read(execution, Map("partition_col" -> SingleValue("part_2"))), rows_2)
 
-        // == Overwrite ===================================================================
+        // == Overwrite ===============================================================================================
         val rdd_1a = spark.sparkContext.parallelize(Seq(
             Row("v3", false)
         ))
         val df_1a = spark.createDataFrame(rdd_1a, table_2.dataSchema)
-        relation_2.write(executor, df_1a, Map("partition_col" -> SingleValue("part_1")))
+        relation_2.write(execution, df_1a, Map("partition_col" -> SingleValue("part_1")))
 
-        // == Read ===================================================================
+        // == Read ====================================================================================================
         val rows_1a = Seq(
             Row("v3", false, "part_1")
         )
         val rows_2a = Seq(
             Row("v2", true, "part_2")
         )
-        checkAnswer(relation_2.read(executor, None, Map()), rows_1a ++ rows_2a)
-        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_1"))), rows_1a)
-        checkAnswer(relation_2.read(executor, None, Map("partition_col" -> SingleValue("part_2"))), rows_2a)
+        checkAnswer(relation_2.read(execution, Map()), rows_1a ++ rows_2a)
+        checkAnswer(relation_2.read(execution, Map("partition_col" -> SingleValue("part_1"))), rows_1a)
+        checkAnswer(relation_2.read(execution, Map("partition_col" -> SingleValue("part_2"))), rows_2a)
 
-        // == Destroy ===================================================================
-        relation_2.destroy(executor)
+        // == Destroy =================================================================================================
+        relation_2.destroy(execution)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
@@ -1032,6 +1074,6 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             StructField("ts", TimestampType)
         ))
         val sql = HiveUnionTableRelation.unionSql(Seq(df1,df2), schema)
-        sql should be ("SELECT CAST(`col_0` AS DOUBLE) AS `col_0`, `col_1`, CAST(NULL AS BOOLEAN) AS `col_2`, `ts` FROM `default`.`hive_union_0` UNION ALL SELECT `col_0`, CAST(NULL AS STRING) AS `col_1`, `col_2`, `ts` FROM `default`.`hive_union_1`")
+        sql.unqouted should be ("SELECT CAST(col_0 AS DOUBLE) AS col_0, col_1, CAST(NULL AS BOOLEAN) AS col_2, ts FROM default.hive_union_0 UNION ALL SELECT col_0, CAST(NULL AS STRING) AS col_1, col_2, ts FROM default.hive_union_1")
     })
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,35 @@
 
 package com.dimajix.flowman.server.model
 
+import java.time.Duration
+
 import com.dimajix.flowman.history
 import com.dimajix.flowman.model
 
 
 object Converter {
+    def ofSpec(ms:history.Measurement) : Measurement = {
+        Measurement(
+            ms.name,
+            ms.jobId,
+            ms.ts,
+            ms.labels,
+            ms.value
+        )
+    }
+
+    def ofSpec(ms:history.MetricSeries) : MetricSeries = {
+        MetricSeries(
+            ms.metric,
+            ms.namespace,
+            ms.project,
+            ms.job,
+            ms.phase,
+            ms.labels,
+            ms.measurements.map(m => ofSpec(m))
+        )
+    }
+
     def ofSpec(ns:model.Namespace) : Namespace = {
         Namespace(
             ns.name,
@@ -32,41 +56,52 @@ object Converter {
         )
     }
 
-    def ofSpec(project:model.Project) : Project = {
-        Project(
-            project.name,
-            project.version,
-            project.description,
-            project.environment,
-            project.config,
-            project.profiles.keys.toSeq,
-            project.connections.keys.toSeq,
-            project.basedir.map(_.toString),
-            project.jobs.keys.toSeq,
-            project.targets.keys.toSeq
+    def ofSpec(resource:history.Resource) : Resource = {
+        Resource(resource.category, resource.name, resource.partition)
+    }
+
+    def ofSpec(node:history.Node) : Node = {
+        Node(
+            node.id,
+            node.category.lower,
+            node.kind,
+            node.name,
+            node.provides.map(r => ofSpec(r)),
+            node.requires.map(r => ofSpec(r))
         )
     }
 
-    def ofSpec(job:model.Job) : Job = {
-        Job(
-            job.name,
-            job.description,
-            job.parameters.map(_.name),
-            job.environment
+    def ofSpec(edge:history.Edge) : Edge = {
+        Edge(
+            edge.input.id,
+            edge.output.id,
+            edge.action.upper,
+            edge.labels
         )
     }
 
-    def ofSpec(jobState:history.JobState) : JobState = {
+    def ofSpec(graph:history.Graph) : Graph = {
+        Graph(
+            graph.nodes.map(n => ofSpec(n)),
+            graph.edges.map(n => ofSpec(n))
+        )
+    }
+
+    def ofSpec(jobState:history.JobState, measurements:Seq[history.Measurement]=Seq()) : JobState = {
         JobState(
             jobState.id,
             jobState.namespace,
             jobState.project,
+            jobState.version,
             jobState.job,
             jobState.phase.toString,
             jobState.args,
             jobState.status.toString,
             jobState.startDateTime,
-            jobState.endDateTime
+            jobState.endDateTime,
+            jobState.endDateTime.map(dt => Duration.between(jobState.startDateTime.getOrElse(dt), dt)),
+            jobState.error,
+            measurements.map(ofSpec)
         )
     }
 
@@ -76,12 +111,15 @@ object Converter {
             state.jobId,
             state.namespace,
             state.project,
+            state.version,
             state.target,
             state.partitions,
             state.phase.toString,
             state.status.toString,
             state.startDateTime,
-            state.endDateTime
+            state.endDateTime,
+            state.endDateTime.map(dt => Duration.between(state.startDateTime.getOrElse(dt), dt)),
+            state.error
         )
     }
 }

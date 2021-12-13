@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,16 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 
 
+/**
+ * The ScopedExecution is a caching execution with the added ability to isolate resources (i.e. not to reuse
+ * existing DataFrames) and with a separate [[OperationManager]] for capturing background operations.
+ * @param parent
+ * @param isolated
+ */
 class ScopedExecution(parent:Execution, isolated:Boolean=true) extends CachingExecution(Some(parent), isolated) {
     override protected val logger = LoggerFactory.getLogger(classOf[ScopedExecution])
     private val operationsManager = new OperationManager(parent.operations)
@@ -74,5 +81,28 @@ class ScopedExecution(parent:Execution, isolated:Boolean=true) extends CachingEx
      */
     override def operations: OperationManager = operationsManager
 
-    override def withListeners[T](listeners: Seq[ExecutionListener])(fn: Execution => T): T = parent.withListeners(listeners)(fn)
+    /**
+     * Invokes a function with a new [[Executor]] that with additional [[ExecutionListener]].
+     * @param listeners
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    override def withListeners[T](listeners: Seq[ExecutionListener])(fn: Execution => T): T = {
+        val execution = new MonitorExecution(this, listeners.map(l => (l,None)), None)
+        fn(execution)
+    }
+
+    /**
+     * Invokes a function with a new Executor with a specific [[MetricBoard]]
+     *
+     * @param metrics
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    override def withMetrics[T](metrics: Option[MetricBoard])(fn: Execution => T): T = {
+        val execution = new MonitorExecution(this, Seq(), metrics)
+        fn(execution)
+    }
 }

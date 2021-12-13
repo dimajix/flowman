@@ -86,6 +86,48 @@ class AggregateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
         result(2) should be (Row("c1_v2", "c2_v2", 113l, 118.0, 118.0, 118.0, 118.0))
     }
 
+    it should "support expressions in dimensions" in {
+        val df = spark.createDataFrame(Seq(
+            ("c1_v1", "c2_v1", 12, 23.0),
+            ("c1_v1", "c2_v1", 13, 18.0),
+            ("c1_v2", "c2_v1", 118, 123.0),
+            ("c1_v2", "c2_v2", 113, 118.0)
+        ))
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.execution
+
+        val xfs = AggregateMapping(
+            Mapping.Properties(session.context),
+            MappingOutputIdentifier("myview"),
+            Seq("_1 AS dim1", "upper(_2) AS dim2"),
+            ListMap(
+                "agg3" -> "sum(_3)"
+            )
+        )
+
+        xfs.input should be (MappingOutputIdentifier("myview"))
+        xfs.outputs should be (Seq("main"))
+        xfs.dimensions should be (Seq("_1 AS dim1", "upper(_2) AS dim2"))
+        xfs.aggregations should be (Map("agg3" -> "sum(_3)"))
+        xfs.inputs should be (Seq(MappingOutputIdentifier("myview")))
+
+        val df2 = xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
+            .orderBy("dim1", "dim2")
+        df2.schema should be (
+            StructType(Seq(
+                StructField("dim1", StringType),
+                StructField("dim2", StringType),
+                StructField("agg3", LongType)
+            ))
+        )
+        val result = df2.collect()
+        result.size should be (3)
+        result(0) should be (Row("c1_v1", "C2_V1", 25l))
+        result(1) should be (Row("c1_v2", "C2_V1", 118l))
+        result(2) should be (Row("c1_v2", "C2_V2", 113l))
+    }
+
     "An appropriate project" should "be readable from YML" in {
         val spec =
             """

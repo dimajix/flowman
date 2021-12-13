@@ -19,18 +19,21 @@ package com.dimajix.flowman.spec.dataset
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.annotation.DatasetType
+import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
 object DatasetSpec extends TypeRegistry[DatasetSpec] {
 }
 
+@JsonTypeResolver(classOf[CustomTypeResolverBuilder])
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "file", value = classOf[FileDatasetSpec]),

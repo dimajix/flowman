@@ -58,7 +58,7 @@ class ShowCommand extends Command {
         val task = ConsoleTarget(context, RelationIdentifier(relation), limit, columns, partition, !noHeader, csv)
 
         Try {
-            task.execute(session.execution, Phase.BUILD)
+            task.execute(session.execution, Phase.BUILD).rethrow()
         } match {
             case Success(_) =>
                 true

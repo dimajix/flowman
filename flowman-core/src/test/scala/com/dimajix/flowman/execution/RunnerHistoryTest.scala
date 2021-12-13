@@ -37,7 +37,7 @@ import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
@@ -46,18 +46,19 @@ import com.dimajix.spark.testing.LocalSparkSession
 object RunnerHistoryTest {
     object NullTarget {
         def apply(name:String, partition: Map[String,String] = Map()) : Context => NullTarget = {
-            ctx:Context => NullTarget(Target.Properties(ctx, name), ctx.evaluate(partition))
+            ctx:Context => NullTarget(Target.Properties(ctx, name, "null"), ctx.evaluate(partition))
         }
     }
     case class NullTarget(
         instanceProperties: Target.Properties,
         partition: Map[String,String]
     ) extends BaseTarget {
-        override def instance: TargetInstance = {
-            TargetInstance(
+        override def digest(phase:Phase): TargetDigest = {
+            TargetDigest(
                 namespace.map(_.name).getOrElse(""),
                 project.map(_.name).getOrElse(""),
                 name,
+                phase,
                 partition
             )
         }
@@ -140,9 +141,10 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
 
     it should "correctly handle non-dirty targets" in {
         def genTarget(name:String, dirty:Trilean) : Context => Target = (ctx:Context) => {
-            val instance = TargetInstance("default", "default", name)
+            val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = stub[Target]
             (target.name _).when().returns(name)
+            (target.kind _).when().returns("mock")
             (target.before _).when().returns(Seq())
             (target.after _).when().returns(Seq())
             (target.phases _).when().returns(Lifecycle.ALL.toSet)
@@ -150,14 +152,16 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
             (target.requires _).when(*).returns(Set())
             (target.provides _).when(*).returns(Set())
             (target.identifier _).when().returns(TargetIdentifier(name))
-            (target.instance _).when().returns(instance)
+            (target.digest _).when(Phase.CREATE).returns(instance)
+            (target.namespace _).when().returns(ctx.namespace)
+            (target.project _).when().returns(ctx.project)
             (target.dirty _).when(*, Phase.CREATE).returns(dirty)
             (target.execute _).when(*, Phase.CREATE).returns(TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
             target
         }
         def genJob(session:Session, target:String) : Job = {
             Job.builder(session.getContext(session.project.get))
-                .setName("job-" + Random.nextLong())
+                .setName("default")
                 .addTarget(TargetIdentifier(target))
                 .build()
         }

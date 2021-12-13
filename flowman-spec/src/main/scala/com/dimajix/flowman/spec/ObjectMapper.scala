@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.dataset.DatasetSpec
 import com.dimajix.flowman.spec.history.HistorySpec
 import com.dimajix.flowman.spec.mapping.MappingSpec
+import com.dimajix.flowman.spec.measure.MeasureSpec
 import com.dimajix.flowman.spec.metric.MetricSinkSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
 import com.dimajix.flowman.spec.schema.SchemaSpec
@@ -55,6 +56,7 @@ object ObjectMapper extends CoreObjectMapper {
         val schemaTypes = SchemaSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val connectionTypes = ConnectionSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val assertionTypes = AssertionSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val measureTypes = MeasureSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val datasetTypes = DatasetSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val metricSinkTypes = MetricSinkSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mapper = super.mapper
@@ -67,6 +69,7 @@ object ObjectMapper extends CoreObjectMapper {
         mapper.registerSubtypes(schemaTypes:_*)
         mapper.registerSubtypes(connectionTypes:_*)
         mapper.registerSubtypes(assertionTypes:_*)
+        mapper.registerSubtypes(measureTypes:_*)
         mapper.registerSubtypes(datasetTypes:_*)
         mapper.registerSubtypes(metricSinkTypes:_*)
         mapper

@@ -48,6 +48,7 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.sql.SchemaUtils
 
@@ -93,26 +94,21 @@ case class ValuesRelation(
      * Reads data from the relation, possibly from specific partitions
      *
      * @param execution
-     * @param schema     - the schema to read. If none is specified, all available columns will be read
      * @param partitions - List of partitions. If none are specified, all the data will be read
      * @return
      */
-    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(execution: Execution, partitions: Map[String, FieldValue]): DataFrame = {
         require(execution != null)
-        require(schema != null)
         require(partitions != null)
 
         if (records.nonEmpty) {
             val fullSchema = com.dimajix.flowman.types.StructType(effectiveSchema.fields)
             val values = records.map(_.toArray(fullSchema))
-            val df = DataFrameUtils.ofStringValues(execution.spark, values, fullSchema.sparkType)
-            SchemaUtils.applySchema(df, schema)
+            DataFrameBuilder.ofStringValues(execution.spark, values, fullSchema.sparkType)
         }
         else {
-            val readSchema = schema.orElse(inputSchema)
-                .getOrElse(throw new IllegalArgumentException("Values relation either needs own schema or a desired input schema"))
-
-            DataFrameUtils.ofSchema(execution.spark, readSchema)
+            val readSchema = inputSchema.get
+            DataFrameBuilder.ofSchema(execution.spark, readSchema)
         }
     }
 
@@ -142,6 +138,15 @@ case class ValuesRelation(
      * @return
      */
     override def exists(execution: Execution): Trilean = true
+
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = true
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a

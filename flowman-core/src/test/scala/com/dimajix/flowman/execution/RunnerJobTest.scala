@@ -27,7 +27,8 @@ import com.dimajix.flowman.execution.RunnerJobTest.NullTarget
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
-import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobDigest
+import com.dimajix.flowman.model.JobLifecycle
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.LifecycleResult
@@ -38,7 +39,7 @@ import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.ProjectWrapper
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.types.StringType
@@ -55,11 +56,12 @@ object RunnerJobTest {
         instanceProperties: Target.Properties,
         partition: Map[String,String]
     ) extends BaseTarget {
-        override def instance: TargetInstance = {
-            TargetInstance(
+        override def digest(phase:Phase): TargetDigest = {
+            TargetDigest(
                 namespace.map(_.name).getOrElse(""),
                 project.map(_.name).getOrElse(""),
                 name,
+                phase,
                 partition
             )
         }
@@ -191,7 +193,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
         (target.phases _).expects().atLeastOnce().returns(Set(Phase.BUILD))
         (target.requires _).expects(Phase.BUILD).atLeastOnce().returns(Set())
         (target.provides _).expects(Phase.BUILD).atLeastOnce().returns(Set())
-        (target.instance _).expects().atLeastOnce().returns(TargetInstance("default", "project", "some_target"))
+        (target.digest _).expects(Phase.BUILD).atLeastOnce().returns(TargetDigest("default", "project", "some_target", Phase.BUILD))
         (target.dirty _).expects(*, Phase.BUILD).returns(Yes)
         (target.metadata _).expects().atLeastOnce().returns(Metadata(name="some_target", kind="target", category="target"))
         (target.execute _).expects(*, Phase.BUILD).throwing(new UnsupportedOperationException())
@@ -202,7 +204,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
 
     it should "only execute specified targets" in {
         def genTarget(name:String, toBeExecuted:Boolean) : Context => Target = (ctx:Context) => {
-            val instance = TargetInstance("default", "default", name)
+            val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = mock[Target]
             (target.name _).expects().atLeastOnce().returns(name)
             (target.before _).expects().atLeastOnce().returns(Seq())
@@ -212,7 +214,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             (target.provides _).expects(*).atLeastOnce().returns(Set())
             (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
             if (toBeExecuted) {
-                (target.instance _).expects().atLeastOnce().returns(instance)
+                (target.digest _).expects(Phase.CREATE).atLeastOnce().returns(instance)
                 (target.dirty _).expects(*, Phase.CREATE).returns(Yes)
                 (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
                 (target.execute _).expects(*, Phase.CREATE).returning(TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
@@ -248,7 +250,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
 
     it should "not execute targets in dryMode" in {
         def genTarget(name:String) : Context => Target = (ctx:Context) => {
-            val instance = TargetInstance("default", "default", name)
+            val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = mock[Target]
             (target.name _).expects().atLeastOnce().returns(name)
             (target.before _).expects().atLeastOnce().returns(Seq())
@@ -257,7 +259,8 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             (target.requires _).expects(*).atLeastOnce().returns(Set())
             (target.provides _).expects(*).atLeastOnce().returns(Set())
             (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
-            (target.instance _).expects().atLeastOnce().returns(instance)
+            (target.digest _).expects(Phase.CREATE).atLeastOnce().returns(instance)
+            (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
             (target.dirty _).expects(*, Phase.CREATE).atLeastOnce().returns(Yes)
             (target.execute _).expects(*, Phase.CREATE).never()
 
@@ -283,7 +286,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
 
     it should "stop execution in case of an exception" in {
         def genTarget(name:String, throwsException:Boolean, toBeExecuted:Boolean, before:Seq[String]=Seq(), after:Seq[String]=Seq()) : Context => Target = (ctx:Context) => {
-            val instance = TargetInstance("default", "default", name)
+            val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = mock[Target]
             (target.name _).expects().atLeastOnce().returns(name)
             (target.before _).expects().atLeastOnce().returns(before.map(TargetIdentifier(_)))
@@ -294,7 +297,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             (target.project _).expects().anyNumberOfTimes().returns(None)
             (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
             if (toBeExecuted) {
-                (target.instance _).expects().atLeastOnce().returns(instance)
+                (target.digest _).expects(Phase.CREATE).atLeastOnce().returns(instance)
                 (target.dirty _).expects(*, Phase.CREATE).atLeastOnce().returns(Yes)
                 (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
                 if (throwsException) {
@@ -330,7 +333,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
 
     it should "continue execution in case of an exception with keep-going enabled" in {
         def genTarget(name:String, throwsException:Boolean, before:Seq[String]=Seq(), after:Seq[String]=Seq()) : Context => Target = (ctx:Context) => {
-            val instance = TargetInstance("default", "default", name)
+            val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = mock[Target]
             (target.name _).expects().atLeastOnce().returns(name)
             (target.before _).expects().atLeastOnce().returns(before.map(TargetIdentifier(_)))
@@ -340,7 +343,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             (target.provides _).expects(*).atLeastOnce().returns(Set())
             (target.project _).expects().anyNumberOfTimes().returns(None)
             (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
-            (target.instance _).expects().atLeastOnce().returns(instance)
+            (target.digest _).expects(Phase.CREATE).atLeastOnce().returns(instance)
             (target.dirty _).expects(*, Phase.CREATE).atLeastOnce().returns(Yes)
             (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
             if (throwsException) {
@@ -376,21 +379,21 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
         val jobLifecycleToken = new LifecycleToken {}
         val jobJobToken = new JobToken {}
         val jobTargetToken = new TargetToken {}
-        (jobHook.startLifecycle _).expects( where( (_:Execution, _:Job, _:JobInstance, phase:Seq[Phase]) => phase == Seq(Phase.BUILD)) ).returning(jobLifecycleToken)
+        (jobHook.startLifecycle _).expects( where( (_:Execution, _:Job, instance:JobLifecycle) => instance.phases == Seq(Phase.BUILD)) ).returning(jobLifecycleToken)
         (jobHook.finishLifecycle _).expects(where( (_:Execution, token:LifecycleToken, result:LifecycleResult) => token == jobLifecycleToken && result.status == Status.SUCCESS))
-        (jobHook.startJob _).expects( where( (_:Execution, _:Job, _:JobInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(jobLifecycleToken)) ).returning(jobJobToken)
+        (jobHook.startJob _).expects( where( (_:Execution, _:Job, instance:JobDigest, token:Option[Token]) => instance.phase == Phase.BUILD && token == Some(jobLifecycleToken)) ).returning(jobJobToken)
         (jobHook.finishJob _).expects(where( (_:Execution, token:JobToken, result:JobResult) => token == jobJobToken && result.status == Status.SUCCESS))
-        (jobHook.startTarget _).expects( where( (_:Execution, _:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(jobJobToken))).returning(jobTargetToken)
+        (jobHook.startTarget _).expects( where( (_:Execution, _:Target, instance:TargetDigest, token:Option[Token]) => instance.phase == Phase.BUILD && token == Some(jobJobToken))).returning(jobTargetToken)
         (jobHook.finishTarget _).expects(where( (_:Execution, token:TargetToken, result:TargetResult) => token == jobTargetToken && result.status == Status.SUCCESS))
         val namespaceHook = mock[Hook]
         val namespaceLifecycleToken = new LifecycleToken {}
         val namespaceJobToken = new JobToken {}
         val namespaceTargetToken = new TargetToken {}
-        (namespaceHook.startLifecycle _).expects( where( (_:Execution, _:Job, _:JobInstance, phase:Seq[Phase]) => phase == Seq(Phase.BUILD)) ).returning(namespaceLifecycleToken)
+        (namespaceHook.startLifecycle _).expects( where( (_:Execution, _:Job, instance:JobLifecycle) => instance.phases == Seq(Phase.BUILD)) ).returning(namespaceLifecycleToken)
         (namespaceHook.finishLifecycle _).expects(where( (_:Execution, token:LifecycleToken, result:LifecycleResult) => token == namespaceLifecycleToken && result.status == Status.SUCCESS))
-        (namespaceHook.startJob _).expects( where( (_:Execution, _:Job, _:JobInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(namespaceLifecycleToken)) ).returning(namespaceJobToken)
+        (namespaceHook.startJob _).expects( where( (_:Execution, _:Job, instance:JobDigest, token:Option[Token]) => instance.phase == Phase.BUILD && token == Some(namespaceLifecycleToken)) ).returning(namespaceJobToken)
         (namespaceHook.finishJob _).expects(where( (_:Execution, token:JobToken, result:JobResult) => token == namespaceJobToken && result.status == Status.SUCCESS))
-        (namespaceHook.startTarget _).expects( where( (_:Execution, _:Target, _:TargetInstance, phase:Phase, token:Option[Token]) => phase == Phase.BUILD && token == Some(namespaceJobToken))).returning(namespaceTargetToken)
+        (namespaceHook.startTarget _).expects( where( (_:Execution, _:Target, instance:TargetDigest, token:Option[Token]) => instance.phase == Phase.BUILD && token == Some(namespaceJobToken))).returning(namespaceTargetToken)
         (namespaceHook.finishTarget _).expects(where( (_:Execution, token:TargetToken, result:TargetResult) => token == namespaceTargetToken && result.status == Status.SUCCESS))
 
         val ns = Namespace(

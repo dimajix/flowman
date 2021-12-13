@@ -20,7 +20,6 @@ import scala.util.control.NonFatal
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.catalyst.plans.logical.QualifiedColType
 import org.apache.spark.sql.delta.catalog.DeltaTableV2
 import org.apache.spark.sql.delta.commands.AlterTableAddColumnsDeltaCommand
 import org.apache.spark.sql.delta.commands.AlterTableChangeColumnDeltaCommand
@@ -43,6 +42,7 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionedRelation
+import com.dimajix.flowman.spark.sql.delta.QualifiedColumn
 import com.dimajix.spark.sql.SchemaUtils
 
 
@@ -58,9 +58,8 @@ abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation w
      * @param schema
      * @return
      */
-    protected def readStreamFrom(execution: Execution, location: Path, schema: Option[StructType]): DataFrame = {
-        val df = streamReader(execution, "delta", options).load(location.toString)
-        SchemaUtils.applySchema(df, schema)
+    protected def readStreamFrom(execution: Execution, location: Path): DataFrame = {
+        streamReader(execution, "delta", options).load(location.toString)
     }
 
     /**
@@ -91,7 +90,7 @@ abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation w
     protected def migrateInternal(execution: Execution, migrationPolicy: MigrationPolicy, migrationStrategy: MigrationStrategy): Unit = {
         val table = loadDeltaTable(execution)
         val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
-        val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(com.dimajix.flowman.types.StructType(schema.get.fields))
+        val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
 
         val requiresMigration = TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
 
@@ -135,8 +134,7 @@ abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation w
                         val table = loadDeltaTable(execution)
                         AlterTableAddColumnsDeltaCommand(
                             table,
-                            Seq(QualifiedColType(
-                                Seq(column.name), column.catalogType, column.nullable, column.description, None)
+                            Seq(QualifiedColumn(column.name, column.catalogType, column.nullable, column.description)
                             )).run(spark)
                     case UpdateColumnNullability(column, nullable) =>
                         val table = loadDeltaTable(execution)

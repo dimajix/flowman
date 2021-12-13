@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 
 package com.dimajix.flowman.history
 
-import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.model.JobInstance
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobDigest
+import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetDigest
+import com.dimajix.flowman.model.TargetResult
 
 
 object NullStateStore {
@@ -36,42 +38,67 @@ class NullStateStore extends StateStore {
       * @param batch
       * @return
       */
-    override def getJobState(batch:JobInstance) : Option[JobState] = None
+    override def getJobState(batch:JobDigest) : Option[JobState] = None
+
+    /**
+     * Returns all metrics belonging to a specific job instance
+     * @param jobId
+     * @return
+     */
+    override def getJobMetrics(jobId:String) : Seq[Measurement] = Seq()
+
+    /**
+     * Returns the execution graph belonging to a specific job run
+     *
+     * @param jobId
+     * @return
+     */
+    override def getJobGraph(jobId: String): Option[Graph] = None
+
+    /**
+     * Returns the execution environment of a specific job run
+     *
+     * @param jobId
+     * @return
+     */
+    override def getJobEnvironment(jobId: String): Map[String, String] = Map()
 
     /**
       * Starts the run and returns a token, which can be anything
-      * @param batch
+     *
+     * @param batch
       * @return
       */
-    override def startJob(batch:JobInstance, phase:Phase) : JobToken = DummyJobToken()
+    override def startJob(job:Job, digest:JobDigest) : JobToken = DummyJobToken()
 
     /**
       * Sets the status of a job after it has been started
       * @param token
       * @param status
       */
-    override def finishJob(token:JobToken, status:Status) : Unit = {}
+    override def finishJob(token:JobToken, result:JobResult, metrics:Seq[Measurement]=Seq()) : Unit = {}
 
     /**
       * Returns the state of a target
       * @param target
       * @return
       */
-    override def getTargetState(target:TargetInstance) : Option[TargetState] = None
+    override def getTargetState(target:TargetDigest) : Option[TargetState] = None
+    override def getTargetState(targetId: String): TargetState = ???
 
     /**
       * Starts the run and returns a token, which can be anything
       * @param target
       * @return
       */
-    override def startTarget(target:TargetInstance, phase:Phase, parent:Option[JobToken]=None) : TargetToken = DummyTargetToken()
+    override def startTarget(target:Target, digest:TargetDigest, parent:Option[JobToken]=None) : TargetToken = DummyTargetToken()
 
     /**
       * Sets the status of a target after it has been started
       * @param token
       * @param status
       */
-    override def finishTarget(token:TargetToken, status:Status) : Unit = {}
+    override def finishTarget(token:TargetToken, result:TargetResult) : Unit = {}
 
     /**
       * Returns a list of job matching the query criteria
@@ -80,7 +107,10 @@ class NullStateStore extends StateStore {
       * @param offset
       * @return
       */
-    override def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = Seq()
+    override def findJobs(query:JobQuery, order:Seq[JobOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[JobState] = Seq()
+
+    override def countJobs(query:JobQuery) : Int = 0
+    override def countJobs(query:JobQuery, grouping:JobColumn) : Map[String,Int] = Map()
 
     /**
       * Returns a list of job matching the query criteria
@@ -89,5 +119,10 @@ class NullStateStore extends StateStore {
       * @param offset
       * @return
       */
-    override def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = Seq()
+    override def findTargets(query:TargetQuery, order:Seq[TargetOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[TargetState] = Seq()
+
+    override def countTargets(query: TargetQuery): Int = 0
+    override def countTargets(query:TargetQuery, grouping:TargetColumn) : Map[String,Int] = Map()
+
+    override def findJobMetrics(jobQuery: JobQuery, groupings: Seq[String]): Seq[MetricSeries] = Seq()
 }

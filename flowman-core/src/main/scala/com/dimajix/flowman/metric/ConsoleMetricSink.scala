@@ -21,12 +21,13 @@ import com.dimajix.flowman.execution.Status
 
 class ConsoleMetricSink extends AbstractMetricSink {
     override def commit(board:MetricBoard, status:Status): Unit = {
+        println("Collected metrics")
         board.metrics(catalog(board), status).foreach{ metric =>
             val name = metric.name
             val labels = metric.labels.map(kv => kv._1 + "=" + kv._2)
             metric match {
-                case gauge: GaugeMetric => println(s"MetricSelection($name) GaugeMetric(${labels.mkString(",")})=${gauge.value}")
-                case _: Metric => println(s"MetricSelection($name) Metric(${labels.mkString})=???")
+                case gauge: GaugeMetric => println(s"  $name(${labels.mkString(",")}) = ${gauge.value}")
+                case _: Metric => println(s"  $name(${labels.mkString}) = ???")
             }
         }
     }

@@ -71,12 +71,11 @@ class TemplatingTest extends AnyFlatSpec with Matchers with MockFactory {
         val instant = Instant.now()
         val result = LifecycleResult(
             job,
-            job.instance(Map("p1" -> "1", "p2" -> "2", "p3" -> "str")),
-            Lifecycle.BUILD,
+            job.lifecycle(Lifecycle.BUILD, Map("p1" -> "1", "p2" -> "2", "p3" -> "str")),
             Seq(
-                JobResult(job, job.instance(Map("p1" -> "1", "p2" -> "2", "p3" -> "str")), Phase.VALIDATE, Status.SUCCESS, instant),
-                JobResult(job, job.instance(Map("p1" -> "1", "p2" -> "2", "p3" -> "str")), Phase.CREATE, Status.SUCCESS, instant),
-                JobResult(job, job.instance(Map("p1" -> "1", "p2" -> "2", "p3" -> "str")), Phase.BUILD, Status.SUCCESS, instant)
+                JobResult(job, job.digest(Phase.VALIDATE, Map("p1" -> "1", "p2" -> "2", "p3" -> "str")), Status.SUCCESS, instant),
+                JobResult(job, job.digest(Phase.CREATE, Map("p1" -> "1", "p2" -> "2", "p3" -> "str")), Status.SUCCESS, instant),
+                JobResult(job, job.digest(Phase.BUILD, Map("p1" -> "1", "p2" -> "2", "p3" -> "str")), Status.SUCCESS, instant)
             ),
             instant)
 

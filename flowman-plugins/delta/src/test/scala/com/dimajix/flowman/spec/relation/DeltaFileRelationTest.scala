@@ -22,6 +22,7 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Paths
 import java.util.UUID
 
+import io.delta.sql.DeltaSparkSessionExtension
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
@@ -35,6 +36,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.PartitionField
@@ -52,8 +54,8 @@ import com.dimajix.spark.testing.QueryTest
 
 class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession with QueryTest {
     override def configureSpark(builder: SparkSession.Builder): SparkSession.Builder = {
-        builder.config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-            .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+        builder.config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+            .withExtensions(new DeltaSparkSessionExtension)
     }
 
     "The DeltaFileRelation" should "be parseable" in {
@@ -99,23 +101,27 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Field("int_col", ftypes.IntegerType)
         ))
 
-        // == Create ===================================================================
+        // == Create ==================================================================================================
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
         relation.create(execution, false)
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
 
         // Try to create relation, although it already exists
         a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
         relation.create(execution, true)
 
-        // == Read ===================================================================
-        relation.read(execution, None, Map()).count() should be (0)
+        // == Read ====================================================================================================
+        relation.read(execution, Map()).count() should be (0)
 
-        // == Write ===================================================================
+        // == Write ===================================================================================================
         val schema = StructType(Seq(
             StructField("str_col", StringType),
             StructField("char_col", StringType),
@@ -128,32 +134,36 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.write(execution, df, Map())
         relation.loaded(execution, Map()) should be (Yes)
 
-        // == Read ===================================================================
-        val df2 = relation.read(execution, None, Map())
+        // == Read ====================================================================================================
+        val df2 = relation.read(execution, Map())
         val rows_1 = Seq(
             Row("v1", 21)
         )
         checkAnswer(df2, rows_1)
 
-        // == Truncate ===================================================================
+        // == Truncate ================================================================================================
         relation.truncate(execution)
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
 
-        // == Read ===================================================================
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        // == Read ====================================================================================================
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType)
         )))
 
-        // == Destroy ===================================================================
+        // == Destroy =================================================================================================
         relation.exists(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.destroy(execution)
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
 
         an[FileNotFoundException] shouldBe thrownBy(relation.destroy(execution))
@@ -190,10 +200,14 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create ================================================================================================
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
         relation.create(execution, false)
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
@@ -203,14 +217,14 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.create(execution, true)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Write ==================================================================================================
         val schema = StructType(Seq(
@@ -228,14 +242,14 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Overwrite ==============================================================================================
         relation.write(execution, df, Map("part" -> SingleValue("p0")))
@@ -244,9 +258,9 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Write ==================================================================================================
         relation.write(execution, df, Map("part" -> SingleValue("p1")))
@@ -255,45 +269,49 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).count() should be (2)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (1)
+        relation.read(execution, Map()).count() should be (2)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (1)
 
         // == Truncate ===============================================================================================
         relation.truncate(execution, Map("part" -> SingleValue("p0")))
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (1)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (1)
 
         // == Truncate ===============================================================================================
         relation.truncate(execution)
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Destroy ================================================================================================
         relation.exists(execution) should be (Yes)
@@ -301,6 +319,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
 
         an[FileNotFoundException] shouldBe thrownBy(relation.destroy(execution))
@@ -333,6 +353,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution) should be (No)
         relation.create(execution)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution) should be (No)
 
         // == Write ==================================================================================================
@@ -350,10 +372,10 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
-        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (0)
 
         // == Write ==================================================================================================
         relation.write(execution, df, Map(), OutputMode.APPEND)
@@ -363,10 +385,10 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (8)
-        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (6)
-        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (2)
-        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (8)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (6)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (0)
 
         // == Overwrite ==============================================================================================
         val rdd2 = spark.sparkContext.parallelize(Seq(
@@ -384,28 +406,32 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 //        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
 //        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (Yes)
 //        relation.loaded(execution, Map("part" -> SingleValue("4"))) should be (No)
-//        relation.read(execution, None, Map()).count() should be (6)
-//        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
-//        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (2)
-//        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (1)
-//        relation.read(execution, None, Map("part" -> SingleValue("4"))).count() should be (0)
+//        relation.read(execution, Map()).count() should be (6)
+//        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (3)
+//        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (2)
+//        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (1)
+//        relation.read(execution, Map("part" -> SingleValue("4"))).count() should be (0)
 
         // == Overwrite ==============================================================================================
         relation.write(execution, df, Map(), OutputMode.OVERWRITE)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
         // == Read ==================================================================================================
         relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
-        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (0)
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
@@ -449,27 +475,31 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create ================================================================================================
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
         relation.create(execution, false)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).schema should be (StructType(Seq(
+        relation.read(execution, Map("part" -> SingleValue("p0"))).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Write ==================================================================================================
         val schema = StructType(Seq(
@@ -487,24 +517,26 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read ===================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).schema should be (StructType(Seq(
+        relation.read(execution, Map("part" -> SingleValue("p0"))).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Destroy ================================================================================================
         relation.destroy(execution)
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
     }
 
@@ -534,7 +566,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (No)
-        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
 
         // == Write ==================================================================================================
         val schema = StructType(Seq(
@@ -550,14 +582,14 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (1)
+        relation.read(execution, Map()).count() should be (1)
 
         // == Append =================================================================================================
         relation.write(execution, df, Map(), OutputMode.APPEND)
 
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (2)
+        relation.read(execution, Map()).count() should be (2)
 
         // == Destroy ================================================================================================
         relation.destroy(execution)
@@ -594,7 +626,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (No)
-        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
 
         // == Write ==================================================================================================
         val schema = StructType(Seq(
@@ -610,18 +642,18 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Append =================================================================================================
         relation.write(execution, df, Map("part" -> SingleValue("p0")), OutputMode.APPEND)
 
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (2)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (2)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (2)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (2)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Append =================================================================================================
         val schema2 = StructType(Seq(
@@ -641,7 +673,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
         checkAnswer(
-            relation.read(execution, None, Map()),
+            relation.read(execution, Map()),
             Seq(
                 Row("v1", 21, "p0"),
                 Row("v1", 21, "p0"),
@@ -650,7 +682,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p0"))),
+            relation.read(execution, Map("part" -> SingleValue("p0"))),
             Seq(
                 Row("v1", 21, "p0"),
                 Row("v1", 21, "p0"),
@@ -658,7 +690,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p1"))),
+            relation.read(execution, Map("part" -> SingleValue("p1"))),
             Seq(
                 Row("v2", 23, "p1")
             )
@@ -694,10 +726,14 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create =================================================================================================
         location.exists() should be (false)
         relation0.exists(execution) should be (No)
+        relation0.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation0.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation0.loaded(execution, Map()) should be (No)
         relation0.create(execution, false)
         location.exists() should be (true)
         relation0.exists(execution) should be (Yes)
+        relation0.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation0.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation0.loaded(execution, Map()) should be (No)
         relation0.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation0.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
@@ -714,19 +750,21 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.schema should be (None)
         relation.fields should be (Seq(Field("part", ftypes.StringType, false)))
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read =================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Write =================================================================================================
         val schema = StructType(Seq(
@@ -746,14 +784,14 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read ==================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Write external ========================================================================================
         relation.write(execution, df, Map("part" -> SingleValue("p1")))
@@ -762,33 +800,35 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
 
         // == Read ==================================================================================================
-        relation0.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation0.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation0.read(execution, None, Map()).count() should be (2)
-        relation0.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (1)
-        relation0.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (1)
+        relation0.read(execution, Map()).count() should be (2)
+        relation0.read(execution, Map("part" -> SingleValue("p0"))).count() should be (1)
+        relation0.read(execution, Map("part" -> SingleValue("p1"))).count() should be (1)
 
         // == Truncate =============================================================================================
         relation0.truncate(execution, Map("part" -> SingleValue("p0")))
 
         // == Check =================================================================================================
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
 
         // == Read ==================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (1)
+        relation.read(execution, Map()).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (1)
 
         // == Truncate ==============================================================================================
         relation0.truncate(execution)
@@ -796,25 +836,29 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Check =================================================================================================
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
 
         // == Read =================================================================================================
-        relation.read(execution, None, Map()).schema should be (StructType(Seq(
+        relation.read(execution, Map()).schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType),
             StructField("part", StringType, false)
         )))
-        relation.read(execution, None, Map()).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p0"))).count() should be (0)
-        relation.read(execution, None, Map("part" -> SingleValue("p1"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p0"))).count() should be (0)
+        relation.read(execution, Map("part" -> SingleValue("p1"))).count() should be (0)
 
         // == Destroy ===============================================================================================
         relation0.destroy(execution)
 
         // == Check =================================================================================================
         relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
     }
 
@@ -861,7 +905,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (Yes)
         checkAnswer(
-            relation.read(execution, None, Map()),
+            relation.read(execution, Map()),
             Seq(
                 Row("id-1", "v1", 1),
                 Row("id-1", "v2", 1),
@@ -880,7 +924,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Read ===================================================================================================
         relation.loaded(execution, Map()) should be (Yes)
         checkAnswer(
-            relation.read(execution, None, Map()),
+            relation.read(execution, Map()),
             Seq(
                 Row("id-1", "v11", 2),
                 Row("id-1", "v11", 2),
@@ -927,7 +971,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (0)
+        relation.read(execution, Map()).count() should be (0)
 
         // == Write ==================================================================================================
         val schema = StructType(Seq(
@@ -949,7 +993,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (No)
         checkAnswer(
-            relation.read(execution, None, Map()),
+            relation.read(execution, Map()),
             Seq(
                 Row("id-1", "v1", 1, "p0"),
                 Row("id-1", "v2", 1, "p0"),
@@ -957,7 +1001,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p0"))),
+            relation.read(execution, Map("part" -> SingleValue("p0"))),
             Seq(
                 Row("id-1", "v1", 1, "p0"),
                 Row("id-1", "v2", 1, "p0"),
@@ -965,7 +1009,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p1"))),
+            relation.read(execution, Map("part" -> SingleValue("p1"))),
             Seq()
         )
 
@@ -983,7 +1027,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (No)
         checkAnswer(
-            relation.read(execution, None, Map()),
+            relation.read(execution, Map()),
             Seq(
                 Row("id-1", "v11", 2, "p0"),
                 Row("id-1", "v11", 2, "p0"),
@@ -992,7 +1036,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p0"))),
+            relation.read(execution, Map("part" -> SingleValue("p0"))),
             Seq(
                 Row("id-1", "v11", 2, "p0"),
                 Row("id-1", "v11", 2, "p0"),
@@ -1001,7 +1045,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p1"))),
+            relation.read(execution, Map("part" -> SingleValue("p1"))),
             Seq()
         )
 
@@ -1019,7 +1063,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (No)
         checkAnswer(
-            relation.read(execution, None, Map()),
+            relation.read(execution, Map()),
             Seq(
                 Row("id-1", "v11", 2, "p0"),
                 Row("id-1", "v11", 2, "p0"),
@@ -1030,7 +1074,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p0"))),
+            relation.read(execution, Map("part" -> SingleValue("p0"))),
             Seq(
                 Row("id-1", "v11", 2, "p0"),
                 Row("id-1", "v11", 2, "p0"),
@@ -1039,7 +1083,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             )
         )
         checkAnswer(
-            relation.read(execution, None, Map("part" -> SingleValue("p1"))),
+            relation.read(execution, Map("part" -> SingleValue("p1"))),
             Seq(
                 Row("id-1", "v12", 3, "p1"),
                 Row("id-3", "v22", 3, "p1")
@@ -1066,7 +1110,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("p1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("p3"))) should be (Yes)
         checkAnswer(
-            relation.read(execution, None, Map()),
+            relation.read(execution, Map()),
             Seq(
                 Row("id-1", "v13", 4, "p0"),
                 Row("id-1", "v13", 4, "p0"),
@@ -1126,7 +1170,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Read ==================================================================================================
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (4)
+        relation.read(execution, Map()).count() should be (4)
 
         // == Write ==================================================================================================
         val df2 = StreamingUtils.createSingleTriggerStreamingDF(df0, 1)
@@ -1135,7 +1179,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Read ==================================================================================================
         relation.loaded(execution) should be (Yes)
-        relation.read(execution, None, Map()).count() should be (8)
+        relation.read(execution, Map()).count() should be (8)
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
@@ -1192,10 +1236,10 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (4)
-        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (3)
-        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (1)
-        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (4)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (0)
 
         // == Write ==================================================================================================
         val df2 = StreamingUtils.createSingleTriggerStreamingDF(df0, 1)
@@ -1207,10 +1251,10 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
-        relation.read(execution, None, Map()).count() should be (8)
-        relation.read(execution, None, Map("part" -> SingleValue("1"))).count() should be (6)
-        relation.read(execution, None, Map("part" -> SingleValue("2"))).count() should be (2)
-        relation.read(execution, None, Map("part" -> SingleValue("3"))).count() should be (0)
+        relation.read(execution, Map()).count() should be (8)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (6)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (0)
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)

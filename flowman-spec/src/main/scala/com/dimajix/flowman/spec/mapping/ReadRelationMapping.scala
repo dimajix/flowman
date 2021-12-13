@@ -39,6 +39,7 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.RangeValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.SchemaUtils
 
 
 case class ReadRelationMapping(
@@ -57,7 +58,7 @@ case class ReadRelationMapping(
      */
     override def requires : Set[ResourceIdentifier] = {
         val rel = relation.value
-        rel.resources(partitions) ++ rel.requires ++ rel.provides
+        rel.resources(partitions) // ++ rel.requires ++ rel.provides
     }
 
     /**
@@ -85,10 +86,12 @@ case class ReadRelationMapping(
 
         // Read relation
         val rel = relation.value
-        val df = rel.read(execution, schema, partitions)
+        val df = rel.read(execution, partitions)
 
         // Apply optional filter
-        val result = filter.map(df.filter).getOrElse(df)
+        val filtered = filter.map(df.filter).getOrElse(df)
+
+        val result = SchemaUtils.applySchema(filtered, schema)
 
         Map("main" -> result)
     }

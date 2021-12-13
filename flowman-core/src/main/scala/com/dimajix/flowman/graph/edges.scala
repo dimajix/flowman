@@ -24,19 +24,23 @@ import com.dimajix.flowman.types.SingleValue
 sealed abstract class Edge {
     def input : Node
     def output : Node
-    def action : String
+    def action : Action
+    def label : String
 }
 
-case class ReadRelation(override val input:RelationRef, override val output:Node, partitions:Map[String,FieldValue] = Map()) extends Edge {
-    override def action: String = s"READ from ${input.label} partitions=(${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")})"
+final case class ReadRelation(override val input:RelationRef, override val output:Node, partitions:Map[String,FieldValue] = Map()) extends Edge {
+    override def action: Action = Action.READ
+    override def label: String = s"${action.upper} from ${input.label} partitions=(${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")})"
     def resources : Set[ResourceIdentifier] = input.relation.resources(partitions)
 }
 
-case class InputMapping(override val input:MappingRef,override val output:Node,pin:String="main") extends Edge {
-    override def action: String = s"INPUT from ${input.label} output '$pin'"
+final case class InputMapping(override val input:MappingRef,override val output:Node,pin:String="main") extends Edge {
+    override def action: Action = Action.INPUT
+    override def label: String = s"${action.upper} from ${input.label} output '$pin'"
 }
 
-case class WriteRelation(override val input:Node, override val output:RelationRef, partition:Map[String,SingleValue] = Map()) extends Edge {
-    override def action: String = s"WRITE from ${input.label} partition=(${partition.map(kv => kv._1 + "=" + kv._2).mkString(",")})"
+final case class WriteRelation(override val input:Node, override val output:RelationRef, partition:Map[String,SingleValue] = Map()) extends Edge {
+    override def action: Action = Action.WRITE
+    override def label: String = s"${action.upper} from ${input.label} partition=(${partition.map(kv => kv._1 + "=" + kv._2).mkString(",")})"
     def resources : Set[ResourceIdentifier] = output.relation.resources(partition)
 }

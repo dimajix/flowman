@@ -23,8 +23,12 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+import org.slf4j.LoggerFactory
+
+import com.dimajix.flowman.execution.AssertionRunner
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.model.AssertionResult.logger
 
 
 object Result {
@@ -38,7 +42,7 @@ object Result {
      * @tparam U
      * @return
      */
-    def map[T,U <: Result](seq: Iterable[T], keepGoing:Boolean=false)(fn:T => U) : Seq[U] = {
+    def map[T,U <: Result[U]](seq: Iterable[T], keepGoing:Boolean=false)(fn:T => U) : Seq[U] = {
         flatMap(seq, keepGoing)(i => Some(fn(i)))
     }
 
@@ -52,7 +56,7 @@ object Result {
      * @tparam U
      * @return
      */
-    def flatMap[T,U <: Result](seq: Iterable[T], keepGoing:Boolean=false)(fn:T => Option[U]) : Seq[U] = {
+    def flatMap[T,U <: Result[U]](seq: Iterable[T], keepGoing:Boolean=false)(fn:T => Option[U]) : Seq[U] = {
         val results = mutable.ListBuffer[U]()
         val iter = seq.iterator
         var error = false
@@ -62,7 +66,7 @@ object Result {
                 case Some(result) =>
                     results += result
                     val status = result.status
-                    error |= (status != Status.SUCCESS && status != Status.SKIPPED)
+                    error |= status.failure
                 case None =>
             }
         }
@@ -70,19 +74,19 @@ object Result {
     }
 }
 
-sealed abstract class Result {
+sealed abstract class Result[T <: Result[T]] { this:T =>
     def name : String
-    def category : String
+    def category : Category
     def kind : String
     def description: Option[String]
-    def children : Seq[Result]
+    def children : Seq[Result[_]]
     def status : Status = if (exception.isDefined) Status.FAILED else Status.ofAll(children.map(_.status))
 
     def startTime : Instant
     def endTime : Instant
     def duration : Duration = Duration.between(startTime, endTime)
 
-    def success : Boolean = status == Status.SUCCESS
+    def success : Boolean = status == Status.SUCCESS || status == Status.SUCCESS_WITH_ERRORS
     def failure : Boolean = status == Status.FAILED
     def skipped : Boolean = status == Status.SKIPPED
     def exception : Option[Throwable] = None
@@ -90,34 +94,47 @@ sealed abstract class Result {
     def numFailures : Int = children.count(_.failure)
     def numSuccesses : Int = children.count(_.success)
     def numExceptions : Int = children.count(_.exception.isDefined) + (if (exception.isDefined) 1 else 0)
+
+    def toTry : Try[Status] = {
+        if (exception.nonEmpty)
+            Failure(exception.get)
+        else
+            Success(status)
+    }
+    /**
+     * Rethrows any stored exception
+     * @return
+     */
+    def rethrow() : T = {
+        if (exception.nonEmpty)
+            throw exception.get
+        this
+    }
 }
 
 
 object LifecycleResult {
-    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], status:Status, startTime:Instant) : LifecycleResult =
+    def apply(job:Job, lifecycle: JobLifecycle, status:Status, startTime:Instant) : LifecycleResult =
         LifecycleResult(
             job,
-            instance,
             lifecycle,
             Seq(),
             status,
             startTime=startTime,
             endTime=Instant.now()
         )
-    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], children : Seq[Result], startTime:Instant) : LifecycleResult =
+    def apply(job:Job, lifecycle: JobLifecycle, children : Seq[Result[_]], startTime:Instant) : LifecycleResult =
         LifecycleResult(
             job,
-            instance,
             lifecycle,
             children,
             Status.ofAll(children.map(_.status)),
             startTime=startTime,
             endTime=Instant.now()
         )
-    def apply(job:Job, instance: JobInstance, lifecycle: Seq[Phase], exception:Throwable, startTime:Instant) : LifecycleResult =
+    def apply(job:Job, lifecycle: JobLifecycle, exception:Throwable, startTime:Instant) : LifecycleResult =
         LifecycleResult(
             job,
-            instance,
             lifecycle,
             Seq(),
             Status.FAILED,
@@ -126,49 +143,54 @@ object LifecycleResult {
             endTime=Instant.now()
         )
 }
-case class LifecycleResult(
+final case class LifecycleResult(
     job: Job,
-    instance: JobInstance,
-    lifecycle: Seq[Phase],
-    override val children : Seq[Result],
+    lifecycle: JobLifecycle,
+    override val children : Seq[Result[_]],
     override val status: Status,
     override val exception: Option[Throwable] = None,
     override val startTime : Instant,
     override val endTime : Instant
-) extends Result {
+) extends Result[LifecycleResult] {
     override def name : String = job.name
-    override def category : String = job.category
+    override def category : Category = job.category
     override def kind : String = job.kind
     override def description: Option[String] = job.description
 }
 
 
 object JobResult {
-    def apply(job:Job, instance: JobInstance, phase: Phase, status:Status, startTime:Instant) : JobResult =
+    def apply(job:Job, instance: JobDigest, status:Status) : JobResult =
         JobResult(
             job,
             instance,
-            phase,
+            Seq(),
+            status,
+            startTime=Instant.now(),
+            endTime=Instant.now()
+        )
+    def apply(job:Job, instance: JobDigest, status:Status, startTime:Instant) : JobResult =
+        JobResult(
+            job,
+            instance,
             Seq(),
             status,
             startTime=startTime,
             endTime=Instant.now()
         )
-    def apply(job:Job, instance: JobInstance, phase: Phase, children : Seq[Result], startTime:Instant) : JobResult =
+    def apply(job:Job, instance: JobDigest, children : Seq[Result[_]], startTime:Instant) : JobResult =
         JobResult(
             job,
             instance,
-            phase,
             children,
             Status.ofAll(children.map(_.status)),
             startTime=startTime,
             endTime=Instant.now()
         )
-    def apply(job:Job, instance: JobInstance, phase: Phase, exception:Throwable, startTime:Instant) : JobResult =
+    def apply(job:Job, instance: JobDigest, exception:Throwable, startTime:Instant) : JobResult =
         JobResult(
             job,
             instance,
-            phase,
             Seq(),
             Status.FAILED,
             Some(exception),
@@ -176,18 +198,18 @@ object JobResult {
             endTime=Instant.now()
         )
 }
-case class JobResult(
+final case class JobResult(
     job: Job,
-    instance : JobInstance,
-    phase: Phase,
-    override val children : Seq[Result],
+    instance : JobDigest,
+    override val children : Seq[Result[_]],
     override val status: Status,
     override val exception: Option[Throwable] = None,
     override val startTime : Instant,
     override val endTime : Instant
-) extends Result {
+) extends Result[JobResult] {
+    def phase : Phase = instance.phase
     override def name : String = job.name
-    override def category : String = job.category
+    override def category : Category = job.category
     override def kind : String = job.kind
     override def description: Option[String] = job.description
 }
@@ -197,8 +219,7 @@ object TargetResult {
     def apply(target:Target, phase: Phase, status:Status) : TargetResult =
         TargetResult(
             target,
-            target.instance,
-            phase,
+            target.digest(phase),
             Seq(),
             status,
             startTime=Instant.now(),
@@ -207,38 +228,34 @@ object TargetResult {
     def apply(target:Target, phase: Phase, status:Status, startTime:Instant) : TargetResult =
         TargetResult(
             target,
-            target.instance,
-            phase,
+            target.digest(phase),
             Seq(),
             status,
             startTime=startTime,
             endTime=Instant.now()
         )
-    def apply(target:Target, phase: Phase, children : Seq[Result], startTime:Instant) : TargetResult =
+    def apply(target:Target, phase: Phase, children : Seq[Result[_]], startTime:Instant) : TargetResult =
         TargetResult(
             target,
-            target.instance,
-            phase,
+            target.digest(phase),
             children,
             Status.ofAll(children.map(_.status)),
             startTime=startTime,
             endTime=Instant.now()
         )
-    def apply(target:Target, phase: Phase, children : Seq[Result], status:Status, startTime:Instant) : TargetResult =
+    def apply(target:Target, phase: Phase, children : Seq[Result[_]], status:Status, startTime:Instant) : TargetResult =
         TargetResult(
             target,
-            target.instance,
-            phase,
+            target.digest(phase),
             children,
             status,
             startTime=startTime,
             endTime=Instant.now()
         )
-    def apply(target:Target, phase: Phase, children : Seq[Result], exception:Throwable, startTime:Instant) : TargetResult =
+    def apply(target:Target, phase: Phase, children : Seq[Result[_]], exception:Throwable, startTime:Instant) : TargetResult =
         TargetResult(
             target,
-            target.instance,
-            phase,
+            target.digest(phase),
             children,
             Status.FAILED,
             Some(exception),
@@ -248,8 +265,7 @@ object TargetResult {
     def apply(target:Target, phase: Phase, exception:Throwable, startTime:Instant) : TargetResult =
         TargetResult(
             target,
-            target.instance,
-            phase,
+            target.digest(phase),
             Seq(),
             Status.FAILED,
             Some(exception),
@@ -268,18 +284,18 @@ object TargetResult {
         }
     }
 }
-case class TargetResult(
+final case class TargetResult(
     target: Target,
-    instance : TargetInstance,
-    phase: Phase,
-    override val children : Seq[Result],
+    instance : TargetDigest,
+    override val children : Seq[Result[_]],
     override val status: Status,
     override val exception: Option[Throwable] = None,
     override val startTime : Instant = Instant.now(),
     override val endTime : Instant = Instant.now()
-) extends Result {
+) extends Result[TargetResult] {
+    def phase : Phase = instance.phase
     override def name : String = target.name
-    override def category : String = target.category
+    override def category : Category = target.category
     override def kind : String = target.kind
     override def description: Option[String] = None
 }
@@ -306,23 +322,25 @@ object TestResult {
             endTime=Instant.now()
         )
 }
-case class TestResult(
+final case class TestResult(
     test: Test,
     instance : TestInstance,
-    override val children : Seq[Result],
+    override val children : Seq[Result[_]],
     override val status: Status,
     override val exception: Option[Throwable] = None,
     override val startTime : Instant,
     override val endTime : Instant
-) extends Result {
+) extends Result[TestResult] {
     override def name : String = test.name
-    override def category : String = test.category
+    override def category : Category = test.category
     override def kind : String = test.kind
     override def description: Option[String] = test.description
 }
 
 
 object AssertionResult {
+    private val logger = LoggerFactory.getLogger(classOf[AssertionResult])
+
     def apply(assertion: Assertion, exception:Throwable, startTime:Instant) : AssertionResult =
         AssertionResult(
             assertion,
@@ -362,19 +380,20 @@ object AssertionResult {
             case Success(results) =>
                 AssertionResult(assertion, results, None, startTime, Instant.now())
             case Failure(exception) =>
+                logger.error(s"Caught exception while executing assertion '${assertion.name}': ", exception)
                 AssertionResult(assertion, Seq(), Some(exception), startTime, Instant.now())
         }
     }
 }
-case class AssertionResult(
+final case class AssertionResult(
     assertion: Assertion,
     override val children : Seq[AssertionTestResult],
     override val exception: Option[Throwable] = None,
     override val startTime : Instant,
     override val endTime : Instant
-) extends Result {
+) extends Result[AssertionResult] {
     override def name : String = assertion.name
-    override def category : String = assertion.category
+    override def category : Category = assertion.category
     override def kind : String = assertion.kind
     override def description: Option[String] = assertion.description
 
@@ -390,6 +409,8 @@ case class AssertionResult(
 
 
 object AssertionTestResult {
+    private val logger = LoggerFactory.getLogger(classOf[AssertionTestResult])
+
     def apply(name:String, description:Option[String], success:Boolean) : AssertionTestResult = AssertionTestResult(
         name,
         description,
@@ -421,26 +442,87 @@ object AssertionTestResult {
             case Success(result) =>
                 AssertionTestResult(name, description, result, None, startTime, Instant.now())
             case Failure(exception) =>
+                logger.error(s"Caught exception executing test '${name}': ", exception)
                 AssertionTestResult(name, description, false, Some(exception), startTime, Instant.now())
         }
     }
 }
-case class AssertionTestResult(
+final case class AssertionTestResult(
     override val name:String,
     override val description:Option[String],
     override val success:Boolean,
     override val exception: Option[Throwable] = None,
     override val startTime : Instant,
     override val endTime : Instant
-) extends Result {
-    override def category: String = ""
+) extends Result[AssertionTestResult] {
+    override def category: Category = Category.ASSERTION_TEST
     override def kind: String = ""
-    override def children: Seq[Result] = Seq()
+    override def children: Seq[Result[_]] = Seq()
     override def status : Status = {
         if (success)
             Status.SUCCESS
         else
             Status.FAILED
     }
-    override def failure: Boolean = !success
 }
+
+
+object MeasureResult {
+    private val logger = LoggerFactory.getLogger(classOf[MeasureResult])
+
+    def apply(assertion: Measure, children : Seq[Measurement]) : MeasureResult =
+        MeasureResult(
+            assertion,
+            children,
+            None,
+            startTime=Instant.now(),
+            endTime=Instant.now()
+        )
+    def apply(measure: Measure, children : Seq[Measurement], startTime:Instant) : MeasureResult =
+        MeasureResult(
+            measure,
+            children,
+            None,
+            startTime=startTime,
+            endTime=Instant.now()
+        )
+
+    def of(measure: Measure)(fn: => Seq[Measurement]) : MeasureResult = {
+        val startTime = Instant.now()
+        Try(fn) match {
+            case Success(results) =>
+                MeasureResult(measure, results, None, startTime, Instant.now())
+            case Failure(exception) =>
+                logger.error(s"Caught exception while executing measure '${measure.name}': ", exception)
+                MeasureResult(measure, Seq(), Some(exception), startTime, Instant.now())
+        }
+    }
+}
+final case class MeasureResult(
+    measure: Measure,
+    measurements: Seq[Measurement],
+    override val exception: Option[Throwable] = None,
+    override val startTime : Instant,
+    override val endTime : Instant
+) extends Result[MeasureResult] {
+    override def name : String = measure.name
+    override def category : Category = measure.category
+    override def kind : String = measure.kind
+    override def children : Seq[Result[_]] = Seq()
+    override def description: Option[String] = measure.description
+
+    def withoutTime : MeasureResult = {
+        val ts = Instant.ofEpochSecond(0)
+        copy(
+            startTime=ts,
+            endTime=ts
+        )
+    }
+}
+
+
+final case class Measurement(
+    name:String,
+    labels:Map[String,String],
+    value:Double
+)

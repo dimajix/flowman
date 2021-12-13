@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.tools.exec.job
 
-import scala.concurrent.ExecutionContext
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -26,7 +25,6 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.common.ThreadUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Lifecycle
 import com.dimajix.flowman.execution.Phase
@@ -66,7 +64,7 @@ sealed class PhaseCommand(phase:Phase) extends Command {
             context.getJob(JobIdentifier(job))
         }
         match {
-            case Failure(NonFatal(e)) =>
+            case Failure(e) =>
                 logger.error(s"Error instantiating job '$job': ${e.getMessage()}")
                 false
             case Success(job) =>
@@ -86,11 +84,7 @@ sealed class PhaseCommand(phase:Phase) extends Command {
         else
             executeLinear(session, job, args, lifecycle)
 
-        status match {
-            case Status.SUCCESS => true
-            case Status.SKIPPED => true
-            case _ => false
-        }
+        status.success
     }
 
     private def executeLinear(session: Session, job:Job, args:Map[String,FieldValue], lifecycle: Seq[Phase]) : Status = {

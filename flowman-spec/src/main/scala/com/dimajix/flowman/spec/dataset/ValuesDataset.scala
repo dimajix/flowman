@@ -33,8 +33,7 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.StructType
-import com.dimajix.spark.sql.DataFrameUtils
-import com.dimajix.spark.sql.SchemaUtils
+import com.dimajix.spark.sql.DataFrameBuilder
 
 
 case class ValuesDataset(
@@ -73,16 +72,14 @@ case class ValuesDataset(
      * Reads data from the relation, possibly from specific partitions
      *
      * @param execution
-     * @param schema - the schema to read. If none is specified, all available columns will be read
      * @return
      */
-    override def read(execution: Execution, schema: Option[org.apache.spark.sql.types.StructType]): DataFrame = {
+    override def read(execution: Execution): DataFrame = {
         val recordsSchema = StructType(this.schema.map(_.fields).getOrElse(columns))
         val sparkSchema = recordsSchema.sparkType
 
         val values = records.map(_.toArray(recordsSchema))
-        val df = DataFrameUtils.ofStringValues(execution.spark, values, sparkSchema)
-        SchemaUtils.applySchema(df, schema)
+        DataFrameBuilder.ofStringValues(execution.spark, values, sparkSchema)
     }
 
     /**

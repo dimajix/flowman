@@ -24,12 +24,14 @@ import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes.Found
+import akka.http.scaladsl.server.Directives.pathPrefix
 import akka.http.scaladsl.settings.ServerSettings
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.history.JobQuery
 
 
 class Server(
@@ -48,9 +50,9 @@ class Server(
         implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
         val namespaceService = new NamespaceService(session.namespace.get)
-        val projectService = new ProjectService(session.store)
         val jobHistoryService = new JobHistoryService(session.history)
         val targetHistoryService = new TargetHistoryService(session.history)
+        val metricService = new MetricService(session.history)
 
         val route = (
                 pathPrefix("api") {(
@@ -58,11 +60,13 @@ class Server(
                     ~
                     namespaceService.routes
                     ~
-                    projectService.routes
-                    ~
-                    jobHistoryService.routes
-                    ~
-                    targetHistoryService.routes
+                    pathPrefix("history") {(
+                        jobHistoryService.routes
+                        ~
+                        targetHistoryService.routes
+                        ~
+                        metricService.routes
+                    )}
                 )}
                 ~
                 pathPrefix("swagger") {(
@@ -81,6 +85,9 @@ class Server(
                 ~
                 getFromResourceDirectory("META-INF/resources/webjars/flowman-server-ui")
             )
+
+        logger.info("Connecting to history backend")
+        session.history.countJobs(JobQuery())
 
         logger.info("Starting http server")
 

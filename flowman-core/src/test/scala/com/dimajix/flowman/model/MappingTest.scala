@@ -24,6 +24,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.NoSuchMappingOutputException
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.graph.GraphBuilder
 import com.dimajix.flowman.graph.InputMapping
@@ -50,6 +51,29 @@ object MappingTest {
 }
 
 class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalSparkSession {
+    "Mappings" should "work" in {
+        val project = Project(
+            name = "project"
+        )
+        val session = Session.builder().disableSpark().build()
+        val context = session.getContext(project)
+
+        val mapping = new DummyMapping(
+            Mapping.Properties(context, "m1"),
+            Seq()
+        )
+
+        mapping.metadata should be (Metadata(
+            None,
+            Some("project"),
+            "m1",
+            None,
+            "mapping",
+            "",
+            Map()
+        ))
+    }
+
     "Mapping.output" should "return a MappingOutputIdentifier with a project" in {
         val project = Project(
             name = "project"
@@ -125,7 +149,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
         //(mappingTemplate1.instantiate _).expects(context).returns(mapping1)
         (mappingTemplate2.instantiate _).expects(context).returns(mapping2)
 
-        val graphBuilder = new GraphBuilder(context)
+        val graphBuilder = new GraphBuilder(context, Phase.BUILD)
         val ref1 = graphBuilder.refMapping(mapping1)
         val ref2 = graphBuilder.refMapping(mapping2)
 

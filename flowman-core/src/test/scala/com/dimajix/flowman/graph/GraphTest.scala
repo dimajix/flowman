@@ -20,6 +20,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
@@ -84,12 +85,12 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
         (targetTemplate.instantiate _).expects(context).returns(target)
         (target.context _).expects().returns(context)
         (target.name _).expects().atLeastOnce().returns("t")
-        (target.link _).expects(*).onCall((l:Linker) => Some(1).foreach { _ =>
+        (target.link _).expects(*,*).onCall((l:Linker, _:Phase) => Some(1).foreach { _ =>
             l.input(MappingIdentifier("m1"), "main")
             l.write(RelationIdentifier("tgt"), Map())
         })
 
-        val graph = Graph.ofProject(session, project)
+        val graph = Graph.ofProject(session, project, Phase.BUILD)
 
         val nodes = graph.nodes
         nodes.size should be (5)

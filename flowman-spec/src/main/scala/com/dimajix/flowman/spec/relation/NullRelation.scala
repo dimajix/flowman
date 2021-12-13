@@ -76,14 +76,13 @@ case class NullRelation(
       * @param partitions
       * @return
       */
-    override def read(execution:Execution, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+    override def read(execution:Execution, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         require(execution != null)
-        require(schema != null)
         require(partitions != null)
 
-        val readSchema = schema.orElse(inputSchema)
+        val readSchema = inputSchema
         if (readSchema.isEmpty)
-            throw new IllegalArgumentException("Null relation either needs own schema or a desired input schema")
+            throw new IllegalArgumentException("Null relation needs a schema for reading")
 
         val rdd = execution.spark.sparkContext.emptyRDD[Row]
         execution.spark.createDataFrame(rdd, readSchema.get)
@@ -126,6 +125,14 @@ case class NullRelation(
       * @return
       */
     override def exists(execution:Execution) : Trilean = true
+
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     * @param execution
+     * @return
+     */
+    override def conforms(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED) : Trilean = true
 
     override def create(execution: Execution, ifNotExists:Boolean=false): Unit = {
         require(execution != null)

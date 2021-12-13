@@ -24,3 +24,6 @@ if [[ "$AWS_ACCESS_KEY_ID" != "" ]]; then
         --conf spark.hadoop.fs.s3a.secret.key=${AWS_SECRET_ACCESS_KEY}
         $SPARK_OPTS"
 fi
+
+# Allocate somewhat more memory for driver
+SPARK_DRIVER_MEMORY="4G"

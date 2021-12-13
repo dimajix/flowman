@@ -37,21 +37,18 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.graph.Linker
-import com.dimajix.flowman.metric.LongAccumulatorMetric
-import com.dimajix.flowman.metric.Selector
 import com.dimajix.flowman.model.BaseTarget
-import com.dimajix.flowman.model.IdentifierRelationReference
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.RelationReference
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.spec.relation.IdentifierRelationReferenceSpec
 import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.spark.sql.functions.count_records
 
 
 object RelationTarget {
@@ -60,7 +57,7 @@ object RelationTarget {
         new RelationTarget(
             Target.Properties(context),
             MappingOutputIdentifier(""),
-            IdentifierRelationReference(context,relation),
+            RelationReference(context,relation),
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
@@ -72,7 +69,7 @@ object RelationTarget {
         new RelationTarget(
             Target.Properties(context),
             mapping,
-            IdentifierRelationReference(context,relation),
+            RelationReference(context,relation),
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
@@ -95,12 +92,16 @@ case class RelationTarget(
       * Returns an instance representing this target with the context
       * @return
       */
-    override def instance : TargetInstance = {
-        TargetInstance(
+    override def digest(phase:Phase) : TargetDigest = {
+        TargetDigest(
             namespace.map(_.name).getOrElse(""),
             project.map(_.name).getOrElse(""),
             name,
-            partition
+            phase,
+            phase match {
+                case Phase.BUILD|Phase.VERIFY|Phase.TRUNCATE => partition
+                case _ => Map()
+            }
         )
     }
 
@@ -125,7 +126,7 @@ case class RelationTarget(
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.provides
-            case Phase.BUILD if mapping.nonEmpty => rel.provides ++ rel.resources(partition)
+            case Phase.BUILD if mapping.nonEmpty => rel.resources(partition) // ++ rel.provides
             //case Phase.BUILD => rel.provides
             case _ => Set()
         }
@@ -140,7 +141,7 @@ case class RelationTarget(
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.requires
-            case Phase.BUILD if mapping.nonEmpty => rel.requires ++ MappingUtils.requires(context, mapping.mapping)
+            case Phase.BUILD if mapping.nonEmpty => MappingUtils.requires(context, mapping.mapping) // ++ rel.requires
             //case Phase.BUILD => rel.requires
             case _ => Set()
         }
@@ -162,11 +163,8 @@ case class RelationTarget(
         phase match {
             case Phase.VALIDATE => No
             case Phase.CREATE =>
-                // Since an existing relation might need a migration, we return "unknown"
-                if (rel.exists(execution) == Yes)
-                    Unknown
-                else
-                    Yes
+                val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
+                !rel.conforms(execution, migrationPolicy)
             case Phase.BUILD if mapping.nonEmpty =>
                 if (mode == OutputMode.APPEND) {
                     Yes
@@ -184,16 +182,23 @@ case class RelationTarget(
         }
     }
 
-
     /**
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
-    override def link(linker: Linker): Unit = {
-        val partition = this.partition.mapValues(v => SingleValue(v))
-        if (mapping.nonEmpty)
-            linker.input(mapping.mapping, mapping.output)
-        linker.write(relation.identifier, partition)
+    override def link(linker: Linker, phase:Phase): Unit = {
+        phase match {
+            case Phase.CREATE|Phase.DESTROY =>
+                linker.write(relation.identifier, Map())
+            case Phase.BUILD if (mapping.nonEmpty) =>
+                val partition = this.partition.mapValues(v => SingleValue(v))
+                linker.input(mapping.mapping, mapping.output)
+                linker.write(relation.identifier, partition)
+            case Phase.TRUNCATE =>
+                val partition = this.partition.mapValues(v => SingleValue(v))
+                linker.write(relation.identifier, partition)
+            case _ =>
+        }
     }
 
     /**
@@ -206,10 +211,12 @@ case class RelationTarget(
 
         val rel = relation.value
         if (rel.exists(execution) == Yes) {
-            logger.info(s"Migrating existing relation '${relation.identifier}'")
             val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
-            val migrationStrategy = MigrationStrategy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_STRATEGY))
-            rel.migrate(execution, migrationPolicy, migrationStrategy)
+            if (rel.conforms(execution, migrationPolicy) != Yes) {
+                logger.info(s"Migrating existing relation '${relation.identifier}'")
+                val migrationStrategy = MigrationStrategy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_STRATEGY))
+                rel.migrate(execution, migrationPolicy, migrationStrategy)
+            }
         }
         else {
             logger.info(s"Creating relation '${relation.identifier}'")

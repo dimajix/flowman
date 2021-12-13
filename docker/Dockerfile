@@ -1,4 +1,4 @@
-FROM openjdk:8
+FROM openjdk:11
 MAINTAINER k.kupferschmidt@dimajix.de
 
 ARG DIST_FILE

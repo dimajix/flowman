@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.relation
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types.StructType
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -36,7 +35,6 @@ import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.model.SimpleResourceIdentifier
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.spark.sql.SchemaUtils
 
 
 class ProvidedRelation(
@@ -75,17 +73,14 @@ class ProvidedRelation(
       * Reads data from the relation, possibly from specific partitions
       *
       * @param execution
-      * @param schema
       * @param partitions
       * @return
       */
-    override def read(execution:Execution, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+    override def read(execution:Execution, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         require(execution != null)
-        require(schema != null)
         require(partitions != null)
 
-        val df = execution.spark.table(table)
-        SchemaUtils.applySchema(df, schema)
+        execution.spark.table(table)
     }
 
     /**
@@ -130,6 +125,17 @@ class ProvidedRelation(
         require(execution != null)
 
         execution.spark.catalog.tableExists(table)
+    }
+
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        exists(execution)
     }
 
     override def create(execution: Execution, ifNotExists:Boolean=false): Unit = {

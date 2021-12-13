@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.target
 
 import java.io.File
 
+import com.google.common.io.Resources
 import org.apache.hadoop.fs.Path
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -66,13 +67,14 @@ class CopyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     }
 
     it should "work" in {
+        val srcFile = Resources.getResource(classOf[CopyTargetTest], "/data/data_1.csv")
         val spec =
             s"""
               |relations:
               |  source_relation:
               |    kind: file
               |    format: csv
-              |    location: test/data/data_1.csv
+              |    location: $srcFile
               |    schema:
               |      kind: embedded
               |      fields:
@@ -125,7 +127,7 @@ class CopyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         target.provides(Phase.DESTROY) should be(Set())
 
         target.requires(Phase.CREATE) should be(Set())
-        target.requires(Phase.BUILD) should be(Set(ResourceIdentifier.ofFile(new Path("test/data/data_1.csv"))))
+        target.requires(Phase.BUILD) should be(Set(ResourceIdentifier.ofFile(new Path(srcFile.toURI))))
         target.requires(Phase.VERIFY) should be(Set())
         target.requires(Phase.TRUNCATE) should be(Set())
         target.requires(Phase.DESTROY) should be(Set())

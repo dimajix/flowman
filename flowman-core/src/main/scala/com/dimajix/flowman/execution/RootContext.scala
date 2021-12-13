@@ -105,6 +105,7 @@ object RootContext {
     }
 
     def builder() = new Builder(None, Set())
+    def builder(namespace:Namespace) = new Builder(Some(namespace), Set())
     def builder(namespace:Option[Namespace], profiles:Set[String]) = new Builder(namespace, profiles)
     def builder(parent:Context) = new Builder(parent.namespace, Set(), parent)
 }

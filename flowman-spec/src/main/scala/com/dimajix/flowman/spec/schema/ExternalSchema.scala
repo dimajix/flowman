@@ -92,7 +92,7 @@ abstract class ExternalSchema extends BaseSchema {
         }
         else if (url.nonEmpty) {
             logger.info(s"Loading schema from url ${url.get}")
-            IOUtils.toString(url.get)
+            IOUtils.toString(url.get, "UTF-8")
         }
         else if (spec.exists(_.nonEmpty)) {
             spec.get

@@ -22,6 +22,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.ObjectMapper
@@ -54,7 +55,7 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         ds shouldBe a[ValuesDatasetSpec]
 
         val dataset = ds.instantiate(context).asInstanceOf[ValuesDataset]
-        dataset.category should be ("dataset")
+        dataset.category should be (Category.DATASET)
         dataset.kind should be ("values")
         dataset.records should be (Seq(
             ArrayRecord("a","1"),
@@ -87,7 +88,7 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
         val dataset = ds.instantiate(context).asInstanceOf[ValuesDataset]
 
-        dataset.category should be ("dataset")
+        dataset.category should be (Category.DATASET)
         dataset.kind should be ("values")
         dataset.records should be (Seq(
             ArrayRecord("a","12","3"),
@@ -126,7 +127,7 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         an[UnsupportedOperationException] should be thrownBy(dataset.clean(executor))
         an[UnsupportedOperationException] should be thrownBy(dataset.write(executor, spark.emptyDataFrame))
 
-        val df = dataset.read(executor, None)
+        val df = dataset.read(executor)
         df.schema should be (schema.sparkType)
         df.collect() should be (Seq(
             Row("lala", 12),
@@ -162,44 +163,11 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         an[UnsupportedOperationException] should be thrownBy(dataset.clean(executor))
         an[UnsupportedOperationException] should be thrownBy(dataset.write(executor, spark.emptyDataFrame))
 
-        val df = dataset.read(executor, None)
+        val df = dataset.read(executor)
         df.schema should be (schema.sparkType)
         df.collect() should be (Seq(
             Row("lala", 12),
             Row("lolo", 13),
-            Row(null,null)
-        ))
-    }
-
-    it should "create a DataFrame with specified schema" in {
-        val schema = new StructType(Seq(
-            Field("str_col", StringType),
-            Field("int_col", IntegerType)
-        ))
-
-        val session = Session.builder().withSparkSession(spark).build()
-        val context = session.context
-        val executor = session.execution
-
-        val dataset = ValuesDataset(
-            Dataset.Properties(context, "const"),
-            columns = schema.fields,
-            records = Seq(
-                ArrayRecord("lala","12"),
-                ArrayRecord("lolo","13"),
-                ArrayRecord("",null)
-            )
-        )
-
-        val readSchema = org.apache.spark.sql.types.StructType(Seq(
-            org.apache.spark.sql.types.StructField("str_col", org.apache.spark.sql.types.StringType),
-            org.apache.spark.sql.types.StructField("other_col", org.apache.spark.sql.types.DoubleType)
-        ))
-        val df = dataset.read(executor, Some(readSchema))
-        df.schema should be (readSchema)
-        df.collect() should be (Seq(
-            Row("lala", null),
-            Row("lolo", null),
             Row(null,null)
         ))
     }

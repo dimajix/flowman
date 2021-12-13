@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.types
 
+import org.apache.spark.SPARK_VERSION
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -38,7 +39,10 @@ class NullTypeTest extends AnyFlatSpec with Matchers {
 
     it should "provide the correct SQL type" in {
         NullType.sqlType should be ("null")
-        NullType.sparkType.sql should be ("NULL")
+        if (SPARK_VERSION >= "3.2")
+            NullType.sparkType.sql should be ("VOID")
+        else
+            NullType.sparkType.sql should be ("NULL")
         NullType.typeName should be ("null")
     }
 }

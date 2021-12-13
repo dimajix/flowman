@@ -29,4 +29,7 @@ case class EagerCache(child: LogicalPlan, caches: Seq[InMemoryRelation]) extends
 
     override protected def doCanonicalize(): LogicalPlan = child.canonicalized
         //copy(child=child.canonicalized, caches=caches.map(_.canonicalized.asInstanceOf[InMemoryRelation]))
+
+    /*override*/ protected def withNewChildrenInternal(newChildren: IndexedSeq[LogicalPlan]): LogicalPlan =
+        copy(child=newChildren.head, caches=newChildren.tail.map(_.asInstanceOf[InMemoryRelation]))
 }

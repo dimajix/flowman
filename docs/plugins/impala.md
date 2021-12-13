@@ -47,6 +47,27 @@ config:
   # Enable COMPUTE STATS (already enabled by default)
   - flowman.impala.computeStats=true
 ```
+You can also directly embed the connection as follows:
+```yaml
+# Setup Impala as an additional catalog besides Hive
+catalog:
+  kind: impala
+  connection:
+    impala:
+      kind: jdbc
+      url: jdbc:impala://$System.getenv('IMPALA_HOST'):21050
+      properties:
+        SocketTimeout: 0
+        AuthMech: 1
+        AuthType: 1
+        KrbRealm: MY-KERBEROS-REALM.NET
+        KrbHostFQDN: $System.getenv('IMPALA_HOST')
+        KrbServiceName: impala
+        AllowSelfSignedCerts: 1
+        CAIssuedCertsMismatch: 1
+        SSL: 1
+```
+
 
 You can disable the statistics computation (`COMPUTE STATS`) which is normally also performed by the plugin by
 setting the following configuration variable:

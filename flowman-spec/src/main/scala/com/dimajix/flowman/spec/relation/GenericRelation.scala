@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Kaya Kupferschmidt
+ * Copyright 2020-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.relation
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
@@ -33,9 +32,9 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
+import com.dimajix.flowman.model.SimpleResourceIdentifier
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.spark.sql.SchemaUtils
 
 
 case class GenericRelation(
@@ -45,13 +44,14 @@ case class GenericRelation(
     options:Map[String,String] = Map()
 ) extends BaseRelation with SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
+    private val resource = SimpleResourceIdentifier("genericRelation", identifier.toString)
 
     /**
      * Returns the list of all resources which will be created by this relation.
      *
      * @return
      */
-    override def provides : Set[ResourceIdentifier] = Set()
+    override def provides : Set[ResourceIdentifier] = Set(resource)
 
     /**
      * Returns the list of all resources which will be required by this relation
@@ -68,7 +68,7 @@ case class GenericRelation(
      * @param partitions
      * @return
      */
-    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = Set()
+    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = Set(resource)
 
     /**
      * Reads data from the relation, possibly from specific partitions
@@ -78,15 +78,21 @@ case class GenericRelation(
      * @param partitions - List of partitions. If none are specified, all the data will be read
      * @return
      */
-    override def read(execution:Execution, schema:Option[StructType], partitions:Map[String,FieldValue] = Map()) : DataFrame = {
+    override def read(execution:Execution, partitions:Map[String,FieldValue] = Map()) : DataFrame = {
         require(execution != null)
         require(schema != null)
         require(partitions != null)
 
         logger.info(s"Reading generic relation '$identifier'")
 
-        val data = reader(execution, format, options).load()
-        SchemaUtils.applySchema(data, schema)
+        val df = reader(execution, format, options).load()
+
+        // Install callback to refresh DataFrame when data is overwritten
+        execution.addResource(resource) {
+            df.queryExecution.logical.refresh()
+        }
+
+        df
     }
 
     /**
@@ -104,6 +110,8 @@ case class GenericRelation(
 
         writer(execution, df, format, options, mode.batchMode)
             .save()
+
+        execution.refreshResource(resource)
     }
 
     /**
@@ -113,6 +121,14 @@ case class GenericRelation(
      */
     override def exists(execution:Execution) : Trilean = Unknown
 
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = Unknown
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a

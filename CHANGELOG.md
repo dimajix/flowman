@@ -1,3 +1,18 @@
+# Version 0.19.0 - 2021-12-13
+
+* Add build profile for Hadoop 3.3
+* Add build profile for Spark 3.2
+* Allow SQL expressions as dimensions in `aggregate` mapping
+* Update Hive views when the resulting schema would change
+* Add new `mapping cache` command to FlowShell
+* Support embedded connection definitions
+* Much improved Flowman History Server
+* Fix wrong metric names with TemplateTarget
+* Implement more `template` types for `connection`, `schema`, `dataset`, `assertion` and `measure`
+* Implement new `measure` target for creating custom metrics for measuring data quality
+* Add new config option `flowman.execution.mapping.parallelism`
+
+
 # Version 0.18.0 - 2021-10-13
 
 * Improve automatic schema migration for Hive and JDBC relations

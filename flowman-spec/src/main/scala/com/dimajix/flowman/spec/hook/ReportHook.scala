@@ -47,14 +47,15 @@ import com.dimajix.flowman.model.AssertionWrapper
 import com.dimajix.flowman.model.BaseHook
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
-import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobDigest
+import com.dimajix.flowman.model.JobLifecycle
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.JobResultWrapper
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.LifecycleResultWrapper
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.TargetResultWrapper
 import com.dimajix.flowman.model.TargetWrapper
@@ -141,11 +142,11 @@ case class ReportHook(
      * @param job
      * @return
      */
-    override def startLifecycle(execution:Execution, job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken = {
+    override def startLifecycle(execution:Execution, job:Job, instance:JobLifecycle) : LifecycleToken = {
         logger.info(s"Creating new report to $location")
         val output = newOutput()
         output.foreach { p =>
-            val text = context.evaluate(lifecycleStartVtl, Map("job" -> JobWrapper(job), "lifecycle" -> lifecycle.map(_.toString).asJava))
+            val text = context.evaluate(lifecycleStartVtl, Map("job" -> JobWrapper(job), "lifecycle" -> instance.phases.map(_.toString).asJava))
             p.print(text)
             p.flush()
         }
@@ -162,7 +163,7 @@ case class ReportHook(
         lifecycleToken.output.foreach { p =>
             val vars = Map(
                 "job" -> JobWrapper(result.job),
-                "lifecycle" -> result.lifecycle.map(_.toString).asJava,
+                "lifecycle" -> result.lifecycle.phases.map(_.toString).asJava,
                 "status" -> result.status.toString,
                 "result" -> LifecycleResultWrapper(result)
             )
@@ -179,7 +180,7 @@ case class ReportHook(
      * @param job
      * @return
      */
-    override def startJob(execution:Execution, job: Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = {
+    override def startJob(execution:Execution, job: Job, instance: JobDigest, parent:Option[Token]): JobToken = {
         // Add collecting metric sink, only if no metrics board is specified
         val metricSink =
             if (metrics.isEmpty) {
@@ -201,12 +202,12 @@ case class ReportHook(
             case _ => newOutput()
         }
         output.foreach { p =>
-            val text = context.evaluate(jobStartVtl, Map("job" -> JobWrapper(job), "phase" -> phase.toString))
+            val text = context.evaluate(jobStartVtl, Map("job" -> JobWrapper(job), "phase" -> instance.phase.toString))
             p.print(text)
             p.flush()
         }
 
-        ReporterJobToken(phase, output, metricSink)
+        ReporterJobToken(instance.phase, output, metricSink)
     }
 
     /**
@@ -231,7 +232,7 @@ case class ReportHook(
         jobToken.output.foreach { p =>
             val vars = Map(
                 "job" -> JobWrapper(result.job),
-                "phase" -> result.phase.toString,
+                "phase" -> result.instance.phase.toString,
                 "status" -> result.status.toString,
                 "result" -> JobResultWrapper(result),
                 "metrics" -> (boardMetrics ++ sinkMetrics).asJava
@@ -247,17 +248,17 @@ case class ReportHook(
      * @param target
      * @return
      */
-    override def startTarget(execution:Execution, target: Target, instance: TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = {
+    override def startTarget(execution:Execution, target: Target, instance: TargetDigest, parent: Option[Token]): TargetToken = {
         val output = parent.flatMap {
             case ReporterJobToken(_, output, _) => output
             case _ => None
         }
         output.foreach { p =>
-            val text = context.evaluate(targetStartVtl, Map("target" -> TargetWrapper(target), "phase" -> phase.toString))
+            val text = context.evaluate(targetStartVtl, Map("target" -> TargetWrapper(target), "phase" -> instance.phase.toString))
             p.print(text)
             p.flush()
         }
-        ReporterTargetToken(phase, output)
+        ReporterTargetToken(instance.phase, output)
     }
 
     /**
@@ -270,7 +271,7 @@ case class ReportHook(
         targetToken.output.foreach { p =>
             val vars = Map(
                 "target" -> TargetWrapper(result.target),
-                "phase" -> result.phase.toString,
+                "phase" -> result.instance.phase.toString,
                 "status" -> result.status.toString,
                 "result" -> TargetResultWrapper(result)
             )

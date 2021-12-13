@@ -21,7 +21,6 @@ import java.io.IOException
 import java.net.URL
 import java.nio.charset.Charset
 
-import ch.ethz.ssh2.Connection
 import ch.ethz.ssh2.InteractiveCallback
 import ch.ethz.ssh2.KnownHosts
 import ch.ethz.ssh2.SFTPException
@@ -41,9 +40,11 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.BaseTarget
-import com.dimajix.flowman.model.ConnectionIdentifier
+import com.dimajix.flowman.model.Connection
+import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.spec.connection.SshConnection
 
 
@@ -71,7 +72,7 @@ case class SftpUploadTarget(
     instanceProperties:Target.Properties,
     source:Path,
     target:Path,
-    credentials:SshConnection,
+    connection: Reference[Connection],
     merge:Boolean,
     delimiter:String,
     overwrite:Boolean
@@ -93,6 +94,7 @@ case class SftpUploadTarget(
     override def provides(phase: Phase): Set[ResourceIdentifier] = {
         phase match {
             case Phase.BUILD =>
+                val credentials = connection.value.asInstanceOf[SshConnection]
                 val host = credentials.host
                 val port = Some(credentials.port).filter(_ > 0).getOrElse(22)
                 Set(ResourceIdentifier.ofURL(new URL("sftp", host, port, target.toString)))
@@ -129,6 +131,7 @@ case class SftpUploadTarget(
     }
 
     override protected def build(executor:Execution) : Unit = {
+        val credentials = this.connection.value.asInstanceOf[SshConnection]
         val host = credentials.host
         val port = Some(credentials.port).filter(_ > 0).getOrElse(22)
         val fs = executor.fs
@@ -233,14 +236,14 @@ case class SftpUploadTarget(
         }
     }
 
-    private def connect(host:String, port:Int, credentials:SshConnection) : Connection = {
+    private def connect(host:String, port:Int, credentials:SshConnection) : ch.ethz.ssh2.Connection = {
         val username = credentials.username
         val password = credentials.password
         val keyFile = credentials.keyFile
         val keyPassword = credentials.keyPassword
 
         logger.info(s"Connecting via SFTP to $host:$port")
-        val connection = new Connection(host, port)
+        val connection = new ch.ethz.ssh2.Connection(host, port)
         connection.connect(hostKeyVerifier(credentials))
 
         if (password != null && password.nonEmpty) {
@@ -308,7 +311,7 @@ case class SftpUploadTarget(
 class SftpUploadTargetSpec extends TargetSpec {
     @JsonProperty(value = "source", required = true) private var source: String = ""
     @JsonProperty(value = "target", required = true) private var target: String = ""
-    @JsonProperty(value = "connection", required = true) private var connection: String = ""
+    @JsonProperty(value = "connection", required = true) private var connection: ConnectionReferenceSpec = _
     @JsonProperty(value = "merge", required = false) private var merge: String = "false"
     @JsonProperty(value = "delimiter", required = true) private var delimiter: String = _
     @JsonProperty(value = "overwrite", required = false) private var overwrite: String = "true"
@@ -318,7 +321,7 @@ class SftpUploadTargetSpec extends TargetSpec {
             instanceProperties(context),
             new Path(context.evaluate(source)),
             new Path(context.evaluate(target)),
-            context.getConnection(ConnectionIdentifier.parse(context.evaluate(connection))).asInstanceOf[SshConnection],
+            connection.instantiate(context),
             context.evaluate(merge).toBoolean,
             context.evaluate(delimiter),
             context.evaluate(overwrite).toBoolean

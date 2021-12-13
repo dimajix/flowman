@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.splitSettings
 
@@ -41,7 +42,32 @@ case class TemplateTarget(
         .withEnvironment(environment)
         .build()
     private val targetInstance = {
-        project.get.targets(target.name).instantiate(templateContext)
+        project.get.targets(target.name) match {
+            case spec:TargetSpec => spec.synchronized {
+                // Temporarily rename template, such that its instance will get the current name
+                val oldName = name
+                spec.name = name
+                val instance = spec.instantiate(templateContext)
+                spec.name = oldName
+                instance
+            }
+            case spec => spec.instantiate(templateContext)
+        }
+    }
+
+    /**
+     * Returns an instance representing this target with the context
+     * @return
+     */
+    override def digest(phase:Phase) : TargetDigest = {
+        val parent = targetInstance.digest(phase)
+        TargetDigest(
+            namespace.map(_.name).getOrElse(""),
+            project.map(_.name).getOrElse(""),
+            name,
+            phase,
+            parent.partitions
+        )
     }
 
     /**
@@ -101,21 +127,23 @@ case class TemplateTarget(
     }
 
     /**
-     * Executes a specific phase of this target
+     * Executes a specific phase of this target. This method is should not throw a non-fatal exception, instead it
+     * should wrap any exception in the TargetResult
      *
      * @param execution
      * @param phase
      */
     override def execute(execution: Execution, phase: Phase): TargetResult = {
-        targetInstance.execute(execution, phase)
+        val result = targetInstance.execute(execution, phase)
+        result.copy(target=this, instance=digest(phase))
     }
 
     /**
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
-    override def link(linker: Linker): Unit = {
-        targetInstance.link(linker)
+    override def link(linker: Linker, phase:Phase): Unit = {
+        targetInstance.link(linker, phase)
     }
 }
 

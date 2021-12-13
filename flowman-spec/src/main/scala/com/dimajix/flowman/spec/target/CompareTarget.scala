@@ -83,9 +83,9 @@ case class CompareTarget(
       */
     override protected def verify(executor: Execution): Unit = {
         logger.info(s"Comparing actual dataset '${actual.name}' with expected dataset '${expected.name}'")
-        val expectedDf = expected.read(executor, None)
+        val expectedDf = expected.read(executor)
         val actualDf = try {
-            actual.read(executor, None)
+            actual.read(executor)
         }
         catch {
             case ex:Exception => throw new VerificationFailedException(this.identifier, ex)

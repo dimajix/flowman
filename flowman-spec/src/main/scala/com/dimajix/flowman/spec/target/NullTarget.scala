@@ -26,7 +26,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 
 
 case class NullTarget(
@@ -38,11 +38,12 @@ case class NullTarget(
       *
       * @return
       */
-    override def instance: TargetInstance = {
-        TargetInstance(
+    override def digest(phase:Phase): TargetDigest = {
+        TargetDigest(
             namespace.map(_.name).getOrElse(""),
             project.map(_.name).getOrElse(""),
             name,
+            phase,
             partition
         )
     }

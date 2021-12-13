@@ -20,6 +20,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -62,7 +63,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val mapping1 = context.getMapping(MappingIdentifier("empty1")).asInstanceOf[NullMapping]
         mapping1 shouldBe a[NullMapping]
 
-        mapping1.category should be ("mapping")
+        mapping1.category should be (Category.MAPPING)
         mapping1.kind should be ("null")
         mapping1.columns should be (Seq(
             Field("str_col", StringType),
@@ -87,7 +88,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             None
         )
 
-        mapping.category should be ("mapping")
+        mapping.category should be (Category.MAPPING)
         //mapping.kind should be ("null")
         mapping.outputs should be (Seq("main"))
         mapping.output should be (MappingOutputIdentifier("empty"))
@@ -128,7 +129,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             ))
         )
 
-        mapping.category should be ("mapping")
+        mapping.category should be (Category.MAPPING)
         //mapping.kind should be ("null")
         mapping.outputs should be (Seq("main"))
         mapping.output should be (MappingOutputIdentifier("empty"))

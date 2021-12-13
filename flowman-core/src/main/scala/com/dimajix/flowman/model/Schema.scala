@@ -57,7 +57,7 @@ trait Schema extends Instance {
       *
       * @return
       */
-    override def category: String = "schema"
+    override final def category: Category = Category.SCHEMA
 
     /**
       * Returns the description of the schema

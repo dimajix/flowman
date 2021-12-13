@@ -18,10 +18,13 @@ package com.dimajix.flowman.execution
 
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
+import scala.collection.parallel.ForkJoinTaskSupport
+import scala.collection.parallel.TaskSupport
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.concurrent.duration.Duration
+import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -32,13 +35,26 @@ import org.slf4j.Logger
 
 import com.dimajix.common.IdentityHashMap
 import com.dimajix.common.SynchronizedMap
+import com.dimajix.flowman.common.ThreadUtils
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.StructType
 
 
 abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) extends Execution {
     protected val logger:Logger
+    private lazy val taskSupport:TaskSupport = {
+        parent match {
+            case Some(ce:CachingExecution) if !isolated =>
+                ce.taskSupport
+            case _ =>
+                val tp = ThreadUtils.newThreadPool("execution", parallelism)
+                new ForkJoinTaskSupport(tp)
+        }
+    }
+    private lazy val parallelism = flowmanConf.getConf(FlowmanConf.EXECUTION_MAPPING_PARALLELISM)
 
     private val frameCache:SynchronizedMap[Mapping,Map[String,DataFrame]] = {
         parent match {
@@ -64,6 +80,15 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
                 ce.schemaCache
             case _ =>
                 SynchronizedMap(IdentityHashMap[Mapping,TrieMap[String,StructType]]())
+        }
+    }
+
+    private val resources:mutable.ListBuffer[(ResourceIdentifier,() => Unit)] = {
+        parent match {
+            case Some(ce: CachingExecution) if !isolated =>
+                ce.resources
+            case _ =>
+                mutable.ListBuffer[(ResourceIdentifier,() => Unit)]()
         }
     }
 
@@ -105,23 +130,57 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      */
     override def describe(mapping:Mapping, output:String) : StructType = {
         schemaCache.getOrElseUpdate(mapping, TrieMap())
-            .getOrElseUpdate(output, {
-                if (!mapping.outputs.contains(output))
-                    throw new NoSuchMappingOutputException(mapping.identifier, output)
-                val context = mapping.context
-                val deps = mapping.inputs
-                    .map(id => id -> describe(context.getMapping(id.mapping), id.output))
-                    .toMap
+            .getOrElseUpdate(output, createSchema(mapping, output))
+    }
 
-                // Transform any non-fatal exception in a DescribeMappingFailedException
-                try {
-                    logger.info(s"Describing mapping '${mapping.identifier}' for output ${output}")
-                    mapping.describe(this, deps, output)
-                }
-                catch {
-                    case NonFatal(e) => throw new DescribeMappingFailedException(mapping.identifier, e)
-                }
-            })
+    private def createSchema(mapping:Mapping, output:String) : StructType = {
+        if (!mapping.outputs.contains(output))
+            throw new NoSuchMappingOutputException(mapping.identifier, output)
+        val context = mapping.context
+
+        val deps = if (parallelism > 1 ) {
+            val inputs = mapping.inputs.par
+            inputs.tasksupport = taskSupport
+            inputs.map(id => id -> describe(context.getMapping(id.mapping), id.output))
+                .seq
+                .toMap
+        }
+        else {
+            mapping.inputs
+                .map(id => id -> describe(context.getMapping(id.mapping), id.output))
+                .toMap
+        }
+
+        // Transform any non-fatal exception in a DescribeMappingFailedException
+        try {
+            logger.info(s"Describing mapping '${mapping.identifier}' for output '${output}'")
+            mapping.describe(this, deps, output)
+        }
+        catch {
+            case NonFatal(e) => throw new DescribeMappingFailedException(mapping.identifier, e)
+        }
+    }
+
+    /**
+     * Registers a refresh function associated with a [[ResourceIdentifier]]
+     * @param key
+     * @param refresh
+     */
+    override def addResource(key:ResourceIdentifier)(refresh: => Unit) : Unit = {
+        resources.synchronized {
+            resources.append((key,() => refresh))
+        }
+    }
+
+    /**
+     * Invokes all refresh functions associated with a [[ResourceIdentifier]]
+     * @param key
+     */
+    override def refreshResource(key:ResourceIdentifier) : Unit = {
+        resources.synchronized {
+            resources.filter(kv => kv._1.contains(key) || key.contains(kv._1)).foreach(_._2())
+        }
+        parent.foreach(_.refreshResource(key))
     }
 
     /**
@@ -138,6 +197,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
             frameCache.values.foreach(_.values.foreach(_.unpersist(true)))
             frameCache.clear()
             schemaCache.clear()
+            resources.clear()
         }
     }
 
@@ -149,7 +209,8 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      */
     private def createTables(mapping:Mapping): Map[String,DataFrame] = {
         val context = mapping.context
-        val dependencies = mapping.inputs.map { dep =>
+
+        def dep(dep:MappingOutputIdentifier) = {
             require(dep.mapping.nonEmpty)
 
             val mapping = context.getMapping(dep.mapping)
@@ -157,7 +218,18 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
                 throw new NoSuchMappingOutputException(mapping.identifier, dep.output)
             val instances = instantiate(mapping)
             (dep, instances(dep.output))
-        }.toMap
+        }
+
+        val dependencies = {
+            if (parallelism > 1) {
+                val inputs = mapping.inputs.par
+                inputs.tasksupport = taskSupport
+                inputs.map(dep).seq.toMap
+            }
+            else {
+                mapping.inputs.map(dep).toMap
+            }
+        }
 
         // Retry cache (maybe it was inserted via dependencies)
         frameCache.getOrElseUpdate(mapping, createTables(mapping, dependencies))

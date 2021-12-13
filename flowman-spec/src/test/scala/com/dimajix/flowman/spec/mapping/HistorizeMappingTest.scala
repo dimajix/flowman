@@ -37,6 +37,10 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class HistorizeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    implicit class Unqoute(str:String) {
+        def unqouted : String = str.replace("`", "")
+    }
+
     "The HistorizeMapping" should "extract the latest version" in {
         val spark = this.spark
         import spark.implicits._
@@ -238,7 +242,7 @@ class HistorizeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
         val  df = executor.instantiate(mapping, "main")
 
         val sql = new SqlBuilder(df).toSQL
-        sql should be ("SELECT `col_0`, `col_1`, `ts`, `ts` AS `validFrom`, lead(`ts`, 1, NULL) OVER (PARTITION BY `col_0` ORDER BY `ts` ASC) AS `validTo` FROM `default`.`some_table`")
+        sql.unqouted should be ("SELECT col_0, col_1, ts, ts AS validFrom, lead(ts, 1, NULL) OVER (PARTITION BY col_0 ORDER BY ts ASC) AS validTo FROM default.some_table")
         noException shouldBe thrownBy(spark.sql(sql))
 
         spark.sql("DROP TABLE some_table")

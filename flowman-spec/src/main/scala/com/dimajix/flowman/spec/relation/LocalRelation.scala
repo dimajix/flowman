@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
@@ -46,7 +45,6 @@ import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.UtcTimestamp
-import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.sql.local.implicits._
 
 
@@ -70,6 +68,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment.toMap)
             .build()
     }
+    lazy val qualifiedLocation:Path = collector.root
 
     /**
       * Returns the list of all resources which will be created by this relation.
@@ -77,7 +76,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       * @return
       */
     override def provides : Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofLocal(location)
+        ResourceIdentifier.ofLocal(qualifiedLocation)
     )
 
     /**
@@ -105,7 +104,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             allPartitions.map(p => ResourceIdentifier.ofLocal(collector.resolve(p))).toSet
         }
         else {
-            Set(ResourceIdentifier.ofLocal(location))
+            Set(ResourceIdentifier.ofLocal(qualifiedLocation))
         }
     }
 
@@ -113,13 +112,11 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       * Reads data from the relation, possibly from specific partitions
       *
       * @param execution
-      * @param schema     - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(execution: Execution, partitions: Map[String, FieldValue]): DataFrame = {
         require(execution != null)
-        require(schema != null)
         require(partitions != null)
 
         requireValidPartitionKeys(partitions)
@@ -130,9 +127,9 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             case _ => lit(value)
         }
 
-        logger.info(s"Reading local relation '$identifier' at '$location' ${pattern.map(p => s" with pattern '$p'").getOrElse("")} for partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(", ")})")
+        logger.info(s"Reading local relation '$identifier' at '$qualifiedLocation' ${pattern.map(p => s" with pattern '$p'").getOrElse("")} for partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(", ")})")
         val data = mapFiles(partitions) { (partition, paths) =>
-            logger.info(s"Local relation '$identifier' reads ${paths.size} files under location '${location}' in partition ${partition.spec}")
+            logger.info(s"Local relation '$identifier' reads ${paths.size} files under location '${qualifiedLocation}' in partition ${partition.spec}")
 
             val reader = execution.spark.readLocal.options(options)
             inputSchema.foreach(s => reader.schema(s))
@@ -145,8 +142,10 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, toLit(p._2)))
         }
 
-        val allData = data.reduce(_ union _)
-        SchemaUtils.applySchema(allData, schema)
+        val df1 = data.reduce(_ union _)
+
+        // Add potentially missing partition columns
+        appendPartitionColumns(df1)
     }
 
     /**
@@ -218,6 +217,16 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         new File(localDirectory).exists()
     }
 
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        exists(execution)
+    }
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
@@ -259,7 +268,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         val path = new File(localDirectory)
         if (path.exists()) {
             if (!ifNotExists) {
-                throw new FileAlreadyExistsException(location.toString)
+                throw new FileAlreadyExistsException(qualifiedLocation.toString)
             }
         }
         else {
@@ -331,10 +340,10 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
     private def localDirectory = {
         if (pattern != null && pattern.nonEmpty) {
-            location.toUri.getPath
+            qualifiedLocation.toUri.getPath
         }
         else {
-            location.getParent.toUri.getPath
+            qualifiedLocation.getParent.toUri.getPath
         }
     }
 }

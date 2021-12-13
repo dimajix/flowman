@@ -9,65 +9,73 @@ export default {
           .then(response => response.data)
       },
 
-      listProjects() {
-        return axios.get('/api/project')
+      getJobDetails(job) {
+        return axios.get('/api/history/job/' + job)
           .then(response => response.data)
       },
 
-      getProject(name) {
-        return axios.get('/api/project/' + name)
+      getJobEnvironment(job) {
+        return axios.get('/api/history/job/' + job + '/env')
           .then(response => response.data)
       },
 
-      listJobs(project) {
-        return axios.get('/api/project/' + project + '/job')
+      getJobCounts(grouping, projects=[], jobs=[], phase=[], status=[]) {
+        return axios.get('/api/history/job-counts?grouping=' + grouping + "&project=" + projects.join(',') + "&job=" + jobs.join(',') + "&phase=" + phase.join(',') + "&status=" + status.join(','))
+            .then(response => response.data)
+      },
+
+      getJobsHistory(projects=[], jobs=[], phase=[], status=[], offset=0, limit=1000) {
+        return axios.get('/api/history/jobs?project=' + projects.join(',')
+            + "&job=" + jobs.join(',')
+            + "&phase=" + phase.join(',')
+            + "&status=" + status.join(',')
+            + "&offset=" + offset
+            + "&limit=" + limit
+          )
           .then(response => response.data)
       },
 
-      getJob(project, job) {
-        return axios.get('/api/project/' + project + '/job/' + job)
+      getTargetsHistory(projects=[], jobs=[], targets=[], phase=[], status=[], offset=0, limit=1000) {
+        return axios.get('/api/history/targets?&project=' + projects.join(',')
+            + "&job=" + jobs.join(',')
+            + "&target=" + targets.join(',')
+            + "&phase=" + phase.join(',')
+            + "&status=" + status.join(',')
+            + "&offset=" + offset
+            + "&limit=" + limit
+          )
           .then(response => response.data)
       },
 
-      listTargets(project) {
-        return axios.get('/api/project/' + project + '/target')
+      getTargetDetails(target) {
+        return axios.get('/api/history/target/' + target)
           .then(response => response.data)
       },
 
-      getTarget(project, target) {
-        return axios.get('/api/project/' + project + '/target/' + target)
+      getTargetGraph(target) {
+        return axios.get('/api/history/target/' + target + '/graph')
           .then(response => response.data)
       },
 
-      getAllJobsHistory() {
-        return axios.get('/api/job-history')
+      getTargetCounts(grouping, projects=[], jobs=[], targets=[], phase=[], status=[]) {
+        return axios.get('/api/history/target-counts?grouping=' + grouping + "&project=" + projects.join(',') + "&job=" + jobs.join(',') + "&target=" + targets.join(',') + "&phase=" + phase.join(',') + "&status=" + status.join(','))
           .then(response => response.data)
       },
 
-      getAllProjectJobsHistory(project) {
-        return axios.get('/api/job-history/' + project)
+      getJobTargets(job) {
+        return axios.get('/api/history/targets?jobId=' + job)
           .then(response => response.data)
       },
 
-      getProjectJobHistory(project, job) {
-        return axios.get('/api/job-history/' + project + '/' + job)
+      getJobsMetrics(projects=[], jobs=[], phase=[], status=[], groupings=[]) {
+        return axios.get('/api/history/metrics?project=' + projects.join(',')
+          + "&job=" + jobs.join(',')
+          + "&phase=" + phase.join(',')
+          + "&status=" + status.join(',')
+          + "&grouping=" + groupings.join(',')
+        )
           .then(response => response.data)
       },
-
-      getAllTargetsHistory() {
-        return axios.get('/api/target-history')
-          .then(response => response.data)
-      },
-
-      getAllProjectTargetsHistory(project) {
-        return axios.get('/api/target-history/' + project)
-          .then(response => response.data)
-      },
-
-      getProjectTargetsHistory(project, target) {
-        return axios.get('/api/target-history/' + project + '/' + target)
-          .then(response => response.data)
-      }
     };
 
     Vue.prototype.$api = api

@@ -23,6 +23,7 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.spark.testing.LocalSparkSession
@@ -59,6 +60,13 @@ class ModuleTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |relations:
               |  empty:
               |    kind: null
+              |    schema:
+              |      kind: embedded
+              |      fields:
+              |        - name: col1
+              |          type: string
+              |        - name: col2
+              |          type: Integer
               |
               |targets:
               |  blackhole:
@@ -69,9 +77,6 @@ class ModuleTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |  input:
               |    kind: read
               |    relation: empty
-              |    columns:
-              |      col1: String
-              |      col2: Integer
               |
               |jobs:
               |  default:
@@ -86,7 +91,7 @@ class ModuleTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val job = context.getJob(JobIdentifier("default"))
         job should not be (null)
         job.name should be ("default")
-        job.category should be ("job")
+        job.category should be (Category.JOB)
         job.kind should be ("job")
         runner.executeJob(job, Seq(Phase.BUILD)) should be (Status.SUCCESS)
     }

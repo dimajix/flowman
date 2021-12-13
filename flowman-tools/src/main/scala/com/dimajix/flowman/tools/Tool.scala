@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,19 +33,19 @@ import com.dimajix.flowman.plugin.PluginManager
 
 class Tool {
     // First create PluginManager
-    val plugins:PluginManager = createPluginManager()
+    final val plugins:PluginManager = createPluginManager()
     // Second load global system settings (including plugins for namespaces)
-    val systemSettings:SystemSettings = loadSystemSettings()
+    final val systemSettings:SystemSettings = loadSystemSettings()
     // Third load namespace
-    val namespace:Namespace = loadNamespace()
+    final val namespace:Namespace = loadNamespace()
 
-    private def createPluginManager() : PluginManager = {
+    protected def createPluginManager() : PluginManager = {
         val pluginManager = new PluginManager
         ToolConfig.pluginDirectory.foreach(pluginManager.withPluginDir)
         pluginManager
     }
 
-    private def loadSystemSettings() : SystemSettings = {
+    protected def loadSystemSettings() : SystemSettings = {
         val settings = ToolConfig.confDirectory
             .map(confDir => new File(confDir, "system.yml"))
             .filter(_.isFile)
@@ -57,7 +57,7 @@ class Tool {
         settings
     }
 
-    private def loadNamespace() : Namespace = {
+    protected def loadNamespace() : Namespace = {
         val ns = ToolConfig.confDirectory
             .map(confDir => new File(confDir, "default-namespace.yml"))
             .filter(_.isFile)

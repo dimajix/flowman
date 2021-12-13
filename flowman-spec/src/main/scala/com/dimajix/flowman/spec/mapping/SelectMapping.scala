@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,14 @@
 
 package com.dimajix.flowman.spec.mapping
 
+import scala.collection.immutable.ListMap
+
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions
+
+import com.dimajix.jackson.ListMapDeserializer
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -69,7 +74,8 @@ extends BaseMapping {
 
 class SelectMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
-    @JsonProperty(value = "columns", required = false) private var columns:Map[String,String] = Map()
+    @JsonDeserialize(using = classOf[ListMapDeserializer]) // Old Jackson in old Spark doesn't support ListMap
+    @JsonProperty(value = "columns", required = false) private var columns:ListMap[String,String] = ListMap()
     @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**

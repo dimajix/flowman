@@ -17,6 +17,9 @@ class ExampleSpec extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A Project" should "be loadable" in (if (hiveSupported) {
         val project = DqmProject.instantiate()
 
+        // Create dummy source directory
+        new File(tempDir, "hdfs/landing/kafka/topic=stream.events.1.dev").mkdirs()
+
         val session = Session.builder()
             .withProject(project)
             .withEnvironment("hdfs_basedir", new File(tempDir, "hdfs").toString)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.streaming.{OutputMode => StreamOutputMode}
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
@@ -84,7 +85,7 @@ trait Relation extends Instance {
       * Returns the category of this resource
       * @return
       */
-    final override def category: String = "relation"
+    final override def category: Category = Category.RELATION
 
     /**
       * Returns an identifier for this relation
@@ -99,14 +100,16 @@ trait Relation extends Instance {
     def description : Option[String]
 
     /**
-      * Returns the list of all resources which will be created by this relation.
+      * Returns the list of all resources which will be created by this relation. This method mainly refers to the
+      * CREATE and DESTROY execution phase.
       *
       * @return
       */
     def provides : Set[ResourceIdentifier]
 
     /**
-      * Returns the list of all resources which will be required by this relation for creation.
+      * Returns the list of all resources which will be required by this relation for creation. This method mainly
+      * refers to the CREATE and DESTROY execution phase.
       *
       * @return
       */
@@ -115,7 +118,7 @@ trait Relation extends Instance {
     /**
       * Returns the list of all resources which will are managed by this relation for reading or writing a specific
       * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
-      * partition is empty)
+      * partition is empty). This method mainly refers to the BUILD and TRUNCATE execution phase.
       * @param partitions
       * @return
       */
@@ -152,11 +155,10 @@ trait Relation extends Instance {
       * Reads data from the relation, possibly from specific partitions
       *
       * @param execution
-      * @param schema - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    def read(execution:Execution, schema:Option[org.apache.spark.sql.types.StructType] = None, partitions:Map[String,FieldValue] = Map()) : DataFrame
+    def read(execution:Execution, partitions:Map[String,FieldValue] = Map()) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition
@@ -188,7 +190,7 @@ trait Relation extends Instance {
       * @param schema
       * @return
       */
-    def readStream(execution:Execution, schema:Option[org.apache.spark.sql.types.StructType]) : DataFrame = ???
+    def readStream(execution:Execution) : DataFrame = ???
 
     /**
       * Writes data to a streaming sink
@@ -207,6 +209,14 @@ trait Relation extends Instance {
       * @return
       */
     def exists(execution:Execution) : Trilean
+
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     * @param execution
+     * @return
+     */
+    def conforms(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED) : Trilean
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
@@ -302,7 +312,7 @@ abstract class BaseRelation extends AbstractInstance with Relation {
         }
         else {
             // Otherwise let Spark infer the schema
-            val df = read(execution, None)
+            val df = read(execution)
             StructType.of(df.schema)
         }
     }
@@ -386,16 +396,6 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     }
 
     /**
-     * Applies the input schema (or maybe even transforms it). This should include partitions only if they are
-     * required in read operations.
-     * @param df
-     * @return
-     */
-    protected def applyInputSchema(df:DataFrame) : DataFrame = {
-        SchemaUtils.applySchema(df, inputSchema, insertNulls=false)
-    }
-
-    /**
      * Returns the Spark schema as it is expected from the physical relation for write operations. The list is used
      * for output operations, i.e. for writing. This should include partitions only if they are required for write
      * operations.
@@ -403,6 +403,33 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      */
     protected def outputSchema(execution:Execution) : Option[org.apache.spark.sql.types.StructType] = {
         schema.map(_.catalogSchema)
+    }
+
+    /**
+     * Returns the full schema including partition columns
+     * @return
+     */
+    protected def fullSchema : Option[StructType] = {
+        schema.map { schema =>
+            val schemaFieldNames = SetIgnoreCase(schema.fields.map(_.name))
+            val partitionFieldNames = SetIgnoreCase(partitions.map(_.name))
+            val schemaFields = schema.fields.map {
+                case f:Field if partitionFieldNames.contains(f.name) => f.copy(nullable = false)
+                case f => f
+            }
+            StructType(schemaFields ++ partitions.filter(p => !schemaFieldNames.contains(p.name)).map(_.field))
+        }
+    }
+
+    protected def appendPartitionColumns(df:DataFrame) : DataFrame = {
+        val schemaFields = MapIgnoreCase(df.schema.fields.map(p => p.name -> p))
+
+        partitions.foldLeft(df) { case(df,p) =>
+            if (schemaFields.contains(p.name))
+                df
+            else
+                df.withColumn(p.name, lit(null).cast(p.sparkType))
+        }
     }
 
     /**

@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.model
 
-import java.time.Instant
-
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.common.Trilean
@@ -25,7 +23,6 @@ import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.metric.LongAccumulatorMetric
 import com.dimajix.flowman.metric.Selector
@@ -38,36 +35,33 @@ import com.dimajix.spark.sql.functions.count_records
   * @param target
   * @param partitions
   */
-final case class TargetInstance(
+final case class TargetDigest(
     namespace:String,
     project:String,
     target:String,
+    phase:Phase,
     partitions:Map[String,String] = Map()
 ) {
-    require(namespace != null)
-    require(project != null)
-    require(target != null)
-    require(partitions != null)
-
     def asMap: Map[String, String] =
         Map(
             "namespace" -> namespace,
             "project" -> project,
             "name" -> target,
-            "target" -> target
+            "target" -> target,
+            "phase" -> phase.toString
         ) ++ partitions
 }
 
 
 object Target {
     object Properties {
-        def apply(context: Context, name:String = "") : Properties = {
+        def apply(context: Context, name:String = "", kind:String="") : Properties = {
             Properties(
                 context,
                 context.namespace,
                 context.project,
                 name,
-                "",
+                kind,
                 Map(),
                 Seq(),
                 Seq()
@@ -95,7 +89,7 @@ trait Target extends Instance {
       * Returns the category of this resource
       * @return
       */
-    final override def category: String = "target"
+    final override def category: Category = Category.TARGET
 
     /**
       * Returns an identifier for this target
@@ -107,7 +101,7 @@ trait Target extends Instance {
       * Returns an instance representing this target with the context
       * @return
       */
-    def instance : TargetInstance
+    def digest(phase:Phase) : TargetDigest
 
     /**
       * Returns an explicit user defined list of targets to be executed after this target. I.e. this
@@ -152,8 +146,8 @@ trait Target extends Instance {
     def dirty(execution: Execution, phase: Phase) : Trilean
 
     /**
-     * Executes a specific phase of this target. This method is explicitly allowed to throw an exception, which will
-     * be caught by the [[com.dimajix.flowman.execution.Runner]]
+     * Executes a specific phase of this target. This method is should not throw a non-fatal exception, instead it
+     * should wrap any exception in the TargetResult
      * @param execution
      * @param phase
      */
@@ -163,7 +157,7 @@ trait Target extends Instance {
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
-    def link(linker:Linker) : Unit
+    def link(linker:Linker, phase:Phase) : Unit
 }
 
 
@@ -182,11 +176,12 @@ abstract class BaseTarget extends AbstractInstance with Target {
      * Returns an instance representing this target with the context
      * @return
      */
-    override def instance : TargetInstance = {
-        TargetInstance(
+    override def digest(phase:Phase) : TargetDigest = {
+        TargetDigest(
             namespace.map(_.name).getOrElse(""),
             project.map(_.name).getOrElse(""),
-            name
+            name,
+            phase
         )
     }
 
@@ -236,8 +231,8 @@ abstract class BaseTarget extends AbstractInstance with Target {
     override def dirty(execution: Execution, phase: Phase): Trilean = Unknown
 
     /**
-     * Executes a specific phase of this target. This method is explicitly allowed to throw an exception, which will
-     * be caught by the [[com.dimajix.flowman.execution.Runner]]
+     * Executes a specific phase of this target. This method is should not throw a non-fatal exception, instead it
+     * should wrap any exception in the TargetResult
      *
      * @param execution
      * @param phase
@@ -257,7 +252,7 @@ abstract class BaseTarget extends AbstractInstance with Target {
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
-    override def link(linker:Linker) : Unit = {}
+    override def link(linker:Linker, phase:Phase) : Unit = {}
 
     /**
      * Performs validation before execution. This might be a good point in time to validate any assumption on data
@@ -365,13 +360,14 @@ abstract class BaseTarget extends AbstractInstance with Target {
      */
     protected def destroy(execution:Execution) : Unit = {}
 
-    protected def countRecords(execution:Execution, df:DataFrame) : DataFrame = {
-        val counter = execution.metrics.findMetric(Selector(Some("target_records"), metadata.asMap))
+    protected def countRecords(execution:Execution, df:DataFrame, phase:Phase=Phase.BUILD) : DataFrame = {
+        val labels = metadata.asMap + ("phase" -> phase.upper)
+        val counter = execution.metrics.findMetric(Selector(Some("target_records"), labels))
             .headOption
             .map(_.asInstanceOf[LongAccumulatorMetric].counter)
             .getOrElse {
                 val counter = execution.spark.sparkContext.longAccumulator
-                val metric = LongAccumulatorMetric("target_records", metadata.asMap, counter)
+                val metric = LongAccumulatorMetric("target_records", labels, counter)
                 execution.metrics.addMetric(metric)
                 counter
             }

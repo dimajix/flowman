@@ -24,7 +24,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -37,7 +37,6 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
 
         val start = Instant.now()
         val targets = Seq()
-        val target = mock[Target]
 
         val executor = new ParallelExecutor
         val result = executor.execute(execution, context, Phase.BUILD, targets, _ => true, keepGoing = false) {
@@ -56,7 +55,7 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         val t1 = mock[Target]
         (t1.identifier _).expects().atLeastOnce().returns(TargetIdentifier("t1", "default"))
         (t1.name _).expects().atLeastOnce().returns("t1")
-        (t1.instance _).expects().atLeastOnce().returns(TargetInstance("", "", "", Map()))
+        (t1.digest _).expects(Phase.BUILD).atLeastOnce().returns(TargetDigest("", "", "", Phase.BUILD, Map()))
         (t1.requires _).expects(*).atLeastOnce().returns(Set())
         (t1.provides _).expects(*).atLeastOnce().returns(Set())
         (t1.before _).expects().atLeastOnce().returns(Seq())
@@ -67,7 +66,7 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         val t2 = mock[Target]
         (t2.identifier _).expects().atLeastOnce().returns(TargetIdentifier("t2", "default"))
         (t2.name _).expects().atLeastOnce().returns("t2")
-        (t2.instance _).expects().atLeastOnce().returns(TargetInstance("", "", "", Map()))
+        (t2.digest _).expects(Phase.BUILD).atLeastOnce().returns(TargetDigest("", "", "", Phase.BUILD, Map()))
         (t2.requires _).expects(*).atLeastOnce().returns(Set())
         (t2.provides _).expects(*).atLeastOnce().returns(Set())
         (t2.before _).expects().atLeastOnce().returns(Seq())
@@ -84,8 +83,8 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         }
 
         result.sortBy(_.name) should be (Seq(
-            TargetResult(t1, t1.instance, Phase.BUILD, Seq(), Status.SUCCESS, None, start, start).copy(endTime=start),
-            TargetResult(t2, t2.instance, Phase.BUILD, Seq(), Status.SUCCESS, None, start, start).copy(endTime=start)
+            TargetResult(t1, t1.digest(Phase.BUILD), Seq(), Status.SUCCESS, None, start, start).copy(endTime=start),
+            TargetResult(t2, t2.digest(Phase.BUILD), Seq(), Status.SUCCESS, None, start, start).copy(endTime=start)
         ))
     }
 }

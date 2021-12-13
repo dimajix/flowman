@@ -9,12 +9,12 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.18.0</version>
+        <version>0.19.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <properties>
-        <plugin.name>flowman-swagger</plugin.name>
+        <plugin.name>flowman-openapi</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
     </properties>

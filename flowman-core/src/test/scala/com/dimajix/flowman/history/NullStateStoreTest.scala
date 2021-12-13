@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,45 +16,59 @@
 
 package com.dimajix.flowman.history
 
+import java.time.Instant
+
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.model.JobInstance
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobDigest
+import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetDigest
+import com.dimajix.flowman.model.TargetResult
 
 
-class NullStateStoreTest extends AnyFlatSpec with Matchers {
+class NullStateStoreTest extends AnyFlatSpec with Matchers with MockFactory {
     "The NullStateStore" should "support batches" in {
-        val batch = JobInstance(
+        val context = RootContext.builder().build()
+        val job = Job.builder(context).build()
+        val instance = JobDigest(
             "default",
             "project",
             "job_01",
+            Phase.BUILD,
             Map()
         )
 
         val monitor = new NullStateStore
-        monitor.getJobState(batch) should be (None)
-        val token = monitor.startJob(batch, Phase.BUILD)
-        monitor.getJobState(batch) should be (None)
-        monitor.finishJob(token, Status.SUCCESS)
-        monitor.getJobState(batch) should be (None)
+        monitor.getJobState(instance) should be (None)
+        val token = monitor.startJob(job, instance)
+        monitor.getJobState(instance) should be (None)
+        monitor.finishJob(token, JobResult(job, instance, Status.SUCCESS, Instant.now()))
+        monitor.getJobState(instance) should be (None)
     }
 
     it should "support targets" in {
-        val target = TargetInstance(
+        val instance = TargetDigest(
             "default",
             "project",
             "target_01",
+            Phase.BUILD,
             Map()
         )
+        val target = mock[Target]
+        (target.digest _).expects(Phase.BUILD).anyNumberOfTimes().returns(instance)
 
         val monitor = new NullStateStore
-        monitor.getTargetState(target) should be (None)
-        val token = monitor.startTarget(target, Phase.BUILD)
-        monitor.getTargetState(target) should be (None)
-        monitor.finishTarget(token, Status.SUCCESS)
-        monitor.getTargetState(target) should be (None)
+        monitor.getTargetState(instance) should be (None)
+        val token = monitor.startTarget(target, instance)
+        monitor.getTargetState(instance) should be (None)
+        monitor.finishTarget(token, TargetResult(target, Phase.BUILD, Status.SUCCESS))
+        monitor.getTargetState(instance) should be (None)
     }
 }

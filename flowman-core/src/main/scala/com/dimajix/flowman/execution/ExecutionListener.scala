@@ -19,11 +19,14 @@ package com.dimajix.flowman.execution
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.Job
-import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobDigest
+import com.dimajix.flowman.model.JobLifecycle
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
+import com.dimajix.flowman.model.Measure
+import com.dimajix.flowman.model.MeasureResult
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 
 
@@ -33,6 +36,7 @@ abstract class JobToken extends Token
 abstract class TargetToken extends Token
 abstract class TestToken extends Token
 abstract class AssertionToken extends Token
+abstract class MeasureToken extends Token
 
 
 trait ExecutionListener {
@@ -41,7 +45,7 @@ trait ExecutionListener {
      * @param job
      * @return
      */
-    def startLifecycle(execution:Execution, job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken
+    def startLifecycle(execution:Execution, job:Job, instance:JobLifecycle) : LifecycleToken
 
     /**
      * Sets the status of a job after it has been started
@@ -55,7 +59,7 @@ trait ExecutionListener {
      * @param job
      * @return
      */
-    def startJob(execution:Execution, job:Job, instance:JobInstance, phase:Phase, parent:Option[Token]) : JobToken
+    def startJob(execution:Execution, job:Job, instance:JobDigest, parent:Option[Token]) : JobToken
 
     /**
      * Sets the status of a job after it has been started
@@ -69,7 +73,7 @@ trait ExecutionListener {
      * @param target
      * @return
      */
-    def startTarget(execution:Execution, target:Target, instance:TargetInstance, phase:Phase, parent:Option[Token]) : TargetToken
+    def startTarget(execution:Execution, target:Target, instance:TargetDigest, parent:Option[Token]) : TargetToken
 
     /**
      * Sets the status of a job after it has been started
@@ -91,16 +95,32 @@ trait ExecutionListener {
      * @param result
      */
     def finishAssertion(execution:Execution, token:AssertionToken, result:AssertionResult) : Unit
+
+    /**
+     * Starts the measure and returns a token, which can be anything
+     * @param measure
+     * @return
+     */
+    def startMeasure(execution:Execution, measure:Measure, parent:Option[Token]) : MeasureToken
+
+    /**
+     * Sets the status of a measure after it has been started
+     * @param token The token returned by startJob
+     * @param result
+     */
+    def finishMeasure(execution:Execution, token:MeasureToken, result:MeasureResult) : Unit
 }
 
 
 abstract class AbstractExecutionListener extends ExecutionListener {
-    override def startLifecycle(execution:Execution, job:Job, instance:JobInstance, lifecycle:Seq[Phase]) : LifecycleToken = new LifecycleToken {}
+    override def startLifecycle(execution:Execution, job:Job, instance:JobLifecycle) : LifecycleToken = new LifecycleToken {}
     override def finishLifecycle(execution:Execution, token:LifecycleToken, result:LifecycleResult) : Unit = {}
-    override def startJob(execution:Execution, job: Job, instance: JobInstance, phase: Phase, parent:Option[Token]): JobToken = new JobToken {}
+    override def startJob(execution:Execution, job: Job, instance: JobDigest, parent:Option[Token]): JobToken = new JobToken {}
     override def finishJob(execution:Execution, token: JobToken, result: JobResult): Unit = {}
-    override def startTarget(execution:Execution, target: Target, instance:TargetInstance, phase: Phase, parent: Option[Token]): TargetToken = new TargetToken {}
+    override def startTarget(execution:Execution, target: Target, instance:TargetDigest, parent: Option[Token]): TargetToken = new TargetToken {}
     override def finishTarget(execution:Execution, token: TargetToken, result: TargetResult): Unit = {}
     override def startAssertion(execution:Execution, assertion: Assertion, parent: Option[Token]): AssertionToken = new AssertionToken {}
     override def finishAssertion(execution:Execution, token: AssertionToken, result: AssertionResult): Unit = {}
+    override def startMeasure(execution:Execution, measure: Measure, parent: Option[Token]): MeasureToken = new MeasureToken {}
+    override def finishMeasure(execution:Execution, token: MeasureToken, result: MeasureResult): Unit = {}
 }

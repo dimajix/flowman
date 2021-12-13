@@ -21,7 +21,6 @@ import scala.collection.immutable.ListMap
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.expr
 
 import com.dimajix.jackson.ListMapDeserializer
@@ -50,12 +49,11 @@ case class AggregateMapping(
       */
     override def execute(execution:Execution, tables:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
         val df = tables(input)
-        val dims = dimensions.map(col)
+        val dims = dimensions.map(expr)
         val expressions = aggregations.map(kv => expr(kv._2).as(kv._1))
 
-        val parts = partitions
-        val aggs = if (parts > 0)
-            df.repartition(parts, dims:_*).groupBy(dims:_*).agg(expressions.head, expressions.tail.toSeq:_*)
+        val aggs = if (partitions > 0)
+            df.repartition(partitions, dims:_*).groupBy(dims:_*).agg(expressions.head, expressions.tail.toSeq:_*)
         else
             df.groupBy(dims:_*).agg(expressions.head, expressions.tail.toSeq:_*)
 

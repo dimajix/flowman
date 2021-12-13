@@ -26,22 +26,23 @@ import com.dimajix.flowman.execution.Status
   * The TargetQuery encapsulates a query for retrieving all targets matching the given criteria
   * @param namespace
   * @param project
-  * @param name
+  * @param target
   * @param status
-  * @param jobName
+  * @param job
   * @param jobId
   * @param from
   * @param to
   * @param partitions
   */
 final case class TargetQuery(
-    namespace:Option[String] = None,
-    project:Option[String] = None,
-    name:Option[String] = None,
-    status:Option[Status] = None,
-    phase:Option[Phase] = None,
-    jobName:Option[String] = None,
-    jobId:Option[String] = None,
+    id:Seq[String] = Seq(),
+    namespace:Seq[String] = Seq(),
+    project:Seq[String] = Seq(),
+    target:Seq[String] = Seq(),
+    status:Seq[Status] = Seq(),
+    phase:Seq[Phase] = Seq(),
+    job:Seq[String] = Seq(),
+    jobId:Seq[String] = Seq(),
     from:Option[ZonedDateTime] = None,
     to:Option[ZonedDateTime] = None,
     partitions:Map[String,String] = Map()
@@ -53,36 +54,40 @@ final case class TargetState(
     jobId:Option[String],
     namespace:String,
     project:String,
+    version:String,
     target:String,
     partitions:Map[String,String],
     phase:Phase,
     status:Status,
     startDateTime:Option[ZonedDateTime] = None,
-    endDateTime:Option[ZonedDateTime] = None
+    endDateTime:Option[ZonedDateTime] = None,
+    error:Option[String] = None
 )
 
 
-sealed case class TargetOrderColumn()
-object TargetOrderColumn {
-    object BY_DATETIME extends TargetOrderColumn
-    object BY_NAME extends TargetOrderColumn
-    object BY_ID extends TargetOrderColumn
-    object BY_STATUS extends TargetOrderColumn
-    object BY_PHASE extends TargetOrderColumn
-    object BY_PARENT_NAME extends TargetOrderColumn
-    object BY_PARENT_ID extends TargetOrderColumn
+sealed abstract class TargetColumn
+object TargetColumn {
+    case object DATETIME extends TargetColumn
+    case object PROJECT extends TargetColumn
+    case object NAME extends TargetColumn
+    case object ID extends TargetColumn
+    case object STATUS extends TargetColumn
+    case object PHASE extends TargetColumn
+    case object PARENT_NAME extends TargetColumn
+    case object PARENT_ID extends TargetColumn
 }
 
 object TargetOrder {
-    final val BY_DATETIME = TargetOrder(TargetOrderColumn.BY_DATETIME)
-    final val BY_NAME = TargetOrder(TargetOrderColumn.BY_NAME)
-    final val BY_ID = TargetOrder(TargetOrderColumn.BY_ID)
-    final val BY_STATUS = TargetOrder(TargetOrderColumn.BY_STATUS)
-    final val BY_PHASE = TargetOrder(TargetOrderColumn.BY_PHASE)
-    final val BY_PARENT_NAME = TargetOrder(TargetOrderColumn.BY_PARENT_NAME)
-    final val BY_PARENT_ID = TargetOrder(TargetOrderColumn.BY_PARENT_ID)
+    final val BY_DATETIME = TargetOrder(TargetColumn.DATETIME)
+    final val BY_PROJECT = TargetOrder(TargetColumn.PROJECT)
+    final val BY_NAME = TargetOrder(TargetColumn.NAME)
+    final val BY_ID = TargetOrder(TargetColumn.ID)
+    final val BY_STATUS = TargetOrder(TargetColumn.STATUS)
+    final val BY_PHASE = TargetOrder(TargetColumn.PHASE)
+    final val BY_PARENT_NAME = TargetOrder(TargetColumn.PARENT_NAME)
+    final val BY_PARENT_ID = TargetOrder(TargetColumn.PARENT_ID)
 }
-final case class TargetOrder(column:TargetOrderColumn, isAscending:Boolean=true) {
+final case class TargetOrder(column:TargetColumn, isAscending:Boolean=true) {
     def asc() : TargetOrder  = copy(isAscending=true)
     def desc() : TargetOrder  = copy(isAscending=false)
 }

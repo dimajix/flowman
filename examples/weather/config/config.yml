@@ -13,8 +13,8 @@ config:
   - flowman.execution.executor.class=com.dimajix.flowman.execution.SimpleExecutor
   # Parallelism of executor for com.dimajix.flowman.execution.ParallelExecutor (default: 4)
   - flowman.execution.executor.parallelism=4
-  # Execution scheduler class (default: com.dimajix.flowman.execution.SimpleScheduler)
-  - flowman.execution.scheduler.class=com.dimajix.flowman.execution.SimpleScheduler
+  # Execution scheduler class (default: com.dimajix.flowman.execution.DependencyScheduler)
+  - flowman.execution.scheduler.class=com.dimajix.flowman.execution.DependencyScheduler
   # Default migration policy for relations (default: RELAXED)
   - flowman.default.relation.migrationPolicy=RELAXED
   # Default migration strategy for relations (default: ALTER)

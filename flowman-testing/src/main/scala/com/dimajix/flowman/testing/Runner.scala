@@ -284,11 +284,7 @@ class Runner private(
         val runner = session.runner
         val result = runner.executeJob(job, phases, args, force=true)
 
-        result match {
-            case Status.SUCCESS => true
-            case Status.SKIPPED => true
-            case _ => false
-        }
+        result.success
     }
 
     /**
@@ -335,11 +331,7 @@ class Runner private(
         val runner = session.runner
         val result = runner.executeTest(test)
 
-        result match {
-            case Status.SUCCESS => true
-            case Status.SKIPPED => true
-            case _ => false
-        }
+        result.success
     }
 
     /**

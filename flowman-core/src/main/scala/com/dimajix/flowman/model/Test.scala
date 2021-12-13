@@ -17,6 +17,8 @@
 package com.dimajix.flowman.model
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Job.Parameter
+import com.dimajix.flowman.types.FieldType
 
 final case class TestInstance(
     namespace:String,
@@ -62,6 +64,63 @@ object Test {
         override def withName(name: String): Properties = copy(name=name)
     }
 
+    class Builder(context:Context) {
+        require(context != null)
+        private var name:String = ""
+        private var labels:Map[String,String] = Map()
+        private var description:Option[String] = None
+        private var targets:Seq[TargetIdentifier] = Seq()
+        private var environment:Map[String,String] = Map()
+
+        def build() : Test = Test(
+            Test.Properties(context, context.namespace, context.project, name, labels, description),
+            environment = environment,
+            targets = targets
+        )
+        def setProperties(props:Test.Properties) : Builder = {
+            require(props != null)
+            require(props.context eq context)
+            name = props.name
+            labels = props.labels
+            description = props.description
+            this
+        }
+        def setName(name:String) : Builder = {
+            require(name != null)
+            this.name = name
+            this
+        }
+        def setDescription(desc:String) : Builder = {
+            require(desc != null)
+            this.description = Some(desc)
+            this
+        }
+        def setEnvironment(env:Map[String,String]) : Builder = {
+            require(env != null)
+            this.environment = env
+            this
+        }
+        def addEnvironment(key:String, value:String) : Builder = {
+            require(key != null)
+            require(value != null)
+            this.environment = this.environment + (key -> value)
+            this
+        }
+        def setTargets(targets:Seq[TargetIdentifier]) : Builder = {
+            require(targets != null)
+            this.targets = targets
+            this
+        }
+        def addTarget(target:TargetIdentifier) : Builder = {
+            require(target != null)
+            this.targets = this.targets :+ target
+            this
+        }
+    }
+
+    def builder(context: Context) : Builder = new Builder(context)
+
+
     /**
      * Creates a new [[Test]] from an existing test and a list of parent tests
      * @param test
@@ -74,13 +133,13 @@ object Test {
             .reduceOption((envs, elems) => envs ++ elems)
             .getOrElse(Map())
         val parentTargets = parents
-            .map(test => test.targets.toSet)
+            .map(test => test.targets)
             .reduceOption((targets, elems) => targets ++ elems)
-            .getOrElse(Set())
+            .getOrElse(Seq())
 
         val allEnvironment = parentEnvironment ++ test.environment
 
-        val allTargets = parentTargets ++ test.targets
+        val allTargets = (parentTargets ++ test.targets).distinct
         val allRelationMocks = parents.foldLeft(Map[String,Prototype[Relation]]())((f, t) => f ++ t.overrideRelations) ++ test.overrideRelations
         val allMappingMocks = parents.foldLeft(Map[String,Prototype[Mapping]]())((f, t) => f ++ t.overrideMappings) ++ test.overrideMappings
         val allFixtures = parents.foldLeft(Map[String,Prototype[Target]]())((f, t) => f ++ t.fixtures) ++ test.fixtures
@@ -89,7 +148,7 @@ object Test {
         Test(
             test.instanceProperties,
             allEnvironment,
-            allTargets.toSeq,
+            allTargets,
             allRelationMocks,
             allMappingMocks,
             allFixtures,
@@ -109,7 +168,7 @@ final case class Test(
     fixtures:Map[String,Prototype[Target]] = Map(),
     assertions:Map[String,Prototype[Assertion]] = Map()
 ) extends AbstractInstance {
-    override def category: String = "test"
+    override def category: Category = Category.TEST
     override def kind : String = "test"
 
    /**

@@ -22,12 +22,15 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.catalog.Catalog
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
+import com.dimajix.flowman.model.Measure
+import com.dimajix.flowman.model.MeasureResult
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 
@@ -93,8 +96,28 @@ final class RootExecution(session:Session) extends CachingExecution(None, true) 
         super.cleanup()
     }
 
+    /**
+     * Invokes a function with a new Executor that with additional listeners.
+     * @param listeners
+     * @param fn
+     * @tparam T
+     * @return
+     */
     override def withListeners[T](listeners:Seq[ExecutionListener])(fn:Execution => T) : T = {
-        val execution = new MonitorExecution(this, listeners.map(l => (l,None)))
+        val execution = new MonitorExecution(this, listeners.map(l => (l,None)), None)
+        fn(execution)
+    }
+
+    /**
+     * Invokes a function with a new Executor with a specific [[MetricBoard]]
+     *
+     * @param metrics
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    override def withMetrics[T](metrics: Option[MetricBoard])(fn: Execution => T): T = {
+        val execution = new MonitorExecution(this, Seq(), metrics)
         fn(execution)
     }
 
@@ -111,6 +134,10 @@ final class RootExecution(session:Session) extends CachingExecution(None, true) 
     }
 
     override def monitorAssertion(assertion:Assertion)(fn:Execution => AssertionResult) : AssertionResult = {
+        fn(this)
+    }
+
+    override def monitorMeasure(measure:Measure)(fn:Execution => MeasureResult) : MeasureResult = {
         fn(this)
     }
 }

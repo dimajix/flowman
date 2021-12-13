@@ -25,10 +25,10 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.AbstractInstance
 import com.dimajix.flowman.model.Dataset
-import com.dimajix.flowman.model.IdentifierRelationReference
 import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.RelationReference
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.types.SingleValue
@@ -39,7 +39,7 @@ object RelationDataset {
     def apply(context: Context, relation:RelationIdentifier, partition:Map[String,SingleValue]) : RelationDataset = {
         new RelationDataset(
             Dataset.Properties(context, "relation(" + relation.name + ")", "relation"),
-            IdentifierRelationReference(context,relation),
+            RelationReference(context,relation),
             partition
         )
     }
@@ -95,9 +95,9 @@ case class RelationDataset(
       * @param schema - the schema to read. If none is specified, all available columns will be read
       * @return
       */
-    override def read(execution: Execution, schema: Option[org.apache.spark.sql.types.StructType]): DataFrame = {
+    override def read(execution: Execution): DataFrame = {
         val instance = relation.value
-        instance.read(execution, schema, partition)
+        instance.read(execution, partition)
     }
 
     /**

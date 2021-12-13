@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.18.0</version>
+    <version>0.19.0</version>
     <packaging>pom</packaging>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
@@ -66,12 +66,13 @@
         <gson.version>2.2.4</gson.version>
         <antlr.version>3.5.2</antlr.version>
         <antlr-st4.version>4.0.4</antlr-st4.version>
+        <junit.version>5.8.2</junit.version>
+        <assertj.version>3.21.0</assertj.version>
         <commons-cli.version>1.2</commons-cli.version>
         <commons-compiler.version>3.0.9</commons-compiler.version>
         <commons-dbcp.version>1.4</commons-dbcp.version>
         <commons-digester.version>1.8.1</commons-digester.version>
         <commons-httpclient.version>3.1</commons-httpclient.version>
-        <commons-io.version>2.4</commons-io.version>
         <commons-lang.version>2.6</commons-lang.version>
         <commons-logging.version>1.1.3</commons-logging.version>
         <commons-math3.version>3.4.1</commons-math3.version>
@@ -93,7 +94,9 @@
         <scala.api_version>2.12</scala.api_version>
         <scalatest.version>3.2.5</scalatest.version>
         <scalatest-api.version>3.2</scalatest-api.version>
+        <scala-xml.version>1.2.0</scala-xml.version>
         <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
+        <scala-collection-compat.version>2.1.1</scala-collection-compat.version>
         <spark.version>3.1.2</spark.version>
         <spark-api.version>3.1</spark-api.version>
         <netty-all.version>4.1.51.Final</netty-all.version>
@@ -112,12 +115,15 @@
         <httpcore.version>4.4.12</httpcore.version>
         <dropwizard.version>4.1.1</dropwizard.version>
         <snappy.version>1.1.8.2</snappy.version>
+        <commons-io.version>2.4</commons-io.version>
         <commons-collections.version>3.2.2</commons-collections.version>
         <commons-compress.version>1.20</commons-compress.version>
         <commons-lang3.version>3.9</commons-lang3.version>
 
         <!-- Flowman version -->
         <flowman.version>${project.version}</flowman.version>
+        <flowman.dist.suffix>-${hadoop.dist}-spark${spark-api.version}-hadoop${hadoop-api.version}</flowman.dist.suffix>
+        <flowman.dist.label>${project.version}${flowman.dist.suffix}</flowman.dist.label>
 
         <!-- Language versions -->
         <java.version>11</java.version>
@@ -158,6 +164,7 @@
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
+                <scala-xml.version>1.0.5</scala-xml.version>
                 <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
                 <spark.version>2.4.0-cdh6.3.4</spark.version>
                 <spark-api.version>2.4</spark-api.version>
@@ -184,6 +191,7 @@
                 <joda-time.version>2.9.9</joda-time.version>
                 <commons-collections.version>3.2.1</commons-collections.version>
                 <commons-compress.version>1.19</commons-compress.version>
+                <commons-io.version>2.4</commons-io.version>
                 <commons-lang3.version>3.7</commons-lang3.version>
                 <slf4j.version>1.7.25</slf4j.version>
             </properties>
@@ -213,6 +221,7 @@
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
+                <scala-xml.version>1.0.5</scala-xml.version>
                 <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
                 <spark.version>2.4.7.${cdp.version}</spark.version>
                 <spark-api.version>2.4</spark-api.version>
@@ -240,6 +249,7 @@
                 <joda-time.version>2.9.3</joda-time.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.19</commons-compress.version>
+                <commons-io.version>2.4</commons-io.version>
                 <commons-lang3.version>3.8.1</commons-lang3.version>
             </properties>
         </profile>
@@ -253,6 +263,7 @@
                 <scala.api_version>2.11</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
+                <scala-xml.version>1.0.5</scala-xml.version>
                 <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
                 <spark.version>2.4.8</spark.version>
                 <spark-api.version>2.4</spark-api.version>
@@ -276,6 +287,7 @@
                 <joda-time.version>2.9.3</joda-time.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.8.1</commons-compress.version>
+                <commons-io.version>2.4</commons-io.version>
                 <commons-lang3.version>3.5</commons-lang3.version>
             </properties>
         </profile>
@@ -286,6 +298,7 @@
                 <scala.api_version>2.12</scala.api_version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
+                <scala-xml.version>1.2.0</scala-xml.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <spark.version>3.0.3</spark.version>
                 <spark-api.version>3.0</spark-api.version>
@@ -309,6 +322,7 @@
                 <joda-time.version>2.10.5</joda-time.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.20</commons-compress.version>
+                <commons-io.version>2.4</commons-io.version>
                 <commons-lang3.version>3.9</commons-lang3.version>
             </properties>
         </profile>
@@ -319,6 +333,7 @@
                 <scala.api_version>2.12</scala.api_version>
                 <scalatest.version>3.2.5</scalatest.version>
                 <scalatest-api.version>3.2</scalatest-api.version>
+                <scala-xml.version>1.2.0</scala-xml.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <spark.version>3.1.2</spark.version>
                 <spark-api.version>3.1</spark-api.version>
@@ -342,7 +357,43 @@
                 <joda-time.version>2.10.5</joda-time.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.20</commons-compress.version>
+                <commons-io.version>2.4</commons-io.version>
                 <commons-lang3.version>3.9</commons-lang3.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-3.2</id>
+            <properties>
+                <scala.version>2.12.15</scala.version>
+                <scala.api_version>2.12</scala.api_version>
+                <scalatest.version>3.2.5</scalatest.version>
+                <scalatest-api.version>3.2</scalatest-api.version>
+                <scala-xml.version>1.2.0</scala-xml.version>
+                <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
+                <spark.version>3.2.0</spark.version>
+                <spark-api.version>3.2</spark-api.version>
+                <snappy.version>1.1.8.4</snappy.version>
+                <netty-all.version>4.1.68.Final</netty-all.version>
+                <antlr4.version>4.8-1</antlr4.version>
+                <jackson.version>2.12.3</jackson.version>
+                <jackson-api.version>2.12</jackson-api.version>
+                <jackson.databind.version>2.12.3</jackson.databind.version>
+                <paranamer.version>2.8</paranamer.version>
+                <kafka.version>2.8.0</kafka.version>
+                <derby.version>10.14.2.0</derby.version>
+                <zookeeper.version>3.6.2</zookeeper.version>
+                <avro.version>1.10.2</avro.version>
+                <json4s.version>3.7.0-M11</json4s.version>
+                <guava.version>14.0.1</guava.version>
+                <slf4j.version>1.7.30</slf4j.version>
+                <httpclient.version>4.5.13</httpclient.version>
+                <httpcore.version>4.4.14</httpcore.version>
+                <dropwizard.version>4.1.1</dropwizard.version>
+                <joda-time.version>2.10.10</joda-time.version>
+                <commons-collections.version>3.2.2</commons-collections.version>
+                <commons-compress.version>1.21</commons-compress.version>
+                <commons-io.version>2.8.0</commons-io.version>
+                <commons-lang3.version>3.12.0</commons-lang3.version>
             </properties>
         </profile>
 
@@ -406,11 +457,20 @@
                 <commons-codec.version>1.11</commons-codec.version>
             </properties>
         </profile>
+        <profile>
+            <id>hadoop-3.3</id>
+            <properties>
+                <hadoop.version>3.3.1</hadoop.version>
+                <hadoop-api.version>3.3</hadoop-api.version>
+                <json-smart.version>2.4.2</json-smart.version>
+                <commons-beanutils.version>1.9.3</commons-beanutils.version>
+                <commons-codec.version>1.15</commons-codec.version>
+            </properties>
+        </profile>
     </profiles>
 
     <modules>
         <module>flowman-scalatest-compat</module>
-        <module>flowman-jackson-compat</module>
         <module>flowman-spark-testing</module>
         <module>flowman-spark-extensions</module>
         <module>flowman-common</module>
@@ -536,6 +596,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
                 <version>3.1.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-help-plugin</artifactId>
+                <version>3.2.0</version>
             </plugin>
         </plugins>
 
@@ -870,11 +935,6 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-jackson-compat</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spark-extensions</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1005,7 +1065,7 @@
             <dependency>
                 <groupId>org.scala-lang.modules</groupId>
                 <artifactId>scala-xml_${scala.api_version}</artifactId>
-                <version>1.2.0</version>
+                <version>${scala-xml.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -1014,19 +1074,17 @@
                 <version>${scala-parser-combinators.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>org.scala-lang.modules</groupId>
+                <artifactId>scala-collection-compat_${scala.api_version}</artifactId>
+                <version>${scala-collection-compat.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.ivy</groupId>
                 <artifactId>ivy</artifactId>
                 <version>${ivy.version}</version>
                 <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.assertj</groupId>
-                <artifactId>assertj-core</artifactId>
-                <version>3.13.2</version>
-                <scope>test</scope>
             </dependency>
 
             <dependency>
@@ -1242,6 +1300,12 @@
                 <artifactId>hadoop-hdfs</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
@@ -1264,6 +1328,10 @@
                     <exclusion>
                         <groupId>javax.servlet</groupId>
                         <artifactId>servlet-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.zookeeper</groupId>
+                        <artifactId>zookeeper</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -1719,13 +1787,25 @@
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-api</artifactId>
-                <version>5.5.2</version>
+                <version>${junit.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-engine</artifactId>
-                <version>5.5.2</version>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-params</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>

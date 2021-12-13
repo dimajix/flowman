@@ -14,7 +14,10 @@ relations:
 targets:
   vacuum_crm_customer:
     kind: deltaVacuum
-    relation: crm_customer  
+    relation: crm_customer
+    compaction: true
+    minFiles: 10
+    maxFiles: 20
 ```
 
 Or alternatively with an embedded relation:
@@ -41,6 +44,15 @@ targets:
  should be kept. If this field is not specified, the property `deletedFileRetentionDuration` specified in the delta 
  relation will be used instead. Note that this time is actually measured in *hours*, i.e. it doesn't make any sense
  to specify a time period with a finer granularity.
+
+* `compaction` **(optional)** *(type: boolean)* *(default: false)*: Perform compaction before vacuum operation. A
+ compaction will reduce the number of files per table and/or partition
+
+* `minFiles` **(optional)** *(type: integer)* *(default: 16)*: Number of files per partition, which will be created
+ during a compaction operation.
+
+* `maxFiles` **(optional)** *(type: integer)* *(default: 64)*: Number of files per partition, below which no compaction
+ will be performed.
 
 
 ## Supported Phases

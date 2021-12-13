@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,21 +34,18 @@ import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.StateStoreAdaptorListener
 import com.dimajix.flowman.history.TargetState
-import com.dimajix.flowman.metric.MetricBoard
-import com.dimajix.flowman.metric.MetricSystem
-import com.dimajix.flowman.metric.withWallTime
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Result
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
-import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.flowman.spi.LogFilter
@@ -80,6 +77,8 @@ private[execution] sealed class RunnerImpl {
         result.status match {
             case Status.SUCCESS =>
                 logger.info(green(s"Successfully finished phase '$phase' for target '${target.identifier}'"))
+            case Status.SUCCESS_WITH_ERRORS =>
+                logger.info(yellow(s"Successfully finished phase '$phase' for target '${target.identifier}' with errors"))
             case Status.SKIPPED =>
                 logger.info(green(s"Skipped phase '$phase' for target '${target.identifier}'"))
             case Status.FAILED if result.exception.nonEmpty =>
@@ -138,8 +137,8 @@ private[execution] sealed class RunnerImpl {
 
     def logEnvironment(context:Context) : Unit = {
         logger.info("Environment:")
-        context.environment.toSeq.sortBy(_._1).foreach { keyValue =>
-            logFilters.foldLeft(Option(keyValue))((kv, f) => kv.flatMap(kv => f.filterConfig(kv._1,kv._2.toString)))
+        context.environment.toSeq.sortBy(_._1).foreach { case (key,value) =>
+            LogFilter.filter(logFilters, key, value.toString)
                 .foreach { case (key,value) => logger.info(s"  $key=$value") }
         }
         logger.info("")
@@ -149,6 +148,8 @@ private[execution] sealed class RunnerImpl {
         val msg = status match {
             case Status.SUCCESS|Status.SKIPPED =>
                 boldGreen(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
+            case Status.SUCCESS_WITH_ERRORS =>
+                boldYellow(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
             case Status.ABORTED|Status.FAILED =>
                 boldRed(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
             case Status.RUNNING =>
@@ -215,8 +216,8 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                                 None
                         }
 
-                        val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
-                        LifecycleResult(job, instance, phases, results, startTime)
+                        val instance = job.lifecycle(phases, arguments.map { case (k, v) => k -> v.toString })
+                        LifecycleResult(job, instance, results, startTime)
                     }
                 }
             }
@@ -240,23 +241,22 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             val allMetrics = job.metrics.map(_.instantiate(context))
 
             val startTime = Instant.now()
-            val result = execution.monitorJob(job, arguments, phase) { execution =>
-                withMetrics(execution.metrics, allMetrics) {
-                    withWallTime(execution.metrics, job.metadata, phase) {
-                        val instance = job.instance(arguments.map { case (k, v) => k -> v.toString })
+            val result =
+                execution.withMetrics(allMetrics) { execution =>
+                    execution.monitorJob(job, arguments, phase) { execution =>
+                        val instance = job.digest(phase, arguments.map { case (k, v) => k -> v.toString })
                         try {
                             val results = executeJobTargets(execution, context, job, phase, targets, force, keepGoing, dryRun)
-                            JobResult(job, instance, phase, results, startTime)
+                            JobResult(job, instance, results, startTime)
                         }
                         catch {
                             case NonFatal(ex) =>
                                 // Primarily exceptions during target instantiation will be caught here
                                 logger.error(s"Caught exception during $title:", ex)
-                                JobResult(job, instance, phase, ex, startTime)
+                                JobResult(job, instance, ex, startTime)
                         }
                     }
                 }
-            }
 
             val endTime = result.endTime
             val duration = Duration.between(startTime, endTime)
@@ -305,11 +305,10 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @return
      */
     private def executeTargetPhase(execution: Execution, target:Target, phase:Phase, force:Boolean, dryRun:Boolean) : TargetResult = {
-        // Create target instance for state server
-        val instance = target.instance
-
         val forceDirty = force || execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY)
-        val canSkip = !force && checkTarget(instance, phase)
+
+        // We need to check the target *before* we run code inside the monitor (which will mark the target as RUNNING)
+        val canSkip = !force && checkTarget(target.digest(phase))
 
         val startTime = Instant.now()
         execution.monitorTarget(target, phase) { execution =>
@@ -328,9 +327,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             }
             else {
                 resultOf(target, phase, dryRun) {
-                    withWallTime(execution.metrics, target.metadata, phase) {
-                        target.execute(execution, phase)
-                    }
+                    target.execute(execution, phase)
                 }
             }
         }
@@ -341,7 +338,9 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @param target
      * @return
      */
-    private def checkTarget(target:TargetInstance, phase:Phase) : Boolean = {
+    private def checkTarget(target:TargetDigest) : Boolean = {
+        val phase = target.phase
+
         def checkState(state:TargetState) : Boolean = {
             val lifecycle = Lifecycle.ofPhase(phase)
             if (!lifecycle.contains(state.phase)) {
@@ -351,44 +350,20 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                 // Same lifecycle, but previous phase => target is not valid
                 false
             } else {
-                state.status == Status.SUCCESS || state.status == Status.SKIPPED
+                state.status.success
             }
         }
 
-        stateStore.getTargetState(target) match {
-            case Some(state:TargetState) => checkState(state)
-            case _ => false
-        }
-    }
-
-    private def withMetrics[T <: Result](metricSystem: MetricSystem, metrics:Option[MetricBoard])(fn: => T) : T = {
-        // Publish metrics
-        metrics.foreach { metrics =>
-            metrics.reset(metricSystem)
-            metricSystem.addBoard(metrics)
-        }
-
-        // Run original function
-        var status:Status = Status.UNKNOWN
         try {
-            val result = fn
-            status = result.status
-            result
+            stateStore.getTargetState(target) match {
+                case Some(state: TargetState) => checkState(state)
+                case _ => false
+            }
         }
         catch {
             case NonFatal(ex) =>
-                status = Status.FAILED
-                throw ex
-        }
-        finally {
-            // Unpublish metrics
-            metrics.foreach { metrics =>
-                // Do not publish metrics for skipped jobs
-                if (status != Status.SKIPPED) {
-                    metricSystem.commitBoard(metrics, status)
-                }
-                metricSystem.removeBoard(metrics)
-            }
+                logger.error("Cannot retrieve status from history database.", ex)
+                false
         }
     }
 }
@@ -449,11 +424,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
                 }
 
                 // Compute complete status - which is only SUCCESS if all steps have been executed successfully
-                val status = if (Seq(buildStatus, testStatus, destroyStatus).forall(_ == Status.SUCCESS))
-                    Status.SUCCESS
-                else
-                    Status.FAILED
-
+                val status = Status.ofAll(Seq(buildStatus, testStatus, destroyStatus))
                 val endTime = Instant.now()
                 val duration = Duration.between(startTime, endTime)
                 logStatus(title, status, duration, endTime)

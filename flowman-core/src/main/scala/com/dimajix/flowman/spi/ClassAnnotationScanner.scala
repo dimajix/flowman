@@ -87,7 +87,7 @@ object ClassAnnotationScanner {
         synchronized {
             if (!_loaded) {
                 val scanResult = new ClassGraph()
-                    .blacklistPackages(IGNORED_PACKAGES:_*)
+                    .rejectPackages(IGNORED_PACKAGES:_*)
                     .enableAnnotationInfo()
                     .enableClassInfo()
                     .scan()

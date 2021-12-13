@@ -27,14 +27,14 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
-import com.dimajix.flowman.model.JobInstance
+import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.target.NullTarget
@@ -56,11 +56,11 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         )
 
         val job = Job.builder(session.context).build()
-        val instance = JobInstance("default", "p1", "j1", Map("arg1" -> "v1"))
+        val instance = JobDigest("default", "p1", "j1", Phase.BUILD, Map("arg1" -> "v1"))
         val execution = session.execution
 
-        val token = hook.startJob(execution, job, instance, Phase.BUILD, None)
-        hook.finishJob(execution, token, JobResult(job, instance, Phase.BUILD, Status.SUCCESS, Instant.now()))
+        val token = hook.startJob(execution, job, instance, None)
+        hook.finishJob(execution, token, JobResult(job, instance, Status.SUCCESS, Instant.now()))
     }
 
     it should "provide a working target API" in {
@@ -75,11 +75,11 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         )
 
         val target = NullTarget(Target.Properties(session.context, "t1"), Map())
-        val instance = TargetInstance("default", "p1", "t1", Map("arg1" -> "v1"))
+        val instance = TargetDigest("default", "p1", "t1", Phase.BUILD, Map("arg1" -> "v1"))
         val execution = session.execution
 
-        val token = hook.startTarget(execution, target, instance, Phase.BUILD, None)
-        hook.finishTarget(execution, token, TargetResult(target, instance, Phase.BUILD, Seq(), Status.SUCCESS, None, Instant.now(), Instant.now()))
+        val token = hook.startTarget(execution, target, instance, None)
+        hook.finishTarget(execution, token, TargetResult(target, instance, Seq(), Status.SUCCESS, None, Instant.now(), Instant.now()))
     }
 
     it should "be deserializable in a namespace" in {

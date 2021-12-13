@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,9 @@ import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
-import java.util.ServiceLoader
 
-import scala.collection.mutable
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -39,19 +38,22 @@ class PluginManager {
     private val logger = LoggerFactory.getLogger(classOf[PluginManager])
 
     private var _pluginDir:File = new File("")
-    private var _sparkContext:SparkContext = _
     private val _plugins:mutable.Map[String,Plugin] = mutable.Map()
+    private val classLoader = {
+        // Replaced class loader
+        val curLoader = Thread.currentThread().getContextClassLoader()
+        try {
+            curLoader.asInstanceOf[URLClassLoader]
+        } catch {
+            case _:ClassCastException =>
+                val loader = new URLClassLoader(Array(), curLoader)
+                Thread.currentThread().setContextClassLoader(loader)
+                loader
+        }
+    }
 
     def withPluginDir(dir:File) : PluginManager = {
         _pluginDir = dir
-        this
-    }
-    def withSparkSession(session:SparkSession) : PluginManager = {
-        _sparkContext = session.sparkContext
-        this
-    }
-    def withSparkContext(context:SparkContext) : PluginManager = {
-        _sparkContext = context
         this
     }
 
@@ -86,19 +88,17 @@ class PluginManager {
         }.distinct
 
         // Extend classpath
-        val classLoader = classOf[PluginManager].getClassLoader.asInstanceOf[URLClassLoader]
+        //val classLoader =  Thread.currentThread().getContextClassLoader().asInstanceOf[URLClassLoader]
         try {
             val method = classOf[URLClassLoader].getDeclaredMethod("addURL", classOf[URL])
             method.setAccessible(true)
             jarFiles.foreach(jar => method.invoke(classLoader, jar))
         } catch {
-            case t: Throwable =>
-                t.printStackTrace()
+            case t: Throwable => logger.error(s"Cannot add plugin ${plugin.name} to classpath", t)
         }
 
         // Inform all interested parties that a Plugin has been loaded
-        ServiceLoader.load(classOf[PluginListener])
-            .iterator().asScala
+        PluginListener.listeners
             .foreach(_.pluginLoaded(plugin, classLoader))
     }
 

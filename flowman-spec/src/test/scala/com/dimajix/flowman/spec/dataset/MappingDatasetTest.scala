@@ -91,7 +91,7 @@ class MappingDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         dataset.requires should be (Set(ResourceIdentifier.ofFile(new Path("file1"))))
         dataset.exists(executor) should be (Yes)
         an[UnsupportedOperationException] should be thrownBy(dataset.clean(executor))
-        dataset.read(executor, None).count() should be (0)
+        dataset.read(executor).count() should be (0)
         an[UnsupportedOperationException] should be thrownBy(dataset.write(executor, null, OutputMode.APPEND))
         dataset.describe(executor) should be (Some(new StructType()))
     }

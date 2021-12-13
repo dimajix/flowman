@@ -25,12 +25,11 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.model.IdentifierRelationReference
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
-import com.dimajix.flowman.model.Prototype
-import com.dimajix.flowman.model.ValueRelationReference
+import com.dimajix.flowman.model.RelationReference
 import com.dimajix.flowman.spec.Spec
 
 
@@ -39,12 +38,12 @@ abstract class RelationReferenceSpec extends Spec[Reference[Relation]]
 final case class IdentifierRelationReferenceSpec(relation:String) extends RelationReferenceSpec {
     override def instantiate(context: Context): Reference[Relation] = {
         val id = RelationIdentifier.parse(context.evaluate(relation))
-        IdentifierRelationReference(context,id)
+        RelationReference(context,id)
     }
 }
 final case class ValueRelationReferenceSpec(relation:Prototype[Relation]) extends RelationReferenceSpec {
     override def instantiate(context: Context): Reference[Relation] = {
-        ValueRelationReference(context, relation)
+        RelationReference(context, relation)
     }
 }
 

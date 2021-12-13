@@ -10,7 +10,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.18.0</version>
+        <version>0.19.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -82,6 +82,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
                     <version>3.2.0</version>
+                    <configuration>
+                        <propertiesEncoding>ISO-8859-1</propertiesEncoding>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -242,12 +245,6 @@
             <!-- Flowman Dependencies -->
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-jackson-compat</artifactId>
-                <version>${flowman.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spark-extensions</artifactId>
                 <version>${flowman.version}</version>
                 <scope>provided</scope>
@@ -390,9 +387,20 @@
             </dependency>
             <dependency>
                 <groupId>org.scala-lang.modules</groupId>
+                <artifactId>scala-xml_${scala.api_version}</artifactId>
+                <version>${scala-xml.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang.modules</groupId>
                 <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
                 <version>${scala-parser-combinators.version}</version>
                 <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang.modules</groupId>
+                <artifactId>scala-collection-compat_${scala.api_version}</artifactId>
+                <version>${scala-collection-compat.version}</version>
             </dependency>
 
             <!-- Spark Dependencies -->
@@ -815,11 +823,35 @@
                 <version>${scalatest.version}</version>
                 <scope>test</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.scalamock</groupId>
                 <artifactId>scalamock_${scala.api_version}</artifactId>
                 <version>${scalamock.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-params</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>

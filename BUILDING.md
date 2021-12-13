@@ -93,12 +93,14 @@ using the correct version. The following profiles are available:
 * spark-2.4
 * spark-3.0
 * spark-3.1 
+* spark-3.2
 * hadoop-2.6
 * hadoop-2.7
 * hadoop-2.8
 * hadoop-2.9
 * hadoop-3.1
 * hadoop-3.2
+* hadoop-3.3
 * CDH-6.3
 * CDP-7.1
 
@@ -154,11 +156,30 @@ mvn clean install -Pspark-3.0 -Phadoop-3.1
 mvn clean install -Pspark-3.0 -Phadoop-3.2
 ```
 
+### Spark 3.1 and Hadoop 2.7
+
+```shell
+mvn clean install -Pspark-3.1 -Phadoop-2.7
+```
+
 ### Spark 3.1 and Hadoop 3.2
 
 ```shell
 mvn clean install -Pspark-3.1 -Phadoop-3.2
 ```
+
+### Spark 3.2 and Hadoop 2.7
+
+```shell
+mvn clean install -Pspark-3.2 -Phadoop-2.7
+```
+
+### Spark 3.2 and Hadoop 3.3
+
+```shell
+mvn clean install -Pspark-3.2 -Phadoop-3.3
+```
+
 
 ## Building for Cloudera
 

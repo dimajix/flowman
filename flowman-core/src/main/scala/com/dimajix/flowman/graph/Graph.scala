@@ -20,6 +20,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.NoSuchRelationException
 import com.dimajix.flowman.execution.NoSuchTargetException
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
@@ -38,8 +39,8 @@ object Graph {
      * @param project
      * @return
      */
-    def ofProject(session:Session, project:Project) : Graph = {
-        ofProject(session.getContext(project), project)
+    def ofProject(session:Session, project:Project, phase:Phase) : Graph = {
+        ofProject(session.getContext(project), project, phase)
     }
 
     /**
@@ -48,11 +49,11 @@ object Graph {
      * @param project
      * @return
      */
-    def ofProject(context:Context, project:Project) : Graph = {
+    def ofProject(context:Context, project:Project, phase:Phase) : Graph = {
         if (context.project.exists(_ ne project))
             throw new IllegalArgumentException("Graph.ofProject requires Context to belong to the given Project")
 
-        val builder = new GraphBuilder(context)
+        val builder = new GraphBuilder(context, phase)
         project.mappings.keys.foreach { name =>
             builder.addMapping(MappingIdentifier(name))
         }
@@ -68,7 +69,7 @@ object Graph {
 }
 
 
-case class Graph(
+final case class Graph(
     context:Context,
     mappings:Seq[MappingRef],
     relations:Seq[RelationRef],

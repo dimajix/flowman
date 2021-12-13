@@ -63,7 +63,7 @@ import com.dimajix.flowman.types.VarcharType
 
 object OpenApiSchemaUtils {
     /**
-      * Convert an entity of a Swagger schema into a Flowman schema. Optionally mark all fields as optional.
+      * Convert an entity of a OpenAPI schema into a Flowman schema. Optionally mark all fields as optional.
       *
       * @param schema
       * @param entity
@@ -76,7 +76,7 @@ object OpenApiSchemaUtils {
     }
 
     /**
-      * Convert an entity of a Swagger schema into a Flowman schema. Optionally mark all fields as optional.
+      * Convert an entity of a OpenAPI schema into a Flowman schema. Optionally mark all fields as optional.
       *
       * @param api
       * @param entity
@@ -89,32 +89,32 @@ object OpenApiSchemaUtils {
             .map(_.asScala)
             .getOrElse(Map.empty[String,Schema[_]])
         val model = entity.filter(_.nonEmpty)
-            .flatMap(e => schemas.get(e))
+            .map(e => schemas.getOrElse(e, throw new IllegalArgumentException(s"Entity $e not found in schema")))
             .getOrElse(schemas.values.head)
         fromOpenApi(model, nullable)
     }
 
     /**
-      * Convert an entity of a Swagger schema into a Flowman schema. Optionally mark all fields as optional.
+      * Convert an entity of a OpenAPI schema into a Flowman schema. Optionally mark all fields as optional.
       *
       * @param model
       * @param nullable
       * @return
       */
     def fromOpenApi(model:Schema[_], nullable:Boolean) : Seq[Field] = {
-        def fromSwaggerRec(model:Schema[_], nullable:Boolean=true) : Seq[Field] = {
+        def fromOpenApiRec(model:Schema[_], nullable:Boolean=true) : Seq[Field] = {
             model match {
-                case composed: ComposedSchema => composed.getAllOf.asScala.flatMap(m => fromSwaggerRec(m, nullable))
+                case composed: ComposedSchema => composed.getAllOf.asScala.flatMap(m => fromOpenApiRec(m, nullable))
                 //case array:ArrayModel => Seq(fromSwaggerProperty(array.getItems))
                 case _ => fromOpenApiObject(model.getProperties.asScala.toSeq, "", Option(model.getRequired).toSeq.flatMap(_.asScala).toSet, nullable).fields
             }
         }
 
-        fromSwaggerRec(model, nullable)
+        fromOpenApiRec(model, nullable)
     }
 
     /**
-      * Parse a string as a Swagger schema. This will also fix some incompatible representations (nested allOf)
+      * Parse a string as a OpenAPI schema. This will also fix some incompatible representations (nested allOf)
       *
       * @param data
       * @return
@@ -129,10 +129,10 @@ object OpenApiSchemaUtils {
         }
 
         // Fix nested "allOf" nodes, which have to be in "definitions->[Entity]->[Definition]"
-        val definitions = rootNode.path("components").path("schemas")
-        val entities = definitions.elements().asScala.toSeq
-        entities.foreach(replaceAllOf)
-        entities.foreach(fixRequired)
+        //val definitions = rootNode.path("components").path("schemas")
+        //val entities = definitions.elements().asScala.toSeq
+        //entities.foreach(replaceAllOf)
+        //entities.foreach(fixRequired)
 
         val result = new OpenAPIDeserializer().deserialize(rootNode)
         val convertValue = result.getOpenAPI
@@ -201,6 +201,9 @@ object OpenApiSchemaUtils {
     }
 
     private def fromOpenApiType(property:Schema[_], fqName:String, nullable:Boolean) : FieldType = {
+        def required(schema:Schema[_]) : Set[String] = {
+            Option(schema.getRequired).toSeq.flatMap(_.asScala).toSet
+        }
         property match {
             case array:ArraySchema => ArrayType(fromOpenApiType(array.getItems, fqName + ".items", nullable))
             case _:BinarySchema => BinaryType
@@ -223,7 +226,6 @@ object OpenApiSchemaUtils {
                     case _ => IntegerType
                 }
             case _:MapSchema => MapType(StringType, StringType)
-            case obj:ObjectSchema => fromOpenApiObject(obj.getProperties.asScala.toSeq, fqName + ".", Option(obj.getRequired).toSeq.flatMap(_.asScala).toSet, nullable)
             case s:StringSchema =>
                 val minLength = Option(s.getMinLength).map(_.intValue())
                 val maxLength = Option(s.getMaxLength).map(_.intValue())
@@ -233,8 +235,11 @@ object OpenApiSchemaUtils {
                     case (_,_) => StringType
                 }
             case _:UUIDSchema => StringType
+            case c:ComposedSchema => StructType(c.getAllOf.asScala.flatMap(s => fromOpenApiType(s, fqName + ".", nullable).asInstanceOf[StructType].fields))
+            case obj:ObjectSchema => fromOpenApiObject(obj.getProperties.asScala.toSeq, fqName + ".", required(obj), nullable)
             case s:Schema[_] if s.getEnum != null => StringType // enums
-            case _ => throw new UnsupportedOperationException(s"Swagger type $property of field $fqName not supported")
+            case s:Schema[_] if s.getProperties != null => fromOpenApiObject(s.getProperties.asScala.toSeq, fqName + ".", required(s), nullable)
+            case _ => throw new UnsupportedOperationException(s"OpenAPI type $property of field $fqName not supported")
         }
     }
 }

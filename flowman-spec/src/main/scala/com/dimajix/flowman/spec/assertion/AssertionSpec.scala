@@ -19,12 +19,14 @@ package com.dimajix.flowman.spec.assertion
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.AssertionType
+import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
@@ -33,6 +35,7 @@ object AssertionSpec extends TypeRegistry[AssertionSpec] {
 }
 
 
+@JsonTypeResolver(classOf[CustomTypeResolverBuilder])
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "expression", value = classOf[ExpressionAssertionSpec]),

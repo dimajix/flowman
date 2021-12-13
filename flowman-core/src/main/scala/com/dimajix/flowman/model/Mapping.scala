@@ -25,6 +25,7 @@ import com.dimajix.flowman.execution.NoSuchMappingOutputException
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.graph.MappingRef
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 
 
@@ -66,7 +67,7 @@ trait Mapping extends Instance {
       * Returns the category of this resource
       * @return
       */
-    final override def category: String = "mapping"
+    final override def category: Category = Category.MAPPING
 
     /**
       * Returns an identifier for this mapping
@@ -235,7 +236,7 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
 
         // Create dummy data frames
         val replacements = input.map { case (name,schema) =>
-            name -> DataFrameUtils.singleRow(execution.spark, schema.sparkType)
+            name -> DataFrameBuilder.singleRow(execution.spark, schema.sparkType)
         }
 
         // Execute mapping

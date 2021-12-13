@@ -23,11 +23,7 @@ import org.apache.spark.sql.types.NullType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 
-import com.dimajix.flowman.types.ArrayType
-import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
-import com.dimajix.flowman.types.MapType
-import com.dimajix.spark.sql.SchemaUtils.normalize
 
 
 object SchemaUtils {

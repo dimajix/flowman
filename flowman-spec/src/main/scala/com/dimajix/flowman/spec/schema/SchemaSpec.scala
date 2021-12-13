@@ -16,14 +16,17 @@
 
 package com.dimajix.flowman.spec.schema
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.annotation.SchemaType
+import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
@@ -33,7 +36,8 @@ object SchemaSpec extends TypeRegistry[SchemaSpec] {
 /**
   * Interface class for declaring relations (for sources and sinks) as part of a model
   */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl = classOf[EmbeddedSchemaSpec])
+@JsonTypeResolver(classOf[CustomTypeResolverBuilder])
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl = classOf[EmbeddedSchemaSpec], visible=true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "inline", value = classOf[EmbeddedSchemaSpec]),
     new JsonSubTypes.Type(name = "embedded", value = classOf[EmbeddedSchemaSpec]),
@@ -44,6 +48,8 @@ object SchemaSpec extends TypeRegistry[SchemaSpec] {
     new JsonSubTypes.Type(name = "union", value = classOf[UnionSchemaSpec])
 ))
 abstract class SchemaSpec extends Spec[Schema] {
+    @JsonProperty(value="kind", required = true) protected var kind: String = _
+
     override def instantiate(context:Context) : Schema
 }
 

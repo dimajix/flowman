@@ -19,12 +19,12 @@ package com.dimajix.flowman.spec.mapping
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.expressions.NamedExpression
-import org.apache.spark.sql.catalyst.plans.logical.GroupingSets
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.expr
-import org.apache.spark.sql.functions.struct
 import org.apache.spark.sql.functions.grouping_id
+import org.apache.spark.sql.functions.struct
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -32,6 +32,7 @@ import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.spec.mapping.GroupedAggregateMappingSpec.GroupSpec
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 
 
@@ -115,21 +116,31 @@ case class GroupedAggregateMapping(
 
         val allGroupings = performGroupedAggregation(filteredInput, dimensionColumns, groupingColumns)
 
+        // This is a workaround for newer Spark version, which apparently use a different mechanism to derive
+        // grouping-ids than Spark up until 3.1.x
+        val dimensionIndices2 = {
+            if (org.apache.spark.SPARK_VERSION >= "3.2")
+                groups.values.flatMap(g => g.dimensions ++ g.filter.map(f => filterNames(filterIndices(f)))).toSeq.distinct.zipWithIndex.toMap
+            else
+                dimensionIndices
+        }
+        // Calculate grouping IDs used for extracting individual groups
         val numDimensions = dimensions.size
         val groupingMask = (1 << numDimensions) - 1
         val groupIds = groups.values.map { group =>
             val dimensions = group.dimensions
             val filter = group.filter.map(f => filterNames(filterIndices(f)))
-            (groupingMask +: (dimensions ++ filter).map(d => ~(1 << (numDimensions - 1 - dimensionIndices(d))))).reduce(_ & _)
+            (groupingMask +: (dimensions ++ filter).map(d => ~(1 << (numDimensions - 1 - dimensionIndices2(d))))).reduce(_ & _)
         }
 
-        // Apply all grouping filters to reduce cache size
+        // Apply all grouping filters to reduce cache size.
         val cache = if (filterIndices.nonEmpty) {
             val filter = groups.values.zip(groupIds).map { case (group, groupId) =>
                 val filter = group.filter.map(f => filterNames(filterIndices(f)))
                 createGroupFilter(groupId, filter)
             }.reduce(_ || _)
             allGroupings.filter(filter)
+                .drop(filterNames:_*)
         }
         else {
             allGroupings
@@ -172,6 +183,7 @@ case class GroupedAggregateMapping(
                 createGroupFilter(groupId, filter)
             }.reduce(_ || _)
             allGroupings.filter(filter)
+                .drop(filterNames:_*)
         }
         else {
             allGroupings
@@ -221,10 +233,14 @@ case class GroupedAggregateMapping(
             else
                 input
 
-        DataFrameUtils.ofRows(input.sparkSession, GroupingSets(
-            groupings.map(g => g.map(_.expr)),
-            dimensions.map(_.expr),
-            df.queryExecution.logical, expressions))
+        DataFrameBuilder.ofRows(input.sparkSession,
+            SparkShim.groupingSetAggregate(
+                dimensions.map(_.expr),
+                groupings.map(g => g.map(_.expr)),
+                expressions,
+                df.queryExecution.logical
+            )
+        )
     }
 }
 

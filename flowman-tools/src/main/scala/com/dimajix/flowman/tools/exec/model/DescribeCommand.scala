@@ -48,7 +48,7 @@ class DescribeCommand extends Command {
             val relation = context.getRelation(identifier)
 
             if (useSpark) {
-                val df = relation.read(session.execution, None, Map())
+                val df = relation.read(session.execution, Map())
                 df.printSchema()
             }
             else {

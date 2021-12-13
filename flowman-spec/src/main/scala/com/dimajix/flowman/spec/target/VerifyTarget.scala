@@ -39,7 +39,7 @@ import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetInstance
+import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.assertion.AssertionSpec
 
@@ -56,13 +56,14 @@ case class VerifyTarget(
      *
      * @return
      */
-    override def instance: TargetInstance = {
+    override def digest(phase:Phase): TargetDigest = {
         // Create a custom instance identifier with a timestamp, such that every run is a new instance. Otherwise
         // verification wouldn't be always executed in the presence of a state store.
-        TargetInstance(
+        TargetDigest(
             namespace.map(_.name).getOrElse(""),
             project.map(_.name).getOrElse(""),
             name,
+            phase,
             Map("verification_ts" -> Clock.systemUTC().millis().toString)
         )
     }
@@ -110,17 +111,18 @@ case class VerifyTarget(
         val runner = new AssertionRunner(context, execution, cacheLevel = StorageLevel.NONE)
         val result = runner.run(assertions.values.toList, keepGoing = errorMode != ErrorMode.FAIL_FAST)
 
-        if (!result.forall(_.success)) {
+        val status = Status.ofAll(result.map(_.status))
+        if (!status.success) {
             logger.error(s"Verification $identifier failed.")
             if (errorMode != ErrorMode.FAIL_NEVER) {
                 TargetResult(this, Phase.VERIFY, result, new VerificationFailedException(identifier), startTime)
             }
             else {
-                TargetResult(this, Phase.VERIFY, result, Status.SUCCESS, startTime)
+                TargetResult(this, Phase.VERIFY, result, Status.SUCCESS_WITH_ERRORS, startTime)
             }
         }
         else {
-            TargetResult(this, Phase.VERIFY, result, Status.SUCCESS, startTime)
+            TargetResult(this, Phase.VERIFY, result, status, startTime)
         }
     }
 }

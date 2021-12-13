@@ -16,9 +16,6 @@
 
 package com.dimajix.flowman.spec.relation
 
-import org.apache.spark.sql.types.StringType
-import org.apache.spark.sql.types.StructField
-import org.apache.spark.sql.types.StructType
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -26,9 +23,12 @@ import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.target.RelationTarget
+import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -56,9 +56,14 @@ class NullRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
 
-        val relation = NullRelation(Relation.Properties(session.context))
-        val schema = StructType(
-            StructField("lala", StringType) :: Nil
+        val relation = NullRelation(
+            Relation.Properties(session.context),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(session.context),
+                fields = Seq(
+                    Field("lala", StringType)
+                )
+            ))
         )
 
         // == Create ===================================================================
@@ -67,7 +72,7 @@ class NullRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.create(executor)
 
         // == Read ===================================================================
-        val df = relation.read(executor, Some(schema))
+        val df = relation.read(executor)
         df.count() should be (0)
 
         // == Truncate ===================================================================

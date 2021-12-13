@@ -33,6 +33,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -112,15 +113,13 @@ case class DeltaTableRelation(
      * @param partitions - List of partitions. If none are specified, all the data will be read
      * @return
      */
-    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(execution: Execution, partitions: Map[String, FieldValue]): DataFrame = {
         logger.info(s"Reading Delta relation '$identifier' from table $tableIdentifier using partition values $partitions")
 
         val tableDf = execution.spark.read
             .options(options)
             .table(tableIdentifier.quotedString)
-        val df = filterPartition(tableDf, partitions)
-
-        SchemaUtils.applySchema(df, schema)
+        filterPartition(tableDf, partitions)
     }
 
     /**
@@ -177,10 +176,10 @@ case class DeltaTableRelation(
      * @param schema
      * @return
      */
-    override def readStream(execution: Execution, schema: Option[StructType]): DataFrame = {
+    override def readStream(execution: Execution): DataFrame = {
         logger.info(s"Streaming from Delta table relation '$identifier' at $tableIdentifier")
         val location = DeltaUtils.getLocation(execution, tableIdentifier)
-        readStreamFrom(execution, location, schema)
+        readStreamFrom(execution, location)
     }
 
     /**
@@ -206,6 +205,36 @@ case class DeltaTableRelation(
      */
     override def exists(execution: Execution): Trilean = {
         execution.catalog.tableExists(tableIdentifier)
+    }
+
+
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        val catalog = execution.catalog
+        if (catalog.tableExists(tableIdentifier)) {
+            val table = catalog.getTable(tableIdentifier)
+            if (table.tableType == CatalogTableType.VIEW) {
+                false
+            }
+            else if (schema.nonEmpty) {
+                val table = loadDeltaTable(execution)
+                val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
+                val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
+                !TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
+            }
+            else {
+                true
+            }
+        }
+        else {
+            false
+        }
     }
 
     /**
@@ -316,7 +345,7 @@ case class DeltaTableRelation(
         require(execution != null)
 
         val catalog = execution.catalog
-        if (schema.nonEmpty && catalog.tableExists(tableIdentifier)) {
+        if (catalog.tableExists(tableIdentifier)) {
             val table = catalog.getTable(tableIdentifier)
             if (table.tableType == CatalogTableType.VIEW) {
                 migrationStrategy match {
@@ -331,7 +360,7 @@ case class DeltaTableRelation(
                         create(execution, false)
                 }
             }
-            else {
+            else if (schema.nonEmpty) {
                 migrateInternal(execution, migrationPolicy, migrationStrategy)
             }
         }

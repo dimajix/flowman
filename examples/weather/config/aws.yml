@@ -1,6 +1,10 @@
 config:
+  # Inject AWS Credentials
   - spark.hadoop.fs.s3a.access.key=$System.getenv('AWS_ACCESS_KEY_ID')
   - spark.hadoop.fs.s3a.secret.key=$System.getenv('AWS_SECRET_ACCESS_KEY')
+  # Use anonymous access to S3
+  - spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.AnonymousAWSCredentialsProvider
+  # Inject proxy for accessing S3
   - spark.hadoop.fs.s3a.proxy.host=$System.getenv('S3_PROXY_HOST', $System.getenv('AWS_PROXY_HOST'))
   - spark.hadoop.fs.s3a.proxy.port=$System.getenv('S3_PROXY_PORT', $System.getenv('AWS_PROXY_PORT' ,'-1'))
   - spark.hadoop.fs.s3a.proxy.username=

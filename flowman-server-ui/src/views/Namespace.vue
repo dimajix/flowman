@@ -1,8 +1,10 @@
 <template>
-  <v-container>
+  <v-container
+    fluid
+  >
     <v-row>
-      <v-col>
-        <v-card>
+      <v-col cols="12">
+        <v-card  shaped outlined elevation="2">
           <v-card-title>Namespace "{{ name }}"</v-card-title>
           <v-card-text>
           <v-divider class="my-2"></v-divider>
@@ -24,25 +26,19 @@
           <v-divider class="my-2"></v-divider>
           <v-item-group>
             <v-subheader>Plugins</v-subheader>
-            <v-chip-group
-              active-class="primary--text"
-              column
+            <v-chip
+              v-for="p in plugins"
+              :key="p"
             >
-              <v-chip
-                v-for="p in plugins"
-                :key="p"
-              >
-                {{ p }}
-              </v-chip>
-            </v-chip-group>
+              {{ p }}
+            </v-chip>
           </v-item-group>
           </v-card-text>
         </v-card>
       </v-col>
-    </v-row>
-    <v-row>
-      <v-col>
-        <v-card>
+
+      <v-col cols="12">
+        <v-card  shaped outlined elevation="2">
           <v-card-title>Environment</v-card-title>
           <v-data-table
             dense
@@ -51,14 +47,16 @@
             :items-per-page="10"
             item-key="name"
             class="elevation-1"
+            :footer-props="{
+              prevIcon: 'navigate_before',
+              nextIcon: 'navigate_next'
+            }"
           ></v-data-table>
         </v-card>
       </v-col>
-    </v-row>
 
-    <v-row>
-      <v-col>
-        <v-card>
+      <v-col cols="12">
+        <v-card shaped outlined elevation="2">
           <v-card-title>Configs</v-card-title>
           <v-data-table
             dense
@@ -67,6 +65,10 @@
             :items-per-page="10"
             item-key="name"
             class="elevation-1"
+            :footer-props="{
+              prevIcon: 'navigate_before',
+              nextIcon: 'navigate_next'
+            }"
           ></v-data-table>
         </v-card>
       </v-col>

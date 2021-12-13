@@ -51,7 +51,7 @@ object Assertion {
 
 
 trait Assertion extends Instance {
-    override def category: String = "assertion"
+    override final def category: Category = Category.ASSERTION
 
     /**
      * Returns a description of the assertion
@@ -73,8 +73,9 @@ trait Assertion extends Instance {
     def inputs : Seq[MappingOutputIdentifier]
 
     /**
-     * Executes this [[Assertion]] and returns a corresponding DataFrame. This method is explicitly allowed to
-     * throw an exception, which will be caught and handled by the [[AssertionRunner]]
+     * Executes this [[Assertion]] and returns a corresponding DataFrame. This method is allowed to  throw an exception,
+     * which will be caught and handled by the [[AssertionRunner]]. But of course it is more convenient if any
+     * exceptiosn are already caught and returned within the AssertionResult.
      *
      * @param execution
      * @param input

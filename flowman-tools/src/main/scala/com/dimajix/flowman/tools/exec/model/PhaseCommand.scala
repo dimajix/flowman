@@ -69,11 +69,7 @@ class PhaseCommand(phase:Phase) extends Command {
         val runner = session.runner
         val result = runner.executeJob(job, Seq(phase), force=force, keepGoing=keepGoing, dryRun=dryRun)
 
-        result match {
-            case Status.SUCCESS => true
-            case Status.SKIPPED => true
-            case _ => false
-        }
+        result.success
     }
 }
 

@@ -62,7 +62,7 @@ trait Instance {
       * Returns the category of the resource
       * @return
       */
-    def category : String
+    def category : Category
 
     /**
       * Returns the map of generic meta data labels
@@ -97,7 +97,7 @@ trait Instance {
             project.map(_.name),
             name,
             project.flatMap(_.version),
-            category,
+            category.lower,
             kind,
             labels
         )

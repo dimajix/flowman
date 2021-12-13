@@ -54,7 +54,6 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SchemaUtils
 import com.dimajix.spark.sql.catalyst.SqlBuilder
-import com.dimajix.spark.sql.{SchemaUtils => SparkSchemaUtils}
 
 
 object HiveUnionTableRelation {
@@ -200,6 +199,7 @@ case class HiveUnionTableRelation(
 
         requireValidPartitionKeys(partition)
 
+        // Only return Hive table partitions!
         val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
         allPartitions.map(p => ResourceIdentifier.ofHivePartition(tablePrefix + "_[0-9]+", tableDatabase, p.toMap)).toSet
     }
@@ -209,21 +209,17 @@ case class HiveUnionTableRelation(
       * Reads data from the relation, possibly from specific partitions
       *
       * @param execution
-      * @param schema     - the schema to read. If none is specified, all available columns will be read
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    override def read(execution: Execution, schema: Option[StructType], partitions: Map[String, FieldValue]): DataFrame = {
+    override def read(execution: Execution, partitions: Map[String, FieldValue]): DataFrame = {
         require(execution != null)
-        require(schema != null)
         require(partitions != null)
 
         logger.info(s"Reading from Hive union relation '$identifier' from UNION VIEW $viewIdentifier using partition values $partitions")
 
         val tableDf = execution.spark.read.table(viewIdentifier.unquotedString)
-        val df = filterPartition(tableDf, partitions)
-
-        SparkSchemaUtils.applySchema(df, schema)
+        filterPartition(tableDf, partitions)
     }
 
     /**
@@ -345,6 +341,69 @@ case class HiveUnionTableRelation(
 
         val catalog = execution.catalog
         catalog.tableExists(viewIdentifier)
+    }
+
+
+    /**
+     * Returns true if the relation exists and has the correct schema. If the method returns false, but the
+     * relation exists, then a call to [[migrate]] should result in a conforming relation.
+     *
+     * @param execution
+     * @return
+     */
+    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+        val catalog = execution.catalog
+        if (catalog.tableExists(viewIdentifier)) {
+            val catalog = execution.catalog
+            val sourceSchema = schema.get.catalogSchema
+            val allTables = listTables(execution)
+
+            // 1. Find all tables
+            // 2. Find appropriate table
+            val target = allTables
+                .find { id =>
+                    val table = catalog.getTable(id)
+                    val targetSchema = table.dataSchema
+                    val targetFieldsByName = MapIgnoreCase(targetSchema.map(f => (f.name, f)))
+
+                    sourceSchema.forall { field =>
+                        targetFieldsByName.get(field.name)
+                            .forall(tgt => SchemaUtils.isCompatible(field, tgt))
+                    }
+                }
+
+            val needsMigration = target match {
+                case Some(id) =>
+                    // 3. If found:
+                    //  3.1 Migrate table (add new columns)
+                    val table = catalog.getTable(id)
+                    val targetSchema = table.dataSchema
+                    val targetFields = SetIgnoreCase(targetSchema.map(f => f.name))
+
+                    val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name))
+                    if (missingFields.nonEmpty) {
+                        true
+                    }
+                    else {
+                        false
+                    }
+
+                case None =>
+                    // 3. If not found:
+                    //  3.2 Create new table
+                    true
+            }
+
+            if (needsMigration) {
+                No
+            }
+            else {
+                val hiveViewRelation = viewRelationFromTables(execution)
+                hiveViewRelation.conforms(execution, MigrationPolicy.RELAXED)
+            }
+        } else {
+            false
+        }
     }
 
     /**

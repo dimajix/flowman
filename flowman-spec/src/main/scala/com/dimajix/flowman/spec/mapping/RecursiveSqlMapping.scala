@@ -41,6 +41,7 @@ import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.sql.DataFrameUtils.withTempView
 import com.dimajix.spark.sql.DataFrameUtils.withTempViews
@@ -62,6 +63,7 @@ extends BaseMapping {
         SqlParser.resolveDependencies(statement)
             .filter(_.toLowerCase(Locale.ROOT) != "__this__")
             .map(MappingOutputIdentifier.parse)
+            .toSeq
     }
 
     /**
@@ -133,7 +135,7 @@ extends BaseMapping {
 
         // Create dummy data frames
         val replacements = input.map { case (id,schema) =>
-            id.name -> DataFrameUtils.singleRow(spark, schema.sparkType)
+            id.name -> DataFrameBuilder.singleRow(spark, schema.sparkType)
         }
 
         val result = withTempViews(replacements) {
@@ -160,7 +162,7 @@ extends BaseMapping {
             }
         }
         else if (url.nonEmpty) {
-            IOUtils.toString(url.get)
+            IOUtils.toString(url.get, "UTF-8")
         }
         else {
             throw new IllegalArgumentException("SQL mapping needs either 'sql', 'file' or 'url'")

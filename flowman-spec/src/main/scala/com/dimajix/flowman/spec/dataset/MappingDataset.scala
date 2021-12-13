@@ -30,7 +30,6 @@ import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.StructType
-import com.dimajix.spark.sql.SchemaUtils
 
 
 object MappingDataset {
@@ -81,10 +80,9 @@ case class MappingDataset(
       * @param schema - the schema to read. If none is specified, all available columns will be read
       * @return
       */
-    override def read(execution: Execution, schema: Option[org.apache.spark.sql.types.StructType]): DataFrame = {
+    override def read(execution: Execution): DataFrame = {
         val instance = context.getMapping(mapping.mapping)
-        val df = execution.instantiate(instance, mapping.output)
-        SchemaUtils.applySchema(df, schema)
+        execution.instantiate(instance, mapping.output)
     }
 
     /**

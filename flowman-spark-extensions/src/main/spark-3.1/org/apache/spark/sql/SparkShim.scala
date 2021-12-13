@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,19 +23,15 @@ import java.util.TimeZone
 import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.internal.config.ConfigEntry
-import org.apache.spark.sql.catalyst.TableIdentifier
-import org.apache.spark.sql.catalyst.analysis.NoSuchDatabaseException
-import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
+import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
 import org.apache.spark.sql.catalyst.analysis.ViewType
-import org.apache.spark.sql.catalyst.catalog.CatalogTable
-import org.apache.spark.sql.catalyst.catalog.SessionCatalog
-import org.apache.spark.sql.catalyst.util.DateTimeUtils.localDateToDays
-import org.apache.spark.sql.catalyst.util.DateTimeUtils.microsToInstant
+import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.catalyst.expressions.NamedExpression
+import org.apache.spark.sql.catalyst.plans.logical.GroupingSets
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.util.IntervalUtils
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.SQLExecution
-import org.apache.spark.sql.execution.SparkPlan
-import org.apache.spark.sql.execution.columnar.InMemoryRelation
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
 import org.apache.spark.sql.execution.datasources.v2.FileDataSourceV2
@@ -84,11 +80,26 @@ object SparkShim {
         }
     }
 
+    def groupingSetAggregate(
+        groupByExpressions:Seq[Expression],
+        groupingSets:Seq[Seq[Expression]],
+        aggregateExpressions: Seq[NamedExpression],
+        child: LogicalPlan) : LogicalPlan = {
+        GroupingSets(
+            groupingSets,
+            groupByExpressions,
+            child,
+            aggregateExpressions
+        )
+    }
+
     def withNewExecutionId[T](
         sparkSession: SparkSession,
         queryExecution: QueryExecution,
         name: Option[String] = None)(body: => T): T =
         SQLExecution.withNewExecutionId(queryExecution, name)(body)
+
+    def functionRegistry(spark:SparkSession) : FunctionRegistry = spark.sessionState.functionRegistry
 
     val LocalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.LocalTempView
     val GlobalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.GlobalTempView

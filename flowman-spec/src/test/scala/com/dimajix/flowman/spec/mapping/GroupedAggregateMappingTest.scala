@@ -28,6 +28,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -73,6 +74,10 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
             Mapping.Properties(context),
             MappingOutputIdentifier("data"),
             Map(
+                "g3" -> GroupedAggregateMapping.Group(
+                    dimensions = Seq("_1", "_3"),
+                    aggregations = Seq()
+                ),
                 "g1" -> GroupedAggregateMapping.Group(
                     dimensions = Seq("_1", "_2"),
                     aggregations = Seq("count")
@@ -80,10 +85,6 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
                 "g2" -> GroupedAggregateMapping.Group(
                     dimensions = Seq("_1"),
                     aggregations = Seq("count")
-                ),
-                "g3" -> GroupedAggregateMapping.Group(
-                    dimensions = Seq("_1", "_3"),
-                    aggregations = Seq()
                 )
             ),
             Map(
@@ -311,7 +312,7 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
 
         val schema = StructType((1 to 38).map(i => StructField(s"_$i", StringType)))
         val records = (1 to 10).map(row => (1 to 38).map(col => s"${row}_${col}").toArray)
-        val data = DataFrameUtils.ofStringValues(execution.spark, records, schema)
+        val data = DataFrameBuilder.ofStringValues(execution.spark, records, schema)
 
         val result = mapping.execute(execution, Map(MappingOutputIdentifier("data") -> data))
         result.keySet should be (Set("g1", "g2", "g3", "cache"))
@@ -380,7 +381,7 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
 
         val schema = StructType((1 to 38).map(i => StructField(s"_$i", StringType)))
         val records = (1 to 10).map(row => (1 to 38).map(col => s"${row}_${col}").toArray)
-        val data = DataFrameUtils.ofStringValues(execution.spark, records, schema)
+        val data = DataFrameBuilder.ofStringValues(execution.spark, records, schema)
 
         val result = mapping.execute(execution, Map(MappingOutputIdentifier("data") -> data))
         result.keySet should be (Set("g1", "g2", "g3", "cache"))

@@ -31,7 +31,7 @@ import com.dimajix.flowman.tools.exec.Command
 
 
 class ExplainCommand extends Command {
-    private val logger = LoggerFactory.getLogger(classOf[DescribeCommand])
+    private val logger = LoggerFactory.getLogger(classOf[ExplainCommand])
 
     @Option(name="-e", aliases=Array("--extended"), required = false)
     var extended: Boolean = false

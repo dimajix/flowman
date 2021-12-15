@@ -35,11 +35,13 @@ final case class ValueRelationReference(context:Context, prototype:Prototype[Rel
     override lazy val value : Relation = prototype.instantiate(context)
     override def name: String = value.name
     override def identifier: RelationIdentifier = value.identifier
+    override def toString: String = value.identifier.toString
 }
 final case class IdentifierRelationReference(context: Context, relation:RelationIdentifier) extends Reference[Relation] {
     override lazy val value: Relation = context.getRelation(relation)
     override def name: String = relation.name
     override def identifier: RelationIdentifier = relation
+    override def toString: String = relation.toString
 }
 
 
@@ -53,10 +55,12 @@ final case class ValueConnectionReference(context:Context, prototype:Prototype[C
     override lazy val value : Connection = prototype.instantiate(context)
     override def name: String = value.name
     override def identifier: ConnectionIdentifier = value.identifier
+    override def toString: String = value.identifier.toString
 }
 final case class IdentifierConnectionReference(context: Context, connection:ConnectionIdentifier) extends Reference[Connection] {
     override lazy val value: Connection = context.getConnection(connection)
     override def name: String = connection.name
     override def identifier: ConnectionIdentifier = connection
+    override def toString: String = connection.toString
 }
 

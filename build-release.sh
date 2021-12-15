@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
-set -o pipefail
+set -eo pipefail
 
 
 FLOWMAN_VERSION=$(mvn -q -N help:evaluate -Dexpression=project.version -DforceStdout)
@@ -52,4 +51,6 @@ build_profile CDH-6.3
 build_profile CDP-7.1
 
 # Finally build default version
-mvn clean install -DskipTests
+export JAVA_HOME=
+mvn clean deploy -DskipTests
+cp flowman-dist/target/flowman-dist-*.tar.gz release

@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+set +e
+set +o pipefail
+
+
 FLOWMAN_VERSION=$(mvn -q -N help:evaluate -Dexpression=project.version -DforceStdout)
 echo "Building Flowman release version ${FLOWMAN_VERSION}"
 
@@ -21,8 +25,9 @@ build_profile() {
     echo "Building for dist $HADOOP_DIST with Spark $SPARK_API_VERSION and Hadoop $HADOOP_API_VERSION"
     mvn -q versions:set -DnewVersion=${FLOWMAN_VERSION}-${HADOOP_DIST}-spark${SPARK_API_VERSION}-hadoop${HADOOP_API_VERSION}
 
-    #mvn clean deploy $profiles -DskipTests -Dflowman.dist.suffix=""
-    mvn clean install $profiles -DskipTests -Dflowman.dist.suffix=""
+    mvn clean deploy $profiles -DskipTests -Dflowman.dist.suffix="" -Ddockerfile.skip
+    #mvn clean install $profiles -DskipTests -Dflowman.dist.suffix="" -Ddockerfile.skip
+
     cp flowman-dist/target/flowman-dist-*.tar.gz release
 
     # Revert to original version

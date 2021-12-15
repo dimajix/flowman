@@ -585,6 +585,7 @@
                     <serverId>${deployment.repository.id}</serverId>
                     <nexusUrl>${deployment.repository.server}</nexusUrl>
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                    <stagingProgressTimeoutMinutes>60</stagingProgressTimeoutMinutes>
                 </configuration>
             </plugin>
             <plugin>

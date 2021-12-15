@@ -445,12 +445,12 @@ abstract class BaseRelation extends AbstractInstance with Relation {
             if (includePartitions) {
                 baseSchema.map { schema =>
                     val schemaFieldNames = SetIgnoreCase(schema.fieldNames)
-                    partitions.foldLeft(schema)((schema, partition) =>
-                        if (!schemaFieldNames.contains(partition.name))
-                            org.apache.spark.sql.types.StructType(schema.fields :+ partition.sparkField)
-                        else
-                            schema
-                    )
+                    val partitionFieldNames = SetIgnoreCase(partitions.map(_.name))
+                    val schemaFields = schema.fields.map {
+                        case f:org.apache.spark.sql.types.StructField if partitionFieldNames.contains(f.name) => f.copy(nullable = false)
+                        case f => f
+                    }
+                    org.apache.spark.sql.types.StructType(schemaFields ++ partitions.filter(p => !schemaFieldNames.contains(p.name)).map(_.catalogField))
                 }
             }
             else {

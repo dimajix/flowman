@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-set +e
-set +o pipefail
+set -e
+set -o pipefail
 
 
 FLOWMAN_VERSION=$(mvn -q -N help:evaluate -Dexpression=project.version -DforceStdout)

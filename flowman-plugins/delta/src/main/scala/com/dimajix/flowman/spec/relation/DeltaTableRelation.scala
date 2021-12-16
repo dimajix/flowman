@@ -50,7 +50,6 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.annotation.RelationType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.spark.sql.SchemaUtils
 
 
 case class DeltaTableRelation(
@@ -119,7 +118,9 @@ case class DeltaTableRelation(
         val tableDf = execution.spark.read
             .options(options)
             .table(tableIdentifier.quotedString)
-        filterPartition(tableDf, partitions)
+
+        val filteredDf = filterPartition(tableDf, partitions)
+        applyInputSchema(execution, filteredDf)
     }
 
     /**
@@ -136,8 +137,7 @@ case class DeltaTableRelation(
 
         logger.info(s"Writing Delta relation '$identifier' to table $tableIdentifier partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode'")
 
-        val extDf = SchemaUtils.applySchema(addPartition(df, partition), outputSchema(execution))
-
+        val extDf = applyOutputSchema(execution, addPartition(df, partition))
         mode match {
             case OutputMode.OVERWRITE_DYNAMIC => throw new IllegalArgumentException(s"Output mode 'overwrite_dynamic' not supported by Delta table relation '$identifier'")
             case OutputMode.UPDATE => doUpdate(extDf, partitionSpec)

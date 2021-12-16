@@ -145,16 +145,15 @@ final case class SchemaEnforcer(
     }
 
 
+    private def applyType(col:Column, field:StructField) : Column = {
+        field.dataType match {
+            case CharType(n) => rpad(col.cast(StringType), n, " ").as(field.name, field.metadata)
+            case VarcharType(n) => substring(col.cast(StringType), 0, n).as(field.name, field.metadata)
+            case _ => col.cast(field.dataType).as(field.name, field.metadata)
+        }
+    }
 
     private def conformField(requiredField:StructField, inputType:DataType, prefix:String) : Column = {
-        def applyType(col:Column, field:StructField) : Column = {
-            field.dataType match {
-                case CharType(n) => rpad(col.cast(StringType), n, " ").as(field.name, field.metadata)
-                case VarcharType(n) => substring(col.cast(StringType), 0, n).as(field.name, field.metadata)
-                case _ => col.cast(field.dataType).as(field.name, field.metadata)
-            }
-        }
-
         requiredField.dataType match {
             // Simple match: DataType is already correct
             case `inputType` => col(prefix + requiredField.name)
@@ -214,7 +213,7 @@ final case class SchemaEnforcer(
                 .map(f => conformField(field, f.dataType, prefix))
                 .orElse {
                     if (addColumns)
-                        Some(lit(null).cast(field.dataType))
+                        Some(applyType(lit(null), field))
                     else if (ignoreColumns)
                         None
                     else

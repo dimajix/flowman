@@ -163,7 +163,7 @@ case class FileCollector(
             }
         }
 
-        val parent = walkUp(path)
+        val parent = walkUp(qualifiedPath)
         fileSystem.exists(parent)
     }
 

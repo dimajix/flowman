@@ -5,6 +5,7 @@
 * Add new config variable `flowman.default.relation.input.typeMismatchPolicy` (default is `IGNORE`)
 * Add new config variable `flowman.default.relation.output.columnMismatchPolicy` (default is `ADD_REMOVE_COLUMNS`)
 * Add new config variable `flowman.default.relation.output.typeMismatchPolicy` (default is `CAST_ALWAYS`)
+* Improve handling of _SUCCESS files for detecting dirty directories
 
 
 # Version 0.19.0 - 2021-12-13

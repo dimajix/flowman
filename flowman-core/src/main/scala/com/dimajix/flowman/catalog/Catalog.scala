@@ -698,7 +698,8 @@ final class Catalog(val spark:SparkSession, val config:Configuration, val extern
 
     private def maxCommentLength : Int = {
         if (spark.conf.getOption("spark.hadoop.hive.metastore.uris").isEmpty
-            || spark.conf.getOption("javax.jdo.option.ConnectionURL").exists(_.contains("jdbc:derby:"))) {
+            || spark.conf.getOption("javax.jdo.option.ConnectionURL").exists(_.contains("jdbc:derby:"))
+            || spark.conf.getOption("spark.hadoop.javax.jdo.option.ConnectionURL").exists(_.contains("jdbc:derby:"))) {
             254
         }
         else {

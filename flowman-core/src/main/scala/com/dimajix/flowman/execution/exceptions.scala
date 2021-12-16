@@ -73,6 +73,8 @@ class VerificationFailedException(val target:TargetIdentifier, cause:Throwable =
 
 class IncompatibleSchemaException(val relation:RelationIdentifier)
     extends ExecutionException(s"Incompatible schema in relation '$relation'")
+class SchemaMismatchException(msg:String)
+    extends ExecutionException(s"Mismatching schema: $msg")
 
 class UnspecifiedSchemaException(val relation:RelationIdentifier, cause:Throwable = None.orNull)
     extends ExecutionException(s"No schema specified for '$relation' failed", cause)

@@ -145,7 +145,9 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         val df1 = data.reduce(_ union _)
 
         // Add potentially missing partition columns
-        appendPartitionColumns(df1)
+        val df2 = appendPartitionColumns(df1)
+
+        applyInputSchema(execution, df2)
     }
 
     /**

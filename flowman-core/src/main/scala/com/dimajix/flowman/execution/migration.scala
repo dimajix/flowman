@@ -19,16 +19,12 @@ package com.dimajix.flowman.execution
 import java.util.Locale
 
 
-sealed abstract class MigrationPolicy {
+sealed abstract class MigrationPolicy
 
-}
 object MigrationPolicy {
-    case object RELAXED extends MigrationPolicy {
-        override def toString: String = "RELAXED"
-    }
-    case object STRICT extends MigrationPolicy {
-        override def toString: String = "STRICT"
-    }
+    case object RELAXED extends MigrationPolicy
+    case object STRICT extends MigrationPolicy
+
     def ofString(mode:String) : MigrationPolicy = {
         mode.toLowerCase(Locale.ROOT) match {
             case "relaxed" => MigrationPolicy.RELAXED
@@ -39,25 +35,15 @@ object MigrationPolicy {
     }
 }
 
-sealed abstract class MigrationStrategy {
 
-}
+sealed abstract class MigrationStrategy
+
 object MigrationStrategy {
-    case object NEVER extends MigrationStrategy {
-        override def toString: String = "NEVER"
-    }
-    case object FAIL extends MigrationStrategy {
-        override def toString: String = "FAIL"
-    }
-    case object ALTER extends MigrationStrategy {
-        override def toString: String = "ALTER"
-    }
-    case object ALTER_REPLACE extends MigrationStrategy {
-        override def toString: String = "ALTER_REPLACE"
-    }
-    case object REPLACE extends MigrationStrategy {
-        override def toString: String = "REPLACE"
-    }
+    case object NEVER extends MigrationStrategy
+    case object FAIL extends MigrationStrategy
+    case object ALTER extends MigrationStrategy
+    case object ALTER_REPLACE extends MigrationStrategy
+    case object REPLACE extends MigrationStrategy
 
     def ofString(mode:String) : MigrationStrategy = {
         mode.toLowerCase(Locale.ROOT) match {

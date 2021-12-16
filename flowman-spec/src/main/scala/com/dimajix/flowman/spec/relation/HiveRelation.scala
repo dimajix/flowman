@@ -50,7 +50,9 @@ abstract class HiveRelation extends BaseRelation with PartitionedRelation {
 
         val reader = execution.spark.read
         val tableDf = reader.table(tableIdentifier.unquotedString)
-        filterPartition(tableDf, partitions)
+        val filteredDf = filterPartition(tableDf, partitions)
+
+        applyInputSchema(execution, filteredDf)
     }
 
     /**

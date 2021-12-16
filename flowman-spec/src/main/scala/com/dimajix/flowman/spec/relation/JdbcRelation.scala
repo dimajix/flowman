@@ -177,6 +177,7 @@ case class JdbcRelation(
 
         // Apply embedded schema, if it is specified. This will remove/cast any columns not present in the
         // explicit schema specification of the relation
+        // TODO: Use applyInputSchema to apply Input schema
         val schemaDf = SchemaUtils.applySchema(tableDf, inputSchema, insertNulls=false)
 
         filterPartition(schemaDf, partitions)

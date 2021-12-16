@@ -157,6 +157,7 @@ case class FileRelation(
             df.queryExecution.logical.refresh()
         }
 
+        // TODO: Apply Input schema
         df
     }
     private def readCustom(execution:Execution, partitions:Map[String,FieldValue]) : DataFrame = {

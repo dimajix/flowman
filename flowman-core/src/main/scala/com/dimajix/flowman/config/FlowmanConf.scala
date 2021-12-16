@@ -31,6 +31,8 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.SimpleExecutor
 import com.dimajix.flowman.execution.DependencyScheduler
 import com.dimajix.flowman.execution.Scheduler
+import com.dimajix.flowman.transforms.ColumnMismatchStrategy
+import com.dimajix.flowman.transforms.TypeMismatchStrategy
 import com.dimajix.spark.features
 
 
@@ -104,6 +106,23 @@ object FlowmanConf {
         .doc("Default migration strategy. Allowed values are 'never', 'fail', 'alter', 'alter_replace' and 'replace'")
         .stringConf
         .createWithDefault(MigrationStrategy.ALTER.toString)
+
+    val DEFAULT_RELATION_INPUT_COLUMN_MISMATCH_STRATEGY = buildConf("flowman.default.relation.input.columnMismatchPolicy")
+        .doc("Default strategy to use on schema column mismatch while reading relations. Can be 'ignore', 'error', 'add_columns_or_ignore', 'add_columns_or_error', 'remove_columns_or_ignore', 'remove_columns_or_error', 'add_remove_columns'")
+        .stringConf
+        .createWithDefault(ColumnMismatchStrategy.IGNORE.toString)
+    val DEFAULT_RELATION_INPUT_TYPE_MISMATCH_STRATEGY = buildConf("flowman.default.relation.input.typeMismatchPolicy")
+        .doc("Default strategy to use on schema type mismatch while reading relations. Can be 'ignore', 'error', 'cast_compatible_or_ignore', 'cast_compatible_or_error', 'cast_always'")
+        .stringConf
+        .createWithDefault(TypeMismatchStrategy.IGNORE.toString)
+    val DEFAULT_RELATION_OUTPUT_COLUMN_MISMATCH_STRATEGY = buildConf("flowman.default.relation.output.columnMismatchPolicy")
+        .doc("Default strategy to use on schema column mismatch while reading relations. Can be 'ignore', 'error', 'add_columns_or_ignore', 'add_columns_or_error', 'remove_columns_or_ignore', 'remove_columns_or_error', 'add_remove_columns'")
+        .stringConf
+        .createWithDefault(ColumnMismatchStrategy.ADD_REMOVE_COLUMNS.toString)
+    val DEFAULT_RELATION_OUTPUT_TYPE_MISMATCH_STRATEGY = buildConf("flowman.default.relation.output.typeMismatchPolicy")
+        .doc("Default strategy to use on schema type mismatch while reading relations. Can be 'ignore', 'error', 'cast_compatible_or_ignore', 'cast_compatible_or_error', 'cast_always'")
+        .stringConf
+        .createWithDefault(TypeMismatchStrategy.CAST_ALWAYS.toString)
 
     val DEFAULT_TARGET_OUTPUT_MODE = buildConf("flowman.default.target.outputMode")
         .doc("Default output mode of targets")

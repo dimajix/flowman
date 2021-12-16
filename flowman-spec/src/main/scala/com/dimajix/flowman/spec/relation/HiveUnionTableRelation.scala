@@ -219,7 +219,9 @@ case class HiveUnionTableRelation(
         logger.info(s"Reading from Hive union relation '$identifier' from UNION VIEW $viewIdentifier using partition values $partitions")
 
         val tableDf = execution.spark.read.table(viewIdentifier.unquotedString)
-        filterPartition(tableDf, partitions)
+        val filteredDf = filterPartition(tableDf, partitions)
+
+        applyInputSchema(execution, filteredDf)
     }
 
     /**

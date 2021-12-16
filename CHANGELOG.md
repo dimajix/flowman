@@ -1,3 +1,12 @@
+# Version 0.19.1
+
+* Fix detection of Derby metastore to truncate comment lengths.
+* Add new config variable `flowman.default.relation.input.columnMismatchPolicy` (default is `IGNORE`)
+* Add new config variable `flowman.default.relation.input.typeMismatchPolicy` (default is `IGNORE`)
+* Add new config variable `flowman.default.relation.output.columnMismatchPolicy` (default is `ADD_REMOVE_COLUMNS`)
+* Add new config variable `flowman.default.relation.output.typeMismatchPolicy` (default is `CAST_ALWAYS`)
+
+
 # Version 0.19.0 - 2021-12-13
 
 * Add build profile for Hadoop 3.3

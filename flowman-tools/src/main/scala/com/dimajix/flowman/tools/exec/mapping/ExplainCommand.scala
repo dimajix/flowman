@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ class ExplainCommand extends Command {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 false
             case NonFatal(e) =>
-                logger.error(s"Caught exception while explaining mapping '$mapping", e)
+                logger.error(s"Error explaining mapping '$mapping", e)
                 false
         }
     }

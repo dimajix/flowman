@@ -48,7 +48,6 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
-import com.dimajix.spark.sql.SchemaUtils
 
 
 object Relation {

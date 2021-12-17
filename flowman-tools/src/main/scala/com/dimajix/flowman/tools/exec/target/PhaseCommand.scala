@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Lifecycle
 import com.dimajix.flowman.execution.Phase
@@ -64,7 +65,7 @@ class PhaseCommand(phase:Phase) extends Command {
         } match {
             case Success(status) => status.success
             case Failure(e) =>
-                logger.error(e.getMessage)
+                logger.error(s"Error ${phase.upper} target '${targets.mkString(",")}: ${reasons(e)}")
                 false
         }
     }

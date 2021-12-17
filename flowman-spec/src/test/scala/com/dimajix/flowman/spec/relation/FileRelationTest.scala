@@ -262,6 +262,200 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map()) should be (No)
     }
 
+    it should "correctly detect dirty/non-dirty unpartitioned directories" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val outputPath = Paths.get(tempDir.toString, "csv-"+UUID.randomUUID().toString)
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", com.dimajix.flowman.types.StringType),
+                    Field("int_col", com.dimajix.flowman.types.IntegerType)
+                )
+            ))
+        )
+
+        // ===== Check State ==========================================================================================
+        outputPath.toFile.exists() should be (false)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        an[AnalysisException] should be thrownBy(relation.read(execution))
+
+        // ===== Create Directory =====================================================================================
+        outputPath.toFile.mkdirs() should be (true)
+
+        outputPath.toFile.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.read(execution).count() should be (0)
+
+        // ===== Create dummy File ===================================================================================
+        val dummy = new File(outputPath.toFile, "dummy")
+        dummy.createNewFile() should be (true)
+
+        outputPath.toFile.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.read(execution).count() should be (0)
+
+        // ===== Create _SUCCESS File =================================================================================
+        val success = new File(outputPath.toFile, "_SUCCESS")
+        success.createNewFile() should be (true)
+
+        outputPath.toFile.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.read(execution).count() should be (0)
+    }
+
+    it should "correctly detect dirty/non-dirty partitioned directories with an explicit pattern" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val outputPath = Paths.get(tempDir.toString, "csv-"+UUID.randomUUID().toString)
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            pattern = Some("p_col=$p_col"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", com.dimajix.flowman.types.StringType),
+                    Field("int_col", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("p_col", com.dimajix.flowman.types.IntegerType)
+            )
+        )
+
+        // ===== Check State ==========================================================================================
+        outputPath.toFile.exists() should be (false)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        a[FileNotFoundException] should be thrownBy(relation.read(execution))
+
+        // ===== Create Directory =====================================================================================
+        outputPath.toFile.mkdirs() should be (true)
+
+        outputPath.toFile.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        relation.read(execution).count() should be (0)
+
+        // ===== Create Partition Directory ===========================================================================
+        val subdir = new File(outputPath.toFile, "p_col=123")
+        subdir.mkdirs() should be (true)
+
+        outputPath.toFile.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("123"))) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("456"))) should be (No)
+        relation.read(execution).count() should be (0)
+
+        // ===== Create dummy file ===================================================================================
+        val dummy = new File(subdir, "dummy")
+        dummy.createNewFile() should be (true)
+
+        outputPath.toFile.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("123"))) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("456"))) should be (No)
+        relation.read(execution).count() should be (0)
+
+        // ===== Create _SUCCESS File =================================================================================
+        val success = new File(subdir, "_SUCCESS")
+        success.createNewFile() should be (true)
+
+        outputPath.toFile.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("123"))) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("456"))) should be (No)
+        relation.read(execution).count() should be (0)
+    }
+
+    it should "correctly detect dirty/non-dirty partitioned directories without an explicit pattern" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val outputPath = Paths.get(tempDir.toString, "csv-"+UUID.randomUUID().toString)
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", com.dimajix.flowman.types.StringType),
+                    Field("int_col", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("p_col", com.dimajix.flowman.types.IntegerType)
+            )
+        )
+
+        // ===== Check State ==========================================================================================
+        outputPath.toFile.exists() should be (false)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        a[FileNotFoundException] should be thrownBy(relation.read(execution))
+
+        // ===== Create Directory =====================================================================================
+        outputPath.toFile.mkdirs() should be (true)
+
+        outputPath.toFile.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
+        relation.read(execution).count() should be (0)
+
+        // ===== Create Partition Directory ===========================================================================
+        val subdir = new File(outputPath.toFile, "p_col=123")
+        subdir.mkdirs() should be (true)
+
+        outputPath.toFile.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("123"))) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("456"))) should be (No)
+        relation.read(execution).count() should be (0)
+
+        // ===== Create dummy file ====================================================================================
+        val dummy = new File(subdir, "dummy")
+        dummy.createNewFile() should be (true)
+
+        outputPath.toFile.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("123"))) should be (No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("456"))) should be (No)
+        relation.read(execution).count() should be (0)
+
+        // ===== Create _SUCCESS file =================================================================================
+        val success = new File(subdir, "_SUCCESS")
+        success.createNewFile() should be (true)
+
+        outputPath.toFile.exists() should be (true)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("123"))) should be (Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("456"))) should be (No)
+        relation.read(execution).count() should be (0)
+    }
+
     it should "support partitions" in {
         val spark = this.spark
         import spark.implicits._

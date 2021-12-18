@@ -5,6 +5,10 @@ still be useful for managing the lifecycle, i.e. for creating, migrating and des
 automatically generate the SQL from other mappings. 
 
 ## Example
+You can either specify a [mapping](../mapping/index.md) as the source of the Hive view. Flowman will then create an
+SQL which is equivalent to the logic contained in the mapping. This only works if all (direct and indirect) sources
+of the mapping also refer to Hive relations like views or tables. Also note that the process of transforming a data
+flow into an SQL is non trivial, and therefore not all kinds of operation sequences might be supported.
 ```yaml
 mappings:
   transaction_latest:
@@ -19,6 +23,30 @@ relations:
     mapping: transaction_latest
 ```
 
+As a possibly convenient alternative to create a Hive view from a mapping, you can of course also directly specify
+an SQL. Note that in contrast to the [SQL mapping](../mapping/sql.md), all table identifiers used in the SQL actually
+refer to Hive tables and not to Flowman mappings. The SQL will be passed as is to Hive.
+```yaml
+relations:
+  transaction_latest:
+    kind: hiveView
+    database: banking
+    view: transaction_latest
+    sql: "
+      WITH tx AS (
+        SELECT
+          *,
+          row_number() OVER(PARTITION BY transaction_id ORDER BY event_time) AS rank
+        FROM transaction
+      )
+      SELECT
+        *
+      FROM tx
+      WHERE rank = 1
+    "
+```
+
+
 ## Fields
 * `kind` **(mandatory)** *(string)*: `hiveView`
 
@@ -29,7 +57,7 @@ relations:
  Defines the Hive database where the view is defined. When no database is specified, the  table is accessed without
  any specific qualification, meaning that the default database will be used.
 
-* `view` **(optional)** *(string)* *(default: empty)*:
+* `view` **(mandatory)** *(string)* *(default: empty)*:
  Contains the name of the Hive view.
 
 * `sql` **(optional)** *(string)* *(default: empty)*:
@@ -38,6 +66,17 @@ relations:
 * `mapping` **(optional)** *(string)* *(default: empty)*:
  Specifies the name of a mapping, which should be translated into SQL and stored in the Hive view. Cannot be used
  together with `sql`.
+
+
+## Automatic Migrations
+Flowman supports automatic migration of Hive views once the view definition changes. Then Flowman will simply recreate
+the Hive view with the new definition. Flowman also detects if the schema changes, which also requires a recreation
+of the view to update type information stored in the Hive meta store.
+
+
+## Schema Conversion
+The Hive view relation fully supports automatic schema conversion on read operations as described in the
+corresponding section of [relations](index.md).
 
 
 ## Output Modes

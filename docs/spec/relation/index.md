@@ -39,25 +39,18 @@ configured using the `columnMismatchPolicy` as follows. Basically the idea is th
 
 | Column Mismatch Policy     | Input Column | Requested Column | Result      |
 |----------------------------|--------------|------------------|-------------|
-| `IGNORE`                   | present      | present          | present     |
 | `IGNORE`                   | present      | missing          | present     |
 | `IGNORE`                   | missing      | present          | missing     |
-| `ERROR`                    | present      | present          | present     |
 | `ERROR`                    | present      | missing          | build error |
 | `ERROR`                    | missing      | present          | build error |
-| `ADD_COLUMNS_OR_IGNORE`    | present      | present          | present     |
 | `ADD_COLUMNS_OR_IGNORE`    | present      | missing          | present     |
 | `ADD_COLUMNS_OR_IGNORE`    | missing      | present          | present     |
-| `ADD_COLUMNS_OR_ERROR`     | present      | present          | present     |
 | `ADD_COLUMNS_OR_ERROR`     | present      | missing          | build error |
 | `ADD_COLUMNS_OR_ERROR`     | missing      | present          | missing     |
-| `REMOVE_COLUMNS_OR_IGNORE` | present      | present          | present     |
 | `REMOVE_COLUMNS_OR_IGNORE` | present      | missing          | missing     |
 | `REMOVE_COLUMNS_OR_IGNORE` | missing      | present          | missing     |
-| `REMOVE_COLUMNS_OR_ERROR`  | present      | present          | present     |
 | `REMOVE_COLUMNS_OR_ERROR`  | present      | missing          | missing     |
 | `REMOVE_COLUMNS_OR_ERROR`  | missing      | present          | build error |
-| `ADD_REMOVE_COLUMNS`       | present      | present          | present     |
 | `ADD_REMOVE_COLUMNS`       | present      | missing          | missing     |
 | `ADD_REMOVE_COLUMNS`       | missing      | present          | present     |
 
@@ -66,20 +59,15 @@ follows:
 
 | Type Mismatch Policy        | Input vs Requested Data Type         | Result           |
 |-----------------------------|--------------------------------------|------------------|
-| `IGNORE`                    | Same                                 | Input Data Type  |
 | `IGNORE`                    | Source can be cast to dest           | Input Data Type  |
 | `IGNORE`                    | Source cannot be safely cast to dest | Input Data Type  |
-| `ERROR`                     | Same                                 | Input Data Type  |
 | `ERROR`                     | Source can be cast to dest           | build error      |
 | `ERROR`                     | Source cannot be safely cast to dest | build error      |
-| `CAST_COMPATIBLE_OR_ERROR`  | Same                                 | Input Data Type  |
 | `CAST_COMPATIBLE_OR_ERROR`  | Source can be cast to dest           | Target Data Type |
 | `CAST_COMPATIBLE_OR_ERROR`  | Source cannot be safely cast to dest | build error      |
-| `CAST_COMPATIBLE_OR_IGNORE` | Same                                 | Input Data Type  |
-| `CAST_COMPATIBLE_OR_IGNORE` | Source can be cast to dest           | Target Data Type |
+| `CAST_COMPATIBLE_OR_IGNORE` | Source can be safely cast to dest    | Target Data Type |
 | `CAST_COMPATIBLE_OR_IGNORE` | Source cannot be safely cast to dest | Input Data Type  |
-| `CAST_ALWAYS`               | Same                                 | Input Data Type  |
-| `CAST_ALWAYS`               | Source can be cast to dest           | Target Data Type |
+| `CAST_ALWAYS`               | Source can be safely cast to dest    | Target Data Type |
 | `CAST_ALWAYS`               | Source cannot be safely cast to dest | Target Data Type |
 
 ## Relation Types

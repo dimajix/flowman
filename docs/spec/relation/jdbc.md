@@ -90,18 +90,23 @@ the migration strategy is set to `ALTER_REPLACE`, then Flowman will fall back to
 altogether on *any* non-recoverable exception during migration.
 
 
+## Schema Conversion
+The JDBC relation fully supports automatic schema conversion on input and output operations as described in the
+corresponding section of [relations](index.md).
+
+
 ## Output Modes
 The `jdbc` relation supports the following output modes in a [`relation` target](../target/relation.md):
 
-|Output Mode |Supported  | Comments|
---- | --- | ---
-|`errorIfExists`|yes|Throw an error if the JDBC table already exists|
-|`ignoreIfExists`|yes|Do nothing if the JDBC table already exists|
-|`overwrite`|yes|Overwrite the whole table or the specified partitions|
-|`overwrite_dynamic`|no|-|
-|`append`|yes|Append new records to the existing table|
-|`update`|no|-|
-|`merge`|no|-|
+| Output Mode         | Supported | Comments                                              |
+|---------------------|-----------|-------------------------------------------------------|
+| `errorIfExists`     | yes       | Throw an error if the JDBC table already exists       |
+| `ignoreIfExists`    | yes       | Do nothing if the JDBC table already exists           |
+| `overwrite`         | yes       | Overwrite the whole table or the specified partitions |
+| `overwrite_dynamic` | no        | -                                                     |
+| `append`            | yes       | Append new records to the existing table              |
+| `update`            | no        | -                                                     |
+| `merge`             | no        | -                                                     |
 
 
 ## Remarks

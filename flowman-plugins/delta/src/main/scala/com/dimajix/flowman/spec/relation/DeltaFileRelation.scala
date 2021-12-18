@@ -30,6 +30,7 @@ import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
+import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
@@ -164,7 +165,7 @@ case class DeltaFileRelation(
     }
     private def doUpdate(df: DataFrame, partitionSpec: PartitionSpec) : Unit = {
         val withinPartitionKeyColumns = if (mergeKey.nonEmpty) mergeKey else schema.map(_.primaryKey).getOrElse(Seq())
-        val keyColumns = partitions.map(_.name).toSet -- partitionSpec.keys ++ withinPartitionKeyColumns
+        val keyColumns = SetIgnoreCase(partitions.map(_.name)) -- partitionSpec.keys ++ withinPartitionKeyColumns
         val table = DeltaTable.forPath(df.sparkSession, location.toString)
         DeltaUtils.upsert(table, df, keyColumns, partitionSpec)
     }

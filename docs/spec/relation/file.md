@@ -73,30 +73,35 @@ relations:
  Please see the section [Partitioning](#Partitioning) below. 
 
 
+## Schema Conversion
+The file relation fully supports automatic schema conversion on input and output operations as described in the
+corresponding section of [relations](index.md).
+
+
 ## Output Modes
 
 ### Batch Writing
 The `file` relation supports the following output modes in a [`relation` target](../target/relation.md):
 
-|Output Mode |Supported  | Comments|
---- | --- | ---
-|`errorIfExists`|yes|Throw an error if the files already exists|
-|`ignoreIfExists`|yes|Do nothing if the files already exists|
-|`overwrite`|yes|Overwrite the whole location or the specified partitions|
-|`overwrite_dynamic`|yes|Overwrite only partitions dynamically determined by the data itself|
-|`append`|yes|Append new records to the existing files|
-|`update`|no|-|
-|`merge`|no|-|
+| Output Mode         | Supported | Comments                                                            |
+|---------------------|-----------|---------------------------------------------------------------------|
+| `errorIfExists`     | yes       | Throw an error if the files already exists                          |
+| `ignoreIfExists`    | yes       | Do nothing if the files already exists                              |
+| `overwrite`         | yes       | Overwrite the whole location or the specified partitions            |
+| `overwrite_dynamic` | yes       | Overwrite only partitions dynamically determined by the data itself |
+| `append`            | yes       | Append new records to the existing files                            |
+| `update`            | no        | -                                                                   |
+| `merge`             | no        | -                                                                   |
 
 ### Stream Writing
 In addition to batch writing, the file relation also supports stream writing via the
 [`stream` target](../target/stream.md) with the following semantics:
 
-|Output Mode |Supported  | Comments|
---- | --- | ---
-|`append`|yes|Append new records from the streaming process once they don't change any more|
-|`update`|yes|Append records every time they are updated|
-|`complete`|no|-|
+| Output Mode | Supported | Comments                                                                      |
+|-------------|-----------|-------------------------------------------------------------------------------|
+| `append`    | yes       | Append new records from the streaming process once they don't change any more |
+| `update`    | yes       | Append records every time they are updated                                    |
+| `complete`  | no        | -                                                                             |
 
 
 ## Remarks

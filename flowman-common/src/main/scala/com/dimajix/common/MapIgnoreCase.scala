@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,12 @@ import java.util.Locale
 
 import scala.collection.Iterator
 import scala.collection.Map
+import scala.collection.MapLike
 import scala.collection.Seq
 
 
 object MapIgnoreCase {
-    def apply[T]() : MapIgnoreCase[T] = new MapIgnoreCase[T](Map())
+    def apply[T]() : MapIgnoreCase[T] = new MapIgnoreCase[T](Map.empty)
     def apply[T](map:Map[String,T]) : MapIgnoreCase[T] = {
         new MapIgnoreCase[T](map.map(kv => kv._1.toLowerCase(Locale.ROOT) -> ((kv._1, kv._2))))
     }
@@ -41,7 +42,8 @@ object MapIgnoreCase {
 }
 
 
-class MapIgnoreCase[B] private(impl:Map[String,(String,B)] = Map()) extends Map[String,B] {
+class MapIgnoreCase[B] private(impl:Map[String,(String,B)] = Map()) extends Map[String,B] with MapLike[String,B,MapIgnoreCase[B]] {
+    override def empty: MapIgnoreCase[B] = MapIgnoreCase[B]()
 
     override def get(key: String): Option[B] = {
         impl.get(key.toLowerCase(Locale.ROOT)).map(_._2)

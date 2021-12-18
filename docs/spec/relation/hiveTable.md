@@ -138,6 +138,11 @@ Other changes (like changing the data type or dropping columns) is not supported
 will require either `REPLACE` or `ALTER_REPLACE` - but this will remove all existing data in that table!
 
 
+## Schema Conversion
+The Hive table relation fully supports automatic schema conversion on input and output operations as described in the
+corresponding section of [relations](index.md).
+
+
 ## Output Modes
 The `hive` relation supports the following output modes in a [`relation` target](../target/relation.md):
 

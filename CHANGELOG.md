@@ -1,11 +1,11 @@
-# Version 0.19.1
+# Version 0.20.0
 
 * Fix detection of Derby metastore to truncate comment lengths.
 * Add new config variable `flowman.default.relation.input.columnMismatchPolicy` (default is `IGNORE`)
 * Add new config variable `flowman.default.relation.input.typeMismatchPolicy` (default is `IGNORE`)
 * Add new config variable `flowman.default.relation.output.columnMismatchPolicy` (default is `ADD_REMOVE_COLUMNS`)
 * Add new config variable `flowman.default.relation.output.typeMismatchPolicy` (default is `CAST_ALWAYS`)
-* Improve handling of _SUCCESS files for detecting dirty directories
+* Improve handling of `_SUCCESS` files for detecting (non-)dirty directories
 
 
 # Version 0.19.0 - 2021-12-13
@@ -26,7 +26,7 @@
 # Version 0.18.0 - 2021-10-13
 
 * Improve automatic schema migration for Hive and JDBC relations
-* Improve support of CHAR(n) and VARCHAR(n) types. Those types will now be propagates to Hive with newer Spark versions
+* Improve support of `CHAR(n)` and `VARCHAR(n)` types. Those types will now be propagates to Hive with newer Spark versions
 * Support writing to dynamic partitions for file relations, Hive tables, JDBC relations and Delta tables
 * Fix the name of some config variables (floman.* => flowman.*)
 * Added new config variables `flowman.default.relation.migrationPolicy` and `flowman.default.relation.migrationStrategy`
@@ -159,8 +159,8 @@ parameter `spark.sql.sources.commitProtocolClass`
 * Refactor Maven module structure
 * Implement new Scala DSL for creating projects
 * Fix ordering bug in target execution
-* Merge 'migrate' phase into 'create' phase
-* Rename 'input' field to 'mapping' in most targets
+* Merge `migrate` phase into `create` phase
+* Rename `input` field to `mapping` in most targets
 * Lots of minor code improvements
 
 
@@ -178,9 +178,9 @@ parameter `spark.sql.sources.commitProtocolClass`
 # Version 0.12.0 - 2020-01-09
 
 * Add new RecursiveSqlMapping
-* Refactor 'describe' method of mappings
+* Refactor `describe` method of mappings
 * Fix TemplateRelation to return correct partitions and fields
-* Add 'filter' attribute to many mappings
+* Add `filter` attribute to many mappings
 
 
 # Version 0.11.6 - 2019-12-17
@@ -203,12 +203,12 @@ parameter `spark.sql.sources.commitProtocolClass`
 # Version 0.11.3 - 2019-12-06
 
 * Improve migrations of HiveUnionTable
-* Improve schema support in 'copy' target 
+* Improve schema support in `copy` target 
  
 
 # Version 0.11.2 - 2019-12-02
 
-* Add new 'earliest' mapping
+* Add new `earliest` mapping
 
 
 # Version 0.11.1 - 2019-11-29
@@ -220,7 +220,7 @@ parameter `spark.sql.sources.commitProtocolClass`
 
 * Add support for Spark 3.0 preview
 * Remove HBase plugin
-* Add optional 'filter' to 'readRelation' mapping
+* Add optional `filter` to `readRelation` mapping
 * Improve Hive compatibility of SQL generator for ORDER BY statements
 * Fix target table search in Hive Union Table
 
@@ -232,13 +232,13 @@ parameter `spark.sql.sources.commitProtocolClass`
 
 # Version 0.10.1 - 2019-11-14
 
-* Add 'error' output to 'extractJson' mapping
+* Add `error` output to `extractJson` mapping
 
 
 # Version 0.10.0 - 2019-11-05
 
-* Add new 'hiveUnionTable' relation
-* Add new 'union' schema
+* Add new `hiveUnionTable` relation
+* Add new `union` schema
 * Support nested columns in deduplication
 * Support nested Hive VIEWs
 * Support Spark 2.4.4
@@ -251,18 +251,18 @@ parameter `spark.sql.sources.commitProtocolClass`
 
 # Version 0.9.0 - 2019-10-08
 
-* Complete overhaul of job execution. No tasks any more
+* Complete overhaul of job execution. No tasks anymore
 * Improve Swagger schema support
 
 
 # Version 0.8.3 - 2019-09-16
 
-* Add configuration option for column insert position of 'historize' mapping
+* Add configuration option for column insert position of `historize` mapping
 
 
 # Version 0.8.2 - 2019-08-29
 
-* Add optional filter condition to 'latest' mapping
+* Add optional filter condition to `latest` mapping
 
 
 # Version 0.8.1 - 2019-08-29
@@ -275,7 +275,7 @@ parameter `spark.sql.sources.commitProtocolClass`
 * Add new metric system
 * Add Hive view generation from mappings
 * Support for Hadoop 3.1 and 3.2 (without Hive)
-* Add 'historize' mapping
+* Add `historize` mapping
 
 
 # Version 0.7.1 - 2019-07-22
@@ -307,7 +307,7 @@ parameter `spark.sql.sources.commitProtocolClass`
 
 # Version 0.6.2 - 2019-06-12
 
-* "explode" mapping supports simple data types
+* `explode` mapping supports simple data types
 
 
 # Version 0.6.1 - 2019-06-11
@@ -326,7 +326,7 @@ parameter `spark.sql.sources.commitProtocolClass`
 
 * github-32: Improve handling of nullable structs
 * github-30: Refactoring of whole specification handling
-* github-30: Add new 'template' mapping
+* github-30: Add new `template` mapping
 * Add new `flatten` entry in assembler
 * Implement new `flatten` mapping
 * github-31: Fix handling of local project definition in flowexec

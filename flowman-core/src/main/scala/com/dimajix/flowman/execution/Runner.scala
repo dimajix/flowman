@@ -19,7 +19,9 @@ package com.dimajix.flowman.execution
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.Locale
+import java.util.UUID
 
 import scala.util.Failure
 import scala.util.Success
@@ -74,19 +76,20 @@ private[execution] sealed class RunnerImpl {
             case Failure(e) => TargetResult(target, phase, e, startTime)
         }
 
+        val duration = result.duration
         result.status match {
             case Status.SUCCESS =>
-                logger.info(green(s"Successfully finished phase '$phase' for target '${target.identifier}'"))
+                logger.info(green(s"Successfully finished phase '$phase' for target '${target.identifier}' in ${fmt(duration)}"))
             case Status.SUCCESS_WITH_ERRORS =>
-                logger.info(yellow(s"Successfully finished phase '$phase' for target '${target.identifier}' with errors"))
+                logger.info(yellow(s"Successfully finished phase '$phase' for target '${target.identifier}' with errors  in ${fmt(duration)}"))
             case Status.SKIPPED =>
                 logger.info(green(s"Skipped phase '$phase' for target '${target.identifier}'"))
             case Status.FAILED if result.exception.nonEmpty =>
-                logger.error(red(s"Failed phase '$phase' for target '${target.identifier}' with exception: "), result.exception.get)
+                logger.error(red(s"Failed phase '$phase' for target '${target.identifier}'  after ${fmt(duration)} with exception: "), result.exception.get)
             case Status.FAILED =>
-                logger.error(red(s"Failed phase '$phase' for target '${target.identifier}'"))
+                logger.error(red(s"Failed phase '$phase' for target '${target.identifier}' after ${fmt(duration)}"))
             case Status.ABORTED =>
-                logger.error(red(s"Aborted phase '$phase' for target '${target.identifier}'"))
+                logger.error(red(s"Aborted phase '$phase' for target '${target.identifier}' after ${fmt(duration)}"))
             case status =>
                 logger.warn(yellow(s"Finished '$phase' for target '${target.identifier}' with unknown status $status"))
         }
@@ -161,9 +164,37 @@ private[execution] sealed class RunnerImpl {
         logger.info(separator)
         logger.info(msg)
         logger.info(separator)
-        logger.info(s"Total time: ${duration.toMillis / 1000.0} s")
+        logger.info(s"Total time: ${fmt(duration)}")
         logger.info(s"Finished at: ${endTime.atZone(ZoneId.systemDefault())}")
         logger.info(separator)
+    }
+
+    def logResult(title:String, result:Result[_]) : Unit = {
+        logger.info(separator)
+        logger.info(boldWhite(s"Execution summary for ${result.category.lower} '${result.identifier}'"))
+        logger.info("")
+        for (child <- result.children) {
+            logger.info(s"${child.identifier} ... ${status(child.status)} [${fmt(child.duration)}]")
+        }
+        logStatus(title, result.status, result.duration, result.endTime)
+    }
+
+    private def status(status:Status) : String = {
+        status match {
+            case Status.SUCCESS|Status.SKIPPED => boldGreen(status.upper)
+            case Status.SUCCESS_WITH_ERRORS|Status.RUNNING => boldYellow(status.upper)
+            case Status.FAILED|Status.ABORTED => boldRed(status.upper)
+            case _ => boldRed(status.upper)
+        }
+    }
+
+    private def fmt(duration:Duration) : String = {
+        if (duration.toSeconds >= 60*60)
+            s"${duration.toHours}:${duration.toMinutesPart} h"
+        else if (duration.toSeconds >= 60)
+            s"${duration.toMinutes}:${duration.toSecondsPart} min"
+        else
+            s"${duration.toMillis / 1000.0} s"
     }
 }
 
@@ -258,10 +289,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                     }
                 }
 
-            val endTime = result.endTime
-            val duration = Duration.between(startTime, endTime)
-            val status = result.status
-            logStatus(title, status, duration, endTime)
+            logResult(title, result)
             result
         }
     }
@@ -562,13 +590,11 @@ final class Runner(
         if (targets.nonEmpty) {
             val context = targets.head.context
             val job = Job.builder(context)
-                .setName("execute-target")
+                .setName("execute-target-" + UUID.randomUUID().toString)
                 .setTargets(targets.map(_.identifier))
                 .build()
 
-            val runner = new JobRunnerImpl(this)
-            val result = runner.executeJob(job, phases, Map(), Seq(".*".r), force, keepGoing, dryRun)
-            result.status
+            executeJob(job, phases, force=force, keepGoing=keepGoing, dryRun=dryRun)
         }
         else {
             Status.SUCCESS

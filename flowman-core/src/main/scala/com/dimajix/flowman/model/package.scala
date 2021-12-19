@@ -25,6 +25,9 @@ package object model {
     type JobIdentifier = Identifier[Job]
     type TestIdentifier = Identifier[Test]
     type TemplateIdentifier = Identifier[Template[_]]
+    type AssertionIdentifier = Identifier[Assertion]
+    type MeasureIdentifier = Identifier[Measure]
+    type EmptyIdentifier = Identifier[Unit]
 
     object MappingIdentifier extends IdentifierFactory[Mapping]
     object ConnectionIdentifier extends IdentifierFactory[Connection]
@@ -33,4 +36,7 @@ package object model {
     object JobIdentifier extends IdentifierFactory[Job]
     object TestIdentifier extends IdentifierFactory[Test]
     object TemplateIdentifier extends IdentifierFactory[Template[_]]
+    object AssertionIdentifier extends IdentifierFactory[Assertion]
+    object MeasureIdentifier extends IdentifierFactory[Measure]
+    object EmptyIdentifier extends IdentifierFactory[Unit]
 }

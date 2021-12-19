@@ -47,6 +47,7 @@ object Measure {
         description:Option[String]
     ) extends Instance.Properties[Properties] {
         override def withName(name: String): Properties = copy(name=name)
+        def identifier : MeasureIdentifier = MeasureIdentifier(name, project.map(_.name))
     }
 }
 
@@ -57,6 +58,12 @@ trait Measure extends Instance {
      * @return
      */
     final override def category: Category = Category.MEASURE
+
+    /**
+     * Returns an identifier for this measure
+     * @return
+     */
+    def identifier : MeasureIdentifier
 
     /**
      * Returns a description of the measure
@@ -88,6 +95,12 @@ trait Measure extends Instance {
 }
 abstract class BaseMeasure extends AbstractInstance with Measure {
     protected override def instanceProperties : Measure.Properties
+
+    /**
+     * Returns an identifier for this assertion
+     * @return
+     */
+    override def identifier : MeasureIdentifier = instanceProperties.identifier
 
     override def description: Option[String] = instanceProperties.description
 }

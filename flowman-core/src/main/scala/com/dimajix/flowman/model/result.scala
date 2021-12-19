@@ -75,6 +75,7 @@ object Result {
 }
 
 sealed abstract class Result[T <: Result[T]] { this:T =>
+    def identifier : Identifier[_]
     def name : String
     def category : Category
     def kind : String
@@ -152,6 +153,7 @@ final case class LifecycleResult(
     override val startTime : Instant,
     override val endTime : Instant
 ) extends Result[LifecycleResult] {
+    override def identifier : JobIdentifier = job.identifier
     override def name : String = job.name
     override def category : Category = job.category
     override def kind : String = job.kind
@@ -208,6 +210,7 @@ final case class JobResult(
     override val endTime : Instant
 ) extends Result[JobResult] {
     def phase : Phase = instance.phase
+    override def identifier : JobIdentifier = job.identifier
     override def name : String = job.name
     override def category : Category = job.category
     override def kind : String = job.kind
@@ -294,6 +297,7 @@ final case class TargetResult(
     override val endTime : Instant = Instant.now()
 ) extends Result[TargetResult] {
     def phase : Phase = instance.phase
+    override def identifier : TargetIdentifier = target.identifier
     override def name : String = target.name
     override def category : Category = target.category
     override def kind : String = target.kind
@@ -331,6 +335,7 @@ final case class TestResult(
     override val startTime : Instant,
     override val endTime : Instant
 ) extends Result[TestResult] {
+    override def identifier : TestIdentifier = test.identifier
     override def name : String = test.name
     override def category : Category = test.category
     override def kind : String = test.kind
@@ -392,6 +397,7 @@ final case class AssertionResult(
     override val startTime : Instant,
     override val endTime : Instant
 ) extends Result[AssertionResult] {
+    override def identifier : AssertionIdentifier = assertion.identifier
     override def name : String = assertion.name
     override def category : Category = assertion.category
     override def kind : String = assertion.kind
@@ -455,6 +461,7 @@ final case class AssertionTestResult(
     override val startTime : Instant,
     override val endTime : Instant
 ) extends Result[AssertionTestResult] {
+    override def identifier : EmptyIdentifier = EmptyIdentifier.empty
     override def category: Category = Category.ASSERTION_TEST
     override def kind: String = ""
     override def children: Seq[Result[_]] = Seq()
@@ -505,6 +512,7 @@ final case class MeasureResult(
     override val startTime : Instant,
     override val endTime : Instant
 ) extends Result[MeasureResult] {
+    override def identifier : MeasureIdentifier = measure.identifier
     override def name : String = measure.name
     override def category : Category = measure.category
     override def kind : String = measure.kind

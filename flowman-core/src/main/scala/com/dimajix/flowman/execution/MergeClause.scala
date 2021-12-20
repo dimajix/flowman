@@ -27,7 +27,8 @@ sealed abstract class MergeMatchedClause extends MergeClause
 sealed abstract class MergeUnmatchedClause extends MergeClause
 
 case class MergeInsertClause(
-    condition: Option[Column]
+    condition: Option[Column],
+    columns:Map[String,Column]
 ) extends MergeUnmatchedClause
 
 case class MergeDeleteClause(

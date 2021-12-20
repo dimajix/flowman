@@ -39,6 +39,10 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MergeClause
+import com.dimajix.flowman.execution.MergeDeleteClause
+import com.dimajix.flowman.execution.MergeInsertClause
+import com.dimajix.flowman.execution.MergeUpdateClause
 import com.dimajix.flowman.model.PartitionField
 
 
@@ -129,6 +133,38 @@ object DeltaUtils {
             .merge(df.as("df"), mergeCondition)
             .whenMatched().updateAll()
             .whenNotMatched().insertAll()
+            .execute()
+    }
+
+    def merge(table:DeltaTable, df: DataFrame, keyColumns:Iterable[String], clauses:Seq[MergeClause]) : Unit = {
+        if (keyColumns.isEmpty)
+            throw new IllegalArgumentException(s"Cannot perform upsert operation without primary key")
+
+        val keyCondition = keyColumns.map(k => col("target." + k) <=> col("source." + k))
+        val mergeCondition = keyCondition.reduce(_ && _)
+
+        val builder = table.as("target")
+            .merge(df.as("source"), mergeCondition)
+        clauses.foldLeft(builder) { (mergeBuilder, clause) =>
+                clause match {
+                    case MergeInsertClause(condition, columns) =>
+                        val b2 = condition.map(mergeBuilder.whenNotMatched).getOrElse(mergeBuilder.whenNotMatched())
+                        if (columns.nonEmpty)
+                            b2.insert(columns)
+                        else
+                            b2.insertAll()
+                    case MergeUpdateClause(condition, columns) =>
+                        val b2 = condition.map(mergeBuilder.whenMatched).getOrElse(mergeBuilder.whenMatched())
+                        if (columns.nonEmpty)
+                            b2.update(columns)
+                        else
+                            b2.updateAll()
+                    case MergeDeleteClause(condition) =>
+                        val b2 = condition.map(mergeBuilder.whenMatched).getOrElse(mergeBuilder.whenMatched())
+                        b2.delete()
+                }
+
+            }
             .execute()
     }
 

@@ -172,13 +172,14 @@ trait Relation extends Instance {
     def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:OutputMode = OutputMode.OVERWRITE) : Unit
 
     /**
-     * Performs a merge operation. All condition columns should reference the relation using the alias `relation`.
+     * Performs a merge operation. Either you need to specify a [[mergeKey]], or the relation needs to provide some
+     * default key.
      * @param execution
      * @param df
      * @param mergeCondition
      * @param clauses
      */
-    def merge(execution:Execution, df:DataFrame, mergeCondition:Column, clauses:Seq[MergeClause]) : Unit = ???
+    def merge(execution:Execution, df:DataFrame, mergeKey:Seq[String], clauses:Seq[MergeClause]) : Unit = ???
 
     /**
       * Removes one or more partitions.

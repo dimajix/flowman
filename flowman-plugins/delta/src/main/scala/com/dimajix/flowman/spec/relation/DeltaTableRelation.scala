@@ -37,6 +37,7 @@ import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
@@ -168,6 +169,28 @@ case class DeltaTableRelation(
         val keyColumns = SetIgnoreCase(partitions.map(_.name)) -- partitionSpec.keys ++ withinPartitionKeyColumns
         val table = DeltaTable.forName(df.sparkSession, tableIdentifier.quotedString)
         DeltaUtils.upsert(table, df, keyColumns, partitionSpec)
+    }
+
+    /**
+     * Performs a merge operation. Either you need to specify a [[mergeKey]], or the relation needs to provide some
+     * default key.
+     *
+     * @param execution
+     * @param df
+     * @param mergeCondition
+     * @param clauses
+     */
+    override def merge(execution: Execution, df: DataFrame, mergeKey: Seq[String], clauses: Seq[MergeClause]): Unit = {
+        val withinPartitionKeyColumns =
+            if (mergeKey.nonEmpty)
+                mergeKey
+            else if (this.mergeKey.nonEmpty)
+                this.mergeKey
+            else
+                schema.map(_.primaryKey).getOrElse(Seq())
+        val keyColumns = SetIgnoreCase(partitions.map(_.name)) ++ withinPartitionKeyColumns
+        val table = DeltaTable.forName(df.sparkSession, tableIdentifier.quotedString)
+        DeltaUtils.merge(table, df, keyColumns, clauses)
     }
 
     /**

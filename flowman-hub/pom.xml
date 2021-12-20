@@ -84,7 +84,7 @@
                         <configuration>
                             <artifacts>
                                 <artifact>
-                                    <file>${project.build.directory}/properties/flowman-studio-hub.properties</file>
+                                    <file>${project.build.directory}/properties/flowman-hub.properties</file>
                                     <type>properties</type>
                                     <classifier>properties</classifier>
                                 </artifact>

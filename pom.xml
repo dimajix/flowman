@@ -982,7 +982,7 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-kernel</artifactId>
+                <artifactId>flowman-hub</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

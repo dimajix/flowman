@@ -38,8 +38,8 @@
                 <!-- Only include top level dependencies, otherwise shaded artifacts will appear -->
                 <include>com.dimajix.flowman:flowman-tools</include>
                 <include>com.dimajix.flowman:flowman-server</include>
-                <include>com.dimajix.flowman:flowman-kernel</include>
                 <include>com.dimajix.flowman:flowman-studio</include>
+                <include>com.dimajix.flowman:flowman-hub</include>
             </includes>
             <excludes>
                 <!-- Manually exclude shaded artifacts -->

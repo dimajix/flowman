@@ -2,24 +2,24 @@
   <v-container>
     <v-card>
     <v-list nav dense>
-      <v-list-item link>
+      <v-list-item link dense>
         <v-list-item-action><v-icon>info</v-icon></v-list-item-action>
         <v-list-item-title>System</v-list-item-title>
       </v-list-item>
 
-      <v-list-item link>
+      <v-list-item link dense>
         <v-list-item-action><v-icon>domain</v-icon></v-list-item-action>
         <v-list-item-title>Namespace</v-list-item-title>
       </v-list-item>
 
-      <v-list-item link>
+      <v-list-item link dense>
         <v-list-item-action><v-icon>account_tree</v-icon></v-list-item-action>
         <v-list-item-title>Project</v-list-item-title>
       </v-list-item>
 
       <v-list-group no-action>
         <template v-slot:activator>
-          <v-list-item>
+          <v-list-item dense>
             <v-list-item-action><v-icon>gavel</v-icon></v-list-item-action>
             <v-list-item-title>Jobs</v-list-item-title>
           </v-list-item>
@@ -29,6 +29,7 @@
           :key="item"
           @click.stop="clickJob(item)"
           link
+          dense
         >
           <v-list-item-content>
             <v-list-item-title>{{ item }}</v-list-item-title>
@@ -50,7 +51,7 @@
 
       <v-list-group no-action>
         <template v-slot:activator>
-          <v-list-item>
+          <v-list-item dense>
             <v-list-item-action><v-icon>rule</v-icon></v-list-item-action>
             <v-list-item-title>Tests</v-list-item-title>
           </v-list-item>
@@ -60,6 +61,7 @@
           :key="item"
           @click.stop="clickTest(item)"
           link
+          dense
         >
           <v-list-item-content>
             <v-list-item-title>{{ item }}</v-list-item-title>
@@ -81,7 +83,7 @@
 
       <v-list-group no-action>
         <template v-slot:activator>
-          <v-list-item>
+          <v-list-item dense>
             <v-list-item-action><v-icon>label</v-icon></v-list-item-action>
             <v-list-item-title>Targets</v-list-item-title>
           </v-list-item>
@@ -91,6 +93,7 @@
           :key="item"
           @click.stop="clickTarget(item)"
           link
+          dense
         >
           <v-list-item-content>
             <v-list-item-title>{{ item }}</v-list-item-title>
@@ -112,7 +115,7 @@
 
       <v-list-group no-action>
         <template v-slot:activator>
-          <v-list-item>
+          <v-list-item dense>
             <v-list-item-action><v-icon>mediation</v-icon></v-list-item-action>
             <v-list-item-title>Mappings</v-list-item-title>
           </v-list-item>
@@ -122,6 +125,7 @@
           :key="item"
           @click.stop="clickMapping(item)"
           link
+          dense
         >
           <v-list-item-content>
             <v-list-item-title>{{ item }}</v-list-item-title>
@@ -155,7 +159,7 @@
 
       <v-list-group no-action>
         <template v-slot:activator>
-          <v-list-item>
+          <v-list-item dense>
             <v-list-item-action>
               <v-icon>table_view</v-icon>
             </v-list-item-action>
@@ -167,6 +171,7 @@
           :key="item"
           @click.stop="clickRelation(item)"
           link
+          dense
         >
           <v-list-item-content>
             <v-list-item-title>{{ item }}</v-list-item-title>

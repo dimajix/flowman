@@ -204,7 +204,7 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>com.dimajix.flowman</groupId>
-                                    <artifactId>flowman-studio-hub</artifactId>
+                                    <artifactId>flowman-hub</artifactId>
                                     <version>${project.version}</version>
                                     <type>properties</type>
                                     <classifier>properties</classifier>
@@ -248,7 +248,7 @@
         </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-kernel</artifactId>
+            <artifactId>flowman-hub</artifactId>
         </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>

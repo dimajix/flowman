@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.tools.exec.model
 
+import java.util.UUID
+
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
@@ -48,7 +50,7 @@ class PhaseCommand(phase:Phase) extends Command {
     var partition: String = ""
 
     override def execute(session: Session, project: Project, context:Context) : Boolean = {
-        logger.info(s"Executing phase '$phase' for relations {}", if (relations != null) relations.mkString(",") else "all")
+        logger.info(s"Executing phase '$phase' for relations ${if (relations != null) relations.mkString(",") else "all"}")
 
         val toRun =
             if (relations.nonEmpty)
@@ -61,7 +63,7 @@ class PhaseCommand(phase:Phase) extends Command {
             .withTargets(toRun.map(rel => (rel,  RelationTargetSpec(rel, rel, partition))).toMap)
             .build()
         val job = Job.builder(jobContext)
-            .setName("cli-modify-relations")
+            .setName("execute-relation-" + UUID.randomUUID().toString)
             .setDescription("Modify relations via CLI")
             .setTargets(toRun.map(t => TargetIdentifier(t)))
             .build()

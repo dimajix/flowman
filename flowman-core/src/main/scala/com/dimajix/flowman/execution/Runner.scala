@@ -19,8 +19,6 @@ package com.dimajix.flowman.execution
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
-import java.time.temporal.ChronoUnit
-import java.util.Locale
 import java.util.UUID
 
 import scala.util.Failure
@@ -91,7 +89,7 @@ private[execution] sealed class RunnerImpl {
             case Status.ABORTED =>
                 logger.error(red(s"Aborted phase '$phase' for target '${target.identifier}' after ${fmt(duration)}"))
             case status =>
-                logger.warn(yellow(s"Finished '$phase' for target '${target.identifier}' with unknown status $status"))
+                logger.warn(yellow(s"Finished '$phase' for target '${target.identifier}' with unknown status ${status.upper}"))
         }
 
         result
@@ -150,11 +148,11 @@ private[execution] sealed class RunnerImpl {
     def logStatus(title:String, status:Status, duration: Duration, endTime:Instant) : Unit = {
         val msg = status match {
             case Status.SUCCESS|Status.SKIPPED =>
-                boldGreen(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
+                boldGreen(s"${status.upper} $title")
             case Status.SUCCESS_WITH_ERRORS =>
-                boldYellow(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
+                boldYellow(s"${status.upper} $title")
             case Status.ABORTED|Status.FAILED =>
-                boldRed(s"${status.toString.toUpperCase(Locale.ROOT)} $title")
+                boldRed(s"${status.upper} $title")
             case Status.RUNNING =>
                 boldYellow(s"ALREADY RUNNING $title")
             case status =>
@@ -190,9 +188,9 @@ private[execution] sealed class RunnerImpl {
 
     private def fmt(duration:Duration) : String = {
         if (duration.toSeconds >= 60*60)
-            s"${duration.toHours}:${duration.toMinutesPart} h"
+            s"${duration.toHours}:${duration.toMinutes % 60L} h"
         else if (duration.toSeconds >= 60)
-            s"${duration.toMinutes}:${duration.toSecondsPart} min"
+            s"${duration.toMinutes}:${duration.toSeconds % 60L} min"
         else
             s"${duration.toMillis / 1000.0} s"
     }
@@ -265,7 +263,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         keepGoing:Boolean,
         dryRun:Boolean) : JobResult = {
         runner.withPhaseContext(jobContext, phase) { context =>
-            val title = s"${phase.toString.toUpperCase} job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
+            val title = s"${phase.upper} job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
             logTitle(title)
             logEnvironment(context)
 

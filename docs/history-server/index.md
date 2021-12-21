@@ -8,8 +8,8 @@ the [Flowman namespace](../spec/namespace.md).
 
 ## Configuration
 The history database needs to be configured in the `default-namespace.yml` file and also (if used) in the
-`history-server.yml` file. The first configuration will be used by [flowexec](flowexec.md) and [flowshell](flowshell.md)
-while the second file will be picked up by the Flowman History Server.
+`history-server.yml` file. The first configuration will be used by [flowexec](../cli/flowexec.md) and 
+[flowshell](../cli/flowshell.md) while the second file will be picked up by the Flowman History Server.
 
 ```yaml
 # The following definition provides a "run history" stored in a database. If nothing else is specified, the database
@@ -60,5 +60,5 @@ Note that you also need to load the corresponding database plugin to provide the
 
 ## Running
 
-Once the History Server is configured, it can be started via `flowserver`. This will start a web server which listens
+Once the History Server is configured, it can be started via `flowman-server`. This will start a web server which listens
 on port 8080, so you should be able to access the UI via [http://localhost:8080](http://localhost:8080).

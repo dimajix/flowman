@@ -17,9 +17,10 @@ needs to match the ones of your platform
 
 ## Downloading Flowman
 
-Currently since version 0.14.1, prebuilt releases are provided on [GitHub](https://github.com/dimajix/flowman/releases).
-This probably is the simplest way to grab a working Flowman package. Note that for each release, there are different
-packages being provided, for different Spark and Hadoop versions. The naming is very simple:
+Since version 0.14.1, prebuilt releases are provided on the [FLowman Homepage](https://flowman.io) or on 
+[GitHub](https://github.com/dimajix/flowman/releases). This probably is the simplest way to grab a working Flowman 
+package. Note that for each release, there are different packages being provided, for different Spark and Hadoop 
+versions. The naming is very simple:
 ```
 flowman-dist-<version>-oss-spark<spark-version>-hadoop<hadoop-version>-bin.tar.gz
 ```

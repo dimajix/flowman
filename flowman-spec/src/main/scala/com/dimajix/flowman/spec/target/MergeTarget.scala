@@ -295,7 +295,7 @@ object MergeTargetSpec {
 
         def instantiate(context: Context) : MergeClause = {
             MergeDeleteClause(
-                context.evaluate(condition).map(expr),
+                context.evaluate(condition).map(expr)
             )
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,6 +101,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         val target = context.getTarget(TargetIdentifier("out"))
         target.kind should be ("relation")
+        target.phases should be (Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
 
         target.requires(Phase.CREATE) should be (Set())
         target.requires(Phase.BUILD) should be (Set())
@@ -135,6 +136,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         val target = context.getTarget(TargetIdentifier("out"))
         target.kind should be ("relation")
+        target.phases should be (Set(Phase.CREATE, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
 
         target.requires(Phase.CREATE) should be (Set())
         target.requires(Phase.BUILD) should be (Set())

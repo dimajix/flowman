@@ -56,8 +56,8 @@ object RelationTarget {
         val conf = context.flowmanConf
         new RelationTarget(
             Target.Properties(context),
-            MappingOutputIdentifier(""),
             RelationReference(context,relation),
+            MappingOutputIdentifier.empty,
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
@@ -68,8 +68,8 @@ object RelationTarget {
         val conf = context.flowmanConf
         new RelationTarget(
             Target.Properties(context),
-            mapping,
             RelationReference(context,relation),
+            mapping,
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
@@ -79,8 +79,8 @@ object RelationTarget {
 }
 case class RelationTarget(
     instanceProperties: Target.Properties,
-    mapping: MappingOutputIdentifier,
     relation: Reference[Relation],
+    mapping: MappingOutputIdentifier,
     mode: OutputMode = OutputMode.OVERWRITE,
     partition: Map[String,String] = Map(),
     parallelism: Int = 16,
@@ -318,8 +318,8 @@ class RelationTargetSpec extends TargetSpec {
         val conf = context.flowmanConf
         RelationTarget(
             instanceProperties(context),
-            MappingOutputIdentifier.parse(context.evaluate(mapping)),
             relation.instantiate(context),
+            MappingOutputIdentifier.parse(context.evaluate(mapping)),
             OutputMode.ofString(context.evaluate(mode).getOrElse(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE))),
             context.evaluate(partition),
             context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),

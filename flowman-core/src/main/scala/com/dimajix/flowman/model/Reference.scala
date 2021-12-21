@@ -37,6 +37,10 @@ final case class ValueRelationReference(context:Context, prototype:Prototype[Rel
     override def identifier: RelationIdentifier = value.identifier
     override def toString: String = value.identifier.toString
 }
+object IdentifierRelationReference {
+    def apply(context: Context, relation:String) : IdentifierRelationReference =
+        IdentifierRelationReference(context, RelationIdentifier(relation))
+}
 final case class IdentifierRelationReference(context: Context, relation:RelationIdentifier) extends Reference[Relation] {
     override lazy val value: Relation = context.getRelation(relation)
     override def name: String = relation.name
@@ -56,6 +60,10 @@ final case class ValueConnectionReference(context:Context, prototype:Prototype[C
     override def name: String = value.name
     override def identifier: ConnectionIdentifier = value.identifier
     override def toString: String = value.identifier.toString
+}
+object IdentifierConnectionReference {
+    def apply(context: Context, connection:String) : IdentifierConnectionReference =
+        IdentifierConnectionReference(context, ConnectionIdentifier(connection))
 }
 final case class IdentifierConnectionReference(context: Context, connection:ConnectionIdentifier) extends Reference[Connection] {
     override lazy val value: Connection = context.getConnection(connection)

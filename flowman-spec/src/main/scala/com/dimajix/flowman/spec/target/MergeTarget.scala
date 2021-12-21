@@ -34,9 +34,9 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.MergeClause
-import com.dimajix.flowman.execution.MergeDeleteClause
-import com.dimajix.flowman.execution.MergeInsertClause
-import com.dimajix.flowman.execution.MergeUpdateClause
+import com.dimajix.flowman.execution.DeleteClause
+import com.dimajix.flowman.execution.InsertClause
+import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Phase
@@ -56,12 +56,12 @@ import com.dimajix.flowman.spec.target.MergeTargetSpec.MergeClauseSpec
 
 
 object MergeTarget {
-    def apply(context: Context, relation: RelationIdentifier, mergeKey:Seq[String], clauses:Seq[MergeClause]) : MergeTarget = {
+    def apply(context: Context, relation: RelationIdentifier, mapping: MappingOutputIdentifier, mergeKey:Seq[String], clauses:Seq[MergeClause]) : MergeTarget = {
         val conf = context.flowmanConf
         new MergeTarget(
             Target.Properties(context),
-            MappingOutputIdentifier(""),
             RelationReference(context, relation),
+            mapping,
             mergeKey,
             clauses,
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
@@ -72,8 +72,8 @@ object MergeTarget {
 
 case class MergeTarget(
     instanceProperties: Target.Properties,
-    mapping: MappingOutputIdentifier,
     relation: Reference[Relation],
+    mapping: MappingOutputIdentifier,
     key: Seq[String],
     clauses: Seq[MergeClause],
     parallelism: Int = 16,
@@ -273,7 +273,7 @@ object MergeTargetSpec {
         @JsonProperty(value="columns", required = true) private var columns: Map[String,String] = Map()
 
         def instantiate(context: Context) : MergeClause = {
-            MergeInsertClause(
+            InsertClause(
                 context.evaluate(condition).map(expr),
                 context.evaluate(columns).map(kv => kv._1 -> expr(kv._2))
             )
@@ -284,7 +284,7 @@ object MergeTargetSpec {
         @JsonProperty(value="columns", required = true) private var columns: Map[String,String] = Map()
 
         def instantiate(context: Context) : MergeClause = {
-            MergeUpdateClause(
+            UpdateClause(
                 context.evaluate(condition).map(expr),
                 context.evaluate(columns).map(kv => kv._1 -> expr(kv._2))
             )
@@ -294,7 +294,7 @@ object MergeTargetSpec {
         @JsonProperty(value="condition", required=false) private var condition:Option[String] = None
 
         def instantiate(context: Context) : MergeClause = {
-            MergeDeleteClause(
+            DeleteClause(
                 context.evaluate(condition).map(expr)
             )
         }
@@ -312,8 +312,8 @@ class MergeTargetSpec extends TargetSpec {
         val conf = context.flowmanConf
         MergeTarget(
             instanceProperties(context),
-            MappingOutputIdentifier.parse(context.evaluate(mapping)),
             relation.instantiate(context),
+            MappingOutputIdentifier.parse(context.evaluate(mapping)),
             mergeKey.map(context.evaluate),
             clauses.map(_.instantiate(context)),
             context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),

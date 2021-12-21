@@ -26,16 +26,16 @@ sealed abstract class MergeClause {
 sealed abstract class MergeMatchedClause extends MergeClause
 sealed abstract class MergeUnmatchedClause extends MergeClause
 
-case class MergeInsertClause(
-    condition: Option[Column],
-    columns:Map[String,Column]
+case class InsertClause(
+    condition: Option[Column] = None,
+    columns:Map[String,Column] = Map()
 ) extends MergeUnmatchedClause
 
-case class MergeDeleteClause(
-    condition: Option[Column]
+case class DeleteClause(
+    condition: Option[Column] = None
 ) extends MergeMatchedClause
 
-case class MergeUpdateClause(
-    condition: Option[Column],
-    columns:Map[String,Column]
+case class UpdateClause(
+    condition: Option[Column] = None,
+    columns:Map[String,Column] = Map()
 ) extends MergeMatchedClause

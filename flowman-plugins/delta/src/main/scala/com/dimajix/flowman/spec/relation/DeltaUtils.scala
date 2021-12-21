@@ -40,9 +40,9 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
-import com.dimajix.flowman.execution.MergeDeleteClause
-import com.dimajix.flowman.execution.MergeInsertClause
-import com.dimajix.flowman.execution.MergeUpdateClause
+import com.dimajix.flowman.execution.DeleteClause
+import com.dimajix.flowman.execution.InsertClause
+import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.model.PartitionField
 
 
@@ -147,19 +147,19 @@ object DeltaUtils {
             .merge(df.as("source"), mergeCondition)
         clauses.foldLeft(builder) { (mergeBuilder, clause) =>
                 clause match {
-                    case MergeInsertClause(condition, columns) =>
+                    case InsertClause(condition, columns) =>
                         val b2 = condition.map(mergeBuilder.whenNotMatched).getOrElse(mergeBuilder.whenNotMatched())
                         if (columns.nonEmpty)
                             b2.insert(columns)
                         else
                             b2.insertAll()
-                    case MergeUpdateClause(condition, columns) =>
+                    case UpdateClause(condition, columns) =>
                         val b2 = condition.map(mergeBuilder.whenMatched).getOrElse(mergeBuilder.whenMatched())
                         if (columns.nonEmpty)
                             b2.update(columns)
                         else
                             b2.updateAll()
-                    case MergeDeleteClause(condition) =>
+                    case DeleteClause(condition) =>
                         val b2 = condition.map(mergeBuilder.whenMatched).getOrElse(mergeBuilder.whenMatched())
                         b2.delete()
                 }

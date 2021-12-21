@@ -28,6 +28,7 @@ import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
+import org.apache.spark.sql.functions.expr
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.IntegerType
@@ -39,11 +40,14 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.DeleteClause
+import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
@@ -1144,6 +1148,88 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Destroy ===============================================================================================
         relation.destroy(execution)
     }
+
+    it should "support merging without partitions" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val execution = session.execution
+
+        val location = new File(tempDir, "delta/default/lala3")
+        val relation = DeltaTableRelation(
+            Relation.Properties(context, "delta_relation"),
+            database = "default",
+            table = "delta_table2",
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("key_col", ftypes.StringType),
+                    Field("str_col", ftypes.StringType),
+                    Field("int_col", ftypes.IntegerType)
+                )
+            )),
+            mergeKey = Seq("key_col")
+        )
+
+        // == Create =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.create(execution, false)
+        relation.exists(execution) should be (Yes)
+
+        // == Write ==================================================================================================
+        val schema = StructType(Seq(
+            StructField("key_col", StringType),
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType)
+        ))
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row("id-1", "v1", 1),
+            Row("id-1", "v2", 1),
+            Row("id-2", "v3", 1)
+        ))
+        val df = spark.createDataFrame(rdd, schema)
+        relation.write(execution, df, Map())
+
+        // == Update =================================================================================================
+        val schema2 = StructType(Seq(
+            StructField("key_col", StringType),
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("op", StringType)
+        ))
+        val rdd2 = spark.sparkContext.parallelize(Seq(
+            Row("id-1", "v11", 2, "UPDATE"),
+            Row("id-3", "v21", 2, "INSERT"),
+            Row("id-2", null, 0, "DELETE")
+        ))
+        val df2 = spark.createDataFrame(rdd2, schema2)
+        relation.merge(execution, df2, Seq(), Seq(
+            UpdateClause(
+                Some(expr("source.op == 'UPDATE'"))
+            ),
+            InsertClause(
+                Some(expr("source.op == 'INSERT'"))
+            ),
+            DeleteClause(
+                Some(expr("source.op == 'DELETE'"))
+            )
+        ))
+
+        // == Read ===================================================================================================
+        relation.loaded(execution, Map()) should be (Yes)
+        checkAnswer(
+            relation.read(execution, Map()),
+            Seq(
+                Row("id-1", "v11", 2),
+                Row("id-1", "v11", 2),
+                Row("id-3", "v21", 2)
+            )
+        )
+
+        // == Destroy ===============================================================================================
+        relation.destroy(execution)
+    }
+
 
     it should "support migrations by adding new columns" in {
         val session = Session.builder()

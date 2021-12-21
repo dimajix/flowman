@@ -193,7 +193,7 @@ class Runner private(
     val metastorePath : String = new File(tempDir, "metastore").getCanonicalPath
 
     /** Hive Warehouse directory inside the [[tempDir]] */
-    val warehousePath : String = new File(tempDir, "wharehouse").getCanonicalPath
+    val warehousePath : String = new File(tempDir, "warehouse").getCanonicalPath
 
     /** Spark checkpoint directory inside the [[tempDir]] */
     val checkpointPath : String = new File(tempDir, "checkpoints").getCanonicalPath

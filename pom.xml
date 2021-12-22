@@ -102,7 +102,7 @@
         <spark-api.version>3.1</spark-api.version>
         <netty-all.version>4.1.51.Final</netty-all.version>
         <antlr4.version>4.8-1</antlr4.version>
-        <snakeyaml.version>1.24</snakeyaml.version>
+        <snakeyaml.version>1.26</snakeyaml.version>
         <jackson.version>2.10.0</jackson.version>
         <jackson-api.version>2.10</jackson-api.version>
         <jackson.databind.version>2.10.0</jackson.databind.version>

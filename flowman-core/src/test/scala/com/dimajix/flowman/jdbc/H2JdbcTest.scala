@@ -132,7 +132,7 @@ class H2JdbcTest extends AnyFlatSpec with Matchers with LocalSparkSession {
                 Row(20, null, null, "UPDATE"),
                 Row(30, null, null, "DELETE"),
                 Row(40, null, null, "DELETE"),
-                Row(50, "Debora", "female", "INSERT"),
+                Row(50, "Debora", "female", "INSERT")
             ),
             updateSchema
         )

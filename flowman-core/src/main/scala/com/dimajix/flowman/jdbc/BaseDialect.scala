@@ -244,6 +244,7 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
         override def withName(newName: String): DialectUnresolvedAttribute = DialectUnresolvedAttribute(Seq(newName))
         override def withMetadata(newMetadata: Metadata): Attribute = this
         override def withExprId(newExprId: ExprId): DialectUnresolvedAttribute = this
+        /* override */ def withDataType(newType: DataType): DialectUnresolvedAttribute = this
 
         override def toString: String = s"'$name"
 

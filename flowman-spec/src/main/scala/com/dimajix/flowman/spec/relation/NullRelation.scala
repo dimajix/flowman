@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.relation
 
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.StructType
@@ -113,7 +114,7 @@ case class NullRelation(
      * @param mergeCondition
      * @param clauses
      */
-    override def merge(execution: Execution, df: DataFrame, mergeKey: Seq[String], clauses: Seq[MergeClause]): Unit = {
+    override def merge(execution: Execution, df: DataFrame, condition: Option[Column], clauses: Seq[MergeClause]): Unit = {
         // Force materialization of all records
         df.count()
     }

@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.target
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.expr
 import org.slf4j.LoggerFactory
 
@@ -63,6 +64,7 @@ object MergeTarget {
             RelationReference(context, relation),
             mapping,
             mergeKey,
+            None,
             clauses,
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
             conf.getConf(DEFAULT_TARGET_REBALANCE)
@@ -75,6 +77,7 @@ case class MergeTarget(
     relation: Reference[Relation],
     mapping: MappingOutputIdentifier,
     key: Seq[String],
+    condition: Option[String],
     clauses: Seq[MergeClause],
     parallelism: Int = 16,
     rebalance: Boolean = false
@@ -206,8 +209,16 @@ case class MergeTarget(
 
         // Setup metric for counting number of records
         val dfCount = countRecords(executor, dfOut)
+
+        // Create merge condition
+        val conds = key.map(k => col("target." + k) === col("source." + k)) ++ this.condition.map(expr)
+        val condition =
+            if (conds.nonEmpty)
+                Some(conds.reduce(_ && _))
+            else
+                None
         val rel = relation.value
-        rel.merge(executor, dfCount, key, clauses)
+        rel.merge(executor, dfCount, condition, clauses)
     }
 
     /**
@@ -306,6 +317,7 @@ class MergeTargetSpec extends TargetSpec {
     @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
     @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
     @JsonProperty(value="mergeKey", required=false) private var mergeKey:Seq[String] = Seq()
+    @JsonProperty(value="condition", required=false) private var mergeCondition:Option[String] = None
     @JsonProperty(value="clauses", required=false) private var clauses:Seq[MergeClauseSpec] = Seq()
 
     override def instantiate(context: Context): MergeTarget = {
@@ -315,6 +327,7 @@ class MergeTargetSpec extends TargetSpec {
             relation.instantiate(context),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
             mergeKey.map(context.evaluate),
+            mergeCondition.map(context.evaluate),
             clauses.map(_.instantiate(context)),
             context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),
             context.evaluate(rebalance).map(_.toBoolean).getOrElse(conf.getConf(DEFAULT_TARGET_REBALANCE))

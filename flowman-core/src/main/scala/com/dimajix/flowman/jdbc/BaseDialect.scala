@@ -19,11 +19,28 @@ package com.dimajix.flowman.jdbc
 import java.sql.Date
 import java.sql.JDBCType
 import java.sql.SQLException
+import java.util.Locale
 
 import org.apache.commons.lang3.StringUtils
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
+import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
+import org.apache.spark.sql.catalyst.analysis.UnresolvedException
+import org.apache.spark.sql.catalyst.expressions.Attribute
+import org.apache.spark.sql.catalyst.expressions.ExprId
+import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.catalyst.expressions.Unevaluable
+import org.apache.spark.sql.catalyst.parser.ParserUtils
+import org.apache.spark.sql.catalyst.util.quoteIdentifier
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.jdbc.JdbcType
+import org.apache.spark.sql.types.DataType
+import org.apache.spark.sql.types.Metadata
+import org.apache.spark.sql.types.StructType
 
+import com.dimajix.common.MapIgnoreCase
+import com.dimajix.common.SetIgnoreCase
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
@@ -31,6 +48,10 @@ import com.dimajix.flowman.catalog.TableChange.DropColumn
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
+import com.dimajix.flowman.execution.DeleteClause
+import com.dimajix.flowman.execution.InsertClause
+import com.dimajix.flowman.execution.MergeClause
+import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.ByteType
@@ -202,6 +223,34 @@ abstract class BaseDialect extends SqlDialect {
 
 
 class BaseStatements(dialect: SqlDialect) extends SqlStatements {
+    case class DialectUnresolvedAttribute(nameParts: Seq[String]) extends Attribute with Unevaluable {
+
+        def name: String =
+            nameParts.map(n => if (n.contains(".")) s"`$n`" else n).mkString(".")
+
+        override def exprId: ExprId = throw new UnresolvedException(this, "exprId")
+        override def dataType: DataType = throw new UnresolvedException(this, "dataType")
+        override def nullable: Boolean = throw new UnresolvedException(this, "nullable")
+        override def qualifier: Seq[String] = throw new UnresolvedException(this, "qualifier")
+        override lazy val resolved = false
+
+        override def newInstance(): DialectUnresolvedAttribute = this
+        override def withNullability(newNullability: Boolean): DialectUnresolvedAttribute = this
+        override def withQualifier(newQualifier: Seq[String]): DialectUnresolvedAttribute = this
+        override def withName(newName: String): DialectUnresolvedAttribute = DialectUnresolvedAttribute(Seq(newName))
+        override def withMetadata(newMetadata: Metadata): Attribute = this
+        override def withExprId(newExprId: ExprId): DialectUnresolvedAttribute = this
+
+        override def toString: String = s"'$name"
+
+        override def sql: String = {
+            if (nameParts.tail.nonEmpty)
+                nameParts.head + "." + dialect.quoteIdentifier(nameParts.tail)
+            else
+                dialect.quoteIdentifier(nameParts.head)
+        }
+    }
+
     /**
      * The SQL query that should be used to discover the schema of a table. It only needs to
      * ensure that the result set has the same schema as the table, such as by calling
@@ -259,6 +308,56 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
     override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} SET $nullable"
+    }
+
+    override def merge(table: TableIdentifier, targetAlias:String, targetSchema:Option[StructType], sourceAlias:String, sourceSchema:StructType, condition:Column, clauses:Seq[MergeClause]) : String = {
+        val sourceColumns = sourceSchema.names
+        val sqlPlaceholders = sourceColumns.map(_ => "?").mkString(",")
+        val sourceAliases = MapIgnoreCase(sourceColumns.zipWithIndex.map { case(src,alias) => src -> s"C${alias+1}" })
+
+        def getColumnExpressions(cols:Map[String,Column]) : Seq[(String,String)] = {
+            if (cols.nonEmpty) {
+                cols.toSeq.map { case(n,c) => n -> toSql(c.expr, sourceAlias, sourceAliases) }
+            }
+            else {
+                targetSchema.get.names.flatMap(n => sourceAliases.get(n).map(c => n -> (sourceAlias + "." + dialect.quoteIdentifier(c))))
+            }
+        }
+
+        val sqlMergeCondition = toSql(condition.expr, sourceAlias, sourceAliases)
+        val sqlClauses = clauses.map {
+            case i:InsertClause =>
+                val cond = i.condition.map(c => " AND " + toSql(c.expr, sourceAlias, sourceAliases)).getOrElse("")
+                val expressions = getColumnExpressions(i.columns)
+                val columnNames = expressions.map { case(n,_) => dialect.quoteIdentifier(n) }
+                val columnValues = expressions.map { case(_,e) => e }
+                s"WHEN NOT MATCHED$cond THEN INSERT(${columnNames.mkString(",")}) VALUES(${columnValues.mkString(",")})"
+            case u:UpdateClause =>
+                val cond = u.condition.map(c => " AND " + toSql(c.expr, sourceAlias, sourceAliases)).getOrElse("")
+                val expressions = getColumnExpressions(u.columns)
+                val setters = expressions.map { case(n,c) => s"${dialect.quoteIdentifier(n)} = $c" }
+                s"WHEN MATCHED$cond THEN UPDATE SET ${setters.mkString(", ")}"
+            case d:DeleteClause =>
+                val cond = d.condition.map(c => " AND " + toSql(c.expr, sourceAlias, sourceAliases)).getOrElse("")
+                s"WHEN MATCHED$cond THEN DELETE"
+        }
+        s"""MERGE INTO ${dialect.quote(table)} $targetAlias
+           |USING (VALUES($sqlPlaceholders)) $sourceAlias
+           |ON $sqlMergeCondition
+           |${sqlClauses.mkString("\n")}""".stripMargin
+    }
+
+    protected def toSql(expr:Expression, sourceAlias:String, sourceAliases:MapIgnoreCase[String]) : String = {
+        val sourcePrefix = sourceAlias.toLowerCase(Locale.ROOT)
+        val newExpr = expr.transformDown {
+            case UnresolvedAttribute(x) if x.head.toLowerCase(Locale.ROOT) == sourcePrefix =>
+                val srcAlias = sourceAliases(x.tail.head)
+                DialectUnresolvedAttribute(Seq(x.head, srcAlias))
+            case UnresolvedAttribute(x) =>
+                DialectUnresolvedAttribute(x)
+        }
+
+        newExpr.sql
     }
 }
 

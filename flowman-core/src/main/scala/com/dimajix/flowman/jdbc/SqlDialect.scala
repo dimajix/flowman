@@ -57,6 +57,12 @@ abstract class SqlDialect {
     def quoteIdentifier(colName: String): String
 
     /**
+     * Quotes the identifier. This is used to put quotes around the identifier in case the column
+     * name is a reserved keyword, or in case it contains characters that require quotes (e.g. space).
+     */
+    def quoteIdentifier(path: Seq[String]): String = path.map(p => quoteIdentifier(p)).mkString(".")
+
+    /**
       * Quotes a table name including the optional database prefix
       * @param table
       * @return

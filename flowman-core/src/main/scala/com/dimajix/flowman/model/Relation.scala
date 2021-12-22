@@ -179,7 +179,7 @@ trait Relation extends Instance {
      * @param mergeCondition
      * @param clauses
      */
-    def merge(execution:Execution, df:DataFrame, mergeKey:Seq[String], clauses:Seq[MergeClause]) : Unit = ???
+    def merge(execution:Execution, df:DataFrame, condition:Option[Column], clauses:Seq[MergeClause]) : Unit = ???
 
     /**
       * Removes one or more partitions.

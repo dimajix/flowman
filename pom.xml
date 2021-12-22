@@ -58,6 +58,7 @@
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <spark-avro.version>4.0.0</spark-avro.version>
         <derby.version>10.12.1.1</derby.version>
+        <h2.version>1.4.200</h2.version>
         <log4j.version>1.2.17</log4j.version>
         <re2j.version>1.1</re2j.version>
         <scalamock.version>5.1.0</scalamock.version>
@@ -1768,6 +1769,12 @@
                 <artifactId>derby</artifactId>
                 <version>${derby.version}</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.version}</version>
             </dependency>
 
             <!-- Test Dependencies -->

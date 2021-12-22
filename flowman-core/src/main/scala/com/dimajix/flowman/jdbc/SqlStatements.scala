@@ -16,7 +16,11 @@
 
 package com.dimajix.flowman.jdbc
 
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.types.StructType
+
+import com.dimajix.flowman.execution.MergeClause
 
 
 abstract class SqlStatements {
@@ -47,4 +51,6 @@ abstract class SqlStatements {
     def deleteColumn(table: TableIdentifier, columnName: String): String
     def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String): String
     def updateColumnNullability(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean): String
+
+    def merge(table: TableIdentifier, targetAlias:String, targetSchema:Option[StructType], sourceAlias:String, sourceSchema:StructType, condition:Column, clauses:Seq[MergeClause]) : String
 }

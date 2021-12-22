@@ -43,10 +43,6 @@ object MsSqlServerDialect extends BaseDialect {
 
     override def canHandle(url : String): Boolean = url.toLowerCase(Locale.ROOT).startsWith("jdbc:sqlserver")
 
-    override def quoteIdentifier(colName: String): String = {
-        s""""$colName""""
-    }
-
     override def getJdbcType(dt: FieldType): JdbcType = dt match {
         case TimestampType => JdbcType("DATETIME", java.sql.Types.TIMESTAMP)
         case StringType => JdbcType("NVARCHAR(MAX)", java.sql.Types.NVARCHAR)

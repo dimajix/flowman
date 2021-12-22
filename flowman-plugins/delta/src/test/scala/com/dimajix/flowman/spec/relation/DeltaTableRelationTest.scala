@@ -1203,7 +1203,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
             Row("id-2", null, 0, "DELETE")
         ))
         val df2 = spark.createDataFrame(rdd2, schema2)
-        relation.merge(execution, df2, Seq(), Seq(
+        relation.merge(execution, df2, None, Seq(
             UpdateClause(
                 Some(expr("source.op == 'UPDATE'"))
             ),

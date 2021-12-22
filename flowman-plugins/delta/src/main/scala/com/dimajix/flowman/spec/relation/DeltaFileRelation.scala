@@ -22,8 +22,10 @@ import java.nio.file.FileAlreadyExistsException
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.delta.catalog.DeltaTableV2
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.StructType
@@ -62,7 +64,7 @@ case class DeltaFileRelation(
     options: Map[String,String] = Map(),
     properties: Map[String, String] = Map(),
     mergeKey: Seq[String] = Seq()
-) extends DeltaRelation(options) {
+) extends DeltaRelation(options, mergeKey) {
     protected  val logger = LoggerFactory.getLogger(classOf[DeltaFileRelation])
 
     /**
@@ -172,28 +174,6 @@ case class DeltaFileRelation(
     }
 
     /**
-     * Performs a merge operation. Either you need to specify a [[mergeKey]], or the relation needs to provide some
-     * default key.
-     *
-     * @param execution
-     * @param df
-     * @param mergeCondition
-     * @param clauses
-     */
-    override def merge(execution: Execution, df: DataFrame, mergeKey: Seq[String], clauses: Seq[MergeClause]): Unit = {
-        val withinPartitionKeyColumns =
-            if (mergeKey.nonEmpty)
-                mergeKey
-            else if (this.mergeKey.nonEmpty)
-                this.mergeKey
-            else
-                schema.map(_.primaryKey).getOrElse(Seq())
-        val keyColumns = SetIgnoreCase(partitions.map(_.name)) ++ withinPartitionKeyColumns
-        val table = DeltaTable.forPath(df.sparkSession, location.toString)
-        DeltaUtils.merge(table, df, keyColumns, clauses)
-    }
-
-    /**
      * Reads data from a streaming source
      *
      * @param execution
@@ -240,7 +220,7 @@ case class DeltaFileRelation(
     override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
         if (exists(execution) == Yes) {
             if (schema.nonEmpty) {
-                val table = loadDeltaTable(execution)
+                val table = deltaCatalogTable(execution)
                 val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
                 val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
                 !TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
@@ -381,7 +361,11 @@ case class DeltaFileRelation(
         }
     }
 
-    override protected def loadDeltaTable(execution: Execution): DeltaTableV2 = {
+    override protected def deltaTable(execution: Execution) : DeltaTable = {
+        DeltaTable.forPath(execution.spark, location.toString)
+    }
+
+    override protected def deltaCatalogTable(execution: Execution): DeltaTableV2 = {
         DeltaTableV2(execution.spark, location)
     }
 }

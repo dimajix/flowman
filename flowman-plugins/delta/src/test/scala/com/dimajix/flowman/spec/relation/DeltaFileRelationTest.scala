@@ -1183,7 +1183,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Row("id-2", null, 0, "DELETE")
         ))
         val df2 = spark.createDataFrame(rdd2, schema2)
-        relation.merge(execution, df2, Seq("key_col"), Seq(
+        relation.merge(execution, df2, Some(expr("source.key_col = target.key_col")), Seq(
             UpdateClause(
                 Some(expr("source.op == 'UPDATE'"))
             ),

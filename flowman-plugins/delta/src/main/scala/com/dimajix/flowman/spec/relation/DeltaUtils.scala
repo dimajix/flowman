@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.relation
 
 import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.SparkSession
@@ -136,13 +137,7 @@ object DeltaUtils {
             .execute()
     }
 
-    def merge(table:DeltaTable, df: DataFrame, keyColumns:Iterable[String], clauses:Seq[MergeClause]) : Unit = {
-        if (keyColumns.isEmpty)
-            throw new IllegalArgumentException(s"Cannot perform upsert operation without primary key")
-
-        val keyCondition = keyColumns.map(k => col("target." + k) <=> col("source." + k))
-        val mergeCondition = keyCondition.reduce(_ && _)
-
+    def merge(table:DeltaTable, df: DataFrame, mergeCondition:Column, clauses:Seq[MergeClause]) : Unit = {
         val builder = table.as("target")
             .merge(df.as("source"), mergeCondition)
         clauses.foldLeft(builder) { (mergeBuilder, clause) =>

@@ -8,6 +8,7 @@
 * Improve handling of `_SUCCESS` files for detecting (non-)dirty directories
 * Implement new `merge`target
 * Implement merge operation for Delta relations
+* Implement merge operation for JDBC relations (only for some databases)
 
 
 # Version 0.19.0 - 2021-12-13

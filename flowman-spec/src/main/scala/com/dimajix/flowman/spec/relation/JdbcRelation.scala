@@ -20,16 +20,21 @@ import java.sql.SQLInvalidAuthorizationSpecException
 import java.sql.SQLNonTransientConnectionException
 import java.sql.SQLNonTransientException
 import java.sql.Statement
+import java.util.Locale
 
 import scala.collection.mutable
 import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
+import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
+import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -37,12 +42,16 @@ import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.InsertClause
+import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
+import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialect
 import com.dimajix.flowman.jdbc.SqlDialects
@@ -246,9 +255,45 @@ case class JdbcRelation(
             .save()
     }
 
+
+    /**
+     * Performs a merge operation. Either you need to specify a [[mergeKey]], or the relation needs to provide some
+     * default key.
+     *
+     * @param execution
+     * @param df
+     * @param mergeCondition
+     * @param clauses
+     */
+    override def merge(execution: Execution, df: DataFrame, condition:Option[Column], clauses: Seq[MergeClause]): Unit = {
+        logger.info(s"Writing JDBC relation '$identifier' for table $tableIdentifier using connection '$connection' using merge operation")
+        if (query.nonEmpty)
+            throw new UnsupportedOperationException(s"Cannot write into JDBC relation '$identifier' which is defined by an SQL query")
+
+        val mergeCondition =
+            condition.getOrElse {
+                val pk = schema.map(_.primaryKey)
+                if (pk.isEmpty)
+                    throw new IllegalArgumentException("Either require primary key in schema or explicit merge condition")
+                (SetIgnoreCase(partitions.map(_.name)) ++ pk.getOrElse(Seq()))
+                    .toSeq
+                    .map(c => col("source." + c) === col("target." + c))
+                    .reduce(_ && _)
+            }
+
+        val sourceColumns = collectColumns(mergeCondition.expr, "source") ++ clauses.flatMap(c => collectColumns(c, "source"))
+        val sourceDf = df.select(sourceColumns.toSeq.map(col):_*)
+
+        val (url, props) = createProperties()
+        val options = new JDBCOptions(url, tableIdentifier.unquotedString, props)
+        val targetSchema = outputSchema(execution)
+        JdbcUtils.mergeTable(tableIdentifier, "target", targetSchema, sourceDf, "source", mergeCondition, clauses, options)
+    }
+
     /**
       * Removes one or more partitions.
-      * @param execution
+     *
+     * @param execution
       * @param partitions
       */
     override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
@@ -565,6 +610,26 @@ case class JdbcRelation(
             dialect.expr.in(field.name, field.interpolate(value))
         }
         .mkString(" AND ")
+    }
+
+    private def collectColumns(clause:MergeClause, prefix:String) : SetIgnoreCase = {
+        clause match {
+            case i:InsertClause =>
+                i.condition.map(c => collectColumns(c.expr, prefix)).getOrElse(SetIgnoreCase()) ++
+                    i.columns.values.flatMap(c => collectColumns(c.expr, prefix))
+            case u:UpdateClause =>
+                u.condition.map(c => collectColumns(c.expr, prefix)).getOrElse(SetIgnoreCase()) ++
+                    u.columns.values.flatMap(c => collectColumns(c.expr, prefix))
+            case d:DeleteClause =>
+                d.condition.map(c => collectColumns(c.expr, prefix)).getOrElse(SetIgnoreCase())
+        }
+    }
+    private def collectColumns(expr:Expression, prefix:String) : SetIgnoreCase = {
+        val lwrPrefix = prefix.toLowerCase(Locale.ROOT)
+        val columns = expr.collect {
+            case UnresolvedAttribute(x) if x.head.toLowerCase(Locale.ROOT) == lwrPrefix => x.tail.mkString(".")
+        }
+        SetIgnoreCase(columns)
     }
 }
 

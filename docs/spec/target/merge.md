@@ -33,6 +33,38 @@ relations:
       file: "${project.basedir}/schema/stations.avsc"
 ```
 
+```yaml
+targets:
+  stations:
+    kind: merge
+    mapping: stations_mapping
+    relation: stations
+    parallelism: 32
+    rebalance: true
+    condition: "source.usaf = target.usaf AND source.wban = target.wban" 
+    clauses:
+      - condition: "source.op = 'INSERT'"
+        action: insert
+        columns:
+          id: "source.id"
+          name: "upper(source.name)"
+      - condition: "source.op = 'DELETE'"
+        action: delete
+      - condition: "source.op = 'UPDATE'"
+        action: update
+        columns:
+          name: "upper(source.name)"
+
+relations:
+  stations:
+    kind: deltaFile
+    location: "$basedir/stations/"
+    schema:
+      kind: avro
+      file: "${project.basedir}/schema/stations.avsc"
+```
+
+
 ## Fields
 
 * `kind` **(mandatory)** *(type: string)*: `merge`
@@ -44,8 +76,15 @@ relations:
   Specifies the name of the relation to write to
 
 * `mergeKey` **(optional)** *(type: list[string])*:
+  Specifies the list of columns used for matching the new source columns with existing target columns.
 
-* `clauses`
+* `condition` **(optional)** *(type: string)*:
+  As an alternative to `mergeKey` you can also explicitly specify an arbitrary merge condition. You should use
+  the prefixes `source.` to refer to the incoming source records (from the mapping) and `target.` to refer to
+  columns in the target table. **Note that this condition is executed on the SQL server side, so you can only use
+  SQL functions available on the server**
+
+* `clauses` **(required)** *(type: list)*:
 
 * `parallelism` **(optional)** *(type: integer)* *(default=16)*:
   This specifies the parallelism to be used when writing data. The parallelism equals the number

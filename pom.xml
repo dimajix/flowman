@@ -58,7 +58,7 @@
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <spark-avro.version>4.0.0</spark-avro.version>
         <derby.version>10.12.1.1</derby.version>
-        <h2.version>1.4.200</h2.version>
+        <h2.version>2.0.202</h2.version>
         <log4j.version>1.2.17</log4j.version>
         <re2j.version>1.1</re2j.version>
         <scalamock.version>5.1.0</scalamock.version>
@@ -102,6 +102,7 @@
         <spark-api.version>3.1</spark-api.version>
         <netty-all.version>4.1.51.Final</netty-all.version>
         <antlr4.version>4.8-1</antlr4.version>
+        <snakeyaml.version>1.24</snakeyaml.version>
         <jackson.version>2.10.0</jackson.version>
         <jackson-api.version>2.10</jackson-api.version>
         <jackson.databind.version>2.10.0</jackson.databind.version>
@@ -182,6 +183,7 @@
                 <json-smart.version>2.3</json-smart.version>
                 <snappy.version>1.1.7.3</snappy.version>
                 <netty-all.version>4.1.42.Final</netty-all.version>
+                <snakeyaml.version>1.23</snakeyaml.version>
                 <antlr4.version>4.7</antlr4.version>
                 <jackson.version>2.9.10</jackson.version>
                 <jackson-api.version>2.9</jackson-api.version>
@@ -239,6 +241,7 @@
                 <guava.version>28.0-jre</guava.version>
                 <snappy.version>1.1.7.5</snappy.version>
                 <netty-all.version>4.1.63.Final</netty-all.version>
+                <snakeyaml.version>1.26</snakeyaml.version>
                 <antlr4.version>4.7</antlr4.version>
                 <jackson.version>2.10.5</jackson.version>
                 <jackson-api.version>2.10</jackson-api.version>
@@ -271,6 +274,7 @@
                 <snappy.version>1.1.7.3</snappy.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <antlr4.version>4.7</antlr4.version>
+                <snakeyaml.version>1.15</snakeyaml.version>
                 <jackson.version>2.6.7</jackson.version>
                 <jackson-api.version>2.6</jackson-api.version>
                 <jackson.databind.version>2.6.7.3</jackson.databind.version>
@@ -306,6 +310,7 @@
                 <snappy.version>1.1.8.2</snappy.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <antlr4.version>4.7.1</antlr4.version>
+                <snakeyaml.version>1.24</snakeyaml.version>
                 <jackson.version>2.10.0</jackson.version>
                 <jackson-api.version>2.10</jackson-api.version>
                 <jackson.databind.version>2.10.0</jackson.databind.version>
@@ -341,6 +346,7 @@
                 <snappy.version>1.1.8.2</snappy.version>
                 <netty-all.version>4.1.51.Final</netty-all.version>
                 <antlr4.version>4.8-1</antlr4.version>
+                <snakeyaml.version>1.24</snakeyaml.version>
                 <jackson.version>2.10.0</jackson.version>
                 <jackson-api.version>2.10</jackson-api.version>
                 <jackson.databind.version>2.10.0</jackson.databind.version>
@@ -376,6 +382,7 @@
                 <snappy.version>1.1.8.4</snappy.version>
                 <netty-all.version>4.1.68.Final</netty-all.version>
                 <antlr4.version>4.8-1</antlr4.version>
+                <snakeyaml.version>1.27</snakeyaml.version>
                 <jackson.version>2.12.3</jackson.version>
                 <jackson-api.version>2.12</jackson-api.version>
                 <jackson.databind.version>2.12.3</jackson.databind.version>
@@ -1433,6 +1440,13 @@
             </dependency>
 
             <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>org.codehaus.jackson</groupId>
                 <artifactId>jackson-mapper-asl</artifactId>
                 <version>${jackson_asl.version}</version>
@@ -1507,7 +1521,7 @@
                 <groupId>com.fasterxml.jackson.dataformat</groupId>
                 <artifactId>jackson-dataformat-yaml</artifactId>
                 <version>${jackson.version}</version>
-                <scope>compile</scope>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.datatype</groupId>
@@ -1708,25 +1722,31 @@
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-core</artifactId>
-                <version>1.6.2</version>
+                <version>1.6.3</version>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-models</artifactId>
-                <version>1.6.2</version>
+                <version>1.6.3</version>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-annotations</artifactId>
-                <version>1.6.2</version>
+                <version>1.6.3</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-jaxrs</artifactId>
+                <version>1.6.3</version>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>org.webjars</groupId>
                 <artifactId>swagger-ui</artifactId>
-                <version>3.22.2</version>
+                <version>4.1.3</version>
             </dependency>
 
             <dependency>

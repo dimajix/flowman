@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.tools.exec.sql
 
-import java.util.UUID
+import java.time.Clock
 
 import scala.util.control.NonFatal
 
@@ -47,7 +47,7 @@ class SqlCommand extends Command {
 
     override def execute(session: Session, project: Project, context: Context): Boolean = {
         val mapping = SqlMapping(
-            Mapping.Properties(context, "sql-" + UUID.randomUUID().toString),
+            Mapping.Properties(context, "sql-" + Clock.systemUTC().millis()),
             sql = Some(statement.mkString(" "))
         )
         try {

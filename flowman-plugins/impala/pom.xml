@@ -68,6 +68,11 @@
             <artifactId>spark-sql_${scala.api_version}</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+
         <!-- The following dependency is required by JDBC driver -->
         <dependency>
             <groupId>org.apache.hive</groupId>

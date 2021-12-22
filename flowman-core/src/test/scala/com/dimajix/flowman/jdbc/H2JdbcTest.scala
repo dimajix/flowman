@@ -77,9 +77,9 @@ class H2JdbcTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             TableIdentifier("table_001"),
             Seq(
                 Field("id", IntegerType),
-                Field("name", StringType),
-                Field("sex", StringType),
-                Field("state", StringType)
+                Field("Name", StringType),
+                Field("Sex", StringType),
+                Field("State", StringType)
             ),
             None,
             Seq()

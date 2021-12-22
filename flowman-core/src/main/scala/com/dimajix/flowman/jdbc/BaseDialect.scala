@@ -223,15 +223,19 @@ abstract class BaseDialect extends SqlDialect {
 
 
 class BaseStatements(dialect: SqlDialect) extends SqlStatements {
+    /**
+     * Helper class, which behaves like the Spark [[UnresolvedAttribute]], but uses to slightly different sql
+     * generator which uses the [[SqlDialect]]
+     * @param nameParts
+     */
     case class DialectUnresolvedAttribute(nameParts: Seq[String]) extends Attribute with Unevaluable {
-
         def name: String =
             nameParts.map(n => if (n.contains(".")) s"`$n`" else n).mkString(".")
 
-        override def exprId: ExprId = throw new UnresolvedException(this, "exprId")
-        override def dataType: DataType = throw new UnresolvedException(this, "dataType")
-        override def nullable: Boolean = throw new UnresolvedException(this, "nullable")
-        override def qualifier: Seq[String] = throw new UnresolvedException(this, "qualifier")
+        override def exprId: ExprId = ???
+        override def dataType: DataType = ???
+        override def nullable: Boolean = ???
+        override def qualifier: Seq[String] = ???
         override lazy val resolved = false
 
         override def newInstance(): DialectUnresolvedAttribute = this

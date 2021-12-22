@@ -16,10 +16,10 @@
 
 package com.dimajix.flowman.execution
 
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
-import java.util.UUID
 
 import scala.util.Failure
 import scala.util.Success
@@ -588,7 +588,7 @@ final class Runner(
         if (targets.nonEmpty) {
             val context = targets.head.context
             val job = Job.builder(context)
-                .setName("execute-target-" + UUID.randomUUID().toString)
+                .setName("execute-target-" + Clock.systemUTC().millis())
                 .setTargets(targets.map(_.identifier))
                 .build()
 

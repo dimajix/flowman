@@ -69,11 +69,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
         </dependency>
@@ -86,6 +81,16 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-hive_${scala.api_version}</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
         </dependency>
 
         <dependency>

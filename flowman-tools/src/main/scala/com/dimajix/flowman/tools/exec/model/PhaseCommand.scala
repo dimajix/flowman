@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.tools.exec.model
 
-import java.util.UUID
+import java.time.Clock
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
@@ -27,7 +27,6 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.TargetIdentifier
@@ -63,7 +62,7 @@ class PhaseCommand(phase:Phase) extends Command {
             .withTargets(toRun.map(rel => (rel,  RelationTargetSpec(rel, rel, partition))).toMap)
             .build()
         val job = Job.builder(jobContext)
-            .setName("execute-relation-" + UUID.randomUUID().toString)
+            .setName("execute-relation-" + Clock.systemUTC().millis())
             .setDescription("Modify relations via CLI")
             .setTargets(toRun.map(t => TargetIdentifier(t)))
             .build()

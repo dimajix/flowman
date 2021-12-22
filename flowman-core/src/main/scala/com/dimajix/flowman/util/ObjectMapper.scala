@@ -22,7 +22,6 @@ import java.net.URL
 import scala.reflect.ClassTag
 
 import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.jsontype.NamedType
 import com.fasterxml.jackson.databind.{ObjectMapper => JacksonMapper}
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule

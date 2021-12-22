@@ -401,7 +401,7 @@ class Runner private(
                     s"Failed to create a temp directory (under ${root}) after ${maxAttempts}")
             }
             try {
-                dir = new File(root, "spark-" + UUID.randomUUID.toString)
+                dir = new File(root, "flowman-testing-" + UUID.randomUUID.toString)
                 if (dir.exists() || !dir.mkdirs()) {
                     dir = null
                 }

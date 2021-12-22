@@ -123,6 +123,16 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-hive_${scala.api_version}</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>args4j</groupId>
             <artifactId>args4j</artifactId>
         </dependency>

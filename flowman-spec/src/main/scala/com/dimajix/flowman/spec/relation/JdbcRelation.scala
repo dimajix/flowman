@@ -286,7 +286,7 @@ case class JdbcRelation(
                     .reduce(_ && _)
             }
 
-        val sourceColumns = collectColumns(mergeCondition.expr, "source") ++ clauses.flatMap(c => collectColumns(c, "source"))
+        val sourceColumns = collectColumns(mergeCondition.expr, "source") ++ clauses.flatMap(c => collectColumns(df.schema, c, "source"))
         val sourceDf = df.select(sourceColumns.toSeq.map(col):_*)
 
         val (url, props) = createProperties()
@@ -617,14 +617,16 @@ case class JdbcRelation(
         .mkString(" AND ")
     }
 
-    private def collectColumns(clause:MergeClause, prefix:String) : SetIgnoreCase = {
+    private def collectColumns(sourceSchema:StructType, clause:MergeClause, prefix:String) : SetIgnoreCase = {
         clause match {
             case i:InsertClause =>
-                i.condition.map(c => collectColumns(c.expr, prefix)).getOrElse(SetIgnoreCase()) ++
-                    i.columns.values.flatMap(c => collectColumns(c.expr, prefix))
+                val conditionColumns = i.condition.map(c => collectColumns(c.expr, prefix)).getOrElse(SetIgnoreCase())
+                val insertColumns = if(i.columns.nonEmpty) i.columns.values.flatMap(c => collectColumns(c.expr, prefix)) else sourceSchema.names.toSeq
+                conditionColumns ++ insertColumns
             case u:UpdateClause =>
-                u.condition.map(c => collectColumns(c.expr, prefix)).getOrElse(SetIgnoreCase()) ++
-                    u.columns.values.flatMap(c => collectColumns(c.expr, prefix))
+                val conditionColumns = u.condition.map(c => collectColumns(c.expr, prefix)).getOrElse(SetIgnoreCase())
+                val updateColumns = if(u.columns.nonEmpty) u.columns.values.flatMap(c => collectColumns(c.expr, prefix)) else sourceSchema.names.toSeq
+                conditionColumns ++ updateColumns
             case d:DeleteClause =>
                 d.condition.map(c => collectColumns(c.expr, prefix)).getOrElse(SetIgnoreCase())
         }

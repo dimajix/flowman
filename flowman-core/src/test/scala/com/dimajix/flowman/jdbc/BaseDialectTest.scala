@@ -94,4 +94,31 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
               |WHEN MATCHED AND (source."C4" = 'DELETE') THEN DELETE
               |WHEN MATCHED THEN UPDATE SET "name" = source."C2", "sex" = source."C3"""".stripMargin)
     }
+
+    it should "provide merge statements with trivial clauses" in {
+        val dialect = NoopDialect
+        val table = TableIdentifier("table_1", Some("my_db"))
+        val tableSchema = StructType(Seq(
+            StructField("id", IntegerType),
+            StructField("name", StringType),
+            StructField("sex", StringType)
+        ))
+        val sourceSchema = StructType(Seq(
+            StructField("id", IntegerType),
+            StructField("name", StringType),
+            StructField("sex", StringType)
+        ))
+        val condition = expr("source.id = target.id")
+        val clauses = Seq(
+            InsertClause(),
+            UpdateClause()
+        )
+        val sql = dialect.statement.merge(table, "target", Some(tableSchema), "source", sourceSchema, condition, clauses)
+        sql should be (
+            """MERGE INTO "my_db"."table_1" target
+              |USING (VALUES(?,?,?)) source
+              |ON (source."C1" = target."id")
+              |WHEN NOT MATCHED THEN INSERT("id","name","sex") VALUES(source."C1",source."C2",source."C3")
+              |WHEN MATCHED THEN UPDATE SET "id" = source."C1", "name" = source."C2", "sex" = source."C3"""".stripMargin)
+    }
 }

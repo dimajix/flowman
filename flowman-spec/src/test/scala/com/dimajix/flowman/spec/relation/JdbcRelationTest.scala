@@ -232,11 +232,11 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.read(execution).count() should be (0)
 
         relation.write(execution, df, mode=OutputMode.IGNORE_IF_EXISTS)
-        relation.read(execution).count() should be (0)
+        relation.read(execution).count() should be (2)
 
         // Try write records
         an[Exception] shouldBe thrownBy(relation.write(execution, df, mode=OutputMode.ERROR_IF_EXISTS))
-        relation.read(execution).count() should be (0)
+        relation.read(execution).count() should be (2)
 
         // == Truncate ================================================================================================
         relation.truncate(execution)

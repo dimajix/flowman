@@ -29,11 +29,12 @@ import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.UpdateClause
+import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.util.UtcTimestamp
 
 
 class BaseDialectTest extends AnyFlatSpec with Matchers {
-    "The BaseDialect" should "create PARTITION spects" in {
+    "The BaseDialect" should "create PARTITION specs" in {
         val dialect = NoopDialect
         val partitionSpec = PartitionSpec(Map(
             "p1" -> "lala",
@@ -53,7 +54,53 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
         dialect.expr.in("col", Seq(UtcTimestamp.parse("2021-08-03T02:03:44"))) should be (""""col" IN (timestamp(1627956224))""")
     }
 
-    it should "provide merge statements" in {
+    it should "provide CREATE statements" in {
+        val dialect = NoopDialect
+        val table = TableIdentifier("table_1", Some("my_db"))
+        val tableDefinition = TableDefinition(
+            table,
+            Seq(
+                Field("id", com.dimajix.flowman.types.IntegerType, nullable = false),
+                Field("name", com.dimajix.flowman.types.StringType),
+                Field("sex", com.dimajix.flowman.types.StringType)
+            )
+        )
+
+        val sql = dialect.statement.createTable(tableDefinition)
+        sql should be (
+            """CREATE TABLE "my_db"."table_1" (
+              |    "id" INTEGER NOT NULL,
+              |    "name" TEXT,
+              |    "sex" TEXT
+              |)
+              |""".stripMargin)
+    }
+
+    it should "provide CREATE statements with PK" in {
+        val dialect = NoopDialect
+        val table = TableIdentifier("table_1", Some("my_db"))
+        val tableDefinition = TableDefinition(
+            table,
+            Seq(
+                Field("id", com.dimajix.flowman.types.IntegerType, nullable = false),
+                Field("name", com.dimajix.flowman.types.StringType),
+                Field("sex", com.dimajix.flowman.types.StringType)
+            ),
+            primaryKey = Seq("id")
+        )
+
+        val sql = dialect.statement.createTable(tableDefinition)
+        sql should be (
+            """CREATE TABLE "my_db"."table_1" (
+              |    "id" INTEGER NOT NULL,
+              |    "name" TEXT,
+              |    "sex" TEXT,
+              |    PRIMARY KEY ("id")
+              |)
+              |""".stripMargin)
+    }
+
+    it should "provide MERGE statements with complex clauses" in {
         val dialect = NoopDialect
         val table = TableIdentifier("table_1", Some("my_db"))
         val tableSchema = StructType(Seq(
@@ -95,7 +142,7 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
               |WHEN MATCHED THEN UPDATE SET "name" = source."C2", "sex" = source."C3"""".stripMargin)
     }
 
-    it should "provide merge statements with trivial clauses" in {
+    it should "provide MERGE statements with trivial clauses" in {
         val dialect = NoopDialect
         val table = TableIdentifier("table_1", Some("my_db"))
         val tableSchema = StructType(Seq(

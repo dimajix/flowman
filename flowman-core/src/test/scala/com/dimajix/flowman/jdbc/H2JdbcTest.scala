@@ -56,11 +56,12 @@ class H2JdbcTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val table = TableDefinition(
             TableIdentifier("table_001"),
             Seq(
+                Field("Id", IntegerType, nullable=false),
                 Field("str_field", StringType),
                 Field("int_field", IntegerType)
             ),
             None,
-            Seq()
+            Seq("iD")
         )
         JdbcUtils.tableExists(conn, table.identifier, options) should be (false)
         JdbcUtils.createTable(conn, table, options)
@@ -70,7 +71,7 @@ class H2JdbcTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         conn.close()
     }
 
-    "JdbcUtils.mergeTable()" should "work" in {
+    "JdbcUtils.mergeTable()" should "work with complex clauses" in {
         val options = new JDBCOptions(url, "table_002", Map(JDBCOptions.JDBC_DRIVER_CLASS -> driver))
         val conn = JdbcUtils.createConnection(options)
         val table = TableDefinition(
@@ -159,6 +160,83 @@ class H2JdbcTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             Row(20, "Bob", "male", "immutable"),
             Row(40, "Eve", "female", "immutable"),
             Row(50, "Debora", "female", "mutable")
+        ))
+
+        // ===== Drop Table ===========================================================================================
+        JdbcUtils.dropTable(conn, table.identifier, options)
+        JdbcUtils.tableExists(conn, table.identifier, options) should be (false)
+        conn.close()
+    }
+
+    it should "work with trivial clauses" in {
+        val options = new JDBCOptions(url, "table_002", Map(JDBCOptions.JDBC_DRIVER_CLASS -> driver))
+        val conn = JdbcUtils.createConnection(options)
+        val table = TableDefinition(
+            TableIdentifier("table_001"),
+            Seq(
+                Field("id", IntegerType),
+                Field("Name", StringType),
+                Field("Sex", StringType)
+            ),
+            None,
+            Seq("id")
+        )
+
+        // ===== Create Table =========================================================================================
+        JdbcUtils.tableExists(conn, table.identifier, options) should be (false)
+        JdbcUtils.createTable(conn, table, options)
+        JdbcUtils.tableExists(conn, table.identifier, options) should be (true)
+
+        // ===== Write Table ==========================================================================================
+        val tableSchema = org.apache.spark.sql.types.StructType(Seq(
+            StructField("id", org.apache.spark.sql.types.IntegerType),
+            StructField("name", org.apache.spark.sql.types.StringType),
+            StructField("sex", org.apache.spark.sql.types.StringType)
+        ))
+        val df0 = DataFrameBuilder.ofRows(
+            spark,
+            Seq(
+                Row(10, "Alice", "male"),
+                Row(20, "Bob", "male")
+            ),
+            tableSchema
+        )
+        df0.write.mode("APPEND").jdbc(url, "table_001", new Properties())
+
+        // ===== Read Table ===========================================================================================
+        val df1 = spark.read.jdbc(url, "table_001", new Properties())
+        df1.sort(col("id")).collect() should be (Seq(
+            Row(10, "Alice", "male"),
+            Row(20, "Bob", "male")
+        ))
+
+        // ===== Merge Table ==========================================================================================
+        val updateSchema = org.apache.spark.sql.types.StructType(Seq(
+            StructField("id", org.apache.spark.sql.types.IntegerType),
+            StructField("name", org.apache.spark.sql.types.StringType),
+            StructField("sex", org.apache.spark.sql.types.StringType)
+        ))
+        val df2 = DataFrameBuilder.ofRows(
+            spark,
+            Seq(
+                Row(10, "Alice", "female"),
+                Row(50, "Debora", "female")
+            ),
+            updateSchema
+        )
+        val condition = expr("source.id = target.id")
+        val clauses = Seq(
+            InsertClause(),
+            UpdateClause()
+        )
+        JdbcUtils.mergeTable(table.identifier, "target", Some(tableSchema), df2, "source", condition, clauses, options)
+
+        // ===== Read Table ===========================================================================================
+        val df3 = spark.read.jdbc(url, "table_001", new Properties())
+        df3.sort(col("id")).collect() should be (Seq(
+            Row(10, "Alice", "female"),
+            Row(20, "Bob", "male"),
+            Row(50, "Debora", "female")
         ))
 
         // ===== Drop Table ===========================================================================================

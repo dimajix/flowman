@@ -226,16 +226,22 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
     }
 
     override def createTable(table: TableDefinition): String = {
-        val strSchema = table.fields.map { field =>
+        // Column definitions
+        val columns = table.fields.map { field =>
             val name = dialect.quoteIdentifier(field.name)
             val typ = dialect.getJdbcType(field.ftype).databaseTypeDefinition
             val nullable = if (field.nullable) ""
-            else "NOT NULL"
-            s"$name $typ $nullable"
-        }.mkString(",\n")
+            else " NOT NULL"
+            s"$name $typ$nullable"
+        }
+        // Primary key
+        val pk = if (table.primaryKey.nonEmpty) Seq(s"PRIMARY KEY (${table.primaryKey.map(dialect.quoteIdentifier).mkString(",")})") else Seq()
+
+        // Full schema
+        val schema = columns ++ pk
         val createTableOptions = ""
 
-        s"CREATE TABLE ${dialect.quote(table.identifier)} ($strSchema) $createTableOptions"
+        s"CREATE TABLE ${dialect.quote(table.identifier)} (\n    ${schema.mkString(",\n    ")}\n)\n$createTableOptions"
     }
 
     /**

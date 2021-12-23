@@ -134,12 +134,13 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
         val sql = dialect.statement.merge(table, "target", Some(tableSchema), "source", sourceSchema, condition, clauses)
         sql should be (
             """MERGE INTO "my_db"."table_1" target
-              |USING (VALUES(?,?,?,?)) source
-              |ON (source."C1" = target."id")
-              |WHEN NOT MATCHED AND ((source."C4" = 'INSERT') AND (NOT (target."state" = 'FINAL'))) THEN INSERT("id","name","sex") VALUES(source."C1",source."C2",source."C3")
-              |WHEN NOT MATCHED AND (source."C4" = 'INSERT') THEN INSERT("id","name") VALUES(source."C1",source."C2")
-              |WHEN MATCHED AND (source."C4" = 'DELETE') THEN DELETE
-              |WHEN MATCHED THEN UPDATE SET "name" = source."C2", "sex" = source."C3"""".stripMargin)
+              |USING (VALUES(?,?,?,?)) source(id,name,sex,op)
+              |ON (source."id" = target."id")
+              |WHEN NOT MATCHED AND ((source."op" = 'INSERT') AND (NOT (target."state" = 'FINAL'))) THEN INSERT("id","name","sex") VALUES(source."id",source."name",source."sex")
+              |WHEN NOT MATCHED AND (source."op" = 'INSERT') THEN INSERT("id","name") VALUES(source."id",source."name")
+              |WHEN MATCHED AND (source."op" = 'DELETE') THEN DELETE
+              |WHEN MATCHED THEN UPDATE SET "name" = source."name", "sex" = source."sex"
+              |;""".stripMargin)
     }
 
     it should "provide MERGE statements with trivial clauses" in {
@@ -163,9 +164,10 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
         val sql = dialect.statement.merge(table, "target", Some(tableSchema), "source", sourceSchema, condition, clauses)
         sql should be (
             """MERGE INTO "my_db"."table_1" target
-              |USING (VALUES(?,?,?)) source
-              |ON (source."C1" = target."id")
-              |WHEN NOT MATCHED THEN INSERT("id","name","sex") VALUES(source."C1",source."C2",source."C3")
-              |WHEN MATCHED THEN UPDATE SET "id" = source."C1", "name" = source."C2", "sex" = source."C3"""".stripMargin)
+              |USING (VALUES(?,?,?)) source(id,name,sex)
+              |ON (source."id" = target."id")
+              |WHEN NOT MATCHED THEN INSERT("id","name","sex") VALUES(source."id",source."name",source."sex")
+              |WHEN MATCHED THEN UPDATE SET "id" = source."id", "name" = source."name", "sex" = source."sex"
+              |;""".stripMargin)
     }
 }

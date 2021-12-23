@@ -58,4 +58,6 @@ class SetIgnoreCase private(impl:Map[String,String] = Map()) extends Set[String]
     override def - (key: String): SetIgnoreCase = new SetIgnoreCase(impl - key.toLowerCase(Locale.ROOT))
 
     override def contains(elem: String): Boolean = impl.contains(elem.toLowerCase(Locale.ROOT))
+
+    def get(v: String) : Option[String] = impl.get(v.toLowerCase(Locale.ROOT))
 }

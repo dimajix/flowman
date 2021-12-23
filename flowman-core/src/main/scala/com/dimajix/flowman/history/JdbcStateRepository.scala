@@ -410,7 +410,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     }
 
     def setJobStatus(run:JobRun) : Unit = {
-        val q = jobRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status, r.error)).update((run.end_ts, run.status, run.error))
+        val q = jobRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status, r.error)).update((run.end_ts, run.status, run.error.map(_.substring(0, 1021))))
         Await.result(db.run(q), Duration.Inf)
     }
 
@@ -724,7 +724,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     }
 
     def setTargetStatus(run:TargetRun) : Unit = {
-        val q = targetRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status, r.error)).update((run.end_ts, run.status, run.error))
+        val q = targetRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status, r.error)).update((run.end_ts, run.status, run.error.map(_.substring(0, 1021))))
         Await.result(db.run(q), Duration.Inf)
     }
 

@@ -29,6 +29,8 @@ import org.everit.json.schema.NullSchema
 import org.everit.json.schema.NumberSchema
 import org.everit.json.schema.ObjectSchema
 import org.everit.json.schema.StringSchema
+import org.everit.json.schema.internal.DateFormatValidator
+import org.everit.json.schema.internal.DateTimeFormatValidator
 import org.everit.json.schema.loader.SchemaLoader
 import org.everit.json.schema.{Schema => JSchema}
 import org.json.JSONObject
@@ -41,6 +43,8 @@ import com.dimajix.flowman.spec.annotation.SchemaType
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.BooleanType
+import com.dimajix.flowman.types.CharType
+import com.dimajix.flowman.types.DateType
 import com.dimajix.flowman.types.DoubleType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
@@ -48,6 +52,7 @@ import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.types.NullType
 import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.types.TimestampType
 import com.dimajix.flowman.types.VarcharType
 
 
@@ -103,11 +108,18 @@ case class JsonSchema(
                 DoubleType
             }
             case obj:ObjectSchema => fromJsonObject(obj)
+            case string:StringSchema if string.getFormatValidator.isInstanceOf[DateTimeFormatValidator] => TimestampType
+            case string:StringSchema if string.getFormatValidator.isInstanceOf[DateFormatValidator] => DateType
             case string:StringSchema => {
-                if (string.getMaxLength != null && string.getMaxLength < Integer.MAX_VALUE)
-                    VarcharType(string.getMaxLength)
-                else
+                if (string.getMaxLength != null && string.getMaxLength < Integer.MAX_VALUE) {
+                    if (string.getMinLength != null && string.getMinLength == string.getMaxLength)
+                        CharType(string.getMaxLength)
+                    else
+                        VarcharType(string.getMaxLength)
+                }
+                else {
                     StringType
+                }
             }
             case obj:CombinedSchema => fromJsonCombinedType(obj)
             case _ => throw new UnsupportedOperationException(s"Unsupported type in JSON schema: ${schema.getClass}")

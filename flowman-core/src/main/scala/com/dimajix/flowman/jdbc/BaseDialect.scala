@@ -30,6 +30,7 @@ import org.apache.spark.sql.jdbc.JdbcType
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.common.MapIgnoreCase
+import com.dimajix.common.SetIgnoreCase
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
@@ -280,46 +281,47 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
 
     override def merge(table: TableIdentifier, targetAlias:String, targetSchema:Option[StructType], sourceAlias:String, sourceSchema:StructType, condition:Column, clauses:Seq[MergeClause]) : String = {
         val sourceColumns = sourceSchema.names
+        val sourceColumnNames = SetIgnoreCase(sourceColumns)
         val sqlPlaceholders = sourceColumns.map(_ => "?").mkString(",")
-        val sourceAliases = MapIgnoreCase(sourceColumns.zipWithIndex.map { case(src,alias) => src -> s"C${alias+1}" })
 
         def getColumnExpressions(cols:Map[String,Column]) : Seq[(String,String)] = {
             if (cols.nonEmpty) {
-                cols.toSeq.map { case(n,c) => n -> toSql(c.expr, sourceAlias, sourceAliases) }
+                cols.toSeq.map { case(n,c) => n -> toSql(c.expr, sourceAlias) }
             }
             else {
-                targetSchema.get.names.flatMap(n => sourceAliases.get(n).map(c => n -> (sourceAlias + "." + dialect.quoteIdentifier(c))))
+                targetSchema.get.names.flatMap(n => sourceColumnNames.get(n).map(c => n -> (sourceAlias + "." + dialect.quoteIdentifier(c))))
             }
         }
 
-        val sqlMergeCondition = toSql(condition.expr, sourceAlias, sourceAliases)
+        val sqlMergeCondition = toSql(condition.expr, sourceAlias)
         val sqlClauses = clauses.map {
             case i:InsertClause =>
-                val cond = i.condition.map(c => " AND " + toSql(c.expr, sourceAlias, sourceAliases)).getOrElse("")
+                val cond = i.condition.map(c => " AND " + toSql(c.expr, sourceAlias)).getOrElse("")
                 val expressions = getColumnExpressions(i.columns)
                 val columnNames = expressions.map { case(n,_) => dialect.quoteIdentifier(n) }
                 val columnValues = expressions.map { case(_,e) => e }
                 s"WHEN NOT MATCHED$cond THEN INSERT(${columnNames.mkString(",")}) VALUES(${columnValues.mkString(",")})"
             case u:UpdateClause =>
-                val cond = u.condition.map(c => " AND " + toSql(c.expr, sourceAlias, sourceAliases)).getOrElse("")
+                val cond = u.condition.map(c => " AND " + toSql(c.expr, sourceAlias)).getOrElse("")
                 val expressions = getColumnExpressions(u.columns)
                 val setters = expressions.map { case(n,c) => s"${dialect.quoteIdentifier(n)} = $c" }
                 s"WHEN MATCHED$cond THEN UPDATE SET ${setters.mkString(", ")}"
             case d:DeleteClause =>
-                val cond = d.condition.map(c => " AND " + toSql(c.expr, sourceAlias, sourceAliases)).getOrElse("")
+                val cond = d.condition.map(c => " AND " + toSql(c.expr, sourceAlias)).getOrElse("")
                 s"WHEN MATCHED$cond THEN DELETE"
         }
         s"""MERGE INTO ${dialect.quote(table)} $targetAlias
-           |USING (VALUES($sqlPlaceholders)) $sourceAlias
+           |USING (VALUES($sqlPlaceholders)) $sourceAlias(${sourceColumns.mkString(",")})
            |ON $sqlMergeCondition
-           |${sqlClauses.mkString("\n")}""".stripMargin
+           |${sqlClauses.mkString("\n")}
+           |;""".stripMargin
     }
 
-    protected def toSql(expr:Expression, sourceAlias:String, sourceAliases:MapIgnoreCase[String]) : String = {
+    protected def toSql(expr:Expression, sourceAlias:String) : String = {
         val sourcePrefix = sourceAlias.toLowerCase(Locale.ROOT)
         val newExpr = expr.transformDown {
             case UnresolvedAttribute(x) if x.head.toLowerCase(Locale.ROOT) == sourcePrefix =>
-                val srcAlias = sourceAliases(x.tail.head)
+                val srcAlias = x.tail.head
                 val expr = x.head + "." + dialect.quoteIdentifier(srcAlias)
                 UnresolvableExpression(expr)
             case UnresolvedAttribute(x) =>

@@ -19,9 +19,12 @@ package com.dimajix.flowman.jdbc
 import java.sql.SQLFeatureNotSupportedException
 import java.util.Locale
 
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.jdbc.JdbcType
+import org.apache.spark.sql.types.StructType
 
+import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.FieldType

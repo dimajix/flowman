@@ -33,4 +33,6 @@ case class UnresolvableExpression(expr:String) extends Unevaluable {
     override def sql: String = expr
 
     override def children: Seq[Expression] = Seq()
+
+    /*override*/ protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = this
 }

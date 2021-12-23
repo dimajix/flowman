@@ -34,7 +34,12 @@ abstract class SqlStatements {
      */
     def schema(table: TableIdentifier): String
 
-    def create(table: TableDefinition): String
+    /**
+     * The SQL query for creating a new table
+     * @param table
+     * @return
+     */
+    def createTable(table: TableDefinition): String
 
     /**
      * Get the SQL query that should be used to find if the given table exists. Dialects can

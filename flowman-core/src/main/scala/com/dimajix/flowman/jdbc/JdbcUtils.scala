@@ -215,7 +215,7 @@ object JdbcUtils {
      */
     def createTable(conn:Connection, table:TableDefinition, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val sql = dialect.statement.create(table)
+        val sql = dialect.statement.createTable(table)
         withStatement(conn, options) { statement =>
             statement.executeUpdate(sql)
         }

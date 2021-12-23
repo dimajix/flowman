@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.spark.expressions
+package com.dimajix.spark.sql.expressions
 
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry.FunctionBuilder
@@ -28,16 +28,13 @@ import org.apache.spark.sql.catalyst.expressions.NamedExpression
 import org.apache.spark.sql.catalyst.expressions.codegen.CodegenContext
 import org.apache.spark.sql.catalyst.expressions.codegen.ExprCode
 
-import com.dimajix.spark.sql.expressions
-import com.dimajix.spark.sql.expressions
-
 
 /**
   * Returns a Row containing the evaluation of all children expressions.
   */
 object CreateNullableStruct extends FunctionBuilder {
-    def apply(children: Seq[Expression]): expressions.CreateNullableNamedStruct = {
-        expressions.CreateNullableNamedStruct(children.zipWithIndex.flatMap {
+    def apply(children: Seq[Expression]): CreateNullableNamedStruct = {
+        CreateNullableNamedStruct(children.zipWithIndex.flatMap {
             //case (e: NamedExpression, _) if e.resolved => Seq(Literal(e.name), e)
             case (e: NamedExpression, _) if e.name.nonEmpty => Seq(Literal(e.name), e)
             case (e: NamedExpression, _) => Seq(NamePlaceholder, e)

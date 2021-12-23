@@ -225,7 +225,7 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
         s"SELECT * FROM ${dialect.quote(table)} WHERE 1=0"
     }
 
-    override def create(table: TableDefinition): String = {
+    override def createTable(table: TableDefinition): String = {
         val strSchema = table.fields.map { field =>
             val name = dialect.quoteIdentifier(field.name)
             val typ = dialect.getJdbcType(field.ftype).databaseTypeDefinition

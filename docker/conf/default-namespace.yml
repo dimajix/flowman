@@ -15,9 +15,9 @@ connections:
 
 config:
   - spark.sql.warehouse.dir=/opt/flowman/hive/warehouse
-  - hive.metastore.uris=
-  - javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=/opt/flowman/hive/db;create=true
-  - datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
+  - spark.hadoop.hive.metastore.uris=
+  - spark.hadoop.javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=/opt/flowman/hive/db;create=true
+  - spark.hadoop.datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
 
 store:
   kind: file

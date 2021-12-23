@@ -25,22 +25,11 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.analysis.UnresolvedException
-import org.apache.spark.sql.catalyst.expressions.Attribute
-import org.apache.spark.sql.catalyst.expressions.ExprId
 import org.apache.spark.sql.catalyst.expressions.Expression
-import org.apache.spark.sql.catalyst.expressions.Unevaluable
-import org.apache.spark.sql.catalyst.parser.ParserUtils
-import org.apache.spark.sql.catalyst.util.quoteIdentifier
-import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.jdbc.JdbcType
-import org.apache.spark.sql.types.DataType
-import org.apache.spark.sql.types.Metadata
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.common.MapIgnoreCase
-import com.dimajix.common.SetIgnoreCase
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
@@ -55,6 +44,7 @@ import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.ByteType
+import com.dimajix.flowman.types.CharType
 import com.dimajix.flowman.types.DateType
 import com.dimajix.flowman.types.DecimalType
 import com.dimajix.flowman.types.DoubleType
@@ -65,9 +55,9 @@ import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.types.ShortType
 import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.TimestampType
-import com.dimajix.flowman.types.CharType
 import com.dimajix.flowman.types.VarcharType
 import com.dimajix.flowman.util.UtcTimestamp
+import com.dimajix.spark.sql.expressions.UnresolvableExpression
 
 
 abstract class BaseDialect extends SqlDialect {
@@ -224,39 +214,6 @@ abstract class BaseDialect extends SqlDialect {
 
 class BaseStatements(dialect: SqlDialect) extends SqlStatements {
     /**
-     * Helper class, which behaves like the Spark [[UnresolvedAttribute]], but uses to slightly different sql
-     * generator which uses the [[SqlDialect]]
-     * @param nameParts
-     */
-    case class DialectUnresolvedAttribute(nameParts: Seq[String]) extends Attribute with Unevaluable {
-        def name: String =
-            nameParts.map(n => if (n.contains(".")) s"`$n`" else n).mkString(".")
-
-        override def exprId: ExprId = ???
-        override def dataType: DataType = ???
-        override def nullable: Boolean = ???
-        override def qualifier: Seq[String] = ???
-        override lazy val resolved = false
-
-        override def newInstance(): DialectUnresolvedAttribute = this
-        override def withNullability(newNullability: Boolean): DialectUnresolvedAttribute = this
-        override def withQualifier(newQualifier: Seq[String]): DialectUnresolvedAttribute = this
-        override def withName(newName: String): DialectUnresolvedAttribute = DialectUnresolvedAttribute(Seq(newName))
-        override def withMetadata(newMetadata: Metadata): Attribute = this
-        override def withExprId(newExprId: ExprId): DialectUnresolvedAttribute = this
-        /* override */ def withDataType(newType: DataType): DialectUnresolvedAttribute = this
-
-        override def toString: String = s"'$name"
-
-        override def sql: String = {
-            if (nameParts.tail.nonEmpty)
-                nameParts.head + "." + dialect.quoteIdentifier(nameParts.tail)
-            else
-                dialect.quoteIdentifier(nameParts.head)
-        }
-    }
-
-    /**
      * The SQL query that should be used to discover the schema of a table. It only needs to
      * ensure that the result set has the same schema as the table, such as by calling
      * "SELECT * ...". Dialects can override this method to return a query that works best in a
@@ -357,9 +314,16 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
         val newExpr = expr.transformDown {
             case UnresolvedAttribute(x) if x.head.toLowerCase(Locale.ROOT) == sourcePrefix =>
                 val srcAlias = sourceAliases(x.tail.head)
-                DialectUnresolvedAttribute(Seq(x.head, srcAlias))
+                val expr = x.head + "." + dialect.quoteIdentifier(srcAlias)
+                UnresolvableExpression(expr)
             case UnresolvedAttribute(x) =>
-                DialectUnresolvedAttribute(x)
+                val expr = if (x.tail.nonEmpty) {
+                        x.head + "." + dialect.quoteIdentifier(x.tail)
+                    }
+                    else {
+                        dialect.quoteIdentifier(x.head)
+                    }
+                UnresolvableExpression(expr)
         }
 
         newExpr.sql

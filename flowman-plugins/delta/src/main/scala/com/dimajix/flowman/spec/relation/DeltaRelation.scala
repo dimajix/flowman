@@ -71,8 +71,10 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
             val withinPartitionKeyColumns =
                 if (mergeKey.nonEmpty)
                     mergeKey
+                else if (schema.exists(_.primaryKey.nonEmpty))
+                    schema.map(_.primaryKey).get
                 else
-                    schema.map(_.primaryKey).getOrElse(Seq())
+                    throw new IllegalArgumentException(s"Merging Delta relation '$identifier' requires primary key in schema, explicit merge key or merge condition")
             (SetIgnoreCase(partitions.map(_.name)) ++ withinPartitionKeyColumns)
                 .toSeq
                 .map(k => col("target." + k) <=> col("source." + k))

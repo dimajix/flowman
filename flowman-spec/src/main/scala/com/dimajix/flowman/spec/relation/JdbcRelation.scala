@@ -82,7 +82,8 @@ case class JdbcRelation(
     properties: Map[String,String] = Map(),
     database: Option[String] = None,
     table: Option[String] = None,
-    query: Option[String] = None
+    query: Option[String] = None,
+    mergeKey: Seq[String] = Seq()
 ) extends BaseRelation with PartitionedRelation with SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[JdbcRelation])
 
@@ -272,10 +273,14 @@ case class JdbcRelation(
 
         val mergeCondition =
             condition.getOrElse {
-                val pk = schema.map(_.primaryKey)
-                if (pk.isEmpty)
-                    throw new IllegalArgumentException("Either require primary key in schema or explicit merge condition")
-                (SetIgnoreCase(partitions.map(_.name)) ++ pk.getOrElse(Seq()))
+                val withinPartitionKeyColumns =
+                    if (mergeKey.nonEmpty)
+                        mergeKey
+                    else if (schema.exists(_.primaryKey.nonEmpty))
+                        schema.map(_.primaryKey).get
+                    else
+                        throw new IllegalArgumentException(s"Merging JDBC relation '$identifier' requires primary key in schema, explicit merge key or merge condition")
+                (SetIgnoreCase(partitions.map(_.name)) ++ withinPartitionKeyColumns)
                     .toSeq
                     .map(c => col("source." + c) === col("target." + c))
                     .reduce(_ && _)

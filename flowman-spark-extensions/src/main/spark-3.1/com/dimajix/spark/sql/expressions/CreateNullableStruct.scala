@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.spark.expressions
+package com.dimajix.spark.sql.expressions
 
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry.FunctionBuilder

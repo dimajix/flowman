@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.flowman.config.FlowmanConf
+import com.dimajix.flowman.execution.AbstractContext.Builder
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.StateStoreAdaptorListener
 import com.dimajix.flowman.history.TargetState
@@ -114,9 +115,10 @@ private[execution] sealed class RunnerImpl {
         result
     }
 
-    private val separator = boldWhite((0 to 79).map(_ => "-").mkString)
+    private val lineSize = 109
+    private val separator = boldWhite((0 until lineSize).map(_ => "-").mkString)
     def logSubtitle(s:String) : Unit = {
-        val l = (77 - (s.length + 1)) / 2
+        val l = (lineSize - 3 - (s.length + 1)) / 2
         val t = if (l > 3) {
             val sep = (0 to l).map(_ => '-').mkString
             boldWhite(sep) + " " + boldCyan(s) + " " + boldWhite(sep)
@@ -212,15 +214,15 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @param phases
      * @return
      */
-    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), targets:Seq[Regex]=Seq(".*".r), force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false) : LifecycleResult = {
+    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), targets:Seq[Regex]=Seq(".*".r), force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : LifecycleResult = {
         require(args != null)
         require(phases != null)
         require(args != null)
 
         val startTime = Instant.now()
-        val isolated = job.parameters.nonEmpty || job.environment.nonEmpty
-        withExecution(parentExecution, isolated) { execution =>
-            runner.withJobContext(job, args, Some(execution), force, dryRun) { (context, arguments) =>
+        val isolated2 = isolated || job.parameters.nonEmpty || job.environment.nonEmpty
+        withExecution(parentExecution, isolated2) { execution =>
+            runner.withJobContext(job, args, Some(execution), force, dryRun, isolated2) { (context, arguments) =>
                 val listeners = if (!dryRun) stateStoreListener +: (runner.hooks ++ job.hooks).map(_.instantiate(context)) else Seq()
                 execution.withListeners(listeners) { execution =>
                     execution.monitorLifecycle(job, arguments, phases) { execution =>
@@ -553,14 +555,14 @@ final class Runner(
       * @param phases
       * @return
       */
-    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), targets:Seq[Regex]=Seq(".*".r), force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false) : Status = {
+    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), targets:Seq[Regex]=Seq(".*".r), force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : Status = {
         require(args != null)
         require(phases != null)
         require(args != null)
 
         logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.identifier}'")
         val runner = new JobRunnerImpl(this)
-        val result = runner.executeJob(job, phases, args, targets, force, keepGoing, dryRun)
+        val result = runner.executeJob(job, phases, args, targets, force, keepGoing, dryRun, isolated)
         result.status
     }
 
@@ -584,15 +586,21 @@ final class Runner(
      * @param phases
      * @return
      */
-    def executeTargets(targets:Seq[Target], phases:Seq[Phase], force:Boolean, keepGoing:Boolean=false, dryRun:Boolean=false) : Status = {
+    def executeTargets(targets:Seq[Target], phases:Seq[Phase], force:Boolean, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : Status = {
         if (targets.nonEmpty) {
             val context = targets.head.context
-            val job = Job.builder(context)
+
+            // Build a new scoped job context, which contains the given targets. This way, the targets do not need
+            // to be part of the project, but they still *can* be part
+            val jobContext = ScopeContext.builder(context)
+                .withTargets(targets.map(tgt => (tgt.name, Prototype.of(tgt))).toMap)
+                .build()
+            val job = Job.builder(jobContext)
                 .setName("execute-target-" + Clock.systemUTC().millis())
                 .setTargets(targets.map(_.identifier))
                 .build()
 
-            executeJob(job, phases, force=force, keepGoing=keepGoing, dryRun=dryRun)
+            executeJob(job, phases, force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=isolated)
         }
         else {
             Status.SUCCESS
@@ -609,24 +617,35 @@ final class Runner(
      * @tparam T
      * @return
      */
-    def withJobContext[T](job:Job, args:Map[String,Any]=Map(), execution:Option[Execution]=None, force:Boolean=false, dryRun:Boolean=false)(fn:(Context,Map[String,Any]) => T) : T = {
+    def withJobContext[T](job:Job, args:Map[String,Any]=Map(), execution:Option[Execution]=None, force:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true)(fn:(Context,Map[String,Any]) => T) : T = {
         val arguments : Map[String,Any] = job.parameters.flatMap(p => p.default.map(d => p.name -> d)).toMap ++ args
         arguments.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Job argument $k=$v")}
 
         verifyArguments(job,arguments)
 
-        val rootContext = RootContext.builder(job.context)
-            .withEnvironment("force", force)
-            .withEnvironment("dryRun", dryRun)
-            .withEnvironment("job", JobWrapper(job))
-            .withEnvironment(arguments, SettingLevel.SCOPE_OVERRIDE)
-            .withEnvironment(job.environment, SettingLevel.JOB_OVERRIDE)
-            .withExecution(execution)
-            .build()
-        val jobContext = if (job.context.project.nonEmpty)
-            rootContext.getProjectContext(job.context.project.get)
-        else
-            rootContext
+        val jobContext =
+            if (isolated || arguments.nonEmpty || job.environment.nonEmpty) {
+                val rootContext = RootContext.builder(job.context)
+                    .withEnvironment("force", force)
+                    .withEnvironment("dryRun", dryRun)
+                    .withEnvironment("job", JobWrapper(job))
+                    .withEnvironment(arguments, SettingLevel.SCOPE_OVERRIDE)
+                    .withEnvironment(job.environment, SettingLevel.JOB_OVERRIDE)
+                    .withExecution(execution)
+                    .build()
+                if (job.context.project.nonEmpty)
+                    rootContext.getProjectContext(job.context.project.get)
+                else
+                    rootContext
+            }
+            else {
+                ScopeContext.builder(job.context)
+                    .withEnvironment("force", force)
+                    .withEnvironment("dryRun", dryRun)
+                    .withEnvironment("job", JobWrapper(job))
+                    .build()
+            }
+
         fn(jobContext, arguments)
     }
 

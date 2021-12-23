@@ -60,7 +60,7 @@ object MergeTarget {
     def apply(context: Context, relation: RelationIdentifier, mapping: MappingOutputIdentifier, mergeKey:Seq[String], clauses:Seq[MergeClause]) : MergeTarget = {
         val conf = context.flowmanConf
         new MergeTarget(
-            Target.Properties(context),
+            Target.Properties(context, relation.name, "merge"),
             RelationReference(context, relation),
             mapping,
             mergeKey,

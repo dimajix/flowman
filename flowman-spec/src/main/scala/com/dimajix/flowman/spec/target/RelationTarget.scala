@@ -55,8 +55,8 @@ object RelationTarget {
     def apply(context: Context, relation: RelationIdentifier) : RelationTarget = {
         val conf = context.flowmanConf
         new RelationTarget(
-            Target.Properties(context),
-            RelationReference(context,relation),
+            Target.Properties(context, relation.name, "relation"),
+            RelationReference(context, relation),
             MappingOutputIdentifier.empty,
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
@@ -67,11 +67,24 @@ object RelationTarget {
     def apply(context: Context, relation: RelationIdentifier, mapping: MappingOutputIdentifier) : RelationTarget = {
         val conf = context.flowmanConf
         new RelationTarget(
-            Target.Properties(context),
-            RelationReference(context,relation),
+            Target.Properties(context, relation.name, "relation"),
+            RelationReference(context, relation),
             mapping,
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
+            conf.getConf(DEFAULT_TARGET_PARALLELISM),
+            conf.getConf(DEFAULT_TARGET_REBALANCE)
+        )
+    }
+    def apply(props:Target.Properties, relation: RelationIdentifier, mapping: MappingOutputIdentifier, partition: Map[String,String]) : RelationTarget = {
+        val context = props.context
+        val conf = context.flowmanConf
+        new RelationTarget(
+            props.copy(kind="relation"),
+            RelationReference(context, relation),
+            mapping,
+            OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
+            partition,
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
             conf.getConf(DEFAULT_TARGET_REBALANCE)
         )
@@ -235,7 +248,7 @@ case class RelationTarget(
         if (mapping.nonEmpty) {
             val partition = this.partition.mapValues(v => SingleValue(v))
 
-            logger.info(s"Writing mapping '${this.mapping}' to relation '${relation.identifier}' into partition $partition with mode '$mode'")
+            logger.info(s"Writing mapping '${this.mapping}' to relation '${relation.identifier}' into partition (${partition.map(p => p._1 + "=" + p._2.value).mkString(",")}) with mode '$mode'")
             val mapping = context.getMapping(this.mapping.mapping)
             val dfIn = executor.instantiate(mapping, this.mapping.output)
             val dfOut =

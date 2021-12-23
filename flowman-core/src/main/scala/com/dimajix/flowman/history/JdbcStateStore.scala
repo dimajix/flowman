@@ -97,7 +97,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             null,
             None
         )
-        logger.debug(s"Checking last state of '${run.phase}' job '${run.namespace}/${run.project}/${run.job}' in history database")
+        logger.debug(s"Checking last state of '${run.phase}' job '${run.name}' in history database")
         withSession { repository =>
             repository.getJobState(run)
         }
@@ -166,7 +166,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
                 LogFilter.filter(logFilters, key, value.toString)
             }
 
-        logger.debug(s"Start '${digest.phase}' job '${run.namespace}/${run.project}/${run.job}' in history database")
+        logger.debug(s"Start '${digest.phase}' job '${run.name}' in history database")
         val run2 = withSession { repository =>
             repository.insertJobRun(run, digest.args, env)
         }
@@ -183,7 +183,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         val status = result.status
         val jdbcToken = token.asInstanceOf[JdbcJobToken]
         val run = jdbcToken.run
-        logger.info(s"Mark '${run.phase}' job '${run.namespace}/${run.project}/${run.job}' as $status in history database")
+        logger.info(s"Mark '${run.phase}' job '${run.name}' as $status in history database")
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         val graph = Graph.ofGraph(jdbcToken.graph.build())
@@ -214,7 +214,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             null,
             None
         )
-        logger.debug(s"Checking state of target '${run.namespace}/${run.project}/${run.target}' in history database")
+        logger.debug(s"Checking state of target '${run.name}' in history database")
         withSession { repository =>
             repository.getTargetState(run, target.partitions)
         }
@@ -250,7 +250,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             None
         )
 
-        logger.debug(s"Start '${digest.phase}' target '${run.namespace}/${run.project}/${run.target}' in history database")
+        logger.debug(s"Start '${digest.phase}' target '${run.name}' in history database")
         val run2 = withSession { repository =>
             repository.insertTargetRun(run, digest.partitions)
         }
@@ -266,7 +266,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         val status = result.status
         val jdbcToken = token.asInstanceOf[JdbcTargetToken]
         val run = jdbcToken.run
-        logger.info(s"Mark '${run.phase}' target '${run.namespace}/${run.project}/${run.target}' as $status in history database")
+        logger.info(s"Mark '${run.phase}' target '${run.name}' as $status in history database")
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withSession{ repository =>

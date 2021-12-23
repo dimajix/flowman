@@ -52,7 +52,13 @@ private[history] object JdbcStateRepository {
         end_ts:Option[Timestamp],
         status:String,
         error:Option[String]
-    )
+    ) {
+        def name : String = {
+            val ns = if (namespace.nonEmpty) namespace + "/" else ""
+            val prj = if (project.nonEmpty) project + "/" else ""
+            ns + prj + job
+        }
+    }
 
     case class JobArgument(
         job_id:Long,
@@ -92,7 +98,13 @@ private[history] object JdbcStateRepository {
         end_ts:Option[Timestamp],
         status:String,
         error:Option[String]
-    )
+    ) {
+        def name : String = {
+            val ns = if (namespace.nonEmpty) namespace + "/" else ""
+            val prj = if (project.nonEmpty) project + "/" else ""
+            ns + prj + target
+        }
+    }
 
     case class TargetPartition(
         target_id:Long,
@@ -410,7 +422,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     }
 
     def setJobStatus(run:JobRun) : Unit = {
-        val q = jobRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status, r.error)).update((run.end_ts, run.status, run.error.map(_.substring(0, 1021))))
+        val q = jobRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status, r.error)).update((run.end_ts, run.status, run.error.map(_.take(1021))))
         Await.result(db.run(q), Duration.Inf)
     }
 
@@ -724,7 +736,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     }
 
     def setTargetStatus(run:TargetRun) : Unit = {
-        val q = targetRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status, r.error)).update((run.end_ts, run.status, run.error.map(_.substring(0, 1021))))
+        val q = targetRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status, r.error)).update((run.end_ts, run.status, run.error.map(_.take(1021))))
         Await.result(db.run(q), Duration.Inf)
     }
 

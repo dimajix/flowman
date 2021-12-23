@@ -45,6 +45,8 @@ class PhaseCommand(phase:Phase) extends Command {
     var force: Boolean = false
     @Option(name = "-k", aliases=Array("--keep-going"), usage = "continues execution of all targets in case of errors")
     var keepGoing: Boolean = false
+    @Option(name = "--dry-run", usage = "perform dry run without actually executing build targets")
+    var dryRun: Boolean = false
     @Option(name = "-nl", aliases=Array("--no-lifecycle"), usage = "only executes the specific phase and not the whole lifecycle")
     var noLifecycle: Boolean = false
 
@@ -61,7 +63,7 @@ class PhaseCommand(phase:Phase) extends Command {
                 context.getTarget(TargetIdentifier(t))
             }
             val runner = session.runner
-            runner.executeTargets(allTargets, lifecycle, force = force, keepGoing = keepGoing)
+            runner.executeTargets(allTargets, lifecycle, force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
         } match {
             case Success(status) => status.success
             case Failure(e) =>

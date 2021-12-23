@@ -261,9 +261,9 @@ case class FileRelation(
             .save(outputPath.toString)
     }
     private def doWriteStaticPartitions(execution:Execution, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
-        val partitionSpec = PartitionSchema(partitions).spec(partition)
-        val outputPath = collector.resolve(partitionSpec.toMap)
-        logger.info(s"Writing file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to output location '$outputPath' as '$format' with mode '$mode'")
+        val partitionMap = PartitionSchema(partitions).spec(partition).toMap
+        val outputPath = collector.resolve(partitionMap)
+        logger.info(s"Writing file relation '$identifier' partition (${partitionMap.map(kv => kv._1 + "=" + kv._2).mkString(",")}) to output location '$outputPath' as '$format' with mode '$mode'")
 
         requireAllPartitionKeys(partition)
 

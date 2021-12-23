@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.common.ParserUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.spec.target.RelationTargetSpec
+import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.spec.target.RelationTarget
 import com.dimajix.flowman.tools.exec.Command
 
 
@@ -57,18 +57,16 @@ class PhaseCommand(phase:Phase) extends Command {
             else
                 project.relations.keys.toSeq
         val partition = ParserUtils.parseDelimitedKeyValues(this.partition)
-
-        val jobContext = ScopeContext.builder(context)
-            .withTargets(toRun.map(rel => (rel,  RelationTargetSpec(rel, rel, partition))).toMap)
-            .build()
-        val job = Job.builder(jobContext)
-            .setName("execute-relation-" + Clock.systemUTC().millis())
-            .setDescription("Modify relations via CLI")
-            .setTargets(toRun.map(t => TargetIdentifier(t)))
-            .build()
+        val targets = toRun.map { rel =>
+            // Create Properties without a project. Otherwise the lookup of the relation will fail, since its identifier
+            // will refer to the project. And since the relation are not part of the project, this is also really correct
+            val name = rel + "-" + Clock.systemUTC().millis()
+            val props = Target.Properties(context, name, "relation").copy(project = None)
+            RelationTarget(props, RelationIdentifier(name), MappingOutputIdentifier.empty, partition)
+        }
 
         val runner = session.runner
-        val result = runner.executeJob(job, Seq(phase), force=force, keepGoing=keepGoing, dryRun=dryRun)
+        val result = runner.executeTargets(targets, Seq(phase), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
 
         result.success
     }

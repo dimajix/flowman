@@ -34,7 +34,7 @@ import com.dimajix.flowman.model.Target
 object CountTarget {
     def apply(context: Context, mapping:MappingOutputIdentifier) : CountTarget = {
         new CountTarget(
-            Target.Properties(context),
+            Target.Properties(context, mapping.name, "count"),
             mapping
         )
     }

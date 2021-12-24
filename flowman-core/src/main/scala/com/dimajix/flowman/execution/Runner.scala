@@ -334,9 +334,10 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      */
     private def executeTargetPhase(execution: Execution, target:Target, phase:Phase, force:Boolean, dryRun:Boolean) : TargetResult = {
         val forceDirty = force || execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY)
+        val useHistory = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_USE_HISTORY)
 
         // We need to check the target *before* we run code inside the monitor (which will mark the target as RUNNING)
-        val canSkip = !force && checkTarget(target.digest(phase))
+        val canSkip = !forceDirty && useHistory && checkTarget(target.digest(phase))
 
         val startTime = Instant.now()
         execution.monitorTarget(target, phase) { execution =>

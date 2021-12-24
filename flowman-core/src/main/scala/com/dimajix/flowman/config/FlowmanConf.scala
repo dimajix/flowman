@@ -81,6 +81,10 @@ object FlowmanConf {
         .doc("Consider all targets as being 'dirty' without checking")
         .booleanConf
         .createWithDefault(false)
+    val EXECUTION_TARGET_USE_HISTORY = buildConf("flowman.execution.target.useHistory")
+        .doc("Consult history store for deciding if a target is dirty")
+        .booleanConf
+        .createWithDefault(false)
     val EXECUTION_EXECUTOR_CLASS = buildConf("flowman.execution.executor.class")
         .doc("Class name for executor used to run targets")
         .classConf(classOf[Executor])

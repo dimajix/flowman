@@ -33,7 +33,11 @@ variable `FLOWMAN_PLUGIN_DIR` or `FLOWMAN_HOME`.
 
 - `flowman.execution.target.forceDirty` *(type: boolean)* *(default:false)* (since Flowman 0.14.0)
 When enabled (i.e. set to `true`), then Flowman will treat all targets as being dirty. Otherwise, Flowman will check
-the existence of targets to decide if a rebuild is required.
+the existence of targets and/or the history to decide if a rebuild is required.
+
+- `flowman.execution.target.useStateStore`  *(type: boolean)* *(default:false)* (since Flowman 0.20.0)
+  When enabled (i.e. set to `false`), then Flowman will ignore the history information to check if a target needs a
+  rebuild. Otherwise, the history store will be trusted for deciding if a target needs a rebuild.
   
 - `flowman.execution.executor.class` *(type: class)* *(default: `com.dimajix.flowman.execution.SimpleExecutor`)* (since Flowman 0.16.0)
 Configure the executor to use. The default `SimpleExecutor` will process all targets in the correct order

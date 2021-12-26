@@ -22,6 +22,8 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.common.No
+import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.RunnerJobTest.NullTarget
 import com.dimajix.flowman.model.BaseTarget
@@ -42,6 +44,7 @@ import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Prototype
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -372,6 +375,47 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             .build()
         val runner = session.runner
         runner.executeJob(job, Seq(Phase.CREATE), keepGoing =true) should be(Status.FAILED)
+    }
+
+    it should "execute dependent targets of dirty targets" in {
+        def genTarget(name:String, doRun:Boolean, dirty:Trilean, produces:Set[ResourceIdentifier]=Set(), requires:Set[ResourceIdentifier]=Set()) : Context => Target = (ctx:Context) => {
+            val instance = TargetDigest("default", "default", name, Phase.CREATE)
+            val target = mock[Target]
+            (target.name _).expects().atLeastOnce().returns(name)
+            (target.before _).expects().atLeastOnce().returns(Seq())
+            (target.after _).expects().atLeastOnce().returns(Seq())
+            (target.phases _).expects().atLeastOnce().returns(Lifecycle.ALL.toSet)
+            (target.requires _).expects(*).atLeastOnce().returns(requires)
+            (target.provides _).expects(*).atLeastOnce().returns(produces)
+            (target.project _).expects().anyNumberOfTimes().returns(None)
+            (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
+            (target.digest _).expects(Phase.CREATE).atLeastOnce().returns(instance)
+            (target.dirty _).expects(*, Phase.CREATE).anyNumberOfTimes().returns(dirty)
+            (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
+            if (doRun) {
+                (target.execute _).expects(*, Phase.CREATE).returning(TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
+            }
+
+            target
+        }
+
+        val project = Project(
+            name = "default",
+            targets = Map(
+                "t0" -> genTarget("t0", true, Yes, produces=Set(ResourceIdentifier.ofHivePartition("some_table", Map("p1" -> "123")))),
+                "t1" -> genTarget("t1", true, No, requires=Set(ResourceIdentifier.ofHivePartition("some_table", Map()))),
+                "t2" -> genTarget("t2", false, No)
+            )
+        )
+        val session = Session.builder()
+            .withProject(project)
+            .withSparkSession(spark)
+            .build()
+        val job = Job.builder(session.getContext(session.project.get))
+            .setTargets(project.targets.map(t => TargetIdentifier(t._1)).toSeq)
+            .build()
+        val runner = session.runner
+        runner.executeJob(job, Seq(Phase.CREATE), keepGoing =true) should be(Status.SUCCESS)
     }
 
     it should "invoke all hooks (in jobs and namespaces)" in {

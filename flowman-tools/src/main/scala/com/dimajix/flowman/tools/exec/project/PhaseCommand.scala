@@ -47,6 +47,8 @@ sealed class PhaseCommand(phase:Phase) extends Command {
     var args: Array[String] = Array()
     @Option(name = "-t", aliases=Array("--target"), usage = "only process specific targets, as specified by a regex", metaVar = "<target>")
     var targets: Array[String] = Array(".*")
+    @Option(name = "-d", aliases=Array("--dirty"), usage = "mark targets as being dirty, as specified by a regex", metaVar = "<target>")
+    var dirtyTargets: Array[String] = Array()
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
     @Option(name = "-k", aliases=Array("--keep-going"), usage = "continues execution of job with next target in case of errors")
@@ -84,7 +86,7 @@ sealed class PhaseCommand(phase:Phase) extends Command {
 
         job.interpolate(args).forall { args =>
             val runner = session.runner
-            val result = runner.executeJob(job, lifecycle, args, targets.map(_.r), force, keepGoing, dryRun)
+            val result = runner.executeJob(job, lifecycle, args, targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r), force=force, keepGoing=keepGoing, dryRun=dryRun)
             result.success
         }
     }

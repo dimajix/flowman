@@ -9,6 +9,7 @@
 * Implement new `merge`target
 * Implement merge operation for Delta relations
 * Implement merge operation for JDBC relations (only for some databases)
+* Add new `-d` / `--dirty` option for explicitly marking individual targets as dirty
 
 
 # Version 0.19.0 - 2021-12-13

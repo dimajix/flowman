@@ -214,7 +214,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @param phases
      * @return
      */
-    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), targets:Seq[Regex]=Seq(".*".r), force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : LifecycleResult = {
+    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), targets:Seq[Regex]=Seq(".*".r), dirtyTargets:Seq[Regex]=Seq(), force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : LifecycleResult = {
         require(args != null)
         require(phases != null)
         require(args != null)
@@ -242,7 +242,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                                 }
 
                             if (isActive)
-                                Some(executeJobPhase(execution, context, job, phase, arguments, targets, force, keepGoing, dryRun))
+                                Some(executeJobPhase(execution, context, job, phase, arguments, targets, dirtyTargets, force=force, keepGoing=keepGoing, dryRun=dryRun))
                             else
                                 None
                         }
@@ -261,6 +261,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         job:Job, phase:Phase,
         arguments:Map[String,Any],
         targets:Seq[Regex],
+        dirtyTargets:Seq[Regex],
         force:Boolean,
         keepGoing:Boolean,
         dryRun:Boolean) : JobResult = {
@@ -277,7 +278,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                     execution.monitorJob(job, arguments, phase) { execution =>
                         val instance = job.digest(phase, arguments.map { case (k, v) => k -> v.toString })
                         try {
-                            val results = executeJobTargets(execution, context, job, phase, targets, force, keepGoing, dryRun)
+                            val results = executeJobTargets(execution, context, job, phase, targets, dirtyTargets, force=force, keepGoing=keepGoing, dryRun=dryRun)
                             JobResult(job, instance, results, startTime)
                         }
                         catch {
@@ -303,7 +304,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @param token
      * @return
      */
-    private def executeJobTargets(execution:Execution, context:Context, job:Job, phase:Phase, targets:Seq[Regex], force:Boolean, keepGoing:Boolean, dryRun:Boolean) : Seq[TargetResult] = {
+    private def executeJobTargets(execution:Execution, context:Context, job:Job, phase:Phase, targets:Seq[Regex], dirtyTargets:Seq[Regex], force:Boolean, keepGoing:Boolean, dryRun:Boolean) : Seq[TargetResult] = {
         require(phase != null)
 
         // This will throw an exception if instantiation fails
@@ -316,10 +317,18 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         def targetFilter(target:Target) : Boolean =
             target.phases.contains(phase) && targets.exists(_.unapplySeq(target.name).nonEmpty)
 
+        val dirtyManager = new DirtyTargets(jobTargets, phase)
+        dirtyManager.markAsDirty(dirtyTargets)
+
         executor.execute(execution, context, phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
             val sc = execution.spark.sparkContext
             withJobGroup(sc, target.name, s"$phase target ${target.identifier}") {
-                executeTargetPhase(execution, target, phase, force, dryRun)
+                val dirty = dirtyManager.isDirty(target)
+                val result = executeTargetPhase(execution, target, phase, force || dirty, dryRun)
+                if (result.status == Status.SUCCESS) {
+                    dirtyManager.markAsDirty(target)
+                }
+                result
             }
         }
     }
@@ -337,14 +346,14 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         val useHistory = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_USE_HISTORY)
 
         // We need to check the target *before* we run code inside the monitor (which will mark the target as RUNNING)
-        val canSkip = !forceDirty && useHistory && checkTarget(target.digest(phase))
+        val isClean = !forceDirty && useHistory && checkTarget(target.digest(phase))
 
         val startTime = Instant.now()
         execution.monitorTarget(target, phase) { execution =>
             logSubtitle(s"$phase target '${target.identifier}'")
 
             // First checkJob if execution is really required
-            if (canSkip) {
+            if (isClean) {
                 logger.info(cyan(s"Target '${target.identifier}' up to date for phase '$phase' according to state store, skipping execution"))
                 logger.info("")
                 TargetResult(target, phase, Status.SKIPPED, startTime)
@@ -556,14 +565,14 @@ final class Runner(
       * @param phases
       * @return
       */
-    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), targets:Seq[Regex]=Seq(".*".r), force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : Status = {
+    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), targets:Seq[Regex]=Seq(".*".r), dirtyTargets:Seq[Regex]=Seq(), force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : Status = {
         require(args != null)
         require(phases != null)
         require(args != null)
 
         logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.identifier}'")
         val runner = new JobRunnerImpl(this)
-        val result = runner.executeJob(job, phases, args, targets, force, keepGoing, dryRun, isolated)
+        val result = runner.executeJob(job, phases, args, targets, dirtyTargets=dirtyTargets, force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=isolated)
         result.status
     }
 

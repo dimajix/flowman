@@ -19,12 +19,16 @@ package com.dimajix.flowman.execution
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
 
+import org.slf4j.LoggerFactory
+
 import com.dimajix.common.IdentityHashMap
 import com.dimajix.common.IdentityHashSet
 import com.dimajix.flowman.model.Target
 
 
 final class DirtyTargets(targets: Seq[Target], phase:Phase) {
+    private val logger = LoggerFactory.getLogger(classOf[DirtyTargets])
+
     private val dependencies = {
         // Initialize dependencies map with targets as keys
         val dependencies = IdentityHashMap[Target,IdentityHashSet[Target]]()
@@ -49,22 +53,43 @@ final class DirtyTargets(targets: Seq[Target], phase:Phase) {
     }
     private val dirtyTargets = IdentityHashSet[Target]()
 
+    /**
+     * Checks if a given target was tainted, i.e. it is dirty
+     * @param target
+     * @return
+     */
     def isDirty(target: Target) : Boolean = {
         dirtyTargets.synchronized {
             dirtyTargets.contains(target)
         }
     }
-    def markAsDirty(target: Target) : Unit = {
+
+    /**
+     * Taint a given target as being dirty
+     * @param target
+     */
+    def taint(target: Target) : Unit = {
         dirtyTargets.synchronized {
             dirtyTargets += target
             dependencies.get(target).map { deps =>
-                dirtyTargets ++= deps
+                val newDirty = deps -- dirtyTargets
+                if (newDirty.nonEmpty) {
+                    logger.info(s"Cascade target '${target.identifier}' to taint targets ${newDirty.map(_.identifier.toString).mkString(",")}")
+                    dirtyTargets ++= newDirty
+                }
             }
         }
     }
-    def markAsDirty(targets: Seq[Regex]) : Unit = {
+
+    /**
+     * Taint possibly multiple targets as being dirty
+     * @param targets
+     */
+    def taint(targets: Seq[Regex]) : Unit = {
         val dirtyTargets = dependencies.keys.filter(target => targets.exists(_.unapplySeq(target.name).nonEmpty))
-        dirtyTargets.foreach(markAsDirty)
+        if (dirtyTargets.nonEmpty)
+            logger.info(s"Explicitly taint targets as dirty: ${dirtyTargets.map(_.identifier.toString).mkString(",")}")
+        dirtyTargets.foreach(taint)
     }
 
     /**

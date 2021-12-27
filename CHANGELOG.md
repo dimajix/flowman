@@ -9,6 +9,7 @@
 * Implement new `merge`target
 * Implement merge operation for Delta relations
 * Implement merge operation for JDBC relations (only for some databases)
+* Add new config variable `flowman.execution.target.useHistory` (default is `false`)
 * Add new `-d` / `--dirty` option for explicitly marking individual targets as dirty
 
 

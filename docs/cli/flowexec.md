@@ -22,9 +22,13 @@ flowexec project <create|build|verify|truncate|destroy> <args>
 ```
 This will execute the whole job by executing the desired lifecycle for the `main` job. Additional parameters are
 * `-h` displays help
-* `-f` or `--force` force execution of the project, even if the output targets already exist.
-* `-t` or `--targets` explicitly specify targets to be executed. The targets can be specified as regular expressions
-* `-d` or `--dirty` explicitly mark individual targets as being dirty, i.e. they need a rebuild. The targets can be specified as regular expressions
+* `-f` or `--force` force execution of all targets in the project, even if Flowman considers the targets to be clean.
+* `-t` or `--targets` explicitly specify targets to be executed. The targets can be specified as regular expressions.
+* `-d` or `--dirty` explicitly mark individual targets as being dirty, i.e. they need a rebuild. The targets can be
+specified as regular expressions. The difference between `-d` and `-t` is that while `-t` tells Flowman to only rebuild
+the specified targets if they are dirty, `-d` actually taints specific targets as being dirty, i.e. they need a rebuild.
+The difference between `-f` and `-d` is that `-f` marks *all* targets as being dirty, while you can explicitly select
+individual targets with `-d`.
 * `-k` or `--keep-going` proceed with execution, in case of errors.
 * `-j <n>` or `--jobs <n>` execute multiple jobs in parallel
 * `--dry-run` only simulate execution
@@ -48,9 +52,13 @@ flowexec job <create|build|verify|truncate|destroy> <job_name> <args>
 ```
 This will execute the whole job by executing the desired lifecycle for the `main` job. Additional parameters are
 * `-h` displays help
-* `-f` or `--force` force execution of the project, even if the output targets already exist.
+* `-f` or `--force` force execution of all targets in the job, even if Flowman considers the targets to be clean.
 * `-t` or `--targets` explicitly specify targets to be executed. The targets can be specified as regular expressions
-* `-d` or `--dirty` explicitly mark individual targets as being dirty, i.e. they need a rebuild. The targets can be specified as regular expressions
+* `-d` or `--dirty` explicitly mark individual targets as being dirty, i.e. they need a rebuild. The targets can be
+  specified as regular expressions. The difference between `-d` and `-t` is that while `-t` tells Flowman to only rebuild
+  the specified targets if they are dirty, `-d` actually taints specific targets as being dirty, i.e. they need a rebuild.
+  The difference between `-f` and `-d` is that `-f` marks *all* targets as being dirty, while you can explicitly select
+  individual targets with `-d`.
 * `-k` or `--keep-going` proceed with execution, in case of errors.
 * `-j <n>` runs multiple job instances in parallel. This is very useful for running a job for a whole range of dates.
 * `--dry-run` only simulate execution

@@ -318,7 +318,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             target.phases.contains(phase) && targets.exists(_.unapplySeq(target.name).nonEmpty)
 
         val dirtyManager = new DirtyTargets(jobTargets, phase)
-        dirtyManager.markAsDirty(dirtyTargets)
+        dirtyManager.taint(dirtyTargets)
 
         executor.execute(execution, context, phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
             val sc = execution.spark.sparkContext
@@ -326,7 +326,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                 val dirty = dirtyManager.isDirty(target)
                 val result = executeTargetPhase(execution, target, phase, force || dirty, dryRun)
                 if (result.status == Status.SUCCESS) {
-                    dirtyManager.markAsDirty(target)
+                    dirtyManager.taint(target)
                 }
                 result
             }

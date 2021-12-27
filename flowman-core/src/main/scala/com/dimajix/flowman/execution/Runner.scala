@@ -190,9 +190,9 @@ private[execution] sealed class RunnerImpl {
 
     private def fmt(duration:Duration) : String = {
         if (duration.getSeconds >= 60*60)
-            s"${duration.toHours}:${duration.toMinutes % 60L} h"
+            f"${duration.toHours}:${(duration.toMinutes % 60L)%02d} h"
         else if (duration.getSeconds >= 60)
-            s"${duration.toMinutes}:${duration.getSeconds % 60L} min"
+            f"${duration.toMinutes}:${(duration.getSeconds % 60L)%02d} min"
         else
             s"${duration.toMillis / 1000.0} s"
     }

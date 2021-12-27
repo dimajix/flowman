@@ -266,14 +266,15 @@ final class Catalog(val spark:SparkSession, val config:Configuration, val extern
     def dropTable(table:TableIdentifier, ignoreIfNotExists:Boolean=false) : Unit = {
         require(table != null)
 
+        val db = formatDatabaseName(table.database.getOrElse(catalog.getCurrentDatabase))
         val exists = tableExists(table)
         if (!ignoreIfNotExists && !exists) {
-            throw new NoSuchTableException(table.database.getOrElse(catalog.getCurrentDatabase), table.table)
+            throw new NoSuchTableException(db, table.table)
         }
 
         if (exists) {
             logger.info(s"Dropping Hive table/view $table")
-            val catalogTable = catalog.getTableMetadata(table)
+            val catalogTable =  catalog.externalCatalog.getTable(db, formatTableName(table.table))
             require(catalogTable.tableType != CatalogTableType.VIEW)
 
             // Delete all partitions

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.SparkShim
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.catalog.Catalog
+import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
@@ -393,7 +393,7 @@ class Session private[execution](
 
     private lazy val _catalog = {
         val externalCatalogs = _namespace.toSeq.flatMap(_.catalogs).map(_.instantiate(rootContext))
-        new Catalog(spark, config, externalCatalogs)
+        new HiveCatalog(spark, config, externalCatalogs)
     }
 
     private lazy val _projectStore : Store = {
@@ -418,13 +418,13 @@ class Session private[execution](
 
 
     /**
-      * Returns the Namespace tied to this Flowman session.
+      * Returns the [[Namespace]] tied to this Flowman session.
       * @return
       */
     def namespace : Option[Namespace] = _namespace
 
     /**
-     * Returns the Project tied to this Flowman session.
+     * Returns the [[Project]] tied to this Flowman session.
      * @return
      */
     def project : Option[Project] = _project
@@ -480,10 +480,10 @@ class Session private[execution](
     }
 
     /**
-      * Returns a Catalog for managing Hive tables
+      * Returns a [[HiveCatalog]] for managing Hive tables
       * @return
       */
-    def catalog : Catalog = _catalog
+    def catalog : HiveCatalog = _catalog
 
     /**
       * Returns true if a SparkSession is already available
@@ -503,7 +503,7 @@ class Session private[execution](
     def fs : FileSystem = rootContext.fs
 
     /**
-      * Returns the MetricRegistry of this session
+      * Returns the [[MetricRegistry]] of this Flowman session
       * @return
       */
     def metrics : MetricSystem = metricSystem

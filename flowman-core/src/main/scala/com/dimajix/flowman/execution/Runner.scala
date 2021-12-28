@@ -27,6 +27,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
 
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
@@ -116,12 +117,13 @@ private[execution] sealed class RunnerImpl {
     }
 
     private val lineSize = 109
-    private val separator = boldWhite((0 until lineSize).map(_ => "-").mkString)
+    private val separator = boldWhite(StringUtils.repeat('-', lineSize))
     def logSubtitle(s:String) : Unit = {
-        val l = (lineSize - 3 - (s.length + 1)) / 2
+        val l = (lineSize - 2 - s.length) / 2
         val t = if (l > 3) {
-            val sep = (0 to l).map(_ => '-').mkString
-            boldWhite(sep) + " " + boldCyan(s) + " " + boldWhite(sep)
+            val lsep = StringUtils.repeat('-', l)
+            val rsep = StringUtils.repeat('-', lineSize - 2 - s.length - l)
+            boldWhite(lsep) + " " + boldCyan(s) + " " + boldWhite(rsep)
         }
         else {
             boldWhite("--- ") + boldCyan(s) + boldWhite(" ---")
@@ -174,7 +176,10 @@ private[execution] sealed class RunnerImpl {
         logger.info(boldWhite(s"Execution summary for ${result.category.lower} '${result.identifier}'"))
         logger.info("")
         for (child <- result.children) {
-            logger.info(s"${child.identifier} ... ${status(child.status)} [${fmt(child.duration)}]")
+            val name = child.identifier.toString
+            val status = s"${this.status(child.status)} [${StringUtils.leftPad(fmt(child.duration), 10)}]"
+            val dots = StringUtils.repeat('.', lineSize - child.status.upper.length - name.length - 15)
+            logger.info(s"$name $dots $status")
         }
         logStatus(title, result.status, result.duration, result.endTime)
     }
@@ -189,12 +194,19 @@ private[execution] sealed class RunnerImpl {
     }
 
     private def fmt(duration:Duration) : String = {
-        if (duration.getSeconds >= 60*60)
-            f"${duration.toHours}:${(duration.toMinutes % 60L)%02d} h"
-        else if (duration.getSeconds >= 60)
-            f"${duration.toMinutes}:${(duration.getSeconds % 60L)%02d} min"
-        else
+        if (duration.getSeconds >= 60*60) {
+            val hours = duration.toHours
+            val minutes = duration.toMinutes % 60L
+            f"$hours:$minutes%02d h"
+        }
+        else if (duration.getSeconds >= 60) {
+            val minutes = duration.toMinutes
+            val seconds = duration.getSeconds % 60L
+            f"$minutes:$seconds%02d min"
+        }
+        else {
             s"${duration.toMillis / 1000.0} s"
+        }
     }
 }
 

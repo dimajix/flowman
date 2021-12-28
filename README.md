@@ -6,24 +6,27 @@
 
 [Flowman.io](https://flowman.io)
 
-Flowman is a Spark based ETL program that simplifies the act of writing data transformations.
-The main idea is that users write so called *specifications* in purely declarative YAML files
-instead of writing Spark jobs in Scala or Python. The main advantage of this approach is that
-many technical details of a correct and robust implementation are encapsulated and the user
+Flowman is a Spark based data build tool that simplifies the act of writing data transformations as part of ETL
+processes. The main idea is that users write purely declarative *specifications* which describe all details of the
+data sources, sinks and data transformations instead of writing Spark jobs in Scala or Python. The main advantage of 
+this approach is that many technical details of a correct and robust implementation are encapsulated and the user
 can concentrate on the data transformations themselves.
 
-In addition to writing and executing data transformations, Flowman can also be used for
-managing physical data models, i.e. Hive tables. Flowman can create such tables from a
-specification with the correct schema. This helps to keep all aspects (like transformations
-and schema information) in a single place managed by a single program.
+In addition to writing and executing data transformations, Flowman can also be used for managing physical data models, 
+i.e. Hive or JDBC tables. Flowman can create such tables from a specification with the correct schema. This helps to 
+keep all aspects (like transformations and schema information) in a single place managed by a single program.
 
 ### Noteable Features
 
+* Semantics of a build tool like Maven - just for data instead for applications
 * Declarative syntax in YAML files
-* Data model management (Create and Destroy Hive tables or file based storage)
+* Data model management (Create, Migrate and Destroy Hive tables, JDBC tables or file based storage)
 * Flexible expression language
 * Jobs for managing build targets (like copying files or uploading data via sftp)
-* Powerful yet simple command line tool
+* Automatic data dependency management within the execution of individual jobs
+* Rich set of execution metrics
+* Meaningful logging output
+* Powerful yet simple command line tools
 * Extendable via Plugins
 
 
@@ -51,9 +54,26 @@ location using
     tar xvzf flowman-{version}-bin.tar.gz
 
 
+## Apache Spark
+
+Flowman does not bring its own Spark libraries, but relies on a correctly installed Spark distribution. You can 
+download appropriate packages directly from [https://spark.apache.org](the Spark Homepage). 
+
+
+## Hadoop Utils for Windows
+
+If you are trying to run the application on Windows, you also need the *Hadoop Winutils*, which is a set of
+DLLs required for the Hadoop libraries to be working. You can get a copy at https://github.com/kontext-tech/winutils .
+Once you downloaded the appropriate version, you need to place the DLLs into a directory `$HADOOP_HOME/bin`, where
+`HADOOP_HOME` refers to some location on your Windows PC. You also need to set the following environment variables:
+* `HADOOP_HOME` should point to the parent directory of the `bin` directory
+* `PATH` should also contain `$HADOOP_HOME/bin`
+
+
+
 # Command Line Utils
 
-The primary tool provided by Flowman is called `flowexec` and is locaed in the `bin` folder of the 
+The primary tool provided by Flowman is called `flowexec` and is located in the `bin` folder of the 
 installation directory.
 
 ## General Usage

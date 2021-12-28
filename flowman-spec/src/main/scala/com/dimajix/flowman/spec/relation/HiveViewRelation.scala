@@ -22,7 +22,7 @@ import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
-import com.dimajix.flowman.catalog.Catalog
+import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
@@ -187,7 +187,7 @@ case class HiveViewRelation(
         }
     }
 
-    private def migrateFromView(catalog:Catalog, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
+    private def migrateFromView(catalog:HiveCatalog, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
         val curTable = catalog.getTable(tableIdentifier)
         val curSchema = SchemaUtils.normalize(curTable.schema)
         val newSchema = SchemaUtils.normalize(catalog.spark.sql(newSelect).schema)
@@ -205,7 +205,7 @@ case class HiveViewRelation(
         }
     }
 
-    private def migrateFromTable(catalog:Catalog, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
+    private def migrateFromTable(catalog:HiveCatalog, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for HiveView relation '$identifier' from TABLE to a VIEW $tableIdentifier, but migrations are disabled.")

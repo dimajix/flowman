@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,13 +62,13 @@ import com.dimajix.spark.sql.SchemaUtils
 
 
 /**
- * The Catalog is a wrapper around the Spark external catalog, which mainly contains Hive tables.
+ * The HiveCatalog is a wrapper around the Spark external catalog, which mainly contains Hive tables.
  * @param spark
  * @param config
  * @param externalCatalogs
  */
-final class Catalog(val spark:SparkSession, val config:Configuration, val externalCatalogs: Seq[ExternalCatalog] = Seq()) {
-    private val logger = LoggerFactory.getLogger(classOf[Catalog])
+final class HiveCatalog(val spark:SparkSession, val config:Configuration, val externalCatalogs: Seq[ExternalCatalog] = Seq()) {
+    private val logger = LoggerFactory.getLogger(classOf[HiveCatalog])
     private val catalog = spark.sessionState.catalog
     private val hadoopConf = spark.sparkContext.hadoopConfiguration
 

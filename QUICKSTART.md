@@ -27,8 +27,17 @@ cd playground# Download and unpack Spark & Hadoop
 curl -L https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.1.2-bin-hadoop3.2.tgz | tar xvzf -# Create a nice link
 ln -snf spark-3.1.2-bin-hadoop3.2 spark
 ```
-
 The Spark package already contains Hadoop, so with this single download you already have both installed and integrated with each other.
+
+### Download & Install Hadoop Utils for Windows
+
+If you are trying to run the application on Windows, you also need the *Hadoop Winutils*, which is a set of
+DLLs required for the Hadoop libraries to be working. You can get a copy at https://github.com/kontext-tech/winutils .
+Once you downloaded the appropriate version, you need to place the DLLs into a directory `$HADOOP_HOME/bin`, where
+`HADOOP_HOME` refers to some location on your Windows PC. You also need to set the following environment variables:
+* `HADOOP_HOME` should point to the parent directory of the `bin` directory
+* `PATH` should also contain `$HADOOP_HOME/bin`
+
 
 ## 1.2 Install Flowman
 

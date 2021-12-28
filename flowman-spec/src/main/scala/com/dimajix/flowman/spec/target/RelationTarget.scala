@@ -181,8 +181,6 @@ case class RelationTarget(
             case Phase.BUILD if mapping.nonEmpty =>
                 if (mode == OutputMode.APPEND) {
                     Yes
-                } else if (mode == OutputMode.UPDATE) {
-                    Unknown
                 } else {
                     !rel.loaded(execution, partition)
                 }

@@ -27,12 +27,10 @@ import scala.collection.JavaConverters._
 import org.apache.hadoop.conf.{Configuration => HadoopConfiguration}
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.log4j.PropertyConfigurator
-import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.internal.SQLConf
 
 import com.dimajix.flowman.common.Logging
-import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.hadoop.FileSystem
@@ -42,7 +40,6 @@ import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
-import com.dimajix.flowman.spi.SparkExtension
 import com.dimajix.spark.features
 
 
@@ -245,7 +242,7 @@ class Runner private(
       */
     val session : Session = {
         val builder = Session.builder()
-            .withSparkSession((sc,fc) => createSparkSession(sc,fc))
+            .withSparkSession(bld => createSparkSession(bld))
             .withNamespace(namespace)
             .withProject(project)
             .withEnvironment(environment)
@@ -371,14 +368,10 @@ class Runner private(
       * Creates a Spark session
       * @return
       */
-    private def createSparkSession(sparkConf:SparkConf, config:Configuration) : SparkSession = {
-        val builder = SparkSession.builder()
-            .config(sparkConf)
+    private def createSparkSession(builder:SparkSession.Builder) : SparkSession = {
+        // Only enable Hive if requested so
         if (features.hiveSupported && enableHive)
             builder.enableHiveSupport()
-
-        // Apply all session extensions to builder
-        SparkExtension.extensions.foldLeft(builder)((bld,ext) => ext.register(bld, config))
 
         val spark = builder.getOrCreate()
         val sc = spark.sparkContext

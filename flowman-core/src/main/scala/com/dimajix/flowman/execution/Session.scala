@@ -44,7 +44,7 @@ import com.dimajix.spark.sql.execution.ExtraStrategies
 
 object Session {
     class Builder {
-        private var sparkSession: (SparkConf,Configuration) => SparkSession = null
+        private var sparkSession:SparkSession.Builder => SparkSession = null
         private var sparkMaster:Option[String] = None
         private var sparkName:Option[String] = None
         private var config = Map[String,String]()
@@ -59,14 +59,14 @@ object Session {
          * @param session
          * @return
          */
-        def withSparkSession(session:(SparkConf,Configuration) => SparkSession) : Builder = {
+        def withSparkSession(session:SparkSession.Builder => SparkSession) : Builder = {
             require(session != null)
             sparkSession = session
             this
         }
         def withSparkSession(session:SparkSession) : Builder = {
             require(session != null)
-            sparkSession = (_,_) => session
+            sparkSession = _ => session
             this
         }
         def withSparkName(name:String) : Builder = {
@@ -190,12 +190,12 @@ object Session {
         }
 
         def disableSpark() : Builder = {
-            sparkSession = (_,_) => throw new IllegalStateException("Spark session disable in Flowman session")
+            sparkSession = _ => throw new IllegalStateException("Spark session disable in Flowman session")
             this
         }
 
         def enableSpark() : Builder = {
-            sparkSession = (_,_) => null
+            sparkSession = _ => null
             this
         }
 
@@ -231,7 +231,7 @@ object Session {
 class Session private[execution](
     _namespace:Option[Namespace],
     _project:Option[Project],
-    _sparkSession:(SparkConf,Configuration) => SparkSession,
+    _sparkSession:SparkSession.Builder => SparkSession,
     _sparkMaster:Option[String],
     _sparkName:Option[String],
     _config:Map[String,String],
@@ -289,11 +289,15 @@ class Session private[execution](
       * @return
       */
     private def createOrReuseSession() : SparkSession = {
-        val sparkConf = this.sparkConf
-            .setMaster(sparkMaster)
-            .setAppName(sparkName)
+        val sessionBuilder = SparkSession.builder()
+            .config(sparkConf)
+            .appName(sparkName)
+            .master(sparkMaster)
 
-        val spark = _sparkSession(sparkConf, config)
+        // Apply all session extensions to builder
+        SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder, config))
+
+        val spark = _sparkSession(sessionBuilder)
         if (spark != null) {
             logger.info("Creating Spark session using provided builder")
             // Set all session properties that can be changed in an existing session
@@ -306,14 +310,10 @@ class Session private[execution](
         }
         else {
             logger.info("Creating new Spark session")
-            val sessionBuilder = SparkSession.builder()
-                .config(sparkConf)
             if (flowmanConf.sparkEnableHive) {
                 logger.info("Enabling Spark Hive support")
                 sessionBuilder.enableHiveSupport()
             }
-            // Apply all session extensions to builder
-            SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder, config))
             // Create Spark session
             sessionBuilder.getOrCreate()
         }
@@ -547,7 +547,7 @@ class Session private[execution](
         new Session(
             _namespace,
             Some(project),
-            (_,_) => spark.newSession(),
+            _ => spark.newSession(),
             _sparkMaster,
             _sparkName,
             _config,
@@ -565,7 +565,7 @@ class Session private[execution](
         new Session(
             _namespace,
             _project,
-            (_,_) => spark.newSession(),
+            _ => spark.newSession(),
             _sparkMaster,
             _sparkName,
             _config,

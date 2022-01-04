@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import java.util.UUID
 
 import scala.collection.JavaConverters._
 
-import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.conf.{Configuration => HadoopConfiguration}
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.log4j.PropertyConfigurator
 import org.apache.spark.SparkConf
@@ -32,9 +32,9 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.internal.SQLConf
 
 import com.dimajix.flowman.common.Logging
+import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
@@ -42,6 +42,7 @@ import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
+import com.dimajix.flowman.spi.SparkExtension
 import com.dimajix.spark.features
 
 
@@ -68,7 +69,7 @@ object Runner {
         private var sparkMaster:String = "local[*]"
         private var sparkName:String = ""
         private var allowHive:Boolean = true
-        private lazy val fs = FileSystem(new Configuration(false))
+        private lazy val fs = FileSystem(new HadoopConfiguration(false))
 
         def withNamespace(namespace:URL) : Builder = {
             this.namespace = Namespace.read.url(namespace)
@@ -244,7 +245,7 @@ class Runner private(
       */
     val session : Session = {
         val builder = Session.builder()
-            .withSparkSession(conf => createSparkSession(conf))
+            .withSparkSession((sc,fc) => createSparkSession(sc,fc))
             .withNamespace(namespace)
             .withProject(project)
             .withEnvironment(environment)
@@ -370,11 +371,15 @@ class Runner private(
       * Creates a Spark session
       * @return
       */
-    private def createSparkSession(conf:SparkConf) : SparkSession = {
+    private def createSparkSession(sparkConf:SparkConf, config:Configuration) : SparkSession = {
         val builder = SparkSession.builder()
-            .config(conf)
+            .config(sparkConf)
         if (features.hiveSupported && enableHive)
             builder.enableHiveSupport()
+
+        // Apply all session extensions to builder
+        SparkExtension.extensions.foldLeft(builder)((bld,ext) => ext.register(bld, config))
+
         val spark = builder.getOrCreate()
         val sc = spark.sparkContext
         sc.setLogLevel("WARN")

@@ -8,22 +8,23 @@ stored in S3.
 ## 1.1 Install Spark
 
 Although Flowman directly builds upon the power of Apache Spark, it does not provide a working Hadoop or Spark
-environment — and there is a good reason for that: In many environments (specifically in companies using Hadoop
-distributions) a Hadoop/Spark environment is already provided by some platform team. And Flowman tries its best not
-to mess this up and instead requires a working Spark installation.
+environment by itself — and there is a good reason for that: In many environments (specifically in companies using 
+Hadoop distributions like Cloudera) a Hadoop/Spark environment is already provided by some platform team. And Flowman 
+tries its best not to mess this up and instead requires a working Spark installation.
 
-Fortunately, Spark is rather simple to install locally on your machine:
+Fortunately, Apache Spark is rather simple to install locally on your machine:
 
 ### Download & Install Spark
 
-As of this writing, the latest release of Flowman is 0.18.0 and is available prebuilt for Spark 3.1.2 on the Spark
+As of this writing, the latest release of Flowman is 0.20.0 and is available prebuilt for Spark 3.1.2 on the Spark
 homepage. So we download the appropriate Spark distribution from the Apache archive and unpack it.
 
 ```shell
 # Create a nice playground which doesn't mess up your system
 mkdir playground
-cd playground# Download and unpack Spark & Hadoop
+cd playground
 
+# Download and unpack Spark & Hadoop
 curl -L https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.1.2-bin-hadoop3.2.tgz | tar xvzf -# Create a nice link
 ln -snf spark-3.1.2-bin-hadoop3.2 spark
 ```
@@ -42,12 +43,14 @@ Once you downloaded the appropriate version, you need to place the DLLs into a d
 ## 1.2 Install Flowman
 
 You find prebuilt Flowman packages on the corresponding release page on GitHub. For this quickstart, we chose
-`flowman-dist-0.14.2-oss-spark3.0-hadoop3.2-bin.tar.gz` which nicely fits to the Spark package we just downloaded before.
+`flowman-dist-0.20.0-oss-spark3.1-hadoop3.2-bin.tar.gz` which nicely fits to the Spark package we just downloaded before.
 
 ```shell
 # Download and unpack Flowman
-curl -L https://github.com/dimajix/flowman/releases/download/0.18.0/flowman-dist-0.18.0-oss-spark3.1-hadoop3.2-bin.tar.gz | tar xvzf -# Create a nice link
-ln -snf flowman-0.18.0 flowman
+curl -L https://github.com/dimajix/flowman/releases/download/0.20.0/flowman-dist-0.20.0-oss-spark3.1-hadoop3.2-bin.tar.gz | tar xvzf -
+
+# Create a nice link
+ln -snf flowman-0.20.0 flowman
 ```
 
 ### Flowman Configuration
@@ -89,7 +92,7 @@ $ export AWS_SECRET_ACCESS_KEY=<your aws secret key>
 ## 2.1 Start interactive Flowman shell
 
 We start Flowman by running the interactive Flowman shell. While this is not the tool that would be used in automatic
-batch processing ( flowexec is the right tool for that scenario), it gives us a good idea how ETL projects in Flowman
+batch processing (`flowexec` is the right tool for that scenario), it gives us a good idea how ETL projects in Flowman
 are organized.
 
 ```shell
@@ -99,7 +102,7 @@ bin/flowshell -f examples/weather
 
 ## 2.2 Inspecting Relations
 
-Now we can inspect some of the relations defined in the project. First we list all relations
+Now we can inspect some relations defined in the project. First we list all relations
 ```
 flowman:weather> relation list
 ```
@@ -134,7 +137,7 @@ flowman:weather/main> mapping show measurements-raw
 flowman:weather/main> mapping show measurements-extracted
 flowman:weather/main> mapping show stations-raw
 ```
-Finally we'd like to leave the job context again.
+Since we are finished inspecting job related entities, we'd like to leave the job context again.
 ```
 flowman:weather/main> job leave
 ```
@@ -160,7 +163,7 @@ flowman:weather> history target search -J 1
 
 ## 2.7 Quitting
 
-Finally we quit the Flowman shell via the `quit` command.
+Finally, we quit the Flowman shell via the `quit` command.
 ```
 flowman:weather> quit
 ```

@@ -29,10 +29,11 @@ import javax.ws.rs.Path
 import com.dimajix.flowman.studio.model.Status
 
 
-@Api(value = "ping", produces = "application/json", consumes = "application/json")
+@Api(value = "/ping", produces = "application/json", consumes = "text/plain")
 @Path("/ping")
 class PingEndpoint {
     import akka.http.scaladsl.server.Directives._
+
     import com.dimajix.flowman.studio.model.JsonSupport._
 
     def routes : server.Route = pathPrefix("ping") {
@@ -42,7 +43,7 @@ class PingEndpoint {
     }
 
     @POST
-    @Path("")
+    @Path("/")
     @ApiOperation(value = "Ping", nickname = "ping", httpMethod = "POST")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "ping message", value = "some message to ping", required = true,
@@ -51,7 +52,7 @@ class PingEndpoint {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Ping", response = classOf[String])
     ))
-    private def ping() : server.Route = {
+    def ping() : server.Route = {
         post {
             entity(as[String]) { body =>
                 complete(Status("success"))

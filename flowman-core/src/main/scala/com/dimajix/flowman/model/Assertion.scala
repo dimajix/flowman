@@ -46,12 +46,19 @@ object Assertion {
         description:Option[String]
     ) extends Instance.Properties[Properties] {
         override def withName(name: String): Properties = copy(name=name)
+        def identifier : AssertionIdentifier = AssertionIdentifier(name, project.map(_.name))
     }
 }
 
 
 trait Assertion extends Instance {
     override final def category: Category = Category.ASSERTION
+
+    /**
+     * Returns an identifier for this assertion
+     * @return
+     */
+    def identifier : AssertionIdentifier
 
     /**
      * Returns a description of the assertion
@@ -87,6 +94,12 @@ trait Assertion extends Instance {
 
 abstract class BaseAssertion extends AbstractInstance with Assertion {
     protected override def instanceProperties : Assertion.Properties
+
+    /**
+     * Returns an identifier for this assertion
+     * @return
+     */
+    override def identifier : AssertionIdentifier = instanceProperties.identifier
 
     override def description: Option[String] = instanceProperties.description
 }

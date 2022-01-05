@@ -66,7 +66,7 @@ case class UpsertMapping(
         val filteredUpdates = filter.map(f => updatesDf.where(f)).getOrElse(updatesDf)
 
         // Project updates DataFrame to schema of input DataFrame
-        val conformer = new SchemaEnforcer(inputDf.schema)
+        val conformer = SchemaEnforcer(inputDf.schema)
         val projectedUpdates = conformer.transform(filteredUpdates)
 
         // Perform update operation

@@ -27,9 +27,9 @@ metrics:
 # This section contains global configuration properties. These still can be overwritten within projects or profiles
 config:
   - spark.sql.warehouse.dir=$System.getenv('FLOWMAN_HOME')/hive/warehouse
-  - hive.metastore.uris=
-  - javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=$System.getenv('FLOWMAN_HOME')/hive/db;create=true
-  - datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
+  - spark.hadoop.hive.metastore.uris=
+  - spark.hadoop.javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=$System.getenv('FLOWMAN_HOME')/hive/db;create=true
+  - spark.hadoop.datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
 
 
 # This section enables plugins. You may want to remove plugins which are of no use for you.

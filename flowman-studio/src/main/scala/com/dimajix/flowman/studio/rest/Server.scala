@@ -16,55 +16,66 @@
 
 package com.dimajix.flowman.studio.rest
 
+import java.net.InetSocketAddress
+
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Promise
 import scala.concurrent.duration.Duration
+import scala.util.Failure
+import scala.util.Success
 
 import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes.Found
+import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.settings.ServerSettings
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.net.SocketUtils
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.studio.Configuration
-import com.dimajix.flowman.studio.service.KernelManager
-import com.dimajix.flowman.studio.service.LauncherManager
-import com.dimajix.flowman.studio.service.LocalLauncher
+import com.dimajix.flowman.studio.Configuration
+import com.dimajix.flowman.studio.model.StudioRegistrationRequest
 
 
 class Server(
-    conf:Configuration
+    conf:Configuration,
+    rootSession:Session
 ) {
+    import akka.http.scaladsl.client.RequestBuilding._
     import akka.http.scaladsl.server.Directives._
+
+    import com.dimajix.flowman.studio.model.JsonSupport._
 
     private val logger = LoggerFactory.getLogger(classOf[Server])
 
-    implicit private val system: ActorSystem = ActorSystem("flowman")
+    implicit private  val system: ActorSystem = ActorSystem("flowman")
     implicit private val materializer: ActorMaterializer = ActorMaterializer()
     implicit private val executionContext: ExecutionContextExecutor = system.dispatcher
 
-    private val launcherManager = new LauncherManager
-    private val kernelManager = new KernelManager
+    private val shutdownPromise = Promise[Done]()
+    private val shutdownEndpoint = new ShutdownEndpoint(shutdownPromise.trySuccess(Done))
     private val pingEndpoint = new PingEndpoint
-    private val launcherEndpoint = new LauncherEndpoint(launcherManager)
-    private val registryEndpoint = new RegistryEndpoint(kernelManager)
-    private val kernelEndpoint = new KernelEndpoint(kernelManager, launcherManager)
+    private val projectEndpoint = new ProjectEndpoint(rootSession.store)
+    private val namespaceEndpoint = new NamespaceEndpoint(rootSession.namespace.get)
+    private val sessionEndpoint = new SessionEndpoint(rootSession)
 
     def run(): Unit = {
         val route = (
                 pathPrefix("api") {(
+                    shutdownEndpoint.routes
+                    ~
                     pingEndpoint.routes
                     ~
-                    registryEndpoint.routes
+                    projectEndpoint.routes
                     ~
-                    launcherEndpoint.routes
+                    namespaceEndpoint.routes
                     ~
-                    kernelEndpoint.routes
+                    sessionEndpoint.routes
                     ~
                     SwaggerDocEndpoint.routes
                 )}
@@ -78,7 +89,21 @@ class Server(
                     ~
                     getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/3.22.2")
                 )}
+                ~
+                pathEndOrSingleSlash {
+                    getFromResource("META-INF/resources/webjars/flowman-studio-ui/index.html")
+                }
+                ~
+                getFromResourceDirectory("META-INF/resources/webjars/flowman-studio-ui")
             )
+
+        java.lang.System.setProperty("akka.http.server.remote-address-header", "true")
+        val loggingRoute = extractRequestContext { ctx =>
+            extractClientIP { ip =>
+                logger.info(s"Client ${ip} ${ctx.request.method.value} ${ctx.request.uri.path}")
+                route
+            }
+        }
 
         logger.info("Starting Flowman Studio")
 
@@ -87,8 +112,7 @@ class Server(
 
         val server = Http().bind(conf.getBindHost(), conf.getBindPort(), akka.http.scaladsl.ConnectionContext.noEncryption(), settings)
             .to(Sink.foreach { connection =>
-                logger.info("Accepted new connection from " + connection.remoteAddress)
-                connection.handleWith(route)
+                connection.handleWith(loggingRoute)
             })
             .run()
 
@@ -96,11 +120,30 @@ class Server(
             val listenUrl = SocketUtils.toURL("http", binding.localAddress, allowAny = true)
             logger.info(s"Flowman Studio online at $listenUrl")
 
-            val localUrl = SocketUtils.toURL("http", binding.localAddress, allowAny = false)
-
-            launcherManager.addLauncher(new LocalLauncher(localUrl, system))
+            register(binding.localAddress)
         }
 
-        Await.ready(Promise[Done].future, Duration.Inf)
+        Await.ready(shutdownPromise.future, Duration.Inf)
+    }
+
+    /**
+     * Register Studio at Flowman Hub
+     * @param localAddress
+     */
+    private def register(localAddress:InetSocketAddress) : Unit = {
+        conf.getHubUrl().foreach { url =>
+            val localUrl = SocketUtils.toURL("http", localAddress)
+
+            logger.info(s"Registering Flowman Studio running at $localUrl with Flowman Hub running at $url")
+            val request = StudioRegistrationRequest(id=conf.getStudioId(), url=localUrl.toString)
+            val studioUri = Uri(url.toString)
+            val uri = studioUri.withPath(studioUri.path / "api" / "registry")
+
+            Http().singleRequest(Post(uri, request))
+                .onComplete {
+                    case Success(res) => println(res)
+                    case Failure(_) => sys.error("something wrong")
+                }
+        }
     }
 }

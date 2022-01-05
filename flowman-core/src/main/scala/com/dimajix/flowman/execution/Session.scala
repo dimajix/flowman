@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.SparkShim
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.catalog.Catalog
+import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
@@ -44,7 +44,7 @@ import com.dimajix.spark.sql.execution.ExtraStrategies
 
 object Session {
     class Builder {
-        private var sparkSession: SparkConf => SparkSession = null
+        private var sparkSession:SparkSession.Builder => SparkSession = null
         private var sparkMaster:Option[String] = None
         private var sparkName:Option[String] = None
         private var config = Map[String,String]()
@@ -59,14 +59,14 @@ object Session {
          * @param session
          * @return
          */
-        def withSparkSession(session:SparkConf => SparkSession) : Builder = {
+        def withSparkSession(session:SparkSession.Builder => SparkSession) : Builder = {
             require(session != null)
             sparkSession = session
             this
         }
         def withSparkSession(session:SparkSession) : Builder = {
             require(session != null)
-            sparkSession = (_:SparkConf) => session
+            sparkSession = _ => session
             this
         }
         def withSparkName(name:String) : Builder = {
@@ -231,7 +231,7 @@ object Session {
 class Session private[execution](
     _namespace:Option[Namespace],
     _project:Option[Project],
-    _sparkSession:SparkConf => SparkSession,
+    _sparkSession:SparkSession.Builder => SparkSession,
     _sparkMaster:Option[String],
     _sparkName:Option[String],
     _config:Map[String,String],
@@ -289,11 +289,15 @@ class Session private[execution](
       * @return
       */
     private def createOrReuseSession() : SparkSession = {
-        val sparkConf = this.sparkConf
-            .setMaster(sparkMaster)
-            .setAppName(sparkName)
+        val sessionBuilder = SparkSession.builder()
+            .config(sparkConf)
+            .appName(sparkName)
+            .master(sparkMaster)
 
-        val spark = _sparkSession(sparkConf)
+        // Apply all session extensions to builder
+        SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder, config))
+
+        val spark = _sparkSession(sessionBuilder)
         if (spark != null) {
             logger.info("Creating Spark session using provided builder")
             // Set all session properties that can be changed in an existing session
@@ -306,14 +310,10 @@ class Session private[execution](
         }
         else {
             logger.info("Creating new Spark session")
-            val sessionBuilder = SparkSession.builder()
-                .config(sparkConf)
             if (flowmanConf.sparkEnableHive) {
                 logger.info("Enabling Spark Hive support")
                 sessionBuilder.enableHiveSupport()
             }
-            // Apply all session extensions to builder
-            SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder, config))
             // Create Spark session
             sessionBuilder.getOrCreate()
         }
@@ -393,7 +393,7 @@ class Session private[execution](
 
     private lazy val _catalog = {
         val externalCatalogs = _namespace.toSeq.flatMap(_.catalogs).map(_.instantiate(rootContext))
-        new Catalog(spark, config, externalCatalogs)
+        new HiveCatalog(spark, config, externalCatalogs)
     }
 
     private lazy val _projectStore : Store = {
@@ -418,13 +418,13 @@ class Session private[execution](
 
 
     /**
-      * Returns the Namespace tied to this Flowman session.
+      * Returns the [[Namespace]] tied to this Flowman session.
       * @return
       */
     def namespace : Option[Namespace] = _namespace
 
     /**
-     * Returns the Project tied to this Flowman session.
+     * Returns the [[Project]] tied to this Flowman session.
      * @return
      */
     def project : Option[Project] = _project
@@ -480,10 +480,10 @@ class Session private[execution](
     }
 
     /**
-      * Returns a Catalog for managing Hive tables
+      * Returns a [[HiveCatalog]] for managing Hive tables
       * @return
       */
-    def catalog : Catalog = _catalog
+    def catalog : HiveCatalog = _catalog
 
     /**
       * Returns true if a SparkSession is already available
@@ -503,7 +503,7 @@ class Session private[execution](
     def fs : FileSystem = rootContext.fs
 
     /**
-      * Returns the MetricRegistry of this session
+      * Returns the [[MetricRegistry]] of this Flowman session
       * @return
       */
     def metrics : MetricSystem = metricSystem

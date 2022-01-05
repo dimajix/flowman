@@ -27,6 +27,8 @@ import com.dimajix.flowman.tools.exec.Command
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
+
 
 class InspectCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[InspectCommand])
@@ -57,7 +59,7 @@ class InspectCommand extends Command {
                 logger.error(s"Cannot resolve relation '${ex.relation}'")
                 false
             case NonFatal(e) =>
-                logger.error(s"Error '$relation': ${e.getMessage}")
+                logger.error(s"Error inspecting '$relation': ${reasons(e)}")
                 false
         }
     }

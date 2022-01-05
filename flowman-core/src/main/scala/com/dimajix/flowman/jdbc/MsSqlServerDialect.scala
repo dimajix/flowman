@@ -19,9 +19,12 @@ package com.dimajix.flowman.jdbc
 import java.sql.SQLFeatureNotSupportedException
 import java.util.Locale
 
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.jdbc.JdbcType
+import org.apache.spark.sql.types.StructType
 
+import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.FieldType
@@ -42,10 +45,6 @@ object MsSqlServerDialect extends BaseDialect {
     private object Statements extends MsSqlServerStatements(this)
 
     override def canHandle(url : String): Boolean = url.toLowerCase(Locale.ROOT).startsWith("jdbc:sqlserver")
-
-    override def quoteIdentifier(colName: String): String = {
-        s""""$colName""""
-    }
 
     override def getJdbcType(dt: FieldType): JdbcType = dt match {
         case TimestampType => JdbcType("DATETIME", java.sql.Types.TIMESTAMP)

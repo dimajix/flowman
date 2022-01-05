@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import scala.collection.convert.Wrappers._
 class IdentityHashMap[A, B] extends JMapWrapper[A, B](new java.util.IdentityHashMap)
     with JMapWrapperLike[A, B, IdentityHashMap[A, B]] {
     override def empty = new IdentityHashMap[A, B]
+    override def clone(): IdentityHashMap[A,B] = new IdentityHashMap[A,B]() ++= this
 }
 
 

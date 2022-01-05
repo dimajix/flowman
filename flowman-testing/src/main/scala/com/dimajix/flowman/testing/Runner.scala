@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,15 @@ import java.util.UUID
 
 import scala.collection.JavaConverters._
 
-import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.conf.{Configuration => HadoopConfiguration}
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.log4j.PropertyConfigurator
-import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.internal.SQLConf
 
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
@@ -68,7 +66,7 @@ object Runner {
         private var sparkMaster:String = "local[*]"
         private var sparkName:String = ""
         private var allowHive:Boolean = true
-        private lazy val fs = FileSystem(new Configuration(false))
+        private lazy val fs = FileSystem(new HadoopConfiguration(false))
 
         def withNamespace(namespace:URL) : Builder = {
             this.namespace = Namespace.read.url(namespace)
@@ -193,7 +191,7 @@ class Runner private(
     val metastorePath : String = new File(tempDir, "metastore").getCanonicalPath
 
     /** Hive Warehouse directory inside the [[tempDir]] */
-    val warehousePath : String = new File(tempDir, "wharehouse").getCanonicalPath
+    val warehousePath : String = new File(tempDir, "warehouse").getCanonicalPath
 
     /** Spark checkpoint directory inside the [[tempDir]] */
     val checkpointPath : String = new File(tempDir, "checkpoints").getCanonicalPath
@@ -244,7 +242,7 @@ class Runner private(
       */
     val session : Session = {
         val builder = Session.builder()
-            .withSparkSession(conf => createSparkSession(conf))
+            .withSparkSession(bld => createSparkSession(bld))
             .withNamespace(namespace)
             .withProject(project)
             .withEnvironment(environment)
@@ -370,11 +368,11 @@ class Runner private(
       * Creates a Spark session
       * @return
       */
-    private def createSparkSession(conf:SparkConf) : SparkSession = {
-        val builder = SparkSession.builder()
-            .config(conf)
+    private def createSparkSession(builder:SparkSession.Builder) : SparkSession = {
+        // Only enable Hive if requested so
         if (features.hiveSupported && enableHive)
             builder.enableHiveSupport()
+
         val spark = builder.getOrCreate()
         val sc = spark.sparkContext
         sc.setLogLevel("WARN")
@@ -401,7 +399,7 @@ class Runner private(
                     s"Failed to create a temp directory (under ${root}) after ${maxAttempts}")
             }
             try {
-                dir = new File(root, "spark-" + UUID.randomUUID.toString)
+                dir = new File(root, "flowman-testing-" + UUID.randomUUID.toString)
                 if (dir.exists() || !dir.mkdirs()) {
                     dir = null
                 }

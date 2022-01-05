@@ -19,7 +19,7 @@ package com.dimajix.flowman.execution
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.catalog.Catalog
+import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricBoard
@@ -72,7 +72,7 @@ class ScopedExecution(parent:Execution, isolated:Boolean=true) extends CachingEx
      * Returns the table catalog used for managing table instances
      * @return
      */
-    override def catalog: Catalog = parent.catalog
+    override def catalog: HiveCatalog = parent.catalog
 
     /**
      * Returns the [[OperationManager]] of this execution, which should be the instance created by the [[Session]]

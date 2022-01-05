@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,6 @@
  */
 
 package com.dimajix.flowman.tools.exec.test
-
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option

@@ -62,7 +62,7 @@ class DescribeCommand extends Command {
                 logger.error(s"Cannot resolve relation '${ex.relation}'")
                 false
             case NonFatal(e) =>
-                logger.error(s"Caught exception while describing relation '$relation':", e)
+                logger.error(s"Error describing relation '$relation':", e)
                 false
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Lifecycle
 import com.dimajix.flowman.execution.Phase
@@ -47,6 +48,8 @@ sealed class PhaseCommand(phase:Phase) extends Command {
     var args: Array[String] = Array()
     @Option(name = "-t", aliases=Array("--target"), usage = "only process specific targets, as specified by a regex", metaVar = "<target>")
     var targets: Array[String] = Array(".*")
+    @Option(name = "-d", aliases=Array("--dirty"), usage = "mark targets as being dirty, as specified by a regex", metaVar = "<target>")
+    var dirtyTargets: Array[String] = Array()
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
     @Option(name = "-k", aliases=Array("--keep-going"), usage = "continues execution of job with next target in case of errors")
@@ -65,7 +68,7 @@ sealed class PhaseCommand(phase:Phase) extends Command {
         }
         match {
             case Failure(e) =>
-                logger.error(s"Error instantiating job '$job': ${e.getMessage()}")
+                logger.error(s"Error instantiating job '$job': ${reasons(e)}")
                 false
             case Success(job) =>
                 executeJob(session, job, job.parseArguments(args))
@@ -90,14 +93,14 @@ sealed class PhaseCommand(phase:Phase) extends Command {
     private def executeLinear(session: Session, job:Job, args:Map[String,FieldValue], lifecycle: Seq[Phase]) : Status = {
         Status.ofAll(job.interpolate(args), keepGoing=keepGoing) { args =>
             val runner = session.runner
-            runner.executeJob(job, lifecycle, args, targets.map(_.r), force, keepGoing, dryRun)
+            runner.executeJob(job, lifecycle, args, targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r), force=force, keepGoing=keepGoing, dryRun=dryRun)
         }
     }
 
     private def executeParallel(session: Session, job:Job, args:Map[String,FieldValue], lifecycle: Seq[Phase]) : Status = {
         Status.parallelOfAll(job.interpolate(args).toSeq, parallelism, keepGoing=keepGoing, prefix="JobExecution") { args =>
             val runner = session.runner
-            runner.executeJob(job, lifecycle, args, targets.map(_.r), force, keepGoing, dryRun)
+            runner.executeJob(job, lifecycle, args, targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r), force=force, keepGoing=keepGoing, dryRun=dryRun)
         }
     }
 }

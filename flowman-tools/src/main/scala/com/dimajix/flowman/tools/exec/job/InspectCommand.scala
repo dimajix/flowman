@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Kaya Kupferschmidt
+ * Copyright 2020-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import scala.util.control.NonFatal
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.Session
@@ -59,7 +60,7 @@ class InspectCommand extends Command {
                 logger.error(s"Cannot resolve job '${ex.job}'")
                 false
             case NonFatal(e) =>
-                logger.error(s"Error '$job': ${e.getMessage}")
+                logger.error(s"Error inspecting '$job': ${reasons(e)}")
                 false
         }
     }

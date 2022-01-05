@@ -5,7 +5,6 @@ export default {
   install(Vue) {
     const api = {
       state: Vue.observable({
-          kernel: null,
           session: null
       }),
 
@@ -14,93 +13,79 @@ export default {
           .then(response => response.data)
       },
 
-      launchKernel() {
-        return axios.post('/api/kernel')
+      listSessions() {
+        return axios.get('/api/session')
           .then(response => response.data)
       },
-      shutdownKernel(kernel) {
-        return axios.delete('/api/kernel/' + kernel)
-          .then(response => response.data)
+      resetSession(session) {
+        return axios.post('/api/session/' + session + "/reset")
       },
-      listKernels() {
-        return axios.get('/api/kernel')
-          .then(response => response.data)
+      closeSession(session) {
+        return axios.delete('/api/session/' + session)
       },
 
-      listSessions(kernel) {
-        return axios.get('/api/kernel/' + kernel + "/session")
-          .then(response => response.data)
-      },
-      resetSession(kernel, session) {
-        return axios.post('/api/kernel/' + kernel + "/session/" + session + "/reset")
-      },
-      closeSession(kernel, session) {
-        return axios.delete('/api/kernel/' + kernel + "/session/" + session)
-      },
-
-      setCurrentSession(kernel, session) {
-        this.state.kernel = kernel
+      setCurrentSession(session) {
         this.state.session = session
       },
 
       getKernelLog() {
         return Vue.$sse.create({
-          url:'/api/kernel/' + this.state.kernel + '/log',
+          url:'/api/log',
           format: 'json'
         })
       },
 
-      listProjects(kernel) {
-        return axios.get('/api/kernel/' + kernel + '/project')
+      listProjects() {
+        return axios.get('/api/project')
           .then(response => response.data)
       },
-      openProject(kernel, project) {
-        return axios.post('/api/kernel/' + kernel + '/session', {projectName: project})
+      openProject(project) {
+        return axios.post('/api/session', {projectName: project})
           .then(response => response.data)
       },
 
       getCurrentSession() {
-        return axios.get('/api/kernel/' + this.state.kernel + "/session/" + this.state.session)
+        return axios.get('/api/session/' + this.state.session)
           .then(response => response.data)
       },
       listJobs() {
-        return axios.get('/api/kernel/' + this.state.kernel + "/session/" + this.state.session + "/job")
+        return axios.get('/api/session/' + this.state.session + "/job")
           .then(response => response.data)
       },
       getJob(job) {
-        return axios.get('/api/kernel/' + this.state.kernel + "/session/" + this.state.session + "/job/" + job)
+        return axios.get('/api/session/' + this.state.session + "/job/" + job)
           .then(response => response.data)
       },
       listTargets() {
-        return axios.get('/api/kernel/' + this.state.kernel + "/session/" + this.state.session + "/target")
+        return axios.get('/api/session/' + this.state.session + "/target")
           .then(response => response.data)
       },
       getTarget(target) {
-        return axios.get('/api/kernel/' + this.state.kernel + "/session/" + this.state.session + "/target/" + target)
+        return axios.get('/api/session/' + this.state.session + "/target/" + target)
           .then(response => response.data)
       },
       listTests() {
-        return axios.get('/api/kernel/' + this.state.kernel + "/session/" + this.state.session + "/test")
+        return axios.get('/api/session/' + this.state.session + "/test")
           .then(response => response.data)
       },
       getTest(test) {
-        return axios.get('/api/kernel/' + this.state.kernel + "/session/" + this.state.session + "/test/" + test)
+        return axios.get('/api/session/' + this.state.session + "/test/" + test)
           .then(response => response.data)
       },
       listMappings() {
-        return axios.get('/api/kernel/' + this.state.kernel + "/session/" + this.state.session + "/mapping")
+        return axios.get('/api/session/' + this.state.session + "/mapping")
           .then(response => response.data)
       },
       getMapping(mapping) {
-        return axios.get('/api/kernel/' + this.state.kernel + "/session/" + this.state.session + "/mapping/" + mapping)
+        return axios.get('/api/session/' + this.state.session + "/mapping/" + mapping)
           .then(response => response.data)
       },
       listRelations() {
-        return axios.get('/api/kernel/' + this.state.kernel + "/session/" + this.state.session + "/relation")
+        return axios.get('/api/session/' + this.state.session + "/relation")
           .then(response => response.data)
       },
       getRelation(relation) {
-        return axios.get('/api/kernel/' + this.state.kernel + "/session/" + this.state.session + "/relation/" + relation)
+        return axios.get('/api/session/' + this.state.session + "/relation/" + relation)
           .then(response => response.data)
       },
     };

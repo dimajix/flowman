@@ -27,8 +27,13 @@ import java.util.Locale
 import scala.collection.mutable
 import scala.util.Try
 
+import org.apache.spark.sql.Column
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
+import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.createConnectionFactory
+import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.savePartition
+import org.apache.spark.sql.jdbc.JdbcDialects
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.TableChange
@@ -37,6 +42,7 @@ import com.dimajix.flowman.catalog.TableChange.DropColumn
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
+import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
 
@@ -61,7 +67,7 @@ object JdbcUtils {
     }
 
     def createConnection(options: JDBCOptions) : Connection = {
-        val factory = org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.createConnectionFactory(options)
+        val factory = createConnectionFactory(options)
         factory()
     }
 
@@ -209,7 +215,7 @@ object JdbcUtils {
      */
     def createTable(conn:Connection, table:TableDefinition, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val sql = dialect.statement.create(table)
+        val sql = dialect.statement.createTable(table)
         withStatement(conn, options) { statement =>
             statement.executeUpdate(sql)
         }
@@ -289,6 +295,33 @@ object JdbcUtils {
             sqls.foreach { sql =>
                 statement.executeUpdate(sql)
             }
+        }
+    }
+
+    def mergeTable(target:TableIdentifier,
+                   targetAlias:String,
+                   targetSchema:Option[org.apache.spark.sql.types.StructType],
+                   source: DataFrame,
+                   sourceAlias:String,
+                   condition:Column,
+                   clauses:Seq[MergeClause],
+                   options: JDBCOptions) : Unit = {
+        val url = options.url
+        val dialect = SqlDialects.get(url)
+        val sparkDialect = JdbcDialects.get(url)
+        val quotedTarget = dialect.quote(target)
+        val getConnection: () => Connection = createConnectionFactory(options)
+        val sourceSchema = source.schema
+        val batchSize = options.batchSize
+        val isolationLevel = options.isolationLevel
+        val insertStmt = dialect.statement.merge(target, targetAlias, targetSchema, sourceAlias, sourceSchema, condition, clauses)
+        val repartitionedDF = options.numPartitions match {
+            case Some(n) if n <= 0 => throw new IllegalArgumentException("Invalid number of partitions")
+            case Some(n) if n < source.rdd.getNumPartitions => source.coalesce(n)
+            case _ => source
+        }
+        repartitionedDF.rdd.foreachPartition { iterator => savePartition(
+            getConnection, quotedTarget, iterator, sourceSchema, insertStmt, batchSize, sparkDialect, isolationLevel, options)
         }
     }
 }

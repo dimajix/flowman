@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.relation
 
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.StructType
@@ -24,6 +25,7 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
@@ -99,6 +101,20 @@ case class NullRelation(
         require(execution != null)
         require(partition != null)
 
+        // Force materialization of all records
+        df.count()
+    }
+
+    /**
+     * Performs a merge operation. Either you need to specify a [[mergeKey]], or the relation needs to provide some
+     * default key.
+     *
+     * @param execution
+     * @param df
+     * @param mergeCondition
+     * @param clauses
+     */
+    override def merge(execution: Execution, df: DataFrame, condition: Option[Column], clauses: Seq[MergeClause]): Unit = {
         // Force materialization of all records
         df.count()
     }

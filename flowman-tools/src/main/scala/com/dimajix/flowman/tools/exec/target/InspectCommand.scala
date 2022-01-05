@@ -21,6 +21,7 @@ import scala.util.control.NonFatal
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchTargetException
 import com.dimajix.flowman.execution.Session
@@ -64,7 +65,7 @@ class InspectCommand extends Command {
                 logger.error(s"Cannot resolve target '${ex.target}'")
                 false
             case NonFatal(e) =>
-                logger.error(s"Error '$target': ${e.getMessage}")
+                logger.error(s"Error inspecting '$target': ${reasons(e)}")
                 false
         }
 

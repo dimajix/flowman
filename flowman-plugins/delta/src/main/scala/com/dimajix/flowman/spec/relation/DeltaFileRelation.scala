@@ -22,20 +22,24 @@ import java.nio.file.FileAlreadyExistsException
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.delta.catalog.DeltaTableV2
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
+import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
@@ -50,7 +54,6 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.annotation.RelationType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.spark.sql.SchemaUtils
 
 
 case class DeltaFileRelation(
@@ -61,7 +64,7 @@ case class DeltaFileRelation(
     options: Map[String,String] = Map(),
     properties: Map[String, String] = Map(),
     mergeKey: Seq[String] = Seq()
-) extends DeltaRelation(options) {
+) extends DeltaRelation(options, mergeKey) {
     protected  val logger = LoggerFactory.getLogger(classOf[DeltaFileRelation])
 
     /**
@@ -120,7 +123,9 @@ case class DeltaFileRelation(
             .options(options)
             .format("delta")
             .load(location.toString)
-        filterPartition(tableDf, partitions)
+
+        val filteredDf = filterPartition(tableDf, partitions)
+        applyInputSchema(execution, filteredDf)
     }
 
     /**
@@ -137,8 +142,7 @@ case class DeltaFileRelation(
 
         logger.info(s"Writing Delta file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to location '$location' with mode '$mode'")
 
-        val extDf = SchemaUtils.applySchema(addPartition(df, partition), outputSchema(execution))
-
+        val extDf = applyOutputSchema(execution, addPartition(df, partition))
         mode match {
             case OutputMode.OVERWRITE_DYNAMIC => throw new IllegalArgumentException(s"Output mode 'overwrite_dynamic' not supported by Delta file relation $identifier")
             case OutputMode.UPDATE => doUpdate(extDf, partitionSpec)
@@ -164,11 +168,10 @@ case class DeltaFileRelation(
     }
     private def doUpdate(df: DataFrame, partitionSpec: PartitionSpec) : Unit = {
         val withinPartitionKeyColumns = if (mergeKey.nonEmpty) mergeKey else schema.map(_.primaryKey).getOrElse(Seq())
-        val keyColumns = partitions.map(_.name).toSet -- partitionSpec.keys ++ withinPartitionKeyColumns
+        val keyColumns = SetIgnoreCase(partitions.map(_.name)) -- partitionSpec.keys ++ withinPartitionKeyColumns
         val table = DeltaTable.forPath(df.sparkSession, location.toString)
         DeltaUtils.upsert(table, df, keyColumns, partitionSpec)
     }
-
 
     /**
      * Reads data from a streaming source
@@ -217,7 +220,7 @@ case class DeltaFileRelation(
     override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
         if (exists(execution) == Yes) {
             if (schema.nonEmpty) {
-                val table = loadDeltaTable(execution)
+                val table = deltaCatalogTable(execution)
                 val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
                 val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
                 !TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
@@ -358,7 +361,11 @@ case class DeltaFileRelation(
         }
     }
 
-    override protected def loadDeltaTable(execution: Execution): DeltaTableV2 = {
+    override protected def deltaTable(execution: Execution) : DeltaTable = {
+        DeltaTable.forPath(execution.spark, location.toString)
+    }
+
+    override protected def deltaCatalogTable(execution: Execution): DeltaTableV2 = {
         DeltaTableV2(execution.spark, location)
     }
 }

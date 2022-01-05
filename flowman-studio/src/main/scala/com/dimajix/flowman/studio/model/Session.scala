@@ -16,6 +16,20 @@
 
 package com.dimajix.flowman.studio.model
 
-class Session {
+case class Session(
+    id: String,
+    namespace: String,
+    project: String,
+    config: Map[String,String] = Map(),
+    environment: Map[String,String] = Map()
+)
 
-}
+case class SessionList(
+    sessions:Seq[Session]
+)
+
+
+case class CreateSessionRequest(
+    projectName:Option[String],
+    projectPath:Option[String]
+)

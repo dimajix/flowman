@@ -14,7 +14,7 @@ cyclic dependencies in its default configuration.
 
 ## Manual Scheduler
 To overcome issues with a wrong (or unsolvable) execution order, Flowman provides a mechanism to turn off the automatic
-execution ordering. This is achieved by setting the following conifguration variable
+execution ordering. This is achieved by setting the following configuration variable
 
 ```yaml
 config:

@@ -1,6 +1,6 @@
 # Validations
 
-In many cases, you'd like to perform some validation of input data before you start processing it. For example when
+In many cases, you'd like to perform some validation of input data before you start processing. For example when
 joining data, you often assume some uniqueness constraint on the join key in some tables or mappings. If that
 constraint was violated, your processing would probably create multiple entries per key as a result of the join 
 operation, which might be very undesirable.

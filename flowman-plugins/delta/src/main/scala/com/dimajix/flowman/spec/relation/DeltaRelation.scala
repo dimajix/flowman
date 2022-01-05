@@ -18,17 +18,21 @@ package com.dimajix.flowman.spec.relation
 
 import scala.util.control.NonFatal
 
+import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.delta.catalog.DeltaTableV2
 import org.apache.spark.sql.delta.commands.AlterTableAddColumnsDeltaCommand
 import org.apache.spark.sql.delta.commands.AlterTableChangeColumnDeltaCommand
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.MetadataBuilder
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.SetIgnoreCase
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
 import com.dimajix.flowman.catalog.TableChange.DropColumn
@@ -36,6 +40,7 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
@@ -46,10 +51,38 @@ import com.dimajix.flowman.spark.sql.delta.QualifiedColumn
 import com.dimajix.spark.sql.SchemaUtils
 
 
-abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation with PartitionedRelation {
+abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String]) extends BaseRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[DeltaRelation])
 
-    protected def loadDeltaTable(execution: Execution) : DeltaTableV2
+    protected def deltaCatalogTable(execution: Execution) : DeltaTableV2
+    protected def deltaTable(execution: Execution) : DeltaTable
+
+    /**
+     * Performs a merge operation. Either you need to specify a [[mergeKey]], or the relation needs to provide some
+     * default key.
+     *
+     * @param execution
+     * @param df
+     * @param mergeCondition
+     * @param clauses
+     */
+    override def merge(execution: Execution, df: DataFrame, condition:Option[Column], clauses: Seq[MergeClause]): Unit = {
+        val mergeCondition = condition.getOrElse {
+            val withinPartitionKeyColumns =
+                if (mergeKey.nonEmpty)
+                    mergeKey
+                else if (schema.exists(_.primaryKey.nonEmpty))
+                    schema.map(_.primaryKey).get
+                else
+                    throw new IllegalArgumentException(s"Merging Delta relation '$identifier' requires primary key in schema, explicit merge key or merge condition")
+            (SetIgnoreCase(partitions.map(_.name)) ++ withinPartitionKeyColumns)
+                .toSeq
+                .map(k => col("target." + k) <=> col("source." + k))
+                .reduce(_ && _)
+        }
+        val table = deltaTable(execution)
+        DeltaUtils.merge(table, df, mergeCondition, clauses)
+    }
 
     /**
      * Reads data from a streaming source
@@ -88,7 +121,7 @@ abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation w
      * @param migrationStrategy
      */
     protected def migrateInternal(execution: Execution, migrationPolicy: MigrationPolicy, migrationStrategy: MigrationStrategy): Unit = {
-        val table = loadDeltaTable(execution)
+        val table = deltaCatalogTable(execution)
         val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
         val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
 
@@ -131,13 +164,13 @@ abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation w
                 val spark = execution.spark
                 migrations.foreach {
                     case AddColumn(column) =>
-                        val table = loadDeltaTable(execution)
+                        val table = deltaCatalogTable(execution)
                         AlterTableAddColumnsDeltaCommand(
                             table,
                             Seq(QualifiedColumn(column.name, column.catalogType, column.nullable, column.description)
                             )).run(spark)
                     case UpdateColumnNullability(column, nullable) =>
-                        val table = loadDeltaTable(execution)
+                        val table = deltaCatalogTable(execution)
                         val oldColumn = table.schema()(column)
                         AlterTableChangeColumnDeltaCommand(
                             table,
@@ -147,7 +180,7 @@ abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation w
                             None
                         ).run(spark)
                     case UpdateColumnType(column, dataType) =>
-                        val table = loadDeltaTable(execution)
+                        val table = deltaCatalogTable(execution)
                         val oldColumn = table.schema()(column)
                         AlterTableChangeColumnDeltaCommand(
                             table,
@@ -157,7 +190,7 @@ abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation w
                             None
                         ).run(spark)
                     case UpdateColumnComment(column, comment) =>
-                        val table = loadDeltaTable(execution)
+                        val table = deltaCatalogTable(execution)
                         val oldColumn = table.schema()(column)
                         val field = comment.map(c => oldColumn.withComment(c))
                             .getOrElse(oldColumn.copy(metadata = new MetadataBuilder().withMetadata(oldColumn.metadata).remove("comment").build()))
@@ -168,6 +201,7 @@ abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation w
                             field,
                             None
                         ).run(spark)
+                    case m => throw new UnsupportedOperationException(s"Migration $m not supported by Delta relations")
                 }
             }
             catch {
@@ -199,6 +233,6 @@ abstract class DeltaRelation(options: Map[String,String]) extends BaseRelation w
     }
 
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
-        Some(loadDeltaTable(execution).schema())
+        Some(deltaCatalogTable(execution).schema())
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.dimajix.common
 import java.util
 import java.util.Collections
 
+import scala.collection.convert.Wrappers
 import scala.collection.convert.Wrappers.JSetWrapper
 import scala.collection.generic.MutableSetFactory
 import scala.collection.mutable
@@ -27,9 +28,10 @@ import scala.collection.mutable
 class IdentityHashSet[A] extends JSetWrapper[A](Collections.newSetFromMap(new util.IdentityHashMap()))
     with mutable.SetLike[A, IdentityHashSet[A]]
 {
-    override def empty = new IdentityHashSet[A]
+    override def empty: IdentityHashSet[A] = new IdentityHashSet[A]()
+    override def clone(): IdentityHashSet[A] = new IdentityHashSet[A]() ++= this
 }
 
 object IdentityHashSet extends MutableSetFactory[IdentityHashSet] {
-    override def empty[A]: IdentityHashSet[A] = new IdentityHashSet[A]
+    override def empty[A]: IdentityHashSet[A] = new IdentityHashSet[A]()
 }

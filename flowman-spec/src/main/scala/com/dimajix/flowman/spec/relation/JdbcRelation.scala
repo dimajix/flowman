@@ -20,16 +20,22 @@ import java.sql.SQLInvalidAuthorizationSpecException
 import java.sql.SQLNonTransientConnectionException
 import java.sql.SQLNonTransientException
 import java.sql.Statement
+import java.util.Locale
 
 import scala.collection.mutable
 import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
+import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
+import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
+import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
@@ -37,12 +43,16 @@ import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.InsertClause
+import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
+import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialect
 import com.dimajix.flowman.jdbc.SqlDialects
@@ -73,7 +83,9 @@ case class JdbcRelation(
     properties: Map[String,String] = Map(),
     database: Option[String] = None,
     table: Option[String] = None,
-    query: Option[String] = None
+    query: Option[String] = None,
+    mergeKey: Seq[String] = Seq(),
+    primaryKey: Seq[String] = Seq()
 ) extends BaseRelation with PartitionedRelation with SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[JdbcRelation])
 
@@ -175,11 +187,12 @@ case class JdbcRelation(
                     .load()
             }
 
+        val filteredDf = filterPartition(tableDf, partitions)
+
         // Apply embedded schema, if it is specified. This will remove/cast any columns not present in the
         // explicit schema specification of the relation
-        val schemaDf = SchemaUtils.applySchema(tableDf, inputSchema, insertNulls=false)
-
-        filterPartition(schemaDf, partitions)
+        //SchemaUtils.applySchema(filteredDf, inputSchema, insertNulls=false)
+        applyInputSchema(execution, filteredDf, includePartitions = false)
     }
 
     /**
@@ -203,51 +216,90 @@ case class JdbcRelation(
         val dfExt = addPartition(applyOutputSchema(execution, df), partition)
 
         // Write partition into DataBase
-        if (partition.isEmpty) {
-            // TODO: Maybe we should perform a truncate followed by an append. Otherwise Spark will actually recreate the table
-            doWrite(execution, dfExt, mode.batchMode)
-        }
-        else {
-            mode match {
-                case OutputMode.OVERWRITE =>
-                    withStatement { (statement, options) =>
-                        val dialect = SqlDialects.get(options.url)
-                        val condition = partitionCondition(dialect, partition)
-                        val query = "DELETE FROM " + dialect.quote(tableIdentifier) + " WHERE " + condition
-                        statement.executeUpdate(query)
-                    }
-                    doWrite(execution, dfExt, SaveMode.Append)
-                case OutputMode.APPEND =>
-                    doWrite(execution, dfExt, SaveMode.Append)
-                case OutputMode.UPDATE =>
-                    ???
-                case OutputMode.IGNORE_IF_EXISTS =>
-                    if (!checkPartition(partition)) {
-                        doWrite(execution, dfExt, SaveMode.Append)
-                    }
-                case OutputMode.ERROR_IF_EXISTS =>
-                    if (!checkPartition(partition)) {
-                        doWrite(execution, dfExt, SaveMode.Append)
-                    }
-                    else {
-                        throw new PartitionAlreadyExistsException(database.getOrElse(""), table.get, partition.mapValues(_.value))
-                    }
-                case _ => throw new IllegalArgumentException(s"Unsupported save mode: '$mode'. " +
-                    "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists'.")
-            }
+        mode match {
+            case OutputMode.OVERWRITE if partition.isEmpty =>
+                withConnection { (con, options) =>
+                    JdbcUtils.truncateTable(con, tableIdentifier, options)
+                }
+                doWrite(execution, dfExt)
+            case OutputMode.OVERWRITE =>
+                withStatement { (statement, options) =>
+                    val dialect = SqlDialects.get(options.url)
+                    val condition = partitionCondition(dialect, partition)
+                    val query = "DELETE FROM " + dialect.quote(tableIdentifier) + " WHERE " + condition
+                    statement.executeUpdate(query)
+                }
+                doWrite(execution, dfExt)
+            case OutputMode.APPEND =>
+                doWrite(execution, dfExt)
+            case OutputMode.IGNORE_IF_EXISTS =>
+                if (!checkPartition(partition)) {
+                    doWrite(execution, dfExt)
+                }
+            case OutputMode.ERROR_IF_EXISTS =>
+                if (!checkPartition(partition)) {
+                    doWrite(execution, dfExt)
+                }
+                else {
+                    throw new PartitionAlreadyExistsException(database.getOrElse(""), table.get, partition.mapValues(_.value))
+                }
+            case _ => throw new IllegalArgumentException(s"Unsupported save mode: '$mode'. " +
+                "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists'.")
         }
     }
-    private def doWrite(execution: Execution, df:DataFrame ,saveMode: SaveMode): Unit = {
+    private def doWrite(execution: Execution, df:DataFrame): Unit = {
         val (_,props) = createProperties()
-        this.writer(execution, df, "jdbc", Map(), saveMode)
+        this.writer(execution, df, "jdbc", Map(), SaveMode.Append)
             .options(props)
             .option(JDBCOptions.JDBC_TABLE_NAME, tableIdentifier.unquotedString)
             .save()
     }
 
+
+    /**
+     * Performs a merge operation. Either you need to specify a [[mergeKey]], or the relation needs to provide some
+     * default key.
+     *
+     * @param execution
+     * @param df
+     * @param mergeCondition
+     * @param clauses
+     */
+    override def merge(execution: Execution, df: DataFrame, condition:Option[Column], clauses: Seq[MergeClause]): Unit = {
+        logger.info(s"Writing JDBC relation '$identifier' for table $tableIdentifier using connection '$connection' using merge operation")
+        if (query.nonEmpty)
+            throw new UnsupportedOperationException(s"Cannot write into JDBC relation '$identifier' which is defined by an SQL query")
+
+        val mergeCondition =
+            condition.getOrElse {
+                val withinPartitionKeyColumns =
+                    if (mergeKey.nonEmpty)
+                        mergeKey
+                    else if (primaryKey.nonEmpty)
+                        primaryKey
+                    else if (schema.exists(_.primaryKey.nonEmpty))
+                        schema.map(_.primaryKey).get
+                    else
+                        throw new IllegalArgumentException(s"Merging JDBC relation '$identifier' requires primary key in schema, explicit merge key or merge condition")
+                (SetIgnoreCase(partitions.map(_.name)) ++ withinPartitionKeyColumns)
+                    .toSeq
+                    .map(c => col("source." + c) === col("target." + c))
+                    .reduce(_ && _)
+            }
+
+        val sourceColumns = collectColumns(mergeCondition.expr, "source") ++ clauses.flatMap(c => collectColumns(df.schema, c, "source"))
+        val sourceDf = df.select(sourceColumns.toSeq.map(col):_*)
+
+        val (url, props) = createProperties()
+        val options = new JDBCOptions(url, tableIdentifier.unquotedString, props)
+        val targetSchema = outputSchema(execution)
+        JdbcUtils.mergeTable(tableIdentifier, "target", targetSchema, sourceDf, "source", mergeCondition, clauses, options)
+    }
+
     /**
       * Removes one or more partitions.
-      * @param execution
+     *
+     * @param execution
       * @param partitions
       */
     override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
@@ -373,7 +425,7 @@ case class JdbcRelation(
             tableIdentifier,
             schema.fields ++ partitions.map(_.field),
             schema.description,
-            schema.primaryKey
+            if (primaryKey.nonEmpty) primaryKey else schema.primaryKey
         )
         JdbcUtils.createTable(con, table, options)
     }
@@ -551,8 +603,15 @@ case class JdbcRelation(
 
     private def checkPartition(partition:Map[String,SingleValue]) : Boolean = {
         withConnection{ (connection, options) =>
-            val dialect = SqlDialects.get(options.url)
-            val condition = partitionCondition(dialect, partition)
+            val condition = {
+                if (partition.isEmpty) {
+                    "1=1"
+                }
+                else {
+                    val dialect = SqlDialects.get(options.url)
+                    partitionCondition(dialect, partition)
+                }
+            }
             !JdbcUtils.emptyResult(connection, tableIdentifier, condition, options)
         }
     }
@@ -565,6 +624,28 @@ case class JdbcRelation(
         }
         .mkString(" AND ")
     }
+
+    private def collectColumns(sourceSchema:StructType, clause:MergeClause, prefix:String) : SetIgnoreCase = {
+        clause match {
+            case i:InsertClause =>
+                val conditionColumns = i.condition.map(c => collectColumns(c.expr, prefix)).getOrElse(SetIgnoreCase())
+                val insertColumns = if(i.columns.nonEmpty) i.columns.values.flatMap(c => collectColumns(c.expr, prefix)) else sourceSchema.names.toSeq
+                conditionColumns ++ insertColumns
+            case u:UpdateClause =>
+                val conditionColumns = u.condition.map(c => collectColumns(c.expr, prefix)).getOrElse(SetIgnoreCase())
+                val updateColumns = if(u.columns.nonEmpty) u.columns.values.flatMap(c => collectColumns(c.expr, prefix)) else sourceSchema.names.toSeq
+                conditionColumns ++ updateColumns
+            case d:DeleteClause =>
+                d.condition.map(c => collectColumns(c.expr, prefix)).getOrElse(SetIgnoreCase())
+        }
+    }
+    private def collectColumns(expr:Expression, prefix:String) : SetIgnoreCase = {
+        val lwrPrefix = prefix.toLowerCase(Locale.ROOT)
+        val columns = expr.collect {
+            case UnresolvedAttribute(x) if x.head.toLowerCase(Locale.ROOT) == lwrPrefix => x.tail.mkString(".")
+        }
+        SetIgnoreCase(columns)
+    }
 }
 
 
@@ -576,6 +657,8 @@ class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with Sc
     @JsonProperty(value = "database", required = false) private var database: Option[String] = None
     @JsonProperty(value = "table", required = false) private var table: Option[String] = None
     @JsonProperty(value = "query", required = false) private var query: Option[String] = None
+    @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq()
+    @JsonProperty(value = "primaryKey", required = false) private var primaryKey: Seq[String] = Seq()
 
     /**
       * Creates the instance of the specified Relation with all variable interpolation being performed
@@ -591,7 +674,9 @@ class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with Sc
             context.evaluate(properties),
             database.map(context.evaluate).filter(_.nonEmpty),
             table.map(context.evaluate).filter(_.nonEmpty),
-            query.map(context.evaluate).filter(_.nonEmpty)
+            query.map(context.evaluate).filter(_.nonEmpty),
+            mergeKey.map(context.evaluate),
+            primaryKey.map(context.evaluate)
         )
     }
 }

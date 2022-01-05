@@ -138,18 +138,23 @@ Other changes (like changing the data type or dropping columns) is not supported
 will require either `REPLACE` or `ALTER_REPLACE` - but this will remove all existing data in that table!
 
 
+## Schema Conversion
+The Hive table relation fully supports automatic schema conversion on input and output operations as described in the
+corresponding section of [relations](index.md).
+
+
 ## Output Modes
 The `hive` relation supports the following output modes in a [`relation` target](../target/relation.md):
 
-|Output Mode |Supported  | Comments|
---- | --- | ---
-|`errorIfExists`|yes|Throw an error if the Hive table already exists|
-|`ignoreIfExists`|yes|Do nothing if the Hive table already exists|
-|`overwrite`|yes|Overwrite the whole table or the specified partitions. If using dynamic partitioning, the table is truncated first.|
-|`overwrite_dynamic`|yes|Overwrite only the partitions dynamically inferred from the data.|
-|`append`|yes|Append new records to the existing table|
-|`update`|no|-|
-|`merge`|no|-|
+| Output Mode         | Supported | Comments                                                                                                            |
+|---------------------|-----------|---------------------------------------------------------------------------------------------------------------------|
+| `errorIfExists`     | yes       | Throw an error if the Hive table already exists                                                                     |
+| `ignoreIfExists`    | yes       | Do nothing if the Hive table already exists                                                                         |
+| `overwrite`         | yes       | Overwrite the whole table or the specified partitions. If using dynamic partitioning, the table is truncated first. |
+| `overwrite_dynamic` | yes       | Overwrite only the partitions dynamically inferred from the data.                                                   |
+| `append`            | yes       | Append new records to the existing table                                                                            |
+| `update`            | no        | -                                                                                                                   |
+| `merge`             | no        | -                                                                                                                   |
 
 
 ## Remarks

@@ -67,6 +67,8 @@ class ManualSchedulerTest extends AnyFlatSpec with Matchers with MockFactory wit
             (t.identifier _).expects().atLeastOnce().returns(TargetIdentifier("prj/" + name))
             (t.name _).expects().atLeastOnce().returns(name)
             (t.phases _).expects().atLeastOnce().returns(Set(Phase.BUILD))
+            (t.requires _).expects(*).atLeastOnce().returns(Set())
+            (t.provides _).expects(*).atLeastOnce().returns(Set())
             (t.digest _).expects(Phase.BUILD).atLeastOnce().returns(TargetDigest("default", "prj", name, Phase.BUILD))
             (t.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
             (t.dirty _).expects(*, Phase.BUILD).returns(Yes)

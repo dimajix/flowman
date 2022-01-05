@@ -47,7 +47,6 @@ export default {
   }),
 
   props: {
-    kernel: null
   },
 
   mounted() {
@@ -63,15 +62,15 @@ export default {
 
   methods: {
     reloadProjects() {
-      this.$api.listProjects(this.kernel)
+      this.$api.listProjects()
         .then(response => {
           this.projects = response.projects
         })
     },
     openProject(project) {
-      this.$api.openProject(this.kernel, project)
+      this.$api.openProject(project)
         .then(response => {
-          this.$api.setCurrentSession(this.kernel, response.id)
+          this.$api.setCurrentSession(response.id)
         })
       this.show = false
     }

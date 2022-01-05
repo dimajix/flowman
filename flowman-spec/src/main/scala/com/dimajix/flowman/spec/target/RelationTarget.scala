@@ -55,9 +55,9 @@ object RelationTarget {
     def apply(context: Context, relation: RelationIdentifier) : RelationTarget = {
         val conf = context.flowmanConf
         new RelationTarget(
-            Target.Properties(context),
-            MappingOutputIdentifier(""),
-            RelationReference(context,relation),
+            Target.Properties(context, relation.name, "relation"),
+            RelationReference(context, relation),
+            MappingOutputIdentifier.empty,
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
@@ -67,11 +67,24 @@ object RelationTarget {
     def apply(context: Context, relation: RelationIdentifier, mapping: MappingOutputIdentifier) : RelationTarget = {
         val conf = context.flowmanConf
         new RelationTarget(
-            Target.Properties(context),
+            Target.Properties(context, relation.name, "relation"),
+            RelationReference(context, relation),
             mapping,
-            RelationReference(context,relation),
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
+            conf.getConf(DEFAULT_TARGET_PARALLELISM),
+            conf.getConf(DEFAULT_TARGET_REBALANCE)
+        )
+    }
+    def apply(props:Target.Properties, relation: RelationIdentifier, mapping: MappingOutputIdentifier, partition: Map[String,String]) : RelationTarget = {
+        val context = props.context
+        val conf = context.flowmanConf
+        new RelationTarget(
+            props.copy(kind="relation"),
+            RelationReference(context, relation),
+            mapping,
+            OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
+            partition,
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
             conf.getConf(DEFAULT_TARGET_REBALANCE)
         )
@@ -79,8 +92,8 @@ object RelationTarget {
 }
 case class RelationTarget(
     instanceProperties: Target.Properties,
-    mapping: MappingOutputIdentifier,
     relation: Reference[Relation],
+    mapping: MappingOutputIdentifier,
     mode: OutputMode = OutputMode.OVERWRITE,
     partition: Map[String,String] = Map(),
     parallelism: Int = 16,
@@ -168,8 +181,6 @@ case class RelationTarget(
             case Phase.BUILD if mapping.nonEmpty =>
                 if (mode == OutputMode.APPEND) {
                     Yes
-                } else if (mode == OutputMode.UPDATE) {
-                    Unknown
                 } else {
                     !rel.loaded(execution, partition)
                 }
@@ -235,7 +246,7 @@ case class RelationTarget(
         if (mapping.nonEmpty) {
             val partition = this.partition.mapValues(v => SingleValue(v))
 
-            logger.info(s"Writing mapping '${this.mapping}' to relation '${relation.identifier}' into partition $partition with mode '$mode'")
+            logger.info(s"Writing mapping '${this.mapping}' to relation '${relation.identifier}' into partition (${partition.map(p => p._1 + "=" + p._2.value).mkString(",")}) with mode '$mode'")
             val mapping = context.getMapping(this.mapping.mapping)
             val dfIn = executor.instantiate(mapping, this.mapping.output)
             val dfOut =
@@ -318,8 +329,8 @@ class RelationTargetSpec extends TargetSpec {
         val conf = context.flowmanConf
         RelationTarget(
             instanceProperties(context),
-            MappingOutputIdentifier.parse(context.evaluate(mapping)),
             relation.instantiate(context),
+            MappingOutputIdentifier.parse(context.evaluate(mapping)),
             OutputMode.ofString(context.evaluate(mode).getOrElse(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE))),
             context.evaluate(partition),
             context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),

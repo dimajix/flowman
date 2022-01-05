@@ -25,8 +25,8 @@ import org.apache.spark.sql.catalyst.analysis.FunctionRegistry.FunctionBuilder
 import org.apache.spark.sql.catalyst.expressions.ExpressionInfo
 import org.apache.spark.util.LongAccumulator
 
-import com.dimajix.spark.expressions.CreateNullableStruct
 import com.dimajix.spark.sql.catalyst.plans.logical.CountRecords
+import com.dimajix.spark.sql.expressions.CreateNullableStruct
 
 
 class functions

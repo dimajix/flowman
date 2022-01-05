@@ -28,6 +28,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.config.FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY
+import com.dimajix.flowman.config.FlowmanConf.EXECUTION_TARGET_USE_HISTORY
 import com.dimajix.flowman.execution.RunnerHistoryTest.NullTarget
 import com.dimajix.flowman.history.JdbcStateStore
 import com.dimajix.flowman.model.BaseTarget
@@ -98,6 +99,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
         )
         val session = Session.builder()
             .withNamespace(ns)
+            .withConfig(EXECUTION_TARGET_USE_HISTORY.key, "true")
             .withSparkSession(spark)
             .build()
 
@@ -125,6 +127,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
         val session = Session.builder()
             .withNamespace(ns)
             .withProject(project)
+            .withConfig(EXECUTION_TARGET_USE_HISTORY.key, "true")
             .withSparkSession(spark)
             .build()
 
@@ -185,6 +188,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
         {
             val session = Session.builder()
                 .withNamespace(ns)
+                .withConfig(EXECUTION_TARGET_USE_HISTORY.key, "true")
                 .withProject(project)
                 .withSparkSession(spark)
                 .build()
@@ -200,15 +204,16 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
             val session = Session.builder()
                 .withNamespace(ns)
                 .withConfig(EXECUTION_TARGET_FORCE_DIRTY.key, "true")
+                .withConfig(EXECUTION_TARGET_USE_HISTORY.key, "true")
                 .withProject(project)
                 .withSparkSession(spark)
                 .build()
             val runner = session.runner
             runner.executeJob(genJob(session, "clean1"), Seq(Phase.CREATE)) should be(Status.SUCCESS)
-            runner.executeJob(genJob(session, "clean1"), Seq(Phase.CREATE)) should be(Status.SKIPPED)
+            runner.executeJob(genJob(session, "clean1"), Seq(Phase.CREATE)) should be(Status.SUCCESS)
             runner.executeJob(genJob(session, "clean1"), Seq(Phase.CREATE), force=true) should be(Status.SUCCESS)
             runner.executeJob(genJob(session, "dirty1"), Seq(Phase.CREATE)) should be(Status.SUCCESS)
-            runner.executeJob(genJob(session, "dirty1"), Seq(Phase.CREATE)) should be(Status.SKIPPED)
+            runner.executeJob(genJob(session, "dirty1"), Seq(Phase.CREATE)) should be(Status.SUCCESS)
             runner.executeJob(genJob(session, "dirty1"), Seq(Phase.CREATE), force=true) should be(Status.SUCCESS)
         }
     }
@@ -248,6 +253,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
         val session = Session.builder()
             .withNamespace(ns)
             .withProject(project)
+            .withConfig(EXECUTION_TARGET_USE_HISTORY.key, "true")
             .withSparkSession(spark)
             .build()
         val job = Job.builder(session.getContext(project))

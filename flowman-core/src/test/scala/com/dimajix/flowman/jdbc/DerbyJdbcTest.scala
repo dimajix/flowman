@@ -46,11 +46,12 @@ class DerbyJdbcTest extends AnyFlatSpec with Matchers with LocalTempDir {
         val table = TableDefinition(
             TableIdentifier("table_001"),
             Seq(
+                Field("Id", IntegerType, nullable=false),
                 Field("str_field", StringType),
                 Field("int_field", IntegerType)
             ),
             None,
-            Seq()
+            Seq("Id")
         )
         JdbcUtils.tableExists(conn, table.identifier, options) should be (false)
         JdbcUtils.createTable(conn, table, options)

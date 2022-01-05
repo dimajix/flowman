@@ -261,9 +261,9 @@ case class FileRelation(
             .save(outputPath.toString)
     }
     private def doWriteStaticPartitions(execution:Execution, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
-        val partitionSpec = PartitionSchema(partitions).spec(partition)
-        val outputPath = collector.resolve(partitionSpec.toMap)
-        logger.info(s"Writing file relation '$identifier' partition ${HiveDialect.expr.partition(partitionSpec)} to output location '$outputPath' as '$format' with mode '$mode'")
+        val partitionMap = PartitionSchema(partitions).spec(partition).toMap
+        val outputPath = collector.resolve(partitionMap)
+        logger.info(s"Writing file relation '$identifier' partition (${partitionMap.map(kv => kv._1 + "=" + kv._2).mkString(",")}) to output location '$outputPath' as '$format' with mode '$mode'")
 
         requireAllPartitionKeys(partition)
 
@@ -343,23 +343,31 @@ case class FileRelation(
         requireValidPartitionKeys(partition)
 
         val rootLocation = collector.root
-        val fs = rootLocation.getFileSystem(execution.hadoopConf)
-        val isStream = FileUtils.isValidStreamData(fs, rootLocation)
+        val fs = collector.fs
 
         def checkPartition(path:Path) = {
-            // TODO: Valid file data detection is difficult, since
-            //  * streaming won't write a _SUCCESS file
-            //  * dynamic partitioning writes a _SUCCESS file at the top level
-            // FileUtils.isValidFileData(fs, path)
-            FileUtils.isValidHiveData(fs, path)
+            // streaming won't write a _SUCCESS file
+            FileUtils.isValidFileData(fs, path, requireSuccessFile=true) ||
+                FileUtils.isValidStreamData(fs, rootLocation)
+        }
+        def checkDirectory(path:Path) = {
+            // dynamic partitioning writes a _SUCCESS file at the top level
+            FileUtils.isValidFileData(fs, path, requireSuccessFile=false)
         }
 
         if (this.partitions.nonEmpty) {
             val partitionSpec = PartitionSchema(partitions).spec(partition)
-            collector.glob(partitionSpec).exists(checkPartition)
+            // Check if root location contains a _SUCCESS file, then it might be dynamic partitioning
+            if (collector.pattern.isEmpty && checkPartition(rootLocation)) {
+                collector.glob(partitionSpec).exists(checkDirectory)
+            }
+            else {
+                collector.glob(partitionSpec).exists(checkPartition)
+            }
         }
         else {
-            checkPartition(collector.resolve())
+            //checkPartition(collector.resolve())
+            checkPartition(rootLocation)
         }
     }
 
@@ -370,10 +378,7 @@ case class FileRelation(
       * @return
       */
     override def exists(execution:Execution) : Trilean = {
-        require(execution != null)
-
-        val fs = qualifiedLocation.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
-        fs.exists(qualifiedLocation)
+        collector.exists()
     }
 
     /**
@@ -394,14 +399,14 @@ case class FileRelation(
     override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
         require(execution != null)
 
-        val fs = qualifiedLocation.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
-        if (fs.exists(qualifiedLocation)) {
+        if (collector.exists()) {
             if (!ifNotExists) {
                 throw new FileAlreadyExistsException(qualifiedLocation.toString)
             }
         }
         else {
             logger.info(s"Creating file relation '$identifier' at location '$qualifiedLocation'")
+            val fs = collector.fs
             if (!fs.mkdirs(qualifiedLocation)) {
                 throw new FileSystemException(qualifiedLocation.toString, "", "Cannot create directory.")
             }
@@ -453,14 +458,14 @@ case class FileRelation(
     override def destroy(execution:Execution, ifExists:Boolean) : Unit =  {
         require(execution != null)
 
-        val fs = qualifiedLocation.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
-        if (!fs.exists(qualifiedLocation)) {
+        if (!collector.exists()) {
             if (!ifExists) {
                 throw new FileNotFoundException(qualifiedLocation.toString)
             }
         }
         else {
             logger.info(s"Destroying file relation '$identifier' by deleting directory '$qualifiedLocation'")
+            val fs = collector.fs
             fs.delete(qualifiedLocation, true)
         }
     }

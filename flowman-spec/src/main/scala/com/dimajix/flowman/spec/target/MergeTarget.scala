@@ -17,6 +17,10 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.expr
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
@@ -30,6 +34,10 @@ import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.MergeClause
+import com.dimajix.flowman.execution.DeleteClause
+import com.dimajix.flowman.execution.InsertClause
+import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Phase
@@ -43,18 +51,21 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.RelationReference
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.spec.relation.IdentifierRelationReferenceSpec
 import com.dimajix.flowman.spec.relation.RelationReferenceSpec
+import com.dimajix.flowman.spec.target.MergeTargetSpec.MergeClauseSpec
 
 
 object MergeTarget {
-    def apply(context: Context, relation: RelationIdentifier) : MergeTarget = {
+    def apply(context: Context, relation: RelationIdentifier, mapping: MappingOutputIdentifier, mergeKey:Seq[String], clauses:Seq[MergeClause]) : MergeTarget = {
         val conf = context.flowmanConf
         new MergeTarget(
-            Target.Properties(context),
-            MappingOutputIdentifier(""),
+            Target.Properties(context, relation.name, "merge"),
             RelationReference(context, relation),
+            mapping,
+            mergeKey,
+            None,
+            clauses,
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
             conf.getConf(DEFAULT_TARGET_REBALANCE)
         )
@@ -63,8 +74,11 @@ object MergeTarget {
 
 case class MergeTarget(
     instanceProperties: Target.Properties,
-    mapping: MappingOutputIdentifier,
     relation: Reference[Relation],
+    mapping: MappingOutputIdentifier,
+    key: Seq[String],
+    condition: Option[String],
+    clauses: Seq[MergeClause],
     parallelism: Int = 16,
     rebalance: Boolean = false
 ) extends BaseTarget {
@@ -87,7 +101,7 @@ case class MergeTarget(
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.provides
-            case Phase.BUILD => rel.provides ++ rel.resources()
+            case Phase.BUILD => rel.resources()
             case _ => Set()
         }
     }
@@ -101,7 +115,7 @@ case class MergeTarget(
 
         phase match {
             case Phase.CREATE|Phase.DESTROY => rel.requires
-            case Phase.BUILD => rel.requires ++ MappingUtils.requires(context, mapping.mapping)
+            case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
             case _ => Set()
         }
     }
@@ -121,11 +135,8 @@ case class MergeTarget(
         phase match {
             case Phase.VALIDATE => No
             case Phase.CREATE =>
-                // Since an existing relation might need a migration, we return "unknown"
-                if (rel.exists(execution) == Yes)
-                    Unknown
-                else
-                    Yes
+                val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
+                !rel.conforms(execution, migrationPolicy)
             case Phase.BUILD =>
                 Unknown
             case Phase.VERIFY => Yes
@@ -148,6 +159,8 @@ case class MergeTarget(
             case Phase.BUILD =>
                 linker.input(mapping.mapping, mapping.output)
                 linker.write(relation.identifier, Map())
+            case Phase.TRUNCATE =>
+                linker.write(relation.identifier, Map())
             case _ =>
         }
     }
@@ -162,10 +175,12 @@ case class MergeTarget(
 
         val rel = relation.value
         if (rel.exists(execution) == Yes) {
-            logger.info(s"Migrating existing relation '${relation.identifier}'")
             val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
-            val migrationStrategy = MigrationStrategy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_STRATEGY))
-            rel.migrate(execution, migrationPolicy, migrationStrategy)
+            if (rel.conforms(execution, migrationPolicy) != Yes) {
+                logger.info(s"Migrating existing relation '${relation.identifier}'")
+                val migrationStrategy = MigrationStrategy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_STRATEGY))
+                rel.migrate(execution, migrationPolicy, migrationStrategy)
+            }
         }
         else {
             logger.info(s"Creating relation '${relation.identifier}'")
@@ -194,8 +209,16 @@ case class MergeTarget(
 
         // Setup metric for counting number of records
         val dfCount = countRecords(executor, dfOut)
+
+        // Create merge condition
+        val conds = key.map(k => col("target." + k) === col("source." + k)) ++ this.condition.map(expr)
+        val condition =
+            if (conds.nonEmpty)
+                Some(conds.reduce(_ && _))
+            else
+                None
         val rel = relation.value
-        //rel.merge(executor, dfCount)
+        rel.merge(executor, dfCount, condition, clauses)
     }
 
     /**
@@ -246,19 +269,66 @@ object MergeTargetSpec {
         spec.relation = IdentifierRelationReferenceSpec(relation)
         spec
     }
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "action")
+    @JsonSubTypes(value = Array(
+        new JsonSubTypes.Type(name = "insert", value = classOf[InsertClauseSpec]),
+        new JsonSubTypes.Type(name = "update", value = classOf[UpdateClauseSpec]),
+        new JsonSubTypes.Type(name = "delete", value = classOf[DeleteClauseSpec])
+    ))
+    abstract sealed class MergeClauseSpec {
+        def instantiate(context: Context) : MergeClause
+    }
+    final class InsertClauseSpec extends MergeClauseSpec {
+        @JsonProperty(value="condition", required=false) private var condition:Option[String] = None
+        @JsonProperty(value="columns", required = true) private var columns: Map[String,String] = Map()
+
+        def instantiate(context: Context) : MergeClause = {
+            InsertClause(
+                context.evaluate(condition).map(expr),
+                context.evaluate(columns).map(kv => kv._1 -> expr(kv._2))
+            )
+        }
+    }
+    final class UpdateClauseSpec extends MergeClauseSpec {
+        @JsonProperty(value="condition", required=false) private var condition:Option[String] = None
+        @JsonProperty(value="columns", required = true) private var columns: Map[String,String] = Map()
+
+        def instantiate(context: Context) : MergeClause = {
+            UpdateClause(
+                context.evaluate(condition).map(expr),
+                context.evaluate(columns).map(kv => kv._1 -> expr(kv._2))
+            )
+        }
+    }
+    final class DeleteClauseSpec extends MergeClauseSpec {
+        @JsonProperty(value="condition", required=false) private var condition:Option[String] = None
+
+        def instantiate(context: Context) : MergeClause = {
+            DeleteClause(
+                context.evaluate(condition).map(expr)
+            )
+        }
+    }
 }
 class MergeTargetSpec extends TargetSpec {
     @JsonProperty(value="mapping", required=true) private var mapping:String = ""
     @JsonProperty(value="relation", required=true) private var relation:RelationReferenceSpec = _
     @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
     @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
+    @JsonProperty(value="mergeKey", required=false) private var mergeKey:Seq[String] = Seq()
+    @JsonProperty(value="condition", required=false) private var mergeCondition:Option[String] = None
+    @JsonProperty(value="clauses", required=false) private var clauses:Seq[MergeClauseSpec] = Seq()
 
     override def instantiate(context: Context): MergeTarget = {
         val conf = context.flowmanConf
         MergeTarget(
             instanceProperties(context),
-            MappingOutputIdentifier.parse(context.evaluate(mapping)),
             relation.instantiate(context),
+            MappingOutputIdentifier.parse(context.evaluate(mapping)),
+            mergeKey.map(context.evaluate),
+            mergeCondition.map(context.evaluate),
+            clauses.map(_.instantiate(context)),
             context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),
             context.evaluate(rebalance).map(_.toBoolean).getOrElse(conf.getConf(DEFAULT_TARGET_REBALANCE))
         )

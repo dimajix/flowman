@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Lifecycle
 import com.dimajix.flowman.execution.Phase
@@ -44,6 +45,8 @@ class PhaseCommand(phase:Phase) extends Command {
     var force: Boolean = false
     @Option(name = "-k", aliases=Array("--keep-going"), usage = "continues execution of all targets in case of errors")
     var keepGoing: Boolean = false
+    @Option(name = "--dry-run", usage = "perform dry run without actually executing build targets")
+    var dryRun: Boolean = false
     @Option(name = "-nl", aliases=Array("--no-lifecycle"), usage = "only executes the specific phase and not the whole lifecycle")
     var noLifecycle: Boolean = false
 
@@ -60,11 +63,11 @@ class PhaseCommand(phase:Phase) extends Command {
                 context.getTarget(TargetIdentifier(t))
             }
             val runner = session.runner
-            runner.executeTargets(allTargets, lifecycle, force = force, keepGoing = keepGoing)
+            runner.executeTargets(allTargets, lifecycle, force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
         } match {
             case Success(status) => status.success
             case Failure(e) =>
-                logger.error(e.getMessage)
+                logger.error(s"Error ${phase.upper} target '${targets.mkString(",")}: ${reasons(e)}")
                 false
         }
     }

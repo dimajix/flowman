@@ -23,6 +23,11 @@ relations:
     connection: frontend
     # Specify the table
     table: "users"
+    schema:
+      kind: avro
+      file: "${project.basedir}/schema/users.avsc"
+    primaryKey:
+      - user_id
 ```
 It is also possible to directly embed the connection as follows:
 ```yaml
@@ -49,6 +54,14 @@ multiple places.
  * `schema` **(optional)** *(type: schema)* *(default: empty)*: 
  Explicitly specifies the schema of the JDBC source. Alternatively Flowman will automatically
  try to infer the schema.
+
+ * `primaryKey`  **(optional)** *(type: list)* *(default: empty)*:
+List of columns which form the primary key. This will be used when Flowman creates the table, and this will also be used
+as the fallback for merge/upsert operations, when no `mergeKey` and no explicit merge condition is specified.
+
+ * `mergeKey`  **(optional)** *(type: list)* *(default: empty)*:
+  List of columns which will be used as default condition for merge and upsert operations. The main difference to
+ `primaryKey` is that these columns will not be used as a primary key for creating the table.
  
  * `description` **(optional)** *(type: string)* *(default: empty)*:
  A description of the relation. This is purely for informational purpose.
@@ -90,18 +103,23 @@ the migration strategy is set to `ALTER_REPLACE`, then Flowman will fall back to
 altogether on *any* non-recoverable exception during migration.
 
 
+## Schema Conversion
+The JDBC relation fully supports automatic schema conversion on input and output operations as described in the
+corresponding section of [relations](index.md).
+
+
 ## Output Modes
 The `jdbc` relation supports the following output modes in a [`relation` target](../target/relation.md):
 
-|Output Mode |Supported  | Comments|
---- | --- | ---
-|`errorIfExists`|yes|Throw an error if the JDBC table already exists|
-|`ignoreIfExists`|yes|Do nothing if the JDBC table already exists|
-|`overwrite`|yes|Overwrite the whole table or the specified partitions|
-|`overwrite_dynamic`|no|-|
-|`append`|yes|Append new records to the existing table|
-|`update`|no|-|
-|`merge`|no|-|
+| Output Mode         | Supported | Comments                                              |
+|---------------------|-----------|-------------------------------------------------------|
+| `errorIfExists`     | yes       | Throw an error if the JDBC table already exists       |
+| `ignoreIfExists`    | yes       | Do nothing if the JDBC table already exists           |
+| `overwrite`         | yes       | Overwrite the whole table or the specified partitions |
+| `overwrite_dynamic` | no        | -                                                     |
+| `append`            | yes       | Append new records to the existing table              |
+| `update`            | no        | -                                                     |
+| `merge`             | no        | -                                                     |
 
 
 ## Remarks

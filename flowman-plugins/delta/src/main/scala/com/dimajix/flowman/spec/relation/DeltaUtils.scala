@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec.relation
 
 import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.SparkSession
@@ -39,6 +40,10 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.MergeClause
+import com.dimajix.flowman.execution.DeleteClause
+import com.dimajix.flowman.execution.InsertClause
+import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.model.PartitionField
 
 
@@ -129,6 +134,32 @@ object DeltaUtils {
             .merge(df.as("df"), mergeCondition)
             .whenMatched().updateAll()
             .whenNotMatched().insertAll()
+            .execute()
+    }
+
+    def merge(table:DeltaTable, df: DataFrame, mergeCondition:Column, clauses:Seq[MergeClause]) : Unit = {
+        val builder = table.as("target")
+            .merge(df.as("source"), mergeCondition)
+        clauses.foldLeft(builder) { (mergeBuilder, clause) =>
+                clause match {
+                    case InsertClause(condition, columns) =>
+                        val b2 = condition.map(mergeBuilder.whenNotMatched).getOrElse(mergeBuilder.whenNotMatched())
+                        if (columns.nonEmpty)
+                            b2.insert(columns)
+                        else
+                            b2.insertAll()
+                    case UpdateClause(condition, columns) =>
+                        val b2 = condition.map(mergeBuilder.whenMatched).getOrElse(mergeBuilder.whenMatched())
+                        if (columns.nonEmpty)
+                            b2.update(columns)
+                        else
+                            b2.updateAll()
+                    case DeleteClause(condition) =>
+                        val b2 = condition.map(mergeBuilder.whenMatched).getOrElse(mergeBuilder.whenMatched())
+                        b2.delete()
+                }
+
+            }
             .execute()
     }
 

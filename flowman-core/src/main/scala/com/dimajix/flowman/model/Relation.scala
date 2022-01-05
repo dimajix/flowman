@@ -33,6 +33,7 @@ import org.apache.spark.sql.streaming.{OutputMode => StreamOutputMode}
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
@@ -40,11 +41,13 @@ import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.graph.Linker
+import com.dimajix.flowman.transforms.ColumnMismatchStrategy
+import com.dimajix.flowman.transforms.SchemaEnforcer
+import com.dimajix.flowman.transforms.TypeMismatchStrategy
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
-import com.dimajix.spark.sql.SchemaUtils
 
 
 object Relation {
@@ -169,13 +172,14 @@ trait Relation extends Instance {
     def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:OutputMode = OutputMode.OVERWRITE) : Unit
 
     /**
-     * Performs a merge operation. All condition columns should reference the relation using the alias `relation`.
+     * Performs a merge operation. Either you need to specify a [[mergeKey]], or the relation needs to provide some
+     * default key.
      * @param execution
      * @param df
      * @param mergeCondition
      * @param clauses
      */
-    def merge(execution:Execution, df:DataFrame, mergeCondition:Column, clauses:Seq[MergeClause]) : Unit = ???
+    def merge(execution:Execution, df:DataFrame, condition:Option[Column], clauses:Seq[MergeClause]) : Unit = ???
 
     /**
       * Removes one or more partitions.
@@ -432,6 +436,16 @@ abstract class BaseRelation extends AbstractInstance with Relation {
         }
     }
 
+    protected def appendPartitionColumns(schema:org.apache.spark.sql.types.StructType) : org.apache.spark.sql.types.StructType = {
+        val schemaFieldNames = SetIgnoreCase(schema.fieldNames)
+        val partitionFieldNames = SetIgnoreCase(partitions.map(_.name))
+        val schemaFields = schema.fields.map {
+            case f:org.apache.spark.sql.types.StructField if partitionFieldNames.contains(f.name) => f.copy(nullable = false)
+            case f => f
+        }
+        org.apache.spark.sql.types.StructType(schemaFields ++ partitions.filter(p => !schemaFieldNames.contains(p.name)).map(_.catalogField))
+    }
+
     /**
      * Applies the output schema (or maybe even transforms it). This should include partitions only if they are
      * required for write operations.
@@ -440,25 +454,48 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      */
     protected def applyOutputSchema(execution:Execution, df:DataFrame, includePartitions:Boolean=false) : DataFrame = {
         // Add all partition columns to the output schema
-        val outputSchema = {
-            val baseSchema = this.outputSchema(execution)
-            if (includePartitions) {
-                baseSchema.map { schema =>
-                    val schemaFieldNames = SetIgnoreCase(schema.fieldNames)
-                    partitions.foldLeft(schema)((schema, partition) =>
-                        if (!schemaFieldNames.contains(partition.name))
-                            org.apache.spark.sql.types.StructType(schema.fields :+ partition.sparkField)
-                        else
-                            schema
-                    )
-                }
+        val outputSchema = this.outputSchema(execution)
+            .map { schema =>
+                if (includePartitions)
+                    appendPartitionColumns(schema)
+                else
+                    schema
             }
-            else {
-                baseSchema
-            }
-        }
 
-        SchemaUtils.applySchema(df, outputSchema)
+        // Use SchemaEnforcer to enforce current outputSchema
+        outputSchema.map { schema =>
+                val conf = execution.flowmanConf
+                val enforcer = SchemaEnforcer(
+                    schema,
+                    columnMismatchStrategy = ColumnMismatchStrategy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_OUTPUT_COLUMN_MISMATCH_STRATEGY)),
+                    typeMismatchStrategy = TypeMismatchStrategy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_OUTPUT_TYPE_MISMATCH_STRATEGY))
+                )
+                enforcer.transform(df)
+            }
+            .getOrElse(df)
+    }
+
+    protected def applyInputSchema(execution:Execution, df:DataFrame, includePartitions:Boolean=true) : DataFrame = {
+        // Add all partition columns to the output schema
+        val inputSchema = this.inputSchema
+            .map { schema =>
+                if (includePartitions)
+                    appendPartitionColumns(schema)
+                else
+                    schema
+            }
+
+        // Use SchemaEnforcer to enforce current inputSchema
+        inputSchema.map { schema =>
+                val conf = execution.flowmanConf
+                val enforcer = SchemaEnforcer(
+                    schema,
+                    columnMismatchStrategy = ColumnMismatchStrategy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_INPUT_COLUMN_MISMATCH_STRATEGY)),
+                    typeMismatchStrategy = TypeMismatchStrategy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_INPUT_TYPE_MISMATCH_STRATEGY))
+                )
+                enforcer.transform(df)
+            }
+            .getOrElse(df)
     }
 }
 

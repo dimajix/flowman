@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,11 @@ import java.util.Locale
 import scala.collection.Iterator
 import scala.collection.Map
 import scala.collection.Seq
+import scala.collection.SetLike
 
 
 object SetIgnoreCase {
-    def apply() : SetIgnoreCase = new SetIgnoreCase(Map())
+    def apply() : SetIgnoreCase = new SetIgnoreCase(Map.empty)
     def apply(set:Iterable[String]) : SetIgnoreCase = {
         new SetIgnoreCase(set.map(kv => kv.toLowerCase(Locale.ROOT) -> kv).toMap)
     }
@@ -36,7 +37,8 @@ object SetIgnoreCase {
     }
 
 }
-class SetIgnoreCase private(impl:Map[String,String] = Map()) extends Set[String] {
+class SetIgnoreCase private(impl:Map[String,String] = Map()) extends Set[String] with SetLike[String, SetIgnoreCase] {
+    override def empty: SetIgnoreCase = SetIgnoreCase(Set.empty)
 
     /** Creates a new iterator over all key/value pairs of this map
       *
@@ -56,4 +58,6 @@ class SetIgnoreCase private(impl:Map[String,String] = Map()) extends Set[String]
     override def - (key: String): SetIgnoreCase = new SetIgnoreCase(impl - key.toLowerCase(Locale.ROOT))
 
     override def contains(elem: String): Boolean = impl.contains(elem.toLowerCase(Locale.ROOT))
+
+    def get(v: String) : Option[String] = impl.get(v.toLowerCase(Locale.ROOT))
 }

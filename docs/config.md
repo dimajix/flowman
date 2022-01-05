@@ -7,6 +7,7 @@ specification (see [module documentation](spec/module.md)) or in the namespace c
 
 
 ## List of Configuration Properties
+
 - `flowman.spark.enableHive` *(type: boolean)* *(default:true)*
 If set to `false`, then Hive support will be disabled in Flowman.
 
@@ -30,24 +31,28 @@ variable `FLOWMAN_PLUGIN_DIR` or `FLOWMAN_HOME`.
   [Impala Catalog plugin](plugins/impala.md) whenever a Hive table is updated. The `REFRESH` statements will always
   be executed by the plugin.
 
-- `flowman.execution.target.forceDirty` *(type: boolean)* *(default:false)*
-When enabled (i.e. set to `true`), then Flowman will treat all targets as being dirty. Otherwise Flowman will check
-the existence of targets to decide if a rebuild is required.
+- `flowman.execution.target.forceDirty` *(type: boolean)* *(default:false)* (since Flowman 0.14.0)
+When enabled (i.e. set to `true`), then Flowman will treat all targets as being dirty. Otherwise, Flowman will check
+the existence of targets and/or the history to decide if a rebuild is required.
+
+- `flowman.execution.target.useStateStore`  *(type: boolean)* *(default:false)* (since Flowman 0.20.0)
+  When enabled (i.e. set to `false`), then Flowman will ignore the history information to check if a target needs a
+  rebuild. Otherwise, the history store will be trusted for deciding if a target needs a rebuild.
   
-- `flowman.execution.executor.class` *(type: class)* *(default: `com.dimajix.flowman.execution.SimpleExecutor`)*
+- `flowman.execution.executor.class` *(type: class)* *(default: `com.dimajix.flowman.execution.SimpleExecutor`)* (since Flowman 0.16.0)
 Configure the executor to use. The default `SimpleExecutor` will process all targets in the correct order
   sequentially. The alternative implementation `com.dimajix.flowman.execution.ParallelExecutor` will run multiple 
   targets in parallel (if they are not depending on each other)
-  
-- `flowman.execution.executor.parallelism` *(type: int)* *(default: 1)*
+
+- `flowman.execution.executor.parallelism` *(type: int)* *(default: 4)* (since Flowman 0.16.0)
+  The number of targets to be executed in parallel, when the `ParallelExecutor` is used.
+
+- `flowman.execution.mapping.parallelism` *(type: int)* *(default: 1)* (since Flowman 0.19.0)
 The number of mappings to be processed in parallel. Increasing this number may help in scenarios where many 
 relations are read from and their initial setup is slow (for example due to slow directory listings). With the
 default value of 1, the parallelism is completely disabled and a non-threaded code path is used instead.
 
-- `flowman.execution.executor.parallelism` *(type: int)* *(default: 4)*
-The number of targets to be executed in parallel, when the `ParallelExecutor` is used.
-
-- `flowman.execution.scheduler.class` *(type: class)* *(default: `com.dimajix.flowman.execution.DependencyScheduler`)*
+- `flowman.execution.scheduler.class` *(type: class)* *(default: `com.dimajix.flowman.execution.DependencyScheduler`)* (since Flowman 0.16.0)
   Configure the scheduler to use, which essentially decides which target to build next.
   - The default `DependencyScheduler` will sort all targets according to their dependency.
   - The simpler `ManualScheduler` will simply respect the order of targets as specified in a job. This may not work
@@ -57,14 +62,14 @@ The number of targets to be executed in parallel, when the `ParallelExecutor` is
 Turns on automatic eager caching of Spark jobs that reference a single cached DataFrame multiple times. This is to
 avoid parallel computation of the same partitions, which can be seen in some scenarios.
 
-- `flowman.default.relation.migrationPolicy` *(type: string)* *(default:`RELAXED`)*
+- `flowman.default.relation.migrationPolicy` *(type: string)* *(default:`RELAXED`)* (since Flowman 0.18.0)
 Sets the default policy when to migrate tables. Possible values are:
   - *`STRICT`*: A migration will be initiated, whenever the physical table definition does not match the required
       one, even if the types would be compatible.
   - *`RELAXED`*: A migration will only be initiated, whenever the physical table definition is not sufficient for
     storing information with the required schema. If all types are compatible, not migration will be initiated.
 
-- `flowman.default.relation.migrationStrategy` *(type: string)* *(default:`ALTER`)*
+- `flowman.default.relation.migrationStrategy` *(type: string)* *(default:`ALTER`)* (since Flowman 0.18.0)
 Sets the strategy to use how tables should be migrated. Possible values are:
   - *`NEVER`* even if a migration would be required, it will not be performed. No error will be generated.
   - *`FAIL`* even if a migration would be required, it will not be performed, instead an error will be generated.
@@ -77,6 +82,23 @@ Sets the strategy to use how tables should be migrated. Possible values are:
   - *`REPLACE`* If a migration is required, Flowman will always replace the existing table with a new one.
     Note that all contents will be lost.
 
+- `flowman.default.relation.input.columnMismatchPolicy` *(type: string)* *(default:`IGNORE`)* (since Flowman 0.20.0)
+  Defines how Flowman should handle a mismatch between the actual columns of a relation when reading from it and the
+  columns as defined in the relation. Per default, Flowman ignores any mismatch and simply passes through the schema
+  of the actual relation. See [relations](spec/relation/index.md) for possible options and more details.
+- `flowman.default.relation.input.typeMismatchPolicy` *(type: string)* *(default:`IGNORE`)* (since Flowman 0.20.0)
+  Defines how Flowman should handle a mismatch between the types of the actual schema of a relation when reading from 
+  it and the types of the schema as defined in the relation. Per default, Flowman ignores any mismatch and simply passes 
+  through the types of the actual relation. See [relations](spec/relation/index.md) for possible options and more details.
+- `flowman.default.relation.output.columnMismatchPolicy` *(type: string)* *(default:`ADD_REMOVE_COLUMNS`)* (since Flowman 0.20.0)
+  Defines how Flowman should handle a mismatch of columns of records being written to a relation and the relations
+  actual defined columns. Per default Flowman will add/remove columns to/from records such that they match the current
+  physical layout. See [relations](spec/relation/index.md) for possible options and more details.
+- `flowman.default.relation.output.typeMismatchPolicy` *(type: string)* *(default:`CAST_ALWAYS`)* (since Flowman 0.20.0)
+  Defines how Flowman should handle a mismatch of columns of records being written to a relation and the relations
+  actual defined columns. Per default Flowman will add/remove columns to/from records such that they match the current
+  physical layout. See [relations](spec/relation/index.md) for possible options and more details.
+
 - `flowman.default.target.outputMode` *(type: string)* *(default:`OVERWRITE`)*
 Sets the default target output mode. Possible values are 
   - *`OVERWRITE`*: Will overwrite existing data. Only supported in batch output.
@@ -86,12 +108,12 @@ Sets the default target output mode. Possible values are
   - *`ERROR_IF_EXISTS`*: Throws an error if the output already exists
 Note that you can still explicitly specify a different output mode in each target.
     
-- `flowman.default.target.rebalance` *(type: boolean)* *(default:false)*
+- `flowman.default.target.rebalance` *(type: boolean)* *(default:false)* (since Flowman 0.15.0)
 If set to `true`, Flowman will try to write a similar records per each output file. Rebelancing might be an expensive
 operation since it will invoke a Spark network shuffle. Note that you can still explicitly use different settings per
 target. 
 
-- `flowman.default.target.parallelism` *(type: int)* *(default:16)*
+- `flowman.default.target.parallelism` *(type: int)* *(default:16)* (since Flowman 0.15.0)
 Sets the default number of output files per target. If set to zero or a negative value, the number of output files is 
 implicitly determined by the number of internal Spark partitions, i.e. no explicit change will be performed. Note that 
 you can still explicitly use different settings per target. 
@@ -101,7 +123,7 @@ you can still explicitly use different settings per target.
 
 Sometimes some workarounds are required, especially for non-quite-open-source Big Data platforms.
 
-- `flowman.workaround.analyze_partition` *(type: boolean)*
+- `flowman.workaround.analyze_partition` *(type: boolean)* (since Flowman 0.18.0)
 Enables a workaround for CDP 7.1, where ANALYZE TABLES wouldn't always work correctly (especially in unittests). The
   workaround is enabled per default if the Spark version matches ?.?.?.7.?.?.?.+ (i.e. 2.4.0.7.1.6.0-297) AND if 
   the Spark repository url contains "cloudera".

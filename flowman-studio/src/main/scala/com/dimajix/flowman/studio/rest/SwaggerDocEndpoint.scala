@@ -2,14 +2,17 @@ package com.dimajix.flowman.studio.rest
 
 import com.github.swagger.akka.SwaggerHttpService
 import com.github.swagger.akka.model.Info
+import io.swagger.models.auth.BasicAuthDefinition
 
 
 object SwaggerDocEndpoint extends SwaggerHttpService  {
     override def apiClasses = Set(
-        classOf[KernelEndpoint],
+        classOf[ShutdownEndpoint],
         classOf[PingEndpoint],
-        classOf[RegistryEndpoint],
-        classOf[LauncherEndpoint]
+        classOf[ProjectEndpoint],
+        classOf[NamespaceEndpoint],
+        classOf[SessionEndpoint],
+        classOf[JobEndpoint]
     )
     override def host = ""
     override def basePath: String = "/api/"

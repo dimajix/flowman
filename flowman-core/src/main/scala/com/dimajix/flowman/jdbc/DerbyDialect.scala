@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,14 +38,6 @@ object DerbyDialect extends BaseDialect {
     private object Statements extends DerbyStatements(this)
 
     override def canHandle(url: String): Boolean = url.startsWith("jdbc:derby")
-
-    /**
-      * Quotes the identifier. This is used to put quotes around the identifier in case the column
-      * name is a reserved keyword, or in case it contains characters that require quotes (e.g. space).
-      */
-    override def quoteIdentifier(colName: String): String = {
-        s""""$colName""""
-    }
 
     /**
      * Quotes a table name including the optional database prefix

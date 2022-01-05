@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Kaya Kupferschmidt
+ * Copyright 2020-2021 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,16 @@
 
 package com.dimajix.flowman.tools.exec.sql
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
+import java.time.Clock
+
+import scala.util.control.NonFatal
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.kohsuke.args4j.spi.RestOfArgumentsHandler
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
@@ -46,19 +47,19 @@ class SqlCommand extends Command {
 
     override def execute(session: Session, project: Project, context: Context): Boolean = {
         val mapping = SqlMapping(
-            Mapping.Properties(context, "sql"),
+            Mapping.Properties(context, "sql-" + Clock.systemUTC().millis()),
             sql = Some(statement.mkString(" "))
         )
-        Try {
+        try {
             val executor = session.execution
             val df = executor.instantiate(mapping, "main")
             ConsoleUtils.showDataFrame(df, limit, csv)
             true
-        } match {
-            case Failure(ex) =>
-                logger.error(s"Cannot execute sql: ${ex.getMessage}")
+        }
+        catch {
+            case NonFatal(ex) =>
+                logger.error("Cannot execute sql: " + reasons(ex))
                 false
-            case Success(_) => true
         }
     }
 }

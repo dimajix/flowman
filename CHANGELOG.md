@@ -1,4 +1,4 @@
-# Version 0.20.0
+# Version 0.20.0 - 2022-01-05
 
 * Fix detection of Derby metastore to truncate comment lengths.
 * Add new config variable `flowman.default.relation.input.columnMismatchPolicy` (default is `IGNORE`)
@@ -6,10 +6,11 @@
 * Add new config variable `flowman.default.relation.output.columnMismatchPolicy` (default is `ADD_REMOVE_COLUMNS`)
 * Add new config variable `flowman.default.relation.output.typeMismatchPolicy` (default is `CAST_ALWAYS`)
 * Improve handling of `_SUCCESS` files for detecting (non-)dirty directories
-* Implement new `merge`target
+* Implement new `merge` target
 * Implement merge operation for Delta relations
-* Implement merge operation for JDBC relations (only for some databases)
+* Implement merge operation for JDBC relations (only for some databases, i.e. MS SQL)
 * Add new config variable `flowman.execution.target.useHistory` (default is `false`)
+* Change the semantics of config variable `flowman.execution.target.forceDirty` (default is `false`)
 * Add new `-d` / `--dirty` option for explicitly marking individual targets as dirty
 
 
@@ -31,7 +32,7 @@
 # Version 0.18.0 - 2021-10-13
 
 * Improve automatic schema migration for Hive and JDBC relations
-* Improve support of `CHAR(n)` and `VARCHAR(n)` types. Those types will now be propagates to Hive with newer Spark versions
+* Improve support of `CHAR(n)` and `VARCHAR(n)` types. Those types will now be propagated to Hive with newer Spark versions
 * Support writing to dynamic partitions for file relations, Hive tables, JDBC relations and Delta tables
 * Fix the name of some config variables (floman.* => flowman.*)
 * Added new config variables `flowman.default.relation.migrationPolicy` and `flowman.default.relation.migrationStrategy`

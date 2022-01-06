@@ -64,7 +64,7 @@ object ResourceIdentifier {
  * target during a lifecycle phase. ResourceIdentifiers therefore play a crucial role in determining the correct
  * execution order of all targets
  */
-abstract class ResourceIdentifier {
+abstract class ResourceIdentifier extends Product with Serializable {
     val category:String
     val name:String
     val partition:Map[String,String]

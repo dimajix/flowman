@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.dimajix.flowman.transforms.CaseFormat.CAMEL_CASE.name
 import com.dimajix.flowman.transforms.CaseFormat.CAMEL_CASE.name
 
 
-sealed abstract class CaseFormat(val name:String) {
+sealed abstract class CaseFormat(val name:String) extends Product with Serializable {
     override def toString() : String = name
     def format(str:String) : String
     def join(words:String*) : String

@@ -74,7 +74,7 @@ object Result {
     }
 }
 
-sealed abstract class Result[T <: Result[T]] { this:T =>
+sealed abstract class Result[T <: Result[T]] extends Product with Serializable { this:T =>
     def identifier : Identifier[_]
     def name : String
     def category : Category

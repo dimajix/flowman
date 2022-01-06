@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.BaseSchema
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SchemaUtils
@@ -32,6 +33,13 @@ case class UnionSchema(
 ) extends BaseSchema {
     private val unionSchema = SchemaUtils.union(schemas.map(s => StructType(s.fields)))
     private val unionDescription = schemas.flatMap(_.description).find(_.nonEmpty)
+
+    /**
+     * Returns a list of physical resources required by this schema
+     *
+     * @return
+     */
+    override def requires : Set[ResourceIdentifier] = schemas.flatMap(_.requires).toSet
 
     /**
       * Returns the description of the schema

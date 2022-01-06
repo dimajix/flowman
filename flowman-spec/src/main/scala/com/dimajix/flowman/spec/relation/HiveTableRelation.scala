@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,7 +142,7 @@ case class HiveTableRelation(
       * @return
       */
     override def requires : Set[ResourceIdentifier] = {
-        database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
+        database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet ++ super.requires
     }
 
     /**

@@ -1,3 +1,8 @@
+# Version 0.20.1
+
+* Implement detection of dependencies introduced by schema
+
+
 # Version 0.20.0 - 2022-01-05
 
 * Fix detection of Derby metastore to truncate comment lengths.

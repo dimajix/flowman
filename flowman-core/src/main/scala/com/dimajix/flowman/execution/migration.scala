@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.dimajix.flowman.execution
 import java.util.Locale
 
 
-sealed abstract class MigrationPolicy
+sealed abstract class MigrationPolicy extends Product with Serializable
 
 object MigrationPolicy {
     case object RELAXED extends MigrationPolicy
@@ -36,7 +36,7 @@ object MigrationPolicy {
 }
 
 
-sealed abstract class MigrationStrategy
+sealed abstract class MigrationStrategy extends Product with Serializable
 
 object MigrationStrategy {
     case object NEVER extends MigrationStrategy

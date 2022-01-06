@@ -27,7 +27,7 @@ import com.dimajix.flowman.common.ThreadUtils
 import com.dimajix.flowman.model.Result
 
 
-sealed abstract class Status {
+sealed abstract class Status extends Product with Serializable {
     def lower : String = toString.toLowerCase(Locale.ROOT)
     def upper : String = toString.toUpperCase(Locale.ROOT)
 

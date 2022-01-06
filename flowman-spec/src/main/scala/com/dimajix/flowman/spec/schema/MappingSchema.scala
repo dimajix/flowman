@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,11 @@ package com.dimajix.flowman.spec.schema
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.model.BaseSchema
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.RegexResourceIdentifier
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.types.Field
 
@@ -41,10 +44,25 @@ case class MappingSchema (
         val instance = context.getMapping(mapping.mapping)
         execution.describe(instance, mapping.output).fields
     }
+    private lazy val cachedRequires = {
+        MappingUtils.requires(context, mapping.mapping).map {
+            case RegexResourceIdentifier("hiveTablePartition", name, _) => RegexResourceIdentifier("hiveTable", name, Map())
+            case RegexResourceIdentifier("jdbcTablePartition", name, _) => RegexResourceIdentifier("jdbcTable", name, Map())
+            case res => res
+        }
+    }
+
+    /**
+     * Returns a list of physical resources required by this schema
+     *
+     * @return
+     */
+    override def requires: Set[ResourceIdentifier] = cachedRequires
 
     /**
       * Returns the description of the schema
-      * @return
+     *
+     * @return
       */
     override def description : Option[String] = Some(s"Inferred from mapping $mapping")
 

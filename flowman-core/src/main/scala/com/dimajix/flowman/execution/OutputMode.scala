@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import java.util.Locale
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.streaming.{ OutputMode => StreamingMode }
 
-sealed abstract class OutputMode {
+sealed abstract class OutputMode extends Product with Serializable {
     def batchMode : SaveMode
     def streamMode : StreamingMode
 }

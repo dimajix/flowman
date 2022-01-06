@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -581,6 +581,14 @@ trait PartitionedRelation { this:Relation =>
  * Common base implementation for the Relation interface class. It contains a couple of common properties.
  */
 trait SchemaRelation { this: Relation =>
+    /**
+     * Returns the list of all resources which will be required by this relation for creation. This method mainly
+     * refers to the CREATE and DESTROY execution phase.
+     *
+     * @return
+     */
+    override def requires: Set[ResourceIdentifier] = schema.map(_.requires).getOrElse(Set())
+
     /**
      * Returns the schema of the relation
      *

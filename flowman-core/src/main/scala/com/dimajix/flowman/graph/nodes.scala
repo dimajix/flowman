@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 
 
-sealed abstract class Node {
+sealed abstract class Node extends Product with Serializable {
     private[graph] val inEdges = mutable.Buffer[Edge]()
     private[graph] val outEdges = mutable.Buffer[Edge]()
     private[graph] val _parent : Option[Node] = None

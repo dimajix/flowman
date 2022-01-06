@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.Path
 import org.slf4j.Logger
 
 import com.dimajix.flowman.model.BaseSchema
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.Field
 
@@ -46,6 +47,14 @@ abstract class ExternalSchema extends BaseSchema {
     protected val url: Option[URL]
     protected val spec: Option[String]
     private lazy val cache : CachedSchema = loadSchema
+
+    /**
+     * Returns a list of physical resources required by this schema
+     * @return
+     */
+    override def requires : Set[ResourceIdentifier] = {
+        file.map(ResourceIdentifier.ofFile).toSet
+    }
 
     /**
       * Returns the description of the schema. This will be cached once and for ever

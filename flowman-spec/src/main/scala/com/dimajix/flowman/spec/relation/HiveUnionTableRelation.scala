@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import com.dimajix.flowman.model.PartitionedRelation
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.transforms.UnionTransformer
@@ -87,23 +88,8 @@ case class HiveUnionTableRelation(
     outputFormat: Option[String] = None,
     properties: Map[String, String] = Map(),
     serdeProperties: Map[String, String] = Map()
-)  extends BaseRelation with PartitionedRelation {
+)  extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[HiveUnionTableRelation])
-    private lazy val tableSchema = schema.map { schema =>
-        EmbeddedSchema(
-            Schema.Properties(
-                schema.context,
-                schema.namespace,
-                schema.project,
-                schema.name,
-                schema.kind,
-                schema.labels
-            ),
-            schema.description,
-            schema.fields.map(com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar),
-            schema.primaryKey
-        )
-    }
 
     def viewIdentifier: TableIdentifier = TableIdentifier(view, viewDatabase)
     def tableIdentifier(version:Int) : TableIdentifier = {
@@ -183,7 +169,8 @@ case class HiveUnionTableRelation(
       */
     override def requires: Set[ResourceIdentifier] = {
         tableDatabase.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet ++
-        viewDatabase.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
+        viewDatabase.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet ++
+            super.requires
     }
 
     /**

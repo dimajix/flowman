@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.dimajix.flowman.model.BaseSchema
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.types.Field
 
@@ -54,6 +55,16 @@ case class RelationSchema(
     private lazy val cachedPrimaryKey = {
         val rel = context.getRelation(relation)
         rel.schema.toSeq.flatMap(_.primaryKey)
+    }
+
+    /**
+     * Returns a list of physical resources required by this schema
+     *
+     * @return
+     */
+    override def requires: Set[ResourceIdentifier] = {
+        val rel = context.getRelation(relation)
+        rel.requires
     }
 
     /**

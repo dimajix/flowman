@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.dimajix.flowman.model
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.Dataset.Properties
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
@@ -58,6 +59,12 @@ trait Schema extends Instance {
       * @return
       */
     override final def category: Category = Category.SCHEMA
+
+    /**
+     * Returns a list of physical resources required by this schema
+     * @return
+     */
+    def requires : Set[ResourceIdentifier]
 
     /**
       * Returns the description of the schema
@@ -102,6 +109,12 @@ trait Schema extends Instance {
 
 
 abstract class BaseSchema extends AbstractInstance with Schema {
+    /**
+     * Returns a list of physical resources required by this schema
+     * @return
+     */
+    override def requires : Set[ResourceIdentifier] = Set()
+
     /**
      * Returns a Spark schema for this schema
      * @return

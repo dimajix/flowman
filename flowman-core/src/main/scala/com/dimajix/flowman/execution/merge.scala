@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.dimajix.flowman.execution
 import org.apache.spark.sql.Column
 
 
-sealed abstract class MergeClause {
+sealed abstract class MergeClause extends Product with Serializable {
     def condition : Option[Column]
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,11 +169,15 @@ class Shell(args:Arguments) extends StatefulTool(
                 System.out.flush()
                 val context = job.map(_.name).orElse(test.map(_.name))
                 val prompt = "flowman:" + project.name + context.map("/" + _).getOrElse("") + "> "
+
                 console.readLine(prompt)
-                val args = console.getParsedLine.words().asScala.filter(_.trim.nonEmpty)
-                if (args.nonEmpty) {
-                    val parser = new CmdLineParser(cmd)
-                    parser.parseArgument(args.asJava)
+                val parsedLine = console.getParsedLine
+                if (parsedLine != null) {
+                    val args = parsedLine.words().asScala.filter(_.trim.nonEmpty)
+                    if (args.nonEmpty) {
+                        val parser = new CmdLineParser(cmd)
+                        parser.parseArgument(args.asJava)
+                    }
                 }
             } catch {
                 case e: CmdLineException =>
@@ -183,9 +187,9 @@ class Shell(args:Arguments) extends StatefulTool(
                     writer.println("Error parsing command: " + e.getMessage)
             }
 
-            try {
-                val command = cmd.command
-                if (command != null) {
+            val command = cmd.command
+            if (command != null) {
+                try {
                     if (command.help) {
                         command.printHelp(System.out)
                     }
@@ -193,11 +197,11 @@ class Shell(args:Arguments) extends StatefulTool(
                         command.execute(session, project, context)
                     }
                 }
-            }
-            catch {
-                case NonFatal(e) =>
-                    writer.println("Error executing command: " + e.getMessage)
-                    e.printStackTrace(writer)
+                catch {
+                    case NonFatal(e) =>
+                        writer.println("Error executing command: " + e.getMessage)
+                        e.printStackTrace(writer)
+                }
             }
         }
 

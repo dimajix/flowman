@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.dimajix.flowman.graph
 import java.util.Locale
 
 
-sealed abstract class Action {
+sealed abstract class Action extends Product with Serializable {
     def lower : String = toString.toLowerCase(Locale.ROOT)
     def upper : String = toString.toUpperCase(Locale.ROOT)
 }

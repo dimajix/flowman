@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.types.StringType
 
@@ -163,6 +164,7 @@ class AvroSchemaTest extends AnyFlatSpec with Matchers {
 
         val result = schemaSpec.instantiate(session.context)
         result shouldBe an[AvroSchema]
+        result.requires should be (Set(ResourceIdentifier.ofFile(new Path(basedir, "schema/AvroSchema.json"))))
 
         val fields = result.fields
         fields.size should be (1)

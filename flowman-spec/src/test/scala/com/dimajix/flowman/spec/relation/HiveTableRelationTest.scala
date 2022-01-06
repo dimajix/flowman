@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1880,7 +1880,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
     }
 
-    it should "support mapping schemas" in {
+    it should "provide its schema to mappings" in {
         val spec =
             s"""
                |relations:
@@ -1920,6 +1920,88 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Field("spart", ftypes.StringType, false),
             Field("ip", ftypes.IntegerType, false)
         )))
+    }
+
+    it should "support mapping schemas" in {
+        val spec =
+            s"""
+               |relations:
+               |  t0:
+               |    kind: hiveTable
+               |    database: default
+               |    table: lala_0004
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+               |    partitions:
+               |      - name: spart
+               |        type: string
+               |      - name: ip
+               |        type: int
+               |  t1:
+               |     kind: hiveTable
+               |     database: default
+               |     table: lala_0005
+               |     schema:
+               |       kind: mapping
+               |       mapping: input
+               |
+               |mappings:
+               |  input:
+               |    kind: read
+               |    relation: t0
+               |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        val mapping = context.getMapping(MappingIdentifier("input"))
+        val schema = mapping.describe(execution, Map(), "main")
+        schema should be (ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("spart", ftypes.StringType, false),
+            Field("ip", ftypes.IntegerType, false)
+        )))
+
+        val t0 = context.getRelation(RelationIdentifier("t0"))
+        t0.fields should be (Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("spart", ftypes.StringType, false),
+            Field("ip", ftypes.IntegerType, false)
+        ))
+        t0.schema.toSeq.flatMap(_.fields) should be (Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType)
+        ))
+        t0.provides should be (Set(ResourceIdentifier.ofHiveTable("lala_0004", Some("default"))))
+        t0.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
+
+        val t1 = context.getRelation(RelationIdentifier("t1"))
+        t1.fields should be (Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("spart", ftypes.StringType, false),
+            Field("ip", ftypes.IntegerType, false)
+        ))
+        t1.schema.toSeq.flatMap(_.fields) should be (Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("spart", ftypes.StringType, false),
+            Field("ip", ftypes.IntegerType, false)
+        ))
+        t1.provides should be (Set(ResourceIdentifier.ofHiveTable("lala_0005", Some("default"))))
+        t1.requires should be (Set(
+            ResourceIdentifier.ofHiveTable("lala_0004", Some("default")),
+            ResourceIdentifier.ofHiveDatabase("default")
+        ))
     }
 
     it should "replace an existing Hive view with a Hive table" in {

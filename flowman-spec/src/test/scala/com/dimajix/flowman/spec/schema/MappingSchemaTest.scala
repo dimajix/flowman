@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
@@ -66,9 +67,10 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Field("int_col", IntegerType),
             Field("spart", StringType, false)
         ))
+        schema.requires should be (Set())
     }
 
-    it should "work with non-trivial schema inferrence" in {
+    it should "work with non-trivial schema inference" in {
         val spec =
             """
               |mappings:
@@ -90,14 +92,17 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Field("str_col", StringType, nullable=false),
             Field("int_col", IntegerType, nullable=false)
         ))
+        schema.requires should be (Set())
     }
 
     it should "work as a schema of a relations" in {
         val spec =
             """
               |relations:
-              |  empty:
-              |    kind: null
+              |  some_hive_table:
+              |    kind: hiveTable
+              |    table: lala
+              |    database: some_db
               |    schema:
               |      kind: embedded
               |      fields:
@@ -116,7 +121,7 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |mappings:
               |  read:
               |    kind: read
-              |    relation: empty
+              |    relation: some_hive_table
               |    partitions:
               |      spart: abc
               |  alias:
@@ -135,5 +140,6 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Field("int_col", IntegerType),
             Field("spart", StringType, false)
         ))
+        schema.requires should be (Set(ResourceIdentifier.ofHiveTable("lala", Some("some_db"))))
     }
 }

@@ -1,4 +1,4 @@
-# Version 0.20.1
+# Version 0.20.1 - 2022-01-06
 
 * Implement detection of dependencies introduced by schema
 

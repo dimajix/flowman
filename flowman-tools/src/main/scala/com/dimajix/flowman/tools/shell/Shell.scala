@@ -28,6 +28,7 @@ import dev.dirs.ProjectDirectories
 import org.apache.hadoop.fs.Path
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
+import org.jline.reader.UserInterruptException
 import org.jline.reader.impl.history.DefaultHistory
 import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
@@ -171,15 +172,13 @@ class Shell(args:Arguments) extends StatefulTool(
                 val prompt = "flowman:" + project.name + context.map("/" + _).getOrElse("") + "> "
 
                 console.readLine(prompt)
-                val parsedLine = console.getParsedLine
-                if (parsedLine != null) {
-                    val args = parsedLine.words().asScala.filter(_.trim.nonEmpty)
-                    if (args.nonEmpty) {
-                        val parser = new CmdLineParser(cmd)
-                        parser.parseArgument(args.asJava)
-                    }
+                val args = console.getParsedLine.words().asScala.filter(_.trim.nonEmpty)
+                if (args.nonEmpty) {
+                    val parser = new CmdLineParser(cmd)
+                    parser.parseArgument(args.asJava)
                 }
             } catch {
+                case _: UserInterruptException =>
                 case e: CmdLineException =>
                     writer.println("Syntax error: " + e.getMessage)
                     e.getParser.printUsage(writer, null)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,19 @@
 
 package com.dimajix.flowman.util
 
+import java.io.IOException
 import java.io.InputStream
+import java.io.OutputStream
+import java.io.StringWriter
+import java.io.Writer
 import java.net.URL
 
 import scala.reflect.ClassTag
 
+import com.fasterxml.jackson.core.JsonGenerationException
+import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.{ObjectMapper => JacksonMapper}
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -46,6 +53,9 @@ class ObjectMapper {
         mapper
     }
 
+    @throws[IOException]
+    @throws[JsonProcessingException]
+    @throws[JsonMappingException]
     def read[T:ClassTag](file:File) : T = {
         val input = file.open()
         try {
@@ -55,6 +65,9 @@ class ObjectMapper {
             input.close()
         }
     }
+    @throws[IOException]
+    @throws[JsonProcessingException]
+    @throws[JsonMappingException]
     def read[T:ClassTag](url:URL) : T = {
         val con = url.openConnection()
         val input = con.getInputStream
@@ -66,17 +79,52 @@ class ObjectMapper {
             input.close()
         }
     }
+    @throws[IOException]
+    @throws[JsonProcessingException]
+    @throws[JsonMappingException]
     def read[T:ClassTag](file:java.io.File) : T = {
         val ctag = implicitly[reflect.ClassTag[T]]
         mapper.readValue(file, ctag.runtimeClass.asInstanceOf[Class[T]])
     }
+    @throws[IOException]
+    @throws[JsonProcessingException]
+    @throws[JsonMappingException]
     def read[T:ClassTag](stream:InputStream) : T = {
         val ctag = implicitly[reflect.ClassTag[T]]
         mapper.readValue(stream, ctag.runtimeClass.asInstanceOf[Class[T]])
     }
+    @throws[JsonProcessingException]
+    @throws[JsonMappingException]
     def parse[T:ClassTag](spec:String) : T = {
         val ctag = implicitly[reflect.ClassTag[T]]
         mapper.readValue(spec, ctag.runtimeClass.asInstanceOf[Class[T]])
+    }
+
+    @throws[IOException]
+    @throws[JsonGenerationException]
+    @throws[JsonMappingException]
+    def write[T:ClassTag](value:T) : String = {
+        val out = new StringWriter()
+        mapper.writeValue(out, value)
+        out.toString
+    }
+    @throws[IOException]
+    @throws[JsonGenerationException]
+    @throws[JsonMappingException]
+    def write[T:ClassTag](writer:Writer, value:T) : Unit = {
+        mapper.writeValue(writer, value)
+    }
+    @throws[IOException]
+    @throws[JsonGenerationException]
+    @throws[JsonMappingException]
+    def write[T:ClassTag](stream:OutputStream, value:T) : Unit = {
+        mapper.writeValue(stream, value)
+    }
+    @throws[IOException]
+    @throws[JsonGenerationException]
+    @throws[JsonMappingException]
+    def write[T:ClassTag](file:java.io.File, value:T) : Unit = {
+        mapper.writeValue(file, value)
     }
 }
 

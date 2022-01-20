@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.dimajix.flowman.spec.measure.MeasureSpec
 import com.dimajix.flowman.spec.metric.MetricSinkSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
 import com.dimajix.flowman.spec.schema.SchemaSpec
+import com.dimajix.flowman.spec.storage.ParcelSpec
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spi.ClassAnnotationScanner
 import com.dimajix.flowman.util.{ObjectMapper => CoreObjectMapper}
@@ -59,6 +60,7 @@ object ObjectMapper extends CoreObjectMapper {
         val measureTypes = MeasureSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val datasetTypes = DatasetSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val metricSinkTypes = MetricSinkSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+        val parcelTypes = ParcelSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
         val mapper = super.mapper
         mapper.registerSubtypes(stateStoreTypes:_*)
         mapper.registerSubtypes(catalogTypes:_*)
@@ -72,6 +74,7 @@ object ObjectMapper extends CoreObjectMapper {
         mapper.registerSubtypes(measureTypes:_*)
         mapper.registerSubtypes(datasetTypes:_*)
         mapper.registerSubtypes(metricSinkTypes:_*)
+        mapper.registerSubtypes(parcelTypes:_*)
         mapper
     }
 }

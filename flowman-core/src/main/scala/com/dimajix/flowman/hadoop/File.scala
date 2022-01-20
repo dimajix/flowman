@@ -192,6 +192,11 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
         fs.exists(path)
     }
 
+    def mkdirs() : Unit = {
+        if (!fs.mkdirs(path))
+            throw new IOException(s"Cannot create directory '$path'")
+    }
+
     /**
       * Returns true if the file exists as a directory
       * @return

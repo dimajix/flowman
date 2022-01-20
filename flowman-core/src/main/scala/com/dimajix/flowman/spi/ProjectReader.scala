@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spi
 
+import java.io.IOException
+
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Project
 
@@ -45,6 +47,7 @@ abstract class ProjectReader {
      * @param file
      * @return
      */
+    @throws[IOException]
     def file(file: File): Project
 
     /**
@@ -52,5 +55,6 @@ abstract class ProjectReader {
      * @param file
      * @return
      */
+    @throws[IOException]
     def string(text: String): Project
 }

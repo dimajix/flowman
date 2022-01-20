@@ -14,24 +14,13 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.storage
+package com.dimajix.flowman.spec.storage
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.storage.NullStore
+import com.dimajix.flowman.storage.Store
 
-import com.dimajix.flowman.execution.Session
 
-
-class FileStoreTest extends AnyFlatSpec with Matchers {
-    "A FileStore" should "list all projects" in {
-        val session = Session.builder()
-            .disableSpark()
-            .build()
-
-        val root = session.fs.local("../examples")
-        val store = new FileStore(root)
-
-        val result = store.listProjects()
-        println(result)
-    }
+class NullStoreSpec extends StoreSpec {
+    override def instantiate(context:Context): Store = new NullStore
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.history.HistorySpec
 import com.dimajix.flowman.spec.hook.HookSpec
 import com.dimajix.flowman.spec.metric.MetricSinkSpec
-import com.dimajix.flowman.spec.storage.StorageSpec
+import com.dimajix.flowman.spec.storage.StoreSpec
 
 
 final class NamespaceSpec {
@@ -36,7 +36,7 @@ final class NamespaceSpec {
     @JsonProperty(value="profiles") private var profiles: Map[String,ProfileSpec] = Map()
     @JsonDeserialize(converter=classOf[ConnectionSpec.NameResolver])
     @JsonProperty(value="connections") private var connections: Map[String,ConnectionSpec] = Map()
-    @JsonProperty(value="store") private var store: Option[StorageSpec] = None
+    @JsonProperty(value="store") private var store: Option[StoreSpec] = None
     @JsonProperty(value="catalog") private var catalogs: Seq[CatalogSpec] = Seq()
     @JsonProperty(value="history") private var history : Option[HistorySpec] = None
     @JsonProperty(value="metrics") private var metrics : Seq[MetricSinkSpec] = Seq()

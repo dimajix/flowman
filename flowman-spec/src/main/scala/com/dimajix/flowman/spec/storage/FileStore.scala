@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.storage
+package com.dimajix.flowman.spec.storage
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchProjectException
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.storage.Store
 
 
-class FileStore(root:File) extends Store {
+
+case class FileStore(root:File) extends Store {
     private val logger = LoggerFactory.getLogger(classOf[FileStore])
     private val globPattern = new Path("*/project.{yml,yaml}")
 
@@ -42,20 +46,8 @@ class FileStore(root:File) extends Store {
     }
 
     /**
-     * Stores a project inside this persistent storage
-     * @param project
-     */
-    override def storeProject(project: Project): Unit = ???
-
-    /**
-     * Removes a project from this persistent storage
-     * @param name
-     */
-    override def removeProject(name: String): Unit = ???
-
-    /**
      * Retrieves a list of all projects. The returned projects only contain some fundamental information
-     * like the projects's name, its basedir and so on. The project itself (mappings, relations, targets etc)
+     * like the projects name, its basedir and so on. The project itself (mappings, relations, targets etc)
      * will not be loaded
      * @return
      */
@@ -72,5 +64,15 @@ class FileStore(root:File) extends Store {
                 logger.warn(s"Cannot load project manifest '$project'", ex)
                 None
         }
+    }
+}
+
+
+class FileStoreSpec extends StoreSpec {
+    @JsonProperty(value="location", required=true) private var root:String = ""
+
+    override def instantiate(context:Context): Store = {
+        val root = context.fs.file(context.evaluate(this.root))
+        new FileStore(root)
     }
 }

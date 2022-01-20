@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package com.dimajix.flowman.spec
+
+import java.io.IOException
 
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Project
@@ -35,10 +37,12 @@ class YamlProjectReader extends ProjectReader {
      * @param file
      * @return
      */
+    @throws[IOException]
     override def file(file:File) : Project = {
         ObjectMapper.read[ProjectSpec](file).instantiate()
     }
 
+    @throws[IOException]
     override def string(text:String) : Project = {
         ObjectMapper.parse[ProjectSpec](text).instantiate()
     }

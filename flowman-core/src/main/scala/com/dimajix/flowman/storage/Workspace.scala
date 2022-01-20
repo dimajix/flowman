@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright 2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,25 +19,40 @@ package com.dimajix.flowman.storage
 import com.dimajix.flowman.model.Project
 
 
-/**
- * The [[Store]] is the abstract class for implementing project stores. These stores offer an abstraction of
- * persistent storage, which allows projects to be stored not only in filesystems, but also in databases. To
- * enable this flexibility, projects are references solely by their name and not by their physical storage location
- * like a path, filename or directory.
- */
-abstract class Store {
+abstract class Workspace extends Store {
     /**
      * Loads a project via its name (not its filename or directory)
+     *
      * @param name
      * @return
      */
-    def loadProject(name:String) : Project
+    override def loadProject(name: String): Project
 
     /**
      * Retrieves a list of all projects. The returned projects only contain some fundamental information
-     * like the project's name, its basedir and so on. The project itself (mappings, relations, targets etc)
+     * like the projects name, its basedir and so on. The project itself (mappings, relations, targets etc)
      * will not be loaded
+     *
      * @return
      */
-    def listProjects() : Seq[Project]
+    override def listProjects(): Seq[Project]
+
+    /**
+     * Returns the list of all Parcels which belong to this Workspace
+     * @return
+     */
+    def parcels : Seq[Parcel]
+
+    /**
+     * Add a new [[Parcel]] to the workspace. Afterwards, the Parcel and all contained Projects should be resolvable
+     * via the Workspace.
+     * @return
+     */
+    def addParcel(parcel:Parcel) : Unit
+
+    /**
+     * Removes a Parcel from the Workspace again
+     * @param parcel
+     */
+    def removeParcel(parcel:String) : Unit
 }

@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spi
 
+import java.io.IOException
 import java.io.InputStream
 
 import com.dimajix.flowman.hadoop.File
@@ -47,6 +48,7 @@ abstract class ModuleReader {
      * @param file
      * @return
      */
+    @throws[IOException]
     def file(file: File): Module
 
     /**
@@ -54,6 +56,7 @@ abstract class ModuleReader {
      * @param file
      * @return
      */
+    @throws[IOException]
     def stream(stream: InputStream): Module
 
     /**
@@ -61,5 +64,6 @@ abstract class ModuleReader {
      * @param file
      * @return
      */
+    @throws[IOException]
     def string(text: String): Module
 }

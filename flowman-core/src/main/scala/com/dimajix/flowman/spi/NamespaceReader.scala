@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spi
 
 import java.io.File
+import java.io.IOException
 import java.io.InputStream
 
 import com.dimajix.flowman.model.Namespace
@@ -47,6 +48,7 @@ abstract class NamespaceReader {
      * @param file
      * @return
      */
+    @throws[IOException]
     def file(file: File): Namespace
 
     /**
@@ -54,6 +56,7 @@ abstract class NamespaceReader {
      * @param file
      * @return
      */
+    @throws[IOException]
     def stream(stream: InputStream): Namespace
 
     /**
@@ -61,5 +64,6 @@ abstract class NamespaceReader {
      * @param file
      * @return
      */
+    @throws[IOException]
     def string(text: String): Namespace
 }

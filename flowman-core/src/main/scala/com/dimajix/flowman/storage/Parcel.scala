@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.storage
+package com.dimajix.flowman.storage
 
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.storage.NullStore
-import com.dimajix.flowman.storage.Store
+import com.dimajix.flowman.hadoop.File
 
 
-class NullStorageSpec extends StorageSpec {
-    override def instantiate(context:Context): Store = new NullStore
+abstract class Parcel extends Store {
+    def name : String
+    def root : File
 }

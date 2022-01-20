@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,22 @@
 
 package com.dimajix.flowman.spec.storage
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.storage.FileStore
-import com.dimajix.flowman.storage.Store
+import com.dimajix.flowman.execution.Session
 
 
-class FileStorageSpec extends StorageSpec {
-    @JsonProperty(value="location", required=true) private var root:String = ""
+class FileStoreTest extends AnyFlatSpec with Matchers {
+    "A FileStore" should "list all projects" in {
+        val session = Session.builder()
+            .disableSpark()
+            .build()
 
-    override def instantiate(context:Context): Store = {
-        val root = context.fs.file(context.evaluate(this.root))
-        new FileStore(root)
+        val root = session.fs.local("../examples")
+        val store = new FileStore(root)
+
+        val result = store.listProjects()
+        println(result)
     }
 }

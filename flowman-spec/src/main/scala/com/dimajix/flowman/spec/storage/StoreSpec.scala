@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,24 +27,24 @@ import com.dimajix.flowman.spi.ClassAnnotationHandler
 import com.dimajix.flowman.storage.Store
 
 
-object StorageSpec extends TypeRegistry[StorageSpec] {
+object StoreSpec extends TypeRegistry[StoreSpec] {
 }
 
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "file", value = classOf[FileStorageSpec]),
-    new JsonSubTypes.Type(name = "null", value = classOf[NullStorageSpec])
+    new JsonSubTypes.Type(name = "file", value = classOf[FileStoreSpec]),
+    new JsonSubTypes.Type(name = "null", value = classOf[NullStoreSpec])
 ))
-abstract class StorageSpec extends Spec[Store] {
+abstract class StoreSpec extends Spec[Store] {
     override def instantiate(context:Context): Store
 }
 
 
 
-class StorageSpecAnnotationHandler extends ClassAnnotationHandler {
+class StoreSpecAnnotationHandler extends ClassAnnotationHandler {
     override def annotation: Class[_] = classOf[StoreType]
 
     override def register(clazz: Class[_]): Unit =
-        StorageSpec.register(clazz.getAnnotation(classOf[StoreType]).kind(), clazz.asInstanceOf[Class[_ <: StorageSpec]])
+        StoreSpec.register(clazz.getAnnotation(classOf[StoreType]).kind(), clazz.asInstanceOf[Class[_ <: StoreSpec]])
 }

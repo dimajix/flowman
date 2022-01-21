@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,18 +36,15 @@ import javax.ws.rs.POST
 import javax.ws.rs.Path
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.execution
 import com.dimajix.flowman.studio.model.Converter
-import com.dimajix.flowman.studio.model.CreateSessionRequest
 import com.dimajix.flowman.studio.model.CreateSessionRequest
 import com.dimajix.flowman.studio.model.Project
 import com.dimajix.flowman.studio.model.Session
-import com.dimajix.flowman.studio.model.Session
-import com.dimajix.flowman.studio.model.SessionList
 import com.dimajix.flowman.studio.model.SessionList
 import com.dimajix.flowman.studio.model.Status
 import com.dimajix.flowman.studio.service.SessionManager
 import com.dimajix.flowman.studio.service.SessionService
+import com.dimajix.flowman.studio.service.WorkspaceManager
 
 
 @Api(value = "/session", produces = "application/json", consumes = "application/json")
@@ -55,13 +52,12 @@ import com.dimajix.flowman.studio.service.SessionService
 @ApiResponses(Array(
     new ApiResponse(code = 500, message = "Internal server error")
 ))
-class SessionEndpoint(rootSession:execution.Session) {
+class SessionEndpoint(workspaceManager:WorkspaceManager, sessionManager:SessionManager) {
     import akka.http.scaladsl.server.Directives._
 
     import com.dimajix.flowman.studio.model.JsonSupport._
 
     private val logger = LoggerFactory.getLogger(classOf[SessionEndpoint])
-    private val sessionManager:SessionManager = new SessionManager(rootSession)
     private val jobEndpoint:JobEndpoint = new JobEndpoint
     private val mappingEndpoint:MappingEndpoint = new MappingEndpoint
     private val relationEndpoint:RelationEndpoint = new RelationEndpoint
@@ -130,16 +126,11 @@ class SessionEndpoint(rootSession:execution.Session) {
     def createSession() : server.Route = {
         post {
             entity(as[CreateSessionRequest]) { request =>
-                request.projectPath.map { p =>
-                    val path = new org.apache.hadoop.fs.Path(p)
-                    Try { sessionManager.createSession(path) }
+                Try {
+                    val workspace = workspaceManager.getWorkspace(request.workspace)
+                    sessionManager.createSession(workspace, request.project)
                 }
-                .orElse {
-                    request.projectName.map { p =>
-                        Try { sessionManager.createSession(p) }
-                    }
-                }
-                .map {
+                match {
                     case Success(session) =>
                         val result = Session(
                             id = session.id,
@@ -152,9 +143,6 @@ class SessionEndpoint(rootSession:execution.Session) {
                     case Failure(e) =>
                         logger.warn(s"Cannot load project. Request was $request, error is ${e.getMessage}")
                         complete(HttpResponse(status = StatusCodes.InternalServerError))
-                }
-                .getOrElse {
-                    complete(HttpResponse(status = StatusCodes.BadRequest))
                 }
             }
         }

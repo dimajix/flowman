@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.studio.model
+package com.dimajix.flowman.studio.service
 
-case class Session(
-    id: String,
-    namespace: String,
-    project: String,
-    config: Map[String,String] = Map(),
-    environment: Map[String,String] = Map()
-)
+import org.slf4j.LoggerFactory
 
-case class SessionList(
-    sessions:Seq[Session]
-)
+import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.storage.Workspace
 
 
-case class CreateSessionRequest(
-    workspace:String,
-    project:String
-)
+class WorkspaceManager(root:File) {
+    private val logger = LoggerFactory.getLogger(classOf[WorkspaceManager])
+
+    logger.info(s"Initialized WorkspaceManager at '$root'")
+
+    def list() : Seq[String] = ???
+    def createWorkspace(name:String) : Workspace = ???
+    def deleteWorkspace(name:String) : Unit = ???
+    def getWorkspace(name:String) : Workspace = ???
+}

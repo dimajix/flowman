@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,10 @@ import java.util.concurrent.ForkJoinWorkerThread
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution
-import com.dimajix.flowman.hadoop.FileSystem
-import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.storage.Store
 
 
 object SessionManager {
@@ -79,31 +76,15 @@ class SessionManager(rootSession:execution.Session) {
         result
     }
 
-
     /**
      * Creates a new [[SessionService]] by loading a new project. The project is specified via its name, as returned
      * by [[rootSession]]
      * @param projectPath
      * @return
      */
-    def createSession(projectName:String) : SessionService = {
-        val project = rootSession.store.loadProject(projectName)
-        createSession(project)
-    }
-
-    /**
-     * Creates a new [[SessionService]] by loading a new project. The project is specified via a path, which needs
-     * to point to a location resolvable by the Hadoop filesystem layer.
-     * @param projectPath
-     * @return
-     */
-    def createSession(projectPath:Path) : SessionService = {
-        val project = loadProject(projectPath)
-        createSession(project)
-    }
-
-    private def createSession(project:Project) : SessionService = {
-        val session = rootSession.newSession(project)
+    def createSession(store: Store, projectName:String) : SessionService = {
+        val project = store.loadProject(projectName)
+        val session = rootSession.newSession(project, store)
         val svc = new SessionService(this, session)
 
         sessions.synchronized {
@@ -121,18 +102,5 @@ class SessionManager(rootSession:execution.Session) {
                 sessions.remove(index)
             }
         }
-    }
-
-    private def loadProject(projectPath:Path) : Project = {
-        // Create Hadoop FileSystem instance
-        val hadoopConfig = new Configuration()
-        val fs = FileSystem(hadoopConfig)
-
-        // Load Project. If no schema is specified, load from local file system
-        val projectUri = projectPath.toUri
-        if (projectUri.getAuthority == null && projectUri.getScheme == null)
-            Project.read.file(fs.local(projectPath))
-        else
-            Project.read.file(fs.file(projectPath))
     }
 }

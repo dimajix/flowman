@@ -51,6 +51,7 @@ object Session {
         private var environment = Map[String,String]()
         private var profiles = Set[String]()
         private var project:Option[Project] = None
+        private var store:Option[Store] = None
         private var namespace:Option[Namespace] = None
         private var jars = Set[String]()
 
@@ -156,6 +157,11 @@ object Session {
             this
         }
 
+        def withStore(store:Store) : Builder = {
+            this.store = Some(store)
+            this
+        }
+
         /**
          * Adds a new profile to be activated
          * @param profile
@@ -206,7 +212,7 @@ object Session {
         def build() : Session = {
             if (sparkSession == null)
                 throw new IllegalArgumentException("You need to either enable or disable Spark before creating a Flowman Session.")
-            new Session(namespace, project, sparkSession, sparkMaster, sparkName, config, environment, profiles, jars)
+            new Session(namespace, project, store, sparkSession, sparkMaster, sparkName, config, environment, profiles, jars)
         }
     }
 
@@ -231,6 +237,7 @@ object Session {
 class Session private[execution](
     _namespace:Option[Namespace],
     _project:Option[Project],
+    _store:Option[Store],
     _sparkSession:SparkSession.Builder => SparkSession,
     _sparkMaster:Option[String],
     _sparkName:Option[String],
@@ -397,7 +404,7 @@ class Session private[execution](
     }
 
     private lazy val _projectStore : Store = {
-        _namespace.flatMap(_.store).map(_.instantiate(rootContext)).getOrElse(new NullStore)
+        _store.orElse(_namespace.flatMap(_.store).map(_.instantiate(rootContext))).getOrElse(new NullStore)
     }
 
     private lazy val _history = {
@@ -538,23 +545,24 @@ class Session private[execution](
     }
 
     /**
+     * Returns a new detached Flowman Session sharing the same Spark Context.
+     * @param project
+     * @return
+     */
+    def newSession(project:Project, store:Store) : Session = {
+        require(project != null)
+        require(store != null)
+        newSession(Some(project), Some(store))
+    }
+
+    /**
       * Returns a new detached Flowman Session sharing the same Spark Context.
       * @param project
       * @return
       */
     def newSession(project:Project) : Session = {
         require(project != null)
-        new Session(
-            _namespace,
-            Some(project),
-            _ => spark.newSession(),
-            _sparkMaster,
-            _sparkName,
-            _config,
-            _environment,
-            _profiles,
-            Set()
-        )
+        newSession(Some(project), None)
     }
 
     /**
@@ -562,9 +570,14 @@ class Session private[execution](
       * @return
       */
     def newSession() : Session = {
+        newSession(None, None)
+    }
+
+    private def newSession(project:Option[Project], store:Option[Store]) : Session = {
         new Session(
             _namespace,
-            _project,
+            project.orElse(_project),
+            store.orElse(_store),
             _ => spark.newSession(),
             _sparkMaster,
             _sparkName,

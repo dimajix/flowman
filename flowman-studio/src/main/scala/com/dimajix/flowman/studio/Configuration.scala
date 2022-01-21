@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import java.io.FileInputStream
 import java.net.URL
 import java.util.Properties
 
+import org.apache.hadoop.fs.Path
+
 
 object Configuration {
     val SERVER_BIND_HOST = "studio.server.bind.host"
@@ -28,6 +30,7 @@ object Configuration {
     val SERVER_IDLE_TIMEOUT = "studio.server.idle.timeout"
     val SERVER_BIND_TIMEOUT = "studio.server.bind.timeout"
     val SERVER_LINGER_TIMEOUT = "studio.server.linger.timeout"
+    val WORKSPACE_ROOT = "studio.server.workspace.root"
     val STUDIO_ID = "studio.server.id"
     val HUB_URL = "studio.hub.url"
     val HUB_SECRET = "studio.hub.secret"
@@ -84,6 +87,10 @@ class Configuration(properties: Properties) {
         properties.setProperty(HUB_SECRET, secret)
         this
     }
+    def setWorkspaceRoot(root: String) : Configuration = {
+        properties.setProperty(WORKSPACE_ROOT, root)
+        this
+    }
 
     def getBindHost() : String = properties.getProperty(SERVER_BIND_HOST, "0.0.0.0")
     def getBindPort() : Int = properties.getProperty(SERVER_BIND_PORT, "8080").toInt
@@ -103,5 +110,11 @@ class Configuration(properties: Properties) {
     def getHubSecret() : Option[String] = {
         Some(properties.getProperty(HUB_SECRET, "").trim)
             .filter(_.nonEmpty)
+    }
+    def getWorkspaceRoot() : Path = {
+        val path = Some(properties.getProperty(HUB_URL, "").trim)
+            .filter(_.nonEmpty)
+            .getOrElse(".")
+        new Path(path)
     }
 }

@@ -34,6 +34,7 @@ import javax.ws.rs.Path
 
 import com.dimajix.flowman.execution.NoSuchProjectException
 import com.dimajix.flowman.storage.Store
+import com.dimajix.flowman.storage.Workspace
 import com.dimajix.flowman.studio.model.Converter
 import com.dimajix.flowman.studio.model.Project
 import com.dimajix.flowman.studio.model.Project
@@ -41,27 +42,27 @@ import com.dimajix.flowman.studio.model.ProjectList
 import com.dimajix.flowman.studio.model.ProjectList
 
 
-@Api(value = "/project", produces = "application/json", consumes = "application/json")
-@Path("/project")
+@Api(value = "/workspace/{workspace}/project", produces = "application/json", consumes = "application/json")
+@Path("/workspace/{workspace}/project")
 @ApiResponses(Array(
     new ApiResponse(code = 500, message = "Internal server error")
 ))
-class ProjectEndpoint(store:Store) {
+class ProjectEndpoint {
     import akka.http.scaladsl.server.Directives._
 
     import com.dimajix.flowman.studio.model.JsonSupport._
 
-    def routes : Route = pathPrefix("project") {(
+    def routes(workspace:Workspace) : Route = pathPrefix("project") {(
         pathEndOrSingleSlash {
             redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
-                listProjects()
+                listProjects(workspace)
             }
         }
         ~
         pathPrefix(Segment) { project =>
             pathEndOrSingleSlash {
                 redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
-                    infoProject(project)
+                    infoProject(workspace, project)
                 }
             }
         }
@@ -72,7 +73,7 @@ class ProjectEndpoint(store:Store) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Project information", response = classOf[ProjectList])
     ))
-    def listProjects(): server.Route = {
+    def listProjects(@ApiParam(hidden = true) store:Store): server.Route = {
         val result = store.listProjects()
         complete(ProjectList(result.map(Converter.of)))
     }
@@ -87,7 +88,7 @@ class ProjectEndpoint(store:Store) {
         new ApiResponse(code = 200, message = "Project information", response = classOf[Project]),
         new ApiResponse(code = 404, message = "Project not found", response = classOf[Project])
     ))
-    def infoProject(@ApiParam(hidden = true) project:String): server.Route = {
+    def infoProject(@ApiParam(hidden = true) store:Store, @ApiParam(hidden = true) project:String): server.Route = {
         Try {
             Converter.of(store.loadProject(project))
         }

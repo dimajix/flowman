@@ -107,7 +107,7 @@ class RelationEndpoint {
             session.getRelation(relationName)
         } match {
             case Success(relation) => fn(relation)
-            case Failure(_) => complete(HttpResponse(status = StatusCodes.NotFound))
+            case Failure(_) => complete(StatusCodes.NotFound -> s"Relation '$relationName' not found")
         }
     }
 }

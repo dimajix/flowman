@@ -254,6 +254,10 @@
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-studio</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-client</artifactId>
+        </dependency>
     </dependencies>
 </project>
 

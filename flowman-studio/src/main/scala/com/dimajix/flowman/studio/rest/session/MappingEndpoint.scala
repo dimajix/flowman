@@ -106,7 +106,7 @@ class MappingEndpoint {
             session.getMapping(mappingName)
         } match {
             case Success(mapping) => fn(mapping)
-            case Failure(_) => complete(HttpResponse(status = StatusCodes.NotFound))
+            case Failure(_) => complete(StatusCodes.NotFound -> s"Mapping '$mappingName' not found")
         }
     }
 }

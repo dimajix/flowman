@@ -109,7 +109,7 @@ class WorkspaceEndpoint(workspaceManager:WorkspaceManager) {
             } match {
                 case Success(ws) => complete(StatusCodes.Created -> Converter.of(ws))
                 case Failure(_:IllegalArgumentException) => complete(HttpResponse(status = StatusCodes.BadRequest))
-                case Failure(_) => complete(HttpResponse(status = StatusCodes.InternalServerError))
+                case Failure(ex) => throw ex
             }
         }
     }

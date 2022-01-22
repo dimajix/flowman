@@ -107,7 +107,7 @@ class TargetEndpoint {
             session.getTarget(targetName)
         } match {
             case Success(target) => fn(target)
-            case Failure(_) => complete(HttpResponse(status = StatusCodes.NotFound))
+            case Failure(_) => complete(StatusCodes.NotFound -> s"Target '$targetName' not found")
         }
     }
 }

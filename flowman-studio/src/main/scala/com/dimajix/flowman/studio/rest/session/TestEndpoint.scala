@@ -107,7 +107,7 @@ class TestEndpoint {
             session.getTest(testName)
         } match {
             case Success(test) => fn(test)
-            case Failure(_) => complete(HttpResponse(status = StatusCodes.NotFound))
+            case Failure(_) => complete(StatusCodes.NotFound -> s"Test '$testName' not found")
         }
     }
 }

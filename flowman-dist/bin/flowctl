@@ -6,6 +6,6 @@ source "$basedir"/libexec/flowman-common.sh
 APP_NAME="flowman-client"
 APP_VERSION="${project.version}"
 
-APP_JAR="$APP_NAME-$APP_VERSION-jar-with-dependencies.jar"
+APP_JAR="lib/$APP_NAME-$APP_VERSION.jar"
 
 java -jar $APP_JAR "$@"

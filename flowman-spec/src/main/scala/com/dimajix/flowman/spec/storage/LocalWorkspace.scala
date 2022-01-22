@@ -17,8 +17,10 @@
 package com.dimajix.flowman.spec.storage
 
 import scala.collection.mutable
+import scala.util.Try
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.execution.NoSuchProjectException
 import com.dimajix.flowman.hadoop.File
@@ -31,8 +33,15 @@ import com.dimajix.flowman.storage.Workspace
 
 object LocalWorkspace {
     def load(file:File) : LocalWorkspace = new LocalWorkspace(file)
+
+    def list(root:File) : Seq[Workspace] = {
+        val globPattern = new Path("*/.flowman-workspace.yaml")
+        root.glob(globPattern)
+            .flatMap(file => Try(load(file.parent)).toOption)
+    }
 }
-class LocalWorkspace(root:File) extends Workspace {
+
+case class LocalWorkspace(root:File) extends Workspace {
     private val _parcels = mutable.ListBuffer[Parcel]()
 
     root.mkdirs()

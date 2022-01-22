@@ -18,11 +18,15 @@ package com.dimajix.flowman.studio.rest
 
 import akka.http.scaladsl.server
 import io.swagger.annotations.Api
+import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
+import javax.ws.rs.GET
 import javax.ws.rs.Path
 
 import com.dimajix.flowman.storage.Workspace
+import com.dimajix.flowman.studio.model.TargetList
+import com.dimajix.flowman.studio.model.WorkspaceList
 import com.dimajix.flowman.studio.service.WorkspaceManager
 
 
@@ -39,7 +43,7 @@ class WorkspaceEndpoint(workspaceManager:WorkspaceManager) {
     private val projectEndpoint:ProjectEndpoint = new ProjectEndpoint
     private val parcelEndpoint:ParcelEndpoint = new ParcelEndpoint
 
-    def routes : server.Route = pathPrefix("session") {(
+    def routes : server.Route = pathPrefix("workspace") {(
         pathEndOrSingleSlash {(
             listWorkspaces()
             ~
@@ -61,9 +65,15 @@ class WorkspaceEndpoint(workspaceManager:WorkspaceManager) {
         }
     )}
 
-    private def listWorkspaces() : server.Route = {
+    @GET
+    @ApiOperation(value = "Return list of all worksapces", nickname = "listWorkspaces", httpMethod = "GET")
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "List of all targets", response = classOf[WorkspaceList])
+    ))
+    def listWorkspaces() : server.Route = {
         get {
-            ???
+            val result = WorkspaceList(workspaceManager.list())
+            complete(result)
         }
     }
     private def createWorkspace() : server.Route = {

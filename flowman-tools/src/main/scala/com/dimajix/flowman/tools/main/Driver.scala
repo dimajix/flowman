@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import scala.util.Try
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.common.Logging
-import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.tools.Tool
 
 

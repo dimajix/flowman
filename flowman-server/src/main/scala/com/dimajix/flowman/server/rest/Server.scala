@@ -30,6 +30,7 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.net.SocketUtils
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.history.JobQuery
 
@@ -93,15 +94,26 @@ class Server(
 
         val settings = ServerSettings(system)
             .withVerboseErrorMessages(true)
+            .withRemoteAddressHeader(true)
 
-        Http().bind(conf.getBindHost(), conf.getBindPort(), akka.http.scaladsl.ConnectionContext.noEncryption(), settings)
+        val server = Http().bind(conf.getBindHost(), conf.getBindPort(), akka.http.scaladsl.ConnectionContext.noEncryption(), settings)
             .to(Sink.foreach { connection =>
-                logger.info("Accepted new connection from " + connection.remoteAddress)
-                connection.handleWith(route)
+                connection.handleWith(
+                    extractRequestContext { ctx =>
+                        extractClientIP { ip =>
+                            logger.info(s"Client ${ip} ${ctx.request.method.value} ${ctx.request.uri.path}")
+                            route
+                        }
+                    }
+                )
             })
             .run()
 
-        logger.info(s"Server online at http://${conf.getBindHost()}:${conf.getBindPort()}/")
+        server.foreach { binding =>
+            val listenUrl = SocketUtils.toURL("http", binding.localAddress, allowAny = true)
+            logger.info(s"Flowman Server online at $listenUrl")
+        }
+
         Await.ready(Promise[Done].future, Duration.Inf)
     }
 }

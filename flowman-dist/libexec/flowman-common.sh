@@ -4,6 +4,9 @@
 export FLOWMAN_HOME=${FLOWMAN_HOME=$(readlink -f $(dirname $0)/..)}
 export FLOWMAN_CONF_DIR=${FLOWMAN_CONF_DIR=$FLOWMAN_HOME/conf}
 
+# Set default Flowman Studio url for flowctl
+export FLOWMAN_STUDIO_URL=${FLOWMAN_STUDIO_URL="http://localhost:8080/api"}
+
 # Load environment file if present
 if [ -f "$FLOWMAN_CONF_DIR/flowman-env.sh" ]; then
     source "$FLOWMAN_CONF_DIR/flowman-env.sh"

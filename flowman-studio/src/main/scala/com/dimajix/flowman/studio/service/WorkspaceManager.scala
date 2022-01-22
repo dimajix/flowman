@@ -19,6 +19,7 @@ package com.dimajix.flowman.studio.service
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.spec.storage.LocalWorkspace
 import com.dimajix.flowman.storage.Workspace
 
 
@@ -27,7 +28,15 @@ class WorkspaceManager(root:File) {
 
     logger.info(s"Initialized WorkspaceManager at '$root'")
 
-    def list() : Seq[String] = ???
+    // Create workspace are + default workspace
+    root.mkdirs()
+    new LocalWorkspace(root / "default")
+
+    def list() : Seq[String] = {
+        LocalWorkspace.list(root)
+            .collect { case ws:LocalWorkspace => ws.root.path.getName }
+    }
+
     def createWorkspace(name:String) : Workspace = ???
     def deleteWorkspace(name:String) : Unit = ???
     def getWorkspace(name:String) : Workspace = ???

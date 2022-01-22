@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.spec.catalog.CatalogSpec
 import com.dimajix.flowman.spec.connection.ConnectionSpec

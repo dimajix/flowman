@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.studio.model
 
-case class Project(
+final case class Project(
     name:String,
     version:Option[String],
     description: Option[String],
@@ -30,6 +30,6 @@ case class Project(
     targets: Seq[String]
 )
 
-case class ProjectList(
+final case class ProjectList(
     projects:Seq[Project]
 )

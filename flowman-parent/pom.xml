@@ -383,6 +383,12 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-client</artifactId>
+                <version>${flowman.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-dist</artifactId>
                 <version>${flowman.version}</version>
                 <type>tar.gz</type>

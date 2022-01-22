@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.job
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.common.TypeRegistry
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
@@ -27,7 +28,6 @@ import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.hook.HookSpec
 import com.dimajix.flowman.spec.metric.MetricBoardSpec
-import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StringType
 

@@ -44,7 +44,7 @@ import com.dimajix.flowman.SPARK_BUILD_VERSION
 import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ToolConfig
-import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.tools.StatefulTool
 import com.dimajix.flowman.util.ConsoleColors.yellow
 

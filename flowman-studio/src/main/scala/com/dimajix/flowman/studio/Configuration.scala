@@ -112,7 +112,7 @@ class Configuration(properties: Properties) {
             .filter(_.nonEmpty)
     }
     def getWorkspaceRoot() : Path = {
-        val path = Some(properties.getProperty(HUB_URL, "").trim)
+        val path = Some(properties.getProperty(WORKSPACE_ROOT, "").trim)
             .filter(_.nonEmpty)
             .getOrElse(".")
         new Path(path)

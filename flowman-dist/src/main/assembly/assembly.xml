@@ -40,6 +40,7 @@
                 <include>com.dimajix.flowman:flowman-server</include>
                 <include>com.dimajix.flowman:flowman-studio</include>
                 <include>com.dimajix.flowman:flowman-hub</include>
+                <include>com.dimajix.flowman:flowman-client</include>
             </includes>
             <excludes>
                 <!-- Manually exclude shaded artifacts -->

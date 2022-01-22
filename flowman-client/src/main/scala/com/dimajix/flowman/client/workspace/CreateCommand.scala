@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman
+package com.dimajix.flowman.client.workspace
 
-package object spec {
-    def splitSettings(settings: Seq[String]) : Seq[(String,String)] = {
-        settings.map(splitSetting)
-    }
-    def splitSetting(setting: String) : (String,String) = {
-        val sep = setting.indexOf('=')
-        val key = setting.take(sep).trim
-        val value = setting.drop(sep + 1).trim.replaceAll("^\"|\"$","")
-        (key, value)
+import java.net.URI
+
+import org.apache.http.impl.client.CloseableHttpClient
+import org.slf4j.LoggerFactory
+
+import com.dimajix.flowman.client.Command
+
+
+class CreateCommand extends Command {
+    private val logger = LoggerFactory.getLogger(classOf[CreateCommand])
+
+    override def execute(httpClient:CloseableHttpClient, baseUri:URI) : Boolean = {
+        true
     }
 }

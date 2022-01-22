@@ -112,22 +112,22 @@ class Server(
                 getFromResourceDirectory("META-INF/resources/webjars/flowman-studio-ui")
             )
 
-        java.lang.System.setProperty("akka.http.server.remote-address-header", "true")
-        val loggingRoute = extractRequestContext { ctx =>
-            extractClientIP { ip =>
-                logger.info(s"Client ${ip} ${ctx.request.method.value} ${ctx.request.uri.path}")
-                route
-            }
-        }
-
         logger.info("Starting Flowman Studio")
 
         val settings = ServerSettings(system)
             .withVerboseErrorMessages(true)
+            .withRemoteAddressHeader(true)
 
         val server = Http().bind(conf.getBindHost(), conf.getBindPort(), akka.http.scaladsl.ConnectionContext.noEncryption(), settings)
             .to(Sink.foreach { connection =>
-                connection.handleWith(loggingRoute)
+                connection.handleWith(
+                    extractRequestContext { ctx =>
+                        extractClientIP { ip =>
+                            logger.info(s"Client ${ip} ${ctx.request.method.value} ${ctx.request.uri.path}")
+                            route
+                        }
+                    }
+                )
             })
             .run()
 

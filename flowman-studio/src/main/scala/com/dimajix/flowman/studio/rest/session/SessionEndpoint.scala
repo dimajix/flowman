@@ -47,7 +47,7 @@ import com.dimajix.flowman.studio.service.SessionService
 import com.dimajix.flowman.studio.service.WorkspaceManager
 
 
-@Api(value = "/session", produces = "application/json", consumes = "application/json")
+@Api(value = "session", produces = "application/json", consumes = "application/json")
 @Path("/session")
 @ApiResponses(Array(
     new ApiResponse(code = 500, message = "Internal server error")

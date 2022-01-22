@@ -25,7 +25,7 @@ import javax.ws.rs.Path
 import com.dimajix.flowman.studio.service.SessionService
 
 
-@Api(value = "/session/{session}/task", produces = "application/json", consumes = "application/json")
+@Api(value = "session", produces = "application/json", consumes = "application/json")
 @Path("/session/{session}/task")
 class TaskEndpoint {
     def routes(session:SessionService) : server.Route = pathPrefix("task") {(

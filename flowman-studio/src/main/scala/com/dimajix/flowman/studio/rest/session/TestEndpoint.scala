@@ -40,7 +40,7 @@ import com.dimajix.flowman.studio.model.TestList
 import com.dimajix.flowman.studio.service.SessionService
 
 
-@Api(value = "/session/{session}/test", produces = "application/json", consumes = "application/json")
+@Api(value = "session", produces = "application/json", consumes = "application/json")
 @Path("/session/{session}/test")
 @ApiImplicitParams(Array(
     new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")

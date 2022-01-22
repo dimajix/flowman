@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.studio.rest
+package com.dimajix.flowman.studio.rest.session
 
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives.pathEndOrSingleSlash

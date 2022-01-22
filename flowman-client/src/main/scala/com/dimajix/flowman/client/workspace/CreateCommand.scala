@@ -18,7 +18,9 @@ package com.dimajix.flowman.client.workspace
 
 import java.net.URI
 
+import org.apache.http.client.methods.HttpPost
 import org.apache.http.impl.client.CloseableHttpClient
+import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.client.Command
@@ -27,7 +29,12 @@ import com.dimajix.flowman.client.Command
 class CreateCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[CreateCommand])
 
+    @Argument(usage = "specifies the workspace to create", metaVar = "<workspace>", required = true)
+    var workspace: String = ""
+
     override def execute(httpClient:CloseableHttpClient, baseUri:URI) : Boolean = {
+        val request = new HttpPost(baseUri.resolve(s"workspace/$workspace"))
+        query(httpClient, request)
         true
     }
 }

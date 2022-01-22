@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.studio.rest
+package com.dimajix.flowman.studio.rest.workspace
 
 import scala.util.Failure
 import scala.util.Success
@@ -30,6 +30,7 @@ import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
+import javax.ws.rs.GET
 import javax.ws.rs.Path
 
 import com.dimajix.flowman.execution.NoSuchProjectException
@@ -37,13 +38,15 @@ import com.dimajix.flowman.storage.Store
 import com.dimajix.flowman.storage.Workspace
 import com.dimajix.flowman.studio.model.Converter
 import com.dimajix.flowman.studio.model.Project
-import com.dimajix.flowman.studio.model.Project
-import com.dimajix.flowman.studio.model.ProjectList
 import com.dimajix.flowman.studio.model.ProjectList
 
 
-@Api(value = "/workspace/{workspace}/project", produces = "application/json", consumes = "application/json")
+@Api(value = "workspace", produces = "application/json", consumes = "application/json")
 @Path("/workspace/{workspace}/project")
+@ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "workspace", value = "name of workspace", required = true,
+        dataType = "string", paramType = "path")
+))
 @ApiResponses(Array(
     new ApiResponse(code = 500, message = "Internal server error")
 ))
@@ -68,6 +71,7 @@ class ProjectEndpoint {
         }
     )}
 
+    @GET
     @Path("/")
     @ApiOperation(value = "Retrieve a list of all projects", nickname = "getProjects", httpMethod = "GET")
     @ApiResponses(Array(
@@ -78,6 +82,7 @@ class ProjectEndpoint {
         complete(ProjectList(result.map(Converter.of)))
     }
 
+    @GET
     @Path("/{project}")
     @ApiOperation(value = "Retrieve general information about a project", nickname = "getProject", httpMethod = "GET")
     @ApiImplicitParams(Array(

@@ -16,10 +16,15 @@
 
 package com.dimajix.flowman.storage
 
+import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Project
 
 
 abstract class Workspace extends Store {
+    def name : String
+
+    def root : File
+
     /**
      * Loads a project via its name (not its filename or directory)
      *

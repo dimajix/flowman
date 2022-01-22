@@ -16,8 +16,20 @@
 
 package com.dimajix.flowman.spec.storage
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import java.io.BufferedInputStream
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 
+import scala.util.control.NonFatal
+
+import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.commons.compress.archivers.ArchiveEntry
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
+import org.apache.commons.io.IOUtils
+
+import com.dimajix.common.tryWith
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.ToSpec
@@ -25,6 +37,7 @@ import com.dimajix.flowman.storage.Parcel
 
 
 case class LocalParcel(override val name:String, override val root:File) extends Parcel with ToSpec[ParcelSpec] {
+    root.mkdirs()
     private val fileStore = FileStore(root)
 
     /**
@@ -44,11 +57,61 @@ case class LocalParcel(override val name:String, override val root:File) extends
      */
     override def listProjects(): Seq[Project] = fileStore.listProjects()
 
+    override def replace(targz: File): Unit = {
+        if (!targz.isFile())
+            throw new IOException(s"File '$targz' doesn't exists!")
+
+        root.glob(new org.apache.hadoop.fs.Path("*")).foreach(_.delete(true))
+        decompressTarGzipFile(targz, root)
+    }
+
     override def spec: ParcelSpec = {
         val spec = new LocalParcelSpec
         spec.name = name
         spec.root = root.toString
         spec
+    }
+
+    def decompressTarGzipFile(source: File, target: File): Unit = {
+        tryWith(source.open()) { fi =>
+            tryWith(new BufferedInputStream(fi)) { bi =>
+                tryWith(new GzipCompressorInputStream(bi)) { gzi =>
+                    tryWith(new TarArchiveInputStream(gzi)) { ti =>
+                        var entry: ArchiveEntry = ti.getNextEntry
+                        while (entry != null) {
+                            val newPath = zipSlipProtect(entry, target)
+                            if (entry.isDirectory) {
+                                newPath.mkdirs()
+                            }
+                            else { // check parent folder again
+                                val parent = newPath.parent
+                                parent.mkdirs()
+                                // copy TarArchiveInputStream to Path newPath
+                                val out = newPath.create(true)
+                                try {
+                                    IOUtils.copy(ti, out)
+                                    out.close()
+                                }
+                                catch {
+                                    case NonFatal(ex) =>
+                                        newPath.delete()
+                                        throw ex
+                                }
+                            }
+                            entry = ti.getNextEntry
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private def zipSlipProtect(entry: ArchiveEntry, targetDir: File) : File = {
+        val targetDirResolved = targetDir / entry.getName
+        val normalizePath = targetDirResolved.absolute
+        if (!normalizePath.toString.startsWith(targetDir.toString))
+            throw new IOException("Bad entry: " + entry.getName)
+        normalizePath
     }
 }
 

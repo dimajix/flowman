@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.dimajix.flowman.studio.model
 
 import com.dimajix.flowman.model
 import com.dimajix.flowman.studio.service
+import com.dimajix.flowman.storage
 
 
 object Converter {
@@ -108,6 +109,18 @@ object Converter {
             job.keepGoing,
             job.dryRun,
             job.status.toString
+        )
+    }
+
+    def of(workspace: storage.Workspace) : Workspace = {
+        Workspace(
+            workspace.name
+        )
+    }
+
+    def of(parcel: storage.Parcel) : Parcel = {
+        Parcel(
+            parcel.name
         )
     }
 

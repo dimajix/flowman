@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package com.dimajix.flowman.studio.model
 
-final case class Workspace(
+case class Parcel(
     name:String
 )
 
 
-final case class WorkspaceList(
-    workspaces:Seq[Workspace]
+case class ParcelList(
+    parcels:Seq[Parcel]
 )

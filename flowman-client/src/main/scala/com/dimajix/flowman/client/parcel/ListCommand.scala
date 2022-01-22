@@ -18,7 +18,11 @@ package com.dimajix.flowman.client.parcel
 
 import java.net.URI
 
+import scala.Console.out
+
+import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.CloseableHttpClient
+import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.client.Command
@@ -27,7 +31,12 @@ import com.dimajix.flowman.client.Command
 class ListCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[ListCommand])
 
+    @Argument(usage = "specifies the workspace to list all parcels", metaVar = "<workspace>", required = false)
+    var workspace: String = "default"
+
     override def execute(httpClient:CloseableHttpClient, baseUri:URI) : Boolean = {
+        val request = new HttpGet(baseUri.resolve(s"workspace/$workspace/parcel"))
+        query(httpClient, request)
         true
     }
 }

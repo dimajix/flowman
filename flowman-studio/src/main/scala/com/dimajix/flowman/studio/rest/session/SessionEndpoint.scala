@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.studio.rest
+package com.dimajix.flowman.studio.rest.session
 
 import scala.util.Failure
 import scala.util.Success

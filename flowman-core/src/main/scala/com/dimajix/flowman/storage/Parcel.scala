@@ -22,4 +22,5 @@ import com.dimajix.flowman.hadoop.File
 abstract class Parcel extends Store {
     def name : String
     def root : File
+    def replace(targz:File) : Unit
 }

@@ -39,6 +39,8 @@ import com.dimajix.common.net.SocketUtils
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.studio.Configuration
 import com.dimajix.flowman.studio.model.StudioRegistrationRequest
+import com.dimajix.flowman.studio.rest.session.SessionEndpoint
+import com.dimajix.flowman.studio.rest.workspace.WorkspaceEndpoint
 import com.dimajix.flowman.studio.service.SessionManager
 import com.dimajix.flowman.studio.service.WorkspaceManager
 
@@ -102,7 +104,7 @@ class Server(
                         }
                     }
                     ~
-                    getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/3.22.2")
+                    getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/4.1.3")
                 )}
                 ~
                 pathEndOrSingleSlash {

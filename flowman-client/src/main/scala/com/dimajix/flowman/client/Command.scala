@@ -19,6 +19,9 @@ package com.dimajix.flowman.client
 import java.io.PrintStream
 import java.net.URI
 
+import scala.Console.out
+
+import org.apache.http.client.methods.HttpRequestBase
 import org.apache.http.impl.client.CloseableHttpClient
 import org.kohsuke.args4j.CmdLineParser
 import org.kohsuke.args4j.Option
@@ -49,4 +52,11 @@ abstract class Command {
     }
 
     def execute(httpClient:CloseableHttpClient, baseUri:URI) : Boolean
+
+    protected def query(httpClient:CloseableHttpClient, request:HttpRequestBase) : Unit = {
+        val response = httpClient.execute(request)
+        println(response.getStatusLine.getReasonPhrase)
+        response.getEntity.writeTo(out)
+        response.close()
+    }
 }

@@ -85,9 +85,15 @@
         </dependency>
 
         <dependency>
-            <groupId>dev.dirs</groupId>
-            <artifactId>directories</artifactId>
-            <version>20</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>

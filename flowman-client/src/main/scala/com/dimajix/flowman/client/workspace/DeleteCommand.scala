@@ -18,7 +18,11 @@ package com.dimajix.flowman.client.workspace
 
 import java.net.URI
 
+import scala.Console.out
+
+import org.apache.http.client.methods.HttpDelete
 import org.apache.http.impl.client.CloseableHttpClient
+import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.client.Command
@@ -27,7 +31,12 @@ import com.dimajix.flowman.client.Command
 class DeleteCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[DeleteCommand])
 
+    @Argument(usage = "specifies the workspace to delete", metaVar = "<workspace>", required = true)
+    var workspace: String = ""
+
     override def execute(httpClient:CloseableHttpClient, baseUri:URI) : Boolean = {
+        val request = new HttpDelete(baseUri.resolve(s"workspace/$workspace"))
+        query(httpClient, request)
         true
     }
 }

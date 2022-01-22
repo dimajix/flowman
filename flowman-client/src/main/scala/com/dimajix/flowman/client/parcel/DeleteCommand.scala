@@ -18,7 +18,11 @@ package com.dimajix.flowman.client.parcel
 
 import java.net.URI
 
+import scala.Console.out
+
+import org.apache.http.client.methods.HttpDelete
 import org.apache.http.impl.client.CloseableHttpClient
+import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.client.Command
@@ -27,7 +31,21 @@ import com.dimajix.flowman.client.Command
 class DeleteCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[DeleteCommand])
 
+    @Argument(usage = "specifies the parcel to delete", metaVar = "<workspace>/<parcel>", required = true)
+    var fqParcel: String = ""
+
     override def execute(httpClient:CloseableHttpClient, baseUri:URI) : Boolean = {
+        val parts = fqParcel.split('/')
+        val (workspace, parcel) =
+            if (parts.length == 1) {
+                "default" -> parts(0)
+            }
+            else {
+                parts(0) -> parts(1)
+            }
+
+        val request = new HttpDelete(baseUri.resolve(s"workspace/$workspace/parcel/$parcel"))
+        query(httpClient, request)
         true
     }
 }

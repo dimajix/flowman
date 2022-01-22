@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.studio.rest
+package com.dimajix.flowman.studio.rest.session
 
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import io.swagger.annotations.Api
@@ -137,7 +136,7 @@ class JobEndpoint {
             session.getJob(jobName)
         } match {
             case Success(job) => fn(job)
-            case Failure(_) => complete(HttpResponse(status = StatusCodes.NotFound))
+            case Failure(_) => complete(StatusCodes.NotFound -> s"Job '$jobName' not found")
         }
     }
 }

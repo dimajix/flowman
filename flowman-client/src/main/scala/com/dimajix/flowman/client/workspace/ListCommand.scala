@@ -32,10 +32,7 @@ class ListCommand extends Command {
 
     override def execute(httpClient:CloseableHttpClient, baseUri:URI) : Boolean = {
         val request = new HttpGet(baseUri.resolve("workspace"))
-        val response = httpClient.execute(request)
-        println(response.getStatusLine.getReasonPhrase)
-        response.getEntity.writeTo(out)
-        response.close()
+        query(httpClient, request)
         true
     }
 }

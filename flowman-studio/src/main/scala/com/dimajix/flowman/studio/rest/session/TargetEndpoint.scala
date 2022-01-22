@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.studio.rest
+package com.dimajix.flowman.studio.rest.session
 
 import scala.util.Failure
 import scala.util.Success
@@ -35,79 +35,78 @@ import javax.ws.rs.Path
 
 import com.dimajix.flowman.model
 import com.dimajix.flowman.studio.model.Converter
-import com.dimajix.flowman.studio.model.Mapping
-import com.dimajix.flowman.studio.model.Mapping
-import com.dimajix.flowman.studio.model.MappingList
-import com.dimajix.flowman.studio.model.MappingList
+import com.dimajix.flowman.studio.model.Target
+import com.dimajix.flowman.studio.model.TargetList
 import com.dimajix.flowman.studio.service.SessionService
 
 
-@Api(value = "/session/{session}/mapping", produces = "application/json", consumes = "application/json")
-@Path("/session/{session}/mapping")
+@Api(value = "/session/{session}/target", produces = "application/json", consumes = "application/json")
+@Path("/session/{session}/target")
 @ApiImplicitParams(Array(
     new ApiImplicitParam(name = "session", value = "Session ID", required = true, dataType = "string", paramType = "path")
 ))
 @ApiResponses(Array(
-    new ApiResponse(code = 404, message = "Session or mapping not found"),
+    new ApiResponse(code = 404, message = "Session or target not found"),
     new ApiResponse(code = 500, message = "Internal server error")
 ))
-class MappingEndpoint {
+class TargetEndpoint {
     import akka.http.scaladsl.server.Directives._
 
     import com.dimajix.flowman.studio.model.JsonSupport._
 
-    def routes(session:SessionService) : server.Route = pathPrefix("mapping") {(
+    def routes(session:SessionService) : server.Route = pathPrefix("target") {(
         pathEndOrSingleSlash {
             redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
-                listMappings(session)
+                listTargets(session)
             }
         }
         ~
-        pathPrefix(Segment) { mappingName => (
+        pathPrefix(Segment) { targetName => (
             pathEndOrSingleSlash {
                 redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
-                    getMapping(session, mappingName)
+                    getTarget(session, targetName)
                 }
             })
         }
     )}
 
     @GET
-    @ApiOperation(value = "Return list of all jobs", nickname = "listMappings", httpMethod = "GET")
+    @ApiOperation(value = "Return list of all jobs", nickname = "listTargets", httpMethod = "GET")
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "List of all mappings", response = classOf[MappingList])
+        new ApiResponse(code = 200, message = "List of all targets", response = classOf[TargetList])
     ))
-    def listMappings(@ApiParam(hidden = true) session: SessionService) : server.Route = {
+    def listTargets(@ApiParam(hidden = true) session: SessionService) : server.Route = {
         get {
-            val result = MappingList(
-                session.listMappings()
+            val result = TargetList(
+                session.listTargets()
             )
             complete(result)
         }
     }
 
     @GET
-    @Path("/{mapping}")
-    @ApiOperation(value = "Get mapping", nickname = "getMapping", httpMethod = "GET")
+    @Path("/{target}")
+    @ApiOperation(value = "Get target", nickname = "getTarget", httpMethod = "GET")
     @ApiImplicitParams(Array(
-        new ApiImplicitParam(name = "mapping", value = "Mapping Name", required = true, dataType = "string", paramType = "path")
+        new ApiImplicitParam(name = "target", value = "Target Name", required = true, dataType = "string", paramType = "path")
     ))
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Information about the mapping", response = classOf[Mapping])
+        new ApiResponse(code = 200, message = "Information about the target", response = classOf[Target])
     ))
-    def getMapping(@ApiParam(hidden = true) session: SessionService, @ApiParam(hidden = true) mapping:String) : server.Route = {
+    def getTarget(@ApiParam(hidden = true) session: SessionService, @ApiParam(hidden = true) target:String) : server.Route = {
         get {
-            withMapping(session, mapping) { mapping =>
-                complete(Converter.of(mapping))
+            withTarget(session, target) { target =>
+                complete(Converter.of(target))
             }
         }
     }
 
-    private def withMapping(session:SessionService, mappingName:String)(fn:(model.Mapping) => server.Route) : server.Route = {
+
+    private def withTarget(session:SessionService, targetName:String)(fn:(model.Target) => server.Route) : server.Route = {
         Try {
-            session.getMapping(mappingName)
+            session.getTarget(targetName)
         } match {
-            case Success(mapping) => fn(mapping)
+            case Success(target) => fn(target)
             case Failure(_) => complete(HttpResponse(status = StatusCodes.NotFound))
         }
     }

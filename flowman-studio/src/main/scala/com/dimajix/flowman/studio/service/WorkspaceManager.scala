@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.studio.service
 
+import scala.collection.mutable
+
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.hadoop.File
@@ -25,19 +27,60 @@ import com.dimajix.flowman.storage.Workspace
 
 class WorkspaceManager(root:File) {
     private val logger = LoggerFactory.getLogger(classOf[WorkspaceManager])
+    private val workspaces : mutable.Map[String,Workspace] = mutable.Map()
 
     logger.info(s"Initialized WorkspaceManager at '$root'")
 
     // Create workspace are + default workspace
     root.mkdirs()
-    new LocalWorkspace(root / "default")
+    workspaces.put("default", new LocalWorkspace(root / "default"))
 
-    def list() : Seq[String] = {
-        LocalWorkspace.list(root)
-            .collect { case ws:LocalWorkspace => ws.root.path.getName }
+
+    def list() : Seq[Workspace] = {
+        val ws = LocalWorkspace.list(root)
+
+        workspaces.synchronized {
+            workspaces.clear()
+            ws.foreach(ws => workspaces.put(ws.name, ws))
+        }
+
+        ws
     }
 
-    def createWorkspace(name:String) : Workspace = ???
-    def deleteWorkspace(name:String) : Unit = ???
-    def getWorkspace(name:String) : Workspace = ???
+    def createWorkspace(name:String) : Workspace = {
+        val path = root / name
+        if (LocalWorkspace.exists(path))
+            throw new IllegalArgumentException(s"Workspace '$name' already exists")
+        val ws = new LocalWorkspace(path)
+
+        workspaces.synchronized {
+            workspaces.put(name, ws)
+        }
+
+        ws
+    }
+
+    def deleteWorkspace(name:String) : Unit = {
+        val path = root / name
+        if (!LocalWorkspace.exists(path))
+            throw new IllegalArgumentException(s"Workspace '$name' does not exists")
+
+        workspaces.synchronized {
+            workspaces.remove(name)
+        }
+
+        path.delete(true)
+    }
+
+    def getWorkspace(name:String) : Workspace = {
+        workspaces.synchronized {
+            workspaces.getOrElseUpdate(name, {
+                val path = root / name
+                if (!LocalWorkspace.exists(path))
+                    throw new IllegalArgumentException(s"Workspace '$name' does not exists")
+                val ws = LocalWorkspace.load(path)
+                ws
+            })
+        }
+    }
 }

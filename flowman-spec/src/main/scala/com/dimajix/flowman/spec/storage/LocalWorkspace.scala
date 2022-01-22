@@ -39,9 +39,13 @@ object LocalWorkspace {
         root.glob(globPattern)
             .flatMap(file => Try(load(file.parent)).toOption)
     }
+
+    def exists(file:File) : Boolean = {
+        file.isDirectory() && (file / ".flowman-workspace.yaml").isFile()
+    }
 }
 
-case class LocalWorkspace(root:File) extends Workspace {
+case class LocalWorkspace(override val root:File) extends Workspace {
     private val _parcels = mutable.ListBuffer[Parcel]()
 
     root.mkdirs()
@@ -53,6 +57,8 @@ case class LocalWorkspace(root:File) extends Workspace {
         val spec = ObjectMapper.read[ParcelWorkspaceSpec](file)
         spec.parcels.foreach(p => _parcels.append(p.instantiate(root)))
     }
+
+    override def name : String = root.path.getName
 
     /**
      * Loads a project via its name (not its filename or directory)

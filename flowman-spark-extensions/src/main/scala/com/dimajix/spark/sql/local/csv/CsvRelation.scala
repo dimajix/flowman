@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,9 +74,15 @@ class CsvRelation(context: SQLContext, files:Seq[File], options:CsvOptions, msch
         }
     }
 
-    private def readFile(file:File) : Iterator[Row] = {
-        val lines = Source.fromFile(file, options.encoding).getLines()
-        val parser = new UnivocityReader(schema, options)
-        UnivocityReader.parseIterator(lines, parser.options.headerFlag, parser)
+    private def readFile(file:File) : Seq[Row] = {
+        val source = Source.fromFile(file, options.encoding)
+        try {
+            val lines = source.getLines()
+            val parser = new UnivocityReader(schema, options)
+            UnivocityReader.parseIterator(lines, parser).toList
+        }
+        finally {
+            source.close()
+        }
     }
 }

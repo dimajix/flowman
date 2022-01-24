@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,12 +55,8 @@ object CsvUtils {
         }
     }
 
-    /**
-      * Drop header line so that only data can remain.
-      * This is similar with `filterHeaderLine` above and currently being used in CSV reading path.
-      */
-    def dropHeaderLine(iter: Iterator[String], options: CsvOptions): Iterator[String] = {
-        val nonEmptyLines = if (options.isCommentSet) {
+    def skipComments(iter: Iterator[String], options: CsvOptions) : Iterator[String] = {
+        if (options.isCommentSet) {
             val commentPrefix = options.comment.toString
             iter.dropWhile { line =>
                 line.trim.isEmpty || line.trim.startsWith(commentPrefix)
@@ -68,8 +64,15 @@ object CsvUtils {
         } else {
             iter.dropWhile(_.trim.isEmpty)
         }
+    }
 
-        if (nonEmptyLines.hasNext) nonEmptyLines.drop(1)
+    /**
+      * Drop header line so that only data can remain.
+      * This is similar with `filterHeaderLine` above and currently being used in CSV reading path.
+      */
+    def dropHeaderLine(iter: Iterator[String], options: CsvOptions): Iterator[String] = {
+        skipComments(iter, options)
+        if (iter.hasNext) iter.drop(1)
         iter
     }
 }

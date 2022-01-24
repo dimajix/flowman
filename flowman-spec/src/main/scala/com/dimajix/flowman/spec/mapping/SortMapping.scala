@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ import com.dimajix.flowman.types.StructType
 case class SortMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
-    columns:Seq[(String,SortOrder)]
+    columns:Seq[(String,SortOrder)],
+    filter:Option[String] = None
 ) extends BaseMapping {
     /**
      * Returns the dependencies (i.e. names of tables in the Dataflow model)
@@ -62,8 +63,9 @@ case class SortMapping(
             }
         )
         val result = df.sort(cols:_*)
+        val filteredResult = filter.map(result.filter).getOrElse(result)
 
-        Map("main" -> result)
+        Map("main" -> filteredResult)
     }
 
     /**
@@ -86,6 +88,7 @@ case class SortMapping(
 class SortMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "columns", required = true) private var columns:Seq[Map[String,String]] = Seq()
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -96,7 +99,8 @@ class SortMappingSpec extends MappingSpec {
         SortMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            columns.flatMap(context.evaluate).map { case(col,order) => col -> SortOrder.of(order) }
+            columns.flatMap(context.evaluate).map { case(col,order) => col -> SortOrder.of(order) },
+            context.evaluate(filter)
         )
     }
 }

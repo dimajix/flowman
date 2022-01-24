@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.dimajix.flowman.transforms.schema.StructNode
 import com.dimajix.flowman.transforms.schema.TreeTransformer
 
 
-case class FlattenTransformer(format:CaseFormat) extends TreeTransformer {
+final case class FlattenTransformer(format:CaseFormat) extends TreeTransformer {
     private def rename(prefix:String, name:String) : String = {
         format.concat(prefix, name)
     }

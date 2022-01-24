@@ -1,6 +1,7 @@
 # Version 0.21.0
 
 * Implement basic schema inference for local CSV files
+* Implement new `stack` mapping
 
 
 # Version 0.20.1 - 2022-01-06

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "select", value = classOf[SelectMappingSpec]),
     new JsonSubTypes.Type(name = "sort", value = classOf[SortMappingSpec]),
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlMappingSpec]),
+    new JsonSubTypes.Type(name = "stack", value = classOf[StackMappingSpec]),
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateMappingSpec]),
     new JsonSubTypes.Type(name = "transitiveChildren", value = classOf[TransitiveChildrenMappingSpec]),
     new JsonSubTypes.Type(name = "union", value = classOf[UnionMappingSpec]),

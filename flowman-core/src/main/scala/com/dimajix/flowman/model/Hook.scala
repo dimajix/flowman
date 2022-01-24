@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,4 +151,6 @@ abstract class BaseHook extends AbstractInstance with Hook {
     override def finishAssertion(execution:Execution, token: AssertionToken, result:AssertionResult): Unit = {}
     override def startMeasure(execution:Execution, measure:Measure, parent:Option[Token]) : MeasureToken = new MeasureToken {}
     override def finishMeasure(execution:Execution, token:MeasureToken, result:MeasureResult) : Unit = {}
+    override def instantiateMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit = {}
+    override def describeMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit = {}
 }

@@ -362,13 +362,13 @@ abstract class BaseTarget extends AbstractInstance with Target {
 
     protected def countRecords(execution:Execution, df:DataFrame, phase:Phase=Phase.BUILD) : DataFrame = {
         val labels = metadata.asMap + ("phase" -> phase.upper)
-        val counter = execution.metrics.findMetric(Selector(Some("target_records"), labels))
+        val counter = execution.metricSystem.findMetric(Selector(Some("target_records"), labels))
             .headOption
             .map(_.asInstanceOf[LongAccumulatorMetric].counter)
             .getOrElse {
                 val counter = execution.spark.sparkContext.longAccumulator
                 val metric = LongAccumulatorMetric("target_records", labels, counter)
-                execution.metrics.addMetric(metric)
+                execution.metricSystem.addMetric(metric)
                 counter
             }
 

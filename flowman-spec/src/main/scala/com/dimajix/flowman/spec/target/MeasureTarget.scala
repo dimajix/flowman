@@ -130,7 +130,7 @@ case class MeasureTarget(
         }
 
         // Publish result as metrics
-        val metrics = execution.metrics
+        val metrics = execution.metricSystem
         result.flatMap(_.measurements).foreach { measurement =>
             val gauge = metrics.findMetric(Selector(Some(measurement.name), measurement.labels))
                 .headOption

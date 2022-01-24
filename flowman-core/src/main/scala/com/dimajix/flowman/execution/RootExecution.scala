@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,16 +39,22 @@ final class RootExecution(session:Session) extends CachingExecution(None, true) 
     override protected val logger = LoggerFactory.getLogger(classOf[RootExecution])
 
     /**
-     * Returns the FlowmanConf object, which contains all Flowman settings.
-     * @return
-     */
-    override def flowmanConf : FlowmanConf = session.flowmanConf
-
-    /**
      * Returns the MetricRegistry of this execution
      * @return
      */
-    override def metrics : MetricSystem = session.metrics
+    override def metricSystem : MetricSystem = session.metrics
+
+    /**
+     * Returns the currently used [[MetricBoard]] for collecting metrics
+     * @return
+     */
+    override def metricBoard : Option[MetricBoard] = None
+
+    /**
+     * Returns the list of [[ExecutionListener]] used for monitoring the whole execution
+     * @return
+     */
+    override def listeners : Seq[(ExecutionListener,Option[Token])] = Seq()
 
     /**
      * Returns the FileSystem as configured in Hadoop
@@ -69,6 +75,12 @@ final class RootExecution(session:Session) extends CachingExecution(None, true) 
      * @return
      */
     override def sparkRunning: Boolean = session.sparkRunning
+
+    /**
+     * Returns the FlowmanConf object, which contains all Flowman settings.
+     * @return
+     */
+    override def flowmanConf : FlowmanConf = session.flowmanConf
 
     /**
      * Returns the table catalog used for managing table instances
@@ -94,50 +106,5 @@ final class RootExecution(session:Session) extends CachingExecution(None, true) 
         }
 
         super.cleanup()
-    }
-
-    /**
-     * Invokes a function with a new Executor that with additional listeners.
-     * @param listeners
-     * @param fn
-     * @tparam T
-     * @return
-     */
-    override def withListeners[T](listeners:Seq[ExecutionListener])(fn:Execution => T) : T = {
-        val execution = new MonitorExecution(this, listeners.map(l => (l,None)), None)
-        fn(execution)
-    }
-
-    /**
-     * Invokes a function with a new Executor with a specific [[MetricBoard]]
-     *
-     * @param metrics
-     * @param fn
-     * @tparam T
-     * @return
-     */
-    override def withMetrics[T](metrics: Option[MetricBoard])(fn: Execution => T): T = {
-        val execution = new MonitorExecution(this, Seq(), metrics)
-        fn(execution)
-    }
-
-    override def monitorLifecycle(job:Job, arguments:Map[String,Any], phases:Seq[Phase])(fn:Execution => LifecycleResult) : LifecycleResult = {
-        fn(this)
-    }
-
-    override def monitorJob(job:Job, arguments:Map[String,Any], phase:Phase)(fn:Execution => JobResult) : JobResult = {
-        fn(this)
-    }
-
-    override def monitorTarget(target:Target, phase:Phase)(fn:Execution => TargetResult) : TargetResult = {
-        fn(this)
-    }
-
-    override def monitorAssertion(assertion:Assertion)(fn:Execution => AssertionResult) : AssertionResult = {
-        fn(this)
-    }
-
-    override def monitorMeasure(measure:Measure)(fn:Execution => MeasureResult) : MeasureResult = {
-        fn(this)
     }
 }

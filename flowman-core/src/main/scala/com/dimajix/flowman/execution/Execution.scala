@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,19 @@ abstract class Execution {
       * Returns the MetricRegistry of this execution
       * @return
       */
-    def metrics : MetricSystem
+    def metricSystem : MetricSystem
+
+    /**
+     * Returns the currently used [[MetricBoard]] for collecting metrics
+     * @return
+     */
+    def metricBoard : Option[MetricBoard]
+
+    /**
+     * Returns the list of [[ExecutionListener]] used for monitoring the whole execution
+     * @return
+     */
+    def listeners : Seq[(ExecutionListener,Option[Token])]
 
     /**
       * Returns the FileSystem as configured in Hadoop
@@ -66,6 +78,12 @@ abstract class Execution {
       * @return
       */
     def spark: SparkSession
+
+    /**
+     * Returns true if a SparkSession is already available
+     * @return
+     */
+    def sparkRunning: Boolean
 
     /**
      * Returns the FlowmanConf object, which contains all Flowman settings.
@@ -83,12 +101,6 @@ abstract class Execution {
       * @return
       */
     def hadoopConf : Configuration = spark.sparkContext.hadoopConfiguration
-
-    /**
-      * Returns true if a SparkSession is already available
-      * @return
-      */
-    def sparkRunning: Boolean
 
     /**
       * Returns the table catalog used for managing Hive table instances. The HiveCatalog will take care of many
@@ -219,7 +231,7 @@ abstract class Execution {
      * @tparam T
      * @return
      */
-    def monitorLifecycle(job:Job, arguments:Map[String,Any], phases:Seq[Phase])(fn:Execution => LifecycleResult) : LifecycleResult = fn(this)
+    def monitorLifecycle(job:Job, arguments:Map[String,Any], phases:Seq[Phase])(fn:Execution => LifecycleResult) : LifecycleResult
 
     /**
      * Monitors the execution of a job by calling appropriate listeners at the start and end.
@@ -230,7 +242,7 @@ abstract class Execution {
      * @tparam T
      * @return
      */
-    def monitorJob(job:Job, arguments:Map[String,Any], phase:Phase)(fn:Execution => JobResult) : JobResult = fn(this)
+    def monitorJob(job:Job, arguments:Map[String,Any], phase:Phase)(fn:Execution => JobResult) : JobResult
 
     /**
      * Monitors the execution of a target by calling appropriate listeners at the start and end.
@@ -240,7 +252,7 @@ abstract class Execution {
      * @tparam T
      * @return
      */
-    def monitorTarget(target:Target, phase:Phase)(fn:Execution => TargetResult) : TargetResult = fn(this)
+    def monitorTarget(target:Target, phase:Phase)(fn:Execution => TargetResult) : TargetResult
 
     /**
      * Monitors the execution of an assertion by calling appropriate listeners at the start and end.
@@ -249,7 +261,7 @@ abstract class Execution {
      * @tparam T
      * @return
      */
-    def monitorAssertion(assertion:Assertion)(fn:Execution => AssertionResult) : AssertionResult = fn(this)
+    def monitorAssertion(assertion:Assertion)(fn:Execution => AssertionResult) : AssertionResult
 
     /**
      * Monitors the execution of an assertion by calling appropriate listeners at the start and end.
@@ -258,5 +270,5 @@ abstract class Execution {
      * @tparam T
      * @return
      */
-    def monitorMeasure(measure:Measure)(fn:Execution => MeasureResult) : MeasureResult = fn(this)
+    def monitorMeasure(measure:Measure)(fn:Execution => MeasureResult) : MeasureResult
 }

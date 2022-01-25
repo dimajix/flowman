@@ -20,7 +20,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Instance
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Prototype
 
 
@@ -42,10 +44,27 @@ object NamedSpec {
 }
 
 
+final class MetadataSpec {
+    @JsonProperty(value="labels", required=false) protected var labels:Map[String,String] = Map()
+
+    def instantiate(context:Context, name:String, category:Category, kind:String) : Metadata = {
+        Metadata(
+            namespace = context.namespace.map(_.name),
+            project = context.project.map(_.name),
+            name = name,
+            version = context.project.flatMap(_.version),
+            category = category.lower,
+            kind = kind,
+            labels = context.evaluate(labels)
+        )
+    }
+}
+
+
 abstract class NamedSpec[T] extends Spec[T] {
     @JsonProperty(value="kind", required = true) protected var kind: String = _
     @JsonProperty(value="name", required = false) protected[spec] var name:String = ""
-    @JsonProperty(value="labels", required=false) protected var labels:Map[String,String] = Map()
+    @JsonProperty(value="metadata", required=false) protected var metadata:Option[MetadataSpec] = None
 
     override def instantiate(context:Context) : T
 

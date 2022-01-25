@@ -25,26 +25,23 @@ import com.dimajix.flowman.types.FieldType
 
 object Template {
     object Properties {
-        def apply(context: Context, name:String = "") : Properties = {
+        def apply(context: Context, name:String = "", kind:String = "") : Properties = {
             Properties(
                 context,
-                context.namespace,
-                context.project,
-                name,
-                "",
-                Map()
+                Metadata(context, name, Category.TEMPLATE, kind),
             )
         }
     }
     final case class Properties(
         context:Context,
-        namespace:Option[Namespace],
-        project:Option[Project],
-        name:String,
-        kind:String,
-        labels:Map[String,String]
+        metadata:Metadata
     ) extends Instance.Properties[Properties] {
-        override def withName(name: String): Properties = copy(name=name)
+        override val namespace : Option[Namespace] = context.namespace
+        override val project : Option[Project] = context.project
+        override val kind : String = metadata.kind
+        override val name : String = metadata.name
+
+        override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
         def identifier : TemplateIdentifier = TemplateIdentifier(name, project.map(_.name))
     }
 

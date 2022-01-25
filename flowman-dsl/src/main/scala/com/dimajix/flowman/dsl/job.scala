@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ class JobWrapperFunctions(wrapper:Wrapper[model.Job, model.Job.Properties]) {
         override def gen: model.Job.Properties => model.Job = wrapper.gen
         override def props: Context => model.Job.Properties = ctx => {
             val props = wrapper.props(ctx)
-            props.copy(labels = props.labels + kv)
+            props.copy(metadata = props.metadata.copy(labels=props.metadata.labels + kv))
         }
     }
     def description(desc:String) : JobWrapper = new JobWrapper {

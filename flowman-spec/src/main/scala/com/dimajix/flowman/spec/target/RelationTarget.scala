@@ -80,7 +80,7 @@ object RelationTarget {
         val context = props.context
         val conf = context.flowmanConf
         new RelationTarget(
-            props.copy(kind="relation"),
+            props.copy(metadata=props.metadata.copy(kind="relation")),
             RelationReference(context, relation),
             mapping,
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),

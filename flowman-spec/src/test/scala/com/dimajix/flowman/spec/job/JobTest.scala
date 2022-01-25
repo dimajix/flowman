@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -405,8 +405,9 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
             """
               |jobs:
               |  main:
-              |    labels:
-              |      job_label: xyz
+              |    metadata:
+              |      labels:
+              |        job_label: xyz
               |    parameters:
               |      - name: p1
               |    environment:
@@ -442,7 +443,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         metricSystem.addSink(metricSink)
 
         val job = context.getJob(JobIdentifier("main"))
-        job.labels should be (Map("job_label" -> "xyz"))
+        job.metadata.labels should be (Map("job_label" -> "xyz"))
 
         session.runner.executeJob(job, Seq(Phase.BUILD), Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
     }

@@ -89,7 +89,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         assertion.mapping should be (MappingOutputIdentifier("some_mapping"))
         assertion.columns should be (Seq())
         assertion.schema should be (Some(EmbeddedSchema(
-            Schema.Properties(context),
+            Schema.Properties(context, name="embedded", kind="inline"),
             fields = Seq(Field("col_1", StringType), Field("col_2", IntegerType))
         )))
     }

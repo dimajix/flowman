@@ -63,7 +63,7 @@ object Converter {
         Test(
             test.name,
             test.description,
-            test.labels
+            test.metadata.labels
         )
     }
 
@@ -71,7 +71,7 @@ object Converter {
         Target(
             target.name,
             target.kind,
-            target.labels,
+            target.metadata.labels,
             target.before.map(_.toString),
             target.after.map(_.toString)
         )
@@ -86,7 +86,7 @@ object Converter {
             mapping.checkpoint,
             mapping.inputs.map(_.toString),
             mapping.outputs,
-            mapping.labels
+            mapping.metadata.labels
         )
     }
 
@@ -94,7 +94,7 @@ object Converter {
         Relation(
             relation.name,
             relation.kind,
-            relation.labels
+            relation.metadata.labels
         )
     }
 

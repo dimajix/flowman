@@ -44,36 +44,34 @@ object Test {
         def apply(context: Context, name: String = ""): Properties = {
             Properties(
                 context,
-                context.namespace,
-                context.project,
-                name,
-                Map(),
+                Metadata(context, name, Category.TEST, "test"),
                 None
             )
         }
     }
     final case class Properties(
         context: Context,
-        namespace:Option[Namespace],
-        project:Option[Project],
-        name: String,
-        labels: Map[String, String],
+        metadata:Metadata,
         description:Option[String]
     ) extends Instance.Properties[Properties] {
-        override val kind : String = "test"
-        override def withName(name: String): Properties = copy(name=name)
+        override val namespace : Option[Namespace] = context.namespace
+        override val project : Option[Project] = context.project
+        override val kind : String = metadata.kind
+        override val name : String = metadata.name
+
+        override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
     }
 
     class Builder(context:Context) {
         require(context != null)
         private var name:String = ""
-        private var labels:Map[String,String] = Map()
+        private var metadata:Metadata = Metadata(context, "", Category.TEST, "test")
         private var description:Option[String] = None
         private var targets:Seq[TargetIdentifier] = Seq()
         private var environment:Map[String,String] = Map()
 
         def build() : Test = Test(
-            Test.Properties(context, context.namespace, context.project, name, labels, description),
+            Test.Properties(context, metadata.copy(name=name), description),
             environment = environment,
             targets = targets
         )
@@ -81,7 +79,7 @@ object Test {
             require(props != null)
             require(props.context eq context)
             name = props.name
-            labels = props.labels
+            metadata = props.metadata
             description = props.description
             this
         }

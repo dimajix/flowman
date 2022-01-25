@@ -4,7 +4,7 @@ version: ${plugin.version}
 isolation: false
 jars:
  - ${plugin.jar}
- - swagger-parser-1.0.55.jar
+ - swagger-parser-1.0.56.jar
  - swagger-annotations-1.6.3.jar
  - swagger-core-1.6.3.jar
  - swagger-models-1.6.3.jar

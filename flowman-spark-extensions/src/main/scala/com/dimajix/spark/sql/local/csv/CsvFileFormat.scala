@@ -44,6 +44,9 @@ class CsvFileFormat extends RelationProvider {
     override def inferSchema(sparkSession: SparkSession,
                              parameters: Map[String, String],
                     files: Seq[File]): Option[StructType] = {
+        if (files.isEmpty)
+            throw new IllegalArgumentException("Cannot infer schema from empty list of files")
+
         val options = new CsvOptions(parameters)
         val source = Source.fromFile(files.head, options.encoding)
         try {

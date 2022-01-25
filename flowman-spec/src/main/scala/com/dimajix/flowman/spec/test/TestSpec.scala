@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Category
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
@@ -75,12 +77,10 @@ class TestSpec extends NamedSpec[Test] {
      */
     override protected def instanceProperties(context: Context): Test.Properties = {
         require(context != null)
+        val name = context.evaluate(this.name)
         Test.Properties(
             context,
-            context.namespace,
-            context.project,
-            context.evaluate(name),
-            context.evaluate(labels),
+            metadata.map(_.instantiate(context, name, Category.TEST, kind)).getOrElse(Metadata(context, name, Category.TEST, kind)),
             description.map(context.evaluate)
         )
     }

@@ -10,6 +10,7 @@ environment:
 
 connections:
   mysql-db:
+    kind: jdbc
     driver: "$mysql_db_driver"
     url: "$mysql_db_url"
     username: "$mysql_db_username"
@@ -17,5 +18,17 @@ connections:
 ```
 
 ## Fields
+* `kind` **(mandatory)** *(string)*: `jdbc`
+
+* `driver` **(mandatory)** *(string)*
+
+* `url` **(mandatory)** *(string)*
+
+* `username` **(optional)** *(string)*
+
+* `password` **(optional)** *(string)*
+
+* `properties` **(optional)** *(map)* 
+
 
 ## Description

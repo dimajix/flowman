@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,21 @@
 
 package com.dimajix.flowman.model
 
+import com.dimajix.flowman.execution.Context
+
+
+object Metadata {
+    def apply(context: Context, name: String, category:Category, kind: String): Metadata =
+        Metadata(
+            context.namespace.map(_.name),
+            context.project.map(_.name),
+            name,
+            context.project.flatMap(_.version),
+            category.lower,
+            kind,
+            Map()
+        )
+}
 final case class Metadata(
     namespace: Option[String] = None,
     project: Option[String] = None,

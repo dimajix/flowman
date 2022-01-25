@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Hook
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.annotation.HookType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
@@ -52,11 +54,7 @@ abstract class HookSpec extends Spec[Hook] {
         require(context != null)
         Hook.Properties(
             context,
-            context.namespace,
-            context.project,
-            "",
-            kind,
-            Map()
+            Metadata(context, kind, Category.HOOK, kind)
         )
     }
 }

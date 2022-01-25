@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Measure
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.MeasureType
 import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
@@ -47,13 +49,10 @@ abstract class MeasureSpec  extends NamedSpec[Measure] {
 
     override protected def instanceProperties(context:Context) : Measure.Properties = {
         require(context != null)
+        val name = context.evaluate(this.name)
         Measure.Properties(
             context,
-            context.namespace,
-            context.project,
-            context.evaluate(name),
-            kind,
-            context.evaluate(labels),
+            metadata.map(_.instantiate(context, name, Category.MEASURE, kind)).getOrElse(Metadata(context, name, Category.MEASURE, kind)),
             context.evaluate(description)
         )
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class EmbeddedSchemaSpec extends SchemaSpec {
       */
     override def instantiate(context: Context): EmbeddedSchema = {
         EmbeddedSchema(
-            Schema.Properties(context),
+            instanceProperties(context, "embedded"),
             description.map(context.evaluate),
             fields,
             primaryKey.map(context.evaluate)

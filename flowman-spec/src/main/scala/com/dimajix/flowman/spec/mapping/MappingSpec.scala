@@ -24,7 +24,9 @@ import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.MappingType
 import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
@@ -105,13 +107,10 @@ abstract class MappingSpec extends NamedSpec[Mapping] {
       */
     override protected def instanceProperties(context:Context) : Mapping.Properties = {
         require(context != null)
+        val name = context.evaluate(this.name)
         Mapping.Properties(
             context,
-            context.namespace,
-            context.project,
-            context.evaluate(name),
-            kind,
-            context.evaluate(labels),
+            metadata.map(_.instantiate(context, name, Category.MAPPING, kind)).getOrElse(Metadata(context, name, Category.MAPPING, kind)),
             context.evaluate(broadcast).toBoolean,
             context.evaluate(checkpoint).toBoolean,
             StorageLevel.fromString(context.evaluate(cache))

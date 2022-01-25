@@ -38,6 +38,7 @@ import javax.ws.rs.Path
 import com.dimajix.flowman.storage.Workspace
 import com.dimajix.flowman.studio.model
 import com.dimajix.flowman.studio.model.Converter
+import com.dimajix.flowman.studio.service.SessionManager
 import com.dimajix.flowman.studio.service.WorkspaceManager
 
 
@@ -46,12 +47,12 @@ import com.dimajix.flowman.studio.service.WorkspaceManager
 @ApiResponses(Array(
     new ApiResponse(code = 500, message = "Internal server error")
 ))
-class WorkspaceEndpoint(workspaceManager:WorkspaceManager) {
+class WorkspaceEndpoint(workspaceManager:WorkspaceManager, sessionManager: SessionManager) {
     import akka.http.scaladsl.server.Directives._
 
     import com.dimajix.flowman.studio.model.JsonSupport._
 
-    private val projectEndpoint:ProjectEndpoint = new ProjectEndpoint
+    private val projectEndpoint:ProjectEndpoint = new ProjectEndpoint(sessionManager)
     private val parcelEndpoint:ParcelEndpoint = new ParcelEndpoint
 
     def routes : server.Route = pathPrefix("workspace") {(

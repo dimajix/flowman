@@ -1,5 +1,6 @@
 # Version 0.21.0
 
+* Fix wrong dependencies in Swagger plugin
 * Implement basic schema inference for local CSV files
 * Implement new `stack` mapping
 

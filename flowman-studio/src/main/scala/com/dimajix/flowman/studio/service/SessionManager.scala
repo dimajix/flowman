@@ -26,6 +26,8 @@ import scala.concurrent.ExecutionContext
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution
+import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.storage.Store
 
 
@@ -44,7 +46,7 @@ object SessionManager {
     }
 }
 
-class SessionManager(rootSession:execution.Session) {
+class SessionManager(val rootSession:execution.Session) {
     import SessionManager._
     private val sessions = mutable.ListBuffer[SessionService]()
     private val threadPool = new ForkJoinPool(4, MyForkJoinWorkerThreadFactory, exceptionHandler, true)
@@ -84,8 +86,10 @@ class SessionManager(rootSession:execution.Session) {
      */
     def createSession(store: Store, projectName:String) : SessionService = {
         val project = store.loadProject(projectName)
-        val session = rootSession.newSession(project, store)
-        val svc = new SessionService(this, session)
+        createSession(store, project)
+    }
+    def createSession(store: Store, project:Project) : SessionService = {
+        val svc = new SessionService(this, store, project)
 
         sessions.synchronized {
             sessions.append(svc)

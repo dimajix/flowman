@@ -55,6 +55,7 @@ object Session {
         private var store:Option[Store] = None
         private var namespace:Option[Namespace] = None
         private var jars = Set[String]()
+        private var listeners = Seq[ExecutionListener]()
 
         /**
          * Injects an existing Spark session. If no session is provided, Flowman will create its own Spark session
@@ -213,6 +214,11 @@ object Session {
             this
         }
 
+        def withListener(listener:ExecutionListener) : Builder = {
+            this.listeners = this.listeners :+ listener
+            this
+        }
+
         /**
          * Build the Flowman session and applies all previously specified options
          * @return
@@ -223,15 +229,16 @@ object Session {
 
             new Session(
                 namespace.orElse(parent.flatMap(_._namespace)),
-                project.orElse(parent.flatMap(_._project)),
-                store.orElse(parent.flatMap(_._store)),
+                project,
+                store,
                 parent.map(p => (_:SparkSession.Builder) => p.spark.newSession()).getOrElse(sparkSession),
                 parent.map(_._sparkMaster).getOrElse(sparkMaster),
                 parent.map(_._sparkName).getOrElse(sparkName),
                 parent.map(_._config).getOrElse(Map()) ++ config,
                 parent.map(_._environment).getOrElse(Map()) ++ environment,
                 parent.map(_._profiles).getOrElse(Set()) ++ profiles,
-                parent.map(_ => Set[String]()).getOrElse(jars)
+                parent.map(_ => Set[String]()).getOrElse(jars),
+                listeners.map(l => (l,None))
             )
         }
 
@@ -270,7 +277,8 @@ class Session private[execution](
     private[execution] val _config:Map[String,String],
     private[execution] val _environment: Map[String,String],
     private[execution] val _profiles:Set[String],
-    private[execution] val _jars:Set[String]
+    private[execution] val _jars:Set[String],
+    private[execution] val _listeners:Seq[(ExecutionListener,Option[Token])]
 ) {
     require(_jars != null)
     require(_environment != null)
@@ -485,6 +493,12 @@ class Session private[execution](
      * Returns the list of all hooks
      */
     def hooks : Seq[Prototype[Hook]] = _hooks
+
+    /**
+     * Returns list of listeners which are active in this Session
+     * @return
+     */
+    def listeners : Seq[(ExecutionListener,Option[Token])] = _listeners
 
     /**
       * Returns an appropriate runner for a specific job. Note that every invocation will actually create a new

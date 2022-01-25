@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.dimajix.flowman.server.model.Namespace
 @Path("/namespace")
 class NamespaceService(ns:model.Namespace) {
     import akka.http.scaladsl.server.Directives._
+
     import com.dimajix.flowman.server.model.JsonSupport._
 
     def routes : server.Route = pathPrefix("namespace") {

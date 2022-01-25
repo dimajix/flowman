@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,18 @@ import io.swagger.annotations.ApiParam
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
 import javax.ws.rs.GET
+import javax.ws.rs.POST
 import javax.ws.rs.Path
 
+import com.dimajix.flowman.execution.Lifecycle
 import com.dimajix.flowman.execution.NoSuchProjectException
+import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.storage.Store
 import com.dimajix.flowman.storage.Workspace
+import com.dimajix.flowman.studio.model
 import com.dimajix.flowman.studio.model.Converter
-import com.dimajix.flowman.studio.model.Project
-import com.dimajix.flowman.studio.model.ProjectList
+import com.dimajix.flowman.studio.service.SessionManager
 
 
 @Api(value = "workspace", produces = "application/json", consumes = "application/json")
@@ -50,7 +54,7 @@ import com.dimajix.flowman.studio.model.ProjectList
 @ApiResponses(Array(
     new ApiResponse(code = 500, message = "Internal server error")
 ))
-class ProjectEndpoint {
+class ProjectEndpoint(sessionManager: SessionManager) {
     import akka.http.scaladsl.server.Directives._
 
     import com.dimajix.flowman.studio.model.JsonSupport._
@@ -63,11 +67,22 @@ class ProjectEndpoint {
         }
         ~
         pathPrefix(Segment) { project =>
-            pathEndOrSingleSlash {
-                redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
-                    infoProject(workspace, project)
+            withProject(workspace, project) { project => (
+                pathEndOrSingleSlash {
+                    redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
+                        infoProject(project)
+                    }
                 }
-            }
+                ~
+                path("run") {
+                    parameterMap { params =>
+                        val phase = params.get("phase")
+                        val force = params.get("force").map(_.toBoolean)
+                        val args = params.filter(_._1.startsWith("param.")).map { case(k,v) => k.stripPrefix("param.") -> v }
+                        run(workspace, project, phase, args, force)
+                    }
+                }
+            )}
         }
     )}
 
@@ -75,11 +90,13 @@ class ProjectEndpoint {
     @Path("/")
     @ApiOperation(value = "Retrieve a list of all projects", nickname = "getProjects", httpMethod = "GET")
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Project information", response = classOf[ProjectList])
+        new ApiResponse(code = 200, message = "Project information", response = classOf[model.ProjectList])
     ))
     def listProjects(@ApiParam(hidden = true) store:Store): server.Route = {
-        val result = store.listProjects()
-        complete(ProjectList(result.map(Converter.of)))
+        get {
+            val result = store.listProjects()
+            complete(model.ProjectList(result.map(Converter.of)))
+        }
     }
 
     @GET
@@ -90,20 +107,64 @@ class ProjectEndpoint {
             dataType = "string", paramType = "path")
     ))
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Project information", response = classOf[Project]),
-        new ApiResponse(code = 404, message = "Project not found", response = classOf[Project])
+        new ApiResponse(code = 200, message = "Project information", response = classOf[model.Project]),
+        new ApiResponse(code = 404, message = "Project not found", response = classOf[model.Project])
     ))
-    def infoProject(@ApiParam(hidden = true) store:Store, @ApiParam(hidden = true) project:String): server.Route = {
+    def infoProject(@ApiParam(hidden = true) project:Project): server.Route = {
+        get {
+            complete(Converter.of(project))
+        }
+    }
+
+    @POST
+    @Path("/{project}/run")
+    @ApiOperation(value = "Run a single project", nickname = "runProject", httpMethod = "POST")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "project", value = "name of project", required = true,
+            dataType = "string", paramType = "path"),
+        new ApiImplicitParam(name = "phase", value = "Build phase", required = false,
+            dataType = "string", paramType = "query"),
+        new ApiImplicitParam(name = "force", value = "Force processing even if target is not dirty", required = false,
+            dataType = "boolean", paramType = "query")
+    ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Project execution result", response = classOf[model.Status])
+    ))
+    def run(
+        @ApiParam(hidden = true) workspace:Workspace,
+        @ApiParam(hidden = true) project:Project,
+        @ApiParam(hidden = true) phase: Option[String],
+        @ApiParam(hidden = true) args: Map[String,String],
+        @ApiParam(hidden = true) force: Option[Boolean]
+    ): server.Route = {
+        post {
+            val session = sessionManager.createSession(workspace, project)
+            try {
+                val job = session.getJob("main")
+                val runner = session.runner
+                val phases = Lifecycle.ofPhase(phase.map(Phase.ofString).getOrElse(Phase.BUILD))
+                val jargs = job.arguments(args)
+                runner.executeJob(job, phases, jargs, force = force.getOrElse(false))
+            }
+            finally {
+                session.close()
+            }
+            complete(model.Status("success"))
+        }
+    }
+
+    private def withProject(workspace:Workspace, projectName:String)(fn:Project => server.Route) : server.Route= {
         Try {
-            Converter.of(store.loadProject(project))
+            workspace.loadProject(projectName)
         }
         match {
             case Success(result) =>
-                complete(result)
+                fn(result)
             case Failure(_:NoSuchProjectException) =>
-                complete(StatusCodes.NotFound)
+                complete(StatusCodes.NotFound -> s"Project '$projectName' not found")
             case Failure(ex) =>
-                complete(StatusCodes.InternalServerError)
+                throw ex
         }
+
     }
 }

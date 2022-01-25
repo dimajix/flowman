@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import io.swagger.annotations.Api
 import io.swagger.annotations.ApiImplicitParam
 import io.swagger.annotations.ApiImplicitParams
 import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
 import javax.ws.rs.Path
@@ -99,7 +100,14 @@ class JobHistoryService(history:StateStore) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobStateList])
     ))
-    def listJobStates(project:Option[String], job:Option[String], phase:Option[String], status:Option[String], limit:Option[Int], offset:Option[Int]) : server.Route = {
+    def listJobStates(
+        @ApiParam(hidden = true) project:Option[String],
+        @ApiParam(hidden = true) job:Option[String],
+        @ApiParam(hidden = true) phase:Option[String],
+        @ApiParam(hidden = true) status:Option[String],
+        @ApiParam(hidden = true) limit:Option[Int],
+        @ApiParam(hidden = true) offset:Option[Int]
+    ) : server.Route = {
         val query = JobQuery(
             project=split(project),
             job=split(job),
@@ -123,12 +131,18 @@ class JobHistoryService(history:StateStore) {
         new ApiImplicitParam(name = "status", value = "Execution status", required = false,
             dataType = "string", paramType = "query"),
         new ApiImplicitParam(name = "grouping", value = "Grouping attribute", required = true,
-            dataType = "int", paramType = "query")
+            dataType = "string", paramType = "query")
     ))
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobStateList])
     ))
-    def countJobs(project:Option[String], job:Option[String], phase:Option[String], status:Option[String], grouping:String) : server.Route = {
+    def countJobs(
+        @ApiParam(hidden = true) project:Option[String],
+        @ApiParam(hidden = true) job:Option[String],
+        @ApiParam(hidden = true) phase:Option[String],
+        @ApiParam(hidden = true) status:Option[String],
+        @ApiParam(hidden = true) grouping:String
+    ) : server.Route = {
         val query = JobQuery(
             project=split(project),
             job=split(job),
@@ -155,7 +169,7 @@ class JobHistoryService(history:StateStore) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobState])
     ))
-    def getJobState(jobId:String) : server.Route = {
+    def getJobState(@ApiParam(hidden = true) jobId:String) : server.Route = {
         val query = JobQuery(id=Seq(jobId))
         val job = history.findJobs(query).headOption
         complete(job.map { j =>
@@ -173,7 +187,7 @@ class JobHistoryService(history:StateStore) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Job environment", response = classOf[model.JobEnvironment])
     ))
-    def getJobEnvironment(jobId:String) : server.Route = {
+    def getJobEnvironment(@ApiParam(hidden = true) jobId:String) : server.Route = {
         complete{
             val env = history.getJobEnvironment(jobId)
             JobEnvironment(env)

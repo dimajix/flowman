@@ -34,12 +34,9 @@ import javax.ws.rs.POST
 import javax.ws.rs.Path
 
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.model
+import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.studio.model.Converter
-import com.dimajix.flowman.studio.model.Job
-import com.dimajix.flowman.studio.model.JobList
-import com.dimajix.flowman.studio.model.JobTask
-import com.dimajix.flowman.studio.model.RunJobRequest
+import com.dimajix.flowman.studio.model
 import com.dimajix.flowman.studio.service.SessionService
 
 
@@ -65,30 +62,28 @@ class JobEndpoint {
         }
         ~
         pathPrefix(Segment) { jobName =>
-            (
+            withJob(session, jobName) { job => (
                 pathEndOrSingleSlash {
                     redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {
-                        getJob(session, jobName)
+                        getJob(job)
                     }
                 }
                 ~
                 path("run") {
-                    runJob(session, jobName)
+                    runJob(session, job)
                 }
-            )
+            )}
         }
     )}
 
     @GET
     @ApiOperation(value = "Return list of all jobs", nickname = "listJobs", httpMethod = "GET")
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "List of all jobs", response = classOf[JobList])
+        new ApiResponse(code = 200, message = "List of all jobs", response = classOf[model.JobList])
     ))
     def listJobs(@ApiParam(hidden = true) session: SessionService) : server.Route = {
         get {
-            val result = JobList(
-                session.listJobs()
-            )
+            val result = model.JobList(session.listJobs())
             complete(result)
         }
     }
@@ -100,13 +95,11 @@ class JobEndpoint {
         new ApiImplicitParam(name = "job", value = "Job Name", required = true, dataType = "string", paramType = "path")
     ))
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Information about the job", response = classOf[Job])
+        new ApiResponse(code = 200, message = "Information about the job", response = classOf[model.Job])
     ))
-    def getJob(@ApiParam(hidden = true) session: SessionService, @ApiParam(hidden = true) job:String) : server.Route = {
+    def getJob(@ApiParam(hidden = true) job:Job) : server.Route = {
         get {
-            withJob(session, job) { job =>
-                complete(Converter.of(job))
-            }
+            complete(Converter.of(job))
         }
     }
 
@@ -117,21 +110,19 @@ class JobEndpoint {
         new ApiImplicitParam(name = "job", value = "Job Name", required = true, dataType = "string", paramType = "path")
     ))
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Job run", response = classOf[JobTask])
+        new ApiResponse(code = 200, message = "Job run", response = classOf[model.JobTask])
     ))
-    def runJob(@ApiParam(hidden = true) session:SessionService, @ApiParam(hidden = true) job:String) : server.Route = {
+    def runJob(@ApiParam(hidden = true) session:SessionService, @ApiParam(hidden = true) job:Job) : server.Route = {
         post {
-            entity(as[RunJobRequest]) { jobRun =>
-                withJob(session, job) { job =>
-                    val phase = Phase.ofString(jobRun.phase)
-                    val run = session.tasks.runJob(job, phase, jobRun.args, jobRun.force, jobRun.keepGoing, jobRun.dryRun)
-                    complete(Converter.of(run))
-                }
+            entity(as[model.RunJobRequest]) { jobRun =>
+                val phase = Phase.ofString(jobRun.phase)
+                val run = session.tasks.runJob(job, phase, jobRun.args, jobRun.force, jobRun.keepGoing, jobRun.dryRun)
+                complete(Converter.of(run))
             }
         }
     }
 
-    private def withJob(session:SessionService, jobName:String)(fn:(model.Job) => server.Route) : server.Route = {
+    private def withJob(session:SessionService, jobName:String)(fn:(Job) => server.Route) : server.Route = {
         Try {
             session.getJob(jobName)
         } match {

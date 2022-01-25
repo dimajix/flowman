@@ -54,7 +54,7 @@ final class RootExecution(session:Session) extends CachingExecution(None, true) 
      * Returns the list of [[ExecutionListener]] used for monitoring the whole execution
      * @return
      */
-    override def listeners : Seq[(ExecutionListener,Option[Token])] = Seq()
+    override def listeners : Seq[(ExecutionListener,Option[Token])] = session.listeners
 
     /**
      * Returns the FileSystem as configured in Hadoop

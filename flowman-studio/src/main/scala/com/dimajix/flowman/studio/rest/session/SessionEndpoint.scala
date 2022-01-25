@@ -65,20 +65,24 @@ class SessionEndpoint(workspaceManager:WorkspaceManager, sessionManager:SessionM
     private val testEndpoint:TestEndpoint = new TestEndpoint
 
     def routes : server.Route = pathPrefix("session") {(
-        pathEndOrSingleSlash {(
-            listSessions()
-            ~
-            createSession()
-        )}
+        pathEndOrSingleSlash {
+            redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {(
+                listSessions()
+                ~
+                createSession()
+            )}
+        }
         ~
         pathPrefix(Segment) { session =>
             withSession(session) { session =>
             (
-                pathEndOrSingleSlash {(
-                    getSession(session)
-                    ~
-                    closeSession(session)
-                )}
+                pathEndOrSingleSlash {
+                    redirectToNoTrailingSlashIfPresent(StatusCodes.Found) {(
+                        getSession(session)
+                        ~
+                        closeSession(session)
+                    )}
+                }
                 ~
                 path("project") {
                     getProject(session)
@@ -120,7 +124,7 @@ class SessionEndpoint(workspaceManager:WorkspaceManager, sessionManager:SessionM
             dataTypeClass = classOf[CreateSessionRequest], paramType = "body")
     ))
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Create a new session and opens a project", response = classOf[Session]),
+        new ApiResponse(code = 201, message = "Create a new session and opens a project", response = classOf[Session]),
         new ApiResponse(code = 400, message = "Bad request", response = classOf[Session])
     ))
     def createSession() : server.Route = {
@@ -139,7 +143,7 @@ class SessionEndpoint(workspaceManager:WorkspaceManager, sessionManager:SessionM
                             config = session.context.config.toMap,
                             environment = session.context.environment.toMap.map(kv => kv._1 -> kv._2.toString)
                         )
-                        complete(result)
+                        complete(StatusCodes.Created -> result)
                     case Failure(e) =>
                         logger.warn(s"Cannot load project. Request was $request, error is ${e.getMessage}")
                         complete(HttpResponse(status = StatusCodes.InternalServerError))
@@ -224,7 +228,7 @@ class SessionEndpoint(workspaceManager:WorkspaceManager, sessionManager:SessionM
     private def withSession(sessionId:String)(fn:(SessionService) => server.Route) : server.Route = {
         sessionManager.getSession(sessionId) match {
             case Some(session) => fn(session)
-            case None => complete(HttpResponse(status = StatusCodes.NotFound))
+            case None => complete(StatusCodes.NotFound -> s"Session $sessionId not found")
         }
     }
 }

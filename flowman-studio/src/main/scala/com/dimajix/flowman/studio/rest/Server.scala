@@ -77,7 +77,7 @@ class Server(
     private val shutdownPromise = Promise[Done]()
     private val shutdownEndpoint = new ShutdownEndpoint(shutdownPromise.trySuccess(Done))
     private val pingEndpoint = new PingEndpoint
-    private val workspaceEndpoint = new WorkspaceEndpoint(workspaceManager)
+    private val workspaceEndpoint = new WorkspaceEndpoint(workspaceManager, sessionManager)
     private val namespaceEndpoint = new NamespaceEndpoint(rootSession.namespace.get)
     private val sessionEndpoint = new SessionEndpoint(workspaceManager, sessionManager)
 

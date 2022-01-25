@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import io.swagger.annotations.Api
 import io.swagger.annotations.ApiImplicitParam
 import io.swagger.annotations.ApiImplicitParams
 import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
 import javax.ws.rs.Path
@@ -103,7 +104,16 @@ class TargetHistoryService(history:StateStore) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Target information", response = classOf[model.TargetStateList])
     ))
-    def listTargetStates(project:Option[String], job:Option[String], target:Option[String], jobId:Option[String], phase:Option[String], status:Option[String], limit:Option[Int], offset:Option[Int]) : server.Route = {
+    def listTargetStates(
+        @ApiParam(hidden = true) project:Option[String],
+        @ApiParam(hidden = true) job:Option[String],
+        @ApiParam(hidden = true) target:Option[String],
+        @ApiParam(hidden = true) jobId:Option[String],
+        @ApiParam(hidden = true) phase:Option[String],
+        @ApiParam(hidden = true) status:Option[String],
+        @ApiParam(hidden = true) limit:Option[Int],
+        @ApiParam(hidden = true) offset:Option[Int]
+    ) : server.Route = {
         val query = TargetQuery(
             project=split(project),
             job=split(job),
@@ -133,12 +143,20 @@ class TargetHistoryService(history:StateStore) {
         new ApiImplicitParam(name = "status", value = "Execution status", required = false,
             dataType = "string", paramType = "query"),
         new ApiImplicitParam(name = "grouping", value = "Grouping attribute", required = true,
-            dataType = "int", paramType = "query")
+            dataType = "string", paramType = "query")
     ))
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Target information", response = classOf[model.TargetStateList])
     ))
-    def countTargets(project:Option[String], job:Option[String], target:Option[String], jobId:Option[String], phase:Option[String], status:Option[String], grouping:String) : server.Route = {
+    def countTargets(
+        @ApiParam(hidden = true) project:Option[String],
+        @ApiParam(hidden = true) job:Option[String],
+        @ApiParam(hidden = true) target:Option[String],
+        @ApiParam(hidden = true) jobId:Option[String],
+        @ApiParam(hidden = true) phase:Option[String],
+        @ApiParam(hidden = true) status:Option[String],
+        @ApiParam(hidden = true) grouping:String
+    ) : server.Route = {
         val query = TargetQuery(
             project=split(project),
             target=split(target),
@@ -168,7 +186,7 @@ class TargetHistoryService(history:StateStore) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Target information", response = classOf[model.TargetState])
     ))
-    def getTargetState(targetId:String) : server.Route = {
+    def getTargetState(@ApiParam(hidden = true) targetId:String) : server.Route = {
         val query = TargetQuery(id=Seq(targetId))
         val target = history.findTargets(query).headOption
         complete(target.map(Converter.ofSpec))
@@ -183,7 +201,7 @@ class TargetHistoryService(history:StateStore) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Target graph", response = classOf[model.TargetState])
     ))
-    def getTargetGraph(targetId:String) : server.Route = {
+    def getTargetGraph(@ApiParam(hidden = true) targetId:String) : server.Route = {
         val state = history.getTargetState(targetId)
         val jobGraph = history.getJobGraph(state.jobId.get)
         val targetGraph = jobGraph.map(g => g.subgraph(g.nodes.filter(n => n.category == Category.TARGET && n.name == state.target).head))

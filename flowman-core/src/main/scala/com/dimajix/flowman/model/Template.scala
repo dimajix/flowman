@@ -28,7 +28,7 @@ object Template {
         def apply(context: Context, name:String = "", kind:String = "") : Properties = {
             Properties(
                 context,
-                Metadata(context, name, Category.TEMPLATE, kind),
+                Metadata(context, name, Category.TEMPLATE, kind)
             )
         }
     }

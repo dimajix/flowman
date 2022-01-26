@@ -3,6 +3,7 @@
 * Fix wrong dependencies in Swagger plugin
 * Implement basic schema inference for local CSV files
 * Implement new `stack` mapping
+* Improve error messages of local CSV parser
 
 
 # Version 0.20.1 - 2022-01-06

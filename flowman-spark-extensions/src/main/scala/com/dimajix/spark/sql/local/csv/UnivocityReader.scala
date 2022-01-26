@@ -48,7 +48,7 @@ class UnivocityReader(val schema: StructType, val options:CsvOptions) {
       * Parses a single CSV string and turns it into either one resulting row or no row (if the
       * the record is malformed).
       */
-    def parse(input: String): Row = parser.parse(tokenizer.parseLine(input))
+    def parse(input: String): Row = parser.parse(tokenizer.parseLine(input), input)
 }
 
 

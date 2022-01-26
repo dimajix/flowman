@@ -40,8 +40,8 @@ class UnivocityReader(val schema: StructType, val options:CsvOptions) {
             timeZone = options.timeZone,
             timestampFormat = options.timestampFormat,
             dateFormat = options.dateFormat,
-            addExtraColumns = false,
-            removeExtraColumns = false
+            addExtraColumns = options.addExtraColumns,
+            removeExtraColumns = options.removeExtraColumns
         ))
 
     /**

@@ -84,6 +84,8 @@ class CsvOptions(parameters:Map[String,String]) {
     val quote = getChar("quote", '\"')
     val escape = getChar("escape", '\\')
     val comment = getChar("comment", '\u0000')
+    val addExtraColumns = getBool("addExtraColumns", true)
+    val removeExtraColumns = getBool("removeExtraColumns", true)
 
     val quoteAll = getBool("quoteAll", false)
     val escapeQuotes = getBool("escapeQuotes", true)

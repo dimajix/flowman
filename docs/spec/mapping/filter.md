@@ -1,8 +1,10 @@
-
 # Filter Mapping
 
+The `filter` mapping is one of the simplest one and applies a row filter to all incoming records. This is equivalent
+to a `WHERE` or `HAVING` condition in a classical SQL statement.
+
 ## Example
-```
+```yaml
 mappings:
   facts_special:
     kind: filter

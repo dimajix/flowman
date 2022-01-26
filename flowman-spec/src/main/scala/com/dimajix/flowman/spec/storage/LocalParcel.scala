@@ -59,7 +59,7 @@ case class LocalParcel(override val name:String, override val root:File) extends
 
     override def replace(targz: File): Unit = {
         if (!targz.isFile())
-            throw new IOException(s"File '$targz' doesn't exists!")
+            throw new IOException(s"Source file '$targz' doesn't exists!")
 
         root.glob(new org.apache.hadoop.fs.Path("*")).foreach(_.delete(true))
         decompressTarGzipFile(targz, root)

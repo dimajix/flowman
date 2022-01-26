@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,19 @@ package com.dimajix.flowman.tools.exec.mapping
 
 import scala.util.Failure
 import scala.util.Success
-import scala.util.Try
-import scala.util.control.NonFatal
 
 import org.apache.hadoop.fs.Path
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.spec.target.FileTarget
 import com.dimajix.flowman.tools.exec.Command
 

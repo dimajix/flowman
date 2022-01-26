@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ class SparkSchemaSpec extends ExternalSchemaSpec {
       */
     override def instantiate(context: Context): SparkSchema = {
         SparkSchema(
-            Schema.Properties(context),
+            instanceProperties(context, ""),
             file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
             url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)),
             context.evaluate(spec)

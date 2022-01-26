@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.dimajix.flowman.model
 
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
-
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -109,30 +107,28 @@ object Job {
             require(context != null)
             Properties(
                 context,
-                context.namespace,
-                context.project,
-                name,
-                Map(),
+                Metadata(context, name, Category.JOB, "job"),
                 None
             )
         }
     }
     final case class Properties(
         context: Context,
-        namespace:Option[Namespace],
-        project:Option[Project],
-        name: String,
-        labels: Map[String, String],
+        metadata:Metadata,
         description:Option[String]
    ) extends Instance.Properties[Properties] {
-        override val kind : String = "job"
-        override def withName(name: String): Properties = copy(name=name)
+        override val namespace : Option[Namespace] = context.namespace
+        override val project : Option[Project] = context.project
+        override val kind : String = metadata.kind
+        override val name : String = metadata.name
+
+        override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
    }
 
     class Builder(context:Context) {
         require(context != null)
         private var name:String = ""
-        private var labels:Map[String,String] = Map()
+        private var metadata:Metadata = Metadata(context, "", Category.JOB, "job")
         private var description:Option[String] = None
         private var parameters:Seq[Parameter] = Seq()
         private var targets:Seq[TargetIdentifier] = Seq()
@@ -140,7 +136,7 @@ object Job {
         private var hooks:Seq[Prototype[Hook]] = Seq()
 
         def build() : Job = Job(
-            Job.Properties(context, context.namespace, context.project, name, labels, description),
+            Job.Properties(context, metadata.copy(name=name), description),
             parameters = parameters,
             environment = environment,
             targets = targets,
@@ -150,7 +146,7 @@ object Job {
             require(props != null)
             require(props.context eq context)
             name = props.name
-            labels = props.labels
+            metadata = props.metadata
             description = props.description
             this
         }

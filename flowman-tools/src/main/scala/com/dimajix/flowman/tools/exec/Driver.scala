@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import com.dimajix.flowman.SCALA_VERSION
 import com.dimajix.flowman.SPARK_BUILD_VERSION
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ToolConfig
-import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.tools.Tool
 import com.dimajix.flowman.util.ConsoleColors
 import com.dimajix.flowman.util.ConsoleColors.yellow
@@ -69,6 +69,8 @@ object Driver {
             println(s"Flowman $FLOWMAN_VERSION")
             println(s"Flowman home: ${ToolConfig.homeDirectory.getOrElse("")}")
             println(s"Spark version $SPARK_VERSION")
+            println(s"Hadoop version $HADOOP_VERSION")
+            println(s"Scala version $SCALA_VERSION")
             println(s"Java version $JAVA_VERSION")
             true
         }

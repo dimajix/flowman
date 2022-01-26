@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,9 @@
 package com.dimajix.flowman.studio.service
 
 import java.io.Closeable
-import java.lang.Thread.UncaughtExceptionHandler
 import java.util.UUID
-import java.util.concurrent.ForkJoinPool
-import java.util.concurrent.ForkJoinWorkerThread
-import java.util.concurrent.TimeUnit
 
 import scala.concurrent.ExecutionContext
-
-import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -43,36 +37,40 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
+import com.dimajix.flowman.storage.Store
 
 
-class SessionService(_manager:SessionManager, _session:Session)(implicit ec:ExecutionContext) extends Closeable {
+class SessionService(sessionManager:SessionManager, val store:Store, val project:Project)(implicit ec:ExecutionContext) extends Closeable {
+    val session : Session = Session.builder(sessionManager.rootSession)
+        .withProject(project)
+        .withStore(store)
+        .build()
+
     private var _job: Option[Job] = None
     private var _test: Option[Test] = None
-    private var _context : Context = _session.getContext(_session.project.get)
+    private var _context : Context = session.getContext(session.project.get)
 
     val tasks = new TaskService(this)
 
     def executionContext:ExecutionContext = ec
 
     val id : String = UUID.randomUUID().toString
-    val namespace : Namespace = _session.namespace.get
-    val project : Project = _session.project.get
+    val namespace : Namespace = session.namespace.get
 
-    def session : Session = _session
     def context : Context = _context
-    def execution : Execution = _session.execution
-    def runner: Runner = _session.runner
+    def execution : Execution = session.execution
+    def runner: Runner = session.runner
 
     override def close(): Unit = {
-        _manager.removeSession(this)
+        sessionManager.removeSession(this)
     }
 
     def job: Option[Job] = _job
     def test: Option[Test] = _test
 
     def reset() : Unit = {
-        _context = _session.getContext(project)
-        _session.execution.cleanup()
+        _context = session.getContext(project)
+        session.execution.cleanup()
         _job = None
         _test = None
     }
@@ -83,14 +81,14 @@ class SessionService(_manager:SessionManager, _session:Session)(implicit ec:Exec
     }
     def enterJob(job: Job, args:Map[String,String]): Unit = {
         val jargs = job.arguments(args)
-        _context = runner.withJobContext(job, jargs, Some(_session.execution)) { (context,args) => context }
-        _session.execution.cleanup()
+        _context = runner.withJobContext(job, jargs, Some(session.execution)) { (context,args) => context }
+        session.execution.cleanup()
         _test = None
         _job = Some(job)
     }
     def leaveJob(): Unit = {
-        _context = _session.getContext(project)
-        _session.execution.cleanup()
+        _context = session.getContext(project)
+        session.execution.cleanup()
         _job = None
         _test = None
     }
@@ -105,14 +103,14 @@ class SessionService(_manager:SessionManager, _session:Session)(implicit ec:Exec
         _context.getTest(TestIdentifier(name))
     }
     def enterTest(test: Test): Unit = {
-        _context = _session.runner.withTestContext(test) { context => context }
-        _session.execution.cleanup()
+        _context = session.runner.withTestContext(test) { context => context }
+        session.execution.cleanup()
         _job = None
         _test = Some(test)
     }
     def leaveTest(): Unit = {
-        _context = _session.getContext(project)
-        _session.execution.cleanup()
+        _context = session.getContext(project)
+        session.execution.cleanup()
         _job = None
         _test = None
     }

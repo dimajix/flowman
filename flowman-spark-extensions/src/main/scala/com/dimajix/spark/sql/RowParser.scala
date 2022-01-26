@@ -184,6 +184,13 @@ class RowParser(schema: StructType, options:RowParser.Options) {
     }
 
     def parse(tokens: Array[String]): Row = {
+        parseInternal(tokens, None)
+    }
+    def parse(tokens: Array[String], line:String): Row = {
+        parseInternal(tokens, Some(line))
+    }
+
+    private def parseInternal(tokens: Array[String], line:Option[String]): Row = {
         // If the number of tokens doesn't match the schema, we should treat it as a malformed record.
         // However, we still have chance to parse some of the tokens, by adding extra null tokens in
         // the tail if the number is smaller, or by dropping extra tokens if the number is larger.
@@ -193,7 +200,7 @@ class RowParser(schema: StructType, options:RowParser.Options) {
             throw BadRecordException(
                 () => new UTF8String(),
                 () => None,
-                new RuntimeException("Malformed record"))
+                new RuntimeException(s"Malformed record. Expected ${schema.length} columns, but only got ${tokens.length} columns. Offending record:\n${line.getOrElse(tokens.mkString(","))}"))
         }
 
         val checkedTokens = if (schema.length > tokens.length) {

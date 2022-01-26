@@ -2,7 +2,7 @@
 The `sql` mapping allows to execute any SQL transformation which contains Spark SQL code.
 
 ## Example
-```
+```yaml
 mappings:
   people_union:
     kind: sql

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,40 +19,34 @@ package com.dimajix.flowman.model
 import com.dimajix.flowman.execution.AssertionToken
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.ExecutionListener
 import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.LifecycleToken
-import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.ExecutionListener
 import com.dimajix.flowman.execution.MeasureToken
-import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.TargetToken
-import com.dimajix.flowman.execution.TestToken
 import com.dimajix.flowman.execution.Token
 
 
 object Hook {
     object Properties {
-        def apply(context: Context, name:String = "") : Properties = {
+        def apply(context: Context, name:String = "", kind:String = "") : Properties = {
             Properties(
                 context,
-                context.namespace,
-                context.project,
-                name,
-                "",
-                Map()
+                Metadata(context, name, Category.TEST, kind)
             )
         }
     }
     final case class Properties(
         context:Context,
-        namespace:Option[Namespace],
-        project:Option[Project],
-        name:String,
-        kind:String,
-        labels:Map[String,String]
+        metadata:Metadata
     )
     extends Instance.Properties[Properties] {
-        override def withName(name: String): Properties = copy(name=name)
+        override val namespace : Option[Namespace] = context.namespace
+        override val project : Option[Project] = context.project
+        override val kind : String = metadata.kind
+        override val name : String  = metadata.name
+
+        override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
     }
 }
 
@@ -151,4 +145,6 @@ abstract class BaseHook extends AbstractInstance with Hook {
     override def finishAssertion(execution:Execution, token: AssertionToken, result:AssertionResult): Unit = {}
     override def startMeasure(execution:Execution, measure:Measure, parent:Option[Token]) : MeasureToken = new MeasureToken {}
     override def finishMeasure(execution:Execution, token:MeasureToken, result:MeasureResult) : Unit = {}
+    override def instantiateMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit = {}
+    override def describeMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit = {}
 }

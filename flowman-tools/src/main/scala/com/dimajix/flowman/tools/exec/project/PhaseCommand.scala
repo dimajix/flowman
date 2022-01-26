@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,20 @@ package com.dimajix.flowman.tools.exec.project
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
-import scala.util.control.NonFatal
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Lifecycle
-import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.types.FieldValue
 

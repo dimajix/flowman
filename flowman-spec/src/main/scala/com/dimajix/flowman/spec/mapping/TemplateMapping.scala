@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.mapping
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.ScopeContext
@@ -28,7 +29,6 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
-import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.types.StructType
 
 

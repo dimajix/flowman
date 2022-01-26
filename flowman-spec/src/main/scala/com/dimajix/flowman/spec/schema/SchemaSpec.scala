@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Category
+import com.dimajix.flowman.model.Dataset
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.annotation.SchemaType
@@ -51,8 +54,20 @@ abstract class SchemaSpec extends Spec[Schema] {
     @JsonProperty(value="kind", required = true) protected var kind: String = _
 
     override def instantiate(context:Context) : Schema
-}
 
+    /**
+     * Returns a set of common properties
+     * @param context
+     * @return
+     */
+    protected def instanceProperties(context:Context, name:String) : Schema.Properties = {
+        require(context != null)
+        Schema.Properties(
+            context,
+            Metadata(context, name, Category.SCHEMA, kind)
+        )
+    }
+}
 
 
 class SchemaSpecAnnotationHandler extends ClassAnnotationHandler {

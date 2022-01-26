@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.apache.spark.sql.functions.lit
 import com.dimajix.flowman.{types => ftypes}
 
 
-case class UnionTransformer() {
+final case class UnionTransformer() {
     /**
       * Transform a Spark DataFrame
       * @param input

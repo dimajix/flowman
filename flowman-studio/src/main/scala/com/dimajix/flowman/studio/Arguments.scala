@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,8 @@ class Arguments(args:Array[String]) {
     var profiles: Array[String] = Array()
     @Option(name = "-D", aliases=Array("--env"), usage = "set environment variables which can be accessed inside config", metaVar = "<key=value>")
     var environment: Array[String] = Array()
+    @Option(name = "-W", aliases=Array("--workspace-root"), usage = "set the workspace root directory", metaVar = "<workspace_root>")
+    var workspaceRoot: String = ""
     @Option(name = "--conf", usage = "set a Flowman or Spark config", metaVar = "<confname>=<value>")
     var config: Array[String] = Array()
     @Option(name = "--bind-host", usage = "set the host to bind the REST API to", metaVar = "<bind_host>")

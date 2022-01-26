@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.dimajix.flowman.metric.MetricSystem
  * @param parent
  * @param isolated
  */
-class ScopedExecution(parent:Execution, isolated:Boolean=true) extends CachingExecution(Some(parent), isolated) {
+final class ScopedExecution(parent:Execution, isolated:Boolean=true) extends CachingExecution(Some(parent), isolated) {
     override protected val logger = LoggerFactory.getLogger(classOf[ScopedExecution])
     private val operationsManager = new OperationManager(parent.operations)
 
@@ -40,13 +40,17 @@ class ScopedExecution(parent:Execution, isolated:Boolean=true) extends CachingEx
      * Returns the FlowmanConf object, which contains all Flowman settings.
      * @return
      */
-    def flowmanConf : FlowmanConf = parent.flowmanConf
+    override def flowmanConf : FlowmanConf = parent.flowmanConf
 
     /**
      * Returns the MetricRegistry of this execution
      * @return
      */
-    override def metrics : MetricSystem = parent.metrics
+    override def metricSystem : MetricSystem = parent.metricSystem
+
+    override def metricBoard : Option[MetricBoard] = parent.metricBoard
+
+    override def listeners : Seq[(ExecutionListener,Option[Token])] = parent.listeners
 
     /**
      * Returns the FileSystem as configured in Hadoop
@@ -80,29 +84,4 @@ class ScopedExecution(parent:Execution, isolated:Boolean=true) extends CachingEx
      * @return
      */
     override def operations: OperationManager = operationsManager
-
-    /**
-     * Invokes a function with a new [[Executor]] that with additional [[ExecutionListener]].
-     * @param listeners
-     * @param fn
-     * @tparam T
-     * @return
-     */
-    override def withListeners[T](listeners: Seq[ExecutionListener])(fn: Execution => T): T = {
-        val execution = new MonitorExecution(this, listeners.map(l => (l,None)), None)
-        fn(execution)
-    }
-
-    /**
-     * Invokes a function with a new Executor with a specific [[MetricBoard]]
-     *
-     * @param metrics
-     * @param fn
-     * @tparam T
-     * @return
-     */
-    override def withMetrics[T](metrics: Option[MetricBoard])(fn: Execution => T): T = {
-        val execution = new MonitorExecution(this, Seq(), metrics)
-        fn(execution)
-    }
 }

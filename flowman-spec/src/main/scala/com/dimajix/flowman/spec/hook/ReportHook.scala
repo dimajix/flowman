@@ -185,7 +185,7 @@ case class ReportHook(
         val metricSink =
             if (metrics.isEmpty) {
                 val sink = new CollectingMetricSink
-                execution.metrics.addSink(sink)
+                execution.metricSystem.addSink(sink)
                 Some(sink)
             }
             else {
@@ -194,7 +194,7 @@ case class ReportHook(
 
         // Register custom metrics board
         metrics.foreach { board =>
-            board.reset(execution.metrics)
+            board.reset(execution.metricSystem)
         }
 
         val output = parent.flatMap {
@@ -220,12 +220,12 @@ case class ReportHook(
 
         // Remove custom board it
         val boardMetrics = metrics.toSeq.flatMap { board =>
-            board.metrics(execution.metrics, result.status).map(m => MetricWrapper(m))
+            board.metrics(execution.metricSystem, result.status).map(m => MetricWrapper(m))
         }
 
         // Grab metrics from Sink and remove it
         val sinkMetrics = jobToken.metrics.toSeq.flatMap { sink =>
-            execution.metrics.removeSink(sink)
+            execution.metricSystem.removeSink(sink)
             sink.metrics.map(m => MetricWrapper(m))
         }
 

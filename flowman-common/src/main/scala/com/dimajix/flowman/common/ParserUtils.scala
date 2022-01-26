@@ -25,13 +25,23 @@ object ParserUtils {
         list.split(',')
             .map(_.trim)
             .flatMap{ p =>
-                val parts = p.split('=')
-                if (parts.size == 2)
-                    Some((parts(0),parts(1)))
+                val sep = p.indexOf('=')
+                if (sep > 0)
+                    Some(splitSetting(p))
                 else
                     None
             }
-            .filter(p => p._1.nonEmpty && p._2.nonEmpty)
+            .filter(p => p._1.nonEmpty)
             .toMap
+    }
+
+    def splitSettings(settings: Seq[String]) : Seq[(String,String)] = {
+        settings.map(splitSetting)
+    }
+    def splitSetting(setting: String) : (String,String) = {
+        val sep = setting.indexOf('=')
+        val key = setting.take(sep).trim
+        val value = setting.drop(sep + 1).trim.replaceAll("^\"|\"$","")
+        (key, value)
     }
 }

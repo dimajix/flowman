@@ -101,7 +101,7 @@ class MeasureTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         measureResult.children.size should be (0)
         measureResult.measurements should be (Seq(Measurement("m1", Map("name" -> "a1", "category" -> "measure", "kind" -> "sql", "phase" -> "VERIFY"), 23)))
 
-        val metrics = execution.metrics
+        val metrics = execution.metricSystem
         metrics.findMetric(Selector(Some("m1"), Map("name" -> "a1", "category" -> "measure", "kind" -> "sql", "phase" -> "VERIFY"))).size should be (1)
         metrics.findMetric(Selector(Some("m1"), Map("name" -> "a1", "category" -> "measure", "kind" -> "sql" ))).size should be (1)
         metrics.findMetric(Selector(Some("m1"), Map("name" -> "a1", "category" -> "measure"))).size should be (1)

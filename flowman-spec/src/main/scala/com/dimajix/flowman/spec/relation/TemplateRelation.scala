@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ package com.dimajix.flowman.spec.relation
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types.StructType
 
 import com.dimajix.common.Trilean
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
@@ -36,7 +36,6 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue

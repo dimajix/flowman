@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,8 @@ import com.dimajix.flowman.execution.NoSuchProjectException
 import com.dimajix.flowman.model.Project
 
 
-class NullStore extends Store {
+case class NullStore() extends Store {
     override def loadProject(name: String): Project = throw new NoSuchProjectException(name)
-
-    override def storeProject(project: Project): Unit = ???
-
-    override def removeProject(name: String): Unit = ???
 
     override def listProjects(): Seq[Project] = Seq()
 }

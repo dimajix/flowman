@@ -94,14 +94,14 @@ class PluginSpec {
 
     def instantiate(filename:Option[File]=None) : Plugin = {
         val absFilename = filename.map(_.getAbsoluteFile)
-        val parentDircetory = filename.map(_.getParentFile)
+        val parentDirectory = filename.map(_.getParentFile)
         Plugin(
             name,
             description,
             version,
             absFilename,
-            parentDircetory,
-            jars.map(name => parentDircetory.map(path => new File(path, name)).getOrElse(new File(name)))
+            parentDirectory,
+            jars.map(name => parentDirectory.map(path => new File(path, name)).getOrElse(new File(name)))
         )
     }
 }

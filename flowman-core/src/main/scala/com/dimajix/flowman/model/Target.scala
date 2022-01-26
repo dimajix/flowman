@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,11 +58,7 @@ object Target {
         def apply(context: Context, name:String = "", kind:String="") : Properties = {
             Properties(
                 context,
-                context.namespace,
-                context.project,
-                name,
-                kind,
-                Map(),
+                Metadata(context, name, Category.TARGET, kind),
                 Seq(),
                 Seq()
             )
@@ -70,15 +66,16 @@ object Target {
     }
     final case class Properties(
         context:Context,
-        namespace:Option[Namespace],
-        project:Option[Project],
-        name:String,
-        kind:String,
-        labels:Map[String,String],
+        metadata:Metadata,
         before: Seq[TargetIdentifier],
         after: Seq[TargetIdentifier]
     ) extends Instance.Properties[Properties] {
-        override def withName(name: String): Properties = copy(name=name)
+        override val namespace : Option[Namespace] = context.namespace
+        override val project : Option[Project] = context.project
+        override val kind : String = metadata.kind
+        override val name : String = metadata.name
+
+        override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
         def identifier : TargetIdentifier = TargetIdentifier(name, project.map(_.name))
     }
 }
@@ -362,13 +359,13 @@ abstract class BaseTarget extends AbstractInstance with Target {
 
     protected def countRecords(execution:Execution, df:DataFrame, phase:Phase=Phase.BUILD) : DataFrame = {
         val labels = metadata.asMap + ("phase" -> phase.upper)
-        val counter = execution.metrics.findMetric(Selector(Some("target_records"), labels))
+        val counter = execution.metricSystem.findMetric(Selector(Some("target_records"), labels))
             .headOption
             .map(_.asInstanceOf[LongAccumulatorMetric].counter)
             .getOrElse {
                 val counter = execution.spark.sparkContext.longAccumulator
                 val metric = LongAccumulatorMetric("target_records", labels, counter)
-                execution.metrics.addMetric(metric)
+                execution.metricSystem.addMetric(metric)
                 counter
             }
 

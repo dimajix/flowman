@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ class MappingWrapperFunctions(wrapper:Wrapper[Mapping, Mapping.Properties]) {
         override def gen: Mapping.Properties => Mapping = wrapper.gen
         override def props: Context => Mapping.Properties = ctx => {
             val props = wrapper.props(ctx)
-            props.copy(labels = props.labels + kv)
+            props.copy(metadata = props.metadata.copy(labels=props.metadata.labels + kv))
         }
     }
     def cached(level:StorageLevel) : MappingWrapper = new MappingWrapper {

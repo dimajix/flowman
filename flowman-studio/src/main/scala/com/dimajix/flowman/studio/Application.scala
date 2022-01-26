@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import scala.util.Try
 import org.kohsuke.args4j.CmdLineException
 
 import com.dimajix.flowman.common.Logging
-import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.studio.rest.Server
 import com.dimajix.flowman.tools.Tool
 
@@ -60,8 +60,8 @@ object Application {
         else {
             Logging.setSparkLogging(options.sparkLogging)
 
-            val server = new Application(options)
-            server.run()
+            val app = new Application(options)
+            app.run()
         }
     }
 }
@@ -80,6 +80,7 @@ class Application(options:Arguments) extends Tool {
         )
 
         val conf = Configuration.loadDefaults()
+            .setWorkspaceRoot(options.workspaceRoot)
             .setBindHost(options.bindHost)
             .setBindPort(options.bindPort)
             .setStudioId(options.studioId)

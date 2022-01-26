@@ -5,7 +5,7 @@ Cloudera or EMR,  you currently need to build Flowman yourself to match the corr
 
 ## Download Prebuilt Distribution
 
-As an alternative to building Flowman yourself, prebuilt Flowman distributions are are provided on 
+The simplest way to get started with Flowman is to download a prebuilt distribution, which is provided at 
 [GitHub](https://github.com/dimajix/flowman/releases). This probably is the simplest way to grab a working Flowman 
 package. Note that for each release, there are different packages being provided, for different Spark and Hadoop 
 versions. The naming is very simple:
@@ -13,21 +13,23 @@ versions. The naming is very simple:
 flowman-dist-<version>-oss-spark<spark-version>-hadoop<hadoop-version>-bin.tar.gz
 ```
 You simply have to use the package which fits to the Spark and Hadoop versions of your environment. For example the
-package of Flowman 0.14.1 and for Spark 3.0 and Hadoop 3.2 would be
+package of Flowman 0.20.1 and for Spark 3.1 and Hadoop 3.2 would be
 ```
-flowman-dist-0.14.1-oss-spark30-hadoop32-bin.tar.gz
+flowman-dist-0.20.1-oss-spark31-hadoop32-bin.tar.gz
 ```
 and the full URL then would be
 ```
-https://github.com/dimajix/flowman/releases/download/0.14.1/flowman-dist-0.14.1-oss-spark3.0-hadoop3.2-bin.tar.gz
+https://github.com/dimajix/flowman/releases/download/0.20.1/flowman-dist-0.20.1-oss-spark3.1-hadoop3.2-bin.tar.gz
 ```
-
-The whole project is built using Maven. The build also includes a Docker image, which requires that Docker
-is installed on the build machine - building the Docker image can be disabled (see below).
 
 ## Build with Maven
 
-When you decide against downloading a prebuilt Flowman distribution, you can simply built it yourself with Maven.
+When you decide against downloading a prebuilt Flowman distribution, you can simply build it yourself with Maven. As
+a prerequisite, you need
+    * Java (1.8 for Spark <= 2.4 and 11 for Spark >= 3.0)
+    * Apache Maven
+    * On Windows: Hadoop libraries
+
 Building Flowman with the default settings (i.e. Hadoop and Spark version) is as easy as
 
     mvn clean install

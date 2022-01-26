@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.dimajix.flowman.studio.model
 
 import com.dimajix.flowman.model
 import com.dimajix.flowman.studio.service
+import com.dimajix.flowman.storage
 
 
 object Converter {
@@ -62,7 +63,7 @@ object Converter {
         Test(
             test.name,
             test.description,
-            test.labels
+            test.metadata.labels
         )
     }
 
@@ -70,7 +71,7 @@ object Converter {
         Target(
             target.name,
             target.kind,
-            target.labels,
+            target.metadata.labels,
             target.before.map(_.toString),
             target.after.map(_.toString)
         )
@@ -85,7 +86,7 @@ object Converter {
             mapping.checkpoint,
             mapping.inputs.map(_.toString),
             mapping.outputs,
-            mapping.labels
+            mapping.metadata.labels
         )
     }
 
@@ -93,7 +94,7 @@ object Converter {
         Relation(
             relation.name,
             relation.kind,
-            relation.labels
+            relation.metadata.labels
         )
     }
 
@@ -108,6 +109,18 @@ object Converter {
             job.keepGoing,
             job.dryRun,
             job.status.toString
+        )
+    }
+
+    def of(workspace: storage.Workspace) : Workspace = {
+        Workspace(
+            workspace.name
+        )
+    }
+
+    def of(parcel: storage.Parcel) : Parcel = {
+        Parcel(
+            parcel.name
         )
     }
 

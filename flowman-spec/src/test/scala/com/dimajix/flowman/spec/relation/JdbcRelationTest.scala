@@ -124,7 +124,7 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val relation = relationSpec.instantiate(context)
         relation.name should be ("some_relation")
         relation.schema should be (Some(EmbeddedSchema(
-                Schema.Properties(context),
+                Schema.Properties(context, name="embedded", kind="inline"),
                 fields = Seq(
                     Field("str_col", StringType),
                     Field("int_col", IntegerType)

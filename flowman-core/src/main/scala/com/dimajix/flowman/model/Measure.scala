@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,7 @@ object Measure {
         def apply(context: Context, name:String = "", kind:String = "") : Properties = {
             Properties(
                 context,
-                context.namespace,
-                context.project,
-                name,
-                kind,
-                Map(),
+                Metadata(context, name, Category.MEASURE, kind),
                 None
             )
         }
@@ -39,14 +35,15 @@ object Measure {
 
     final case class Properties(
         context:Context,
-        namespace:Option[Namespace],
-        project:Option[Project],
-        name:String,
-        kind:String,
-        labels:Map[String,String],
+        metadata:Metadata,
         description:Option[String]
     ) extends Instance.Properties[Properties] {
-        override def withName(name: String): Properties = copy(name=name)
+        override val namespace : Option[Namespace] = context.namespace
+        override val project : Option[Project] = context.project
+        override val kind : String = metadata.kind
+        override val name : String = metadata.name
+
+        override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
         def identifier : MeasureIdentifier = MeasureIdentifier(name, project.map(_.name))
     }
 }

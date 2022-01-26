@@ -7,7 +7,7 @@ be provided by your platform. This approach ensures that the existing Spark and 
 with all patches and extensions available on your platform. Specifically this means that Flowman requires the following
 components present on your system:
 
-* Java 1.8
+* Java 11 (or 1.8 when using Spark 2.4)
 * Apache Spark with a matching minor version 
 * Apache Hadoop with a matching minor version
 
@@ -25,13 +25,13 @@ versions. The naming is very simple:
 flowman-dist-<version>-oss-spark<spark-version>-hadoop<hadoop-version>-bin.tar.gz
 ```
 You simply have to use the package which fits to the Spark and Hadoop versions of your environment. For example the
-package of Flowman 0.14.1 and for Spark 3.0 and Hadoop 3.2 would be
+package of Flowman 0.20.1 and for Spark 3.1 and Hadoop 3.2 would be
 ```
-flowman-dist-0.14.1-oss-spark30-hadoop32-bin.tar.gz
+flowman-dist-0.20.1-oss-spark31-hadoop32-bin.tar.gz
 ```
 and the full URL then would be
 ```
-https://github.com/dimajix/flowman/releases/download/0.14.1/flowman-dist-0.14.1-oss-spark3.0-hadoop3.2-bin.tar.gz
+https://github.com/dimajix/flowman/releases/download/0.20.1/flowman-dist-0.20.1-oss-spark3.1-hadoop3.2-bin.tar.gz
 ```
 
 
@@ -77,7 +77,8 @@ tar xvzf flowman-dist-X.Y.Z-bin.tar.gz
     ├── flowman-example
     ├── flowman-impala
     ├── flowman-kafka
-    └── flowman-mariadb
+    ├── flowman-mariadb
+    └── flowman-...
 ```
 
 * The `bin` directory contains the Flowman executables

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ object Instance {
         val project: Option[Project]
         val name: String
         val kind: String
-        val labels: Map[String, String]
+        val metadata: Metadata
 
         def withName(name:String) : T
     }
@@ -65,12 +65,6 @@ trait Instance {
     def category : Category
 
     /**
-      * Returns the map of generic meta data labels
-      * @return
-      */
-    def labels : Map[String,String]
-
-    /**
       * Returns the Namespace this instance belongs to
       * @return
       */
@@ -91,17 +85,7 @@ trait Instance {
       * Returns the full set of meta data of this resource
       * @return
       */
-    def metadata : Metadata = {
-        Metadata(
-            namespace.map(_.name),
-            project.map(_.name),
-            name,
-            project.flatMap(_.version),
-            category.lower,
-            kind,
-            labels
-        )
-    }
+    def metadata : Metadata
 }
 
 
@@ -121,12 +105,6 @@ abstract class AbstractInstance extends Instance {
     override def kind : String = instanceProperties.kind
 
     /**
-      * Returns the map of generic meta data labels
-      * @return
-      */
-    override def labels : Map[String,String] = instanceProperties.labels
-
-    /**
       * Returns the Namespace this instance belongs to.
       * @return
       */
@@ -142,4 +120,10 @@ abstract class AbstractInstance extends Instance {
       * lookups of other resources.
       */
     override def context : Context = instanceProperties.context
+
+    /**
+     * Returns the full set of meta data of this resource
+     * @return
+     */
+    override def metadata : Metadata = instanceProperties.metadata
 }

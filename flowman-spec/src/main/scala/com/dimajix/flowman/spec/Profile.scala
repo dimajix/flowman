@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.util.StdConverter
 
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.model.Profile
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 

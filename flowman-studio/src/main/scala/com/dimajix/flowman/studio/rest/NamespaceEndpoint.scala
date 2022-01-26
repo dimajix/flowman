@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import javax.ws.rs.Path
 import com.dimajix.flowman.model
 import com.dimajix.flowman.studio.model.Converter
 import com.dimajix.flowman.studio.model.Namespace
-import com.dimajix.flowman.studio.model.Namespace
 
 
 @Api(value = "/namespace", produces = "application/json", consumes = "application/json")
@@ -37,7 +36,7 @@ class NamespaceEndpoint(ns:model.Namespace) {
     import com.dimajix.flowman.studio.model.JsonSupport._
 
     def routes : server.Route = pathPrefix("namespace") {
-        pathEndOrSingleSlash {
+        pathEnd {
             info()
         }
     }

@@ -93,7 +93,7 @@ class MappingSchemaSpec extends SchemaSpec {
       */
     override def instantiate(context: Context): MappingSchema = {
         MappingSchema(
-            Schema.Properties(context),
+            instanceProperties(context, mapping),
             MappingOutputIdentifier(context.evaluate(mapping))
         )
     }

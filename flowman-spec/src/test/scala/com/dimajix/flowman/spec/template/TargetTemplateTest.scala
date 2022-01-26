@@ -83,11 +83,13 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
 
         val rel_1 = context.getTarget(TargetIdentifier("rel_1"))
         rel_1 shouldBe a[BlackholeTarget]
+        rel_1.name should be ("rel_1")
 
         an[IllegalArgumentException] should be thrownBy(context.getTarget(TargetIdentifier("rel_2")))
 
         val rel_3 = context.getTarget(TargetIdentifier("rel_3"))
         rel_3 shouldBe a[BlackholeTarget]
+        rel_3.name should be ("rel_3")
 
         an[IllegalArgumentException] should be thrownBy(context.getTarget(TargetIdentifier("rel_4")))
     }
@@ -106,5 +108,43 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
 
         an[NoSuchTemplateException] should be thrownBy(context.getTarget(TargetIdentifier("rel_1")))
+    }
+
+    it should "forward before and after" in {
+        val spec =
+            """
+              |templates:
+              |  user:
+              |    kind: target
+              |    parameters:
+              |      - name: p0
+              |        type: string
+              |      - name: p1
+              |        type: int
+              |        default: 12
+              |    template:
+              |      kind: blackhole
+              |      mapping: $p0
+              |
+              |targets:
+              |  rel_1:
+              |    kind: template/user
+              |    before: a
+              |    after:
+              |     - c
+              |     - d
+              |    p0: some_value
+              |""".stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().disableSpark().build()
+        val context = session.getContext(project)
+
+        val rel = context.getTarget(TargetIdentifier("rel_1"))
+        rel shouldBe a[BlackholeTarget]
+        rel.name should be ("rel_1")
+        // TODO
+        //rel.before should be (Seq(TargetIdentifier("a")))
+        //rel.after should be (Seq(TargetIdentifier("b"), TargetIdentifier("c")))
     }
 }

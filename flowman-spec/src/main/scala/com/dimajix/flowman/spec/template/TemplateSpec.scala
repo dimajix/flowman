@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ import com.dimajix.jackson.WrappingTypeIdResolver
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.BaseTemplate
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Instance
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.spec.NamedSpec
@@ -84,13 +86,10 @@ abstract class TemplateSpec extends NamedSpec[Template[_]] {
     @JsonProperty(value="parameters", required=false) protected var parameters : Seq[TemplateSpec.Parameter] = Seq()
 
     protected def instanceProperties(context:Context) : Template.Properties = {
+        val name = context.evaluate(this.name)
         Template.Properties(
             context,
-            context.namespace,
-            context.project,
-            context.evaluate(name),
-            kind,
-            context.evaluate(labels)
+            metadata.map(_.instantiate(context, name, Category.TEMPLATE, kind)).getOrElse(Metadata(context, name, Category.TEMPLATE, kind))
         )
     }
 }

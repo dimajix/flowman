@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
+import com.dimajix.flowman.execution.Session.builder
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.history.NullStateStore
 import com.dimajix.flowman.history.StateStore
@@ -43,7 +44,7 @@ import com.dimajix.spark.sql.execution.ExtraStrategies
 
 
 object Session {
-    class Builder {
+    class Builder private[execution](parent:Option[Session]) {
         private var sparkSession:SparkSession.Builder => SparkSession = null
         private var sparkMaster:Option[String] = None
         private var sparkName:Option[String] = None
@@ -51,8 +52,10 @@ object Session {
         private var environment = Map[String,String]()
         private var profiles = Set[String]()
         private var project:Option[Project] = None
+        private var store:Option[Store] = None
         private var namespace:Option[Namespace] = None
         private var jars = Set[String]()
+        private var listeners = Seq[ExecutionListener]()
 
         /**
          * Injects an existing Spark session. If no session is provided, Flowman will create its own Spark session
@@ -61,21 +64,25 @@ object Session {
          */
         def withSparkSession(session:SparkSession.Builder => SparkSession) : Builder = {
             require(session != null)
+            requireNoParent()
             sparkSession = session
             this
         }
         def withSparkSession(session:SparkSession) : Builder = {
             require(session != null)
+            requireNoParent()
             sparkSession = _ => session
             this
         }
         def withSparkName(name:String) : Builder = {
             require(name != null)
+            requireNoParent()
             sparkName = Some(name)
             this
         }
         def withSparkMaster(master:String) : Builder = {
             require(master != null)
+            requireNoParent()
             sparkMaster = Some(master)
             this
         }
@@ -156,6 +163,11 @@ object Session {
             this
         }
 
+        def withStore(store:Store) : Builder = {
+            this.store = Some(store)
+            this
+        }
+
         /**
          * Adds a new profile to be activated
          * @param profile
@@ -185,17 +197,25 @@ object Session {
          */
         def withJars(jars:Iterable[String]) : Builder = {
             require(jars != null)
+            requireNoParent()
             this.jars = this.jars ++ jars
             this
         }
 
         def disableSpark() : Builder = {
+            requireNoParent()
             sparkSession = _ => throw new IllegalStateException("Spark session disable in Flowman session")
             this
         }
 
         def enableSpark() : Builder = {
+            requireNoParent()
             sparkSession = _ => null
+            this
+        }
+
+        def withListener(listener:ExecutionListener) : Builder = {
+            this.listeners = this.listeners :+ listener
             this
         }
 
@@ -204,13 +224,32 @@ object Session {
          * @return
          */
         def build() : Session = {
-            if (sparkSession == null)
+            if (sparkSession == null && parent.isEmpty)
                 throw new IllegalArgumentException("You need to either enable or disable Spark before creating a Flowman Session.")
-            new Session(namespace, project, sparkSession, sparkMaster, sparkName, config, environment, profiles, jars)
+
+            new Session(
+                namespace.orElse(parent.flatMap(_._namespace)),
+                project,
+                store,
+                parent.map(p => (_:SparkSession.Builder) => p.spark.newSession()).getOrElse(sparkSession),
+                parent.map(_._sparkMaster).getOrElse(sparkMaster),
+                parent.map(_._sparkName).getOrElse(sparkName),
+                parent.map(_._config).getOrElse(Map()) ++ config,
+                parent.map(_._environment).getOrElse(Map()) ++ environment,
+                parent.map(_._profiles).getOrElse(Set()) ++ profiles,
+                parent.map(_ => Set[String]()).getOrElse(jars),
+                listeners.map(l => (l,None))
+            )
+        }
+
+        private def requireNoParent(): Unit = {
+            if (parent.nonEmpty)
+                throw new IllegalArgumentException("Cannot configure SparkSession for Flowman Session with parent session")
         }
     }
 
-    def builder() = new Builder
+    def builder() = new Builder(None)
+    def builder(parent:Session) = new Builder(Some(parent))
 }
 
 
@@ -229,15 +268,17 @@ object Session {
   * @param _jars
   */
 class Session private[execution](
-    _namespace:Option[Namespace],
-    _project:Option[Project],
-    _sparkSession:SparkSession.Builder => SparkSession,
-    _sparkMaster:Option[String],
-    _sparkName:Option[String],
-    _config:Map[String,String],
-    _environment: Map[String,String],
-    _profiles:Set[String],
-    _jars:Set[String]
+    private[execution] val _namespace:Option[Namespace],
+    private[execution] val _project:Option[Project],
+    private[execution] val _store:Option[Store],
+    private[execution] val _sparkSession:SparkSession.Builder => SparkSession,
+    private[execution] val _sparkMaster:Option[String],
+    private[execution] val _sparkName:Option[String],
+    private[execution] val _config:Map[String,String],
+    private[execution] val _environment: Map[String,String],
+    private[execution] val _profiles:Set[String],
+    private[execution] val _jars:Set[String],
+    private[execution] val _listeners:Seq[(ExecutionListener,Option[Token])]
 ) {
     require(_jars != null)
     require(_environment != null)
@@ -397,7 +438,7 @@ class Session private[execution](
     }
 
     private lazy val _projectStore : Store = {
-        _namespace.flatMap(_.store).map(_.instantiate(rootContext)).getOrElse(new NullStore)
+        _store.orElse(_namespace.flatMap(_.store).map(_.instantiate(rootContext))).getOrElse(new NullStore)
     }
 
     private lazy val _history = {
@@ -452,6 +493,12 @@ class Session private[execution](
      * Returns the list of all hooks
      */
     def hooks : Seq[Prototype[Hook]] = _hooks
+
+    /**
+     * Returns list of listeners which are active in this Session
+     * @return
+     */
+    def listeners : Seq[(ExecutionListener,Option[Token])] = _listeners
 
     /**
       * Returns an appropriate runner for a specific job. Note that every invocation will actually create a new
@@ -538,23 +585,26 @@ class Session private[execution](
     }
 
     /**
+     * Returns a new detached Flowman Session sharing the same Spark Context.
+     * @param project
+     * @return
+     */
+    def newSession(project:Project, store:Store) : Session = {
+        builder(this)
+            .withProject(project)
+            .withStore(store)
+            .build()
+    }
+
+    /**
       * Returns a new detached Flowman Session sharing the same Spark Context.
       * @param project
       * @return
       */
     def newSession(project:Project) : Session = {
-        require(project != null)
-        new Session(
-            _namespace,
-            Some(project),
-            _ => spark.newSession(),
-            _sparkMaster,
-            _sparkName,
-            _config,
-            _environment,
-            _profiles,
-            Set()
-        )
+        builder(this)
+            .withProject(project)
+            .build()
     }
 
     /**
@@ -562,17 +612,8 @@ class Session private[execution](
       * @return
       */
     def newSession() : Session = {
-        new Session(
-            _namespace,
-            _project,
-            _ => spark.newSession(),
-            _sparkMaster,
-            _sparkName,
-            _config,
-            _environment,
-            _profiles,
-            Set()
-        )
+        builder(this)
+            .build()
     }
 
     def shutdown() : Unit = {

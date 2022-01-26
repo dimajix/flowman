@@ -144,12 +144,12 @@ final class StateStoreAdaptorListener(store:StateStore) extends AbstractExecutio
     import StateStoreAdaptorListener._
 
     override def startJob(execution:Execution, job:Job, instance: JobDigest, parent:Option[Token]): com.dimajix.flowman.execution.JobToken = {
-        execution.metrics.resetMetrics()
+        execution.metricSystem.resetMetrics()
         StateStoreJobToken(store.startJob(job, instance))
     }
     override def finishJob(execution:Execution, token: com.dimajix.flowman.execution.JobToken, result: JobResult): Unit = {
         val status = result.status.toString
-        val metrics = Measurement.ofMetrics(execution.metrics.metrics)
+        val metrics = Measurement.ofMetrics(execution.metricSystem.metrics)
             .map(m => m.copy(labels = m.labels.updated("status", status)))
         val state = token.asInstanceOf[StateStoreJobToken]
         store.finishJob(state.token, result, metrics)

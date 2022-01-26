@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobLifecycle
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
+import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Measure
 import com.dimajix.flowman.model.MeasureResult
 import com.dimajix.flowman.model.Target
@@ -109,6 +110,22 @@ trait ExecutionListener {
      * @param result
      */
     def finishMeasure(execution:Execution, token:MeasureToken, result:MeasureResult) : Unit
+
+    /**
+     * Informs the listener that a specific mapping is about to be instantiated
+     * @param execution
+     * @param mapping
+     * @param parent
+     */
+    def instantiateMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit
+
+    /**
+     * Informs the listener that a specific mapping is about to be described
+     * @param execution
+     * @param mapping
+     * @param parent
+     */
+    def describeMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit
 }
 
 
@@ -123,4 +140,6 @@ abstract class AbstractExecutionListener extends ExecutionListener {
     override def finishAssertion(execution:Execution, token: AssertionToken, result: AssertionResult): Unit = {}
     override def startMeasure(execution:Execution, measure: Measure, parent: Option[Token]): MeasureToken = new MeasureToken {}
     override def finishMeasure(execution:Execution, token: MeasureToken, result: MeasureResult): Unit = {}
+    override def instantiateMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit = {}
+    override def describeMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit = {}
 }

@@ -5,7 +5,7 @@ downstream mappings may destroy the sort order again, so this should be the last
 before you save a result using an output operation.
 
 ## Example
-```
+```yaml
 mappings:
   stations_sorted:
     kind: sort

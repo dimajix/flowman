@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 
 package com.dimajix.flowman.spec
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Instance
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Prototype
 
 
@@ -29,6 +30,9 @@ trait Spec[T] extends Prototype[T] {
     def instantiate(context:Context) : T
 }
 
+trait ToSpec[T] {
+    def spec : T
+}
 
 object NamedSpec {
     class NameResolver[S <: NamedSpec[_]] extends StdConverter[Map[String, S], Map[String, S]] {
@@ -40,10 +44,27 @@ object NamedSpec {
 }
 
 
-abstract class NamedSpec[T] extends Spec[T] {
-    @JsonProperty(value="name", required = false) protected[spec] var name:String = ""
-    @JsonProperty(value="kind", required = true) protected var kind: String = _
+final class MetadataSpec {
     @JsonProperty(value="labels", required=false) protected var labels:Map[String,String] = Map()
+
+    def instantiate(context:Context, name:String, category:Category, kind:String) : Metadata = {
+        Metadata(
+            namespace = context.namespace.map(_.name),
+            project = context.project.map(_.name),
+            name = name,
+            version = context.project.flatMap(_.version),
+            category = category.lower,
+            kind = kind,
+            labels = context.evaluate(labels)
+        )
+    }
+}
+
+
+abstract class NamedSpec[T] extends Spec[T] {
+    @JsonProperty(value="kind", required = true) protected var kind: String = _
+    @JsonProperty(value="name", required = false) protected[spec] var name:String = ""
+    @JsonProperty(value="metadata", required=false) protected var metadata:Option[MetadataSpec] = None
 
     override def instantiate(context:Context) : T
 

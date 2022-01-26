@@ -7,6 +7,7 @@ com.dimajix.flowman.spec.mapping.MappingSpecAnnotationHandler
 com.dimajix.flowman.spec.metric.MetricSinkSpecAnnotationHandler
 com.dimajix.flowman.spec.relation.RelationSpecAnnotationHandler
 com.dimajix.flowman.spec.schema.SchemaSpecAnnotationHandler
-com.dimajix.flowman.spec.storage.StorageSpecAnnotationHandler
+com.dimajix.flowman.spec.storage.StoreSpecAnnotationHandler
 com.dimajix.flowman.spec.target.TargetSpecAnnotationHandler
 com.dimajix.flowman.spec.assertion.AssertionSpecAnnotationHandler
+com.dimajix.flowman.spec.storage.ParcelSpecAnnotationHandler

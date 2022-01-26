@@ -10,7 +10,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.20.1</version>
+        <version>0.21.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -253,6 +253,10 @@
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-studio</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-client</artifactId>
         </dependency>
     </dependencies>
 </project>

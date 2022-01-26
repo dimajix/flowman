@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,11 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.net.SocketUtils
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.studio.Configuration
-import com.dimajix.flowman.studio.Configuration
 import com.dimajix.flowman.studio.model.StudioRegistrationRequest
+import com.dimajix.flowman.studio.rest.session.SessionEndpoint
+import com.dimajix.flowman.studio.rest.workspace.WorkspaceEndpoint
+import com.dimajix.flowman.studio.service.SessionManager
+import com.dimajix.flowman.studio.service.WorkspaceManager
 
 
 class Server(
@@ -57,12 +60,26 @@ class Server(
     implicit private val materializer: ActorMaterializer = ActorMaterializer()
     implicit private val executionContext: ExecutionContextExecutor = system.dispatcher
 
+    private val workspaceRoot = {
+        val root = conf.getWorkspaceRoot()
+        val fs = rootSession.fs
+
+        // Load Project. If no schema is specified, load from local file system
+        val uri = root.toUri
+        if (uri.getAuthority == null && uri.getScheme == null)
+            fs.local(root).absolute
+        else
+            fs.file(root).absolute
+    }
+    private val sessionManager = new SessionManager(rootSession)
+    private val workspaceManager = new WorkspaceManager(workspaceRoot)
+
     private val shutdownPromise = Promise[Done]()
     private val shutdownEndpoint = new ShutdownEndpoint(shutdownPromise.trySuccess(Done))
     private val pingEndpoint = new PingEndpoint
-    private val projectEndpoint = new ProjectEndpoint(rootSession.store)
+    private val workspaceEndpoint = new WorkspaceEndpoint(workspaceManager, sessionManager)
     private val namespaceEndpoint = new NamespaceEndpoint(rootSession.namespace.get)
-    private val sessionEndpoint = new SessionEndpoint(rootSession)
+    private val sessionEndpoint = new SessionEndpoint(workspaceManager, sessionManager)
 
     def run(): Unit = {
         val route = (
@@ -71,7 +88,7 @@ class Server(
                     ~
                     pingEndpoint.routes
                     ~
-                    projectEndpoint.routes
+                    workspaceEndpoint.routes
                     ~
                     namespaceEndpoint.routes
                     ~
@@ -87,7 +104,7 @@ class Server(
                         }
                     }
                     ~
-                    getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/3.22.2")
+                    getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/4.1.3")
                 )}
                 ~
                 pathEndOrSingleSlash {
@@ -97,22 +114,22 @@ class Server(
                 getFromResourceDirectory("META-INF/resources/webjars/flowman-studio-ui")
             )
 
-        java.lang.System.setProperty("akka.http.server.remote-address-header", "true")
-        val loggingRoute = extractRequestContext { ctx =>
-            extractClientIP { ip =>
-                logger.info(s"Client ${ip} ${ctx.request.method.value} ${ctx.request.uri.path}")
-                route
-            }
-        }
-
         logger.info("Starting Flowman Studio")
 
         val settings = ServerSettings(system)
             .withVerboseErrorMessages(true)
+            .withRemoteAddressHeader(true)
 
         val server = Http().bind(conf.getBindHost(), conf.getBindPort(), akka.http.scaladsl.ConnectionContext.noEncryption(), settings)
             .to(Sink.foreach { connection =>
-                connection.handleWith(loggingRoute)
+                connection.handleWith(
+                    extractRequestContext { ctx =>
+                        extractClientIP { ip =>
+                            logger.info(s"Client ${ip} ${ctx.request.method.value} ${ctx.request.uri.path}")
+                            route
+                        }
+                    }
+                )
             })
             .run()
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,23 +37,20 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 
 
-class AnalyzingExecution(context: Context) extends CachingExecution(None, true) {
+final class AnalyzingExecution(context: Context) extends CachingExecution(None, true) {
     override protected val logger = LoggerFactory.getLogger(classOf[AnalyzingExecution])
-
     private lazy val _metricSystem = new MetricSystem
-
-    /**
-     * Returns the FlowmanConf object, which contains all Flowman settings.
-     * @return
-     */
-    def flowmanConf : FlowmanConf = context.flowmanConf
 
     /**
      * Returns the MetricRegistry of this execution
      *
      * @return
      */
-    override def metrics: MetricSystem = _metricSystem
+    override def metricSystem: MetricSystem = _metricSystem
+
+    override def metricBoard: Option[MetricBoard] = None
+
+    override def listeners: Seq[(ExecutionListener, Option[Token])] = Seq()
 
     /**
      * Returns the FileSystem as configured in Hadoop
@@ -77,6 +74,12 @@ class AnalyzingExecution(context: Context) extends CachingExecution(None, true) 
      * @return
      */
     override def sparkRunning: Boolean = true
+
+    /**
+     * Returns the FlowmanConf object, which contains all Flowman settings.
+     * @return
+     */
+    override def flowmanConf : FlowmanConf = context.flowmanConf
 
     /**
      * Returns the table catalog used for managing table instances

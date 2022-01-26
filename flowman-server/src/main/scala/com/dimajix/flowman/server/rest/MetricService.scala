@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import io.swagger.annotations.Api
 import io.swagger.annotations.ApiImplicitParam
 import io.swagger.annotations.ApiImplicitParams
 import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
 import javax.ws.rs.Path
@@ -71,7 +72,13 @@ class MetricService(history:StateStore) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Job metrics", response = classOf[model.MetricSeriesList])
     ))
-    def findJobMetrics(project:Option[String], job:Option[String], phase:Option[String], status:Option[String], grouping:Option[String]) : server.Route = {
+    def findJobMetrics(
+        @ApiParam(hidden = true) project:Option[String],
+        @ApiParam(hidden = true) job:Option[String],
+        @ApiParam(hidden = true) phase:Option[String],
+        @ApiParam(hidden = true) status:Option[String],
+        @ApiParam(hidden = true) grouping:Option[String]
+    ) : server.Route = {
         val query = JobQuery(
             project=split(project),
             job=split(job),

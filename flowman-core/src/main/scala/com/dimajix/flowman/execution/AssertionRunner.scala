@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,9 @@ class AssertionRunner(
                         }
                         else if (!success) {
                             logger.error(red(s" ✘ failed: $description"))
+                            result.children.filter(_.failure).foreach { result =>
+                                logger.error(red(s"   ✘ failed ${result.name}"))
+                            }
                         }
                         else {
                             logger.info(green(s" ✓ passed: $description"))

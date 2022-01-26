@@ -92,7 +92,7 @@ Flowman also provides optional plugins which extend functionality. You can find 
    :glob:
 
    quickstart
-   building
+   concepts
    installation
    lifecycle
    spec/index
@@ -101,4 +101,5 @@ Flowman also provides optional plugins which extend functionality. You can find 
    cookbook/index
    plugins/index
    config
+   building
 ```

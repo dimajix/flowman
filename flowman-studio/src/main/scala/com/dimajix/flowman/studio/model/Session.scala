@@ -30,6 +30,6 @@ case class SessionList(
 
 
 case class CreateSessionRequest(
-    projectName:Option[String],
-    projectPath:Option[String]
+    workspace:String,
+    project:String
 )

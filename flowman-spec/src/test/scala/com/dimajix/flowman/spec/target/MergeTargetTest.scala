@@ -179,7 +179,7 @@ class MergeTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val target = context.getTarget(TargetIdentifier("target"))
         target.execute(executor, Phase.BUILD)
 
-        val metric = executor.metrics
+        val metric = executor.metricSystem
             .findMetric(Selector(Some("target_records"), target.metadata.asMap))
             .head
             .asInstanceOf[GaugeMetric]

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import org.apache.spark.sql.DataFrame
 import com.dimajix.flowman.types.StructType
 
 
-case class IdentityTransformer() extends Transformer {
+final case class IdentityTransformer() extends Transformer {
     /**
       * Transform a Spark DataFrame
       *

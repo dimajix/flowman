@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,17 @@ package com.dimajix.flowman.spec.test
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Category
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.assertion.AssertionSpec
-import com.dimajix.flowman.spec.hook.HookSpec
 import com.dimajix.flowman.spec.mapping.MappingSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
-import com.dimajix.flowman.spec.splitSettings
 import com.dimajix.flowman.spec.target.TargetSpec
 
 
@@ -76,12 +77,10 @@ class TestSpec extends NamedSpec[Test] {
      */
     override protected def instanceProperties(context: Context): Test.Properties = {
         require(context != null)
+        val name = context.evaluate(this.name)
         Test.Properties(
             context,
-            context.namespace,
-            context.project,
-            context.evaluate(name),
-            context.evaluate(labels),
+            metadata.map(_.instantiate(context, name, Category.TEST, kind)).getOrElse(Metadata(context, name, Category.TEST, kind)),
             description.map(context.evaluate)
         )
     }

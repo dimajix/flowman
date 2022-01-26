@@ -1,4 +1,12 @@
-# Version 0.20.1
+# Version 0.21.0 - 2033-01-26
+
+* Fix wrong dependencies in Swagger plugin
+* Implement basic schema inference for local CSV files
+* Implement new `stack` mapping
+* Improve error messages of local CSV parser
+
+
+# Version 0.20.1 - 2022-01-06
 
 * Implement detection of dependencies introduced by schema
 

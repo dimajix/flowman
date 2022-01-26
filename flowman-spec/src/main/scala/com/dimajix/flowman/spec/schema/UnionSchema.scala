@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ class UnionSchemaSpec extends SchemaSpec {
       */
     override def instantiate(context: Context): UnionSchema = {
         UnionSchema(
-            Schema.Properties(context),
+            instanceProperties(context, ""),
             schema.map(_.instantiate(context))
         )
     }

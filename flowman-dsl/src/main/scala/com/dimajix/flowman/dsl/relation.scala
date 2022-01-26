@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ class RelationWrapperFunctions(wrapper:Wrapper[Relation, Relation.Properties]) {
         override def gen: Relation.Properties => Relation = wrapper.gen
         override def props: Context => Relation.Properties = ctx => {
             val props = wrapper.props(ctx)
-            props.copy(labels = props.labels + kv)
+            props.copy(metadata = props.metadata.copy(labels=props.metadata.labels + kv))
         }
     }
     def description(desc:String) : RelationWrapper = new RelationWrapper {

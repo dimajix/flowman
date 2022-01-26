@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Dataset
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.annotation.DatasetType
 import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
@@ -55,11 +57,7 @@ abstract class DatasetSpec extends Spec[Dataset] {
         require(context != null)
         Dataset.Properties(
             context,
-            context.namespace,
-            context.project,
-            kind + "(" + name + ")",
-            kind,
-            Map()
+            Metadata(context, kind + "(" + name + ")", Category.DATASET, kind)
         )
     }
 }

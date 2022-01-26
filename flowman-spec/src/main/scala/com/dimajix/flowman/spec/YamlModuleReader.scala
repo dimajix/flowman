@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec
 
+import java.io.IOException
 import java.io.InputStream
 
 import com.dimajix.flowman.hadoop.File
@@ -37,14 +38,17 @@ class YamlModuleReader extends ModuleReader {
      * @param file
      * @return
      */
+    @throws[IOException]
     override def file(file:File) : Module = {
         ObjectMapper.read[ModuleSpec](file).instantiate()
     }
 
+    @throws[IOException]
     override def stream(stream:InputStream) : Module = {
         ObjectMapper.read[ModuleSpec](stream).instantiate()
     }
 
+    @throws[IOException]
     override def string(text:String) : Module = {
         ObjectMapper.parse[ModuleSpec](text).instantiate()
     }

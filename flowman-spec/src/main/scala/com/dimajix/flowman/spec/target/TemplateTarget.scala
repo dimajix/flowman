@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.target
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.common.Trilean
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
@@ -27,10 +28,9 @@ import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetDigest
+import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetResult
-import com.dimajix.flowman.spec.splitSettings
 
 
 case class TemplateTarget(

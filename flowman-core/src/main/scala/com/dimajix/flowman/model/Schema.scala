@@ -17,34 +17,29 @@
 package com.dimajix.flowman.model
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.model.Dataset.Properties
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
 
 
 object Schema {
     object Properties {
-        def apply(context: Context, name:String = "") : Properties = {
+        def apply(context: Context, name:String = "", kind:String = "") : Properties = {
             Properties(
                 context,
-                context.namespace,
-                context.project,
-                name,
-                "",
-                Map()
+                Metadata(context, name, Category.SCHEMA, kind)
             )
         }
     }
-    case class Properties(
+    final case class Properties(
         context:Context,
-        namespace:Option[Namespace],
-        project:Option[Project],
-        name: String,
-        kind: String,
-        labels: Map[String, String]
+        metadata:Metadata
     ) extends Instance.Properties[Properties] {
-        override def withName(name: String): Properties = copy(name=name)
+        override val namespace : Option[Namespace] = context.namespace
+        override val project : Option[Project] = context.project
+        override val kind : String = metadata.kind
+        override val name : String = metadata.name
+
+        override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
     }
 }
 

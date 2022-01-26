@@ -28,6 +28,7 @@ import dev.dirs.ProjectDirectories
 import org.apache.hadoop.fs.Path
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
+import org.jline.reader.UserInterruptException
 import org.jline.reader.impl.history.DefaultHistory
 import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
@@ -43,7 +44,7 @@ import com.dimajix.flowman.SPARK_BUILD_VERSION
 import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ToolConfig
-import com.dimajix.flowman.spec.splitSettings
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.tools.StatefulTool
 import com.dimajix.flowman.util.ConsoleColors.yellow
 
@@ -171,15 +172,13 @@ class Shell(args:Arguments) extends StatefulTool(
                 val prompt = "flowman:" + project.name + context.map("/" + _).getOrElse("") + "> "
 
                 console.readLine(prompt)
-                val parsedLine = console.getParsedLine
-                if (parsedLine != null) {
-                    val args = parsedLine.words().asScala.filter(_.trim.nonEmpty)
-                    if (args.nonEmpty) {
-                        val parser = new CmdLineParser(cmd)
-                        parser.parseArgument(args.asJava)
-                    }
+                val args = console.getParsedLine.words().asScala.filter(_.trim.nonEmpty)
+                if (args.nonEmpty) {
+                    val parser = new CmdLineParser(cmd)
+                    parser.parseArgument(args.asJava)
                 }
             } catch {
+                case _: UserInterruptException =>
                 case e: CmdLineException =>
                     writer.println("Syntax error: " + e.getMessage)
                     e.getParser.printUsage(writer, null)

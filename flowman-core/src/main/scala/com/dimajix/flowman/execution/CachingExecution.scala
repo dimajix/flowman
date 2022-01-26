@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) extends Execution {
+abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) extends AbstractExecution {
     protected val logger:Logger
     private lazy val taskSupport:TaskSupport = {
         parent match {
@@ -154,6 +154,11 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         // Transform any non-fatal exception in a DescribeMappingFailedException
         try {
             logger.info(s"Describing mapping '${mapping.identifier}' for output '${output}'")
+            listeners.foreach { l =>
+                Try {
+                    l._1.describeMapping(this, mapping, l._2)
+                }
+            }
             mapping.describe(this, deps, output)
         }
         catch {
@@ -242,6 +247,11 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         val cacheLevel = mapping.cache
         val cacheDesc = if (cacheLevel == null || cacheLevel == StorageLevel.NONE) "None" else cacheLevel.description
         logger.info(s"Instantiating mapping '${mapping.identifier}' with outputs ${mapping.outputs.map("'" + _ + "'").mkString(",")} (broadcast=$doBroadcast, cache='$cacheDesc')")
+        listeners.foreach { l =>
+            Try {
+                l._1.instantiateMapping(this, mapping, l._2)
+            }
+        }
 
         // Transform any non-fatal exception in a InstantiateMappingFailedException
         val instances = {

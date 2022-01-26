@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Category
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.NamedSpec
@@ -65,8 +67,8 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "verify", value = classOf[VerifyTargetSpec])
 ))
 abstract class TargetSpec extends NamedSpec[Target] {
-    @JsonProperty(value = "before", required=false) private var before:Seq[String] = Seq()
-    @JsonProperty(value = "after", required=false) private var after:Seq[String] = Seq()
+    @JsonProperty(value = "before", required=false) protected[spec] var before:Seq[String] = Seq()
+    @JsonProperty(value = "after", required=false) protected[spec] var after:Seq[String] = Seq()
 
     override def instantiate(context: Context): Target
 
@@ -77,13 +79,10 @@ abstract class TargetSpec extends NamedSpec[Target] {
       */
     override protected def instanceProperties(context:Context) : Target.Properties = {
         require(context != null)
+        val name = context.evaluate(this.name)
         Target.Properties(
             context,
-            context.namespace,
-            context.project,
-            context.evaluate(name),
-            kind,
-            context.evaluate(labels),
+            metadata.map(_.instantiate(context, name, Category.TARGET, kind)).getOrElse(Metadata(context, name, Category.TARGET, kind)),
             before.map(context.evaluate).map(TargetIdentifier.parse),
             after.map(context.evaluate).map(TargetIdentifier.parse)
         )

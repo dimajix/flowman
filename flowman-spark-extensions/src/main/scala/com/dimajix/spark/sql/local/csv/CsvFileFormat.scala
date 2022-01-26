@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.dimajix.spark.sql.local.csv
 import java.io.File
 
 import scala.collection.immutable.Map
+import scala.io.Source
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.StructType
@@ -41,8 +42,21 @@ class CsvFileFormat extends RelationProvider {
       * Spark will require that user specify the schema manually.
       */
     override def inferSchema(sparkSession: SparkSession,
-                    options: Map[String, String],
-                    files: Seq[File]): Option[StructType] = ???
+                             parameters: Map[String, String],
+                    files: Seq[File]): Option[StructType] = {
+        if (files.isEmpty)
+            throw new IllegalArgumentException("Cannot infer schema from empty list of files")
+
+        val options = new CsvOptions(parameters)
+        val source = Source.fromFile(files.head, options.encoding)
+        try {
+            val lines = source.getLines()
+            Some(UnivocityReader.inferSchema(lines, options))
+        }
+        finally {
+            source.close()
+        }
+    }
 
     /**
       * Creates a relation for the specified parameters

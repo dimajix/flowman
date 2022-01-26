@@ -61,8 +61,8 @@ class PhaseCommand(phase:Phase) extends Command {
             // Create Properties without a project. Otherwise the lookup of the relation will fail, since its identifier
             // will refer to the project. And since the relation are not part of the project, this is also really correct
             val name = rel + "-" + Clock.systemUTC().millis()
-            val props = Target.Properties(context, name, "relation").copy(project = None)
-            RelationTarget(props, RelationIdentifier(name), MappingOutputIdentifier.empty, partition)
+            val props = Target.Properties(context.root, name, "relation")
+            RelationTarget(props, RelationIdentifier(rel, project.name), MappingOutputIdentifier.empty, partition)
         }
 
         val runner = session.runner

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.MappingType
 import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
@@ -77,6 +79,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "select", value = classOf[SelectMappingSpec]),
     new JsonSubTypes.Type(name = "sort", value = classOf[SortMappingSpec]),
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlMappingSpec]),
+    new JsonSubTypes.Type(name = "stack", value = classOf[StackMappingSpec]),
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateMappingSpec]),
     new JsonSubTypes.Type(name = "transitiveChildren", value = classOf[TransitiveChildrenMappingSpec]),
     new JsonSubTypes.Type(name = "union", value = classOf[UnionMappingSpec]),
@@ -104,13 +107,10 @@ abstract class MappingSpec extends NamedSpec[Mapping] {
       */
     override protected def instanceProperties(context:Context) : Mapping.Properties = {
         require(context != null)
+        val name = context.evaluate(this.name)
         Mapping.Properties(
             context,
-            context.namespace,
-            context.project,
-            context.evaluate(name),
-            kind,
-            context.evaluate(labels),
+            metadata.map(_.instantiate(context, name, Category.MAPPING, kind)).getOrElse(Metadata(context, name, Category.MAPPING, kind)),
             context.evaluate(broadcast).toBoolean,
             context.evaluate(checkpoint).toBoolean,
             StorageLevel.fromString(context.evaluate(cache))

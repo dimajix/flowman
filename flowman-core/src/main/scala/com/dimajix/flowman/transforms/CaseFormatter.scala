@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.dimajix.flowman.transforms.schema.NodeOps
 import com.dimajix.flowman.transforms.schema.TreeTransformer
 
 
-case class CaseFormatter(format:CaseFormat) extends TreeTransformer {
+final case class CaseFormatter(format:CaseFormat) extends TreeTransformer {
     private def rename(str:String) : String = {
         format.format(str)
     }

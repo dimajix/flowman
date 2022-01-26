@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,20 +34,8 @@ abstract class Store {
     def loadProject(name:String) : Project
 
     /**
-     * Stores a project inside this persistent storage
-     * @param project
-     */
-    def storeProject(project: Project) : Unit
-
-    /**
-     * Removes a project from this persistent storage
-     * @param name
-     */
-    def removeProject(name:String) : Unit
-
-    /**
      * Retrieves a list of all projects. The returned projects only contain some fundamental information
-     * like the projects's name, its basedir and so on. The project itself (mappings, relations, targets etc)
+     * like the project's name, its basedir and so on. The project itself (mappings, relations, targets etc)
      * will not be loaded
      * @return
      */

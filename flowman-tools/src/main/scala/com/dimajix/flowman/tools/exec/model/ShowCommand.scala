@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.dimajix.flowman.common.ParserUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.spec.target.ConsoleTarget
@@ -52,19 +53,17 @@ class ShowCommand extends Command {
     @Option(name="-p", aliases=Array("--partition"), usage = "specify partition to work on, as partition1=value1,partition2=value2")
     var partition: String = ""
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         val columns = ParserUtils.parseDelimitedList(this.columns)
         val partition = ParserUtils.parseDelimitedKeyValues(this.partition).map { case(k,v) => (k,SingleValue(v)) }
         val task = ConsoleTarget(context, RelationIdentifier(relation), limit, columns, partition, !noHeader, csv)
 
-        Try {
-            task.execute(session.execution, Phase.BUILD).rethrow()
-        } match {
-            case Success(_) =>
-                true
-            case Failure(NonFatal(e)) =>
+        task.execute(session.execution, Phase.BUILD).toTry match {
+            case Success(s) =>
+                s
+            case Failure(e) =>
                 logger.error(s"Caught exception while dumping relation '$relation'", e)
-                false
+                Status.FAILED
         }
     }
 }

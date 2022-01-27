@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import com.dimajix.flowman.tools.exec.Command
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Status
+
 
 class InspectCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[InspectCommand])
@@ -34,7 +36,7 @@ class InspectCommand extends Command {
     @Argument(required = true, usage = "specifies mapping to inspect", metaVar = "<mapping>")
     var mapping: String = ""
 
-    override def execute(session: Session, project: Project, context: Context): Boolean = {
+    override def execute(session: Session, project: Project, context: Context): Status = {
         try {
             val mapping = context.getMapping(MappingIdentifier(this.mapping))
             println("Mapping:")
@@ -50,15 +52,15 @@ class InspectCommand extends Command {
                     .map(_.toString)
                     .toSeq.sorted
                     .foreach{ p => println(s"    $p") }
-            true
+            Status.SUCCESS
         }
         catch {
             case ex:NoSuchMappingException =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
-                false
+                Status.FAILED
             case NonFatal(e) =>
                 logger.error(s"Error '$mapping': ${e.getMessage}")
-                false
+                Status.FAILED
         }
     }
 }

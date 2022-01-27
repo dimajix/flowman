@@ -15,6 +15,20 @@ or for inspecting individual entities.
 * `--spark-name <application_name>` Sets the Spark application name
 
 
+## Exit Codes
+
+`flowexec` provides different exit codes depending on the result of the execution
+
+| exit code | description                                                                    |
+|-----------|--------------------------------------------------------------------------------|
+| 0         | everything worked out nicely, no error                                         |
+| 1         | all targets and jobs have been skipped                                         |
+| 2         | there were individual errors, but the run was successful (Success with Errors) |
+| 3         | there were execution errors                                                    |
+| 4         | the command line was not correct                                               |
+| 5         | an uncaught exception occurred                                                 |
+
+
 ## Project Commands
 The most important command group is for executing a specific lifecycle or a individual phase for the whole project.
 ```shell script

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ class RunCommand extends Command {
     var parallelism: Int = 1
 
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         val allTests = if (tests.nonEmpty) {
             tests.flatMap(_.split(",")).toSeq.distinct
         }
@@ -59,7 +59,7 @@ class RunCommand extends Command {
         if(!status.success) {
             logger.error(red("There have been test failures"))
         }
-        status.success
+        status
     }
 
     private def executeLinear(session: Session, context:Context, tests:Seq[String]) : Status = {

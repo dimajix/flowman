@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Kaya Kupferschmidt
+ * Copyright 2020-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.mapping.SqlMapping
@@ -45,7 +46,7 @@ class SqlCommand extends Command {
     @Argument(index = 0, required = true, usage = "SQL statement to execute", metaVar = "<sql>", handler = classOf[RestOfArgumentsHandler])
     var statement: Array[String] = Array()
 
-    override def execute(session: Session, project: Project, context: Context): Boolean = {
+    override def execute(session: Session, project: Project, context: Context): Status = {
         val mapping = SqlMapping(
             Mapping.Properties(context, "sql-" + Clock.systemUTC().millis()),
             sql = Some(statement.mkString(" "))
@@ -54,12 +55,12 @@ class SqlCommand extends Command {
             val executor = session.execution
             val df = executor.instantiate(mapping, "main")
             ConsoleUtils.showDataFrame(df, limit, csv)
-            true
+            Status.SUCCESS
         }
         catch {
             case NonFatal(ex) =>
                 logger.error("Cannot execute sql: " + reasons(ex))
-                false
+                Status.FAILED
         }
     }
 }

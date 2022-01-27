@@ -124,7 +124,7 @@ object LifecycleResult {
             startTime=startTime,
             endTime=Instant.now()
         )
-    def apply(job:Job, lifecycle: JobLifecycle, children : Seq[Result[_]], startTime:Instant) : LifecycleResult =
+    def apply(job:Job, lifecycle: JobLifecycle, children : Seq[JobResult], startTime:Instant) : LifecycleResult =
         LifecycleResult(
             job,
             lifecycle,
@@ -147,7 +147,7 @@ object LifecycleResult {
 final case class LifecycleResult(
     job: Job,
     lifecycle: JobLifecycle,
-    override val children : Seq[Result[_]],
+    override val children : Seq[JobResult],
     override val status: Status,
     override val exception: Option[Throwable] = None,
     override val startTime : Instant,

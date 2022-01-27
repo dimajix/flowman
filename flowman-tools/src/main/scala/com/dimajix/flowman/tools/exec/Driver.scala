@@ -34,6 +34,7 @@ import com.dimajix.flowman.SPARK_BUILD_VERSION
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.common.ParserUtils.splitSettings
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.tools.Tool
 import com.dimajix.flowman.util.ConsoleColors
 import com.dimajix.flowman.util.ConsoleColors.yellow
@@ -47,22 +48,26 @@ object Driver {
             run(args:_*)
         }
         match {
-            case Success (true) =>
+            case Success (Status.SUCCESS) =>
                 System.exit(0)
-            case Success (false) =>
+            case Success (Status.SKIPPED) =>
                 System.exit(1)
+            case Success (Status.SUCCESS_WITH_ERRORS) =>
+                System.exit(2)
+            case Success (_) =>
+                System.exit(3)
             case Failure(ex:CmdLineException) =>
                 System.err.println(ex.getMessage)
                 ex.getParser.printUsage(System.err)
                 System.err.println
-                System.exit(1)
+                System.exit(4)
             case Failure(exception) =>
                 exception.printStackTrace(System.err)
-                System.exit(1)
+                System.exit(5)
         }
     }
 
-    def run(args: String*) : Boolean = {
+    def run(args: String*) : Status = {
         val options = new Arguments(args.toArray)
         // Check if only help or version is requested
         if (options.version) {
@@ -72,11 +77,11 @@ object Driver {
             println(s"Hadoop version $HADOOP_VERSION")
             println(s"Scala version $SCALA_VERSION")
             println(s"Java version $JAVA_VERSION")
-            true
+            Status.SUCCESS
         }
         else if (options.help) {
             options.printHelp(System.out)
-            true
+            Status.SUCCESS
         }
         else {
             Logging.setSparkLogging(options.sparkLogging)
@@ -95,14 +100,14 @@ class Driver(options:Arguments) extends Tool {
       * Main method for running this command
       * @return
       */
-    def run() : Boolean = {
+    def run() : Status = {
         // Disable colors in batch mode
         ConsoleColors.disabled = options.batchMode
 
         val command = options.command
         if (command.help) {
             command.printHelp(System.out)
-            true
+            Status.SUCCESS
         }
         else {
             // Create Flowman Session, which also includes a Spark Session

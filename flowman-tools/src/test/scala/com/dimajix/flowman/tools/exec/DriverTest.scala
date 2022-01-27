@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import org.kohsuke.args4j.CmdLineException
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.execution.Status
+
 
 class DriverTest extends AnyFlatSpec with Matchers {
     "The Driver" should "fail with an exception on wrong arguments" in {
-        Driver.run() should be (true)
+        Driver.run() should be (Status.SUCCESS)
 
         a[CmdLineException] shouldBe thrownBy(Driver.run("no_such_command"))
         a[CmdLineException] shouldBe thrownBy(Driver.run("project", "run"))

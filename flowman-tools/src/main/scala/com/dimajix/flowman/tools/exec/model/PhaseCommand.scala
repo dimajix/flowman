@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.dimajix.flowman.common.ParserUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.RelationIdentifier
@@ -48,7 +49,7 @@ class PhaseCommand(phase:Phase) extends Command {
     @Option(name = "-p", aliases=Array("--partition"), usage = "specify partition to work on, as partition1=value1,partition2=value2")
     var partition: String = ""
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         logger.info(s"Executing phase '$phase' for relations ${if (relations != null) relations.mkString(",") else "all"}")
 
         val toRun =
@@ -66,9 +67,7 @@ class PhaseCommand(phase:Phase) extends Command {
         }
 
         val runner = session.runner
-        val result = runner.executeTargets(targets, Seq(phase), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
-
-        result.success
+        runner.executeTargets(targets, Seq(phase), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
     }
 }
 

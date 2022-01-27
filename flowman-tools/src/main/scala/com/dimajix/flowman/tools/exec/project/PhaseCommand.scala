@@ -30,6 +30,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Lifecycle
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Project
@@ -55,7 +56,7 @@ sealed class PhaseCommand(phase:Phase) extends Command {
     @Option(name = "-nl", aliases=Array("--no-lifecycle"), usage = "only executes the specific phase and not the whole lifecycle")
     var noLifecycle: Boolean = false
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         val args = splitSettings(this.args).toMap
         val job = "main"
         Try {
@@ -64,13 +65,13 @@ sealed class PhaseCommand(phase:Phase) extends Command {
         match {
             case Failure(e) =>
                 logger.error(s"Error instantiating job '$job': ${reasons(e)}")
-                false
+                Status.FAILED
             case Success(job) =>
                 executeJob(session, job, job.parseArguments(args))
         }
     }
 
-    private def executeJob(session: Session, job:Job, args:Map[String,FieldValue]) : Boolean = {
+    private def executeJob(session: Session, job:Job, args:Map[String,FieldValue]) : Status = {
         val lifecycle =
             if (noLifecycle)
                 Seq(phase)
@@ -81,10 +82,9 @@ sealed class PhaseCommand(phase:Phase) extends Command {
         val jobArgs = args.map(kv => kv._1 + "=" + kv._2).mkString(", ")
         logger.info(s"Executing job '${job.name}' $jobDescription with args $jobArgs")
 
-        job.interpolate(args).forall { args =>
+        Status.ofAll(job.interpolate(args), keepGoing=keepGoing) { args =>
             val runner = session.runner
-            val result = runner.executeJob(job, lifecycle, args, targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r), force=force, keepGoing=keepGoing, dryRun=dryRun)
-            result.success
+            runner.executeJob(job, lifecycle, args, targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r), force=force, keepGoing=keepGoing, dryRun=dryRun)
         }
     }
 }

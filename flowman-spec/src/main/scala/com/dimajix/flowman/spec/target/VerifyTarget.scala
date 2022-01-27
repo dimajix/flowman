@@ -113,11 +113,12 @@ case class VerifyTarget(
 
         val status = Status.ofAll(result.map(_.status))
         if (!status.success) {
-            logger.error(s"Verification $identifier failed.")
-            if (errorMode != ErrorMode.FAIL_NEVER) {
-                TargetResult(this, Phase.VERIFY, result, new VerificationFailedException(identifier), startTime)
+            if (errorMode != ErrorMode.FAIL_NEVER || result.exists(_.numExceptions > 0)) {
+                logger.error(s"Verification '$identifier' failed.")
+                TargetResult(this, Phase.VERIFY, result, new VerificationFailedException(identifier, result.flatMap(_.exception).headOption.orNull), startTime)
             }
             else {
+                logger.error(s"Verification '$identifier' failed - the result is marked as 'success with errors'.")
                 TargetResult(this, Phase.VERIFY, result, Status.SUCCESS_WITH_ERRORS, startTime)
             }
         }

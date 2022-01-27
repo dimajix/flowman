@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.dimajix.flowman.tools.exec.mapping
 
 import scala.util.Failure
 import scala.util.Success
-import scala.util.Try
-import scala.util.control.NonFatal
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
@@ -30,6 +28,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.target.ConsoleTarget
@@ -51,19 +50,19 @@ class ShowCommand extends Command {
     var csv: Boolean = false
 
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         val columns = ParserUtils.parseDelimitedList(this.columns)
         val task = ConsoleTarget(context, MappingOutputIdentifier(mapping), limit, columns, !noHeader, csv)
 
         task.execute(session.execution, Phase.BUILD).toTry match {
-            case Success(_) =>
-                true
+            case Success(s) =>
+                s
             case Failure(ex:NoSuchMappingException) =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
-                false
+                Status.FAILED
             case Failure(e) =>
                 logger.error(s"Caught exception while dumping mapping '$mapping'", e)
-                false
+                Status.FAILED
         }
     }
 }

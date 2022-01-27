@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchTargetException
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.tools.exec.Command
@@ -36,7 +37,7 @@ class InspectCommand extends Command {
     @Argument(required = true, usage = "specifies target to inspect", metaVar = "<target>")
     var target: String = ""
 
-    override def execute(session: Session, project: Project, context: Context): Boolean = {
+    override def execute(session: Session, project: Project, context: Context): Status = {
         try {
             val target = context.getTarget(TargetIdentifier(this.target))
             println("Target:")
@@ -58,15 +59,15 @@ class InspectCommand extends Command {
                     .toSeq.sorted
                     .foreach{ p => println(s"    $p") }
             }
-            true
+            Status.SUCCESS
         }
         catch {
             case ex:NoSuchTargetException =>
                 logger.error(s"Cannot resolve target '${ex.target}'")
-                false
+                Status.FAILED
             case NonFatal(e) =>
                 logger.error(s"Error inspecting '$target': ${reasons(e)}")
-                false
+                Status.FAILED
         }
 
     }

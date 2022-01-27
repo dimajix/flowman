@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 
 package com.dimajix.flowman.tools.exec.model
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 import scala.util.control.NonFatal
 
 import org.kohsuke.args4j.Argument
@@ -26,9 +23,9 @@ import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.NoSuchRelationException
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.tools.exec.Command
@@ -42,7 +39,7 @@ class DescribeCommand extends Command {
     @Argument(usage = "specifies the relation to describe", metaVar = "<relation>", required = true)
     var relation: String = ""
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         try {
             val identifier = RelationIdentifier(this.relation)
             val relation = context.getRelation(identifier)
@@ -56,14 +53,14 @@ class DescribeCommand extends Command {
                 val schema = relation.describe(execution)
                 schema.printTree()
             }
-            true
+            Status.SUCCESS
         } catch {
             case ex:NoSuchRelationException =>
                 logger.error(s"Cannot resolve relation '${ex.relation}'")
-                false
+                Status.FAILED
             case NonFatal(e) =>
                 logger.error(s"Error describing relation '$relation':", e)
-                false
+                Status.FAILED
         }
     }
 }

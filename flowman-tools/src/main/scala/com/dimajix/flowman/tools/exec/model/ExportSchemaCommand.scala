@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.tools.exec.Command
@@ -43,7 +44,7 @@ class ExportSchemaCommand extends Command {
     @Argument(usage = "specifies the output filename", metaVar = "<filename>", required = true)
     var filename: String = ""
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         logger.info(s"Exporting the schema of model '$relation' to '$filename'")
 
         Try {
@@ -54,10 +55,10 @@ class ExportSchemaCommand extends Command {
         } match {
             case Success(_) =>
                 logger.info("Successfully saved schema")
-                true
-            case Failure(NonFatal(e)) =>
+                Status.SUCCESS
+            case Failure(e) =>
                 logger.error(s"Caught exception while save the schema of model '$relation'", e)
-                false
+                Status.FAILED
         }
     }
 }

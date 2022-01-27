@@ -23,6 +23,7 @@ import org.kohsuke.args4j.spi.SubCommands
 
 import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.exec.NestedCommand
+import com.dimajix.flowman.tools.exec.test.InspectCommand
 import com.dimajix.flowman.tools.exec.test.ListCommand
 import com.dimajix.flowman.tools.exec.test.RunCommand
 

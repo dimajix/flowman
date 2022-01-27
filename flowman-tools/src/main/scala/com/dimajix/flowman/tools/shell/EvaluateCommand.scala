@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
 
@@ -34,15 +35,15 @@ class EvaluateCommand extends Command {
     @Argument(index=0, required=true, usage = "expression to evaluate", metaVar = "<expr>", handler=classOf[RestOfArgumentsHandler])
     var args: Array[String] = Array()
 
-    override def execute(session: Session, project:Project, context:Context): Boolean = {
+    override def execute(session: Session, project:Project, context:Context): Status = {
         try {
             println(context.evaluate(args.mkString(" ")))
-            true
+            Status.SUCCESS
         }
         catch {
             case NonFatal(e) =>
                 logger.error(s"Error: ${e.getMessage}")
-                false
+                Status.FAILED
         }
     }
 }

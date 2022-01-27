@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Kaya Kupferschmidt
+ * Copyright 2020-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,12 @@ import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 
 
 class VersionCommand extends Command {
-    override def execute(session: Session, project: Project, context: Context): Boolean = {
+    override def execute(session: Session, project: Project, context: Context): Status = {
         println(s"Flowman version $FLOWMAN_VERSION")
         println(s"Flowman home directory ${ToolConfig.homeDirectory.getOrElse("")}")
         println(s"Flowman config directory ${ToolConfig.confDirectory.getOrElse("")}")
@@ -39,6 +40,6 @@ class VersionCommand extends Command {
         println(s"Hadoop version $HADOOP_VERSION (build for $HADOOP_BUILD_VERSION)")
         println(s"Scala version $SCALA_VERSION (build for $SCALA_BUILD_VERSION)")
         println(s"Java version $JAVA_VERSION")
-        true
+        Status.SUCCESS
     }
 }

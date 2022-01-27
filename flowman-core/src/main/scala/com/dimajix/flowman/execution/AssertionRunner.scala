@@ -53,23 +53,9 @@ class AssertionRunner(
                 execution.monitorAssertion(assertion) { execution =>
                     if (!error || keepGoing) {
                         val result = executeAssertion(execution, assertion, dryRun)
-                        val success = result.success
-                        error |= !success
+                        error |= !result.success
 
-                        val description = result.description.getOrElse(result.name)
-                        if (result.exception.nonEmpty) {
-                            val ex = result.exception.get
-                            logger.error(s" ✘ exception: $description: ${ex.getMessage}")
-                        }
-                        else if (!success) {
-                            logger.error(red(s" ✘ failed: $description"))
-                            result.children.filter(_.failure).foreach { result =>
-                                logger.error(red(s"   ✘ failed ${result.name}"))
-                            }
-                        }
-                        else {
-                            logger.info(green(s" ✓ passed: $description"))
-                        }
+                        logResult(result)
 
                         result
                     }
@@ -80,6 +66,27 @@ class AssertionRunner(
                     }
                 }
             }
+        }
+    }
+
+    private def logResult(result:AssertionResult) : Unit = {
+        val description = result.description.getOrElse(result.name)
+        result.exception match {
+            case Some(ex) =>
+                logger.error(s" ✘ exception $description: ${ex.getMessage}")
+            case None if (!result.success) =>
+                logger.error(red(s" ✘ failed: $description"))
+                // If an error occured, walk through the children to find a possible exception or failure to display
+                result.children.filter(_.failure).foreach { result =>
+                    result.exception match {
+                        case Some(ex) =>
+                            logger.error(red(s"   ✘ exception ${result.name}: ${ex.getMessage}"))
+                        case None =>
+                            logger.error(red(s"   ✘ failed ${result.name}"))
+                    }
+                }
+            case None =>
+                logger.info(green(s" ✓ passed: $description"))
         }
     }
 

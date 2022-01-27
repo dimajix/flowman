@@ -1,4 +1,9 @@
-# Version 0.21.0 - 2033-01-26
+# Version 0.21.1
+
+* Support new exit codes of flowexec
+
+
+# Version 0.21.0 - 2022-01-26
 
 * Fix wrong dependencies in Swagger plugin
 * Implement basic schema inference for local CSV files

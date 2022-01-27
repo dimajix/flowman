@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
 
@@ -27,8 +28,8 @@ import com.dimajix.flowman.tools.exec.Command
 class ListCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[ListCommand])
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         project.jobs.keys.toList.sorted.foreach(println)
-        true
+        Status.SUCCESS
     }
 }

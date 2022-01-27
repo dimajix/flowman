@@ -60,7 +60,7 @@ sealed class PhaseCommand(phase:Phase) extends Command {
     @Option(name = "-j", aliases=Array("--jobs"), usage = "number of jobs to run in parallel")
     var parallelism: Int = 1
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         val args = splitSettings(this.args).toMap
         Try {
             context.getJob(JobIdentifier(job))
@@ -68,25 +68,23 @@ sealed class PhaseCommand(phase:Phase) extends Command {
         match {
             case Failure(e) =>
                 logger.error(s"Error instantiating job '$job': ${reasons(e)}")
-                false
+                Status.FAILED
             case Success(job) =>
                 executeJob(session, job, job.parseArguments(args))
         }
     }
 
-    private def executeJob(session: Session, job:Job, args:Map[String,FieldValue]) : Boolean = {
+    private def executeJob(session: Session, job:Job, args:Map[String,FieldValue]) : Status = {
         val lifecycle =
             if (noLifecycle)
                 Seq(phase)
             else
                 Lifecycle.ofPhase(phase)
 
-        val status = if (parallelism > 1)
+        if (parallelism > 1)
             executeParallel(session, job, args, lifecycle)
         else
             executeLinear(session, job, args, lifecycle)
-
-        status.success
     }
 
     private def executeLinear(session: Session, job:Job, args:Map[String,FieldValue], lifecycle: Seq[Phase]) : Status = {

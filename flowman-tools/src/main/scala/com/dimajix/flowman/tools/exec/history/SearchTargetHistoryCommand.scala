@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Kaya Kupferschmidt
+ * Copyright 2020-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ class SearchTargetHistoryCommand extends Command {
     @Option(name = "-n", aliases=Array("--limit"), usage = "maximum number of results", metaVar = "<limit>")
     var limit:Int = 100
 
-    override def execute(session: Session, project: Project, context: Context): Boolean = {
+    override def execute(session: Session, project: Project, context: Context): Status = {
         val query = TargetQuery(
             namespace = session.namespace.map(_.name).toSeq,
             project = split(Some(this.project).filter(_.nonEmpty).getOrElse(project.name)),
@@ -57,7 +57,7 @@ class SearchTargetHistoryCommand extends Command {
         )
         val targets = session.history.findTargets(query, Seq(TargetOrder.BY_DATETIME), limit, 0)
         ConsoleUtils.showTable(targets)
-        true
+        Status.SUCCESS
     }
 
     private def split(arg:String) : Seq[String] = {

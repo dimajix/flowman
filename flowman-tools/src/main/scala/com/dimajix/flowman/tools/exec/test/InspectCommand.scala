@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Kaya Kupferschmidt
+ * Copyright 2020-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.shell.test
+package com.dimajix.flowman.tools.exec.test
 
 import scala.util.control.NonFatal
 
@@ -22,9 +22,9 @@ import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.NoSuchTestException
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.tools.exec.Command
@@ -36,7 +36,7 @@ class InspectCommand extends Command {
     @Argument(index=0, required=true, usage = "name of test to inspect", metaVar = "<test>")
     var test: String = ""
 
-    override def execute(session: Session, project:Project, context:Context): Boolean = {
+    override def execute(session: Session, project:Project, context:Context): Status = {
         try {
             val test = context.getTest(TestIdentifier(this.test))
             println(s"Name: ${test.name}")
@@ -69,15 +69,15 @@ class InspectCommand extends Command {
                 .toSeq
                 .sorted
                 .foreach{ p => println(s"    $p") }
-            true
+            Status.SUCCESS
         }
         catch {
             case ex:NoSuchTestException =>
                 logger.error(s"Cannot resolve test '${ex.test}'")
-                false
+                Status.FAILED
             case NonFatal(e) =>
                 logger.error(s"Error '$test': ${e.getMessage}")
-                false
+                Status.FAILED
         }
     }
 }

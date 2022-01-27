@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.target
 
+import java.time.Instant
+
 import scala.collection.immutable.ListMap
 
 import org.scalamock.scalatest.MockFactory
@@ -284,6 +286,62 @@ class ValidateTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         result.numFailures should be (1)
         result.numSuccesses should be (1)
         result.numExceptions should be (0)
+        result.children.size should be (2)
+    }
+
+    it should "throw an exception if fail_never is used, but an exception is thrown inside an assertion" in {
+        val session = Session.builder.disableSpark().build()
+        val execution = session.execution
+        val context = session.context
+
+        val assertion1 = mock[Assertion]
+        val assertion2 = mock[Assertion]
+        val target = ValidateTarget(
+            Target.Properties(context),
+            ListMap(
+                "a1" -> assertion1,
+                "a2" -> assertion2
+            ),
+            errorMode = ErrorMode.FAIL_NEVER
+        )
+
+        (assertion1.requires _).expects().returns(Set())
+        (assertion1.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion1.name _).expects().returns("a1")
+        (assertion1.description _).expects().returns(None)
+        (assertion1.context _).expects().returns(context)
+        (assertion1.execute _).expects(*,*).returns(
+            AssertionResult(
+                assertion1,
+                new IllegalArgumentException("Some error"),
+                Instant.now()
+            )
+        )
+
+        (assertion2.requires _).expects().returns(Set())
+        (assertion2.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion2.name _).expects().returns("a2")
+        (assertion2.description _).expects().returns(None)
+        (assertion2.context _).expects().returns(context)
+        (assertion2.execute _).expects(*,*).returns(
+            AssertionResult(assertion2, Seq(AssertionTestResult("a3", None, true)))
+        )
+
+        target.phases should be (Set(Phase.VALIDATE))
+        target.requires(Phase.VALIDATE) should be (Set())
+        target.provides(Phase.VALIDATE) should be (Set())
+        target.before should be (Seq())
+        target.after should be (Seq())
+
+        target.dirty(execution, Phase.VALIDATE) should be (Yes)
+        val result = target.execute(execution, Phase.VALIDATE)
+        result.target should be (target)
+        result.phase should be (Phase.VALIDATE)
+        result.status should be (Status.FAILED)
+        result.exception.get shouldBe a[ValidationFailedException]
+        result.numFailures should be (1)
+        result.numSuccesses should be (1)
+        result.numExceptions should be (2)
         result.children.size should be (2)
     }
 }

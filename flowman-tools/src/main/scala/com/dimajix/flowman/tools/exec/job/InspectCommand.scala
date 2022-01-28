@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Kaya Kupferschmidt
+ * Copyright 2020-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchJobException
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
@@ -36,7 +37,7 @@ class InspectCommand extends Command {
     @Argument(index=0, required=true, usage = "name of job to inspect", metaVar = "<job>")
     var job: String = ""
 
-    override def execute(session: Session, project:Project, context:Context): Boolean = {
+    override def execute(session: Session, project:Project, context:Context): Status = {
         try {
             val job = context.getJob(JobIdentifier(this.job))
             println(s"Name: ${job.name}")
@@ -53,15 +54,15 @@ class InspectCommand extends Command {
                 .toSeq
                 .sortBy(_._1)
                 .foreach{ case(k,v) => println(s"    $k=$v") }
-            true
+            Status.SUCCESS
         }
         catch {
             case ex:NoSuchJobException =>
                 logger.error(s"Cannot resolve job '${ex.job}'")
-                false
+                Status.FAILED
             case NonFatal(e) =>
                 logger.error(s"Error inspecting '$job': ${reasons(e)}")
-                false
+                Status.FAILED
         }
     }
 }

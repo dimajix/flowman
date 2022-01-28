@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
@@ -38,7 +39,7 @@ class DescribeCommand extends Command {
     @Argument(usage = "specifies the mapping to describe", metaVar = "<mapping>", required = true)
     var mapping: String = ""
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         try {
             val identifier = MappingOutputIdentifier(this.mapping)
             val mapping = context.getMapping(identifier.mapping)
@@ -52,15 +53,15 @@ class DescribeCommand extends Command {
                 val schema = executor.describe(mapping, identifier.output)
                 schema.printTree()
             }
-            true
+            Status.SUCCESS
         }
         catch {
             case ex:NoSuchMappingException =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
-                false
+                Status.FAILED
             case NonFatal(e) =>
                 logger.error(s"Error describing mapping '$mapping'", e)
-                false
+                Status.FAILED
         }
     }
 }

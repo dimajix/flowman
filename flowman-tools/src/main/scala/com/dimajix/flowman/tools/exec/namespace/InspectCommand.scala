@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@ package com.dimajix.flowman.tools.exec.namespace
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
 
 
 class InspectCommand extends Command {
-    override def execute(session: Session, project:Project, context:Context): Boolean = {
+    override def execute(session: Session, project:Project, context:Context): Status = {
         session.namespace.foreach { ns =>
             println("Namespace:")
             println(s"    name: ${ns.name}")
@@ -54,6 +55,6 @@ class InspectCommand extends Command {
                 .foreach{ case(k,v) => println(s"    $k=$v") }
         }
 
-        true
+        Status.SUCCESS
     }
 }

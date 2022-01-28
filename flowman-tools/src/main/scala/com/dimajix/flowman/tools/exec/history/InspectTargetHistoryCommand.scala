@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history.JobQuery
 import com.dimajix.flowman.history.TargetQuery
 import com.dimajix.flowman.model.Project
@@ -33,7 +34,7 @@ class InspectTargetHistoryCommand extends Command {
     @Argument(usage = "Target run ID", metaVar = "<target_run_id>", required = true)
     var targetId: String = ""
 
-    override def execute(session: Session, project: Project, context: Context): Boolean = {
+    override def execute(session: Session, project: Project, context: Context): Status = {
         val query = TargetQuery(
             id = Seq(targetId)
         )
@@ -53,10 +54,10 @@ class InspectTargetHistoryCommand extends Command {
                 target.partitions.foreach { m =>
                     println(s"  ${m._1} = ${m._2}")
                 }
-                true
+                Status.SUCCESS
             case None =>
                 logger.error(s"Cannot find target run with id '$targetId'")
-                false
+                Status.FAILED
         }
     }
 }

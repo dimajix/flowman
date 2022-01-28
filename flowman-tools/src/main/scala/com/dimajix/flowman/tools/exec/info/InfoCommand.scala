@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,13 @@ import scala.collection.JavaConverters._
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
 
 
 class InfoCommand extends Command {
-    override def execute(session: Session, project:Project, context:Context): Boolean = {
+    override def execute(session: Session, project:Project, context:Context): Status = {
         println(s"Flowman home directory: ${ToolConfig.homeDirectory.getOrElse("")}")
         println(s"Flowman config directory: ${ToolConfig.confDirectory.getOrElse("")}")
         println(s"Flowman plugin directory: ${ToolConfig.pluginDirectory.getOrElse("")}")
@@ -71,6 +72,6 @@ class InfoCommand extends Command {
             .sortBy(_.getKey)
             .foreach(kv => println(s"    ${kv.getKey}=${kv.getValue}"))
 
-        true
+        Status.SUCCESS
     }
 }

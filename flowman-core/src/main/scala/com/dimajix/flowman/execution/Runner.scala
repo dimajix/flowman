@@ -81,7 +81,7 @@ private[execution] sealed class RunnerImpl {
             case Status.SUCCESS =>
                 logger.info(green(s"Successfully finished phase '$phase' for target '${target.identifier}' in ${fmt(duration)}"))
             case Status.SUCCESS_WITH_ERRORS =>
-                logger.info(yellow(s"Successfully finished phase '$phase' for target '${target.identifier}' with errors  in ${fmt(duration)}"))
+                logger.warn(yellow(s"Successfully finished phase '$phase' for target '${target.identifier}' with errors  in ${fmt(duration)}"))
             case Status.SKIPPED =>
                 logger.info(green(s"Skipped phase '$phase' for target '${target.identifier}'"))
             case Status.FAILED if result.exception.nonEmpty =>
@@ -116,8 +116,9 @@ private[execution] sealed class RunnerImpl {
         result
     }
 
-    private val lineSize = 109
-    private val separator = boldWhite(StringUtils.repeat('-', lineSize))
+    protected val lineSize = 109
+    protected val separator = boldWhite(StringUtils.repeat('-', lineSize))
+    protected val doubleSeparator = boldWhite(StringUtils.repeat('=', lineSize))
     def logSubtitle(s:String) : Unit = {
         val l = (lineSize - 2 - s.length) / 2
         val t = if (l > 3) {
@@ -149,7 +150,7 @@ private[execution] sealed class RunnerImpl {
         logger.info("")
     }
 
-    def logStatus(title:String, status:Status, duration: Duration, endTime:Instant) : Unit = {
+    def logStatus(title:String, status:Status, duration: Duration, endTime:Instant, double:Boolean=false) : Unit = {
         val msg = status match {
             case Status.SUCCESS|Status.SKIPPED =>
                 boldGreen(s"${status.upper} $title")
@@ -163,25 +164,44 @@ private[execution] sealed class RunnerImpl {
                 boldRed(s"UNKNOWN STATE '$status' in $title. Assuming failure")
         }
 
-        logger.info(separator)
+        val sep = if (double) doubleSeparator else separator
+        logger.info(sep)
         logger.info(msg)
-        logger.info(separator)
+        logger.info(sep)
         logger.info(s"Total time: ${fmt(duration)}")
         logger.info(s"Finished at: ${endTime.atZone(ZoneId.systemDefault())}")
-        logger.info(separator)
+        logger.info(sep)
     }
 
-    def logResult(title:String, result:Result[_]) : Unit = {
-        logger.info(separator)
-        logger.info(boldWhite(s"Execution summary for ${result.category.lower} '${result.identifier}'"))
-        logger.info("")
-        for (child <- result.children) {
-            val name = child.identifier.toString
-            val status = s"${this.status(child.status)} [${StringUtils.leftPad(fmt(child.duration), 10)}]"
-            val dots = StringUtils.repeat('.', lineSize - child.status.upper.length - name.length - 15)
-            logger.info(s"$name $dots $status")
+    def logJobResult(title:String, result:JobResult) : Unit = {
+        if (result.children.length > 1) {
+            logger.info(separator)
+            logger.info(boldWhite(s"Execution summary for ${result.category.lower} '${result.identifier}'"))
+            logger.info("")
+            for (child <- result.children) {
+                val name = child.identifier.toString
+                val status = s"${this.status(child.status)} [${StringUtils.leftPad(fmt(child.duration), 10)}]"
+                val dots = StringUtils.repeat('.', lineSize - child.status.upper.length - name.length - 15)
+                logger.info(s"$name $dots $status")
+            }
         }
         logStatus(title, result.status, result.duration, result.endTime)
+    }
+
+    def logLifecycleResult(title:String, result:LifecycleResult) : Unit = {
+        logger.info("")
+        if (result.children.length > 1) {
+            logger.info(doubleSeparator)
+            logger.info(boldWhite(s"Overall lifecycle summary for ${result.category.lower} '${result.identifier}'"))
+            logger.info("")
+            for (child <- result.children) {
+                val name = s"Phase ${child.phase.upper}"
+                val status = s"${this.status(child.status)} [${StringUtils.leftPad(fmt(child.duration), 10)}]"
+                val dots = StringUtils.repeat('.', lineSize - child.status.upper.length - name.length - 15)
+                logger.info(s"$name $dots $status")
+            }
+        }
+        logStatus(title, result.status, result.duration, result.endTime, double=true)
     }
 
     private def status(status:Status) : String = {
@@ -231,12 +251,17 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         require(phases != null)
         require(args != null)
 
+        logger.info("")
+        logger.info(separator)
+        logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.identifier}'")
+
         val startTime = Instant.now()
         val isolated2 = isolated || job.parameters.nonEmpty || job.environment.nonEmpty
         withExecution(parentExecution, isolated2) { execution =>
             runner.withJobContext(job, args, Some(execution), force, dryRun, isolated2) { (context, arguments) =>
+                val title = s"lifecycle for job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
                 val listeners = if (!dryRun) stateStoreListener +: (runner.hooks ++ job.hooks).map(_.instantiate(context)) else Seq()
-                execution.withListeners(listeners) { execution =>
+                val result = execution.withListeners(listeners) { execution =>
                     execution.monitorLifecycle(job, arguments, phases) { execution =>
                         val results = Result.flatMap(phases, keepGoing) { phase =>
                             // Check if build phase really contains any active target. Otherwise we skip this phase and mark it
@@ -263,6 +288,9 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                         LifecycleResult(job, instance, results, startTime)
                     }
                 }
+
+                logLifecycleResult(title, result)
+                result
             }
         }
     }
@@ -302,7 +330,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                     }
                 }
 
-            logResult(title, result)
+            logJobResult(title, result)
             result
         }
     }
@@ -582,7 +610,6 @@ final class Runner(
         require(phases != null)
         require(args != null)
 
-        logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.identifier}'")
         val runner = new JobRunnerImpl(this)
         val result = runner.executeJob(job, phases, args, targets, dirtyTargets=dirtyTargets, force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=isolated)
         result.status

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchTargetException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.GraphBuilder
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.TargetIdentifier
@@ -38,21 +39,21 @@ class DependencyTreeCommand extends Command {
     @Argument(required = true, usage = "specifies target to inspect", metaVar = "<target>")
     var target: String = ""
 
-    override def execute(session: Session, project: Project, context: Context): Boolean = {
+    override def execute(session: Session, project: Project, context: Context): Status = {
         try {
             val target = context.getTarget(TargetIdentifier(this.target))
             val graph = new GraphBuilder(context, Phase.BUILD).addTarget(target).build()
             val node = graph.target(target)
             println(node.upstreamDependencyTree)
-            true
+            Status.SUCCESS
         }
         catch {
             case ex:NoSuchTargetException =>
                 logger.error(s"Cannot resolve target '${ex.target}'")
-                false
+                Status.FAILED
             case NonFatal(e) =>
                 logger.error(s"Error analyzing '$target': ${reasons(e)}")
-                false
+                Status.FAILED
         }
 
     }

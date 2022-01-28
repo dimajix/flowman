@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
@@ -38,7 +39,7 @@ class ValidateCommand extends Command {
     @Argument(usage = "specifies mappings to validate", metaVar = "<mapping>")
     var mappings: Array[String] = Array()
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         logger.info("Validating mappings {}", if (mappings != null) mappings.mkString(",") else "all")
 
         // Then execute output operations
@@ -54,16 +55,16 @@ class ValidateCommand extends Command {
         } match {
             case Success(true) =>
                 logger.info("Successfully validated mappings")
-                true
+                Status.SUCCESS
             case Success(false) =>
                 logger.error("Validation of mappings failed")
-                false
+                Status.FAILED
             case Failure(ex:NoSuchMappingException) =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
-                false
-            case Failure(NonFatal(e)) =>
+                Status.FAILED
+            case Failure(e) =>
                 logger.error("Caught exception while validating mapping", e)
-                false
+                Status.FAILED
         }
     }
 }

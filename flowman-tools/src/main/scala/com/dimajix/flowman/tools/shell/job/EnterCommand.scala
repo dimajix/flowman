@@ -27,6 +27,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.common.ParserUtils.splitSettings
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.shell.Shell
 
@@ -39,20 +40,20 @@ class EnterCommand extends Command {
     @Argument(index=1, required=false, usage = "specifies job parameters", metaVar = "<param>=<value>")
     var args: Array[String] = Array()
 
-    override def execute(session: Session, project:Project, context:Context): Boolean = {
+    override def execute(session: Session, project:Project, context:Context): Status = {
         try {
             val job = context.getJob(JobIdentifier(this.job))
             val args = splitSettings(this.args).toMap
             Shell.instance.enterJob(job, args)
-            true
+            Status.SUCCESS
         }
         catch {
             case ex:NoSuchJobException =>
                 logger.error(s"Cannot resolve job '${ex.job}'")
-                false
+                Status.FAILED
             case NonFatal(e) =>
                 logger.error(s"Error entering job '$job': ${e.getMessage}")
-                false
+                Status.FAILED
         }
     }
 }

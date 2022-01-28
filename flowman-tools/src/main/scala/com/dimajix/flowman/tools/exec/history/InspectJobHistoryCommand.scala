@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history.JobQuery
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
@@ -32,7 +33,7 @@ class InspectJobHistoryCommand extends Command {
     @Argument(usage = "Job run ID", metaVar = "<job_run_id>", required = true)
     var jobId: String = ""
 
-    override def execute(session: Session, project: Project, context: Context): Boolean = {
+    override def execute(session: Session, project: Project, context: Context): Status = {
         val query = JobQuery(
             id = Seq(jobId)
         )
@@ -56,10 +57,10 @@ class InspectJobHistoryCommand extends Command {
                 metrics.foreach { m =>
                     println(s"  ${m.name} ts=${m.ts} labels=${m.labels.map(kv => kv._1 + "=" + kv._2).mkString("(",",",")")} value=${m.value}")
                 }
-                true
+                Status.SUCCESS
             case None =>
                 logger.error(s"Cannot find job run with id '$jobId'")
-                false
+                Status.FAILED
         }
     }
 }

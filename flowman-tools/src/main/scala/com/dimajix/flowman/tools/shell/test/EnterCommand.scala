@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchTestException
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.tools.exec.Command
@@ -36,19 +37,19 @@ class EnterCommand extends Command {
     @Argument(index=0, required=true, usage = "name of test to enter", metaVar = "<test>")
     var test: String = ""
 
-    override def execute(session: Session, project:Project, context:Context): Boolean = {
+    override def execute(session: Session, project:Project, context:Context): Status = {
         try {
             val test = context.getTest(TestIdentifier(this.test))
             Shell.instance.enterTest(test)
-            true
+            Status.SUCCESS
         }
         catch {
             case ex:NoSuchTestException =>
                 logger.error(s"Cannot resolve test '${ex.test}'")
-                false
+                Status.FAILED
             case NonFatal(e) =>
                 logger.error(s"Error entering test '$test': ${e.getMessage}")
-                false
+                Status.FAILED
         }
     }
 }

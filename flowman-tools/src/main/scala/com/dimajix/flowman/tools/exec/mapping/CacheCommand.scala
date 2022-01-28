@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import scala.util.control.NonFatal
 
 import org.apache.spark.storage.StorageLevel
 import org.kohsuke.args4j.Argument
-import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
@@ -38,7 +38,7 @@ class CacheCommand extends Command {
     var mapping: String = ""
 
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         logger.info(s"Caching mapping '$mapping'")
 
         try {
@@ -48,15 +48,15 @@ class CacheCommand extends Command {
             val table = executor.instantiate(instance, id.output)
             if (table.storageLevel == StorageLevel.NONE)
                 table.cache()
-            true
+            Status.SUCCESS
         }
         catch {
             case ex:NoSuchMappingException =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
-                false
+                Status.FAILED
             case NonFatal(e) =>
                 logger.error(s"Caught exception while caching mapping '$mapping", e)
-                false
+                Status.FAILED
         }
     }
 }

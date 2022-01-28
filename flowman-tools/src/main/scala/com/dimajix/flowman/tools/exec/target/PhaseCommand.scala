@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,25 +51,18 @@ class PhaseCommand(phase:Phase) extends Command {
     var noLifecycle: Boolean = false
 
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         val lifecycle =
             if (noLifecycle)
                 Seq(phase)
             else
                 Lifecycle.ofPhase(phase)
 
-        Try {
-            val allTargets = targets.flatMap(_.split(",")).map { t =>
-                context.getTarget(TargetIdentifier(t))
-            }
-            val runner = session.runner
-            runner.executeTargets(allTargets, lifecycle, force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
-        } match {
-            case Success(status) => status.success
-            case Failure(e) =>
-                logger.error(s"Error ${phase.upper} target '${targets.mkString(",")}: ${reasons(e)}")
-                false
+        val allTargets = targets.flatMap(_.split(",")).map { t =>
+            context.getTarget(TargetIdentifier(t))
         }
+        val runner = session.runner
+        runner.executeTargets(allTargets, lifecycle, force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
     }
 }
 

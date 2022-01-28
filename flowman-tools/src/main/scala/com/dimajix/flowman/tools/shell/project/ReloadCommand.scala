@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.shell.Shell
@@ -31,20 +32,20 @@ import com.dimajix.flowman.tools.shell.Shell
 class ReloadCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[ReloadCommand])
 
-    override def execute(session: Session, project:Project, context:Context): Boolean = {
+    override def execute(session: Session, project:Project, context:Context): Status = {
         project.filename.map { fn =>
             try {
                 Shell.instance.loadProject(fn.path)
-                true
+                Status.SUCCESS
             }
             catch {
                 case NonFatal(e) =>
                     logger.error(s"Error reloading current project '${fn}': ${e.getMessage}")
-                    false
+                    Status.FAILED
             }
         }.getOrElse {
             logger.warn(s"Cannot reload current project, since it has no path")
-            false
+            Status.FAILED
         }
     }
 }

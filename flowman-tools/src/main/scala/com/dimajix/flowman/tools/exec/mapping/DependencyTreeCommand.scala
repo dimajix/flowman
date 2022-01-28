@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.GraphBuilder
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Project
@@ -37,21 +38,21 @@ class DependencyTreeCommand extends Command {
     @Argument(required = true, usage = "specifies mapping to inspect", metaVar = "<mapping>")
     var mapping: String = ""
 
-    override def execute(session: Session, project: Project, context: Context): Boolean = {
+    override def execute(session: Session, project: Project, context: Context): Status = {
         try {
             val mapping = context.getMapping(MappingIdentifier(this.mapping))
             val graph = new GraphBuilder(context, Phase.BUILD).addMapping(mapping).build()
             val node = graph.mapping(mapping)
             println(node.upstreamDependencyTree)
-            true
+            Status.SUCCESS
         }
         catch {
             case ex:NoSuchMappingException =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
-                false
+                Status.FAILED
             case NonFatal(e) =>
                 logger.error(s"Error '$mapping': ${e.getMessage}")
-                false
+                Status.FAILED
         }
 
     }

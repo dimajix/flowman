@@ -44,7 +44,7 @@ class SearchJobHistoryCommand extends Command {
     @Option(name = "-n", aliases=Array("--limit"), usage = "maximum number of results", metaVar = "<limit>")
     var limit:Int = 100
 
-    override def execute(session: Session, project: Project, context: Context): Boolean = {
+    override def execute(session: Session, project: Project, context: Context): Status = {
         val query = JobQuery(
             namespace = session.namespace.map(_.name).toSeq,
             project = split(Some(this.project).filter(_.nonEmpty).getOrElse(project.name)),
@@ -55,7 +55,7 @@ class SearchJobHistoryCommand extends Command {
         )
         val jobs = session.history.findJobs(query, Seq(JobOrder.BY_DATETIME), limit, 0)
         ConsoleUtils.showTable(jobs)
-        true
+        Status.SUCCESS
     }
 
     private def split(arg:String) : Seq[String] = {

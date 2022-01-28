@@ -113,11 +113,12 @@ case class ValidateTarget(
 
         val status = Status.ofAll(result.map(_.status))
         if (!status.success) {
-            logger.error(s"Validation $identifier failed.")
-            if (errorMode != ErrorMode.FAIL_NEVER) {
-                TargetResult(this, Phase.VALIDATE, result, new ValidationFailedException(identifier), startTime)
+            if (errorMode != ErrorMode.FAIL_NEVER || result.exists(_.numExceptions > 0)) {
+                logger.error(s"Validation '$identifier' failed.")
+                TargetResult(this, Phase.VALIDATE, result, new ValidationFailedException(identifier, result.flatMap(_.exception).headOption.orNull), startTime)
             }
             else {
+                logger.error(s"Validation '$identifier' failed - the result is marked as 'success with errors'.")
                 TargetResult(this, Phase.VALIDATE, result, Status.SUCCESS_WITH_ERRORS, startTime)
             }
         }

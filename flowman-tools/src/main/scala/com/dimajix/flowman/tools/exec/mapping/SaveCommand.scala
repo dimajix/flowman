@@ -29,6 +29,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.target.FileTarget
@@ -47,18 +48,18 @@ class SaveCommand extends Command {
     @Argument(usage = "specifies the output filename", metaVar = "<filename>", required = true, index = 1)
     var location: String = ""
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         val task = FileTarget(context, MappingOutputIdentifier(mapping), new Path(location), format, splitSettings(options).toMap)
 
         task.execute(session.execution, Phase.BUILD).toTry match {
-            case Success(_) =>
-                true
+            case Success(s) =>
+                s
             case Failure(ex:NoSuchMappingException) =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
-                false
+                Status.FAILED
             case Failure(e) =>
                 logger.error(s"Caught exception while save mapping '$mapping'", e)
-                false
+                Status.FAILED
         }
     }
 }

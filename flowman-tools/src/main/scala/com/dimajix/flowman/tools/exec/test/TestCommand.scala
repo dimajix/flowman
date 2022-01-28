@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.dimajix.flowman.tools.exec.NestedCommand
 class TestCommand extends NestedCommand {
     @Argument(required=true,index=0,metaVar="<subcommand>",usage="the subcommand to run",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
+        new SubCommand(name="inspect",impl=classOf[InspectCommand]),
         new SubCommand(name="list",impl=classOf[ListCommand]),
         new SubCommand(name="run",impl=classOf[RunCommand])
     ))

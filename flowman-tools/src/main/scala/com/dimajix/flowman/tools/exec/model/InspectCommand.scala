@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
+import com.dimajix.flowman.execution.Status
 
 
 class InspectCommand extends Command {
@@ -36,7 +37,7 @@ class InspectCommand extends Command {
     @Argument(required = true, usage = "specifies relation to inspect", metaVar = "<relation>")
     var relation: String = ""
 
-    override def execute(session: Session, project: Project, context: Context): Boolean = {
+    override def execute(session: Session, project: Project, context: Context): Status = {
         try {
             val relation = context.getRelation(RelationIdentifier(this.relation))
             println("Relation:")
@@ -52,15 +53,15 @@ class InspectCommand extends Command {
                 .map(_.toString)
                 .toSeq.sorted
                 .foreach{ p => println(s"    $p") }
-            true
+            Status.SUCCESS
         }
         catch {
             case ex:NoSuchRelationException =>
                 logger.error(s"Cannot resolve relation '${ex.relation}'")
-                false
+                Status.FAILED
             case NonFatal(e) =>
                 logger.error(s"Error inspecting '$relation': ${reasons(e)}")
-                false
+                Status.FAILED
         }
     }
 }

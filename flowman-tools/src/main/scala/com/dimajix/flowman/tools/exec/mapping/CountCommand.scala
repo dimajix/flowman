@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,19 +41,19 @@ class CountCommand extends Command {
     @Argument(usage = "specifies the mapping to count", metaVar = "<mapping>", required = true)
     var mapping: String = ""
 
-    override def execute(session: Session, project: Project, context:Context) : Boolean = {
+    override def execute(session: Session, project: Project, context:Context) : Status = {
         val task = CountTarget(context, MappingOutputIdentifier(mapping))
 
         task.execute(session.execution, Phase.BUILD).toTry match {
             case Success(_) =>
                 logger.info("Successfully counted  mapping")
-                true
+                Status.SUCCESS
             case Failure(ex:NoSuchMappingException) =>
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
-                false
+                Status.FAILED
             case Failure(e) =>
                 logger.error(s"Caught exception while counting mapping '$mapping'", e)
-                false
+                Status.FAILED
         }
     }
 }

@@ -21,12 +21,11 @@ or for inspecting individual entities.
 
 | exit code | description                                                                    |
 |-----------|--------------------------------------------------------------------------------|
-| 0         | everything worked out nicely, no error                                         |
-| 1         | all targets and jobs have been skipped                                         |
-| 2         | there were individual errors, but the run was successful (Success with Errors) |
-| 3         | there were execution errors                                                    |
-| 4         | the command line was not correct                                               |
-| 5         | an uncaught exception occurred                                                 |
+| 0         | Everything worked out nicely, no error. This includes skipped                  |
+| 2         | There were individual errors, but the run was successful (Success with Errors) |
+| 3         | There were execution errors                                                    |
+| 4         | The command line was not correct                                               |
+| 5         | An uncaught exception occurred                                                 |
 
 
 ## Project Commands

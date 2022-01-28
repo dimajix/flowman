@@ -1,6 +1,6 @@
-# Version 0.21.1
+# Version 0.21.1 - 2022-01-28
 
-* Support new exit codes of flowexec
+* flowexec now returns different exit codes depending on the processing result
 
 
 # Version 0.21.0 - 2022-01-26

@@ -81,7 +81,7 @@ private[execution] sealed class RunnerImpl {
             case Status.SUCCESS =>
                 logger.info(green(s"Successfully finished phase '$phase' for target '${target.identifier}' in ${fmt(duration)}"))
             case Status.SUCCESS_WITH_ERRORS =>
-                logger.info(yellow(s"Successfully finished phase '$phase' for target '${target.identifier}' with errors  in ${fmt(duration)}"))
+                logger.warn(yellow(s"Successfully finished phase '$phase' for target '${target.identifier}' with errors  in ${fmt(duration)}"))
             case Status.SKIPPED =>
                 logger.info(green(s"Skipped phase '$phase' for target '${target.identifier}'"))
             case Status.FAILED if result.exception.nonEmpty =>
@@ -259,7 +259,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         val isolated2 = isolated || job.parameters.nonEmpty || job.environment.nonEmpty
         withExecution(parentExecution, isolated2) { execution =>
             runner.withJobContext(job, args, Some(execution), force, dryRun, isolated2) { (context, arguments) =>
-                val title = s"job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
+                val title = s"lifecycle for job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
                 val listeners = if (!dryRun) stateStoreListener +: (runner.hooks ++ job.hooks).map(_.instantiate(context)) else Seq()
                 val result = execution.withListeners(listeners) { execution =>
                     execution.monitorLifecycle(job, arguments, phases) { execution =>

@@ -3,7 +3,6 @@ relations:
     kind: file
     format: parquet
     location: "$basedir/measurements/"
-    pattern: "${year}"
     partitions:
       - name: year
         type: integer

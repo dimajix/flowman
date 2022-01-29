@@ -197,8 +197,9 @@ case class FileRelation(
         appendPartitionColumns(df1)
     }
     private def readSpark(execution:Execution, partitions:Map[String,FieldValue]) : DataFrame = {
-        val df = this.reader(execution, format, options)
-                .load(qualifiedLocation.toString)
+        val reader = this.reader(execution, format, options)
+        val reader1 = if (execution.fs.file(qualifiedLocation).isDirectory()) reader.option("basePath", qualifiedLocation.toString) else reader
+        val df = reader1.load(qualifiedLocation.toString)
 
         // Filter partitions
         val parts = MapIgnoreCase(this.partitions.map(p => p.name -> p))

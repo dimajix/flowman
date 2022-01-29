@@ -12,7 +12,9 @@ relations:
     format: "csv"
     # Specify the base directory where all data is stored. This location does not include the partition pattern
     location: "${export_dir}"
-    # Specify the pattern how to identify files and/or partitions. This pattern is relative to the `location`
+    # You could specify the pattern how to identify files and/or partitions. This pattern is relative to the `location`.
+    # Actually, it is highly recommended NOT to explicitly specify a partition pattern for outgoing relations
+    # and let Spark generate this according to the Hive standard.
     pattern: "${export_pattern}"
     # Set format specific options
     options:
@@ -67,7 +69,7 @@ relations:
    column has a name and a type and optionally a granularity. Normally the partition columns are separate from the
    schema, but you *may* also include the partition column in the schema, although this is not considered to be best 
    practice. But it turns out to be quite useful in combination with dynamically writing to multiple partitions.
- 
+
  * `pattern` **(optional)** *(string)* *(default: empty)*:
  This field specifies the directory and/or file name pattern to access specific partitions. 
  Please see the section [Partitioning](#Partitioning) below. 
@@ -124,7 +126,10 @@ in all situations where only schema information is required.
 
 ### Partitioning
 
-Flowman also supports partitioning, i.e. written to different sub directories.
+Flowman also supports partitioning, i.e. written to different sub directories. You can explicitly specify a *partition
+pattern* via the `pattern` field, but it is highly recommended to NOT explicitly set this field and let Spark manage
+partitions itself. This way Spark can infer partition values from directory names and will also list directories more
+efficiently.
 
 ### Writing to Dynamic Partitions
 

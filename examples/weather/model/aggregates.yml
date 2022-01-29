@@ -5,8 +5,10 @@ relations:
     format: parquet
     # Specify the base directory where all data is stored. This location does not include the partition pattern
     location: "$basedir/aggregates/"
-    # Specify the pattern how to identify files and/or partitions. This pattern is relative to the `location`
-    pattern: "${year}"
+    # You could specify the pattern how to identify files and/or partitions. This pattern is relative to the `location`.
+    # Actually, it is highly recommended NOT to explicitly specify a partition pattern for outgoing relations
+    # and let Spark generate this according to the Hive standard.
+    #pattern: "${year}"
     # Add partition column, which can be used in the `pattern`
     partitions:
       - name: year

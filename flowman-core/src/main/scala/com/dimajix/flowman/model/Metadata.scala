@@ -42,7 +42,7 @@ final case class Metadata(
 ) {
     require(name != null)
     require(category != null && category.nonEmpty)
-    require(kind != null && kind.nonEmpty)
+    require(kind != null)
     def asMap : Map[String,String] = {
         Map(
             "name" -> name,

@@ -1,3 +1,9 @@
+# Version 0.22.0
+
+* Add new 'sqlserver' relation
+
+
+
 # Version 0.21.1 - 2022-01-28
 
 * flowexec now returns different exit codes depending on the processing result

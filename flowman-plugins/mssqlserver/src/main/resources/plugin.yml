@@ -3,4 +3,5 @@ description: ${project.name}
 version: ${plugin.version}
 isolation: false
 jars:
+ - ${plugin.jar}
  - mssql-jdbc-${mssqlserver-java-client.version}.jar

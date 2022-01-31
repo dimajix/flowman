@@ -168,7 +168,7 @@ case class JdbcRelation(
         require(partitions != null)
 
         // Get Connection
-        val (_,props) = createProperties()
+        val (_,props) = createConnectionProperties()
 
         // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
         val reader = execution.spark.read
@@ -247,8 +247,8 @@ case class JdbcRelation(
                 "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists'.")
         }
     }
-    private def doWrite(execution: Execution, df:DataFrame): Unit = {
-        val (_,props) = createProperties()
+    protected def doWrite(execution: Execution, df:DataFrame): Unit = {
+        val (_,props) = createConnectionProperties()
         this.writer(execution, df, "jdbc", Map(), SaveMode.Append)
             .options(props)
             .option(JDBCOptions.JDBC_TABLE_NAME, tableIdentifier.unquotedString)
@@ -290,7 +290,7 @@ case class JdbcRelation(
         val sourceColumns = collectColumns(mergeCondition.expr, "source") ++ clauses.flatMap(c => collectColumns(df.schema, c, "source"))
         val sourceDf = df.select(sourceColumns.toSeq.map(col):_*)
 
-        val (url, props) = createProperties()
+        val (url, props) = createConnectionProperties()
         val options = new JDBCOptions(url, tableIdentifier.unquotedString, props)
         val targetSchema = outputSchema(execution)
         JdbcUtils.mergeTable(tableIdentifier, "target", targetSchema, sourceDf, "source", mergeCondition, clauses, options)
@@ -553,7 +553,7 @@ case class JdbcRelation(
         }
     }
 
-    private def createProperties() : (String,Map[String,String]) = {
+    protected def createConnectionProperties() : (String,Map[String,String]) = {
         val connection = this.connection.value.asInstanceOf[JdbcConnection]
         val props = mutable.Map[String,String]()
         props.put(JDBCOptions.JDBC_URL, connection.url)
@@ -568,7 +568,7 @@ case class JdbcRelation(
     }
 
     private def withConnection[T](fn:(java.sql.Connection,JDBCOptions) => T) : T = {
-        val (url,props) = createProperties()
+        val (url,props) = createConnectionProperties()
         logger.debug(s"Connecting to jdbc source at $url")
 
         val options = new JDBCOptions(url, tableIdentifier.unquotedString, props)

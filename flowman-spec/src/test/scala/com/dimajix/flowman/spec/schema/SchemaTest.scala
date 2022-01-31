@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,15 @@
 
 package com.dimajix.flowman.spec.schema
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.RootContext
+import com.dimajix.flowman.spec.ObjectMapper
 
 
 class SchemaTest extends AnyFlatSpec with Matchers {
-    lazy val mapper = {
-        val mapper = new ObjectMapper(new YAMLFactory())
-        mapper.registerModule(DefaultScalaModule)
-        mapper
-    }
+    lazy val mapper = ObjectMapper.mapper
 
     "A Schema" should "default to the embedded schema" in {
         val spec =

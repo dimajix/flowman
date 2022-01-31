@@ -1,0 +1,20 @@
+# The following definition provides a "run history" stored in a database. If nothing else is specified, the database
+# is stored locally as a Derby database. If you do not want to use the history, you can simply remove the whole
+# 'history' block from this file.
+history:
+  kind: jdbc
+  connection: flowman_state
+  retries: 3
+  timeout: 1000
+
+connections:
+  flowman_state:
+    driver: $System.getenv('FLOWMAN_LOGDB_DRIVER', 'org.apache.derby.jdbc.EmbeddedDriver')
+    url: $System.getenv('FLOWMAN_LOGDB_URL', $String.concat('jdbc:derby:', $System.getenv('FLOWMAN_HOME'), '/logdb;create=true'))
+    username: $System.getenv('FLOWMAN_LOGDB_USER', '')
+    password: $System.getenv('FLOWMAN_LOGDB_PASSWORD', '')
+
+plugins:
+  - flowman-mariadb
+  - flowman-mysql
+  - flowman-mssqlserver

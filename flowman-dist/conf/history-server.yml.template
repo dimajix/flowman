@@ -16,10 +16,6 @@ connections:
     password: $System.getenv('FLOWMAN_HISTORY_PASSWORD', '')
 
 
-# This section contains global configuration properties.
-config:
-
-
 # This section enables plugins. You may want to remove plugins which are of no use for you.
 plugins:
   - flowman-mariadb

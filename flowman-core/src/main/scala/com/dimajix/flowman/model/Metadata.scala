@@ -40,6 +40,9 @@ final case class Metadata(
     kind: String,
     labels: Map[String,String] = Map()
 ) {
+    require(name != null)
+    require(category != null && category.nonEmpty)
+    require(kind != null && kind.nonEmpty)
     def asMap : Map[String,String] = {
         Map(
             "name" -> name,

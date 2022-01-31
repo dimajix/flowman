@@ -62,7 +62,6 @@ final class MetadataSpec {
 
 
 abstract class NamedSpec[T] extends Spec[T] {
-    @JsonProperty(value="kind", required = true) protected var kind: String = _
     @JsonProperty(value="name", required = false) protected[spec] var name:String = ""
     @JsonProperty(value="metadata", required=false) protected var metadata:Option[MetadataSpec] = None
 

@@ -47,6 +47,7 @@ object AssertionSpec extends TypeRegistry[AssertionSpec] {
     new JsonSubTypes.Type(name = "uniqueKey", value = classOf[UniqueKeyAssertionSpec])
 ))
 abstract class AssertionSpec  extends NamedSpec[Assertion] {
+    @JsonProperty(value="kind", required = true) protected var kind: String = _
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
 
     override def instantiate(context: Context): Assertion

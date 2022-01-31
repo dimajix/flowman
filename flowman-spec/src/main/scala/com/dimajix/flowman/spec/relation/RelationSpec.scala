@@ -61,6 +61,7 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
     new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelationSpec])
 ))
 abstract class RelationSpec extends NamedSpec[Relation] {
+    @JsonProperty(value="kind", required = true) protected var kind: String = _
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
 
     override def instantiate(context:Context) : Relation

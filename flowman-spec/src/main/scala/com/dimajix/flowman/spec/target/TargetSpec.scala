@@ -67,6 +67,7 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "verify", value = classOf[VerifyTargetSpec])
 ))
 abstract class TargetSpec extends NamedSpec[Target] {
+    @JsonProperty(value = "kind", required = true) protected var kind: String = _
     @JsonProperty(value = "before", required=false) protected[spec] var before:Seq[String] = Seq()
     @JsonProperty(value = "after", required=false) protected[spec] var after:Seq[String] = Seq()
 

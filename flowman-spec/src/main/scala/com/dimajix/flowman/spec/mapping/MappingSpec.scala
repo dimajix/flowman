@@ -89,9 +89,10 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "values", value = classOf[ValuesMappingSpec])
 ))
 abstract class MappingSpec extends NamedSpec[Mapping] {
-    @JsonProperty("broadcast") protected var broadcast:String = "false"
-    @JsonProperty("checkpoint") protected var checkpoint:String = "false"
-    @JsonProperty("cache") protected var cache:String = "NONE"
+    @JsonProperty(value="kind", required = true) protected var kind: String = _
+    @JsonProperty(value="broadcast", required = false) protected var broadcast:String = "false"
+    @JsonProperty(value="checkpoint", required = false) protected var checkpoint:String = "false"
+    @JsonProperty(value="cache", required = false) protected var cache:String = "NONE"
 
     /**
       * Creates an instance of this specification and performs the interpolation of all variables

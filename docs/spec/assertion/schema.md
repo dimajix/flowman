@@ -17,7 +17,7 @@ columns:
 ```yaml
 kind: schema
 mapping: some_mapping
-ignoreNullable: false
+ignoreNullability: false
 schema:
   kind: inline
   fields:
@@ -35,7 +35,7 @@ targets:
     assertions:
       - kind: schema
         mapping: some_mapping
-        ignoreNullable: true
+        ignoreNullability: true
         ignoreCase: false
         ignoreOrder: true
         schema:

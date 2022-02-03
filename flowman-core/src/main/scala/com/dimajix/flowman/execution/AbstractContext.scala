@@ -31,7 +31,7 @@ import com.dimajix.flowman.model.Prototype
 
 
 object AbstractContext {
-    abstract class Builder[B <: Builder[B,C], C <: Context](parent:Context, defaultSettingLevel:SettingLevel) { this:B =>
+    abstract class Builder[B <: Builder[B,C], C <: Context](parent:Option[Context], defaultSettingLevel:SettingLevel) { this:B =>
         private var _environment = Seq[(String,Any,SettingLevel)]()
         private var _config = Seq[(String,String,SettingLevel)]()
         private var _connections = Seq[(String, Prototype[Connection], SettingLevel)]()
@@ -48,7 +48,7 @@ object AbstractContext {
             val rawConnections = mutable.Map[String, (Prototype[Connection], Int)]()
 
             // Fetch environment from parent
-            if (parent != null) {
+            parent.foreach { parent =>
                 parent.rawEnvironment.foreach(kv => rawEnvironment.update(kv._1, kv._2))
                 parent.rawConfig.foreach(kv => rawConfig.update(kv._1, kv._2))
             }

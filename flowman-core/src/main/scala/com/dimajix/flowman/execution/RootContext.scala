@@ -48,8 +48,8 @@ import com.dimajix.flowman.model.TestIdentifier
 
 
 object RootContext {
-    class Builder private[RootContext](namespace:Option[Namespace], profiles:Set[String], parent:Context = null) extends AbstractContext.Builder[Builder,RootContext](parent, SettingLevel.NAMESPACE_SETTING) {
-        private var projectResolver:Option[String => Option[Project]] = None
+    class Builder private[RootContext](namespace:Option[Namespace], profiles:Set[String], parent:Option[Context] = None) extends AbstractContext.Builder[Builder,RootContext](parent, SettingLevel.NAMESPACE_SETTING) {
+        private var projectResolver:Option[String => Option[Project]] = parent.map(_.root).flatMap(_.projectResolver)
         private var overrideMappings:Map[MappingIdentifier, Prototype[Mapping]] = Map()
         private var overrideRelations:Map[RelationIdentifier, Prototype[Relation]] = Map()
         private var execution:Option[Execution] = None
@@ -107,13 +107,13 @@ object RootContext {
     def builder() = new Builder(None, Set())
     def builder(namespace:Namespace) = new Builder(Some(namespace), Set())
     def builder(namespace:Option[Namespace], profiles:Set[String]) = new Builder(namespace, profiles)
-    def builder(parent:Context) = new Builder(parent.namespace, Set(), parent)
+    def builder(parent:Context) = new Builder(parent.namespace, Set(), Some(parent))
 }
 
 
 final class RootContext private[execution](
     _namespace:Option[Namespace],
-    projectResolver:Option[String => Option[Project]],
+    private val projectResolver:Option[String => Option[Project]],
     _profiles:Set[String],
     _env:Map[String,(Any, Int)],
     _config:Map[String,(String, Int)],

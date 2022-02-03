@@ -41,7 +41,7 @@ import com.dimajix.flowman.model.TestIdentifier
 
 
 object ScopeContext {
-    class Builder(parent:Context) extends AbstractContext.Builder[Builder,ScopeContext](parent, SettingLevel.SCOPE_OVERRIDE) {
+    class Builder(parent:Context) extends AbstractContext.Builder[Builder,ScopeContext](Some(parent), SettingLevel.SCOPE_OVERRIDE) {
         require(parent != null)
 
         private var mappings = Map[String, Prototype[Mapping]]()

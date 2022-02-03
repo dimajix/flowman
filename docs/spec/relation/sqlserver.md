@@ -3,6 +3,11 @@
 The SQL Server relation allows you to access MS SQL Server and Azure SQL databases using a JDBC driver. It uses the
 `spark-sql-connector` from Microsoft to speed up processing.
 
+## Plugin
+
+This relation type is provided as part of the [`flowman-mssql` plugin](../../plugins/mssql.md), which needs to be enabled 
+in your `namespace.yml` file. See [namespace documentation](../namespace.md) for more information for configuring plugins.
+
 
 ## Example
 

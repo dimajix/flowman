@@ -56,13 +56,14 @@ case class DropMapping(
         require(deps != null)
 
         val df = deps(input)
+
+        // Apply optional filter, before dropping columns!
+        val filtered = filter.map(df.filter).getOrElse(df)
+
         val asm = assembler
-        val result = asm.reassemble(df)
+        val result = asm.reassemble(filtered)
 
-        // Apply optional filter
-        val filteredResult = filter.map(result.filter).getOrElse(result)
-
-        Map("main" -> filteredResult)
+        Map("main" -> result)
     }
 
     /**
@@ -83,7 +84,7 @@ case class DropMapping(
 
     private def assembler : Assembler = {
         val builder = Assembler.builder()
-                .columns(_.drop(columns))
+            .columns(_.drop(columns))
         builder.build()
     }
 }

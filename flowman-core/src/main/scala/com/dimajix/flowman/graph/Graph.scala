@@ -75,6 +75,8 @@ final case class Graph(
     relations:Seq[RelationRef],
     targets:Seq[TargetRef]
 ) {
+    def project : Option[Project] = context.project
+
     def nodes : Seq[Node] = mappings ++ relations ++ targets
     def edges : Seq[Edge] = nodes.flatMap(_.outgoing)
 

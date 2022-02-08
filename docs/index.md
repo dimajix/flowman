@@ -96,6 +96,7 @@ Flowman also provides optional plugins which extend functionality. You can find 
    installation
    lifecycle
    spec/index
+   testing/index
    cli/index
    history-server/index
    cookbook/index

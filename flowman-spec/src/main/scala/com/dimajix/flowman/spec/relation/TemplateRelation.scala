@@ -22,6 +22,7 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.common.ParserUtils.splitSettings
+import com.dimajix.flowman.documentation.RelationDoc
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
@@ -92,6 +93,12 @@ case class TemplateRelation(
       * @return
       */
     override def description : Option[String] = relationInstance.description
+
+    /**
+     * Returns a (static) documentation of this relation
+     * @return
+     */
+    override def documentation : Option[RelationDoc] = relationInstance.documentation.map(_.merge(instanceProperties.documentation))
 
     /**
       * Returns the schema of the relation

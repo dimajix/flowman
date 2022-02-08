@@ -1,0 +1,15 @@
+Project: ${project.name} version ${project.version}
+
+Mappings:
+#foreach($mapping in ${project.mappings})
+Mapping '${mapping}'
+${mapping.description}
+#foreach($output in ${mapping.outputs})
+ - Output '${output.name}'
+#foreach($column in ${output.schema.columns})
+    ${column.name} ${column.catalogType} #if(!$column.nullable)NOT NULL #end
+#end
+#end
+
+
+#end

@@ -29,6 +29,7 @@ import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.RelationType
+import com.dimajix.flowman.spec.documentation.RelationDocSpec
 import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
@@ -63,6 +64,7 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
 abstract class RelationSpec extends NamedSpec[Relation] {
     @JsonProperty(value="kind", required = true) protected var kind: String = _
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
+    @JsonProperty(value="documentation", required = false) private var documentation: Option[RelationDocSpec] = None
 
     override def instantiate(context:Context) : Relation
 
@@ -77,7 +79,8 @@ abstract class RelationSpec extends NamedSpec[Relation] {
         Relation.Properties(
             context,
             metadata.map(_.instantiate(context, name, Category.RELATION, kind)).getOrElse(Metadata(context, name, Category.RELATION, kind)),
-            description.map(context.evaluate)
+            description.map(context.evaluate),
+            documentation.map(_.instantiate(context))
         )
     }
 }

@@ -19,6 +19,7 @@ package com.dimajix.flowman.model
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.storage.StorageLevel
 
+import com.dimajix.flowman.documentation.MappingDoc
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.NoSuchMappingOutputException
@@ -35,7 +36,8 @@ object Mapping {
                 Metadata(context, name, Category.MAPPING, kind),
                 false,
                 false,
-                StorageLevel.NONE
+                StorageLevel.NONE,
+                None
             )
         }
     }
@@ -44,7 +46,8 @@ object Mapping {
         metadata:Metadata,
         broadcast:Boolean,
         checkpoint:Boolean,
-        cache:StorageLevel
+        cache:StorageLevel,
+        documentation:Option[MappingDoc]
     ) extends Instance.Properties[Properties] {
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
@@ -69,6 +72,12 @@ trait Mapping extends Instance {
       * @return
       */
     def identifier : MappingIdentifier
+
+    /**
+     * Returns a (static) documentation of this mapping
+     * @return
+     */
+    def documentation : Option[MappingDoc]
 
     /**
       * This method should return true, if the resulting dataframe should be broadcast for map-side joins
@@ -168,6 +177,12 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
      * @return
      */
     override def identifier : MappingIdentifier = instanceProperties.identifier
+
+    /**
+     * Returns a (static) documentation of this mapping
+     * @return
+     */
+    override def documentation : Option[MappingDoc] = instanceProperties.documentation
 
     /**
      * This method should return true, if the resulting dataframe should be broadcast for map-side joins

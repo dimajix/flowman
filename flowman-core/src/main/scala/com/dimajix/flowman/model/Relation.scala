@@ -34,6 +34,7 @@ import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.config.FlowmanConf
+import com.dimajix.flowman.documentation.RelationDoc
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
@@ -56,6 +57,7 @@ object Relation {
             Properties(
                 context,
                 Metadata(context, name, Category.RELATION, kind),
+                None,
                 None
             )
         }
@@ -63,7 +65,8 @@ object Relation {
     final case class Properties(
         context:Context,
         metadata:Metadata,
-        description:Option[String]
+        description:Option[String],
+        documentation:Option[RelationDoc]
     )
     extends Instance.Properties[Properties] {
         override val namespace : Option[Namespace] = context.namespace
@@ -98,6 +101,12 @@ trait Relation extends Instance {
       * @return
       */
     def description : Option[String]
+
+    /**
+     * Returns a (static) documentation of this relation
+     * @return
+     */
+    def documentation : Option[RelationDoc]
 
     /**
       * Returns the list of all resources which will be created by this relation. This method mainly refers to the
@@ -277,6 +286,12 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     override def description : Option[String] = instanceProperties.description
 
     /**
+     * Returns a (static) documentation of this relation
+     * @return
+     */
+    override def documentation : Option[RelationDoc] = instanceProperties.documentation
+
+    /**
      * Returns the schema of the relation, excluding partition columns
      * @return
      */
@@ -322,7 +337,7 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
-    def link(linker:Linker) : Unit = {}
+    override def link(linker:Linker) : Unit = {}
 
     /**
      * Creates a DataFrameReader which is already configured with the schema

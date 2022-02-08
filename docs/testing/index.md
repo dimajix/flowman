@@ -1,4 +1,4 @@
-# Testing
+# Testing with Flowman
 
 Testing data pipelines often turns out to be a difficult undertaking, since the pipeline relies on external data
 sources which need to be mocked. Fortunately, Flowman natively supports writing `tests`, which in turn support simple

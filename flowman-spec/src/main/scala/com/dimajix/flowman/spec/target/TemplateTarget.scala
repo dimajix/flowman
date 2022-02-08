@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.common.ParserUtils.splitSettings
+import com.dimajix.flowman.documentation.TargetDoc
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
@@ -54,6 +55,12 @@ case class TemplateTarget(
             case spec => spec.instantiate(templateContext)
         }
     }
+
+    /**
+     * Returns a (static) documentation of this target
+     * @return
+     */
+    override def documentation : Option[TargetDoc] = targetInstance.documentation.map(_.merge(instanceProperties.documentation))
 
     /**
      * Returns an instance representing this target with the context

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.common.ParserUtils.splitSettings
+import com.dimajix.flowman.documentation.MappingDoc
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.ScopeContext
@@ -55,6 +56,12 @@ case class TemplateMapping(
         }
     }
 
+    /**
+     * Returns a (static) documentation of this mapping
+     *
+     * @return
+     */
+    override def documentation: Option[MappingDoc] = mappingInstance.documentation.map(_.merge(instanceProperties.documentation))
 
     /**
       * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings

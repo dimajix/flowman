@@ -20,6 +20,7 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
+import com.dimajix.flowman.documentation.TargetDoc
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
@@ -60,7 +61,8 @@ object Target {
                 context,
                 Metadata(context, name, Category.TARGET, kind),
                 Seq(),
-                Seq()
+                Seq(),
+                None
             )
         }
     }
@@ -68,7 +70,8 @@ object Target {
         context:Context,
         metadata:Metadata,
         before: Seq[TargetIdentifier],
-        after: Seq[TargetIdentifier]
+        after: Seq[TargetIdentifier],
+        documentation: Option[TargetDoc]
     ) extends Instance.Properties[Properties] {
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
@@ -93,6 +96,12 @@ trait Target extends Instance {
       * @return
       */
     def identifier : TargetIdentifier
+
+    /**
+     * Returns a (static) documentation of this target
+     * @return
+     */
+    def documentation : Option[TargetDoc]
 
     /**
       * Returns an instance representing this target with the context
@@ -168,6 +177,12 @@ abstract class BaseTarget extends AbstractInstance with Target {
      * @return
      */
     override def identifier : TargetIdentifier = instanceProperties.identifier
+
+    /**
+     * Returns a (static) documentation of this target
+     * @return
+     */
+    override def documentation : Option[TargetDoc] = instanceProperties.documentation
 
     /**
      * Returns an instance representing this target with the context

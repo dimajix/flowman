@@ -62,7 +62,7 @@ final case class TargetDoc(
         val ref = TargetReference(Some(parent), identifier.name)
         copy(
             parent = Some(parent),
-            phases = phases.map(_.reparent(ref)),
+            phases = phases.map(_.reparent(ref))
         )
     }
 

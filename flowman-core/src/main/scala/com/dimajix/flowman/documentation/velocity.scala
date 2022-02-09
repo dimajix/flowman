@@ -18,6 +18,8 @@ package com.dimajix.flowman.documentation
 
 import scala.collection.JavaConverters._
 
+import com.dimajix.flowman.model.ResourceIdentifierWrapper
+
 
 final case class ColumnDocWrapper(column:ColumnDoc) {
     override def toString: String = column.name
@@ -77,6 +79,8 @@ final case class RelationDocWrapper(relation:RelationDoc) {
     def getName() : String = relation.identifier.name
     def getDescription() : String = relation.description.getOrElse("")
     def getSchema() : SchemaDocWrapper = relation.schema.map(SchemaDocWrapper).orNull
+    def getInputs() : java.util.List[String] = relation.inputs.map(_.toString).asJava
+    def getResources() : java.util.List[ResourceIdentifierWrapper] = relation.provides.map(ResourceIdentifierWrapper).asJava
 }
 
 

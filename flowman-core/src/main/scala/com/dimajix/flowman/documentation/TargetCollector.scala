@@ -18,7 +18,10 @@ package com.dimajix.flowman.documentation
 
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
+import com.dimajix.flowman.graph.InputMapping
+import com.dimajix.flowman.graph.ReadRelation
 import com.dimajix.flowman.graph.TargetRef
+import com.dimajix.flowman.graph.WriteRelation
 import com.dimajix.flowman.model.Target
 
 
@@ -36,14 +39,31 @@ class TargetCollector extends Collector {
      * @return
      */
     private def document(execution: Execution, parent:Reference, node:TargetRef) : TargetDoc = {
+        val inputs = node.incoming.flatMap {
+            case map: InputMapping =>
+                val mapref = MappingReference(Some(parent), map.input.name)
+                val outref = MappingOutputReference(Some(mapref), map.pin)
+                Some(outref)
+            case read: ReadRelation =>
+                val relref = RelationReference(Some(parent), read.input.name)
+                Some(relref)
+            case _ => None
+        }
+        val outputs = node.outgoing.flatMap {
+            case write:WriteRelation =>
+                val relref = RelationReference(Some(parent), write.output.name)
+                Some(relref)
+            case _ => None
+        }
+
         val target = node.target
         val doc = TargetDoc(
             Some(parent),
             target.identifier,
             target.description,
             Seq(),
-            Seq(),
-            Seq()
+            inputs,
+            outputs
         )
         val ref = doc.reference
 

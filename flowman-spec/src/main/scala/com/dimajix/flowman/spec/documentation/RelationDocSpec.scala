@@ -37,6 +37,7 @@ class RelationDocSpec extends Spec[RelationDoc] {
             context.evaluate(description),
             None,
             Seq(),
+            Seq(),
             Map()
         )
         val ref = doc.reference

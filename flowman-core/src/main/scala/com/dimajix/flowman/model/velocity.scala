@@ -171,3 +171,11 @@ final case class MeasureResultWrapper(result:MeasureResult) extends ResultWrappe
 
 final case class AssertionTestResultWrapper(result:AssertionTestResult) extends ResultWrapper(result) {
 }
+
+
+final case class ResourceIdentifierWrapper(resource:ResourceIdentifier) {
+    override def toString: String = resource.category + ":" + resource.name
+
+    def getCategory() : String = resource.category
+    def getName() : String = resource.name
+}

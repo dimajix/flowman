@@ -18,13 +18,17 @@ package com.dimajix.flowman.documentation
 
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
+import com.dimajix.flowman.graph.InputMapping
+import com.dimajix.flowman.graph.MappingRef
+import com.dimajix.flowman.graph.RelationRef
+import com.dimajix.flowman.graph.WriteRelation
 import com.dimajix.flowman.model.Relation
 
 
 class RelationCollector extends Collector {
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
         val parent = documentation.reference
-        val docs = graph.relations.map(t => t.relation.identifier -> document(execution, parent, t.relation)).toMap
+        val docs = graph.relations.map(t => t.relation.identifier -> document(execution, parent, t)).toMap
         documentation.copy(relations = docs)
     }
 
@@ -35,19 +39,33 @@ class RelationCollector extends Collector {
      * @param parent
      * @return
      */
-    private def document(execution:Execution, parent:Reference, relation:Relation) : RelationDoc = {
+    private def document(execution:Execution, parent:Reference, node:RelationRef) : RelationDoc = {
+        val inputs = node.incoming.flatMap {
+                case write:WriteRelation =>
+                    write.input.incoming.flatMap {
+                        case map: InputMapping =>
+                            val mapref = MappingReference(Some(parent), map.input.name)
+                            val outref = MappingOutputReference(Some(mapref), map.pin)
+                            Some(outref)
+                        case _ => None
+                    }
+                case _ => Seq()
+            }
+
+        val relation = node.relation
         val doc = RelationDoc(
             Some(parent),
             relation.identifier,
             relation.description,
             None,
+            inputs,
             relation.provides.toSeq,
             Map()
         )
         val ref = doc.reference
 
         val desc = SchemaDoc.ofStruct(ref, relation.describe(execution))
-        val schemaDoc = relation.schema.map { schema =>
+        val schema = relation.schema.map { schema =>
             val fieldsDoc = SchemaDoc.ofFields(parent, schema.fields)
             SchemaDoc(
                 Some(ref),
@@ -56,8 +74,8 @@ class RelationCollector extends Collector {
                 Seq()
             )
         }
-        val mergedDoc = desc.merge(schemaDoc)
+        val mergedSchema = desc.merge(schema)
 
-        doc.copy(schema = Some(mergedDoc)).merge(relation.documentation)
+        doc.copy(schema = Some(mergedSchema)).merge(relation.documentation)
     }
 }

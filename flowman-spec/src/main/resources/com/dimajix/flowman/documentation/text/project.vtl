@@ -25,6 +25,14 @@ Mapping '${mapping}' (${mapping.reference})
 #foreach($relation in ${project.relations})
 Relation '${relation}' (${relation.reference})
   Description: ${relation.description}
+  Resources:
+    #foreach($resource in ${relation.resources})
+    - ${resource.category} : ${resource.name}
+    #end
+  Inputs:
+    #foreach($input in ${relation.inputs})
+    - ${input}
+    #end
   Schema:
   #foreach($column in ${relation.schema.columns})
       ${column.name} ${column.catalogType} #if(!$column.nullable)NOT NULL #end- ${column.description}

@@ -39,6 +39,7 @@ final case class RelationDoc(
     identifier:RelationIdentifier,
     description:Option[String],
     schema:Option[SchemaDoc],
+    inputs:Seq[Reference],
     provides:Seq[ResourceIdentifier],
     partitions:Map[String,FieldValue] = Map()
 ) extends EntityDoc {

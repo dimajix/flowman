@@ -214,7 +214,9 @@ case class ValuesRelation(
      * @return
      */
     override def describe(execution: Execution): types.StructType = {
-        types.StructType(effectiveSchema.fields)
+        val result = types.StructType(effectiveSchema.fields)
+
+        applyDocumentation(result)
     }
 
     /**

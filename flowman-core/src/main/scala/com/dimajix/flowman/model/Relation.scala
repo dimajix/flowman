@@ -322,7 +322,7 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      */
     override def describe(execution:Execution) : StructType = {
         val partitions = SetIgnoreCase(this.partitions.map(_.name))
-        if (!fields.forall(f => partitions.contains(f.name))) {
+        val result = if (!fields.forall(f => partitions.contains(f.name))) {
             // Use given fields if relation contains valid list of fields in addition to the partition columns
             StructType(fields)
         }
@@ -331,6 +331,8 @@ abstract class BaseRelation extends AbstractInstance with Relation {
             val df = read(execution)
             StructType.of(df.schema)
         }
+
+        applyDocumentation(result)
     }
 
     /**
@@ -508,6 +510,12 @@ abstract class BaseRelation extends AbstractInstance with Relation {
                 enforcer.transform(df)
             }
             .getOrElse(df)
+    }
+
+    protected def applyDocumentation(schema:StructType) : StructType = {
+        documentation
+            .flatMap(_.schema.map(_.enrich(schema)))
+            .getOrElse(schema)
     }
 }
 

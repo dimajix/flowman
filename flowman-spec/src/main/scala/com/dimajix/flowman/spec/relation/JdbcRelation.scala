@@ -148,7 +148,7 @@ case class JdbcRelation(
      * @return
      */
     override def describe(execution:Execution) : FlowmanStructType = {
-        if (schema.nonEmpty) {
+        val result = if (schema.nonEmpty) {
             FlowmanStructType(fields)
         }
         else {
@@ -156,6 +156,8 @@ case class JdbcRelation(
                 JdbcUtils.getSchema(con, tableIdentifier, options)
             }
         }
+
+        applyDocumentation(result)
     }
 
     /**

@@ -122,7 +122,9 @@ case class KafkaRelation(
      * @return
      */
     override def describe(execution: Execution): types.StructType = {
-        types.StructType(fields)
+        val result = types.StructType(fields)
+
+        applyDocumentation(result)
     }
 
     /**

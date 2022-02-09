@@ -226,7 +226,9 @@ case class MockRelation(
      * @return
      */
     override def describe(execution: Execution): types.StructType = {
-        types.StructType(mocked.fields)
+        val result = types.StructType(mocked.fields)
+
+        applyDocumentation(result)
     }
 
     /**

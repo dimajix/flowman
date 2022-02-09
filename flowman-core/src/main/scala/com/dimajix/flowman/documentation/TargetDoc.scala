@@ -24,7 +24,14 @@ import com.dimajix.flowman.model.TargetIdentifier
 final case class TargetPhaseReference(
     override val parent:Option[Reference],
     phase:Phase
-) extends Reference
+) extends Reference {
+    override def toString: String = {
+        parent match {
+            case Some(ref) => ref.toString + "/phase=" + phase.upper
+            case None => phase.upper
+        }
+    }
+}
 
 
 final case class TargetPhaseDoc(
@@ -45,7 +52,14 @@ final case class TargetPhaseDoc(
 final case class TargetReference(
     override val parent:Option[Reference],
     name:String
-) extends Reference
+) extends Reference {
+    override def toString: String = {
+        parent match {
+            case Some(ref) => ref.toString + "/target=" + name
+            case None => name
+        }
+    }
+}
 
 
 final case class TargetDoc(

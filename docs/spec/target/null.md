@@ -11,6 +11,15 @@ targets:
     kind: null
 ```
 
+
+## Fields
+
+* `kind` **(mandatory)** *(type: string)*: `null`
+
+* `description` **(optional)** *(type: string)*:
+  Optional descriptive text of the build target
+
+
 ## Supported Phases
 * `CREATE`
 * `MIGRATE`

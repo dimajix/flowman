@@ -21,6 +21,9 @@ targets:
 
 * `kind` **(mandatory)** *(type: string)*: `truncate`
 
+* `description` **(optional)** *(type: string)*:
+  Optional descriptive text of the build target
+
 * `relation` **(mandatory)** *(type: string)*:
   Specifies the name of the relation to truncate.
 

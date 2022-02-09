@@ -29,6 +29,9 @@ targets:
 
 * `kind` **(mandatory)** *(type: string)*: `validate`
 
+* `description` **(optional)** *(type: string)*:
+  Optional descriptive text of the build target
+
 * `assertions` **(optional)** *(type: map:assertion)*:
   Map of [assertions](../assertion/index.md) to be executed. The validation is marked as *failed* if a single
   assertion fails.

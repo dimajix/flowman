@@ -17,6 +17,9 @@ targets:
 
 * `kind` **(mandatory)** *(type: string)*: `blackhole`
 
+* `description` **(optional)** *(type: string)*: 
+Optional descriptive text of the build target
+
 * `mapping` **(mandatory)** *(type: string)*: 
 Specifies the name of the mapping output to be materialized
 

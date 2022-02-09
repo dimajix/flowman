@@ -23,7 +23,14 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 final case class MappingOutputReference(
     override val parent:Option[Reference],
     name:String
-) extends Reference
+) extends Reference {
+    override def toString: String = {
+        parent match {
+            case Some(ref) => ref.toString + "/output=" + name
+            case None => name
+        }
+    }
+}
 
 
 final case class MappingOutputDoc(
@@ -57,7 +64,14 @@ final case class MappingOutputDoc(
 final case class MappingReference(
     override val parent:Option[Reference],
     name:String
-) extends Reference
+) extends Reference {
+    override def toString: String = {
+        parent match {
+            case Some(ref) => ref.toString + "/mapping=" + name
+            case None => name
+        }
+    }
+}
 
 
 final case class MappingDoc(

@@ -1,26 +1,53 @@
 Project: ${project.name} version ${project.version}
+Description: ${project.description}
 
-Mappings:
+
+=========== Mappings: =================================================================================================
 #foreach($mapping in ${project.mappings})
-Mapping '${mapping}'
-${mapping.description}
-#foreach($output in ${mapping.outputs})
- - Output '${output.name}'
-#foreach($column in ${output.schema.columns})
-    ${column.name} ${column.catalogType} #if(!$column.nullable)NOT NULL #end- ${column.description}
-#end
-#end
-
-
-#end
-
-Relations:
-#foreach($relation in ${project.relations})
-Relation '${relation}'
-    ${relation.description}
-    #foreach($column in ${relation.schema.columns})
-        ${column.name} ${column.catalogType} #if(!$column.nullable)NOT NULL #end- ${column.description}
+Mapping '${mapping}' (${mapping.reference})
+  Description: ${mapping.description}
+  Inputs:
+    #foreach($input in ${mapping.inputs})
+    - ${input}
     #end
+  Outputs:
+  #foreach($output in ${mapping.outputs})
+   - '${output.name}':
+    #foreach($column in ${output.schema.columns})
+    ${column.name} ${column.catalogType} #if(!$column.nullable)NOT NULL #end- ${column.description}
+    #end
+  #end
 
+#end
+
+
+=========== Relations: ================================================================================================
+#foreach($relation in ${project.relations})
+Relation '${relation}' (${relation.reference})
+  Description: ${relation.description}
+  Schema:
+  #foreach($column in ${relation.schema.columns})
+      ${column.name} ${column.catalogType} #if(!$column.nullable)NOT NULL #end- ${column.description}
+  #end
+
+#end
+
+
+=========== Targets: ==================================================================================================
+#foreach($target in ${project.targets})
+Target '${target}' (${target.reference})
+  Description: ${target.description}
+  Inputs:
+    #foreach($input in ${target.inputs})
+    - ${input}
+    #end
+  Outputs:
+    #foreach($output in ${target.outputs})
+    - ${output}
+    #end
+  Phases:
+    #foreach($phase in ${target.phases})
+    - ${phase.name} ${phase.description}
+    #end
 
 #end

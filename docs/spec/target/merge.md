@@ -69,6 +69,9 @@ relations:
 
 * `kind` **(mandatory)** *(type: string)*: `merge`
 
+* `description` **(optional)** *(type: string)*:
+  Optional descriptive text of the build target
+
 * `mapping` **(optional)** *(type: string)*:
   Specifies the name of the input mapping to be written
 

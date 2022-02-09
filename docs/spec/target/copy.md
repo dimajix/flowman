@@ -27,6 +27,9 @@ targets:
 
 * `kind` **(mandatory)** *(type: string)*: `copy`
 
+* `description` **(optional)** *(type: string)*:
+  Optional descriptive text of the build target
+
 * `source` **(mandatory)** *(type: dataset)*: 
 Specifies the source data set to be copied from.
 

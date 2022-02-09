@@ -24,7 +24,15 @@ import com.dimajix.flowman.types.Field
 final case class ColumnReference(
     override val parent:Option[Reference],
     name:String
-) extends Reference
+) extends Reference {
+    override def toString: String = {
+        parent match {
+            case Some(col:ColumnReference) => col.toString + "." + name
+            case Some(ref) => ref.toString + "/column=" + name
+            case None => name
+        }
+    }
+}
 
 
 object ColumnDoc {

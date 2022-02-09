@@ -1,6 +1,7 @@
 targets:
   aggregates:
     kind: relation
+    description: "Write aggregated measurements per year"
     mapping: aggregates
     relation: aggregates
     partition:

@@ -37,6 +37,9 @@ targets:
 
 * `kind` **(mandatory)** *(type: string)*: `deleteFile`
 
+* `description` **(optional)** *(type: string)*:
+  Optional descriptive text of the build target
+
 * `relation` **(mandatory)** *(type: string or relation)*: Either the name of a `deltaTable` or `deltaFile` relation
  or alternatively an embedded delta relation
 

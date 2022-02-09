@@ -1,5 +1,6 @@
 targets:
   stations:
     kind: relation
+    description: "Write stations"
     mapping: stations_raw
     relation: stations

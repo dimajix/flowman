@@ -26,7 +26,14 @@ import com.dimajix.flowman.types.StructType
 
 final case class SchemaReference(
     override val parent:Option[Reference]
-) extends Reference
+) extends Reference {
+    override def toString: String = {
+        parent match {
+            case Some(ref) => ref.toString + "/schema"
+            case None => "schema"
+        }
+    }
+}
 
 
 object SchemaDoc {

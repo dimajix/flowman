@@ -68,10 +68,11 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "verify", value = classOf[VerifyTargetSpec])
 ))
 abstract class TargetSpec extends NamedSpec[Target] {
-    @JsonProperty(value = "kind", required = true) protected var kind: String = _
+    @JsonProperty(value = "kind", required=true) protected var kind: String = _
     @JsonProperty(value = "before", required=false) protected[spec] var before:Seq[String] = Seq()
     @JsonProperty(value = "after", required=false) protected[spec] var after:Seq[String] = Seq()
-    @JsonProperty(value="documentation", required = false) private var documentation: Option[TargetDocSpec] = None
+    @JsonProperty(value="description", required = false) private var description: Option[String] = None
+    @JsonProperty(value = "documentation", required=false) private var documentation: Option[TargetDocSpec] = None
 
     override def instantiate(context: Context): Target
 
@@ -88,6 +89,7 @@ abstract class TargetSpec extends NamedSpec[Target] {
             metadata.map(_.instantiate(context, name, Category.TARGET, kind)).getOrElse(Metadata(context, name, Category.TARGET, kind)),
             before.map(context.evaluate).map(TargetIdentifier.parse),
             after.map(context.evaluate).map(TargetIdentifier.parse),
+            context.evaluate(description),
             documentation.map(_.instantiate(context))
         )
     }

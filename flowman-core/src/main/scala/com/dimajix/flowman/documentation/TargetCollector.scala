@@ -18,13 +18,14 @@ package com.dimajix.flowman.documentation
 
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
+import com.dimajix.flowman.graph.TargetRef
 import com.dimajix.flowman.model.Target
 
 
 class TargetCollector extends Collector {
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
         val parent = documentation.reference
-        val docs = graph.targets.map(t => t.target.identifier -> document(execution, parent, t.target)).toMap
+        val docs = graph.targets.map(t => t.target.identifier -> document(execution, parent, t)).toMap
         documentation.copy(targets = docs)
     }
 
@@ -34,11 +35,12 @@ class TargetCollector extends Collector {
      * @param parent
      * @return
      */
-    private def document(execution: Execution, parent:Reference, target:Target) : TargetDoc = {
+    private def document(execution: Execution, parent:Reference, node:TargetRef) : TargetDoc = {
+        val target = node.target
         val doc = TargetDoc(
             Some(parent),
             target.identifier,
-            None,
+            target.description,
             Seq(),
             Seq(),
             Seq()

@@ -57,7 +57,15 @@ case class TemplateTarget(
     }
 
     /**
+     * Returns a description of the build target
+     *
+     * @return
+     */
+    override def description: Option[String] = instanceProperties.description.orElse(targetInstance.description)
+
+    /**
      * Returns a (static) documentation of this target
+ *
      * @return
      */
     override def documentation : Option[TargetDoc] = targetInstance.documentation.map(_.merge(instanceProperties.documentation))

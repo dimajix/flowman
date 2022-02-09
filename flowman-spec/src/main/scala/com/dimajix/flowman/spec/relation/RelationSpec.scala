@@ -79,7 +79,7 @@ abstract class RelationSpec extends NamedSpec[Relation] {
         Relation.Properties(
             context,
             metadata.map(_.instantiate(context, name, Category.RELATION, kind)).getOrElse(Metadata(context, name, Category.RELATION, kind)),
-            description.map(context.evaluate),
+            context.evaluate(description),
             documentation.map(_.instantiate(context))
         )
     }

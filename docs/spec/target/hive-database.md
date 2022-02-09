@@ -12,6 +12,17 @@ targets:
     database: "my_database"
 ```
 
+## Fields
+
+* `kind` **(mandatory)** *(type: string)*: `hiveDatabase`
+
+* `description` **(optional)** *(type: string)*:
+  Optional descriptive text of the build target
+
+* `database` **(mandatory)** *(type: string)*: 
+  Name of the Hive database to be created
+
+
 ## Supported Phases
 * `CREATE` - Ensures that the specified Hive database exists and creates one if it is not found
 * `VERIFY` - Verifies that the specified Hive database exists

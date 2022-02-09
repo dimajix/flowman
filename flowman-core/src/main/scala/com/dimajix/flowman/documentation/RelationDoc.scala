@@ -24,7 +24,14 @@ import com.dimajix.flowman.types.FieldValue
 final case class RelationReference(
     parent:Option[Reference],
     name:String
-) extends Reference
+) extends Reference {
+    override def toString: String = {
+        parent match {
+            case Some(ref) => ref.toString + "/relation=" + name
+            case None => name
+        }
+    }
+}
 
 
 final case class RelationDoc(

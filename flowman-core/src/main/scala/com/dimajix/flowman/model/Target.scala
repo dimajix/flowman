@@ -62,6 +62,7 @@ object Target {
                 Metadata(context, name, Category.TARGET, kind),
                 Seq(),
                 Seq(),
+                None,
                 None
             )
         }
@@ -71,6 +72,7 @@ object Target {
         metadata:Metadata,
         before: Seq[TargetIdentifier],
         after: Seq[TargetIdentifier],
+        description:Option[String],
         documentation: Option[TargetDoc]
     ) extends Instance.Properties[Properties] {
         override val namespace : Option[Namespace] = context.namespace
@@ -96,6 +98,12 @@ trait Target extends Instance {
       * @return
       */
     def identifier : TargetIdentifier
+
+    /**
+     * Returns a description of the build target
+     * @return
+     */
+    def description : Option[String]
 
     /**
      * Returns a (static) documentation of this target
@@ -179,7 +187,15 @@ abstract class BaseTarget extends AbstractInstance with Target {
     override def identifier : TargetIdentifier = instanceProperties.identifier
 
     /**
+     * Returns a description of the build target
+     *
+     * @return
+     */
+    override def description: Option[String] = instanceProperties.description
+
+    /**
      * Returns a (static) documentation of this target
+ *
      * @return
      */
     override def documentation : Option[TargetDoc] = instanceProperties.documentation

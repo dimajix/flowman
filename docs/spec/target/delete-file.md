@@ -13,6 +13,9 @@ targets:
 
 * `kind` **(mandatory)** *(type: string)*: `deleteFile`
 
+* `description` **(optional)** *(type: string)*:
+  Optional descriptive text of the build target
+
 * `location` **(mandatory)** *(type: string)*: 
 
 

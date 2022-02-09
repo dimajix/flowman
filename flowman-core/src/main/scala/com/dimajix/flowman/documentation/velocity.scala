@@ -22,6 +22,7 @@ import scala.collection.JavaConverters._
 final case class ColumnDocWrapper(column:ColumnDoc) {
     override def toString: String = column.name
 
+    def getReference() : String = column.reference.toString
     def getName() : String = column.name
     def getNullable() : Boolean = column.nullable
     def getType() : String = column.typeName
@@ -34,6 +35,7 @@ final case class ColumnDocWrapper(column:ColumnDoc) {
 
 
 final case class SchemaDocWrapper(schema:SchemaDoc) {
+    def getReference() : String = schema.reference.toString
     def getDescription() : String = schema.description.getOrElse("")
     def getColumns() : java.util.List[ColumnDocWrapper] = schema.columns.map(ColumnDocWrapper).asJava
 }
@@ -42,6 +44,7 @@ final case class SchemaDocWrapper(schema:SchemaDoc) {
 final case class MappingOutputDocWrapper(output:MappingOutputDoc) {
     override def toString: String = output.identifier.toString
 
+    def getReference() : String = output.reference.toString
     def getIdentifier() : String = output.identifier.toString
     def getProject() : String = output.identifier.project.getOrElse("")
     def getName() : String = output.identifier.output
@@ -55,10 +58,12 @@ final case class MappingOutputDocWrapper(output:MappingOutputDoc) {
 final case class MappingDocWrapper(mapping:MappingDoc) {
     override def toString: String = mapping.identifier.toString
 
+    def getReference() : String = mapping.reference.toString
     def getIdentifier() : String = mapping.identifier.toString
     def getProject() : String = mapping.identifier.project.getOrElse("")
     def getName() : String = mapping.identifier.name
     def getDescription() : String = mapping.description.getOrElse("")
+    def getInputs() : java.util.List[String] = mapping.inputs.map(_.toString).asJava
     def getOutputs() : java.util.List[MappingOutputDocWrapper] = mapping.outputs.map(MappingOutputDocWrapper).asJava
 }
 
@@ -66,6 +71,7 @@ final case class MappingDocWrapper(mapping:MappingDoc) {
 final case class RelationDocWrapper(relation:RelationDoc) {
     override def toString: String = relation.identifier.toString
 
+    def getReference() : String = relation.reference.toString
     def getIdentifier() : String = relation.identifier.toString
     def getProject() : String = relation.identifier.project.getOrElse("")
     def getName() : String = relation.identifier.name
@@ -74,13 +80,27 @@ final case class RelationDocWrapper(relation:RelationDoc) {
 }
 
 
+final case class TargetPhaseDocWrapper(phase:TargetPhaseDoc) {
+    override def toString: String = phase.phase.upper
+
+    def getReference() : String = phase.reference.toString
+    def getName() : String = phase.phase.upper
+    def getDescription() : String = phase.description.getOrElse("")
+}
+
+
 final case class TargetDocWrapper(target:TargetDoc) {
     override def toString: String = target.identifier.toString
 
+    def getReference() : String = target.reference.toString
     def getIdentifier() : String = target.identifier.toString
     def getProject() : String = target.identifier.project.getOrElse("")
     def getName() : String = target.identifier.name
     def getDescription() : String = target.description.getOrElse("")
+    def getPhases() : java.util.List[TargetPhaseDocWrapper] = target.phases.map(TargetPhaseDocWrapper).asJava
+
+    def getOutputs() : java.util.List[String] = target.outputs.map(_.toString).asJava
+    def getInputs() : java.util.List[String] = target.inputs.map(_.toString).asJava
 }
 
 

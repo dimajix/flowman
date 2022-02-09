@@ -79,7 +79,9 @@ case class DropMapping(
         val asm = assembler
         val result = asm.reassemble(schema)
 
-        Map("main" -> result)
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 
     private def assembler : Assembler = {

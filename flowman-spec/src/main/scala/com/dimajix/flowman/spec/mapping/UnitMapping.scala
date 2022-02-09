@@ -106,11 +106,13 @@ case class UnitMapping(
         require(execution != null)
         require(input != null)
 
-        mappingInstances
+        val schemas = mappingInstances
             .filter(_._2.outputs.contains("main"))
             .keys
             .map(name => name -> describe(execution, input, name))
             .toMap
+
+        applyDocumentation(schemas)
     }
 
     /**
@@ -138,11 +140,12 @@ case class UnitMapping(
                 .toMap
         }
 
-        mappingInstances
+        val schema = mappingInstances
             .filter(_._2.outputs.contains("main"))
             .get(output)
             .map(mapping => describe(mapping, "main"))
             .getOrElse(throw new NoSuchElementException(s"Cannot find output '$output' in unit mapping '$identifier'"))
+        applyDocumentation(output, schema)
     }
 }
 

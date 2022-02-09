@@ -132,7 +132,9 @@ case class TransitiveChildrenMapping(
             childColumns.map(n => fieldsByName(n.toLowerCase(Locale.ROOT)))
         val result = StructType(columns)
 
-        Map("main" -> result)
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 }
 

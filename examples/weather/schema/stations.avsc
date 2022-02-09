@@ -5,47 +5,58 @@
     "fields": [
         {
             "name": "usaf",
-            "type": "int"
+            "type": "int",
+            "doc": "USAF station id"
         },
         {
             "name": "wban",
-            "type": "int"
+            "type": "int",
+            "doc": "WBAN station id"
         },
         {
             "name": "name",
-            "type": [ "string", "null" ]
+            "type": [ "string", "null" ],
+            "doc": "An optional name for the weather station"
         },
         {
             "name": "country",
-            "type": [ "string", "null" ]
+            "type": [ "string", "null" ],
+            "doc": "The country the weather station belongs to"
         },
         {
             "name": "state",
-            "type": [ "string", "null" ]
+            "type": [ "string", "null" ],
+            "doc": "Optional state within the country the weather station belongs to"
         },
         {
             "name": "icao",
-            "type": [ "string", "null" ]
+            "type": [ "string", "null" ],
+            "doc": ""
         },
         {
             "name": "latitude",
-            "type": [ "float", "null" ]
+            "type": [ "float", "null" ],
+            "doc": "The latitude of the geo location of the weather station"
         },
         {
             "name": "longitude",
-            "type": [ "float", "null" ]
+            "type": [ "float", "null" ],
+            "doc": "The longitude of the geo location of the weather station"
         },
         {
             "name": "elevation",
-            "type": [ "float", "null" ]
+            "type": [ "float", "null" ],
+            "doc": "The elevation above sea level in meters of the weather station"
         },
         {
             "name": "date_begin",
-            "type": [ { "type": "int", "logicalType": "date" }, "null" ]
+            "type": [ { "type": "int", "logicalType": "date" }, "null" ],
+            "doc": "The date when the weather station went into service"
         },
         {
             "name": "date_end",
-            "type": [ { "type": "int", "logicalType": "date" }, "null" ]
+            "type": [ { "type": "int", "logicalType": "date" }, "null" ],
+            "doc": "The date when the weather station went out of service"
         }
     ]
 }

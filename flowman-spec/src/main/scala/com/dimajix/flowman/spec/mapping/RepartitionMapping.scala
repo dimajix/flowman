@@ -83,7 +83,9 @@ case class RepartitionMapping(
 
         val result = input(this.input)
 
-        Map("main" -> result)
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 }
 

@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.documentation
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
@@ -87,5 +88,19 @@ final case class SchemaDoc(
         parent.orElse(other.parent)
             .map(result.reparent)
             .getOrElse(result)
+    }
+
+    /**
+     * Enrich a Flowman struct with information from schema documentation
+     * @param schema
+     * @return
+     */
+    def enrich(schema:StructType) : StructType = {
+        def enrichStruct(columns:Seq[ColumnDoc], struct:StructType) : StructType = {
+            val columnsByName = MapIgnoreCase(columns.map(c => c.name -> c))
+            val fields = struct.fields.map(f => columnsByName.get(f.name).map(_.enrich(f)).getOrElse(f))
+            struct.copy(fields = fields)
+        }
+        enrichStruct(columns, schema)
     }
 }

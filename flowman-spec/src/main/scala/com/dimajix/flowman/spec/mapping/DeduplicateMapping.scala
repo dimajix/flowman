@@ -81,7 +81,10 @@ case class DeduplicateMapping(
         require(input != null)
 
         val result = input(this.input)
-        Map("main" -> result)
+
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 }
 

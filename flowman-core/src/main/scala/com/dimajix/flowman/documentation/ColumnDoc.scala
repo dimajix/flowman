@@ -26,6 +26,7 @@ final case class ColumnReference(
     name:String
 ) extends Reference
 
+
 object ColumnDoc {
     def merge(thisCols:Seq[ColumnDoc], otherCols:Seq[ColumnDoc]) :Seq[ColumnDoc] = {
         val thisColsByName = MapIgnoreCase(thisCols.map(c => c.name -> c))
@@ -38,7 +39,6 @@ object ColumnDoc {
         }
         mergedColumns ++ otherCols.filter(c => !thisColsByName.contains(c.name))
     }
-
 }
 final case class ColumnDoc(
     parent:Option[Reference],
@@ -71,8 +71,16 @@ final case class ColumnDoc(
                 ColumnDoc.merge(children, other.children)
             else
                 this.children ++ other.children
-        val desc = description.orElse(description)
+        val desc = other.description.orElse(description)
         val tsts = tests ++ other.tests
         copy(description=desc, children=childs, tests=tsts)
+    }
+
+    /**
+     * Enriches a Flowman [[Field]] with documentation
+     */
+    def enrich(field:Field) : Field = {
+        val desc = description.filter(_.nonEmpty).orElse(field.description)
+        field.copy(description = desc)
     }
 }

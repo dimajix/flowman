@@ -71,7 +71,7 @@ class MappingOutputDocSpec {
 
 class MappingDocSpec extends Spec[MappingDoc] {
     @JsonProperty(value="description", required=false) private var description:Option[String] = None
-    @JsonProperty(value="outputs", required=false) private var outputs:Map[String,MappingOutputDocSpec] = _
+    @JsonProperty(value="outputs", required=false) private var outputs:Map[String,MappingOutputDocSpec] = Map()
     @JsonProperty(value="columns", required=false) private var columns:Seq[ColumnDocSpec] = Seq()
     @JsonProperty(value="tests", required=false) private var tests:Seq[SchemaTestSpec] = Seq()
 

@@ -123,7 +123,10 @@ case class ExplodeMapping(
                 lift.transform(exploded)
         val result = flat.transform(lifted)
 
-        Map("main" -> result, "explode" -> exploded)
+        val schemas = Map("main" -> result, "explode" -> exploded)
+
+        // Apply documentation
+        applyDocumentation(schemas)
     }
 
     private def explode = ExplodeTransformer(array, outerColumns.keep, outerColumns.drop, outerColumns.rename)

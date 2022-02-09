@@ -105,7 +105,7 @@ case class ReadRelationMapping(
         require(execution != null)
         require(input != null)
 
-        val schema = if (columns.nonEmpty) {
+        val result = if (columns.nonEmpty) {
             // Use user specified schema
             StructType(columns)
         }
@@ -114,7 +114,9 @@ case class ReadRelationMapping(
             relation.describe(execution)
         }
 
-        Map("main" -> schema)
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 
     /**

@@ -105,7 +105,9 @@ case class UnpackJsonMapping(
         val fields = schema.fields ++ columns.map(c => Field(Option(c.alias).getOrElse(c.name), StructType(c.schema.fields)))
         val result = StructType(fields)
 
-        Map("main" -> result)
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 }
 

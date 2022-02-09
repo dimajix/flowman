@@ -253,7 +253,10 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
         val results = execute(execution, replacements)
 
         // Extract schemas
-        results.map { case (name,df) => name -> StructType.of(df.schema)}
+        val schemas = results.map { case (name,df) => name -> StructType.of(df.schema)}
+
+        // Apply documentation
+        applyDocumentation(schemas)
     }
 
     /**
@@ -278,5 +281,25 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
         inputs.foreach( in =>
             linker.input(in.mapping, in.output)
         )
+    }
+
+    /**
+     * Applies optional documentation to the result of a [[describe]]
+     * @param schemas
+     * @return
+     */
+    protected def applyDocumentation(schemas:Map[String,StructType]) : Map[String,StructType] = {
+        val outputDoc = documentation.map(_.outputs.map(o => o.identifier.output -> o).toMap).getOrElse(Map())
+        schemas.map { case (output,schema) =>
+            output -> outputDoc.get(output)
+                .flatMap(_.schema.map(_.enrich(schema)))
+                .getOrElse(schema)
+        }
+    }
+
+    protected def applyDocumentation(output:String, schema:StructType) : StructType = {
+        documentation.flatMap(_.outputs.find(_.identifier.output == output))
+            .flatMap(_.schema.map(_.enrich(schema)))
+            .getOrElse(schema)
     }
 }

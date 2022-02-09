@@ -7,9 +7,20 @@ ${mapping.description}
 #foreach($output in ${mapping.outputs})
  - Output '${output.name}'
 #foreach($column in ${output.schema.columns})
-    ${column.name} ${column.catalogType} #if(!$column.nullable)NOT NULL #end
+    ${column.name} ${column.catalogType} #if(!$column.nullable)NOT NULL #end- ${column.description}
 #end
 #end
+
+
+#end
+
+Relations:
+#foreach($relation in ${project.relations})
+Relation '${relation}'
+    ${relation.description}
+    #foreach($column in ${relation.schema.columns})
+        ${column.name} ${column.catalogType} #if(!$column.nullable)NOT NULL #end- ${column.description}
+    #end
 
 
 #end

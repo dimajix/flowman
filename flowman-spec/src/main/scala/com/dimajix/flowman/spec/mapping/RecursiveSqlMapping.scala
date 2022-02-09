@@ -142,7 +142,9 @@ extends BaseMapping {
             firstDf(spark, statement)
         }
 
-        Map("main" -> StructType.of(result.schema))
+        // Apply documentation
+        val schemas = Map("main" -> StructType.of(result.schema))
+        applyDocumentation(schemas)
     }
 
     private def statement : String = {

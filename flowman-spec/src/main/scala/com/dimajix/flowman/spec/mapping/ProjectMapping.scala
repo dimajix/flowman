@@ -86,7 +86,9 @@ extends BaseMapping {
         val schema = input(this.input)
         val result = xfs.transform(schema)
 
-        Map("main" -> result)
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 
     private def xfs : ProjectTransformer = ProjectTransformer(columns)

@@ -101,7 +101,9 @@ case class UnionMapping(
                 xfs.transformSchemas(schemas)
             }
 
-        Map("main" -> result)
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 }
 

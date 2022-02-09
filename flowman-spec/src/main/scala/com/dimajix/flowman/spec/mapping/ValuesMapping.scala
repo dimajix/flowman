@@ -96,7 +96,11 @@ case class ValuesMapping(
      * @return
      */
     override def describe(execution: Execution, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
-        Map("main" -> StructType(schema.map(_.fields).getOrElse(columns)))
+        val result =  StructType(schema.map(_.fields).getOrElse(columns))
+
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 }
 

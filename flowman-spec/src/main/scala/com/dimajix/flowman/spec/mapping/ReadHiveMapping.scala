@@ -98,7 +98,7 @@ extends BaseMapping {
         require(execution != null)
         require(input != null)
 
-        val schema = if (columns.nonEmpty) {
+        val result = if (columns.nonEmpty) {
             // Use user specified schema
             StructType(columns)
         }
@@ -107,7 +107,9 @@ extends BaseMapping {
             StructType.of(tableDf.schema)
         }
 
-        Map("main" -> schema)
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 }
 

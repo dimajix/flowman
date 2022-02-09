@@ -86,7 +86,9 @@ case class StackMapping(
         val result = xfs.transform(schema)
         val assembledResult = asm.map(_.reassemble(result)).getOrElse(result)
 
-        Map("main" -> assembledResult)
+        // Apply documentation
+        val schemas = Map("main" -> assembledResult)
+        applyDocumentation(schemas)
     }
 
     private lazy val xfs : StackTransformer =

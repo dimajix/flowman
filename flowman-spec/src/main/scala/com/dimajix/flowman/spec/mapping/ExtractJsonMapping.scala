@@ -129,10 +129,13 @@ case class ExtractJsonMapping(
 
         val mainSchema = ftypes.StructType(schema.map(_.fields).getOrElse(Seq()))
         val errorSchema = ftypes.StructType(Seq(Field("record", ftypes.StringType, false)))
-        Map(
+        val schemas = Map(
             "main" -> mainSchema,
             "error" -> errorSchema
         )
+
+        // Apply documentation
+        applyDocumentation(schemas)
     }
 }
 

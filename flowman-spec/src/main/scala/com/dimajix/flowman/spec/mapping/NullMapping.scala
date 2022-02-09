@@ -79,7 +79,9 @@ case class NullMapping(
      * @return
      */
     override def describe(execution: Execution, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
-        Map("main" -> effectiveSchema)
+        // Apply documentation
+        val schemas = Map("main" -> effectiveSchema)
+        applyDocumentation(schemas)
     }
 }
 

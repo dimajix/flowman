@@ -99,7 +99,10 @@ case class MockMapping(
      * @return
      */
     override def describe(execution: Execution, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
-        mocked.outputs.map(out => out -> describe(execution, Map(), out)).toMap
+        val schemas = mocked.outputs.map(out => out -> describe(execution, Map(), out)).toMap
+
+        // Apply documentation
+        applyDocumentation(schemas)
     }
 
     /**
@@ -114,7 +117,8 @@ case class MockMapping(
         require(input != null)
         require(output != null && output.nonEmpty)
 
-        execution.describe(mocked, output)
+        val schema = execution.describe(mocked, output)
+        applyDocumentation(output, schema)
     }
 }
 

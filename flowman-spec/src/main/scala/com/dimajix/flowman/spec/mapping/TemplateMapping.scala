@@ -117,7 +117,8 @@ case class TemplateMapping(
         require(execution != null)
         require(input != null)
 
-        mappingInstance.describe(execution, input)
+        val schemas = mappingInstance.describe(execution, input)
+        applyDocumentation(schemas)
     }
 
     /**
@@ -131,7 +132,8 @@ case class TemplateMapping(
         require(input != null)
         require(output != null && output.nonEmpty)
 
-        mappingInstance.describe(execution, input, output)
+        val schema = mappingInstance.describe(execution, input, output)
+        applyDocumentation(output, schema)
     }
 
     /**

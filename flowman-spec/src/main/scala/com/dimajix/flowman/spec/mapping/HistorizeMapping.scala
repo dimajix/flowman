@@ -124,7 +124,9 @@ case class HistorizeMapping(
                 )
         }
 
-        Map("main" -> result)
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 }
 

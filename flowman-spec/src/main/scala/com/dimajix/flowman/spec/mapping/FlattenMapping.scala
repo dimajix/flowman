@@ -81,7 +81,9 @@ case class FlattenMapping(
 
         val result = xfs.transform(schema)
 
-        Map("main" -> result)
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 }
 

@@ -7,6 +7,12 @@ relations:
       - name: year
         type: integer
         granularity: 1
+    # The following schema would use an explicitly specified schema
+    #schema:
+    #  kind: avro
+    #  file: "${project.basedir}/schema/measurements.avsc"
+
+    # We prefer to use the inferred schema of the mapping that is written into the relation
     schema:
-      kind: avro
-      file: "${project.basedir}/schema/measurements.avsc"
+      kind: mapping
+      mapping: measurements_extracted

@@ -32,18 +32,15 @@ import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTablePartition
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
-import org.apache.spark.sql.catalyst.plans.logical.AnalysisOnlyCommand
 import org.apache.spark.sql.execution.command.AlterTableAddColumnsCommand
 import org.apache.spark.sql.execution.command.AlterTableAddPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableChangeColumnCommand
 import org.apache.spark.sql.execution.command.AlterTableDropPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableSetLocationCommand
-import org.apache.spark.sql.execution.command.AlterViewAsCommand
 import org.apache.spark.sql.execution.command.AnalyzePartitionCommand
 import org.apache.spark.sql.execution.command.AnalyzeTableCommand
 import org.apache.spark.sql.execution.command.CreateDatabaseCommand
 import org.apache.spark.sql.execution.command.CreateTableCommand
-import org.apache.spark.sql.execution.command.CreateViewCommand
 import org.apache.spark.sql.execution.command.DropDatabaseCommand
 import org.apache.spark.sql.execution.command.DropTableCommand
 import org.apache.spark.sql.hive.HiveClientShim
@@ -635,12 +632,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             logger.info(s"Creating Hive view $table")
 
             val plan = spark.sql(select).queryExecution.analyzed
-            //@annotation.nowarn // Disable warning about unreachable code for Spark 3.2
-            val cmd = CreateViewCommand(table, Nil, None, Map(), Some(select), plan, false, false, SparkShim.PersistedView) match {
-                // Workaround for providing compatibility with Spark 3.2 and older versions
-                case ac:AnalysisOnlyCommand => ac.markAsAnalyzed().asInstanceOf[CreateViewCommand]
-                case c:CreateViewCommand => c
-            }
+            val cmd = SparkShim.createView(table, select, plan, false, false)
             cmd.run(spark)
 
             // Publish view to external catalog
@@ -656,13 +648,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         logger.info(s"Redefining Hive view $table")
 
         val plan = spark.sql(select).queryExecution.analyzed
-        //@annotation.nowarn // Disable warning about unreachable code for Spark 3.2
-        val cmd = AlterViewAsCommand(table, select, plan) match {
-            // Workaround for providing compatibility with Spark 3.2 and older versions
-            case ac:AnalysisOnlyCommand => ac.markAsAnalyzed().asInstanceOf[AlterViewAsCommand]
-            case c:AlterViewAsCommand => c
-        }
-
+        val cmd = SparkShim.alterView(table, select, plan)
         cmd.run(spark)
 
         // Publish view to external catalog

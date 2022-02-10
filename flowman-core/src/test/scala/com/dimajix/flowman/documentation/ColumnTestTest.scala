@@ -51,7 +51,7 @@ class ColumnTestTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val df = spark.createDataFrame(Seq(
             (Some(1),2,3),
             (None,3,4),
-            (None,3,5),
+            (None,3,5)
         ))
 
         val test = UniqueColumnTest(None)

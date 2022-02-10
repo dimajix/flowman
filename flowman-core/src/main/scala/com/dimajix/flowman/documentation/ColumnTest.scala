@@ -16,9 +16,6 @@
 
 package com.dimajix.flowman.documentation
 
-import scala.util.Success
-import scala.util.Try
-
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Execution
@@ -49,7 +46,7 @@ abstract class ColumnTest extends Fragment with Product with Serializable {
 }
 
 
-case class NotNullColumnTest(
+final case class NotNullColumnTest(
     parent:Option[Reference],
     description: Option[String] = None,
     result:Option[TestResult] = None
@@ -61,7 +58,7 @@ case class NotNullColumnTest(
     }
 }
 
-case class UniqueColumnTest(
+final case class UniqueColumnTest(
     parent:Option[Reference],
     description: Option[String] = None,
     result:Option[TestResult] = None
@@ -73,7 +70,7 @@ case class UniqueColumnTest(
     }
 }
 
-case class RangeColumnTest(
+final case class RangeColumnTest(
     parent:Option[Reference],
     description: Option[String] = None,
     result:Option[TestResult] = None
@@ -85,7 +82,7 @@ case class RangeColumnTest(
     }
 }
 
-case class ValuesColumnTest(
+final case class ValuesColumnTest(
     parent:Option[Reference],
     description: Option[String] = None,
     result:Option[TestResult] = None

@@ -63,4 +63,92 @@ class ColumnTestTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         result3 should be (Some(TestResult(Some(test.reference), TestStatus.SUCCESS)))
         an[Exception] should be thrownBy(testExecutor.execute(execution, df, "_4", test))
     }
+
+    "A ValuesColumnTest" should "be executable" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val testExecutor = new DefaultColumnTestExecutor
+
+        val df = spark.createDataFrame(Seq(
+            (Some(1),2,1),
+            (None,3,2)
+        ))
+
+        val test = ValuesColumnTest(None, values=Seq(1,2))
+        val result1 = testExecutor.execute(execution, df, "_1", test)
+        result1 should be (Some(TestResult(Some(test.reference), TestStatus.SUCCESS)))
+        val result2 = testExecutor.execute(execution, df, "_2", test)
+        result2 should be (Some(TestResult(Some(test.reference), TestStatus.FAILED)))
+        val result3 = testExecutor.execute(execution, df, "_3", test)
+        result3 should be (Some(TestResult(Some(test.reference), TestStatus.SUCCESS)))
+        an[Exception] should be thrownBy(testExecutor.execute(execution, df, "_4", test))
+    }
+
+    it should "use correct data types" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val testExecutor = new DefaultColumnTestExecutor
+
+        val df = spark.createDataFrame(Seq(
+            (Some(1),2,1),
+            (None,3,2)
+        ))
+
+        val test = ValuesColumnTest(None, values=Seq(1,2))
+        val result1 = testExecutor.execute(execution, df, "_1", test)
+        result1 should be (Some(TestResult(Some(test.reference), TestStatus.SUCCESS)))
+        val result2 = testExecutor.execute(execution, df, "_2", test)
+        result2 should be (Some(TestResult(Some(test.reference), TestStatus.FAILED)))
+        val result3 = testExecutor.execute(execution, df, "_3", test)
+        result3 should be (Some(TestResult(Some(test.reference), TestStatus.SUCCESS)))
+        an[Exception] should be thrownBy(testExecutor.execute(execution, df, "_4", test))
+    }
+
+    "A RangeColumnTest" should "be executable" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val testExecutor = new DefaultColumnTestExecutor
+
+        val df = spark.createDataFrame(Seq(
+            (Some(1),2,1),
+            (None,3,2)
+        ))
+
+        val test = RangeColumnTest(None, lower=1, upper=2)
+        val result1 = testExecutor.execute(execution, df, "_1", test)
+        result1 should be (Some(TestResult(Some(test.reference), TestStatus.SUCCESS)))
+        val result2 = testExecutor.execute(execution, df, "_2", test)
+        result2 should be (Some(TestResult(Some(test.reference), TestStatus.FAILED)))
+        val result3 = testExecutor.execute(execution, df, "_3", test)
+        result3 should be (Some(TestResult(Some(test.reference), TestStatus.SUCCESS)))
+        an[Exception] should be thrownBy(testExecutor.execute(execution, df, "_4", test))
+    }
+
+    it should "use correct data types" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val testExecutor = new DefaultColumnTestExecutor
+
+        val df = spark.createDataFrame(Seq(
+            (Some(1),2,1),
+            (None,3,2)
+        ))
+
+        val test = RangeColumnTest(None, lower="1.0", upper="2.2")
+        val result1 = testExecutor.execute(execution, df, "_1", test)
+        result1 should be (Some(TestResult(Some(test.reference), TestStatus.SUCCESS)))
+        val result2 = testExecutor.execute(execution, df, "_2", test)
+        result2 should be (Some(TestResult(Some(test.reference), TestStatus.FAILED)))
+        val result3 = testExecutor.execute(execution, df, "_3", test)
+        result3 should be (Some(TestResult(Some(test.reference), TestStatus.SUCCESS)))
+        an[Exception] should be thrownBy(testExecutor.execute(execution, df, "_4", test))
+    }
 }

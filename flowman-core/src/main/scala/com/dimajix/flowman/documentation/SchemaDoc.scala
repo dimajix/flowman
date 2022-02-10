@@ -58,7 +58,7 @@ object SchemaDoc {
 
         }
         def genColumn(parent:Reference, field:Field) : ColumnDoc = {
-            val doc = ColumnDoc(Some(parent), field.name, field, field.description, Seq(), Seq())
+            val doc = ColumnDoc(Some(parent), field, Seq(), Seq())
             val children = genChildren(doc.reference, field.ftype)
             doc.copy(children = children)
         }
@@ -70,9 +70,9 @@ object SchemaDoc {
 
 final case class SchemaDoc(
     parent:Option[Reference],
-    description:Option[String],
-    columns:Seq[ColumnDoc],
-    tests:Seq[SchemaTest]
+    description:Option[String] = None,
+    columns:Seq[ColumnDoc] = Seq(),
+    tests:Seq[SchemaTest] = Seq()
 ) extends EntityDoc {
     override def reference: SchemaReference = SchemaReference(parent)
     override def fragments: Seq[Fragment] = columns ++ tests

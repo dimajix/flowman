@@ -18,6 +18,7 @@ package com.dimajix.flowman.documentation
 
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.NullType
 
 
 
@@ -50,11 +51,9 @@ object ColumnDoc {
 }
 final case class ColumnDoc(
     parent:Option[Reference],
-    name:String,
     field:Field,
-    description:Option[String],
-    children:Seq[ColumnDoc],
-    tests:Seq[ColumnTest]
+    children:Seq[ColumnDoc] = Seq(),
+    tests:Seq[ColumnTest] = Seq()
 ) extends EntityDoc {
     override def reference: ColumnReference = ColumnReference(parent, name)
     override def fragments: Seq[Fragment] = children
@@ -67,6 +66,8 @@ final case class ColumnDoc(
         )
     }
 
+    def name : String = field.name
+    def description : Option[String] = field.description
     def nullable : Boolean = field.nullable
     def typeName : String = field.typeName
     def sqlType : String = field.sqlType
@@ -81,7 +82,10 @@ final case class ColumnDoc(
                 this.children ++ other.children
         val desc = other.description.orElse(description)
         val tsts = tests ++ other.tests
-        copy(description=desc, children=childs, tests=tsts)
+        val ftyp = if (field.ftype == NullType) other.field.ftype else field.ftype
+        val nll = if (field.ftype == NullType) other.field.nullable else field.nullable
+        val fld = field.copy(ftype=ftyp, nullable=nll, description=desc)
+        copy(field=fld, children=childs, tests=tsts)
     }
 
     /**

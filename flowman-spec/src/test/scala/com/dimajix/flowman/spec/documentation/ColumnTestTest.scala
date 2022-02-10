@@ -41,4 +41,36 @@ class ColumnTestTest extends AnyFlatSpec with Matchers {
             Some(ColumnReference(None, "col0"))
         ))
     }
+
+    "A RangeColumnTest" should "be deserializable" in {
+        val yaml =
+            """
+              |kind: range
+            """.stripMargin
+
+        val spec = ObjectMapper.parse[ColumnTestSpec](yaml)
+        spec shouldBe a[UniqueColumnTestSpec]
+
+        val context = RootContext.builder().build()
+        val test = spec.instantiate(context, ColumnReference(None, "col0"))
+        test should be (UniqueColumnTest(
+            Some(ColumnReference(None, "col0"))
+        ))
+    }
+
+    "A ValuesColumnTest" should "be deserializable" in {
+        val yaml =
+            """
+              |kind: values
+            """.stripMargin
+
+        val spec = ObjectMapper.parse[ColumnTestSpec](yaml)
+        spec shouldBe a[UniqueColumnTestSpec]
+
+        val context = RootContext.builder().build()
+        val test = spec.instantiate(context, ColumnReference(None, "col0"))
+        test should be (UniqueColumnTest(
+            Some(ColumnReference(None, "col0"))
+        ))
+    }
 }

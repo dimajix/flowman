@@ -146,7 +146,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         table.identifier should be (TableIdentifier("lala_1", Some("default")))
         table.tableType should be (CatalogTableType.MANAGED)
         if (hiveVarcharSupported) {
-            table.schema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table.schema) should be(StructType(Seq(
                 StructField("str_col", StringType),
                 StructField("int_col", IntegerType),
                 StructField("char_col", CharType(10)),
@@ -154,7 +154,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             )))
         }
         else {
-            table.schema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table.schema) should be(StructType(Seq(
                 StructField("str_col", StringType),
                 StructField("int_col", IntegerType),
                 StructField("char_col", StringType),

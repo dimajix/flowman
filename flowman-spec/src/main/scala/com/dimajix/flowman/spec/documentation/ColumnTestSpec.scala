@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.documentation
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
@@ -62,8 +63,20 @@ class UniqueColumnTestSpec extends ColumnTestSpec {
     override def instantiate(context: Context, parent:ColumnReference): ColumnTest = UniqueColumnTest(Some(parent))
 }
 class RangeColumnTestSpec extends ColumnTestSpec {
-    override def instantiate(context: Context, parent:ColumnReference): ColumnTest = RangeColumnTest(Some(parent))
+    @JsonProperty(value="lower", required=true) private var lower:String = ""
+    @JsonProperty(value="upper", required=true) private var upper:String = ""
+
+    override def instantiate(context: Context, parent:ColumnReference): ColumnTest = RangeColumnTest(
+        Some(parent),
+        lower=context.evaluate(lower),
+        upper=context.evaluate(upper)
+    )
 }
 class ValuesColumnTestSpec extends ColumnTestSpec {
-    override def instantiate(context: Context, parent:ColumnReference): ColumnTest = ValuesColumnTest(Some(parent))
+    @JsonProperty(value="values", required=false) private var values:Seq[String] = Seq()
+
+    override def instantiate(context: Context, parent:ColumnReference): ColumnTest = ValuesColumnTest(
+        Some(parent),
+        values=values.map(context.evaluate)
+    )
 }

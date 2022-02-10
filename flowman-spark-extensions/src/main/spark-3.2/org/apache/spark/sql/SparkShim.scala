@@ -114,7 +114,7 @@ object SparkShim {
     def createView(table:TableIdentifier, select:String, plan:LogicalPlan, allowExisting:Boolean, replace:Boolean) : CreateViewCommand = {
         CreateViewCommand(table, Nil, None, Map(), Some(select), plan, allowExisting, replace, SparkShim.PersistedView, isAnalyzed=true)
     }
-    def alterView(table:TableIdentifier, select:String, plan:LogicalPlan, allowExisting:Boolean, replace:Boolean) : AlterViewAsCommand = {
+    def alterView(table:TableIdentifier, select:String, plan:LogicalPlan) : AlterViewAsCommand = {
         AlterViewAsCommand(table, select, plan, isAnalyzed=true)
     }
 

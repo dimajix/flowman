@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.documentation
 
+import scala.util.Success
+import scala.util.Try
+
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Execution
@@ -24,7 +27,14 @@ import com.dimajix.flowman.spi.ColumnTestExecutor
 
 final case class ColumnTestReference(
     override val parent:Option[Reference]
-) extends Reference
+) extends Reference {
+    override def toString: String = {
+        parent match {
+            case Some(ref) => ref.toString + "/test"
+            case None => ""
+        }
+    }
+}
 
 
 abstract class ColumnTest extends Fragment with Product with Serializable {
@@ -33,14 +43,14 @@ abstract class ColumnTest extends Fragment with Product with Serializable {
 
     override def reparent(parent: Reference): ColumnTest
 
-    override def parent: Some[Reference]
+    override def parent: Option[Reference]
     override def reference: ColumnTestReference = ColumnTestReference(parent)
     override def fragments: Seq[Fragment] = result.toSeq
 }
 
 
 case class NotNullColumnTest(
-    parent:Some[Reference],
+    parent:Option[Reference],
     description: Option[String] = None,
     result:Option[TestResult] = None
 ) extends ColumnTest {
@@ -52,30 +62,39 @@ case class NotNullColumnTest(
 }
 
 case class UniqueColumnTest(
-    parent:Some[Reference],
+    parent:Option[Reference],
     description: Option[String] = None,
     result:Option[TestResult] = None
 ) extends ColumnTest  {
     override def withResult(result: TestResult): ColumnTest = copy(result=Some(result))
-    override def reparent(parent: Reference): ColumnTest = copy(parent=Some(parent))
+    override def reparent(parent: Reference): UniqueColumnTest = {
+        val ref = ColumnTestReference(Some(parent))
+        copy(parent=Some(parent), result=result.map(_.reparent(ref)))
+    }
 }
 
 case class RangeColumnTest(
-    parent:Some[Reference],
+    parent:Option[Reference],
     description: Option[String] = None,
     result:Option[TestResult] = None
 ) extends ColumnTest  {
     override def withResult(result: TestResult): ColumnTest = copy(result=Some(result))
-    override def reparent(parent: Reference): ColumnTest = copy(parent=Some(parent))
+    override def reparent(parent: Reference): RangeColumnTest = {
+        val ref = ColumnTestReference(Some(parent))
+        copy(parent=Some(parent), result=result.map(_.reparent(ref)))
+    }
 }
 
 case class ValuesColumnTest(
-    parent:Some[Reference],
+    parent:Option[Reference],
     description: Option[String] = None,
     result:Option[TestResult] = None
 ) extends ColumnTest  {
     override def withResult(result: TestResult): ColumnTest = copy(result=Some(result))
-    override def reparent(parent: Reference): ColumnTest = copy(parent=Some(parent))
+    override def reparent(parent: Reference): ValuesColumnTest = {
+        val ref = ColumnTestReference(Some(parent))
+        copy(parent=Some(parent), result=result.map(_.reparent(ref)))
+    }
 }
 
 //case class ForeignKeyColumnTest() extends ColumnTest
@@ -83,5 +102,20 @@ case class ValuesColumnTest(
 
 
 class DefaultColumnTestExecutor extends ColumnTestExecutor {
-    override def execute(execution: Execution, df: DataFrame, column:String, test: ColumnTest): Option[TestResult] = ???
+    override def execute(execution: Execution, df: DataFrame, column:String, test: ColumnTest): Option[TestResult] = {
+        test match {
+            case _: NotNullColumnTest =>
+                val result = df.groupBy(df(column).isNotNull).count().collect()
+                val numSuccess = result.find(_.getBoolean(0) == true).map(_.getLong(1)).getOrElse(0L)
+                val numFailed = result.find(_.getBoolean(0) == false).map(_.getLong(1)).getOrElse(0L)
+                val status = if (numFailed > 0) TestStatus.FAILED else TestStatus.SUCCESS
+                Some(TestResult(Some(test.reference), status, None, None))
+            case _: UniqueColumnTest =>
+                val agg = df.filter(df(column).isNotNull).groupBy(df(column)).count()
+                val result = agg.filter(agg(agg.columns(1)) > 1).orderBy(agg(agg.columns(1)).desc).limit(6).collect()
+                val status = if (result.isEmpty) TestStatus.SUCCESS else TestStatus.FAILED
+                Some(TestResult(Some(test.reference), status, None, None))
+            case _ => None
+        }
+    }
 }

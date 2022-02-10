@@ -373,15 +373,15 @@
             <properties>
                 <scala.version>2.12.15</scala.version>
                 <scala.api_version>2.12</scala.api_version>
-                <scalatest.version>3.2.5</scalatest.version>
+                <scalatest.version>3.2.9</scalatest.version>
                 <scalatest-api.version>3.2</scalatest-api.version>
                 <scala-xml.version>1.2.0</scala-xml.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
-                <spark.version>3.2.0</spark.version>
+                <spark.version>3.2.1</spark.version>
                 <spark-api.version>3.2</spark-api.version>
                 <snappy.version>1.1.8.4</snappy.version>
                 <netty-all.version>4.1.68.Final</netty-all.version>
-                <antlr4.version>4.8-1</antlr4.version>
+                <antlr4.version>4.8</antlr4.version>
                 <snakeyaml.version>1.27</snakeyaml.version>
                 <jackson.version>2.12.3</jackson.version>
                 <jackson-api.version>2.12</jackson-api.version>
@@ -396,7 +396,7 @@
                 <slf4j.version>1.7.30</slf4j.version>
                 <httpclient.version>4.5.13</httpclient.version>
                 <httpcore.version>4.4.14</httpcore.version>
-                <dropwizard.version>4.1.1</dropwizard.version>
+                <dropwizard.version>4.2.0</dropwizard.version>
                 <joda-time.version>2.10.10</joda-time.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compress.version>1.21</commons-compress.version>

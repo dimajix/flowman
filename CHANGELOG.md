@@ -1,12 +1,13 @@
 # Version 0.22.0
 
 * Add new 'sqlserver' relation
-
+* Work on new documentation subsystem
+* Update to Spark 3.2.1
 
 
 # Version 0.21.1 - 2022-01-28
 
-* flowexec now returns different exit codes depending on the processing result
+* `flowexec` now returns different exit codes depending on the processing result
 
 
 # Version 0.21.0 - 2022-01-26

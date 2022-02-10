@@ -27,14 +27,21 @@ object TestStatus {
 
 final case class TestResultReference(
     parent:Option[Reference]
-) extends Reference
+) extends Reference {
+    override def toString: String = {
+        parent match {
+            case Some(ref) => ref.toString + "/result"
+            case None => ""
+        }
+    }
+}
 
 
 final case class TestResult(
     parent:Some[Reference],
     status:TestStatus,
-    description:Option[String],
-    details:Option[Fragment]
+    description:Option[String] = None,
+    details:Option[Fragment] = None
 ) extends Fragment {
     override def reference: TestResultReference = TestResultReference(parent)
     override def fragments: Seq[Fragment] = details.toSeq

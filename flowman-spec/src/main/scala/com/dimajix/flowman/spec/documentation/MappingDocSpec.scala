@@ -103,12 +103,12 @@ class MappingDocSpec extends Spec[MappingDoc] {
                 )
                 val ref3 = schema.reference
                 val cols = columns.map(_.instantiate(context, ref3))
-                val tests = this.tests.map(_.instantiate(context, ref3))
+                val tsts = tests.map(_.instantiate(context, ref3))
                 Some(
                     output.copy(
                         schema = Some(schema.copy(
                             columns=cols,
-                            tests=tests
+                            tests=tsts
                         ))
                     )
                 )

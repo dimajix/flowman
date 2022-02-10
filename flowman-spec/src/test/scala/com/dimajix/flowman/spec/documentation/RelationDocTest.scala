@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.documentation
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.documentation.NotNullColumnTest
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.spec.ObjectMapper
 
@@ -44,6 +45,17 @@ class RelationDocTest extends AnyFlatSpec with Matchers {
         val context = RootContext.builder().build()
         val relation = spec.instantiate(context)
 
-        println(relation.toString)
+        relation.description should be (Some("This is a mapping"))
+
+        val mainSchema = relation.schema.get
+        mainSchema.columns.size should be (2)
+        mainSchema.columns(0).name should be ("col_a")
+        mainSchema.columns(0).description should be (Some("This is column a"))
+        mainSchema.columns(0).tests.size should be (1)
+        mainSchema.columns(0).tests(0) shouldBe a[NotNullColumnTest]
+        mainSchema.columns(1).name should be ("col_x")
+        mainSchema.columns(1).description should be (Some("Column of other output"))
+        mainSchema.columns(1).tests.size should be (0)
+        mainSchema.tests.size should be (0)
     }
 }

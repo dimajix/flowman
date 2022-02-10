@@ -20,7 +20,9 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.documentation.ColumnReference
+import com.dimajix.flowman.documentation.RangeColumnTest
 import com.dimajix.flowman.documentation.UniqueColumnTest
+import com.dimajix.flowman.documentation.ValuesColumnTest
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.spec.ObjectMapper
 
@@ -46,15 +48,19 @@ class ColumnTestTest extends AnyFlatSpec with Matchers {
         val yaml =
             """
               |kind: range
+              |lower: 7
+              |upper: 23
             """.stripMargin
 
         val spec = ObjectMapper.parse[ColumnTestSpec](yaml)
-        spec shouldBe a[UniqueColumnTestSpec]
+        spec shouldBe a[RangeColumnTestSpec]
 
         val context = RootContext.builder().build()
         val test = spec.instantiate(context, ColumnReference(None, "col0"))
-        test should be (UniqueColumnTest(
-            Some(ColumnReference(None, "col0"))
+        test should be (RangeColumnTest(
+            Some(ColumnReference(None, "col0")),
+            lower="7",
+            upper="23"
         ))
     }
 
@@ -62,15 +68,17 @@ class ColumnTestTest extends AnyFlatSpec with Matchers {
         val yaml =
             """
               |kind: values
+              |values: ['a', 12, null]
             """.stripMargin
 
         val spec = ObjectMapper.parse[ColumnTestSpec](yaml)
-        spec shouldBe a[UniqueColumnTestSpec]
+        spec shouldBe a[ValuesColumnTestSpec]
 
         val context = RootContext.builder().build()
         val test = spec.instantiate(context, ColumnReference(None, "col0"))
-        test should be (UniqueColumnTest(
-            Some(ColumnReference(None, "col0"))
+        test should be (ValuesColumnTest(
+            Some(ColumnReference(None, "col0")),
+            values = Seq("a", "12", null)
         ))
     }
 }

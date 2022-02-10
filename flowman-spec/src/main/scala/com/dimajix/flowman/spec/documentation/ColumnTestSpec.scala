@@ -68,8 +68,9 @@ class RangeColumnTestSpec extends ColumnTestSpec {
 
     override def instantiate(context: Context, parent:ColumnReference): ColumnTest = RangeColumnTest(
         Some(parent),
-        lower=context.evaluate(lower),
-        upper=context.evaluate(upper)
+        None,
+        context.evaluate(lower),
+        context.evaluate(upper)
     )
 }
 class ValuesColumnTestSpec extends ColumnTestSpec {

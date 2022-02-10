@@ -1,4 +1,4 @@
-# Documenting Projects and Models
+# Documenting with Flowman
 
 Flowman supports to automatically generate a documentation of your project. The documentation can either include all
 major entities like mappings, relations and targets. Or you may want to focus only on some aspects like the relations

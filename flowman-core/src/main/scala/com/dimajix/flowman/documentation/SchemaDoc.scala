@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.documentation
 
+import scala.annotation.tailrec
+
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.Field
@@ -44,6 +46,7 @@ object SchemaDoc {
         def genColumns(parent:Reference, fields:Seq[Field]) : Seq[ColumnDoc] = {
             fields.map(f => genColumn(parent, f))
         }
+        @tailrec
         def genChildren(parent:Reference, ftype:FieldType) : Seq[ColumnDoc] = {
             ftype match {
                 case s:StructType =>

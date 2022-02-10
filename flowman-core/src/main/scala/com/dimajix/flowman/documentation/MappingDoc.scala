@@ -49,6 +49,24 @@ final case class MappingOutputDoc(
         )
     }
 
+    /**
+     * Returns the name of the project of the mapping of this output
+     * @return
+     */
+    def project : Option[String] = identifier.project
+
+    /**
+     * Returns the mapping identifier of this output
+     * @return
+     */
+    def mapping : MappingIdentifier = identifier.mapping
+
+    /**
+     * Returns the name of the output
+     * @return
+     */
+    def name : String = identifier.output
+
     def merge(other:MappingOutputDoc) : MappingOutputDoc = {
         val id = if (identifier.mapping.isEmpty) other.identifier else identifier
         val desc = other.description.orElse(this.description)
@@ -90,6 +108,18 @@ final case class MappingDoc(
             outputs=outputs.map(_.reparent(ref))
         )
     }
+
+    /**
+     * Returns the name of the project of this mapping
+     * @return
+     */
+    def project : Option[String] = identifier.project
+
+    /**
+     * Returns the name of this mapping
+     * @return
+     */
+    def name : String = identifier.name
 
     def merge(other:Option[MappingDoc]) : MappingDoc = other.map(merge).getOrElse(this)
     def merge(other:MappingDoc) : MappingDoc = {

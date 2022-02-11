@@ -16,15 +16,15 @@
 
 package com.dimajix.flowman.execution
 
+import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
+import scala.util.control.NonFatal
 
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
-import com.dimajix.flowman.execution.ProjectContext.Builder
 import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.ConnectionIdentifier
@@ -36,11 +36,11 @@ import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.NamespaceWrapper
 import com.dimajix.flowman.model.Profile
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.TemplateIdentifier
 import com.dimajix.flowman.model.Test
@@ -125,7 +125,8 @@ final class RootContext private[execution](
     _env + ("namespace" -> (NamespaceWrapper(_namespace) -> SettingLevel.SCOPE_OVERRIDE.level)),
     _config
 ) {
-    private val _children: mutable.Map[String, Context] = mutable.Map()
+    private val _children: TrieMap[String, Context] = TrieMap()
+    private val _imports:TrieMap[String,(Context,Project.Import)] = TrieMap()
     private lazy val _fs = FileSystem(hadoopConf)
     private lazy val _exec = _execution match {
         case Some(execution) => execution
@@ -169,10 +170,12 @@ final class RootContext private[execution](
     override def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true): Mapping = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.isEmpty)
-            throw new NoSuchMappingException(identifier)
-        val child = getProjectContext(identifier.project.get)
-        child.getMapping(identifier, allowOverrides)
+        identifier.project match {
+            case None => throw new NoSuchMappingException(identifier)
+            case Some(project) =>
+                val child = getProjectContext(project)
+                child.getMapping(identifier, allowOverrides)
+        }
     }
 
     /**
@@ -184,10 +187,12 @@ final class RootContext private[execution](
     override def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.isEmpty)
-            throw new NoSuchRelationException(identifier)
-        val child = getProjectContext(identifier.project.get)
-        child.getRelation(identifier, allowOverrides)
+        identifier.project match {
+            case None => throw new NoSuchRelationException (identifier)
+            case Some(project) =>
+                val child = getProjectContext (project)
+                child.getRelation (identifier, allowOverrides)
+        }
     }
 
     /**
@@ -199,10 +204,12 @@ final class RootContext private[execution](
     override def getTarget(identifier: TargetIdentifier): Target = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.isEmpty)
-            throw new NoSuchTargetException(identifier)
-        val child = getProjectContext(identifier.project.get)
-        child.getTarget(identifier)
+        identifier.project match {
+            case None => throw new NoSuchTargetException(identifier)
+            case Some(project) =>
+                val child = getProjectContext(project)
+                child.getTarget(identifier)
+        }
     }
 
     /**
@@ -214,20 +221,20 @@ final class RootContext private[execution](
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.isEmpty) {
-            connections.getOrElseUpdate(identifier.name,
-                extraConnections.get(identifier.name)
-                    .orElse(
-                        namespace
-                            .flatMap(_.connections.get(identifier.name))
-                    )
-                    .map(_.instantiate(this))
-                    .getOrElse(throw new NoSuchConnectionException(identifier))
-            )
-        }
-        else {
-            val child = getProjectContext(identifier.project.get)
-            child.getConnection(identifier)
+        identifier.project match {
+            case None =>
+                connections.getOrElseUpdate(identifier.name,
+                    extraConnections.get(identifier.name)
+                        .orElse(
+                            namespace
+                                .flatMap(_.connections.get(identifier.name))
+                        )
+                        .map(_.instantiate(this))
+                        .getOrElse(throw new NoSuchConnectionException(identifier))
+                )
+            case Some(project) =>
+                val child = getProjectContext(project)
+                child.getConnection(identifier)
         }
     }
 
@@ -240,10 +247,12 @@ final class RootContext private[execution](
     override def getJob(identifier: JobIdentifier): Job = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.isEmpty)
-            throw new NoSuchJobException(identifier)
-        val child = getProjectContext(identifier.project.get)
-        child.getJob(identifier)
+        identifier.project match {
+            case None => throw new NoSuchJobException (identifier)
+            case Some(project) =>
+                val child = getProjectContext (project)
+                child.getJob (identifier)
+        }
     }
 
     /**
@@ -255,10 +264,12 @@ final class RootContext private[execution](
     override def getTest(identifier: TestIdentifier): Test = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.isEmpty)
-            throw new NoSuchTestException(identifier)
-        val child = getProjectContext(identifier.project.get)
-        child.getTest(identifier)
+        identifier.project match {
+            case None => throw new NoSuchTestException(identifier)
+            case Some(project) =>
+                val child = getProjectContext(project)
+                child.getTest(identifier)
+        }
     }
 
     /**
@@ -270,10 +281,24 @@ final class RootContext private[execution](
     override def getTemplate(identifier: TemplateIdentifier): Template[_] = {
         require(identifier != null && identifier.nonEmpty)
 
-        if (identifier.project.isEmpty)
-            throw new NoSuchTemplateException(identifier)
-        val child = getProjectContext(identifier.project.get)
-        child.getTemplate(identifier)
+        identifier.project match {
+            case None => throw new NoSuchTemplateException(identifier)
+            case Some(project) =>
+                val child = getProjectContext(project)
+                child.getTemplate(identifier)
+        }
+    }
+
+    /**
+     * Returns the context for a specific project. This will either return an existing context or create a new
+     * one if it does not exist yet.
+     *
+     * @param project
+     * @return
+     */
+    def getProjectContext(project:Project) : Context = {
+        require(project != null)
+        _children.getOrElseUpdate(project.name, createProjectContext(project))
     }
 
     /**
@@ -286,10 +311,6 @@ final class RootContext private[execution](
         require(projectName != null && projectName.nonEmpty)
         _children.getOrElseUpdate(projectName, createProjectContext(loadProject(projectName)))
     }
-    def getProjectContext(project:Project) : Context = {
-        require(project != null)
-        _children.getOrElseUpdate(project.name, createProjectContext(project))
-    }
 
     private def createProjectContext(project: Project) : Context = {
         val builder = ProjectContext.builder(this, project)
@@ -299,15 +320,50 @@ final class RootContext private[execution](
                 }
             }
 
+        // We need to instantiate the projects job within its context, so we create a very temporary context
+        def getJob(name:String) : Job = {
+            try {
+                val projectContext = ProjectContext.builder(this, project)
+                    .withEnvironment(project.environment, SettingLevel.PROJECT_SETTING)
+                    .build()
+                projectContext.getJob(JobIdentifier(name))
+            } catch {
+                case NonFatal(ex) =>
+                    throw new IllegalArgumentException(s"Cannot instantiate job '$name' to apply import settings for project ${project.name}", ex)
+            }
+        }
+
+        // Apply any import setting
+        _imports.get(project.name).foreach { case(context,imprt) =>
+            val job = context.evaluate(imprt.job) match {
+                case Some(name) =>
+                    Some(getJob(name))
+                case None =>
+                    if (project.jobs.contains("main"))
+                        Some(getJob("main"))
+                    else None
+            }
+            job.foreach { job =>
+                val args = job.arguments(context.evaluate(imprt.arguments))
+                builder.withEnvironment(args, SettingLevel.SCOPE_OVERRIDE)
+                builder.withEnvironment(job.environment, SettingLevel.JOB_OVERRIDE)
+            }
+        }
+
         // Apply overrides
         builder.overrideMappings(overrideMappings.filter(_._1.project.contains(project.name)).map(kv => (kv._1.name, kv._2)))
         builder.overrideRelations(overrideRelations.filter(_._1.project.contains(project.name)).map(kv => (kv._1.name, kv._2)))
 
-        val context = builder.withEnvironment(project.environment)
+        val context = builder
+            .withEnvironment(project.environment, SettingLevel.PROJECT_SETTING)
             .withConfig(project.config)
             .build()
 
-        _children.update(project.name, context)
+        // Store imports, together with context
+        project.imports.foreach { im =>
+            _imports.update(im.project, (context, im))
+        }
+
         context
     }
     private def loadProject(name: String): Project = {

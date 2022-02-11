@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,21 @@ class ProjectTest extends AnyFlatSpec with Matchers {
             """
               |name: test
               |version: 1.0
+              |
+              |imports:
+              |  - project: common
+              |    job: some_job
+              |    arguments:
+              |      some_arg: $lala
             """.stripMargin
         val project = Project.read.string(spec)
         project.name should be ("test")
         project.version should be (Some("1.0"))
         project.filename should be (None)
         project.basedir should be (None)
+        project.imports should be (Seq(
+            Project.Import("common", job=Some("some_job"), arguments=Map("some_arg" -> "$lala"))
+        ))
     }
 
     it should "be readable from a file" in {

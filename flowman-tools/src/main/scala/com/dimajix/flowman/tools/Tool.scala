@@ -101,11 +101,12 @@ class Tool {
         // Create Flowman Session, which also includes a Spark Session
         val builder = Session.builder()
             .withNamespace(namespace)
-            .withProject(project.orNull)
             .withConfig(allConfigs)
             .withEnvironment(additionalEnvironment)
             .withProfiles(profiles)
             .withJars(plugins.jars.map(_.toString))
+
+        project.foreach(builder.withProject)
 
         if (sparkName.nonEmpty)
             builder.withSparkName(sparkName)

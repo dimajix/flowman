@@ -26,8 +26,15 @@ import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spi.ProjectReader
 
 
+
 object Project {
     private lazy val loader = ServiceLoader.load(classOf[ProjectReader]).iterator().asScala.toSeq
+
+    case class Import(
+        project:String,
+        job:Option[String] = None,
+        arguments:Map[String,String] = Map()
+    )
 
     class Reader {
         private val logger = LoggerFactory.getLogger(classOf[Reader])
@@ -138,7 +145,9 @@ final case class Project(
     config : Map[String,String] = Map(),
     environment : Map[String,String] = Map(),
 
+    imports: Seq[Project.Import] = Seq(),
     profiles : Map[String,Profile] = Map(),
+
     relations : Map[String,Prototype[Relation]] = Map(),
     connections : Map[String,Prototype[Connection]] = Map(),
     mappings : Map[String,Prototype[Mapping]] = Map(),

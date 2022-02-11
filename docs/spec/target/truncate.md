@@ -15,6 +15,43 @@ targets:
       year:
         start: $start_year
         end: $end_year
+
+relations:
+  stations:
+    kind: file
+    format: parquet
+    location: "$basedir/stations/"
+    schema:
+      kind: avro
+      file: "${project.basedir}/schema/stations.avsc"
+    partitions:
+      - name: year
+        type: integer
+        granularity: 1
+```
+
+Since Flowman 0.22.0, you can also directly specify the relation inside the target definition. This saves you
+from having to create a separate relation definition in the `relations` section. This is only recommended, if you
+do not access the target relation otherwise, such that a shared definition would not provide any benefit.
+```yaml
+targets:
+  truncate_stations:
+    kind: truncate
+    partitions:
+      year:
+        start: $start_year
+        end: $end_year
+    relation: stations-relation
+      kind: file
+      format: parquet
+      location: "$basedir/stations/"
+      schema:
+        kind: avro
+        file: "${project.basedir}/schema/stations.avsc"
+      partitions:
+        - name: year
+          type: integer
+          granularity: 1
 ```
 
 ## Fields
@@ -25,7 +62,7 @@ targets:
   Optional descriptive text of the build target
 
 * `relation` **(mandatory)** *(type: string)*:
-  Specifies the name of the relation to truncate.
+  Specifies the name of the relation to truncate, or alternatively directly embeds the relation.
 
 * `partitions` **(optional)** *(type: map:partition)*:
   Specifies the partition (or multiple partitions) to truncate.

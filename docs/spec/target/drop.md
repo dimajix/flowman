@@ -22,7 +22,7 @@ relations:
       file: "${project.basedir}/schema/stations.avsc"
 ```
 
-Since Flowman 0.18.0, you can also directly specify the relation inside the target definition. This saves you
+You can also directly specify the relation inside the target definition. This saves you
 from having to create a separate relation definition in the `relations` section. This is only recommended, if you
 do not access the target relation otherwise, such that a shared definition would not provide any benefit.
 ```yaml
@@ -47,7 +47,7 @@ targets:
   Optional descriptive text of the build target
 
 * `relation` **(mandatory)** *(type: string)*: 
-Specifies the name of the relation to write to
+Specifies the name of the relation to drop, or alternatively directly embeds the relation.
 
 
 ## Description

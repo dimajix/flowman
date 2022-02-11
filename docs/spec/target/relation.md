@@ -16,7 +16,7 @@ targets:
     parallelism: 32
     rebalance: true
     partition:
-      processing_date: "${processing_date}"
+      year: "${processing_date}"
 
 relations:
   stations:
@@ -26,6 +26,10 @@ relations:
     schema:
       kind: avro
       file: "${project.basedir}/schema/stations.avsc"
+    partitions:
+      - name: year
+        type: integer
+        granularity: 1
 ```
 
 Since Flowman 0.18.0, you can also directly specify the relation inside the target definition. This saves you
@@ -44,11 +48,15 @@ targets:
       schema:
         kind: avro
         file: "${project.basedir}/schema/stations.avsc"
+      partitions:
+        - name: year
+          type: integer
+          granularity: 1
     mode: overwrite
     parallelism: 32
     rebalance: true
     partition:
-      processing_date: "${processing_date}"
+      year: "${processing_date}"
 ```
 
 ## Fields
@@ -62,7 +70,7 @@ targets:
 Specifies the name of the input mapping to be written
 
 * `relation` **(mandatory)** *(type: string)*: 
-Specifies the name of the relation to write to
+Specifies the name of the relation to write to, or alternatively directly embeds the relation.
 
 * `mode` **(optional)** *(type: string)* *(default=overwrite)*: 
 Specifies the behavior when data or table or partition already exists. Options include:

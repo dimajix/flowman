@@ -19,17 +19,18 @@ relations:
       - name: year
         type: integer
         granularity: 1
-  documentation:
-    description: "The table contains all aggregated measurements"  
-    columns:
-      - name: country
-        description: "Country of the weather station"
-      - name: min_temperature
-        description: "Minimum air temperature per year in degrees Celsius"
-      - name: max_temperature
-        description: "Maximum air temperature per year in degrees Celsius"
-      - name: avg_temperature
-        description: "Average air temperature per year in degrees Celsius"
+        
+    documentation:
+      description: "The table contains all aggregated measurements"  
+      columns:
+        - name: country
+          description: "Country of the weather station"
+        - name: min_temperature
+          description: "Minimum air temperature per year in degrees Celsius"
+        - name: max_temperature
+          description: "Maximum air temperature per year in degrees Celsius"
+        - name: avg_temperature
+          description: "Average air temperature per year in degrees Celsius"
 ```
 
 ## Fields

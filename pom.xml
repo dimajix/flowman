@@ -85,7 +85,7 @@
         <!-- Default Hadoop version (3.3) -->
         <hadoop.version>3.3.1</hadoop.version>
         <hadoop-api.version>3.3</hadoop-api.version>
-        <json-smart.version>2.4.2</json-smart.version>
+        <json-smart.version>2.4.5</json-smart.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <commons-codec.version>1.15</commons-codec.version>
 

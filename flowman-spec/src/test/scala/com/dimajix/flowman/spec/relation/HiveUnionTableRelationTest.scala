@@ -154,7 +154,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             )))
         }
         else {
-            SchemaUtils.dropMetadata(table.schema) should be(StructType(Seq(
+            table.schema should be(StructType(Seq(
                 StructField("str_col", StringType),
                 StructField("int_col", IntegerType),
                 StructField("char_col", StringType),
@@ -757,7 +757,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         view_2.identifier should be (TableIdentifier("lala", Some("default")))
         view_2.tableType should be (CatalogTableType.VIEW)
         if (hiveVarcharSupported) {
-            view_2.schema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(view_2.schema) should be(StructType(Seq(
                 StructField("str_col", StringType),
                 StructField("char_col", CharType(10)),
                 StructField("int_col", IntegerType),
@@ -780,13 +780,13 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         table_2.identifier should be (TableIdentifier("lala_1", Some("default")))
         table_2.tableType should be (CatalogTableType.MANAGED)
         if (hiveVarcharSupported) {
-            table_2.schema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table_2.schema) should be(StructType(Seq(
                 StructField("str_col", StringType),
                 StructField("int_col", IntegerType),
                 StructField("char_col", CharType(10)),
                 StructField("partition_col", StringType, nullable = false)
             )))
-            table_2.dataSchema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table_2.dataSchema) should be(StructType(Seq(
                 StructField("str_col", StringType),
                 StructField("int_col", IntegerType),
                 StructField("char_col", CharType(10))

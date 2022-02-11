@@ -2,7 +2,7 @@
 
 * Add new 'sqlserver' relation
 * Work on new documentation subsystem
-* Update to Spark 3.2.1
+* Change default build to Spark 3.2.1 and Hadoop 3.3.1
 
 
 # Version 0.21.1 - 2022-01-28

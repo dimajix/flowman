@@ -10,9 +10,13 @@
     <parent>
         <groupId>com.dimajix.flowman</groupId>
         <artifactId>flowman-root</artifactId>
-        <version>0.21.2-SNAPSHOT</version>
+        <version>0.22.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
+
+    <properties>
+        <spark-hadoop-archive.version>${hadoop-api.version}</spark-hadoop-archive.version>
+    </properties>
 
     <profiles>
         <profile>
@@ -25,6 +29,16 @@
             <id>CDP-7.1</id>
             <properties>
                 <dockerfile.skip>true</dockerfile.skip>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-3.2</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <!-- The Spark 3.2 archives continue to have a wrong file name -->
+                <spark-hadoop-archive.version>3.2</spark-hadoop-archive.version>
             </properties>
         </profile>
     </profiles>
@@ -93,7 +107,7 @@
                     <pullNewerImage>false</pullNewerImage>
                     <buildArgs>
                         <BUILD_SPARK_VERSION>${spark.version}</BUILD_SPARK_VERSION>
-                        <BUILD_HADOOP_VERSION>${hadoop-api.version}</BUILD_HADOOP_VERSION>
+                        <BUILD_HADOOP_VERSION>${spark-hadoop-archive.version}</BUILD_HADOOP_VERSION>
                         <DIST_FILE>flowman-dist-${flowman.dist.label}-bin.tar.gz</DIST_FILE>
                         <http_proxy>${env.http_proxy}</http_proxy>
                         <https_proxy>${env.https_proxy}</https_proxy>

@@ -67,6 +67,20 @@ final case class MappingOutputDoc(
      */
     def name : String = identifier.output
 
+    /**
+     * Merge this schema documentation with another mapping documentation. Note that while documentation attributes
+     * of [[other]] have a higher priority than those of the instance itself, the parent of itself has higher priority
+     * than the one of [[other]]. This allows for a simply information overlay mechanism.
+     * @param other
+     */
+    def merge(other:Option[MappingOutputDoc]) : MappingOutputDoc = other.map(merge).getOrElse(this)
+
+    /**
+     * Merge this schema documentation with another mapping documentation. Note that while documentation attributes
+     * of [[other]] have a higher priority than those of the instance itself, the parent of itself has higher priority
+     * than the one of [[other]]. This allows for a simply information overlay mechanism.
+     * @param other
+     */
     def merge(other:MappingOutputDoc) : MappingOutputDoc = {
         val id = if (identifier.mapping.isEmpty) other.identifier else identifier
         val desc = other.description.orElse(this.description)
@@ -121,13 +135,26 @@ final case class MappingDoc(
      */
     def name : String = identifier.name
 
+    /**
+     * Merge this schema documentation with another mapping documentation. Note that while documentation attributes
+     * of [[other]] have a higher priority than those of the instance itself, the parent of itself has higher priority
+     * than the one of [[other]]. This allows for a simply information overlay mechanism.
+     * @param other
+     */
     def merge(other:Option[MappingDoc]) : MappingDoc = other.map(merge).getOrElse(this)
+
+    /**
+     * Merge this schema documentation with another mapping documentation. Note that while documentation attributes
+     * of [[other]] have a higher priority than those of the instance itself, the parent of itself has higher priority
+     * than the one of [[other]]. This allows for a simply information overlay mechanism.
+     * @param other
+     */
     def merge(other:MappingDoc) : MappingDoc = {
         val id = if (identifier.isEmpty) other.identifier else identifier
         val desc = other.description.orElse(this.description)
         val in = inputs.toSet ++ other.inputs.toSet
         val out = outputs.map { out =>
-                other.outputs.find(_.identifier.output == out.identifier.output).map(out.merge).getOrElse(out)
+                out.merge(other.outputs.find(_.identifier.output == out.identifier.output))
             } ++
             other.outputs.filter(out => !outputs.exists(_.identifier.output == out.identifier.output))
         val result = copy(identifier=id, description=desc, inputs=in.toSeq, outputs=out)

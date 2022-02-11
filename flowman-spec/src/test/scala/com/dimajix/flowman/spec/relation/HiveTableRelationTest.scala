@@ -1547,12 +1547,12 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table_1.identifier should be (TableIdentifier("some_table", Some("default")))
         table_1.tableType should be (CatalogTableType.MANAGED)
         if (hiveVarcharSupported) {
-            table_1.schema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table_1.schema) should be(StructType(Seq(
                 StructField("f1", VarcharType(4)),
                 StructField("f2", CharType(4)),
                 StructField("f3", StringType)
             )))
-            table_1.dataSchema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table_1.dataSchema) should be(StructType(Seq(
                 StructField("f1", VarcharType(4)),
                 StructField("f2", CharType(4)),
                 StructField("f3", StringType)
@@ -1694,13 +1694,13 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table_2.identifier should be (TableIdentifier("lala", Some("default")))
         table_2.tableType should be (CatalogTableType.MANAGED)
         if (hiveVarcharSupported) {
-            table_2.schema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table_2.schema) should be(StructType(Seq(
                 StructField("str_col", StringType),
                 StructField("int_col", IntegerType),
                 StructField("char_col", VarcharType(10)),
                 StructField("partition_col", StringType, nullable = false)
             )))
-            table_2.dataSchema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table_2.dataSchema) should be(StructType(Seq(
                 StructField("str_col", StringType),
                 StructField("int_col", IntegerType),
                 StructField("char_col", VarcharType(10))

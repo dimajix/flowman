@@ -88,8 +88,25 @@ final case class SchemaDoc(
         )
     }
 
+    /**
+     * Convert this schema documentation to a Flowman struct
+     */
     def toStruct : StructType = StructType(columns.map(_.field))
+
+    /**
+     * Merge this schema documentation with another schema documentation. Note that while documentation attributes
+     * of [[other]] have a higher priority than those of the instance itself, the parent of itself has higher priority
+     * than the one of [[other]]. This allows for a simply information overlay mechanism.
+     * @param other
+     */
     def merge(other:Option[SchemaDoc]) : SchemaDoc = other.map(merge).getOrElse(this)
+
+    /**
+     * Merge this schema documentation with another schema documentation. Note that while documentation attributes
+     * of [[other]] have a higher priority than those of the instance itself, the parent of itself has higher priority
+     * than the one of [[other]]. This allows for a simply information overlay mechanism.
+     * @param other
+     */
     def merge(other:SchemaDoc) : SchemaDoc = {
         val desc = other.description.orElse(this.description)
         val tsts = tests ++ other.tests

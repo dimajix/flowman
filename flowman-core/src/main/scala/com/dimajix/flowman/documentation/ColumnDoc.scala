@@ -41,10 +41,7 @@ object ColumnDoc {
         val thisColsByName = MapIgnoreCase(thisCols.map(c => c.name -> c))
         val otherColsByName = MapIgnoreCase(otherCols.map(c => c.name -> c))
         val mergedColumns = thisCols.map { column =>
-            otherColsByName.get(column.name) match {
-                case Some(other) => column.merge(other)
-                case None => column
-            }
+            column.merge(otherColsByName.get(column.name))
         }
         mergedColumns ++ otherCols.filter(c => !thisColsByName.contains(c.name))
     }
@@ -74,6 +71,20 @@ final case class ColumnDoc(
     def sparkType : String = field.sparkType.sql
     def catalogType : String = field.catalogType.sql
 
+    /**
+     * Merge this schema documentation with another column documentation. Note that while documentation attributes
+     * of [[other]] have a higher priority than those of the instance itself, the parent of itself has higher priority
+     * than the one of [[other]]. This allows for a simply information overlay mechanism.
+     * @param other
+     */
+    def merge(other:Option[ColumnDoc]) : ColumnDoc = other.map(merge).getOrElse(this)
+
+    /**
+     * Merge this schema documentation with another column documentation. Note that while documentation attributes
+     * of [[other]] have a higher priority than those of the instance itself, the parent of itself has higher priority
+     * than the one of [[other]]. This allows for a simply information overlay mechanism.
+     * @param other
+     */
     def merge(other:ColumnDoc) : ColumnDoc = {
         val childs =
             if (this.children.nonEmpty && other.children.nonEmpty)

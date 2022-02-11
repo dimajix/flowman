@@ -1,8 +1,9 @@
 # Version 0.22.0
 
-* Add new 'sqlserver' relation
+* Add new `sqlserver` relation
 * Work on new documentation subsystem
 * Change default build to Spark 3.2.1 and Hadoop 3.3.1
+* Add new `drop` target for removing tables
 
 
 # Version 0.21.1 - 2022-01-28

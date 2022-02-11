@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,14 +200,14 @@ case class RelationTarget(
     override def link(linker: Linker, phase:Phase): Unit = {
         phase match {
             case Phase.CREATE|Phase.DESTROY =>
-                linker.write(relation.identifier, Map())
+                linker.write(relation, Map.empty[String,SingleValue])
             case Phase.BUILD if (mapping.nonEmpty) =>
                 val partition = this.partition.mapValues(v => SingleValue(v))
                 linker.input(mapping.mapping, mapping.output)
-                linker.write(relation.identifier, partition)
+                linker.write(relation, partition)
             case Phase.TRUNCATE =>
                 val partition = this.partition.mapValues(v => SingleValue(v))
-                linker.write(relation.identifier, partition)
+                linker.write(relation, partition)
             case _ =>
         }
     }

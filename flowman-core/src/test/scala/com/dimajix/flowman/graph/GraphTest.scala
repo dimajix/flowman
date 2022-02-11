@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,13 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.Prototype
+import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.SingleValue
 
 
 class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
@@ -70,7 +72,7 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
         (mappingTemplate2.instantiate _).expects(context).returns(mapping2)
         (mapping2.context _).expects().returns(context)
         (mapping2.name _).expects().atLeastOnce().returns("m2")
-        (mapping2.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.read(RelationIdentifier("src"), Map())))
+        (mapping2.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.read(RelationIdentifier("src"), Map.empty[String,FieldValue])))
 
         (sourceRelationTemplate.instantiate _).expects(context).returns(sourceRelation)
         (sourceRelation.context _).expects().returns(context)
@@ -87,7 +89,7 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
         (target.name _).expects().atLeastOnce().returns("t")
         (target.link _).expects(*,*).onCall((l:Linker, _:Phase) => Some(1).foreach { _ =>
             l.input(MappingIdentifier("m1"), "main")
-            l.write(RelationIdentifier("tgt"), Map())
+            l.write(RelationIdentifier("tgt"), Map.empty[String,SingleValue])
         })
 
         val graph = Graph.ofProject(session, project, Phase.BUILD)

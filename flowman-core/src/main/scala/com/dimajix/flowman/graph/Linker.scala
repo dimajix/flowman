@@ -17,23 +17,57 @@
 package com.dimajix.flowman.graph
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.IdentifierRelationReference
+import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.Reference
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.ValueRelationReference
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
 final case class Linker private[graph](builder:GraphBuilder, context:Context, node:Node) {
+    def input(mapping: Mapping, output:String) : Linker = {
+        val in = builder.refMapping(mapping)
+        val edge = InputMapping(in, node, output)
+        link(edge)
+    }
     def input(mapping: MappingIdentifier, output:String) : Linker = {
         val instance = context.getMapping(mapping)
         val in = builder.refMapping(instance)
         val edge = InputMapping(in, node, output)
         link(edge)
     }
+
+    def read(relation: Reference[Relation], partitions:Map[String,FieldValue]) : Linker = {
+        relation match {
+            case ref:ValueRelationReference => read(ref.value, partitions)
+            case ref:IdentifierRelationReference => read(ref.identifier, partitions)
+        }
+    }
+    def read(relation: Relation, partitions:Map[String,FieldValue]) : Linker = {
+        val in = builder.refRelation(relation)
+        val edge = ReadRelation(in, node, partitions)
+        link(edge)
+    }
     def read(relation: RelationIdentifier, partitions:Map[String,FieldValue]) : Linker = {
         val instance = context.getRelation(relation)
         val in = builder.refRelation(instance)
         val edge = ReadRelation(in, node, partitions)
+        link(edge)
+    }
+
+    def write(relation: Reference[Relation], partitions:Map[String,SingleValue]) : Linker = {
+        relation match {
+            case ref:ValueRelationReference => write(ref.value, partitions)
+            case ref:IdentifierRelationReference => write(ref.identifier, partitions)
+        }
+    }
+    def write(relation: Relation, partition:Map[String,SingleValue]) : Linker = {
+        val out = builder.refRelation(relation)
+        val edge = WriteRelation(node, out, partition)
         link(edge)
     }
     def write(relation: RelationIdentifier, partition:Map[String,SingleValue]) : Linker = {

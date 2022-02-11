@@ -29,8 +29,8 @@ relations:
 ```
 
 Since Flowman 0.18.0, you can also directly specify the relation inside the target definition. This saves you
-from having to create a separate relation definition in the `relations` section. This is only recommeneded, if you
-do not access the target relation otherwise, such that a shared definition would not provide any benefir.
+from having to create a separate relation definition in the `relations` section. This is only recommended, if you
+do not access the target relation otherwise, such that a shared definition would not provide any benefit.
 ```yaml
 targets:
   stations:

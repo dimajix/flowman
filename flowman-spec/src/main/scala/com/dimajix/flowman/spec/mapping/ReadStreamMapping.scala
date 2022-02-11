@@ -34,6 +34,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.SchemaUtils
 
@@ -116,7 +117,7 @@ case class ReadStreamMapping (
      * Params: linker - The linker object to use for creating new edges
      */
     override def link(linker: Linker): Unit = {
-        linker.read(relation.identifier, Map())
+        linker.read(relation, Map.empty[String,FieldValue])
     }
 }
 

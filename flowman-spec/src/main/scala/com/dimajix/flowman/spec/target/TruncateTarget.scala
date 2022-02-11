@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,27 +22,51 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseTarget
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.PartitionSchema
+import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.RelationReference
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
+import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.RangeValue
 import com.dimajix.flowman.types.SingleValue
 
 
+object TruncateTarget {
+    def apply(context: Context, relation: RelationIdentifier) : TruncateTarget = {
+        new TruncateTarget(
+            Target.Properties(context, relation.name, "relation"),
+            RelationReference(context, relation),
+            Map()
+        )
+    }
+    def apply(context: Context, relation: RelationIdentifier, partitions:Map[String,FieldValue]) : TruncateTarget = {
+        new TruncateTarget(
+            Target.Properties(context, relation.name, "relation"),
+            RelationReference(context, relation),
+            partitions
+        )
+    }
+}
 case class TruncateTarget(
     instanceProperties: Target.Properties,
-    relation: RelationIdentifier,
+    relation: Reference[Relation],
     partitions:Map[String,FieldValue] = Map()
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[RelationTarget])
@@ -66,7 +90,7 @@ case class TruncateTarget(
      * @return
      */
     override def phases : Set[Phase] = {
-        Set(Phase.BUILD, Phase.VERIFY)
+        Set(Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE)
     }
 
     /**
@@ -75,8 +99,8 @@ case class TruncateTarget(
      */
     override def provides(phase: Phase) : Set[ResourceIdentifier] = {
         phase match {
-            case Phase.BUILD =>
-                val rel = context.getRelation(relation)
+            case Phase.BUILD|Phase.TRUNCATE =>
+                val rel = relation.value
                 rel.provides ++ rel.resources(partitions)
             case _ => Set()
         }
@@ -87,10 +111,10 @@ case class TruncateTarget(
      * @return
      */
     override def requires(phase: Phase) : Set[ResourceIdentifier] = {
-        val rel = context.getRelation(relation)
-
         phase match {
-            case Phase.BUILD => rel.provides ++ rel.requires
+            case Phase.BUILD|Phase.TRUNCATE =>
+                val rel = relation.value
+                rel.provides ++ rel.requires
             case _ => Set()
         }
     }
@@ -106,14 +130,11 @@ case class TruncateTarget(
      */
     override def dirty(execution: Execution, phase: Phase): Trilean = {
         phase match {
-            case Phase.VALIDATE => No
-            case Phase.CREATE => No
-            case Phase.BUILD =>
-                val rel = context.getRelation(relation)
+            case Phase.BUILD|Phase.TRUNCATE =>
+                val rel = relation.value
                 resolvedPartitions(rel).foldLeft(No:Trilean)((l,p) => l || rel.loaded(execution, p))
             case Phase.VERIFY => Yes
-            case Phase.TRUNCATE => No
-            case Phase.DESTROY => No
+            case _ => No
         }
     }
 
@@ -122,9 +143,10 @@ case class TruncateTarget(
      * Params: linker - The linker object to use for creating new edges
      */
     override def link(linker: Linker, phase:Phase): Unit = {
-        if (phase == Phase.BUILD) {
-            val rel = context.getRelation(relation)
-            resolvedPartitions(rel).foreach(p => linker.write(relation, p))
+        phase match {
+            case Phase.BUILD|Phase.TRUNCATE =>
+                val rel = relation.value
+                resolvedPartitions(rel).foreach(p => linker.write(rel, p))
         }
     }
 
@@ -136,7 +158,7 @@ case class TruncateTarget(
     override def build(execution:Execution) : Unit = {
         require(execution != null)
 
-        val rel = context.getRelation(relation)
+        val rel = relation.value
         rel.truncate(execution, partitions)
     }
 
@@ -148,7 +170,7 @@ case class TruncateTarget(
     override def verify(execution: Execution) : Unit = {
         require(execution != null)
 
-        val rel = context.getRelation(relation)
+        val rel = relation.value
         resolvedPartitions(rel)
             .find(p => rel.loaded(execution, p) == Yes)
             .foreach { partition =>
@@ -158,6 +180,18 @@ case class TruncateTarget(
                     logger.error(s"Verification of target '$identifier' failed - partition $partition of relation '$relation' exists")
                 throw new VerificationFailedException(identifier)
             }
+    }
+
+    /**
+     * Builds the target using the given input tables
+     *
+     * @param execution
+     */
+    override def truncate(execution:Execution) : Unit = {
+        require(execution != null)
+
+        val rel = relation.value
+        rel.truncate(execution, partitions)
     }
 
     private def resolvedPartitions(relation:Relation) : Iterable[Map[String,SingleValue]] = {
@@ -174,7 +208,7 @@ case class TruncateTarget(
 
 
 class TruncateTargetSpec extends TargetSpec {
-    @JsonProperty(value = "relation", required = true) private var relation:String = _
+    @JsonProperty(value="relation", required=true) private var relation:RelationReferenceSpec = _
     @JsonProperty(value = "partitions", required=false) private var partitions:Map[String,FieldValue] = Map()
 
     /**
@@ -190,7 +224,7 @@ class TruncateTargetSpec extends TargetSpec {
         }
         TruncateTarget(
             instanceProperties(context),
-            RelationIdentifier(context.evaluate(relation)),
+            relation.instantiate(context),
             partitions
         )
     }

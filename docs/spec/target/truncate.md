@@ -2,7 +2,7 @@
 
 The `truncate` target is used to truncate a relation or individual partitions of a relation. Truncating means that
 the relation itself is not removed, but the contents are deleted (either all records or individual partitions).
-Note that the `truncate` target is executed as part of the `BUILD`phase, which might be surprising.
+Note that the `truncate` target is executed both as part of the `BUILD` and `TRUNCATE` phases, which might be surprising.
 
 
 ## Example
@@ -34,3 +34,4 @@ targets:
 ## Supported Phases
 * `BUILD` - This will truncate the specified relation.
 * `VERIFY` - This will verify that the relation (and any specified partition) actually contains no data.
+* `TRUNCATE` - This will truncate the specified relation.

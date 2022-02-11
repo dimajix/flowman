@@ -49,23 +49,9 @@ object DropTarget {
 }
 case class DropTarget(
     instanceProperties: Target.Properties,
-    relation: Reference[Relation],
+    relation: Reference[Relation]
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[RelationTarget])
-
-    /**
-     * Returns an instance representing this target with the context
-     * @return
-     */
-    override def digest(phase:Phase) : TargetDigest = {
-        TargetDigest(
-            namespace.map(_.name).getOrElse(""),
-            project.map(_.name).getOrElse(""),
-            name,
-            phase,
-            Map()
-        )
-    }
 
     /**
      * Returns all phases which are implemented by this target in the execute method

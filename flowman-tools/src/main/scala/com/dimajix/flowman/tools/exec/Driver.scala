@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.tools.exec
 
+import java.time.Duration
+import java.time.Instant
+
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -112,6 +115,7 @@ class Driver(options:Arguments) extends Tool {
         else {
             // Create Flowman Session, which also includes a Spark Session
             val project = loadProject(new Path(options.projectFile))
+
             val config = splitSettings(options.config)
             val environment = splitSettings(options.environment)
             val session = createSession(

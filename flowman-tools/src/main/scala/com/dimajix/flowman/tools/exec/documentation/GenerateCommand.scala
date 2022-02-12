@@ -34,6 +34,7 @@ import com.dimajix.flowman.documentation.TargetCollector
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Project
@@ -60,24 +61,12 @@ class GenerateCommand extends Command {
                 logger.error(s"Error instantiating job '$job': ${reasons(e)}")
                 Status.FAILED
             case Success(job) =>
-                generateDoc(session, job, job.arguments(args))
+                generateDoc(session, project, job, job.arguments(args))
         }
     }
 
-    private def generateDoc(session: Session, job:Job, args:Map[String,Any]) : Status = {
-        val collectors = Seq(
-            new RelationCollector(),
-            new MappingCollector(),
-            new TargetCollector()
-        )
-        val generators = Seq(
-            new FileGenerator(new Path("/tmp/flowman/doc"))
-        )
-        val documenter = Documenter(
-            collectors,
-            generators
-        )
-
+    private def generateDoc(session: Session, project:Project, job:Job, args:Map[String,Any]) : Status = {
+        val documenter = DocumenterLoader.load(project, job.context)
         try {
             documenter.execute(session, job, args)
             Status.SUCCESS

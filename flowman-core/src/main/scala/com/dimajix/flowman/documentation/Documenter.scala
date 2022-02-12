@@ -16,18 +16,82 @@
 
 package com.dimajix.flowman.documentation
 
+import java.util.ServiceLoader
+
+import scala.collection.JavaConverters._
+
+import org.apache.hadoop.fs.Path
+import org.slf4j.LoggerFactory
+
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.graph.Graph
+import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Prototype
+import com.dimajix.flowman.spi.DocumenterReader
 
 
-case class Documenter(
-    collectors:Seq[Collector],
-    generators:Seq[Generator]
+object Documenter {
+    private lazy val loader = ServiceLoader.load(classOf[DocumenterReader]).iterator().asScala.toSeq
+    private lazy val defaultDocumenter = {
+        val collectors = Seq(
+            new RelationCollector(),
+            new MappingCollector(),
+            new TargetCollector()
+        )
+        Documenter(
+            collectors=collectors
+        )
+    }
+
+    class Reader {
+        private val logger = LoggerFactory.getLogger(classOf[Documenter])
+        private var format = "yaml"
+
+        def default() : Documenter = defaultDocumenter
+
+        def format(fmt:String) : Reader = {
+            format = fmt
+            this
+        }
+
+        /**
+         * Loads a single file or a whole directory (non recursibely)
+         *
+         * @param file
+         * @return
+         */
+        def file(file:File) : Prototype[Documenter] = {
+            if (!file.isAbsolute()) {
+                this.file(file.absolute)
+            }
+            else {
+                logger.info(s"Reading documenter from ${file.toString}")
+                reader.file(file)
+            }
+        }
+
+        def string(text:String) : Prototype[Documenter] = {
+            reader.string(text)
+        }
+
+        private def reader : DocumenterReader = {
+            loader.find(_.supports(format))
+                .getOrElse(throw new IllegalArgumentException(s"Module format '$format' not supported'"))
+        }
+    }
+
+    def read = new Reader
+}
+
+
+final case class Documenter(
+    collectors:Seq[Collector] = Seq(),
+    generators:Seq[Generator] = Seq()
 ) {
     def execute(session:Session, job:Job, args:Map[String,Any]) : Unit = {
         val runner = session.runner

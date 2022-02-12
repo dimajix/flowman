@@ -11,17 +11,17 @@ mappings:
     kind: select
     input: measurements_raw
     columns:
-      usaf: "SUBSTR(raw_data,5,6)"
-      wban: "SUBSTR(raw_data,11,5)"
+      usaf: "CAST(SUBSTR(raw_data,5,6) AS INT)"
+      wban: "CAST(SUBSTR(raw_data,11,5) AS INT)"
       date: "TO_DATE(SUBSTR(raw_data,16,8), 'yyyyMMdd')"
       time: "SUBSTR(raw_data,24,4)"
       report_type: "SUBSTR(raw_data,42,5)"
       wind_direction: "SUBSTR(raw_data,61,3)"
       wind_direction_qual: "SUBSTR(raw_data,64,1)"
       wind_observation: "SUBSTR(raw_data,65,1)"
-      wind_speed: "CAST(SUBSTR(raw_data,66,4) AS FLOAT)/10"
+      wind_speed: "CAST(CAST(SUBSTR(raw_data,66,4) AS FLOAT)/10 AS FLOAT)"
       wind_speed_qual: "SUBSTR(raw_data,70,1)"
-      air_temperature: "CAST(SUBSTR(raw_data,88,5) AS FLOAT)/10"
+      air_temperature: "CAST(CAST(SUBSTR(raw_data,88,5) AS FLOAT)/10 AS FLOAT)"
       air_temperature_qual: "SUBSTR(raw_data,93,1)"
 
     documentation:

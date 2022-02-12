@@ -33,6 +33,7 @@ final case class ColumnTestReference(
             case None => ""
         }
     }
+    override def kind : String = "column_test"
 }
 
 

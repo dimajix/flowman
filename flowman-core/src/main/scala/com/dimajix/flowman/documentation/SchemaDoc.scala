@@ -35,6 +35,7 @@ final case class SchemaReference(
             case None => "schema"
         }
     }
+    override def kind : String = "schema"
 }
 
 

@@ -15,6 +15,7 @@
  */
 
 package com.dimajix.flowman.spec.documentation
+
 import java.net.URL
 import java.nio.charset.Charset
 
@@ -24,7 +25,10 @@ import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.documentation.Generator
+import com.dimajix.flowman.documentation.ProjectDoc
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.hadoop.File
 
 
 object FileGenerator {
@@ -38,6 +42,42 @@ case class FileGenerator(
     template:URL = FileGenerator.defaultTemplate
 ) extends TemplateGenerator(template) {
     private val logger = LoggerFactory.getLogger(classOf[FileGenerator])
+
+    override def generate(context:Context, execution: Execution, documentation: ProjectDoc): Unit = {
+        val fs = execution.fs
+
+        val uri = location.toUri
+        val outputDir = if (uri.getAuthority == null && uri.getScheme == null)
+            fs.local(location)
+        else
+            fs.file(location)
+
+        // Cleanup any existing output directory
+        if (outputDir.isDirectory()) {
+            outputDir.list().foreach(_.delete(true))
+        }
+        else if (outputDir.isFile()) {
+            outputDir.isFile()
+        }
+        outputDir.mkdirs()
+
+        val projectDoc = renderProject(context, documentation)
+        writeFile(outputDir / "project.txt", projectDoc)
+    }
+
+    private def writeFile(file:File, content:String) : Unit = {
+        logger.info(s"Writing documentation file '${file.toString}'")
+        val out = file.create(true)
+        try {
+            // Manually convert string to UTF-8 and use write, since writeUTF apparently would write a BOM
+            val bytes = Charset.forName("UTF-8").encode(content)
+            val output = file.create(true)
+            out.write(bytes.array(), bytes.arrayOffset(), bytes.limit())
+        }
+        finally {
+            out.close()
+        }
+    }
 }
 
 

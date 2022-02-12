@@ -34,6 +34,7 @@ final case class TestResultReference(
             case None => ""
         }
     }
+    override def kind : String = "test_result"
 }
 
 

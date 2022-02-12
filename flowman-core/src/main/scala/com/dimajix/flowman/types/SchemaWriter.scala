@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,12 @@ class SchemaWriter(fields:Seq[Field]) {
         // Manually convert string to UTF-8 and use write, since writeUTF apparently would write a BOM
         val bytes = Charset.forName("UTF-8").encode(schema)
         val output = file.create(true)
-        output.write(bytes.array(), bytes.arrayOffset(), bytes.limit())
-        output.close()
+        try {
+            output.write(bytes.array(), bytes.arrayOffset(), bytes.limit())
+        }
+        finally {
+            output.close()
+        }
     }
 
     private var format: String = ""

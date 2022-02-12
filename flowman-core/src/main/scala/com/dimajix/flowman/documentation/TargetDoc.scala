@@ -31,6 +31,7 @@ final case class TargetPhaseReference(
             case None => phase.upper
         }
     }
+    override def kind : String = "target_phase"
 }
 
 
@@ -59,6 +60,7 @@ final case class TargetReference(
             case None => name
         }
     }
+    override def kind: String = "target"
 }
 
 

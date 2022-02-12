@@ -21,120 +21,116 @@ import scala.collection.JavaConverters._
 import com.dimajix.flowman.model.ResourceIdentifierWrapper
 
 
-final case class TestResultWrapper(result:TestResult) {
+final case class ReferenceWrapper(reference:Reference) {
+    override def toString: String = reference.toString
+
+    def getParent() : ReferenceWrapper = reference.parent.map(ReferenceWrapper).orNull
+    def getKind() : String = reference.kind
+}
+
+
+class FragmentWrapper(fragment:Fragment) {
+    def getReference() : ReferenceWrapper = ReferenceWrapper(fragment.reference)
+    def getParent() : ReferenceWrapper = fragment.parent.map(ReferenceWrapper).orNull
+    def getDescription() : String = fragment.description.getOrElse("")
+}
+
+
+final case class TestResultWrapper(result:TestResult) extends FragmentWrapper(result) {
     override def toString: String = result.status.toString
 
-    def getReference() : String = result.reference.toString
-    def getDescription() : String = result.description.getOrElse("")
     def getStatus() : String = result.status.toString
 }
 
 
-final case class ColumnTestWrapper(test:ColumnTest) {
+final case class ColumnTestWrapper(test:ColumnTest) extends FragmentWrapper(test) {
     override def toString: String = test.name
 
-    def getReference() : String = test.reference.toString
     def getName() : String = test.name
-    def getDescription() : String = test.description.getOrElse("")
     def getResult() : TestResultWrapper = test.result.map(TestResultWrapper).orNull
     def getStatus() : String = test.result.map(_.status.toString).getOrElse("NOT_RUN")
 }
 
 
-final case class ColumnDocWrapper(column:ColumnDoc) {
+final case class ColumnDocWrapper(column:ColumnDoc) extends FragmentWrapper(column) {
     override def toString: String = column.name
 
-    def getReference() : String = column.reference.toString
     def getName() : String = column.name
     def getNullable() : Boolean = column.nullable
     def getType() : String = column.typeName
     def getSqlType() : String = column.sqlType
     def getSparkType() : String = column.sparkType
     def getCatalogType() : String = column.catalogType
-    def getDescription() : String = column.description.getOrElse("")
     def getColumns() : java.util.List[ColumnDocWrapper] = column.children.map(ColumnDocWrapper).asJava
     def getTests() : java.util.List[ColumnTestWrapper] = column.tests.map(ColumnTestWrapper).asJava
 }
 
 
-final case class SchemaDocWrapper(schema:SchemaDoc) {
-    def getReference() : String = schema.reference.toString
-    def getDescription() : String = schema.description.getOrElse("")
+final case class SchemaDocWrapper(schema:SchemaDoc)  extends FragmentWrapper(schema) {
     def getColumns() : java.util.List[ColumnDocWrapper] = schema.columns.map(ColumnDocWrapper).asJava
 }
 
 
-final case class MappingOutputDocWrapper(output:MappingOutputDoc) {
+final case class MappingOutputDocWrapper(output:MappingOutputDoc) extends FragmentWrapper(output) {
     override def toString: String = output.identifier.toString
 
-    def getReference() : String = output.reference.toString
     def getIdentifier() : String = output.identifier.toString
     def getProject() : String = output.identifier.project.getOrElse("")
     def getName() : String = output.identifier.output
     def getMapping() : String = output.identifier.name
     def getOutput() : String = output.identifier.output
-    def getDescription() : String = output.description.getOrElse("")
     def getSchema() : SchemaDocWrapper = output.schema.map(SchemaDocWrapper).orNull
 }
 
 
-final case class MappingDocWrapper(mapping:MappingDoc) {
+final case class MappingDocWrapper(mapping:MappingDoc) extends FragmentWrapper(mapping) {
     override def toString: String = mapping.identifier.toString
 
-    def getReference() : String = mapping.reference.toString
     def getIdentifier() : String = mapping.identifier.toString
     def getProject() : String = mapping.identifier.project.getOrElse("")
     def getName() : String = mapping.identifier.name
-    def getDescription() : String = mapping.description.getOrElse("")
-    def getInputs() : java.util.List[String] = mapping.inputs.map(_.toString).asJava
+    def getInputs() : java.util.List[ReferenceWrapper] = mapping.inputs.map(ReferenceWrapper).asJava
     def getOutputs() : java.util.List[MappingOutputDocWrapper] = mapping.outputs.map(MappingOutputDocWrapper).asJava
 }
 
 
-final case class RelationDocWrapper(relation:RelationDoc) {
+final case class RelationDocWrapper(relation:RelationDoc) extends FragmentWrapper(relation) {
     override def toString: String = relation.identifier.toString
 
-    def getReference() : String = relation.reference.toString
     def getIdentifier() : String = relation.identifier.toString
     def getProject() : String = relation.identifier.project.getOrElse("")
     def getName() : String = relation.identifier.name
-    def getDescription() : String = relation.description.getOrElse("")
     def getSchema() : SchemaDocWrapper = relation.schema.map(SchemaDocWrapper).orNull
-    def getInputs() : java.util.List[String] = relation.inputs.map(_.toString).asJava
+    def getInputs() : java.util.List[ReferenceWrapper] = relation.inputs.map(ReferenceWrapper).asJava
     def getResources() : java.util.List[ResourceIdentifierWrapper] = relation.provides.map(ResourceIdentifierWrapper).asJava
 }
 
 
-final case class TargetPhaseDocWrapper(phase:TargetPhaseDoc) {
+final case class TargetPhaseDocWrapper(phase:TargetPhaseDoc) extends FragmentWrapper(phase) {
     override def toString: String = phase.phase.upper
 
-    def getReference() : String = phase.reference.toString
     def getName() : String = phase.phase.upper
-    def getDescription() : String = phase.description.getOrElse("")
 }
 
 
-final case class TargetDocWrapper(target:TargetDoc) {
+final case class TargetDocWrapper(target:TargetDoc) extends FragmentWrapper(target) {
     override def toString: String = target.identifier.toString
 
-    def getReference() : String = target.reference.toString
     def getIdentifier() : String = target.identifier.toString
     def getProject() : String = target.identifier.project.getOrElse("")
     def getName() : String = target.identifier.name
-    def getDescription() : String = target.description.getOrElse("")
     def getPhases() : java.util.List[TargetPhaseDocWrapper] = target.phases.map(TargetPhaseDocWrapper).asJava
 
-    def getOutputs() : java.util.List[String] = target.outputs.map(_.toString).asJava
-    def getInputs() : java.util.List[String] = target.inputs.map(_.toString).asJava
+    def getOutputs() : java.util.List[ReferenceWrapper] = target.outputs.map(ReferenceWrapper).asJava
+    def getInputs() : java.util.List[ReferenceWrapper] = target.inputs.map(ReferenceWrapper).asJava
 }
 
 
-final case class ProjectDocWrapper(project:ProjectDoc) {
+final case class ProjectDocWrapper(project:ProjectDoc) extends FragmentWrapper(project) {
     override def toString: String = project.name
 
     def getName() : String = project.name
     def getVersion() : String = project.version.getOrElse("")
-    def getDescription() : String = project.description.getOrElse("")
 
     def getMappings() : java.util.List[MappingDocWrapper] = project.mappings.values.map(MappingDocWrapper).toSeq.asJava
     def getRelations() : java.util.List[RelationDocWrapper] = project.relations.values.map(RelationDocWrapper).toSeq.asJava

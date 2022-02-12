@@ -31,6 +31,7 @@ final case class RelationReference(
             case None => name
         }
     }
+    override def kind : String = "relation"
 }
 
 

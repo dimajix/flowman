@@ -5,3 +5,4 @@ isolation: false
 jars:
  - ${plugin.jar}
  - mssql-jdbc-${mssqlserver-java-client.version}.jar
+ - spark-mssql-connector${spark-mssql-connector.suffix}-${spark-mssql-connector.version}.jar

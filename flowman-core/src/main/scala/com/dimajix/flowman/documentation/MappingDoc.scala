@@ -30,6 +30,7 @@ final case class MappingOutputReference(
             case None => name
         }
     }
+    override def kind : String = "mapping_output"
 }
 
 
@@ -103,6 +104,7 @@ final case class MappingReference(
             case None => name
         }
     }
+    override def kind: String = "mapping"
 }
 
 

@@ -24,7 +24,15 @@ import com.dimajix.flowman.spi.SchemaTestExecutor
 
 final case class SchemaTestReference(
     override val parent:Option[SchemaReference]
-) extends Reference
+) extends Reference {
+    override def toString: String = {
+        parent match {
+            case Some(ref) => ref.toString + "/test"
+            case None => ""
+        }
+    }
+    override def kind : String = "schema_test"
+}
 
 
 sealed abstract class SchemaTest extends Fragment with Product with Serializable {

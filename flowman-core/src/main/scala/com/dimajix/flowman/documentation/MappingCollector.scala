@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
+import com.dimajix.flowman.graph.MappingRef
+import com.dimajix.flowman.graph.ReadRelation
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -37,23 +39,33 @@ class MappingCollector(
         val mappings = mutable.Map[MappingIdentifier, MappingDoc]()
         val parent = documentation.reference
 
-        def getMappingDoc(mapping:Mapping) : MappingDoc = {
-            mappings.getOrElseUpdate(mapping.identifier, genDoc(mapping))
+        def getMappingDoc(node:MappingRef) : MappingDoc = {
+            val mapping = node.mapping
+            mappings.getOrElseUpdate(mapping.identifier, genDoc(node))
         }
         def getOutputDoc(mappingOutput:MappingOutputIdentifier) : Option[MappingOutputDoc] = {
             val mapping = mappingOutput.mapping
-            val doc = mappings.getOrElseUpdate(mapping, genDoc(graph.mapping(mapping).mapping))
+            val doc = mappings.getOrElseUpdate(mapping, genDoc(graph.mapping(mapping)))
             val output = mappingOutput.output
             doc.outputs.find(_.identifier.output == output)
         }
-        def genDoc(mapping:Mapping) : MappingDoc = {
+        def genDoc(node:MappingRef) : MappingDoc = {
+            val mapping = node.mapping
             logger.info(s"Collecting documentation for mapping '${mapping.identifier}'")
+
+            // Collect fundamental basis information
             val inputs = mapping.inputs.flatMap(in => getOutputDoc(in).map(in -> _)).toMap
-            document(execution, parent, mapping, inputs)
+            val doc = document(execution, parent, mapping, inputs)
+
+            // Add additional inputs from non-mapping entities
+            val incoming = node.incoming.collect {
+                case ReadRelation(input, _, _) => documentation.relations.get(input.relation.identifier).map(_.reference)
+            }.flatten
+            doc.copy(inputs=doc.inputs ++ incoming)
         }
 
         val docs = graph.mappings.map { mapping =>
-            mapping.mapping.identifier -> getMappingDoc(mapping.mapping)
+            mapping.mapping.identifier -> getMappingDoc(mapping)
         }.toMap
 
         documentation.copy(mappings=docs)

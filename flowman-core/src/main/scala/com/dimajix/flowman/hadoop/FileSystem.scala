@@ -19,6 +19,7 @@ package com.dimajix.flowman.hadoop
 import java.net.URI
 
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.LocalFileSystem
 import org.apache.hadoop.fs.Path
 
 
@@ -29,7 +30,10 @@ import org.apache.hadoop.fs.Path
 case class FileSystem(conf:Configuration) {
     private val localFs = org.apache.hadoop.fs.FileSystem.getLocal(conf)
 
-    def file(path:Path) : File = File(path.getFileSystem(conf), path)
+    def file(path:Path) : File = {
+        val fs = path.getFileSystem(conf)
+        File(fs, path)
+    }
     def file(path:String) : File = file(new Path(path))
     def file(path:URI) : File = file(new Path(path))
 

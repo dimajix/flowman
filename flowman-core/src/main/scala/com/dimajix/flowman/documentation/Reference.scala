@@ -18,6 +18,7 @@ package com.dimajix.flowman.documentation
 
 
 abstract class Reference extends Product with Serializable {
+    def kind : String
     def parent : Option[Reference]
     def path : Seq[Reference] = parent.toSeq.flatMap(_.path) :+ this
 }

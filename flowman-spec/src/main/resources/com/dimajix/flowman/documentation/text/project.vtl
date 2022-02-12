@@ -8,7 +8,7 @@ Mapping '${mapping}' (${mapping.reference})
   Description: ${mapping.description}
   Inputs:
     #foreach($input in ${mapping.inputs})
-    - ${input}
+    - ${input.kind}: ${input}
     #end
   Outputs:
   #foreach($output in ${mapping.outputs})

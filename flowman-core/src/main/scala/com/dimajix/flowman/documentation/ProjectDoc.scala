@@ -26,6 +26,7 @@ final case class ProjectReference(
 ) extends Reference {
     override def toString: String = "/project=" + name
     override def parent: Option[Reference] = None
+    override def kind : String = "reference"
 }
 
 

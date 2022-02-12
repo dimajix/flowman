@@ -22,8 +22,14 @@ import java.nio.charset.Charset
 import com.google.common.io.Resources
 
 import com.dimajix.flowman.documentation.BaseGenerator
+import com.dimajix.flowman.documentation.MappingDoc
+import com.dimajix.flowman.documentation.MappingDocWrapper
 import com.dimajix.flowman.documentation.ProjectDoc
 import com.dimajix.flowman.documentation.ProjectDocWrapper
+import com.dimajix.flowman.documentation.RelationDoc
+import com.dimajix.flowman.documentation.RelationDocWrapper
+import com.dimajix.flowman.documentation.TargetDoc
+import com.dimajix.flowman.documentation.TargetDocWrapper
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 
@@ -31,13 +37,26 @@ import com.dimajix.flowman.execution.Execution
 abstract class TemplateGenerator(
     template:URL
 ) extends BaseGenerator {
-    override def generate(context:Context, execution: Execution, documentation: ProjectDoc): Unit = {
+    override def generate(context:Context, execution: Execution, documentation: ProjectDoc): Unit
+
+    protected def renderProject(context:Context, documentation: ProjectDoc) : String = {
         val temp = loadResource("project.vtl")
-        val result = context.evaluate(temp, Map("project" -> ProjectDocWrapper(documentation)))
-        println(result)
+        context.evaluate(temp, Map("project" -> ProjectDocWrapper(documentation)))
+    }
+    protected def renderRelation(context:Context, documentation: RelationDoc) : String = {
+        val temp = loadResource("relation.vtl")
+        context.evaluate(temp, Map("relation" -> RelationDocWrapper(documentation)))
+    }
+    protected def renderMapping(context:Context, documentation: MappingDoc) : String = {
+        val temp = loadResource("mapping.vtl")
+        context.evaluate(temp, Map("mapping" -> MappingDocWrapper(documentation)))
+    }
+    protected def renderTarget(context:Context, documentation: TargetDoc) : String = {
+        val temp = loadResource("target.vtl")
+        context.evaluate(temp, Map("target" -> TargetDocWrapper(documentation)))
     }
 
-    private def loadResource(name: String): String = {
+    protected def loadResource(name: String): String = {
         val path = template.getPath
         val url =
             if (path.endsWith("/"))

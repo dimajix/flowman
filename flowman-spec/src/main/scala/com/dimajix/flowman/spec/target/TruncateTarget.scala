@@ -147,6 +147,7 @@ case class TruncateTarget(
             case Phase.BUILD|Phase.TRUNCATE =>
                 val rel = relation.value
                 resolvedPartitions(rel).foreach(p => linker.write(rel, p))
+            case _ =>
         }
     }
 

@@ -140,7 +140,7 @@ class StackMappingSpec extends MappingSpec {
             MappingOutputIdentifier(context.evaluate(input)),
             context.evaluate(nameColumn),
             context.evaluate(valueColumn),
-            ListMap(context.evaluate(stackColumns).toSeq:_*),
+            ListMap(stackColumns.toSeq.map {case(k,v) => k -> context.evaluate(v) }:_*),
             context.evaluate(dropNulls).toBoolean,
             keepColumns.map(context.evaluate),
             dropColumns.map(context.evaluate),

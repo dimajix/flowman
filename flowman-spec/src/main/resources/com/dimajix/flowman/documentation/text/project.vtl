@@ -14,7 +14,10 @@ Mapping '${mapping}' (${mapping.reference})
   #foreach($output in ${mapping.outputs})
    - '${output.name}':
     #foreach($column in ${output.schema.columns})
-    ${column.name} ${column.catalogType} #if(!$column.nullable)NOT NULL #end- ${column.description}
+      ${column.name} ${column.catalogType} #if(!$column.nullable)NOT NULL #end- ${column.description}
+      #foreach($test in $column.tests)
+          Test: '${test.name}' => ${test.result.status}
+      #end
     #end
   #end
 
@@ -36,6 +39,9 @@ Relation '${relation}' (${relation.reference})
   Schema:
   #foreach($column in ${relation.schema.columns})
       ${column.name} ${column.catalogType} #if(!$column.nullable)NOT NULL #end- ${column.description}
+      #foreach($test in $column.tests)
+          Test: '${test.name}' => ${test.result.status}
+      #end
   #end
 
 #end

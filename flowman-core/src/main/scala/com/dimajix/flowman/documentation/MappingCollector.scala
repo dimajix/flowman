@@ -18,6 +18,8 @@ package com.dimajix.flowman.documentation
 
 import scala.collection.mutable
 
+import org.slf4j.LoggerFactory
+
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
 import com.dimajix.flowman.model.Mapping
@@ -26,7 +28,11 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-class MappingCollector extends Collector {
+class MappingCollector(
+    executeTests:Boolean = true
+) extends Collector {
+    private val logger = LoggerFactory.getLogger(getClass)
+
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
         val mappings = mutable.Map[MappingIdentifier, MappingDoc]()
         val parent = documentation.reference
@@ -41,6 +47,7 @@ class MappingCollector extends Collector {
             doc.outputs.find(_.identifier.output == output)
         }
         def genDoc(mapping:Mapping) : MappingDoc = {
+            logger.info(s"Collecting documentation for mapping '${mapping.identifier}'")
             val inputs = mapping.inputs.flatMap(in => getOutputDoc(in).map(in -> _)).toMap
             document(execution, parent, mapping, inputs)
         }
@@ -82,6 +89,15 @@ class MappingCollector extends Collector {
             doc.copy(schema = Some(schemaDoc))
         }
 
-        doc.copy(outputs=outputs.toSeq).merge(mapping.documentation)
+        val result = doc.copy(outputs=outputs.toSeq).merge(mapping.documentation)
+        if (executeTests)
+            runTests(execution, mapping, result)
+        else
+            result
+    }
+
+    private def runTests(execution: Execution, mapping:Mapping, doc:MappingDoc) : MappingDoc = {
+        val executor = new TestExecutor(execution)
+        executor.executeTests(mapping, doc)
     }
 }

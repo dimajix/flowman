@@ -21,6 +21,26 @@ import scala.collection.JavaConverters._
 import com.dimajix.flowman.model.ResourceIdentifierWrapper
 
 
+final case class TestResultWrapper(result:TestResult) {
+    override def toString: String = result.status.toString
+
+    def getReference() : String = result.reference.toString
+    def getDescription() : String = result.description.getOrElse("")
+    def getStatus() : String = result.status.toString
+}
+
+
+final case class ColumnTestWrapper(test:ColumnTest) {
+    override def toString: String = test.name
+
+    def getReference() : String = test.reference.toString
+    def getName() : String = test.name
+    def getDescription() : String = test.description.getOrElse("")
+    def getResult() : TestResultWrapper = test.result.map(TestResultWrapper).orNull
+    def getStatus() : String = test.result.map(_.status.toString).getOrElse("NOT_RUN")
+}
+
+
 final case class ColumnDocWrapper(column:ColumnDoc) {
     override def toString: String = column.name
 
@@ -33,6 +53,7 @@ final case class ColumnDocWrapper(column:ColumnDoc) {
     def getCatalogType() : String = column.catalogType
     def getDescription() : String = column.description.getOrElse("")
     def getColumns() : java.util.List[ColumnDocWrapper] = column.children.map(ColumnDocWrapper).asJava
+    def getTests() : java.util.List[ColumnTestWrapper] = column.tests.map(ColumnTestWrapper).asJava
 }
 
 

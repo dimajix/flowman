@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.documentation
 
+import org.slf4j.LoggerFactory
+
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
 import com.dimajix.flowman.graph.InputMapping
@@ -26,6 +28,8 @@ import com.dimajix.flowman.model.Target
 
 
 class TargetCollector extends Collector {
+    private val logger = LoggerFactory.getLogger(getClass)
+
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
         val parent = documentation.reference
         val docs = graph.targets.map(t => t.target.identifier -> document(execution, parent, t)).toMap
@@ -39,6 +43,9 @@ class TargetCollector extends Collector {
      * @return
      */
     private def document(execution: Execution, parent:Reference, node:TargetRef) : TargetDoc = {
+        val target = node.target
+        logger.info(s"Collecting documentation for target '${target.identifier}'")
+
         val inputs = node.incoming.flatMap {
             case map: InputMapping =>
                 val mapref = MappingReference(Some(parent), map.input.name)
@@ -56,7 +63,6 @@ class TargetCollector extends Collector {
             case _ => None
         }
 
-        val target = node.target
         val doc = TargetDoc(
             Some(parent),
             target.identifier,

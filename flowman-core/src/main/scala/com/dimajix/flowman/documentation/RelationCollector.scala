@@ -16,22 +16,28 @@
 
 package com.dimajix.flowman.documentation
 
+import org.slf4j.LoggerFactory
+
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
 import com.dimajix.flowman.graph.InputMapping
 import com.dimajix.flowman.graph.MappingRef
 import com.dimajix.flowman.graph.RelationRef
 import com.dimajix.flowman.graph.WriteRelation
+import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Relation
 
 
-class RelationCollector extends Collector {
+class RelationCollector(
+    executeTests:Boolean = true
+) extends Collector {
+    private val logger = LoggerFactory.getLogger(getClass)
+
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
         val parent = documentation.reference
         val docs = graph.relations.map(t => t.relation.identifier -> document(execution, parent, t)).toMap
         documentation.copy(relations = docs)
     }
-
 
     /**
      * Create a documentation for the relation.
@@ -40,6 +46,9 @@ class RelationCollector extends Collector {
      * @return
      */
     private def document(execution:Execution, parent:Reference, node:RelationRef) : RelationDoc = {
+        val relation = node.relation
+        logger.info(s"Collecting documentation for relation '${relation.identifier}'")
+
         val inputs = node.incoming.flatMap {
                 case write:WriteRelation =>
                     write.input.incoming.flatMap {
@@ -52,7 +61,6 @@ class RelationCollector extends Collector {
                 case _ => Seq()
             }
 
-        val relation = node.relation
         val doc = RelationDoc(
             Some(parent),
             relation.identifier,
@@ -76,6 +84,15 @@ class RelationCollector extends Collector {
         }
         val mergedSchema = desc.merge(schema)
 
-        doc.copy(schema = Some(mergedSchema)).merge(relation.documentation)
+        val result = doc.copy(schema = Some(mergedSchema)).merge(relation.documentation)
+        if (executeTests)
+            runTests(execution, relation, result)
+        else
+            result
+    }
+
+    private def runTests(execution: Execution, relation:Relation, doc:RelationDoc) : RelationDoc = {
+        val executor = new TestExecutor(execution)
+        executor.executeTests(relation, doc)
     }
 }

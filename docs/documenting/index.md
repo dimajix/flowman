@@ -12,14 +12,14 @@ which is useful for providing a documentation of the data model.
    *
 ```
 
-## Providing Descriptions
+### Providing Descriptions
 
 Although Flowman will generate many valuable documentation bits by inspecting the project, the most important entities
 (relations, mappings and targets) also provide the ability to manually and explicitly add documentation to them. This
 documentation will override any automatically inferred information.
 
 
-## Generating Documentation
+### Generating Documentation
 
 Generating the documentation is as easy as running [flowexec](../cli/flowexec.md) as follows:
 

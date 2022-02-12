@@ -37,6 +37,7 @@ final case class ColumnTestReference(
 
 
 abstract class ColumnTest extends Fragment with Product with Serializable {
+    def name : String
     def result : Option[TestResult]
     def withResult(result:TestResult) : ColumnTest
 
@@ -53,6 +54,7 @@ final case class NotNullColumnTest(
     description: Option[String] = None,
     result:Option[TestResult] = None
 ) extends ColumnTest {
+    override def name : String = "IS NOT NULL"
     override def withResult(result: TestResult): ColumnTest = copy(result=Some(result))
     override def reparent(parent: Reference): ColumnTest = {
         val ref = ColumnTestReference(Some(parent))
@@ -65,6 +67,7 @@ final case class UniqueColumnTest(
     description: Option[String] = None,
     result:Option[TestResult] = None
 ) extends ColumnTest  {
+    override def name : String = "HAS UNIQUE VALUES"
     override def withResult(result: TestResult): ColumnTest = copy(result=Some(result))
     override def reparent(parent: Reference): UniqueColumnTest = {
         val ref = ColumnTestReference(Some(parent))
@@ -79,6 +82,7 @@ final case class RangeColumnTest(
     upper:Any,
     result:Option[TestResult] = None
 ) extends ColumnTest  {
+    override def name : String = s"IS BETWEEN $lower AND $upper"
     override def withResult(result: TestResult): ColumnTest = copy(result=Some(result))
     override def reparent(parent: Reference): RangeColumnTest = {
         val ref = ColumnTestReference(Some(parent))
@@ -92,6 +96,7 @@ final case class ValuesColumnTest(
     values: Seq[Any] = Seq(),
     result:Option[TestResult] = None
 ) extends ColumnTest  {
+    override def name : String = s"IS IN (${values.mkString(",")})"
     override def withResult(result: TestResult): ColumnTest = copy(result=Some(result))
     override def reparent(parent: Reference): ValuesColumnTest = {
         val ref = ColumnTestReference(Some(parent))

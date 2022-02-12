@@ -158,7 +158,7 @@ trait Relation extends Instance {
      * @param execution
      * @return
      */
-    def describe(execution:Execution) : StructType
+    def describe(execution:Execution, partitions:Map[String,FieldValue] = Map()) : StructType
 
         /**
       * Reads data from the relation, possibly from specific partitions
@@ -320,15 +320,15 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @param execution
      * @return
      */
-    override def describe(execution:Execution) : StructType = {
-        val partitions = SetIgnoreCase(this.partitions.map(_.name))
-        val result = if (!fields.forall(f => partitions.contains(f.name))) {
+    override def describe(execution:Execution, partitions:Map[String,FieldValue] = Map()) : StructType = {
+        val partitionNames = SetIgnoreCase(this.partitions.map(_.name))
+        val result = if (!fields.forall(f => partitionNames.contains(f.name))) {
             // Use given fields if relation contains valid list of fields in addition to the partition columns
             StructType(fields)
         }
         else {
             // Otherwise let Spark infer the schema
-            val df = read(execution)
+            val df = read(execution, partitions)
             StructType.of(df.schema)
         }
 

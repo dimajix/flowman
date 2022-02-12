@@ -147,7 +147,7 @@ case class JdbcRelation(
      * @param execution
      * @return
      */
-    override def describe(execution:Execution) : FlowmanStructType = {
+    override def describe(execution:Execution, partitions:Map[String,FieldValue] = Map()) : FlowmanStructType = {
         val result = if (schema.nonEmpty) {
             FlowmanStructType(fields)
         }

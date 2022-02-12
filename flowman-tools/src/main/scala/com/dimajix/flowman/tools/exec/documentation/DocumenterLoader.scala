@@ -33,7 +33,7 @@ object DocumenterLoader {
                 Some(file.instantiate(context))
             }
             else {
-                Some(defaultDocumenter((basedir / "doc").path))
+                Some(defaultDocumenter((basedir / "generated-documentation").path))
             }
         }.getOrElse {
             defaultDocumenter(new Path("/tmp/flowman/generated-documentation"))

@@ -22,10 +22,12 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
 import com.dimajix.flowman.graph.InputMapping
 import com.dimajix.flowman.graph.MappingRef
+import com.dimajix.flowman.graph.ReadRelation
 import com.dimajix.flowman.graph.RelationRef
 import com.dimajix.flowman.graph.WriteRelation
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.types.FieldValue
 
 
 class RelationCollector(
@@ -60,6 +62,20 @@ class RelationCollector(
                     }
                 case _ => Seq()
             }
+        val inputPartitions = node.outgoing.flatMap {
+                case read:ReadRelation =>
+                    logger.debug(s"read partition ${relation.identifier}: ${read.input.relation.identifier} ${read.partitions}")
+                    Some(read.partitions)
+                case _ => None
+            }
+        val outputPartitions = node.incoming.flatMap {
+                case write:WriteRelation =>
+                    logger.debug(s"write partition ${relation.identifier}: ${write.output.relation.identifier} ${write.partition}")
+                    Some(write.partition)
+                case _ => None
+            }
+
+        val partitions = (inputPartitions ++ outputPartitions).foldLeft(Map.empty[String,FieldValue])((a,b) => a ++ b)
 
         val doc = RelationDoc(
             Some(parent),
@@ -68,11 +84,11 @@ class RelationCollector(
             None,
             inputs,
             relation.provides.toSeq,
-            Map()
+            partitions
         )
         val ref = doc.reference
 
-        val desc = SchemaDoc.ofStruct(ref, relation.describe(execution))
+        val desc = SchemaDoc.ofStruct(ref, relation.describe(execution, partitions))
         val schema = relation.schema.map { schema =>
             val fieldsDoc = SchemaDoc.ofFields(parent, schema.fields)
             SchemaDoc(

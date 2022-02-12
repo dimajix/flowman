@@ -71,7 +71,6 @@ case class FileGenerator(
         try {
             // Manually convert string to UTF-8 and use write, since writeUTF apparently would write a BOM
             val bytes = Charset.forName("UTF-8").encode(content)
-            val output = file.create(true)
             out.write(bytes.array(), bytes.arrayOffset(), bytes.limit())
         }
         finally {

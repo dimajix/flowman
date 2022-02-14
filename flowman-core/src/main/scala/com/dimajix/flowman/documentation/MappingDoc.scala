@@ -94,6 +94,14 @@ final case class MappingOutputDoc(
 }
 
 
+object MappingReference {
+    def of(parent:Reference, identifier:MappingIdentifier) : MappingReference = {
+        identifier.project match {
+            case None => MappingReference(Some(parent), identifier.name)
+            case Some(project) => MappingReference(Some(ProjectReference(project)), identifier.name)
+        }
+    }
+}
 final case class MappingReference(
     override val parent:Option[Reference],
     name:String

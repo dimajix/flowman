@@ -21,6 +21,14 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.FieldValue
 
 
+object RelationReference {
+    def of(parent:Reference, identifier:RelationIdentifier) : RelationReference = {
+        identifier.project match {
+            case None => RelationReference(Some(parent), identifier.name)
+            case Some(project) => RelationReference(Some(ProjectReference(project)), identifier.name)
+        }
+    }
+}
 final case class RelationReference(
     parent:Option[Reference],
     name:String
@@ -38,10 +46,10 @@ final case class RelationReference(
 final case class RelationDoc(
     parent:Option[Reference],
     identifier:RelationIdentifier,
-    description:Option[String],
-    schema:Option[SchemaDoc],
-    inputs:Seq[Reference],
-    provides:Seq[ResourceIdentifier],
+    description:Option[String] = None,
+    schema:Option[SchemaDoc] = None,
+    inputs:Seq[Reference] = Seq(),
+    provides:Seq[ResourceIdentifier] = Seq(),
     partitions:Map[String,FieldValue] = Map()
 ) extends EntityDoc {
     override def reference: RelationReference = RelationReference(parent, identifier.name)

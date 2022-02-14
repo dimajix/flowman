@@ -20,9 +20,12 @@ import scala.collection.mutable
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetIdentifier
 
 
 sealed abstract class Node extends Product with Serializable {
@@ -39,6 +42,7 @@ sealed abstract class Node extends Product with Serializable {
     def category : Category
     def kind : String
     def name : String
+    def project : Option[String]
 
     def provides : Set[ResourceIdentifier]
     def requires : Set[ResourceIdentifier]
@@ -103,28 +107,35 @@ final case class MappingRef(id:Int, mapping:Mapping) extends Node {
     override def category: Category = Category.MAPPING
     override def kind: String = mapping.kind
     override def name: String = mapping.name
+    override def project: Option[String] = mapping.project.map(_.name)
     override def provides : Set[ResourceIdentifier] = Set()
     override def requires : Set[ResourceIdentifier] = mapping.requires
+    def identifier : MappingIdentifier = mapping.identifier
 }
 final case class TargetRef(id:Int, target:Target, phase:Phase) extends Node {
     override def category: Category = Category.TARGET
     override def kind: String = target.kind
     override def name: String = target.name
+    override def project: Option[String] = target.project.map(_.name)
     override def provides : Set[ResourceIdentifier] = target.provides(phase)
     override def requires : Set[ResourceIdentifier] = target.requires(phase)
+    def identifier : TargetIdentifier = target.identifier
 }
 final case class RelationRef(id:Int, relation:Relation) extends Node {
     override def category: Category = Category.RELATION
     override def kind: String = relation.kind
     override def name: String = relation.name
+    override def project: Option[String] = relation.project.map(_.name)
     override def provides : Set[ResourceIdentifier] = relation.provides
     override def requires : Set[ResourceIdentifier] = relation.requires
+    def identifier : RelationIdentifier = relation.identifier
 }
 
 final case class MappingColumn(id:Int, mapping: Mapping, output:String, column:String) extends Node {
     override def category: Category = Category.MAPPING_COLUMN
     override def kind: String = "mapping_column"
     override def name: String = mapping.name + "." + output + "." + column
+    override def project: Option[String] = mapping.project.map(_.name)
     override def provides : Set[ResourceIdentifier] = Set()
     override def requires : Set[ResourceIdentifier] = Set()
 }
@@ -132,6 +143,7 @@ final case class RelationColumn(id:Int, relation: Relation, column:String) exten
     override def category: Category = Category.RELATION_COLUMN
     override def kind: String = "relation_column"
     override def name: String = relation.name + "." + column
+    override def project: Option[String] = relation.project.map(_.name)
     override def provides : Set[ResourceIdentifier] = Set()
     override def requires : Set[ResourceIdentifier] = Set()
 }

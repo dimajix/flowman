@@ -32,7 +32,7 @@ final case class ProjectReference(
 
 final case class ProjectDoc(
     name: String,
-    version: Option[String],
+    version: Option[String] = None,
     description: Option[String] = None,
     targets:Map[TargetIdentifier,TargetDoc] = Map(),
     relations:Map[RelationIdentifier,RelationDoc] = Map(),

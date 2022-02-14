@@ -21,26 +21,18 @@ import scala.util.Success
 import scala.util.Try
 import scala.util.control.NonFatal
 
-import org.apache.hadoop.fs.Path
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.common.ParserUtils.splitSettings
-import com.dimajix.flowman.documentation.Documenter
-import com.dimajix.flowman.documentation.MappingCollector
-import com.dimajix.flowman.documentation.RelationCollector
-import com.dimajix.flowman.documentation.TargetCollector
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.spec.documentation.FileGenerator
 import com.dimajix.flowman.tools.exec.Command
-import com.dimajix.flowman.types.FieldValue
 
 
 class GenerateCommand extends Command {
@@ -72,7 +64,7 @@ class GenerateCommand extends Command {
             Status.SUCCESS
         } catch {
             case NonFatal(ex) =>
-                logger.error("Cannot generate documentation: " + reasons(ex))
+                logger.error("Cannot generate documentation: ", ex)
                 Status.FAILED
         }
     }

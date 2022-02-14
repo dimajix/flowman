@@ -17,9 +17,11 @@
 package com.dimajix.flowman.documentation
 
 import scala.collection.mutable
+import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
 import com.dimajix.flowman.graph.MappingRef
@@ -80,7 +82,6 @@ class MappingCollector(
      */
     private def document(execution: Execution, parent:Reference, mapping:Mapping, inputs:Map[MappingOutputIdentifier,MappingOutputDoc]) : MappingDoc = {
         val inputSchemas = inputs.map(kv => kv._1 -> kv._2.schema.map(_.toStruct).getOrElse(StructType(Seq())))
-        val schemas = mapping.describe(execution, inputSchemas)
         val doc = MappingDoc(
             Some(parent),
             mapping.identifier,
@@ -90,15 +91,29 @@ class MappingCollector(
         )
         val ref = doc.reference
 
-        val outputs = schemas.map { case(output,schema) =>
-            val doc = MappingOutputDoc(
-                Some(ref),
-                MappingOutputIdentifier(mapping.identifier, output),
-                None,
-                None
-            )
-            val schemaDoc = SchemaDoc.ofStruct(doc.reference, schema)
-            doc.copy(schema = Some(schemaDoc))
+        val outputs = try {
+            val schemas = mapping.describe(execution, inputSchemas)
+            schemas.map { case(output,schema) =>
+                val doc = MappingOutputDoc(
+                    Some(ref),
+                    MappingOutputIdentifier(mapping.identifier, output),
+                    None,
+                    None
+                )
+                val schemaDoc = SchemaDoc.ofStruct(doc.reference, schema)
+                doc.copy(schema = Some(schemaDoc))
+            }
+        } catch {
+            case NonFatal(ex) =>
+                logger.warn(s"Error while inferring schema description of mapping '${mapping.identifier}': ${reasons(ex)}")
+                mapping.outputs.map { output =>
+                    MappingOutputDoc(
+                        Some(ref),
+                        MappingOutputIdentifier(mapping.identifier, output),
+                        None,
+                        None
+                    )
+                }
         }
 
         val result = doc.copy(outputs=outputs.toSeq).merge(mapping.documentation)

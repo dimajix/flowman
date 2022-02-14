@@ -22,6 +22,7 @@ object TestStatus {
     final case object FAILED extends TestStatus
     final case object SUCCESS extends TestStatus
     final case object ERROR extends TestStatus
+    final case object NOT_RUN extends TestStatus
 }
 
 

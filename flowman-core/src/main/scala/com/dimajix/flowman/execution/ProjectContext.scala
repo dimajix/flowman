@@ -43,7 +43,7 @@ import com.dimajix.flowman.model.TestIdentifier
 
 
 object ProjectContext {
-    class Builder private[ProjectContext](parent:Context, project:Project) extends AbstractContext.Builder[Builder,ProjectContext](parent, SettingLevel.PROJECT_SETTING) {
+    class Builder private[ProjectContext](parent:Context, project:Project) extends AbstractContext.Builder[Builder,ProjectContext](Some(parent), SettingLevel.PROJECT_SETTING) {
         require(parent != null)
         require(project != null)
 

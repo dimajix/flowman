@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import scala.collection.mutable
+
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
@@ -400,11 +402,15 @@ class Session private[execution](
     private val rootExecution : RootExecution = new RootExecution(this)
     private val operationsManager = new OperationManager
 
-    private lazy val rootContext : RootContext = {
-        def loadProject(name:String) : Option[Project] = {
-            Some(store.loadProject(name))
+    private val cachedProjects : mutable.Map[String,Project] = mutable.Map()
+    private def loadProject(name:String) : Option[Project] = {
+        val project = cachedProjects.synchronized {
+            cachedProjects.getOrElseUpdate(name, store.loadProject(name))
         }
+        Some(project)
+    }
 
+    private lazy val rootContext : RootContext = {
         val builder = RootContext.builder(_namespace, _profiles)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_config, SettingLevel.GLOBAL_OVERRIDE)

@@ -39,20 +39,20 @@ abstract class TemplateGenerator(
 ) extends BaseGenerator {
     override def generate(context:Context, execution: Execution, documentation: ProjectDoc): Unit
 
-    protected def renderProject(context:Context, documentation: ProjectDoc) : String = {
-        val temp = loadResource("project.vtl")
+    protected def renderProject(context:Context, documentation: ProjectDoc, template:String="project.vtl") : String = {
+        val temp = loadResource(template)
         context.evaluate(temp, Map("project" -> ProjectDocWrapper(documentation)))
     }
-    protected def renderRelation(context:Context, documentation: RelationDoc) : String = {
-        val temp = loadResource("relation.vtl")
+    protected def renderRelation(context:Context, documentation: RelationDoc, template:String="relation.vtl") : String = {
+        val temp = loadResource(template)
         context.evaluate(temp, Map("relation" -> RelationDocWrapper(documentation)))
     }
-    protected def renderMapping(context:Context, documentation: MappingDoc) : String = {
-        val temp = loadResource("mapping.vtl")
+    protected def renderMapping(context:Context, documentation: MappingDoc, template:String="mapping.vtl") : String = {
+        val temp = loadResource(template)
         context.evaluate(temp, Map("mapping" -> MappingDocWrapper(documentation)))
     }
-    protected def renderTarget(context:Context, documentation: TargetDoc) : String = {
-        val temp = loadResource("target.vtl")
+    protected def renderTarget(context:Context, documentation: TargetDoc, template:String="target.vtl") : String = {
+        val temp = loadResource(template)
         context.evaluate(temp, Map("target" -> TargetDocWrapper(documentation)))
     }
 

@@ -16,9 +16,12 @@
 
 package com.dimajix.flowman.spec.documentation
 
+import java.io.StringReader
 import java.net.URL
 import java.nio.charset.Charset
+import java.util.Properties
 
+import scala.collection.JavaConverters._
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.common.io.Resources
 import org.apache.hadoop.fs.Path
@@ -33,7 +36,8 @@ import com.dimajix.flowman.hadoop.File
 
 object FileGenerator {
     val textTemplate : URL = Resources.getResource(classOf[FileGenerator], "/com/dimajix/flowman/documentation/text")
-    val defaultTemplate : URL = textTemplate
+    val htmlTemplate : URL = Resources.getResource(classOf[FileGenerator], "/com/dimajix/flowman/documentation/html")
+    val defaultTemplate : URL = htmlTemplate
 }
 
 
@@ -44,6 +48,9 @@ case class FileGenerator(
     private val logger = LoggerFactory.getLogger(classOf[FileGenerator])
 
     override def generate(context:Context, execution: Execution, documentation: ProjectDoc): Unit = {
+        val props = new Properties()
+        props.load(new StringReader(loadResource("template.properties")))
+
         val fs = execution.fs
 
         val uri = location.toUri
@@ -61,8 +68,15 @@ case class FileGenerator(
         }
         outputDir.mkdirs()
 
-        val projectDoc = renderProject(context, documentation)
-        writeFile(outputDir / "project.txt", projectDoc)
+        generateProjectFile(context, documentation, outputDir, props.asScala.toMap)
+    }
+
+    private def generateProjectFile(context:Context, documentation: ProjectDoc, outputDir:File, properties: Map[String,String]) : Unit= {
+        val in = properties.getOrElse("template.project.input", "project.vtl")
+        val out = properties("template.project.output")
+
+        val projectDoc = renderProject(context, documentation, in)
+        writeFile(outputDir / out, projectDoc)
     }
 
     private def writeFile(file:File, content:String) : Unit = {
@@ -85,9 +99,14 @@ class FileGeneratorSpec extends GeneratorSpec {
     @JsonProperty(value="template", required=false) private var template:String = FileGenerator.defaultTemplate.toString
 
     override def instantiate(context: Context): Generator = {
+        val url = context.evaluate(template) match {
+            case "text" => FileGenerator.textTemplate
+            case "html" => FileGenerator.htmlTemplate
+            case str => new URL(str)
+        }
         FileGenerator(
             new Path(context.evaluate(location)),
-            new URL(context.evaluate(template))
+            url
         )
     }
 }

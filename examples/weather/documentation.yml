@@ -10,3 +10,4 @@ generators:
   # Create an output file in the project directory
   - kind: file
     location: ${project.basedir}/generated-documentation
+    template: html

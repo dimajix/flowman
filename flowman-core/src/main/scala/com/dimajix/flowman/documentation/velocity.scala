@@ -132,6 +132,26 @@ final case class ProjectDocWrapper(project:ProjectDoc) extends FragmentWrapper(p
     def getName() : String = project.name
     def getVersion() : String = project.version.getOrElse("")
 
+    def resolve(reference:ReferenceWrapper) : FragmentWrapper = {
+        val x = project.resolve(reference.reference).map {
+            case m:MappingDoc => MappingDocWrapper(m)
+            case o:MappingOutputDoc => MappingOutputDocWrapper(o)
+            case r:RelationDoc => RelationDocWrapper(r)
+            case t:TargetDoc => TargetDocWrapper(t)
+            case p:TargetPhaseDoc => TargetPhaseDocWrapper(p)
+            case s:SchemaDoc => SchemaDocWrapper(s)
+            case t:TestResult => TestResultWrapper(t)
+            case c:ColumnDoc => ColumnDocWrapper(c)
+            case t:ColumnTest => ColumnTestWrapper(t)
+            case f:Fragment => new FragmentWrapper(f)
+        }.orNull
+
+        if (x == null)
+            println("null")
+
+        x
+    }
+
     def getMappings() : java.util.List[MappingDocWrapper] = project.mappings.values.map(MappingDocWrapper).toSeq.asJava
     def getRelations() : java.util.List[RelationDocWrapper] = project.relations.values.map(RelationDocWrapper).toSeq.asJava
     def getTargets() : java.util.List[TargetDocWrapper] = project.targets.values.map(TargetDocWrapper).toSeq.asJava

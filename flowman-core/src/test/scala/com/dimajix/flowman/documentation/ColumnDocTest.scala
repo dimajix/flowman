@@ -25,7 +25,7 @@ import com.dimajix.flowman.types.NullType
 import com.dimajix.flowman.types.StringType
 
 
-class ColumnDocTest  extends AnyFlatSpec with Matchers {
+class ColumnDocTest extends AnyFlatSpec with Matchers {
     "A ColumnDoc" should "support merge" in {
         val doc1 = ColumnDoc(
             None,

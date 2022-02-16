@@ -37,8 +37,8 @@ final case class MappingOutputReference(
 final case class MappingOutputDoc(
     parent:Some[Reference],
     identifier: MappingOutputIdentifier,
-    description: Option[String],
-    schema:Option[SchemaDoc]
+    description: Option[String] = None,
+    schema:Option[SchemaDoc] = None
 ) extends Fragment {
     override def reference: Reference = MappingOutputReference(parent, identifier.output)
     override def fragments: Seq[Fragment] = schema.toSeq
@@ -103,7 +103,7 @@ object MappingReference {
     }
 }
 final case class MappingReference(
-    override val parent:Option[Reference],
+    override val parent:Option[Reference] = None,
     name:String
 ) extends Reference {
     override def toString: String = {
@@ -117,16 +117,16 @@ final case class MappingReference(
 
 
 final case class MappingDoc(
-    parent:Option[Reference],
+    parent:Option[Reference] = None,
     identifier:MappingIdentifier,
-    description:Option[String],
-    inputs:Seq[Reference],
-    outputs:Seq[MappingOutputDoc]
+    description:Option[String] = None,
+    inputs:Seq[Reference] = Seq.empty,
+    outputs:Seq[MappingOutputDoc] = Seq.empty
 ) extends EntityDoc {
     override def reference: MappingReference = MappingReference(parent, identifier.name)
     override def fragments: Seq[Fragment] = outputs
     override def reparent(parent: Reference): MappingDoc = {
-        val ref = MappingOutputReference(Some(parent), identifier.name)
+        val ref = MappingReference(Some(parent), identifier.name)
         copy(
             parent=Some(parent),
             outputs=outputs.map(_.reparent(ref))

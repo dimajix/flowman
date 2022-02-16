@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.documentation
 
+import scala.annotation.tailrec
+
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.TargetIdentifier
@@ -56,8 +58,10 @@ final case class ProjectDoc(
             case head :: tail =>
                 if (head != reference)
                     None
+                else if (tail.isEmpty)
+                    Some(this)
                 else
-                    resolve(head).flatMap(_.resolve(tail))
+                    fragments.find(_.reference == tail.head).flatMap(_.resolve(tail.tail))
             case Nil =>
                 None
         }

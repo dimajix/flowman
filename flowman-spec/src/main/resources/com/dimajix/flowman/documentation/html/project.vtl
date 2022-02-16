@@ -3,78 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <title>Flowman Project '${project.name}' version ${project.version}</title>
+    <style>
+        body {
+            font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+        }
+        table.blueTable {
+            border: 1px solid #1C6EA4;
+            background-color: #EEEEEE;
+            width: 100%;
+            text-align: left;
+            border-collapse: collapse;
+        }
+        table.blueTable td, table.blueTable th {
+            border: 1px solid #AAAAAA;
+            padding: 3px 2px;
+        }
+        table.blueTable tbody td {
+            font-size: 13px;
+        }
+        table.blueTable tr:nth-child(even) {
+            background: #D0E4F5;
+        }
+        table.blueTable thead {
+            background: #1C6EA4;
+            background: -moz-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+            background: -webkit-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+            background: linear-gradient(to bottom, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+            border-bottom: 2px solid #444444;
+        }
+        table.blueTable thead th {
+            font-size: 15px;
+            font-weight: bold;
+            color: #FFFFFF;
+            border-left: 2px solid #D0E4F5;
+        }
+        table.blueTable thead th:first-child {
+            border-left: none;
+        }
+
+        table.columnTests {
+            width: 100%;
+        }
+        table.columnTests tbody td {
+            font-size: 12px;
+            border-width: 0;
+        }
+        table.columnTests tr {
+            background: transparent;
+        }
+        table.columnTests tr:nth-child(even) {
+            background: transparent;
+        }
+
+        h2.separator {
+            background-color: #6ab0de;
+            border-radius: 20px;
+            margin: 4px;
+            padding: 20px;
+        }
+
+        .identifier {
+            font-family: monospace;
+        }
+        .dataType {
+            font-family: monospace;
+        }
+
+        div.indexBox {
+            background-color: #D0E4F5;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 20px;
+        }
+        div.mainEntity {
+            background-color: #D0E4F5;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 20px;
+        }
+        div.subEntity {
+            background-color: ghostwhite;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        div.titleBox {
+            background-color: #5592bb;
+            margin: 4px;
+            padding: 20px;
+            border-radius: 20px;
+        }
+        div.infoBox {
+            background-color: #5592bb;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        div.bubble {
+            display: inline;
+            background-color: #0e84b5;
+            margin: 2px;
+            padding: 6px;
+            border-radius: 20px;
+        }
+    </style>
 </head>
 
-<body>
-<h1>Flowman Project '${project.name}' version ${project.version}</h1>
-<div>Description: ${project.description}</div>
-
-<h4>Mappings</h4>
-<ul>
-#foreach($mapping in ${project.mappings})
-    <li><a href="#${mapping.reference}">'${mapping.identifier}'</a></li>
+#macro(schema $schema)
+<table class="blueTable">
+    <thead>
+    <tr>
+        <td>Column Name</td>
+        <td>Data Type</td>
+        <td>Attributes</td>
+        <td>Description</td>
+        <td>Tests</td>
+    </tr>
+    </thead>
+    #foreach($column in ${schema.columns})
+        <tr>
+            <td class="identifier">${column.name}</td>
+            <td class="dataType">${column.catalogType}</td>
+            <td class="dataType">#if(!$column.nullable) NOT NULL #end</td>
+            <td>${column.description}</td>
+            <td>
+                <table class="columnTests">
+                #foreach($test in ${column.tests})
+                    <tr>
+                        <td>${test.name}</td>
+                        <td>${test.status}</td>
+                    </tr>
+                #end
+                </table>
+            </td>
+        </tr>
+    #end
+</table>
 #end
-</ul>
 
-<h4>Relations</h4>
-<ul>
-    #foreach($relation in ${project.relations})
-        <li><a href="#${relation.reference}">'${relation.identifier}'</a></li>
-    #end
-</ul>
-
-<h4>Targets</h4>
-<ul>
-    #foreach($target in ${project.targets})
-        <li><a href="#${target.reference}">'${target.identifier}'</a></li>
-    #end
-</ul>
-
-
-<h2>Mappings</h2>
-#foreach($mapping in ${project.mappings})
-    <h3 id="${mapping.reference}">Mapping '${mapping.identifier}'</h3>
-    <div>Description: ${mapping.description}</div>
-    <h4>Inputs</h4>
-    #foreach($input in ${mapping.inputs})
+#macro(references $refs)
+    #foreach($input in ${refs})
     <table>
         <tr>
             <td>${input.kind}</td>
-            <td><a href="#${input}">${input}</a></td>
+            <td><a href="#${input}">${project.resolve($input)}</a></td>
         </tr>
     </table>
     #end
+#end
+
+
+<body>
+<div class="titleBox">
+    <h1>Flowman Project '${project.name}' version ${project.version}</h1>
+    <div>Description: ${project.description}</div>
+</div>
+
+<div class="indexBox">
+    <h2>Index</h2>
+    <h4><a href="#mappings">Mappings</a></h4>
+    <ul>
+    #foreach($mapping in ${project.mappings})
+        <li><a href="#${mapping.reference}">'${mapping.identifier}'</a></li>
+    #end
+    </ul>
+
+    <h4><a href="#relations">Relations</a></h4>
+    <ul>
+        #foreach($relation in ${project.relations})
+            <li><a href="#${relation.reference}">'${relation.identifier}'</a></li>
+        #end
+    </ul>
+
+    <h4><a href="#targets">Targets</a></h4>
+    <ul>
+        #foreach($target in ${project.targets})
+            <li><a href="#${target.reference}">'${target.identifier}'</a></li>
+        #end
+    </ul>
+</div>
+
+<h2 id="mappings" class="separator">Mappings</h2>
+#foreach($mapping in ${project.mappings})
+<div class="mainEntity">
+    <div class="infoBox">
+    <h3 id="${mapping.reference}">Mapping '${mapping.identifier}'</h3>
+    <div>Description: ${mapping.description}</div>
+    </div>
+    <h4>Inputs</h4>
+    #references(${mapping.inputs})
     <h4>Outputs</h4>
+    <div class="subEntity">
     #foreach($output in ${mapping.outputs})
         <h5 id="${output.reference}">${output.name}</h5>
         <div>Description: ${output.description}</div>
-        <table>
-            <thead>
-            <tr>
-                <td>Column</td>
-                <td>Data Type</td>
-                <td>Attributes</td>
-                <td>Description</td>
-                <td>Tests</td>
-            </tr>
-            </thead>
-        #foreach($column in ${output.schema.columns})
-            <tr>
-                <td>${column.name}</td>
-                <td>${column.catalogType}</td>
-                <td>#if(!$column.nullable) NOT NULL #end</td>
-                <td>${column.description}</td>
-                <td></td>
-            </tr>
-        #end
-        </table>
+        #schema($output.schema)
     #end
+    </div>
+</div>
 #end
 
-<h2>Relations</h2>
+<h2 id="relations" class="separator">Relations</h2>
 #foreach($relation in ${project.relations})
+<div class="mainEntity">
+    <div class="infoBox">
     <h3 id="${relation.reference}">Relation '${relation.identifier}'</h3>
     <div>Description: ${relation.description}</div>
+    </div>
     <h4>Resources</h4>
     <table>
     #foreach($resource in ${relation.resources})
@@ -85,64 +219,27 @@
     #end
     </table>
     <h4>Inputs</h4>
-    <table>
-    #foreach($input in ${relation.inputs})
-        <tr>
-            <td></td>
-            <td>${input}</td>
-        </tr>
-    #end
-    </table>
+    #references(${relation.inputs})
     <h4>Schema</h4>
-    <table>
-        <thead>
-        <tr>
-            <td>Column</td>
-            <td>Data Type</td>
-            <td>Attributes</td>
-            <td>Description</td>
-            <td>Tests</td>
-        </tr>
-        </thead>
-        #foreach($column in ${relation.schema.columns})
-            <tr>
-                <td>${column.name}</td>
-                <td>${column.catalogType}</td>
-                <td>#if(!$column.nullable) NOT NULL #end</td>
-                <td>${column.description}</td>
-                <td></td>
-            </tr>
-        #end
-    </table>
+    #schema($relation.schema)
+</div>
 #end
 
-<h2>Targets</h2>
+<h2 id="targets" class="separator">Targets</h2>
 #foreach($target in ${project.targets})
+<div class="mainEntity">
+    <div class="infoBox">
     <h3 id="${target.reference}">Target '${target.identifier}'</h3>
     <div>Description: ${target.description}</div>
-    <h4>Inputs</h4>
-    #foreach($input in ${target.inputs})
-    <table>
-        <tr>
-            <td>${input.kind}</td>
-            <td><a href="#${input}">${input}</a></td>
-        </tr>
-    </table>
-    #end
-    <h4>Outputs</h4>
-    #foreach($output in ${target.outputs})
-    <table>
-        <tr>
-            <td>${output.kind}</td>
-            <td><a href="#${output}">${output}</a></td>
-        </tr>
-    </table>
-    #end
-    <h4>Phases</h4>
-    <div>
-    #foreach($phase in ${target.phases})
-    ${phase.name}
-    #end
     </div>
+    <h4>Inputs</h4>
+    #references(${target.inputs})
+    <h4>Outputs</h4>
+    #references(${target.outputs})
+    <h4>Phases</h4>
+    #foreach($phase in ${target.phases})
+        <div class="bubble">${phase.name}</div>
+    #end
+</div>
 #end
 </body>

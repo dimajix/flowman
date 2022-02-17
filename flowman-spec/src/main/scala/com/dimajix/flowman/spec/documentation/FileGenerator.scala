@@ -22,6 +22,8 @@ import java.nio.charset.Charset
 import java.util.Properties
 
 import scala.collection.JavaConverters._
+import scala.util.matching.Regex
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.common.io.Resources
 import org.apache.hadoop.fs.Path
@@ -43,11 +45,17 @@ object FileGenerator {
 
 case class FileGenerator(
     location:Path,
-    template:URL = FileGenerator.defaultTemplate
-) extends TemplateGenerator(template) {
+    template:URL = FileGenerator.defaultTemplate,
+    includeRelations:Seq[Regex] = Seq.empty,
+    excludeRelations:Seq[Regex] = Seq.empty,
+    includeMappings:Seq[Regex] = Seq.empty,
+    excludeMappings:Seq[Regex] = Seq.empty,
+    includeTargets:Seq[Regex] = Seq.empty,
+    excludeTargets:Seq[Regex] = Seq.empty
+) extends TemplateGenerator(template, includeRelations, excludeRelations, includeMappings, excludeMappings, includeTargets, excludeTargets) {
     private val logger = LoggerFactory.getLogger(classOf[FileGenerator])
 
-    override def generate(context:Context, execution: Execution, documentation: ProjectDoc): Unit = {
+    protected override def generateInternal(context:Context, execution: Execution, documentation: ProjectDoc): Unit = {
         val props = new Properties()
         props.load(new StringReader(loadResource("template.properties")))
 
@@ -94,19 +102,21 @@ case class FileGenerator(
 }
 
 
-class FileGeneratorSpec extends GeneratorSpec {
+class FileGeneratorSpec extends TemplateGeneratorSpec {
     @JsonProperty(value="location", required=true) private var location:String = _
     @JsonProperty(value="template", required=false) private var template:String = FileGenerator.defaultTemplate.toString
 
     override def instantiate(context: Context): Generator = {
-        val url = context.evaluate(template) match {
-            case "text" => FileGenerator.textTemplate
-            case "html" => FileGenerator.htmlTemplate
-            case str => new URL(str)
-        }
+        val url = getTemplateUrl(context)
         FileGenerator(
             new Path(context.evaluate(location)),
-            url
+            url,
+            includeRelations = includeRelations.map(context.evaluate).map(_.trim).filter(_.nonEmpty).map(_.r),
+            excludeRelations = excludeRelations.map(context.evaluate).map(_.trim).filter(_.nonEmpty).map(_.r),
+            includeMappings = includeMappings.map(context.evaluate).map(_.trim).filter(_.nonEmpty).map(_.r),
+            excludeMappings = excludeMappings.map(context.evaluate).map(_.trim).filter(_.nonEmpty).map(_.r),
+            includeTargets = includeTargets.map(context.evaluate).map(_.trim).filter(_.nonEmpty).map(_.r),
+            excludeTargets = excludeTargets.map(context.evaluate).map(_.trim).filter(_.nonEmpty).map(_.r)
         )
     }
 }

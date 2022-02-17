@@ -61,14 +61,13 @@ class MappingCollector(
 
             // Add additional inputs from non-mapping entities
             val incoming = node.incoming.collect {
-                case ReadRelation(input, _, _) => documentation.relations.get(input.relation.identifier).map(_.reference)
+                // TODO: The following logic is not correct in case of embedded relations. We would need an IdentityHashMap instead
+                case ReadRelation(input, _, _) => documentation.relations.find(_.identifier == input.relation.identifier).map(_.reference)
             }.flatten
             doc.copy(inputs=doc.inputs ++ incoming)
         }
 
-        val docs = graph.mappings.map { mapping =>
-            mapping.mapping.identifier -> getMappingDoc(mapping)
-        }.toMap
+        val docs = graph.mappings.map(mapping => getMappingDoc(mapping))
 
         documentation.copy(mappings=docs)
     }

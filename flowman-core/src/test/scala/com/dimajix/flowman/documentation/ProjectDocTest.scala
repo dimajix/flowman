@@ -46,7 +46,7 @@ class ProjectDocTest extends AnyFlatSpec with Matchers {
 
         val finalOutput = output.copy(schema = Some(schema))
         val finalMapping = mapping.copy(outputs = Seq(finalOutput))
-        val finalProject = project.copy(mappings = Map(mapping.identifier -> finalMapping))
+        val finalProject = project.copy(mappings = Seq(finalMapping))
 
         finalProject.resolve(projectRef) should be (Some(finalProject))
         finalProject.resolve(mappingRef) should be (Some(finalMapping))

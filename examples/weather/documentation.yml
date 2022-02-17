@@ -11,3 +11,8 @@ generators:
   - kind: file
     location: ${project.basedir}/generated-documentation
     template: html
+    excludeRelations:
+      # You can either specify a name (without the project)
+      - "stations_raw"
+      # Or can also explicitly specify a name with the project
+      - ".*/measurements_raw"

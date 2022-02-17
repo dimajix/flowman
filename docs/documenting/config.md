@@ -20,4 +20,44 @@ generators:
   # Create an output file in the project directory
   - kind: file
     location: ${project.basedir}/doc
+    # This will exclude all mappings
+    excludeMappings: ".*"
+    excludeRelations:
+      # You can either specify a name (without the project)
+      - "stations_raw"
+      # Or can also explicitly specify a name with the project
+      - ".*/measurements_raw"
 ```
+
+## File Generator Fields
+
+The generator is used for generating the documentation. You can configure multiple generators for creating multiple
+differently configured documentations.
+
+* `kind` **(mandatory)** *(type: string)*: `file` 
+
+* `location` **(mandatory)** *(type: string)*: Specifies the output location 
+
+* `includeMappings` **(optional)** *(type: list:regex)* *(default: ".*")*:
+List of regular expressions which mappings to include. Per default all mappings will be included in the output.
+The list of filters will be applied before the `excludeMappings` filter list.
+
+* `excludeMappings` **(optional)** *(type: list:regex)*
+  List of regular expressions which mappings to exclude. Per default no mapping will be excluded in the output.
+  The list of filters will be applied after the `includeMappings` filter list.
+
+* `includeTargets` **(optional)** *(type: list:regex)* *(default: ".*")*:
+  List of regular expressions which targets to include. Per default all targets will be included in the output.
+  The list of filters will be applied before the `excludeTargets` filter list.
+
+* `excludeTargets` **(optional)** *(type: list:regex)*
+  List of regular expressions which targets to exclude. Per default no target will be excluded in the output.
+  The list of filters will be applied after the `includeTargets` filter list.
+
+* `includeRelations` **(optional)** *(type: list:regex)* *(default: ".*")*:
+  List of regular expressions which relations to include. Per default all relations will be included in the output.
+  The list of filters will be applied before the `excludeRelations` filter list.
+
+* `excludeRelations` **(optional)** *(type: list:regex)*
+  List of regular expressions which relations to exclude. Per default no relation will be excluded in the output.
+  The list of filters will be applied after the `includeRelations` filter list.

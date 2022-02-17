@@ -133,7 +133,7 @@ final case class ProjectDocWrapper(project:ProjectDoc) extends FragmentWrapper(p
     def getVersion() : String = project.version.getOrElse("")
 
     def resolve(reference:ReferenceWrapper) : FragmentWrapper = {
-        val x = project.resolve(reference.reference).map {
+        project.resolve(reference.reference).map {
             case m:MappingDoc => MappingDocWrapper(m)
             case o:MappingOutputDoc => MappingOutputDocWrapper(o)
             case r:RelationDoc => RelationDocWrapper(r)
@@ -145,14 +145,9 @@ final case class ProjectDocWrapper(project:ProjectDoc) extends FragmentWrapper(p
             case t:ColumnTest => ColumnTestWrapper(t)
             case f:Fragment => new FragmentWrapper(f)
         }.orNull
-
-        if (x == null)
-            println("null")
-
-        x
     }
 
-    def getMappings() : java.util.List[MappingDocWrapper] = project.mappings.values.map(MappingDocWrapper).toSeq.asJava
-    def getRelations() : java.util.List[RelationDocWrapper] = project.relations.values.map(RelationDocWrapper).toSeq.asJava
-    def getTargets() : java.util.List[TargetDocWrapper] = project.targets.values.map(TargetDocWrapper).toSeq.asJava
+    def getMappings() : java.util.List[MappingDocWrapper] = project.mappings.map(MappingDocWrapper).asJava
+    def getRelations() : java.util.List[RelationDocWrapper] = project.relations.map(RelationDocWrapper).asJava
+    def getTargets() : java.util.List[TargetDocWrapper] = project.targets.map(TargetDocWrapper).asJava
 }

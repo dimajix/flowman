@@ -16,12 +16,6 @@
 
 package com.dimajix.flowman.documentation
 
-import scala.annotation.tailrec
-
-import com.dimajix.flowman.model.MappingIdentifier
-import com.dimajix.flowman.model.RelationIdentifier
-import com.dimajix.flowman.model.TargetIdentifier
-
 
 final case class ProjectReference(
     name:String
@@ -36,13 +30,13 @@ final case class ProjectDoc(
     name: String,
     version: Option[String] = None,
     description: Option[String] = None,
-    targets:Map[TargetIdentifier,TargetDoc] = Map(),
-    relations:Map[RelationIdentifier,RelationDoc] = Map(),
-    mappings:Map[MappingIdentifier,MappingDoc] = Map()
+    targets:Seq[TargetDoc] = Seq.empty,
+    relations:Seq[RelationDoc] = Seq.empty,
+    mappings:Seq[MappingDoc] = Seq.empty
 ) extends EntityDoc {
     override def reference: Reference = ProjectReference(name)
     override def parent: Option[Reference] = None
-    override def fragments: Seq[Fragment] = (targets.values ++ relations.values ++ mappings.values).toSeq
+    override def fragments: Seq[Fragment] = (targets ++ relations ++ mappings).toSeq
 
     override def resolve(path:Seq[Reference]) : Option[Fragment] = {
         if (path.isEmpty)

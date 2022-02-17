@@ -40,7 +40,7 @@ class RelationCollector(
 
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
         val parent = documentation.reference
-        val docs = graph.relations.map(t => t.relation.identifier -> document(execution, parent, t)).toMap
+        val docs = graph.relations.map(t => document(execution, parent, t))
         documentation.copy(relations = docs)
     }
 

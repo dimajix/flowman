@@ -32,7 +32,7 @@ class TargetCollector extends Collector {
 
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
         val parent = documentation.reference
-        val docs = graph.targets.map(t => t.target.identifier -> document(execution, parent, t)).toMap
+        val docs = graph.targets.map(t => document(execution, parent, t))
         documentation.copy(targets = docs)
     }
 

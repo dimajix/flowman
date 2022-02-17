@@ -141,14 +141,19 @@
 #end
 
 #macro(references $refs)
-    #foreach($input in ${refs})
     <table>
+    #foreach($input in ${refs})
         <tr>
+        #if(${project.resolve($input)})
             <td>${input.kind}</td>
             <td><a href="#${input}">${project.resolve($input)}</a></td>
+        #else
+            <td>${input.kind}</td>
+            <td>${input}</td>
+        #end
         </tr>
-    </table>
     #end
+    </table>
 #end
 
 
@@ -160,28 +165,35 @@
 
 <div class="indexBox">
     <h2>Index</h2>
+    #if(${project.mappings})
     <h4><a href="#mappings">Mappings</a></h4>
     <ul>
-    #foreach($mapping in ${project.mappings})
-        <li><a href="#${mapping.reference}">'${mapping.identifier}'</a></li>
-    #end
+        #foreach($mapping in ${project.mappings})
+            <li><a href="#${mapping.reference}">'${mapping.identifier}'</a></li>
+        #end
     </ul>
+    #end
 
+    #if(${project.relations})
     <h4><a href="#relations">Relations</a></h4>
     <ul>
         #foreach($relation in ${project.relations})
             <li><a href="#${relation.reference}">'${relation.identifier}'</a></li>
         #end
     </ul>
+    #end
 
+    #if(${project.targets})
     <h4><a href="#targets">Targets</a></h4>
     <ul>
         #foreach($target in ${project.targets})
             <li><a href="#${target.reference}">'${target.identifier}'</a></li>
         #end
     </ul>
+    #end
 </div>
 
+#if(${project.mappings})
 <h2 id="mappings" class="separator">Mappings</h2>
 #foreach($mapping in ${project.mappings})
 <div class="mainEntity">
@@ -201,7 +213,9 @@
     </div>
 </div>
 #end
+#end
 
+#if(${project.relations})
 <h2 id="relations" class="separator">Relations</h2>
 #foreach($relation in ${project.relations})
 <div class="mainEntity">
@@ -224,7 +238,9 @@
     #schema($relation.schema)
 </div>
 #end
+#end
 
+#if(${project.targets})
 <h2 id="targets" class="separator">Targets</h2>
 #foreach($target in ${project.targets})
 <div class="mainEntity">
@@ -241,5 +257,6 @@
         <div class="bubble">${phase.name}</div>
     #end
 </div>
+#end
 #end
 </body>

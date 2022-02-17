@@ -31,8 +31,6 @@ import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
 
@@ -115,10 +113,10 @@ class RelationCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
         val collector = new RelationCollector()
         val projectDoc = collector.collect(execution, graph, ProjectDoc(project.name))
 
-        val sourceRelationDoc = projectDoc.relations(RelationIdentifier("project/src"))
-        val targetRelationDoc = projectDoc.relations(RelationIdentifier("project/tgt"))
+        val sourceRelationDoc = projectDoc.relations.find(_.identifier == RelationIdentifier("project/src"))
+        val targetRelationDoc = projectDoc.relations.find(_.identifier == RelationIdentifier("project/tgt"))
 
-        sourceRelationDoc should be (RelationDoc(
+        sourceRelationDoc should be (Some(RelationDoc(
             parent = Some(ProjectReference("project")),
             identifier = RelationIdentifier("project/src"),
             description = Some("source relation"),
@@ -126,9 +124,9 @@ class RelationCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
                 parent = Some(RelationReference(Some(ProjectReference("project")), "src"))
             )),
             partitions = Map("pcol" -> SingleValue("part1"))
-        ))
+        )))
 
-        targetRelationDoc should be (RelationDoc(
+        targetRelationDoc should be (Some(RelationDoc(
             parent = Some(ProjectReference("project")),
             identifier = RelationIdentifier("project/tgt"),
             description = Some("target relation"),
@@ -137,6 +135,6 @@ class RelationCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
             )),
             inputs = Seq(MappingOutputReference(Some(MappingReference(Some(ProjectReference("project")), "m1")), "main")),
             partitions = Map("outcol" -> SingleValue("part1"))
-        ))
+        )))
     }
 }

@@ -8,10 +8,10 @@
           <v-card-title>Jobs</v-card-title>
           <v-row dense>
             <v-col cols="6">
-              <job-status-chart title-position="chartArea" height="160"/>
+              <job-status-chart title-position="chartArea" :height="160"/>
             </v-col>
             <v-col cols="6">
-              <job-phase-chart title-position="chartArea" height="160"/>
+              <job-phase-chart title-position="chartArea" :height="160"/>
             </v-col>
           </v-row>
         </v-card>
@@ -22,10 +22,10 @@
           <v-card-title>Targets</v-card-title>
           <v-row>
             <v-col cols="6">
-              <target-status-chart title-position="chartArea" height="160"/>
+              <target-status-chart title-position="chartArea" :height="160"/>
             </v-col>
             <v-col cols="6">
-              <target-phase-chart title-position="chartArea" height="160"/>
+              <target-phase-chart title-position="chartArea" :height="160"/>
             </v-col>
           </v-row>
         </v-card>

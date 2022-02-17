@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-card-title>
       <v-icon>gavel</v-icon>
-      Target '{{details.project}}/{{details.name}}' {{ details.phase }} id {{target}} status {{details.status}}
+      Target '{{details.project}}/{{details.target}}' {{ details.phase }} id {{target}} status {{details.status}}
     </v-card-title>
     <v-container fluid
                  v-if="environment.length > 0"

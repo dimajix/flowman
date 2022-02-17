@@ -92,14 +92,16 @@ class RelationCollector(
         val ref = doc.reference
 
         val schema = relation.schema.map { schema =>
-            val fieldsDoc = SchemaDoc.ofFields(parent, schema.fields)
-            SchemaDoc(
-                Some(ref),
-                schema.description,
-                fieldsDoc.columns,
-                Seq()
-            )
-        }
+                val fieldsDoc = SchemaDoc.ofFields(parent, schema.fields)
+                SchemaDoc(
+                    Some(ref),
+                    description = schema.description,
+                    columns = fieldsDoc.columns
+                )
+            }.orElse {
+                // Try to infer schema from input
+                getInputSchema(execution, ref, node)
+            }
         val mergedSchema = {
             Try {
                 SchemaDoc.ofStruct(ref, relation.describe(execution, partitions))
@@ -122,5 +124,28 @@ class RelationCollector(
     private def runTests(execution: Execution, relation:Relation, doc:RelationDoc) : RelationDoc = {
         val executor = new TestExecutor(execution)
         executor.executeTests(relation, doc)
+    }
+
+    private def getInputSchema(execution:Execution, parent:Reference, node:RelationRef) : Option[SchemaDoc] = {
+        // Try to infer schema from input
+        val schema = node.incoming.flatMap {
+            case write:WriteRelation =>
+                write.input.incoming.flatMap {
+                    case map: InputMapping =>
+                        Try {
+                            execution.describe(map.input.mapping, map.pin)
+                        }.toOption
+                    case _ => None
+                }
+            case _ => Seq()
+        }.headOption
+
+        schema.map { schema =>
+            val fieldsDoc = SchemaDoc.ofFields(parent.parent.get, schema.fields)
+            SchemaDoc(
+                Some(parent),
+                columns = fieldsDoc.columns
+            )
+        }
     }
 }

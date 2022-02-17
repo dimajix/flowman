@@ -119,6 +119,8 @@
         <td>Tests</td>
     </tr>
     </thead>
+    <tbody>
+    #if($schema)
     #foreach($column in ${schema.columns})
         <tr>
             <td class="identifier">${column.name}</td>
@@ -137,6 +139,8 @@
             </td>
         </tr>
     #end
+    #end
+    </tbody>
 </table>
 #end
 

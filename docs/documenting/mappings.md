@@ -36,7 +36,6 @@ mappings:
           description: "The time when the measurement was made"
         - name: report_type
           description: "The report type of the measurement"
-          description: "The quality indicator of the wind speed. 1 means trustworthy quality."
         - name: air_temperature
           description: "The air temperature in degree Celsius"
         - name: air_temperature_qual

@@ -26,3 +26,12 @@ Generating the documentation is as easy as running [flowexec](../cli/flowexec.md
 ```shell
 flowexec -f my_project_directory documentation generate
 ```
+
+Since generating documentation also requires a job context (which may contain additional parameters and environment
+variables), you can also explicitly specify the job which is used for instantiating all entities like relations,
+mappings and targets as follows:
+
+```shell
+flowexec -f my_project_directory documentation generate <job_name> <param_1=value> <param_2=value>
+```
+If no job is specified, Flowman will use the `main` job

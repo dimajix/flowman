@@ -81,6 +81,7 @@ case class TruncateTarget(
             project.map(_.name).getOrElse(""),
             name,
             phase,
+            // TODO: Maybe here should be a partition or a list of partitions....
             Map()
         )
     }

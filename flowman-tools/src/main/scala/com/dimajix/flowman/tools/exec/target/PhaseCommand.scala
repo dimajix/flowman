@@ -62,7 +62,7 @@ class PhaseCommand(phase:Phase) extends Command {
             context.getTarget(TargetIdentifier(t))
         }
         val runner = session.runner
-        runner.executeTargets(allTargets, lifecycle, force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
+        runner.executeTargets(allTargets, lifecycle, jobName="cli-tools", force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
     }
 }
 

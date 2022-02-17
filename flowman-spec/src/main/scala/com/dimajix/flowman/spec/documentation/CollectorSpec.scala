@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.documentation
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
@@ -38,14 +39,22 @@ abstract class CollectorSpec extends Spec[Collector] {
 }
 
 final class MappingCollectorSpec extends CollectorSpec {
+    @JsonProperty(value="executeTests", required=true) private var executeTests:String = "true"
+
     override def instantiate(context: Context): MappingCollector = {
-        new MappingCollector()
+        new MappingCollector(
+            context.evaluate(executeTests).toBoolean
+        )
     }
 }
 
 final class RelationCollectorSpec extends CollectorSpec {
+    @JsonProperty(value="executeTests", required=true) private var executeTests:String = "true"
+
     override def instantiate(context: Context): RelationCollector = {
-        new RelationCollector()
+        new RelationCollector(
+            context.evaluate(executeTests).toBoolean
+        )
     }
 }
 

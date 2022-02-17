@@ -51,6 +51,8 @@ import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.flowman.spi.LogFilter
+import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.util.ConsoleColors._
 import com.dimajix.spark.SparkUtils.withJobGroup
 
@@ -613,7 +615,7 @@ final class Runner(
      * @param phases
      * @return
      */
-    def executeTargets(targets:Seq[Target], phases:Seq[Phase], force:Boolean, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : Status = {
+    def executeTargets(targets:Seq[Target], phases:Seq[Phase], jobName:String="execute-target", force:Boolean, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : Status = {
         if (targets.nonEmpty) {
             val context = targets.head.context
 
@@ -623,11 +625,12 @@ final class Runner(
                 .withTargets(targets.map(tgt => (tgt.name, Prototype.of(tgt))).toMap)
                 .build()
             val job = Job.builder(jobContext)
-                .setName("execute-target-" + Clock.systemUTC().millis())
+                .setName(jobName)
                 .setTargets(targets.map(_.identifier))
+                .setParameters(Seq(Job.Parameter("execution_ts", LongType)))
                 .build()
 
-            executeJob(job, phases, force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=isolated)
+            executeJob(job, phases, args=Map("execution_ts" -> Clock.systemUTC().millis()), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=isolated)
         }
         else {
             Status.SUCCESS

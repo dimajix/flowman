@@ -20,13 +20,13 @@ import java.util.ServiceLoader
 
 import scala.collection.JavaConverters._
 
-import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.documentation.ColumnTest
 import com.dimajix.flowman.documentation.TestResult
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.graph.Graph
 
 
 object ColumnTestExecutor {

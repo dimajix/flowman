@@ -22,5 +22,19 @@ mappings:
             - kind: unique
         - name: min_wind_speed
           description: Minimum wind speed
+          tests:
+            - kind: expression
+              expression: "min_wind_speed >= 0"
         - name: max_wind_speed
           description: Maximum wind speed
+          tests:
+            - kind: expression
+              expression: "max_wind_speed <= 60"
+        - name: min_temperature
+          tests:
+            - kind: expression
+              expression: "min_temperature >= -100"
+        - name: max_temperature
+          tests:
+            - kind: expression
+              expression: "max_temperature <= 100"

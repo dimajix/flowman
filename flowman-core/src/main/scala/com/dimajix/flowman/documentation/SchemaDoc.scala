@@ -36,6 +36,14 @@ final case class SchemaReference(
         }
     }
     override def kind : String = "schema"
+
+    def sql : String = {
+        parent match {
+            case Some(rel:RelationReference) => rel.sql
+            case Some(map:MappingOutputReference) => map.sql
+            case _ => ""
+        }
+    }
 }
 
 

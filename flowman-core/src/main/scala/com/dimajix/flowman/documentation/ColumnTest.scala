@@ -18,10 +18,14 @@ package com.dimajix.flowman.documentation
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.expr
 import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.types.BooleanType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.spi.ColumnTestExecutor
 
 
@@ -106,8 +110,35 @@ final case class ValuesColumnTest(
     }
 }
 
-//case class ForeignKeyColumnTest() extends ColumnTest
-//case class ExpressionColumnTest() extends ColumnTest
+case class ForeignKeyColumnTest(
+    parent:Option[Reference],
+    description: Option[String] = None,
+    relation: Option[RelationIdentifier] = None,
+    mapping: Option[MappingOutputIdentifier] = None,
+    column: Option[String] = None,
+    result:Option[TestResult] = None
+) extends ColumnTest {
+    override def name : String = s"FOREIGN KEY (${column.getOrElse("")}) REFERENCES ${relation.map(_.toString).orElse(mapping.map(_.toString)).getOrElse("")}"
+    override def withResult(result: TestResult): ColumnTest = copy(result=Some(result))
+    override def reparent(parent: Reference): ForeignKeyColumnTest = {
+        val ref = ColumnTestReference(Some(parent))
+        copy(parent=Some(parent), result=result.map(_.reparent(ref)))
+    }
+}
+
+case class ExpressionColumnTest(
+    parent:Option[Reference],
+    description: Option[String] = None,
+    expression: String,
+    result:Option[TestResult] = None
+) extends ColumnTest {
+    override def name: String = expression
+    override def withResult(result: TestResult): ColumnTest = copy(result=Some(result))
+    override def reparent(parent: Reference): ExpressionColumnTest = {
+        val ref = ColumnTestReference(Some(parent))
+        copy(parent=Some(parent), result=result.map(_.reparent(ref)))
+    }
+}
 
 
 class DefaultColumnTestExecutor extends ColumnTestExecutor {
@@ -115,20 +146,43 @@ class DefaultColumnTestExecutor extends ColumnTestExecutor {
         test match {
             case _: NotNullColumnTest =>
                 executePredicateTest(df, test, df(column).isNotNull)
+
             case _: UniqueColumnTest =>
                 val agg = df.filter(df(column).isNotNull).groupBy(df(column)).count()
-                val result = agg.filter(agg(agg.columns(1)) > 1).orderBy(agg(agg.columns(1)).desc).limit(6).collect()
-                val status = if (result.isEmpty) TestStatus.SUCCESS else TestStatus.FAILED
-                Some(TestResult(Some(test.reference), status, None, None))
+                val result = agg.groupBy(agg(agg.columns(1)) > 1).count().collect()
+                val numSuccess = result.find(_.getBoolean(0) == false).map(_.getLong(1)).getOrElse(0L)
+                val numFailed = result.find(_.getBoolean(0) == true).map(_.getLong(1)).getOrElse(0L)
+                val status = if (numFailed > 0) TestStatus.FAILED else TestStatus.SUCCESS
+                val description = s"$numSuccess values are unique, $numFailed values are non-unique"
+                Some(TestResult(Some(test.reference), status, Some(description)))
+
             case v: ValuesColumnTest =>
                 val dt = df.schema(column).dataType
                 val values = v.values.map(v => lit(v).cast(dt))
                 executePredicateTest(df.filter(df(column).isNotNull), test, df(column).isin(values:_*))
+
             case v: RangeColumnTest =>
                 val dt = df.schema(column).dataType
                 val lower = lit(v.lower).cast(dt)
                 val upper = lit(v.upper).cast(dt)
                 executePredicateTest(df.filter(df(column).isNotNull), test, df(column).between(lower, upper))
+
+            case v: ExpressionColumnTest =>
+                executePredicateTest(df, test, expr(v.expression).cast(BooleanType))
+
+            case f:ForeignKeyColumnTest =>
+                val otherDf =
+                    f.relation.map { rel =>
+                        val relation = context.getRelation(rel)
+                        relation.read(execution)
+                    }.orElse(f.mapping.map { map=>
+                        val mapping = context.getMapping(map.mapping)
+                        execution.instantiate(mapping, map.output)
+                    }).getOrElse(throw new IllegalArgumentException(s"Need either mapping or relation in foreignKey test of column '$column' in test ${test.reference.toString}"))
+                val otherColumn = f.column.getOrElse(column)
+                val joined = df.join(otherDf, df(column) === otherDf(otherColumn), "left")
+                executePredicateTest(joined.filter(df(column).isNotNull), test,otherDf(otherColumn).isNotNull)
+
             case _ => None
         }
     }
@@ -138,6 +192,7 @@ class DefaultColumnTestExecutor extends ColumnTestExecutor {
         val numSuccess = result.find(_.getBoolean(0) == true).map(_.getLong(1)).getOrElse(0L)
         val numFailed = result.find(_.getBoolean(0) == false).map(_.getLong(1)).getOrElse(0L)
         val status = if (numFailed > 0) TestStatus.FAILED else TestStatus.SUCCESS
-        Some(TestResult(Some(test.reference), status, None, None))
+        val description = s"$numSuccess records passed, $numFailed records failed"
+        Some(TestResult(Some(test.reference), status, Some(description)))
     }
 }

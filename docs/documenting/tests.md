@@ -40,6 +40,12 @@ relations:
             - kind: notNull
             - kind: values
               values: [0,1,2,3,4,5,6,7,8,9]
+        - name: air_temperature
+          tests:
+            - kind: expression
+              expression: "air_temperature >= -100 OR air_temperature_qual <> 1"
+            - kind: expression
+              expression: "air_temperature <= 100  OR air_temperature_qual <> 1"
 ```
 
 ## Available Column Tests
@@ -79,3 +85,12 @@ want to specify both `notNUll` and `range`.
 * `kind` **(mandatory)** *(string)*: `range`
 * `lower` **(mandatory)** *(string)*: Lower value (inclusive)
 * `upper` **(mandatory)** *(string)*: Upper value (inclusive)
+
+
+### SQL Expression
+
+A very flexible test is provided with the SQL expression test. This test allows you to specify any simple SQL expression
+(which may also use different columns), which should evaluate to `TRUE` for all records passing the test.
+
+* `kind` **(mandatory)** *(string)*: `expression`
+* `expression` **(mandatory)** *(string)*: Boolean SQL Expression

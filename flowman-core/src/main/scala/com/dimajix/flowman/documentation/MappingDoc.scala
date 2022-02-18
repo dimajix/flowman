@@ -31,6 +31,14 @@ final case class MappingOutputReference(
         }
     }
     override def kind : String = "mapping_output"
+
+    def sql : String = {
+        parent match {
+            case Some(MappingReference(Some(ProjectReference(project)), mapping)) => s"$project/[$mapping:$name]"
+            case Some(p:MappingReference) => s"[${p.sql}:$name]"
+            case _ => s"[:$name]"
+        }
+    }
 }
 
 
@@ -113,6 +121,13 @@ final case class MappingReference(
         }
     }
     override def kind: String = "mapping"
+
+    def sql : String = {
+        parent match {
+            case Some(ProjectReference(project)) => project + "/" + name
+            case _ => name
+        }
+    }
 }
 
 

@@ -34,6 +34,14 @@ final case class ColumnReference(
         }
     }
     override def kind : String = "column"
+
+    def sql : String = {
+        parent match {
+            case Some(schema:SchemaReference) => schema.sql + "." + name
+            case Some(col:ColumnReference) => col.sql + "." + name
+            case _ => name
+        }
+    }
 }
 
 

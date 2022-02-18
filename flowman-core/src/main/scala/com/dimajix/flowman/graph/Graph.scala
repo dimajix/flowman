@@ -32,6 +32,10 @@ import com.dimajix.flowman.model.TargetIdentifier
 
 
 object Graph {
+    def empty(context:Context) : Graph = {
+        Graph(context, Seq.empty, Seq.empty, Seq.empty)
+    }
+
     /**
      * Creates a Graph from a given project. The [[Context]] required for lookups and instantiation is retrieved from
      * the given [[Session]]

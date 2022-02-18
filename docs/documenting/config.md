@@ -25,9 +25,9 @@ generators:
     # This will exclude all mappings
     excludeMappings: ".*"
     excludeRelations:
-      # You can either specify a name (without the project)
+      # You can either specify a name or regular expression (without the project)
       - "stations_raw"
-      # Or can also explicitly specify a name with the project
+      # Or can also explicitly specify a name with the project. Note that the entries actually are regular expressions
       - ".*/measurements_raw"
 ```
 

@@ -20,10 +20,6 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
-import com.dimajix.flowman.model.Mapping
-import com.dimajix.flowman.model.MappingIdentifier
-import com.dimajix.flowman.model.Relation
-import com.dimajix.flowman.model.RelationIdentifier
 
 
 class TestCollector extends Collector {
@@ -37,9 +33,10 @@ class TestCollector extends Collector {
      * @return
      */
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
+        val resolver = new ReferenceResolver(graph)
         val executor = new TestExecutor(execution)
         val mappings = documentation.mappings.map { m =>
-            resolveMapping(graph, m.reference) match {
+            resolver.resolve(m.reference) match {
                 case None =>
                     // This should not happen - but who knows...
                     logger.warn(s"Cannot find mapping for document reference '${m.reference.toString}'")
@@ -49,7 +46,7 @@ class TestCollector extends Collector {
             }
         }
         val relations = documentation.relations.map { r =>
-            resolveRelation(graph, r.reference) match {
+            resolver.resolve(r.reference) match {
                 case None =>
                     // This should not happen - but who knows...
                     logger.warn(s"Cannot find relation for document reference '${r.reference.toString}'")
@@ -63,39 +60,5 @@ class TestCollector extends Collector {
             mappings = mappings,
             relations = relations
         )
-    }
-
-    /**
-     * Resolve a mapping via its documentation reference in the graph
-     * @param graph
-     * @param ref
-     * @return
-     */
-    private def resolveMapping(graph: Graph, ref:MappingReference) : Option[Mapping] = {
-        ref.parent match {
-            case None =>
-                graph.mappings.find(m => m.name == ref.name).map(_.mapping)
-            case Some(ProjectReference(project)) =>
-                val id = MappingIdentifier(ref.name, project)
-                graph.mappings.find(m => m.identifier == id).map(_.mapping)
-            case _ => None
-        }
-    }
-
-    /**
-     * Resolve a relation via its documentation reference in the graph
-     * @param graph
-     * @param ref
-     * @return
-     */
-    private def resolveRelation(graph: Graph, ref:RelationReference) : Option[Relation] = {
-        ref.parent match {
-            case None =>
-                graph.relations.find(m => m.name == ref.name).map(_.relation)
-            case Some(ProjectReference(project)) =>
-                val id = RelationIdentifier(ref.name, project)
-                graph.relations.find(m => m.identifier == id).map(_.relation)
-            case _ => None
-        }
     }
 }

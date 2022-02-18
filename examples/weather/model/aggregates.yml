@@ -33,3 +33,18 @@ relations:
           type: FLOAT
         - name: avg_temperature
           type: FLOAT
+
+    documentation:
+      columns:
+        - name: min_wind_speed
+          tests:
+            - kind: expression
+              expression: "min_wind_speed >= 0"
+        - name: min_temperature
+          tests:
+            - kind: expression
+              expression: "min_temperature >= -100"
+        - name: max_temperature
+          tests:
+            - kind: expression
+              expression: "max_temperature <= 100"

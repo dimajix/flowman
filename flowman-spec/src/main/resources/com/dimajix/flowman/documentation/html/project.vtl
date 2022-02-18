@@ -114,7 +114,7 @@
     <tr>
         <td>Column Name</td>
         <td>Data Type</td>
-        <td>Attributes</td>
+        <td>Constraints</td>
         <td>Description</td>
         <td>Tests</td>
     </tr>
@@ -133,6 +133,7 @@
                     <tr>
                         <td>${test.name}</td>
                         <td>${test.status}</td>
+                        <td>#if(${test.result})${test.result.description}#end</td>
                     </tr>
                 #end
                 </table>

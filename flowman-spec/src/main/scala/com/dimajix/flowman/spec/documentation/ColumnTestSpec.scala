@@ -23,11 +23,15 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.documentation.ColumnReference
 import com.dimajix.flowman.documentation.ColumnTest
+import com.dimajix.flowman.documentation.ExpressionColumnTest
+import com.dimajix.flowman.documentation.ForeignKeyColumnTest
 import com.dimajix.flowman.documentation.NotNullColumnTest
 import com.dimajix.flowman.documentation.RangeColumnTest
 import com.dimajix.flowman.documentation.UniqueColumnTest
 import com.dimajix.flowman.documentation.ValuesColumnTest
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.spec.annotation.ColumnTestType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
@@ -38,6 +42,8 @@ object ColumnTestSpec extends TypeRegistry[ColumnTestSpec] {
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
+    new JsonSubTypes.Type(name = "expression", value = classOf[ExpressionColumnTestSpec]),
+    new JsonSubTypes.Type(name = "foreignKey", value = classOf[ForeignKeyColumnTestSpec]),
     new JsonSubTypes.Type(name = "notNull", value = classOf[NotNullColumnTestSpec]),
     new JsonSubTypes.Type(name = "unique", value = classOf[UniqueColumnTestSpec]),
     new JsonSubTypes.Type(name = "range", value = classOf[RangeColumnTestSpec]),
@@ -57,16 +63,16 @@ class ColumnTestSpecAnnotationHandler extends ClassAnnotationHandler {
 
 
 class NotNullColumnTestSpec extends ColumnTestSpec {
-    override def instantiate(context: Context, parent:ColumnReference): ColumnTest = NotNullColumnTest(Some(parent))
+    override def instantiate(context: Context, parent:ColumnReference): NotNullColumnTest = NotNullColumnTest(Some(parent))
 }
 class UniqueColumnTestSpec extends ColumnTestSpec {
-    override def instantiate(context: Context, parent:ColumnReference): ColumnTest = UniqueColumnTest(Some(parent))
+    override def instantiate(context: Context, parent:ColumnReference): UniqueColumnTest = UniqueColumnTest(Some(parent))
 }
 class RangeColumnTestSpec extends ColumnTestSpec {
     @JsonProperty(value="lower", required=true) private var lower:String = ""
     @JsonProperty(value="upper", required=true) private var upper:String = ""
 
-    override def instantiate(context: Context, parent:ColumnReference): ColumnTest = RangeColumnTest(
+    override def instantiate(context: Context, parent:ColumnReference): RangeColumnTest = RangeColumnTest(
         Some(parent),
         None,
         context.evaluate(lower),
@@ -76,8 +82,28 @@ class RangeColumnTestSpec extends ColumnTestSpec {
 class ValuesColumnTestSpec extends ColumnTestSpec {
     @JsonProperty(value="values", required=false) private var values:Seq[String] = Seq()
 
-    override def instantiate(context: Context, parent:ColumnReference): ColumnTest = ValuesColumnTest(
+    override def instantiate(context: Context, parent:ColumnReference): ValuesColumnTest = ValuesColumnTest(
         Some(parent),
         values=values.map(context.evaluate)
+    )
+}
+class ExpressionColumnTestSpec extends ColumnTestSpec {
+    @JsonProperty(value="expression", required=true) private var expression:String = _
+
+    override def instantiate(context: Context, parent:ColumnReference): ExpressionColumnTest = ExpressionColumnTest(
+        Some(parent),
+        expression=context.evaluate(expression)
+    )
+}
+class ForeignKeyColumnTestSpec extends ColumnTestSpec {
+    @JsonProperty(value="mapping", required=false) private var mapping:Option[String] = None
+    @JsonProperty(value="relation", required=false) private var relation:Option[String] = None
+    @JsonProperty(value="column", required=false) private var column:Option[String] = None
+
+    override def instantiate(context: Context, parent:ColumnReference): ForeignKeyColumnTest = ForeignKeyColumnTest(
+        Some(parent),
+        relation=context.evaluate(relation).map(RelationIdentifier(_)),
+        mapping=context.evaluate(mapping).map(MappingOutputIdentifier(_)),
+        column=context.evaluate(column)
     )
 }

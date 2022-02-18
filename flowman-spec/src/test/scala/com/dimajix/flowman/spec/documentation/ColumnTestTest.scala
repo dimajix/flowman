@@ -20,6 +20,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.documentation.ColumnReference
+import com.dimajix.flowman.documentation.ExpressionColumnTest
 import com.dimajix.flowman.documentation.RangeColumnTest
 import com.dimajix.flowman.documentation.UniqueColumnTest
 import com.dimajix.flowman.documentation.ValuesColumnTest
@@ -79,6 +80,24 @@ class ColumnTestTest extends AnyFlatSpec with Matchers {
         test should be (ValuesColumnTest(
             Some(ColumnReference(None, "col0")),
             values = Seq("a", "12", null)
+        ))
+    }
+
+    "A ExpressionColumnTest" should "be deserializable" in {
+        val yaml =
+            """
+              |kind: expression
+              |expression: "col1 < col2"
+            """.stripMargin
+
+        val spec = ObjectMapper.parse[ColumnTestSpec](yaml)
+        spec shouldBe a[ExpressionColumnTestSpec]
+
+        val context = RootContext.builder().build()
+        val test = spec.instantiate(context, ColumnReference(None, "col0"))
+        test should be (ExpressionColumnTest(
+            Some(ColumnReference(None, "col0")),
+            expression = "col1 < col2"
         ))
     }
 }

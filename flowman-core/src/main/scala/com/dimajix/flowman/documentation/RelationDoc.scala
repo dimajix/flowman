@@ -40,6 +40,13 @@ final case class RelationReference(
         }
     }
     override def kind : String = "relation"
+
+    def sql : String = {
+        parent match {
+            case Some(ProjectReference(project)) => project + "/" + name
+            case _ => name
+        }
+    }
 }
 
 

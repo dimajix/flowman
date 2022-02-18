@@ -26,6 +26,13 @@ final case class ReferenceWrapper(reference:Reference) {
 
     def getParent() : ReferenceWrapper = reference.parent.map(ReferenceWrapper).orNull
     def getKind() : String = reference.kind
+    def getSql() : String = reference match {
+        case m:MappingReference => m.sql
+        case m:RelationReference => m.sql
+        case m:ColumnReference => m.sql
+        case m:SchemaReference => m.sql
+        case _ => ""
+    }
 }
 
 

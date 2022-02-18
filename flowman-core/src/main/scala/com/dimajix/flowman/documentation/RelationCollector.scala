@@ -81,9 +81,10 @@ class RelationCollector extends Collector {
             Some(parent),
             relation.identifier,
             description = relation.description,
-            inputs = inputs,
-            provides = relation.provides.toSeq,
-            partitions = partitions
+            None,
+            inputs,
+            relation.provides.toSeq,
+            partitions
         )
         val ref = doc.reference
 

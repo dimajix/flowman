@@ -58,5 +58,7 @@ targets:
  will be performed.
 
 
-## Supported Phases
+## Supported Execution Phases
 * `BUILD` - This will execute the vacuum operation
+
+Read more about [execution phases](../../lifecycle.md).

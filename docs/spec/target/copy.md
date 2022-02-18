@@ -53,8 +53,10 @@ and output file will contain approximately the same number of records. The defau
 Flowman config variable `floman.default.target.rebalance`.
 
 
-## Supported Phases
+## Supported Execution Phases
 * `BUILD` - The *build* phase will perform the copy operation
 * `VERIFY` - The *verify* phase will ensure that the target exists
 * `TRUNCATE` - The *truncate* phase will remove the target
 * `DESTROY` - The *destroy* phase will remove the target
+
+Read more about [execution phases](../../lifecycle.md).

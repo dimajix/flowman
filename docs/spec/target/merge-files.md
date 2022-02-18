@@ -23,8 +23,10 @@ targets:
  * `overwrite` **(optional)** *(boolean)* *(default: true)*: 
 
 
-## Supported Phases
+## Supported Execution Phases
 * `BUILD`
 * `VERIFY`
 * `TRUNCATE`
 * `DESTROY`
+
+Read more about [execution phases](../../lifecycle.md).

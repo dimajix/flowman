@@ -55,5 +55,7 @@ exist, Flowman will fall back to some default configuration, which creates a htm
 subdirectory `generated-documentation` within the projects base directory.
 
 
-## Supported Phases
+## Supported Execution Phases
 * `VERIFY` - This will generate the documentation
+
+Read more about [execution phases](../../lifecycle.md).

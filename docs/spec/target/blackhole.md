@@ -24,5 +24,7 @@ Optional descriptive text of the build target
 Specifies the name of the mapping output to be materialized
 
 
-## Supported Phases
+## Supported Execution Phases
 * `BUILD` - In the build phase, all records of the specified mapping will be materialized
+
+Read more about [execution phases](../../lifecycle.md).

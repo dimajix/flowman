@@ -102,7 +102,7 @@ relations:
   Flowman config variable `floman.default.target.rebalance`.
 
 
-## Supported Phases
+## Supported Execution Phases
 * `CREATE` - This will create the target relation or migrate it to the newest schema (if possible).
 * `BUILD` - This will write the output of the specified mapping into the relation. If no mapping is specified, nothing
   will be done.
@@ -110,6 +110,8 @@ relations:
 * `TRUNCATE` - This removes the contents of the specified relation. The relation itself will not be removed (for example
   if the relation refers to a Hive table)
 * `DESTROY` - This drops the relation itself and all its content.
+
+Read more about [execution phases](../../lifecycle.md).
 
 
 ## Provided Metrics

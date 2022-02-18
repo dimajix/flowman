@@ -15,3 +15,7 @@ targets:
     environment:
     - table=fee
 ```
+
+## Supported Execution Phases
+
+The supported execution phases are determined by the referenced target.

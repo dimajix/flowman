@@ -56,11 +56,13 @@ Flowman config variable `floman.default.target.rebalance`.
 
 
 ## Supported Phases
-* `CREATE`
-* `BUILD`
-* `VERIFY`
-* `TRUNCATE`
-* `DESTROY`
+* `CREATE` - creates the target directory
+* `BUILD` - build the target files containing records
+* `VERIFY` - verifies that the target file exists
+* `TRUNCATE` - removes the target file, but keeps the directory
+* `DESTROY` - recursively removes the target directory and all files inside
+
+Read more about [execution phases](../../lifecycle.md).
 
 
 ## Provided Metrics

@@ -76,3 +76,9 @@ Set to `true` in order to overwrite existing files on the SFTP server. Otherwise
 file will result in an error.
 
 ## Description
+
+
+## Supported Execution Phases
+* `BUILD` - This will upload the specified file via SFTP
+
+Read more about [execution phases](../../lifecycle.md).

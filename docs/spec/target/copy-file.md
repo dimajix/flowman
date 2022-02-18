@@ -11,8 +11,10 @@
 * `target` **(mandatory)** *(type: string)*: 
 
 
-## Supported Phases
+## Supported Execution Phases
 * `BUILD`
 * `VERIFY`
 * `TRUNCATE`
 * `DESTROY`
+
+Read more about [execution phases](../../lifecycle.md).

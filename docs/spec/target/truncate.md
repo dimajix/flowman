@@ -68,7 +68,9 @@ targets:
   Specifies the partition (or multiple partitions) to truncate.
 
 
-## Supported Phases
+## Supported Execution Phases
 * `BUILD` - This will truncate the specified relation.
 * `VERIFY` - This will verify that the relation (and any specified partition) actually contains no data.
 * `TRUNCATE` - This will truncate the specified relation.
+
+Read more about [execution phases](../../lifecycle.md).

@@ -36,6 +36,8 @@ a mapping.
 Specifies the data set containing the expected data. In most cases you probably will use a file data set referencing
 some predefined results
 
-## Supported Phases
+## Supported Execution Phases
 * `VERIFY` - Comparison will be performed in the *verify* build phase. If the comparison fails, the build will stop
 with an error
+
+Read more about [execution phases](../../lifecycle.md).

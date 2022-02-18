@@ -19,5 +19,7 @@ targets:
 * `location` **(mandatory)** *(type: string)*: 
 
 
-## Supported Phases
+## Supported Execution Phases
 * `BUILD` - This will remove the specified location
+
+Read more about [execution phases](../../lifecycle.md).

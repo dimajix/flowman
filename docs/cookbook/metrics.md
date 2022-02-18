@@ -21,7 +21,10 @@ jobs:
     targets:
       - my_target
       - my_other_target
+    # The following section configures the metric board, which selects the Flowman metrics of interest and also
+    # maps the Flowman metric names to possibly different names
     metrics:
+      # Define labels which are attached to all published metrics below  
       labels:
         force: ${force}
         status: ${status}

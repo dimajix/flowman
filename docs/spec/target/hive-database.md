@@ -23,7 +23,9 @@ targets:
   Name of the Hive database to be created
 
 
-## Supported Phases
+## Supported Execution Phases
 * `CREATE` - Ensures that the specified Hive database exists and creates one if it is not found
 * `VERIFY` - Verifies that the specified Hive database exists
 * `DESTROY` - Drops the Hive database
+
+Read more about [execution phases](../../lifecycle.md).

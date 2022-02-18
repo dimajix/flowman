@@ -20,10 +20,12 @@ targets:
   Optional descriptive text of the build target
 
 
-## Supported Phases
+## Supported Execution Phases
 * `CREATE`
 * `MIGRATE`
 * `BUILD`
 * `VERIFY`
 * `TRUNCATE`
 * `DESTROY`
+
+Read more about [execution phases](../../lifecycle.md).

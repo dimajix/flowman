@@ -56,7 +56,9 @@ The `drop` target will drop a relation and all its contents. It will be executed
 during the `DESTROY` phase.
 
 
-## Supported Phases
+## Supported Execution Phases
 * `CREATE` - This will drop  the target relation or migrate it to the newest schema (if possible).
 * `VERIFY` - This will verify that the target relation does not exist any more
 * `DESTROY` - This will also drop the relation itself and all its content.
+
+Read more about [execution phases](../../lifecycle.md).

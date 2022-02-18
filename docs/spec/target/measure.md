@@ -21,3 +21,9 @@ targets:
 
 This example will provide two metrics, `record_count` and `column_sum`, which then can be sent to a 
 [metric sink](../metric) configured in the [namespace](../namespace.md).
+
+
+## Supported Execution Phases
+* `VERIFY` - The evaluation of all measures will only be performed in the `VERIFY` phase
+
+Read more about [execution phases](../../lifecycle.md).

@@ -16,5 +16,7 @@ targets:
  Specifies the name of the input mapping to be counted
 
 
-## Supported Phases
-* `BUILD`
+## Supported Execution Phases
+* `BUILD` - Counting records of a mapping will be executed as part of the `BUILD` phase
+
+Read more about [execution phases](../../lifecycle.md).

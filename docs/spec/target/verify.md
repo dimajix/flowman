@@ -42,8 +42,10 @@ targets:
   Specify how to proceed in case individual assertions fail. Possible values are `failFast`, `failAtEnd` and `failNever`
 
 
-## Supported Phases
+## Supported Execution Phases
 * `VERIDY` - The specified assertions will be run in the `VERIFY` phase after the `CREATE` and `BUILD` phases.
+
+Read more about [execution phases](../../lifecycle.md).
 
 
 ## Remarks

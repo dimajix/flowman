@@ -5,7 +5,9 @@
 # All template definitions (independent of their kind) go into the templates section
 templates:
   key_value:
+    # The template is a mapping template  
     kind: mapping
+    # Specify a list of template parameters, which then can be provided during instantiation
     parameters:
       - name: key
         type: string
@@ -28,9 +30,12 @@ templates:
 # Now you can create instances of the template in the corresponding entity section or at any other place where
 # a mapping is allowed
 mappings:
+  # First instance  
   mapping_1:
     kind: template/key_value
     key: some_value
+    
+  # Second instance
   mapping_2:
     kind: template/key_value
     key: some_other_value

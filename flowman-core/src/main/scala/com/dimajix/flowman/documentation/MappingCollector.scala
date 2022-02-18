@@ -32,9 +32,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-class MappingCollector(
-    executeTests:Boolean = true
-) extends Collector {
+class MappingCollector extends Collector {
     private val logger = LoggerFactory.getLogger(getClass)
 
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
@@ -84,9 +82,7 @@ class MappingCollector(
         val doc = MappingDoc(
             Some(parent),
             mapping.identifier,
-            None,
-            inputs.map(_._2.reference).toSeq,
-            Seq()
+            inputs = inputs.map(_._2.reference).toSeq,
         )
         val ref = doc.reference
 
@@ -95,9 +91,7 @@ class MappingCollector(
             schemas.map { case(output,schema) =>
                 val doc = MappingOutputDoc(
                     Some(ref),
-                    MappingOutputIdentifier(mapping.identifier, output),
-                    None,
-                    None
+                    MappingOutputIdentifier(mapping.identifier, output)
                 )
                 val schemaDoc = SchemaDoc.ofStruct(doc.reference, schema)
                 doc.copy(schema = Some(schemaDoc))
@@ -108,22 +102,11 @@ class MappingCollector(
                 mapping.outputs.map { output =>
                     MappingOutputDoc(
                         Some(ref),
-                        MappingOutputIdentifier(mapping.identifier, output),
-                        None,
-                        None
+                        MappingOutputIdentifier(mapping.identifier, output)
                     )
                 }
         }
 
-        val result = doc.copy(outputs=outputs.toSeq).merge(mapping.documentation)
-        if (executeTests)
-            runTests(execution, mapping, result)
-        else
-            result
-    }
-
-    private def runTests(execution: Execution, mapping:Mapping, doc:MappingDoc) : MappingDoc = {
-        val executor = new TestExecutor(execution)
-        executor.executeTests(mapping, doc)
+        doc.copy(outputs=outputs.toSeq).merge(mapping.documentation)
     }
 }

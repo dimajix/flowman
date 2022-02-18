@@ -15,6 +15,8 @@ collectors:
   - kind: mappings
   # Collect documentation of build targets
   - kind: targets
+  # Execute all tests
+  - kind: tests
 
 generators:
   # Create an output file in the project directory

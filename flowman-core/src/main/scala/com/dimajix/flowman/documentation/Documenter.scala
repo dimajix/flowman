@@ -41,7 +41,8 @@ object Documenter {
         val collectors = Seq(
             new RelationCollector(),
             new MappingCollector(),
-            new TargetCollector()
+            new TargetCollector(),
+            new TestCollector()
         )
         Documenter(
             collectors=collectors

@@ -66,10 +66,9 @@ class TargetCollector extends Collector {
         val doc = TargetDoc(
             Some(parent),
             target.identifier,
-            target.description,
-            Seq(),
-            inputs,
-            outputs
+            description = target.description,
+            inputs = inputs,
+            outputs = outputs
         )
         val ref = doc.reference
 
@@ -77,9 +76,8 @@ class TargetCollector extends Collector {
             TargetPhaseDoc(
                 Some(ref),
                 p,
-                None,
-                target.provides(p).toSeq,
-                target.requires(p).toSeq
+                provides = target.provides(p).toSeq,
+                requires = target.requires(p).toSeq
             )
         }
 

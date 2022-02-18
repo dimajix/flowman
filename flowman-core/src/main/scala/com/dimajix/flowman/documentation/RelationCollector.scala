@@ -29,13 +29,10 @@ import com.dimajix.flowman.graph.InputMapping
 import com.dimajix.flowman.graph.ReadRelation
 import com.dimajix.flowman.graph.RelationRef
 import com.dimajix.flowman.graph.WriteRelation
-import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.types.FieldValue
 
 
-class RelationCollector(
-    executeTests:Boolean = true
-) extends Collector {
+class RelationCollector extends Collector {
     private val logger = LoggerFactory.getLogger(getClass)
 
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
@@ -83,11 +80,10 @@ class RelationCollector(
         val doc = RelationDoc(
             Some(parent),
             relation.identifier,
-            relation.description,
-            None,
-            inputs,
-            relation.provides.toSeq,
-            partitions
+            description = relation.description,
+            inputs = inputs,
+            provides = relation.provides.toSeq,
+            partitions = partitions
         )
         val ref = doc.reference
 
@@ -114,16 +110,7 @@ class RelationCollector(
             }
         }
 
-        val result = doc.copy(schema = mergedSchema).merge(relation.documentation)
-        if (executeTests)
-            runTests(execution, relation, result)
-        else
-            result
-    }
-
-    private def runTests(execution: Execution, relation:Relation, doc:RelationDoc) : RelationDoc = {
-        val executor = new TestExecutor(execution)
-        executor.executeTests(relation, doc)
+        doc.copy(schema = mergedSchema).merge(relation.documentation)
     }
 
     private def getInputSchema(execution:Execution, parent:Reference, node:RelationRef) : Option[SchemaDoc] = {

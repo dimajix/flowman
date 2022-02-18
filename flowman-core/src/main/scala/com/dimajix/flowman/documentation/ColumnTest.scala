@@ -20,6 +20,7 @@ import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.spi.ColumnTestExecutor
 
@@ -110,10 +111,10 @@ final case class ValuesColumnTest(
 
 
 class DefaultColumnTestExecutor extends ColumnTestExecutor {
-    override def execute(execution: Execution, df: DataFrame, column:String, test: ColumnTest): Option[TestResult] = {
+    override def execute(execution: Execution, context:Context, df: DataFrame, column:String, test: ColumnTest): Option[TestResult] = {
         test match {
             case _: NotNullColumnTest =>
-                executePredicateTest(df, column, test, df(column).isNotNull)
+                executePredicateTest(df, test, df(column).isNotNull)
             case _: UniqueColumnTest =>
                 val agg = df.filter(df(column).isNotNull).groupBy(df(column)).count()
                 val result = agg.filter(agg(agg.columns(1)) > 1).orderBy(agg(agg.columns(1)).desc).limit(6).collect()
@@ -122,17 +123,17 @@ class DefaultColumnTestExecutor extends ColumnTestExecutor {
             case v: ValuesColumnTest =>
                 val dt = df.schema(column).dataType
                 val values = v.values.map(v => lit(v).cast(dt))
-                executePredicateTest(df.filter(df(column).isNotNull), column, test, df(column).isin(values:_*))
+                executePredicateTest(df.filter(df(column).isNotNull), test, df(column).isin(values:_*))
             case v: RangeColumnTest =>
                 val dt = df.schema(column).dataType
                 val lower = lit(v.lower).cast(dt)
                 val upper = lit(v.upper).cast(dt)
-                executePredicateTest(df.filter(df(column).isNotNull), column, test, df(column).between(lower, upper))
+                executePredicateTest(df.filter(df(column).isNotNull), test, df(column).between(lower, upper))
             case _ => None
         }
     }
 
-    private def executePredicateTest(df: DataFrame, column:String, test:ColumnTest, predicate:Column) : Option[TestResult] = {
+    private def executePredicateTest(df: DataFrame, test:ColumnTest, predicate:Column) : Option[TestResult] = {
         val result = df.groupBy(predicate).count().collect()
         val numSuccess = result.find(_.getBoolean(0) == true).map(_.getLong(1)).getOrElse(0L)
         val numFailed = result.find(_.getBoolean(0) == false).map(_.getLong(1)).getOrElse(0L)

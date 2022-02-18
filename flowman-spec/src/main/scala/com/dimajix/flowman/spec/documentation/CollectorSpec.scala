@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.spec.documentation
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
@@ -24,6 +23,7 @@ import com.dimajix.flowman.documentation.Collector
 import com.dimajix.flowman.documentation.MappingCollector
 import com.dimajix.flowman.documentation.RelationCollector
 import com.dimajix.flowman.documentation.TargetCollector
+import com.dimajix.flowman.documentation.TestCollector
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.Spec
 
@@ -32,34 +32,33 @@ import com.dimajix.flowman.spec.Spec
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "mappings", value = classOf[MappingCollectorSpec]),
     new JsonSubTypes.Type(name = "relations", value = classOf[RelationCollectorSpec]),
-    new JsonSubTypes.Type(name = "targets", value = classOf[TargetCollectorSpec])
+    new JsonSubTypes.Type(name = "targets", value = classOf[TargetCollectorSpec]),
+    new JsonSubTypes.Type(name = "tests", value = classOf[TestCollectorSpec])
 ))
 abstract class CollectorSpec extends Spec[Collector] {
     override def instantiate(context: Context): Collector
 }
 
 final class MappingCollectorSpec extends CollectorSpec {
-    @JsonProperty(value="executeTests", required=true) private var executeTests:String = "true"
-
     override def instantiate(context: Context): MappingCollector = {
-        new MappingCollector(
-            context.evaluate(executeTests).toBoolean
-        )
+        new MappingCollector()
     }
 }
 
 final class RelationCollectorSpec extends CollectorSpec {
-    @JsonProperty(value="executeTests", required=true) private var executeTests:String = "true"
-
     override def instantiate(context: Context): RelationCollector = {
-        new RelationCollector(
-            context.evaluate(executeTests).toBoolean
-        )
+        new RelationCollector()
     }
 }
 
 final class TargetCollectorSpec extends CollectorSpec {
     override def instantiate(context: Context): TargetCollector = {
         new TargetCollector()
+    }
+}
+
+final class TestCollectorSpec extends CollectorSpec {
+    override def instantiate(context: Context): TestCollector = {
+        new TestCollector()
     }
 }

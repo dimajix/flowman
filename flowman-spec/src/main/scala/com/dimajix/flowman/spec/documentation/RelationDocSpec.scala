@@ -34,21 +34,14 @@ class RelationDocSpec extends Spec[RelationDoc] {
         val doc = RelationDoc(
             None,
             RelationIdentifier.empty,
-            context.evaluate(description),
-            None,
-            Seq(),
-            Seq(),
-            Map()
+            description = context.evaluate(description)
         )
         val ref = doc.reference
 
         val schema =
             if (columns.nonEmpty || tests.nonEmpty) {
                 val schema = SchemaDoc(
-                    Some(ref),
-                    None,
-                    Seq(),
-                    Seq()
+                    Some(ref)
                 )
                 val ref2 = schema.reference
                 val cols = columns.map(_.instantiate(context, ref2))

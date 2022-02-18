@@ -79,9 +79,7 @@ class MappingDocSpec extends Spec[MappingDoc] {
         val doc = MappingDoc(
             None,
             MappingIdentifier.empty,
-            context.evaluate(description),
-            Seq(),
-            Seq()
+            description = context.evaluate(description)
         )
         val ref = doc.reference
 
@@ -89,17 +87,12 @@ class MappingDocSpec extends Spec[MappingDoc] {
             if (columns.nonEmpty || tests.nonEmpty) {
                 val output = MappingOutputDoc(
                     Some(ref),
-                    MappingOutputIdentifier.empty.copy(output="main"),
-                    None,
-                    None
+                    MappingOutputIdentifier.empty.copy(output="main")
                 )
                 val ref2 = output.reference
 
                 val schema = SchemaDoc(
-                    Some(ref2),
-                    None,
-                    Seq(),
-                    Seq()
+                    Some(ref2)
                 )
                 val ref3 = schema.reference
                 val cols = columns.map(_.instantiate(context, ref3))

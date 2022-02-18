@@ -31,10 +31,7 @@ class TargetDocSpec extends Spec[TargetDoc] {
         val doc = TargetDoc(
             None,
             TargetIdentifier.empty,
-            context.evaluate(description),
-            Seq(),
-            Seq(),
-            Seq()
+            description = context.evaluate(description)
         )
         doc
     }

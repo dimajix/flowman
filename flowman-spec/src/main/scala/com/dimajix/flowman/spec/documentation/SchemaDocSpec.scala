@@ -31,9 +31,7 @@ class SchemaDocSpec {
     def instantiate(context: Context, parent:Reference): SchemaDoc = {
         val doc = SchemaDoc(
             Some(parent),
-            context.evaluate(description),
-            Seq(),
-            Seq()
+            description = context.evaluate(description)
         )
         val ref = doc.reference
 

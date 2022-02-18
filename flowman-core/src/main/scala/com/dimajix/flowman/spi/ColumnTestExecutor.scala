@@ -25,6 +25,7 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.documentation.ColumnTest
 import com.dimajix.flowman.documentation.TestResult
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 
 
@@ -36,5 +37,14 @@ object ColumnTestExecutor {
 }
 
 trait ColumnTestExecutor {
-    def execute(execution: Execution, df: DataFrame, column:String, test: ColumnTest): Option[TestResult]
+    /**
+     * Executes a column test
+     * @param execution - execution to use
+     * @param context - context that can be used for resource lookups like relations or mappings
+     * @param df - DataFrame containing the output to test
+     * @param column - Path of the column to test
+     * @param test - Test to execute
+     * @return
+     */
+    def execute(execution: Execution, context:Context, df: DataFrame, column:String, test: ColumnTest): Option[TestResult]
 }

@@ -16,15 +16,13 @@
 
 package com.dimajix.flowman.documentation
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 import scala.util.control.NonFatal
 
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Relation
@@ -47,7 +45,7 @@ class TestExecutor(execution: Execution) {
                 logger.info(s"Conducting tests on relation '${relation.identifier}'")
                 try {
                     val df = relation.read(execution, doc.partitions)
-                    runSchemaTests(df, schema)
+                    runSchemaTests(relation.context, df, schema)
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Error executing tests for relation '${relation.identifier}': ${reasons(ex)}")
@@ -74,7 +72,7 @@ class TestExecutor(execution: Execution) {
                     logger.info(s"Conducting tests on mapping '${mapping.identifier}'")
                     try {
                         val df = execution.instantiate(mapping, output.name)
-                        runSchemaTests(df, schema)
+                        runSchemaTests(mapping.context, df, schema)
                     } catch {
                         case NonFatal(ex) =>
                             logger.warn(s"Error executing tests for mapping '${mapping.identifier}': ${reasons(ex)}")
@@ -113,19 +111,19 @@ class TestExecutor(execution: Execution) {
         column.copy(children=children, tests=tests)
     }
 
-    private def runSchemaTests(df:DataFrame, schema:SchemaDoc) : SchemaDoc = {
-        val columns = runColumnTests(df, schema.columns)
+    private def runSchemaTests(context:Context, df:DataFrame, schema:SchemaDoc) : SchemaDoc = {
+        val columns = runColumnTests(context, df, schema.columns)
         schema.copy(columns=columns)
     }
-    private def runColumnTests(df:DataFrame, columns:Seq[ColumnDoc], path:String = "") : Seq[ColumnDoc] = {
-        columns.map(col => runColumnTests(df, col, path))
+    private def runColumnTests(context:Context, df:DataFrame, columns:Seq[ColumnDoc], path:String = "") : Seq[ColumnDoc] = {
+        columns.map(col => runColumnTests(context, df, col, path))
     }
-    private def runColumnTests(df:DataFrame, column:ColumnDoc, path:String) : ColumnDoc = {
+    private def runColumnTests(context:Context, df:DataFrame, column:ColumnDoc, path:String) : ColumnDoc = {
         val columnPath = path + column.name
         val tests = column.tests.map { test =>
             val result =
                 try {
-                    val result = columnTestExecutors.flatMap(_.execute(execution, df, columnPath, test)).headOption
+                    val result = columnTestExecutors.flatMap(_.execute(execution, context, df, columnPath, test)).headOption
                     result match {
                         case None =>
                             logger.warn(s"Could not find appropriate test executor for testing column $columnPath")
@@ -141,7 +139,7 @@ class TestExecutor(execution: Execution) {
                 }
             test.withResult(result)
         }
-        val children = runColumnTests(df, column.children, path + column.name + ".")
+        val children = runColumnTests(context, df, column.children, path + column.name + ".")
         column.copy(children=children, tests=tests)
     }
 }

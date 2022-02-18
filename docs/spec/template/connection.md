@@ -33,14 +33,14 @@ relations:
       dir: /opt/flowman/derby_new
     table: "advertiser_setting"
     schema:
-        kind: embedded
-        fields:
-            - name: id
-              type: Integer
-            - name: business_rule_id
-              type: Integer
-            - name: rtb_advertiser_id
-              type: Integer
+      kind: embedded
+      fields:
+        - name: id
+          type: Integer
+        - name: business_rule_id
+          type: Integer
+        - name: rtb_advertiser_id
+          type: Integer
 
   rel_2:
     kind: jdbc

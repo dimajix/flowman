@@ -12,25 +12,25 @@ targets:
   documentation:
     kind: documentation
     collectors:
-        # Collect documentation of relations
-        - kind: relations
-        # Collect documentation of mappings
-        - kind: mappings
-        # Collect documentation of build targets
-        - kind: targets
-        # Execute all tests
-        - kind: tests
+      # Collect documentation of relations
+      - kind: relations
+      # Collect documentation of mappings
+      - kind: mappings
+      # Collect documentation of build targets
+      - kind: targets
+      # Execute all tests
+      - kind: tests
     
     generators:
-        # Create an output file in the project directory
-        - kind: file
-          location: ${project.basedir}/generated-documentation
-          template: html
-          excludeRelations:
-              # You can either specify a name (without the project)
-              - "stations_raw"
-              # Or can also explicitly specify a name with the project
-              - ".*/measurements_raw"
+      # Create an output file in the project directory
+      - kind: file
+        location: ${project.basedir}/generated-documentation
+        template: html
+        excludeRelations:
+          # You can either specify a name (without the project)
+          - "stations_raw"
+          # Or can also explicitly specify a name with the project
+          - ".*/measurements_raw"
 ```
 
 ## Fields

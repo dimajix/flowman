@@ -16,13 +16,19 @@
 
 package com.dimajix.flowman.spec.documentation
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.common.TypeRegistry
+import com.dimajix.flowman.documentation.ExpressionSchemaTest
+import com.dimajix.flowman.documentation.ForeignKeySchemaTest
+import com.dimajix.flowman.documentation.PrimaryKeySchemaTest
 import com.dimajix.flowman.documentation.SchemaReference
 import com.dimajix.flowman.documentation.SchemaTest
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.spec.annotation.SchemaTestType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
@@ -33,12 +39,13 @@ object SchemaTestSpec extends TypeRegistry[SchemaTestSpec] {
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "file", value = classOf[FileGeneratorSpec])
+    new JsonSubTypes.Type(name = "expression", value = classOf[ExpressionSchemaTestSpec]),
+    new JsonSubTypes.Type(name = "foreignKey", value = classOf[ForeignKeySchemaTestSpec]),
+    new JsonSubTypes.Type(name = "primaryKey", value = classOf[PrimaryKeySchemaTestSpec])
 ))
 abstract class SchemaTestSpec {
     def instantiate(context: Context, parent:SchemaReference): SchemaTest
 }
-
 
 
 class SchemaTestSpecAnnotationHandler extends ClassAnnotationHandler {
@@ -46,4 +53,36 @@ class SchemaTestSpecAnnotationHandler extends ClassAnnotationHandler {
 
     override def register(clazz: Class[_]): Unit =
         SchemaTestSpec.register(clazz.getAnnotation(classOf[SchemaTestType]).kind(), clazz.asInstanceOf[Class[_ <: SchemaTestSpec]])
+}
+
+
+class PrimaryKeySchemaTestSpec extends SchemaTestSpec {
+    @JsonProperty(value="columns", required=false) private var columns:Seq[String] = Seq.empty
+
+    override def instantiate(context: Context, parent:SchemaReference): PrimaryKeySchemaTest = PrimaryKeySchemaTest(
+        Some(parent),
+        columns = columns.map(context.evaluate)
+    )
+}
+class ExpressionSchemaTestSpec extends SchemaTestSpec {
+    @JsonProperty(value="expression", required=true) private var expression:String = _
+
+    override def instantiate(context: Context, parent:SchemaReference): ExpressionSchemaTest = ExpressionSchemaTest(
+        Some(parent),
+        expression = context.evaluate(expression)
+    )
+}
+class ForeignKeySchemaTestSpec extends SchemaTestSpec {
+    @JsonProperty(value="mapping", required=false) private var mapping:Option[String] = None
+    @JsonProperty(value="relation", required=false) private var relation:Option[String] = None
+    @JsonProperty(value="columns", required=false) private var columns:Seq[String] = Seq.empty
+    @JsonProperty(value="references", required=false) private var references:Seq[String] = Seq.empty
+
+    override def instantiate(context: Context, parent:SchemaReference): ForeignKeySchemaTest = ForeignKeySchemaTest(
+        Some(parent),
+        columns=columns.map(context.evaluate),
+        relation=context.evaluate(relation).map(RelationIdentifier(_)),
+        mapping=context.evaluate(mapping).map(MappingOutputIdentifier(_)),
+        references=references.map(context.evaluate)
+    )
 }

@@ -27,11 +27,13 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.spi.ColumnTestExecutor
+import com.dimajix.flowman.spi.SchemaTestExecutor
 
 
 class TestExecutor(execution: Execution) {
     private val logger = LoggerFactory.getLogger(getClass)
     private val columnTestExecutors = ColumnTestExecutor.executors
+    private val schemaTestExecutors = SchemaTestExecutor.executors
 
     /**
      * Executes all tests for a relation as defined within the documentation
@@ -97,7 +99,11 @@ class TestExecutor(execution: Execution) {
 
     private def failSchemaTests(schema:SchemaDoc) : SchemaDoc = {
         val columns = failColumnTests(schema.columns)
-        schema.copy(columns=columns)
+        val tests = schema.tests.map { test =>
+            val result = TestResult(Some(test.reference), status = TestStatus.ERROR)
+            test.withResult(result)
+        }
+        schema.copy(columns=columns, tests=tests)
     }
     private def failColumnTests(columns:Seq[ColumnDoc]) : Seq[ColumnDoc] = {
         columns.map(col => failColumnTests(col))
@@ -113,7 +119,28 @@ class TestExecutor(execution: Execution) {
 
     private def runSchemaTests(context:Context, df:DataFrame, schema:SchemaDoc) : SchemaDoc = {
         val columns = runColumnTests(context, df, schema.columns)
-        schema.copy(columns=columns)
+        val tests = schema.tests.map { test =>
+            logger.info(s" - Executing schema test '${test.name}'")
+            val result =
+                try {
+                    val result = schemaTestExecutors.flatMap(_.execute(execution, context, df, test)).headOption
+                    result match {
+                        case None =>
+                            logger.warn(s"Could not find appropriate test executor for testing schema")
+                            TestResult(Some(test.reference), status = TestStatus.NOT_RUN)
+                        case Some(result) =>
+                            result.reparent(test.reference)
+                    }
+                } catch {
+                    case NonFatal(ex) =>
+                        logger.warn(s"Error executing column test: ${reasons(ex)}")
+                        TestResult(Some(test.reference), status = TestStatus.ERROR)
+
+                }
+            test.withResult(result)
+        }
+
+        schema.copy(columns=columns, tests=tests)
     }
     private def runColumnTests(context:Context, df:DataFrame, columns:Seq[ColumnDoc], path:String = "") : Seq[ColumnDoc] = {
         columns.map(col => runColumnTests(context, df, col, path))
@@ -121,6 +148,7 @@ class TestExecutor(execution: Execution) {
     private def runColumnTests(context:Context, df:DataFrame, column:ColumnDoc, path:String) : ColumnDoc = {
         val columnPath = path + column.name
         val tests = column.tests.map { test =>
+            logger.info(s" - Executing test '${test.name}' on column ${columnPath}")
             val result =
                 try {
                     val result = columnTestExecutors.flatMap(_.execute(execution, context, df, columnPath, test)).headOption

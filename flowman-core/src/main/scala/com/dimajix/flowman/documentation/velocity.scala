@@ -73,8 +73,18 @@ final case class ColumnDocWrapper(column:ColumnDoc) extends FragmentWrapper(colu
 }
 
 
+final case class SchemaTestWrapper(test:SchemaTest) extends FragmentWrapper(test) {
+    override def toString: String = test.name
+
+    def getName() : String = test.name
+    def getResult() : TestResultWrapper = test.result.map(TestResultWrapper).orNull
+    def getStatus() : String = test.result.map(_.status.toString).getOrElse("NOT_RUN")
+}
+
+
 final case class SchemaDocWrapper(schema:SchemaDoc)  extends FragmentWrapper(schema) {
     def getColumns() : java.util.List[ColumnDocWrapper] = schema.columns.map(ColumnDocWrapper).asJava
+    def getTests() : java.util.List[SchemaTestWrapper] = schema.tests.map(SchemaTestWrapper).asJava
 }
 
 

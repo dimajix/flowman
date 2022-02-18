@@ -110,7 +110,7 @@ final case class ValuesColumnTest(
     }
 }
 
-case class ForeignKeyColumnTest(
+final case class ForeignKeyColumnTest(
     parent:Option[Reference],
     description: Option[String] = None,
     relation: Option[RelationIdentifier] = None,
@@ -126,7 +126,7 @@ case class ForeignKeyColumnTest(
     }
 }
 
-case class ExpressionColumnTest(
+final case class ExpressionColumnTest(
     parent:Option[Reference],
     description: Option[String] = None,
     expression: String,

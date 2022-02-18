@@ -24,6 +24,7 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.documentation.SchemaTest
 import com.dimajix.flowman.documentation.TestResult
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 
 
@@ -35,5 +36,5 @@ object SchemaTestExecutor {
 }
 
 trait SchemaTestExecutor {
-    def execute(execution: Execution, df:DataFrame, test:SchemaTest) : Option[TestResult]
+    def execute(execution: Execution, context:Context, df:DataFrame, test:SchemaTest) : Option[TestResult]
 }

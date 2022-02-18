@@ -143,6 +143,26 @@
     #end
     </tbody>
 </table>
+#if($schema.tests)
+<table class="blueTable">
+    <thead>
+    <tr>
+        <td>Schema Test</td>
+        <td>Result</td>
+        <td>Remarks</td>
+    </tr>
+    </thead>
+    <tbody>
+    #foreach($test in ${schema.tests})
+    <tr>
+        <td>${test.name}</td>
+        <td>${test.status}</td>
+        <td>#if(${test.result})${test.result.description}#end</td>
+    </tr>
+    #end
+    </tbody>
+</table>
+#end
 #end
 
 #macro(references $refs)

@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.documentation
+package com.dimajix.flowman.spec.documentation
 
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.documentation.Documenter
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Project
-import com.dimajix.flowman.spec.documentation.FileGenerator
 
 
 object DocumenterLoader {
-    def load(project:Project, context:Context) : Documenter = {
+    def load(context: Context, project: Project): Documenter = {
         project.basedir.flatMap { basedir =>
             val docpath = basedir / "documentation.yml"
             if (docpath.isFile()) {
@@ -40,10 +39,10 @@ object DocumenterLoader {
         }
     }
 
-    private def defaultDocumenter(outputDir:Path) : Documenter = {
+    private def defaultDocumenter(outputDir: Path): Documenter = {
         val generators = Seq(
             new FileGenerator(outputDir)
         )
-        Documenter.read.default().copy(generators=generators)
+        Documenter.read.default().copy(generators = generators)
     }
 }

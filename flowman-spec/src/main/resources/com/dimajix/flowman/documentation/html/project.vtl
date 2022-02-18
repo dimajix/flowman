@@ -97,6 +97,9 @@
             padding: 20px;
             border-radius: 10px;
         }
+        div.description {
+            padding: 10px 20px;
+        }
 
         div.bubble {
             display: inline;
@@ -185,7 +188,8 @@
 <body>
 <div class="titleBox">
     <h1>Flowman Project '${project.name}' version ${project.version}</h1>
-    <div>Description: ${project.description}</div>
+    <div class="description">Description: ${project.description}</div>
+    <div>Generated at ${Timestamp.now()}</div>
 </div>
 
 <div class="indexBox">
@@ -224,15 +228,15 @@
 <div class="mainEntity">
     <div class="infoBox">
     <h3 id="${mapping.reference}">Mapping '${mapping.identifier}'</h3>
-    <div>Description: ${mapping.description}</div>
+    <div class="description">Description: ${mapping.description}</div>
     </div>
     <h4>Inputs</h4>
     #references(${mapping.inputs})
     <h4>Outputs</h4>
     <div class="subEntity">
     #foreach($output in ${mapping.outputs})
-        <h5 id="${output.reference}">${output.name}</h5>
-        <div>Description: ${output.description}</div>
+        <h4 id="${output.reference}">Output '${output.name}'</h4>
+        #if(${output.description})<div class="description">Description: ${output.description}</div>#end
         #schema($output.schema)
     #end
     </div>
@@ -245,8 +249,8 @@
 #foreach($relation in ${project.relations})
 <div class="mainEntity">
     <div class="infoBox">
-    <h3 id="${relation.reference}">Relation '${relation.identifier}'</h3>
-    <div>Description: ${relation.description}</div>
+        <h3 id="${relation.reference}">Relation '${relation.identifier}'</h3>
+        <div class="description">Description: ${relation.description}</div>
     </div>
     <h4>Resources</h4>
     <table>
@@ -270,8 +274,8 @@
 #foreach($target in ${project.targets})
 <div class="mainEntity">
     <div class="infoBox">
-    <h3 id="${target.reference}">Target '${target.identifier}'</h3>
-    <div>Description: ${target.description}</div>
+        <h3 id="${target.reference}">Target '${target.identifier}'</h3>
+        <div class="description">Description: ${target.description}</div>
     </div>
     <h4>Inputs</h4>
     #references(${target.inputs})

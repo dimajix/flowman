@@ -13,3 +13,4 @@ jobs:
       - stations
       - aggregates
       - validate_stations_raw
+      - documentation

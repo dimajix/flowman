@@ -102,11 +102,12 @@ final case class Documenter(
             }
         }
     }
-    private def execute(context:Context, execution: Execution, project:Project) : Unit = {
+    def execute(context:Context, execution: Execution, project:Project) : Unit = {
         // 1. Get Project documentation
         val projectDoc = ProjectDoc(
             project.name,
-            project.version
+            version = project.version,
+            description = project.description
         )
 
         // 2. Apply all other collectors

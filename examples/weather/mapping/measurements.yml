@@ -16,7 +16,7 @@ mappings:
       date: "TO_DATE(SUBSTR(raw_data,16,8), 'yyyyMMdd')"
       time: "SUBSTR(raw_data,24,4)"
       report_type: "SUBSTR(raw_data,42,5)"
-      wind_direction: "SUBSTR(raw_data,61,3)"
+      wind_direction: "CAST(SUBSTR(raw_data,61,3) AS INT)"
       wind_direction_qual: "SUBSTR(raw_data,64,1)"
       wind_observation: "SUBSTR(raw_data,65,1)"
       wind_speed: "CAST(CAST(SUBSTR(raw_data,66,4) AS FLOAT)/10 AS FLOAT)"

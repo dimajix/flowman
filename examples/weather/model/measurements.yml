@@ -19,11 +19,15 @@ relations:
 
     documentation:
       description: "This model contains all individual measurements"
+      # This section contains additional documentation to the columns, including some simple test cases
       columns:
         - name: year
           description: "The year of the measurement, used for partitioning the data"
           tests:
             - kind: notNull
+            - kind: range
+              lower: 1901
+              upper: 2022
         - name: usaf
           tests:
             - kind: notNull
@@ -36,6 +40,14 @@ relations:
         - name: time
           tests:
             - kind: notNull
+        - name: wind_direction_qual
+          tests:
+            - kind: notNull
+        - name: wind_direction
+          tests:
+            - kind: notNull
+            - kind: expression
+              expression: "(wind_direction >= 0 AND wind_direction <= 360) OR wind_direction_qual <> 1"
         - name: air_temperature_qual
           tests:
             - kind: notNull

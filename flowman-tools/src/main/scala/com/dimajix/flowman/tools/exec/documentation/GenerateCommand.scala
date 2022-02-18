@@ -32,6 +32,7 @@ import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.spec.documentation.DocumenterLoader
 import com.dimajix.flowman.tools.exec.Command
 
 
@@ -58,7 +59,7 @@ class GenerateCommand extends Command {
     }
 
     private def generateDoc(session: Session, project:Project, job:Job, args:Map[String,Any]) : Status = {
-        val documenter = DocumenterLoader.load(project, job.context)
+        val documenter = DocumenterLoader.load(job.context, project)
         try {
             documenter.execute(session, job, args)
             Status.SUCCESS

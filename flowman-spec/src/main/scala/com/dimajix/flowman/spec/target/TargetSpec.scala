@@ -49,6 +49,8 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "copyFile", value = classOf[CopyFileTargetSpec]),
     new JsonSubTypes.Type(name = "count", value = classOf[CountTargetSpec]),
     new JsonSubTypes.Type(name = "deleteFile", value = classOf[DeleteFileTargetSpec]),
+    new JsonSubTypes.Type(name = "document", value = classOf[DocumentTargetSpec]),
+    new JsonSubTypes.Type(name = "documentation", value = classOf[DocumentTargetSpec]),
     new JsonSubTypes.Type(name = "drop", value = classOf[DropTargetSpec]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileTargetSpec]),
     new JsonSubTypes.Type(name = "getFile", value = classOf[GetFileTargetSpec]),

@@ -35,7 +35,14 @@ relations:
           type: FLOAT
 
     documentation:
+      description: "The aggregate table contains min/max temperature value per year and country"
       columns:
+        - name: country
+          tests:
+            - kind: notNull
+        - name: year
+          tests:
+            - kind: notNull
         - name: min_wind_speed
           tests:
             - kind: expression
@@ -48,3 +55,8 @@ relations:
           tests:
             - kind: expression
               expression: "max_temperature <= 100"
+      tests:
+        kind: primaryKey
+        columns:
+          - country
+          - year

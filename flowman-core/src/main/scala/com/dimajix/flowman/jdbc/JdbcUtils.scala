@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,23 @@ object JdbcUtils {
     def createConnection(options: JDBCOptions) : Connection = {
         val factory = createConnectionFactory(options)
         factory()
+    }
+
+    def withTransaction[T](con:java.sql.Connection)(fn: => T) : T = {
+        val oldMode = con.getAutoCommit
+        con.setAutoCommit(false)
+        try {
+            val result = fn
+            con.commit()
+            result
+        } catch {
+            case ex:SQLException =>
+                logger.error(s"SQL transaction failed, rolling back: ${ex.getMessage}")
+                con.rollback()
+                throw ex
+        } finally {
+            con.setAutoCommit(oldMode)
+        }
     }
 
     def withStatement[T](conn:Connection, options: JDBCOptions)(fn:Statement => T) : T = {

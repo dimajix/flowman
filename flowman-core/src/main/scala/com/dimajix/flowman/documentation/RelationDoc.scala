@@ -57,6 +57,8 @@ final case class RelationDoc(
     schema:Option[SchemaDoc] = None,
     inputs:Seq[Reference] = Seq(),
     provides:Seq[ResourceIdentifier] = Seq(),
+    requires:Seq[ResourceIdentifier] = Seq(),
+    sources:Seq[ResourceIdentifier] = Seq(),
     partitions:Map[String,FieldValue] = Map()
 ) extends EntityDoc {
     override def reference: RelationReference = RelationReference(parent, identifier.name)
@@ -88,7 +90,9 @@ final case class RelationDoc(
         val desc = other.description.orElse(this.description)
         val schm = schema.map(_.merge(other.schema)).orElse(other.schema)
         val prov = provides.toSet ++ other.provides.toSet
-        val result = copy(identifier=id, description=desc, schema=schm, provides=prov.toSeq)
+        val reqs = requires.toSet ++ other.requires.toSet
+        val srcs = sources.toSet ++ other.sources.toSet
+        val result = copy(identifier=id, description=desc, schema=schm, provides=prov.toSeq, requires=reqs.toSeq, sources=srcs.toSeq)
         parent.orElse(other.parent)
             .map(result.reparent)
             .getOrElse(result)

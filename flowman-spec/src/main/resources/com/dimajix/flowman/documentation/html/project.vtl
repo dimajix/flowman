@@ -55,11 +55,20 @@
             background: transparent;
         }
 
+        h3 {
+            margin-top: 4px;
+            font-size: x-large;
+        }
+        h4 {
+            margin-top: 2px;
+            font-size: large;
+        }
         h2.separator {
             background-color: #6ab0de;
             border-radius: 20px;
             margin: 4px;
             padding: 20px;
+            font-size: xx-large;
         }
 
         .identifier {
@@ -92,6 +101,12 @@
             padding: 20px;
             border-radius: 20px;
         }
+        div.detailsBox {
+            background-color: #9fbed4;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 10px;
+        }
         div.infoBox {
             background-color: #5592bb;
             padding: 20px;
@@ -101,12 +116,26 @@
             padding: 10px 20px;
         }
 
-        div.bubble {
-            display: inline;
+        div.multicolumn {
+            display: flex;
+        }
+        div.column_2 {
+            flex: 50%;
+        }
+        div.column_3 {
+            flex: 33%;
+        }
+        div.column_4 {
+            flex: 25%;
+        }
+
+        span.bubble {
+            display: inline-flex;
             background-color: #0e84b5;
-            margin: 2px;
+            margin: 4px;
             padding: 6px;
             border-radius: 20px;
+            font-size: small;
         }
     </style>
 </head>
@@ -184,6 +213,17 @@
     </table>
 #end
 
+#macro(resources $res)
+    <table>
+    #foreach($source in ${res})
+        <tr>
+            <td>${source.category}</td>
+            <td>${source.name}</td>
+        </tr>
+    #end
+    </table>
+#end
+
 
 <body>
 <div class="titleBox">
@@ -230,8 +270,14 @@
     <h3 id="${mapping.reference}">Mapping '${mapping.identifier}'</h3>
     <div class="description">Description: ${mapping.description}</div>
     </div>
+
+    #if(${mapping.inputs})
+    <div class="detailsBox">
     <h4>Inputs</h4>
     #references(${mapping.inputs})
+    </div>
+    #end
+
     <h4>Outputs</h4>
     <div class="subEntity">
     #foreach($output in ${mapping.outputs})
@@ -252,17 +298,34 @@
         <h3 id="${relation.reference}">Relation '${relation.identifier}'</h3>
         <div class="description">Description: ${relation.description}</div>
     </div>
-    <h4>Resources</h4>
-    <table>
-    #foreach($resource in ${relation.resources})
-        <tr>
-            <td>${resource.category}</td>
-            <td>${resource.name}</td>
-        </tr>
+
+    #if(${relation.resources})
+    <div class="detailsBox">
+    <h4>Physical Resources</h4>
+    #resources(${relation.resources})
+    </div>
     #end
-    </table>
-    <h4>Inputs</h4>
-    #references(${relation.inputs})
+
+    <div class="multicolumn">
+        #if(${relation.sources})
+        <div class="column_2">
+            <div class="detailsBox">
+            <h4>Sources</h4>
+            #resources(${relation.sources})
+            </div>
+        </div>
+        #end
+
+        #if(${relation.inputs})
+        <div class="column_2">
+            <div class="detailsBox">
+            <h4>Direct Inputs</h4>
+            #references(${relation.inputs})
+            </div>
+        </div>
+        #end
+    </div>
+
     <h4>Schema</h4>
     #schema($relation.schema)
 </div>
@@ -277,14 +340,31 @@
         <h3 id="${target.reference}">Target '${target.identifier}'</h3>
         <div class="description">Description: ${target.description}</div>
     </div>
-    <h4>Inputs</h4>
-    #references(${target.inputs})
-    <h4>Outputs</h4>
-    #references(${target.outputs})
-    <h4>Phases</h4>
-    #foreach($phase in ${target.phases})
-        <div class="bubble">${phase.name}</div>
-    #end
+
+    <div class="multicolumn">
+        <div class="column_3">
+            <div class="detailsBox">
+            <h4>Inputs</h4>
+            #references(${target.inputs})
+            </div>
+        </div>
+
+        <div class="column_3">
+            <div class="detailsBox">
+            <h4>Outputs</h4>
+            #references(${target.outputs})
+            </div>
+        </div>
+
+        <div class="column_3">
+            <div class="detailsBox">
+            <h4>Phases</h4>
+            #foreach($phase in ${target.phases})
+                <span class="bubble">${phase.name}</span>
+            #end
+            </div>
+        </div>
+    </div>
 </div>
 #end
 #end

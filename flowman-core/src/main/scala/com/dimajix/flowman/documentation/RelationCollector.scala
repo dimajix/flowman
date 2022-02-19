@@ -26,9 +26,11 @@ import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
 import com.dimajix.flowman.graph.InputMapping
+import com.dimajix.flowman.graph.MappingRef
 import com.dimajix.flowman.graph.ReadRelation
 import com.dimajix.flowman.graph.RelationRef
 import com.dimajix.flowman.graph.WriteRelation
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.FieldValue
 
 
@@ -75,6 +77,29 @@ class RelationCollector extends Collector {
                 case _ => None
             }
 
+        // Recursively collect all sources from upstream mappings
+        def collectMappingSources(map:MappingRef) : Seq[ResourceIdentifier] = {
+            val direct = map.mapping.requires.toSeq
+            val indirect = map.incoming.flatMap {
+                case in:InputMapping =>
+                    collectMappingSources(in.input)
+                case _ => Seq.empty
+            }
+            (direct ++ indirect).distinct
+        }
+
+        val sources =  node.incoming.flatMap {
+            case write:WriteRelation =>
+                write.input.incoming.flatMap {
+                    case map: InputMapping =>
+                        collectMappingSources(map.input)
+                    case rel: ReadRelation =>
+                        rel.input.relation.provides.toSeq
+                    case _ => Seq.empty
+                }
+            case _ => Seq.empty
+        }.distinct
+
         val partitions = (inputPartitions ++ outputPartitions).foldLeft(Map.empty[String,FieldValue])((a,b) => a ++ b)
 
         val doc = RelationDoc(
@@ -84,6 +109,8 @@ class RelationCollector extends Collector {
             None,
             inputs,
             relation.provides.toSeq,
+            relation.requires.toSeq,
+            sources,
             partitions
         )
         val ref = doc.reference

@@ -93,12 +93,14 @@ class RelationCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
 
         (mapping1.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m1"))
         //(mapping2.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m2"))
+        (mapping1.requires _).expects().returns(Set())
+        (mapping2.requires _).expects().returns(Set())
 
         (sourceRelation.identifier _).expects().atLeastOnce().returns(RelationIdentifier("project/src"))
         (sourceRelation.description _).expects().atLeastOnce().returns(Some("source relation"))
         (sourceRelation.documentation _).expects().returns(None)
         (sourceRelation.provides _).expects().returns(Set())
-        //(sourceRelation.requires _).expects().returns(Set())
+        (sourceRelation.requires _).expects().returns(Set())
         (sourceRelation.schema _).expects().returns(None)
         (sourceRelation.describe _).expects(*,Map("pcol"-> SingleValue("part1"))).returns(StructType(Seq()))
 
@@ -106,7 +108,7 @@ class RelationCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
         (targetRelation.description _).expects().atLeastOnce().returns(Some("target relation"))
         (targetRelation.documentation _).expects().returns(None)
         (targetRelation.provides _).expects().returns(Set())
-        //(targetRelation.requires _).expects().returns(Set())
+        (targetRelation.requires _).expects().returns(Set())
         (targetRelation.schema _).expects().returns(None)
         (targetRelation.describe _).expects(*,Map("outcol"-> SingleValue("part1"))).returns(StructType(Seq()))
 

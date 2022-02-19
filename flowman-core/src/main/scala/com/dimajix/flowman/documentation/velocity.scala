@@ -120,6 +120,8 @@ final case class RelationDocWrapper(relation:RelationDoc) extends FragmentWrappe
     def getSchema() : SchemaDocWrapper = relation.schema.map(SchemaDocWrapper).orNull
     def getInputs() : java.util.List[ReferenceWrapper] = relation.inputs.map(ReferenceWrapper).asJava
     def getResources() : java.util.List[ResourceIdentifierWrapper] = relation.provides.map(ResourceIdentifierWrapper).asJava
+    def getDependencies() : java.util.List[ResourceIdentifierWrapper] = relation.requires.map(ResourceIdentifierWrapper).asJava
+    def getSources() : java.util.List[ResourceIdentifierWrapper] = relation.sources.map(ResourceIdentifierWrapper).asJava
 }
 
 

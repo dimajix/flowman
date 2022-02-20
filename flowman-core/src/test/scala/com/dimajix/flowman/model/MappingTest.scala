@@ -152,17 +152,20 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
         val graphBuilder = new GraphBuilder(context, Phase.BUILD)
         val ref1 = graphBuilder.refMapping(mapping1)
         val ref2 = graphBuilder.refMapping(mapping2)
+        val out11 = ref1.outputs.head
+        val out21 = ref2.outputs.head
 
         ref1.mapping should be (mapping1)
         ref1.incoming should be (Seq(
-            InputMapping(ref2, ref1, "main")
+            InputMapping(out21, ref1)
         ))
         ref1.outgoing should be (Seq())
 
         ref2.mapping should be (mapping2)
         ref2.incoming should be (Seq())
-        ref2.outgoing should be (Seq(
-            InputMapping(ref2, ref1, "main")
+        ref2.outgoing should be (Seq())
+        ref2.outputs.head.outgoing should be (Seq(
+            InputMapping(out21, ref1)
         ))
     }
 }

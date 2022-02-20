@@ -156,10 +156,10 @@ object Graph {
                 val partitionFields = MapIgnoreCase(relation.partitions.map(p => p.name -> p))
                 val p = read.partitions.map { case(k,v) => (k -> partitionFields(k).interpolate(v).map(_.toString).toSeq) }
                 builder.addEdge(ReadRelation(in, out, p))
-            case input:g.InputMapping =>
-                val in = nodesById(input.input.id).asInstanceOf[MappingNode]
-                val out = nodesById(input.output.id)
-                builder.addEdge(InputMapping(in, out, input.pin))
+            case map:g.InputMapping =>
+                val in = nodesById(map.mapping.id).asInstanceOf[MappingNode]
+                val out = nodesById(map.output.id)
+                builder.addEdge(InputMapping(in, out, map.pin))
             case write:g.WriteRelation =>
                 val in = nodesById(write.input.id)
                 val out = nodesById(write.output.id).asInstanceOf[RelationNode]

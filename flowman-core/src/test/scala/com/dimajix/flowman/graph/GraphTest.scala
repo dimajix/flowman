@@ -66,11 +66,13 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
 
         (mappingTemplate1.instantiate _).expects(context).returns(mapping1)
         (mapping1.context _).expects().returns(context)
+        (mapping1.outputs _).expects().returns(Set("main"))
         (mapping1.name _).expects().atLeastOnce().returns("m1")
         (mapping1.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.input(MappingIdentifier("m2"), "main")))
 
         (mappingTemplate2.instantiate _).expects(context).returns(mapping2)
         (mapping2.context _).expects().returns(context)
+        (mapping2.outputs _).expects().returns(Set("main"))
         (mapping2.name _).expects().atLeastOnce().returns("m2")
         (mapping2.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.read(RelationIdentifier("src"), Map.empty[String,FieldValue])))
 
@@ -95,7 +97,7 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
         val graph = Graph.ofProject(session, project, Phase.BUILD)
 
         val nodes = graph.nodes
-        nodes.size should be (5)
+        nodes.size should be (7)
         nodes.find(_.name == "m1") should not be (None)
         nodes.find(_.name == "m1").get shouldBe a[MappingRef]
         nodes.find(_.name == "m2") should not be (None)
@@ -118,6 +120,8 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
         maps.find(_.name == "m3") should be (None)
         val m1 = maps.find(_.name == "m1").get
         val m2 = maps.find(_.name == "m2").get
+        val out1main = m1.outputs.head
+        val out2main = m2.outputs.head
 
         val tgts = graph.targets
         tgts.size should be (1)
@@ -128,13 +132,15 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
         val src = rels.find(_.name == "src").get
         val tgt = rels.find(_.name == "tgt").get
 
-        m1.incoming should be (Seq(InputMapping(m2, m1, "main")))
-        m1.outgoing should be (Seq(InputMapping(m1, t, "main")))
+        m1.incoming should be (Seq(InputMapping(out2main, m1)))
+        m1.outgoing should be (Seq())
+        m1.outputs.head.outgoing should be (Seq(InputMapping(out1main, t)))
         m2.incoming should be (Seq(ReadRelation(src, m2, Map())))
-        m2.outgoing should be (Seq(InputMapping(m2, m1, "main")))
+        m2.outgoing should be (Seq())
+        m2.outputs.head.outgoing should be (Seq(InputMapping(out2main, m1)))
         src.incoming should be (Seq())
         src.outgoing should be (Seq(ReadRelation(src, m2, Map())))
-        t.incoming should be (Seq(InputMapping(m1, t, "main")))
+        t.incoming should be (Seq(InputMapping(out1main, t)))
         t.outgoing should be (Seq(WriteRelation(t, tgt, Map())))
         tgt.incoming should be (Seq(WriteRelation(t, tgt, Map())))
         tgt.outgoing should be (Seq())

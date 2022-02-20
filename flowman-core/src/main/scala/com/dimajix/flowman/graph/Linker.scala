@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,14 @@ import com.dimajix.flowman.types.SingleValue
 final case class Linker private[graph](builder:GraphBuilder, context:Context, node:Node) {
     def input(mapping: Mapping, output:String) : Linker = {
         val in = builder.refMapping(mapping)
-        val edge = InputMapping(in, node, output)
+        val out = in.outputs.find(_.output == output)
+            .getOrElse(throw new IllegalArgumentException(s"Mapping '${mapping.identifier}' doesn't provide output '$output'"))
+        val edge = InputMapping(out, node)
         link(edge)
     }
     def input(mapping: MappingIdentifier, output:String) : Linker = {
         val instance = context.getMapping(mapping)
-        val in = builder.refMapping(instance)
-        val edge = InputMapping(in, node, output)
-        link(edge)
+        input(instance, output)
     }
 
     def read(relation: Reference[Relation], partitions:Map[String,FieldValue]) : Linker = {
@@ -54,9 +54,7 @@ final case class Linker private[graph](builder:GraphBuilder, context:Context, no
     }
     def read(relation: RelationIdentifier, partitions:Map[String,FieldValue]) : Linker = {
         val instance = context.getRelation(relation)
-        val in = builder.refRelation(instance)
-        val edge = ReadRelation(in, node, partitions)
-        link(edge)
+        read(instance, partitions)
     }
 
     def write(relation: Reference[Relation], partitions:Map[String,SingleValue]) : Linker = {
@@ -72,9 +70,7 @@ final case class Linker private[graph](builder:GraphBuilder, context:Context, no
     }
     def write(relation: RelationIdentifier, partition:Map[String,SingleValue]) : Linker = {
         val instance = context.getRelation(relation)
-        val out = builder.refRelation(instance)
-        val edge = WriteRelation(node, out, partition)
-        link(edge)
+        write(instance, partition)
     }
 
     /**

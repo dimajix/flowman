@@ -38,7 +38,7 @@ import com.dimajix.flowman.types.StructType
 
 
 class MappingCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
-    "RelationCollector.collect" should "work" in {
+    "MappingCollector.collect" should "work" in {
         val mapping1 = mock[Mapping]
         val mappingTemplate1 = mock[Prototype[Mapping]]
         val mapping2 = mock[Mapping]
@@ -62,10 +62,12 @@ class MappingCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
 
         (mappingTemplate1.instantiate _).expects(context).returns(mapping1)
         (mapping1.context _).expects().returns(context)
+        (mapping1.outputs _).expects().returns(Set("main"))
         (mapping1.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.input(MappingIdentifier("m2"), "main")))
 
         (mappingTemplate2.instantiate _).expects(context).returns(mapping2)
         (mapping2.context _).expects().returns(context)
+        (mapping2.outputs _).expects().returns(Set("main"))
         (mapping2.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.read(RelationIdentifier("src"), Map("pcol"-> SingleValue("part1")))))
 
         (sourceRelationTemplate.instantiate _).expects(context).returns(sourceRelation)

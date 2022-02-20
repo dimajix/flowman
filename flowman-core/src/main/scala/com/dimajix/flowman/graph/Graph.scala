@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.graph
 
+import scala.annotation.tailrec
+
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.NoSuchRelationException
@@ -81,7 +83,16 @@ final case class Graph(
 ) {
     def project : Option[Project] = context.project
 
-    def nodes : Seq[Node] = mappings ++ relations ++ targets
+    def nodes : Seq[Node] = {
+        def collectChildren(nodes:Seq[Node]) : Seq[Node] = {
+            val children = nodes.flatMap(_.children)
+            val next = if (children.nonEmpty) collectChildren(children) else Seq.empty
+            nodes ++ next
+        }
+
+        val roots = mappings ++ relations ++ targets
+        collectChildren(roots)
+    }
     def edges : Seq[Edge] = nodes.flatMap(_.outgoing)
 
     /**

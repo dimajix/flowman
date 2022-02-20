@@ -48,7 +48,7 @@ class TargetCollector extends Collector {
 
         val inputs = node.incoming.flatMap {
             case map: InputMapping =>
-                val mapref = MappingReference.of(parent, map.input.identifier)
+                val mapref = MappingReference.of(parent, map.mapping.identifier)
                 val outref = MappingOutputReference(Some(mapref), map.pin)
                 Some(outref)
             case read: ReadRelation =>

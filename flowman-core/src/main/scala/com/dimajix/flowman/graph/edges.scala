@@ -34,9 +34,11 @@ final case class ReadRelation(override val input:RelationRef, override val outpu
     def resources : Set[ResourceIdentifier] = input.relation.resources(partitions)
 }
 
-final case class InputMapping(override val input:MappingRef,override val output:Node,pin:String="main") extends Edge {
+final case class InputMapping(override val input:MappingOutput,override val output:Node) extends Edge {
     override def action: Action = Action.INPUT
-    override def label: String = s"${action.upper} from ${input.label} output '$pin'"
+    override def label: String = s"${action.upper} from ${input.mapping.label} output '${input.output}'"
+    def mapping : MappingRef = input.mapping
+    def pin : String = input.output
 }
 
 final case class WriteRelation(override val input:Node, override val output:RelationRef, partition:Map[String,SingleValue] = Map()) extends Edge {

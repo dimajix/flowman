@@ -57,7 +57,7 @@ class RelationCollector extends Collector {
                 case write:WriteRelation =>
                     write.input.incoming.flatMap {
                         case map: InputMapping =>
-                            val mapref = MappingReference.of(parent, map.input.identifier)
+                            val mapref = MappingReference.of(parent, map.mapping.identifier)
                             val outref = MappingOutputReference(Some(mapref), map.pin)
                             Some(outref)
                         case _ => None
@@ -81,8 +81,8 @@ class RelationCollector extends Collector {
         def collectMappingSources(map:MappingRef) : Seq[ResourceIdentifier] = {
             val direct = map.mapping.requires.toSeq
             val indirect = map.incoming.flatMap {
-                case in:InputMapping =>
-                    collectMappingSources(in.input)
+                case map:InputMapping =>
+                    collectMappingSources(map.mapping)
                 case _ => Seq.empty
             }
             (direct ++ indirect).distinct
@@ -92,7 +92,7 @@ class RelationCollector extends Collector {
             case write:WriteRelation =>
                 write.input.incoming.flatMap {
                     case map: InputMapping =>
-                        collectMappingSources(map.input)
+                        collectMappingSources(map.mapping)
                     case rel: ReadRelation =>
                         rel.input.relation.provides.toSeq
                     case _ => Seq.empty
@@ -148,7 +148,8 @@ class RelationCollector extends Collector {
                 write.input.incoming.flatMap {
                     case map: InputMapping =>
                         Try {
-                            execution.describe(map.input.mapping, map.pin)
+                            val mapout = map.input
+                            execution.describe(mapout.mapping.mapping, mapout.output)
                         }.toOption
                     case _ => None
                 }

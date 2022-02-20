@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             ResourceIdentifier.ofHiveTable("lala_0007", Some("default")),
             ResourceIdentifier.ofHiveDatabase("default")
         ))
-        mapping.inputs should be (Seq())
+        mapping.inputs should be (Set())
         mapping.describe(execution, Map()) should be (Map(
             "main" -> ftypes.StructType(Seq(
                 Field("str_col", ftypes.StringType),
@@ -142,7 +142,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             ResourceIdentifier.ofHiveTable("lala_0007", Some("default")),
             ResourceIdentifier.ofHiveDatabase("default")
         ))
-        mapping.inputs should be (Seq())
+        mapping.inputs should be (Set())
         mapping.describe(execution, Map()) should be (Map(
             "main" -> ftypes.StructType(Seq(
                 Field("int_col", ftypes.DoubleType)

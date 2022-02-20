@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,18 +128,19 @@ object Graph {
      */
     def ofGraph(graph:g.Graph) : Graph = {
         val builder = Graph.builder()
-        val nodesById = graph.nodes.map {
+        val nodesById = graph.nodes.flatMap {
             case target:g.TargetRef =>
                 val provides = target.provides.map(r => Resource(r.category, r.name, r.partition)).toSeq
                 val requires = target.requires.map(r => Resource(r.category, r.name, r.partition)).toSeq
-                target.id -> builder.newTargetNode(target.name, target.kind, provides, requires)
+                Some(target.id -> builder.newTargetNode(target.name, target.kind, provides, requires))
             case mapping:g.MappingRef =>
                 val requires = mapping.requires.map(r => Resource(r.category, r.name, r.partition)).toSeq
-                mapping.id -> builder.newMappingNode(mapping.name, mapping.kind, requires)
+                Some(mapping.id -> builder.newMappingNode(mapping.name, mapping.kind, requires))
             case relation:g.RelationRef =>
                 val provides = relation.provides.map(r => Resource(r.category, r.name, r.partition)).toSeq
                 val requires = relation.requires.map(r => Resource(r.category, r.name, r.partition)).toSeq
-                relation.id -> builder.newRelationNode(relation.name, relation.kind, provides, requires)
+                Some(relation.id -> builder.newRelationNode(relation.name, relation.kind, provides, requires))
+            case _ => None
         }.toMap
 
         val relationsById = graph.nodes.collect {

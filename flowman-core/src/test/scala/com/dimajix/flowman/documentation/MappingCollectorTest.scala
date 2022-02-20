@@ -75,11 +75,11 @@ class MappingCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
         val graph = Graph.ofProject(session, project, Phase.BUILD)
 
         (mapping1.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m1"))
-        (mapping1.inputs _).expects().returns(Seq(MappingOutputIdentifier("project/m2")))
+        (mapping1.inputs _).expects().returns(Set(MappingOutputIdentifier("project/m2")))
         (mapping1.describe: (Execution,Map[MappingOutputIdentifier,StructType]) => Map[String,StructType] ).expects(*,*).returns(Map("main" -> StructType(Seq())))
         (mapping1.documentation _).expects().returns(None)
         (mapping2.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m2"))
-        (mapping2.inputs _).expects().returns(Seq())
+        (mapping2.inputs _).expects().returns(Set())
         (mapping2.describe: (Execution,Map[MappingOutputIdentifier,StructType]) => Map[String,StructType] ).expects(*,*).returns(Map("main" -> StructType(Seq())))
         (mapping2.documentation _).expects().returns(None)
 

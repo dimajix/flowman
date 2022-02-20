@@ -108,7 +108,7 @@ trait Mapping extends Instance {
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       * @return
       */
-    def inputs : Seq[MappingOutputIdentifier]
+    def inputs : Set[MappingOutputIdentifier]
 
     /**
      * Lists all outputs of this mapping. Every mapping should have one "main" output, which is the default output
@@ -116,7 +116,7 @@ trait Mapping extends Instance {
      * recommended.
      * @return
      */
-    def outputs : Seq[String]
+    def outputs : Set[String]
 
     /**
      * Creates an output identifier for the primary output
@@ -213,7 +213,7 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
      * Lists all outputs of this mapping. Every mapping should have one "main" output
      * @return
      */
-    override def outputs : Seq[String] = Seq("main")
+    override def outputs : Set[String] = Set("main")
 
     /**
      * Creates an output identifier for the primary output

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,8 @@ class AliasMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         val inputDf = spark.emptyDataFrame
         mapping.input should be (MappingOutputIdentifier("input_df:output_2"))
-        mapping.outputs should be (Seq("main"))
+        mapping.inputs should be (Set(MappingOutputIdentifier("input_df:output_2")))
+        mapping.outputs should be (Set("main"))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("input_df:output_2") -> inputDf))("main")
         result.count() should be (0)

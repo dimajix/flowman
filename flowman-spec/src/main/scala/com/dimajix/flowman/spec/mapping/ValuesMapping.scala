@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,23 @@ case class ValuesMapping(
      *
      * @return
      */
-    override def inputs: Seq[MappingOutputIdentifier] = Seq()
+    override def inputs: Set[MappingOutputIdentifier] = Set.empty
+
+    /**
+     * Creates an output identifier for the primary output
+     *
+     * @return
+     */
+    override def output: MappingOutputIdentifier = {
+        MappingOutputIdentifier(identifier, "main")
+    }
+
+    /**
+     * Lists all outputs of this mapping. Every mapping should have one "main" output
+     *
+     * @return
+     */
+    override def outputs: Set[String] = Set("main")
 
     /**
      * Executes this Mapping and returns a corresponding map of DataFrames per output
@@ -70,23 +86,6 @@ case class ValuesMapping(
         val df = DataFrameBuilder.ofStringValues(execution.spark, values, sparkSchema)
         Map("main" -> df)
     }
-
-
-    /**
-     * Creates an output identifier for the primary output
-     *
-     * @return
-     */
-    override def output: MappingOutputIdentifier = {
-        MappingOutputIdentifier(identifier, "main")
-    }
-
-    /**
-     * Lists all outputs of this mapping. Every mapping should have one "main" output
-     *
-     * @return
-     */
-    override def outputs: Seq[String] = Seq("main")
 
     /**
      * Returns the schema as produced by this mapping, relative to the given input schema. The map might not contain

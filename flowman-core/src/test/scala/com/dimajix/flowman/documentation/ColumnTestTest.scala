@@ -235,8 +235,8 @@ class ColumnTestTest extends AnyFlatSpec with Matchers with MockFactory with Loc
 
         (mappingSpec.instantiate _).expects(*).returns(mapping)
         (mapping.context _).expects().returns(context)
-        (mapping.inputs _).expects().returns(Seq())
-        (mapping.outputs _).expects().atLeastOnce().returns(Seq("main"))
+        (mapping.inputs _).expects().returns(Set())
+        (mapping.outputs _).expects().atLeastOnce().returns(Set("main"))
         (mapping.broadcast _).expects().returns(false)
         (mapping.cache _).expects().returns(StorageLevel.NONE)
         (mapping.checkpoint _).expects().returns(false)

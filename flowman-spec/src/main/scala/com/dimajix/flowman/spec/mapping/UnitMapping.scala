@@ -62,10 +62,10 @@ case class UnitMapping(
       * Return all outputs provided by this unit
       * @return
       */
-    override def outputs: Seq[String] = {
+    override def outputs: Set[String] = {
         mappingInstances
             .filter(_._2.outputs.contains("main"))
-            .keys.toSeq
+            .keySet
     }
 
     /**
@@ -73,14 +73,14 @@ case class UnitMapping(
       *
       * @return
       */
-    override def inputs: Seq[MappingOutputIdentifier] = {
+    override def inputs: Set[MappingOutputIdentifier] = {
         // For all mappings, find only external dependencies.
         val ownMappings = mappingInstances.keySet
         mappingInstances.values
             .filter(_.outputs.contains("main"))
             .flatMap(_.inputs)
             .filter(dep => dep.project.nonEmpty || !ownMappings.contains(dep.name))
-            .toSeq
+            .toSet
     }
 
     /**

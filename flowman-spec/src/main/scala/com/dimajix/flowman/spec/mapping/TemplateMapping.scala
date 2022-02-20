@@ -78,7 +78,7 @@ case class TemplateMapping(
  *
       * @return
       */
-    override def outputs : Seq[String] = {
+    override def outputs : Set[String] = {
         mappingInstance.outputs
     }
 
@@ -87,7 +87,7 @@ case class TemplateMapping(
       *
       * @return
       */
-    override def inputs: Seq[MappingOutputIdentifier] = {
+    override def inputs: Set[MappingOutputIdentifier] = {
         mappingInstance.inputs
     }
 

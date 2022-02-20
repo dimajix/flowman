@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ case class JoinMapping(
       *
       * @return
       */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        input
+    override def inputs : Set[MappingOutputIdentifier] = {
+        input.toSet
     }
 
     /**
@@ -56,10 +56,10 @@ case class JoinMapping(
         require(tables != null)
 
         val result = if (condition.nonEmpty) {
-            require(inputs.size == 2, "Joining using an condition only supports exactly two inputs")
+            require(input.size == 2, "Joining using an condition only supports exactly two inputs")
 
-            val left = inputs(0)
-            val right = inputs(1)
+            val left = input(0)
+            val right = input(1)
             val leftDf = tables(left).as(left.name)
             val rightDf = tables(right).as(right.name)
             leftDf.join(rightDf, expr(condition), mode)

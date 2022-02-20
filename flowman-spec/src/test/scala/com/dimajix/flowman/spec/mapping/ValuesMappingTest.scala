@@ -72,7 +72,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
         mapping.kind should be ("values")
         mapping.identifier should be (MappingIdentifier("project/fake"))
         mapping.output should be (MappingOutputIdentifier("project/fake:main"))
-        mapping.outputs should be (Seq("main"))
+        mapping.outputs should be (Set("main"))
         mapping.records should be (Seq(
             ArrayRecord("a","12","3"),
             ArrayRecord("cat","","7"),
@@ -108,8 +108,9 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
         mapping.category should be (Category.MAPPING)
         mapping.kind should be ("values")
         mapping.identifier should be (MappingIdentifier("project/fake"))
+        mapping.inputs should be (Set())
         mapping.output should be (MappingOutputIdentifier("project/fake:main"))
-        mapping.outputs should be (Seq("main"))
+        mapping.outputs should be (Set("main"))
         mapping.columns should be (Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType),
@@ -158,8 +159,8 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
         (mappingTemplate.instantiate _).expects(context).returns(mockMapping)
         val mapping = context.getMapping(MappingIdentifier("const"))
 
-        mapping.inputs should be (Seq())
-        mapping.outputs should be (Seq("main"))
+        mapping.inputs should be (Set())
+        mapping.outputs should be (Set("main"))
         mapping.describe(executor, Map()) should be (Map("main" -> schema))
         mapping.describe(executor, Map(), "main") should be (schema)
 
@@ -203,8 +204,8 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
         (mappingTemplate.instantiate _).expects(context).returns(mockMapping)
         val mapping = context.getMapping(MappingIdentifier("const"))
 
-        mapping.inputs should be (Seq())
-        mapping.outputs should be (Seq("main"))
+        mapping.inputs should be (Set())
+        mapping.outputs should be (Set("main"))
         mapping.describe(executor, Map()) should be (Map("main" -> schema))
         mapping.describe(executor, Map(), "main") should be (schema)
 

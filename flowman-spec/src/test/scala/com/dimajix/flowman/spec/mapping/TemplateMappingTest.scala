@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,6 @@ class TemplateMappingTest extends AnyFlatSpec with Matchers {
         mapping shouldBe a[TemplateMapping]
         mapping.name should be ("template")
 
-        mapping.inputs should be (Seq(MappingOutputIdentifier("lala")))
+        mapping.inputs should be (Set(MappingOutputIdentifier("lala")))
     }
 }

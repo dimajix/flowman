@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,10 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 object MappingTest {
-    class DummyMapping(props:Mapping.Properties, ins:Seq[MappingOutputIdentifier]) extends BaseMapping {
+    class DummyMapping(props:Mapping.Properties, ins:Set[MappingOutputIdentifier]) extends BaseMapping {
         protected override def instanceProperties: Mapping.Properties = props
 
-        override def inputs: Seq[MappingOutputIdentifier] = ins
+        override def inputs: Set[MappingOutputIdentifier] = ins
 
         override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = {
             val df = input.head._2.groupBy("id").agg(f.sum("val"))
@@ -60,7 +60,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
 
         val mapping = new DummyMapping(
             Mapping.Properties(context, "m1"),
-            Seq()
+            Set()
         )
 
         mapping.metadata should be (Metadata(
@@ -83,7 +83,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
 
         val mapping = new DummyMapping(
             Mapping.Properties(context, "m1"),
-            Seq()
+            Set()
         )
         mapping.output("main") should be (MappingOutputIdentifier("project/m1:main"))
         an[NoSuchMappingOutputException] should be thrownBy(mapping.output("no_such_output"))
@@ -95,7 +95,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
 
         val mapping = new DummyMapping(
             Mapping.Properties(context, "m1"),
-            Seq()
+            Set()
         )
         mapping.output("main") should be (MappingOutputIdentifier("m1:main"))
         an[NoSuchMappingOutputException] should be thrownBy(mapping.output("no_such_output"))
@@ -108,7 +108,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
 
         val mapping = new DummyMapping(
             Mapping.Properties(context, "m1"),
-            Seq(MappingOutputIdentifier("input:main"))
+            Set(MappingOutputIdentifier("input:main"))
         )
 
         val inputSchema = StructType(Seq(
@@ -140,11 +140,11 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
 
         val mapping1 = new DummyMapping(
             Mapping.Properties(context, "m1"),
-            Seq(MappingOutputIdentifier("m2"))
+            Set(MappingOutputIdentifier("m2"))
         )
         val mapping2 = new DummyMapping(
             Mapping.Properties(context, "m2"),
-            Seq()
+            Set()
         )
         //(mappingTemplate1.instantiate _).expects(context).returns(mapping1)
         (mappingTemplate2.instantiate _).expects(context).returns(mapping2)

@@ -67,15 +67,15 @@ case class GroupedAggregateMapping(
      * recommended.
      * @return
      */
-    override def outputs: Seq[String] = groups.keys.toSeq :+ "cache"
+    override def outputs: Set[String] = groups.keys.toSet + "cache"
 
     /**
      * Returns the dependencies of this mapping, which is exactly one input table
      *
      * @return
      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
+    override def inputs : Set[MappingOutputIdentifier] = {
+        Set(input)
     }
 
     /**

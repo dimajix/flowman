@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,8 @@ class SortMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val typedInstance = instance.asInstanceOf[SortMapping]
         typedInstance.input should be (MappingOutputIdentifier("some_mapping"))
-        typedInstance.outputs should be (Seq("main"))
+        typedInstance.inputs should be (Set(MappingOutputIdentifier("some_mapping")))
+        typedInstance.outputs should be (Set("main"))
         typedInstance.columns should be (Seq(
             "c1" -> SortOrder(Ascending, NullsFirst),
             "c2" -> SortOrder(Descending, NullsFirst)

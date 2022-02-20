@@ -39,7 +39,7 @@ import com.dimajix.spark.testing.LocalSparkSession
 object RootExecutionTest {
     case class TestMapping(
         instanceProperties: Mapping.Properties,
-        inputs:Seq[MappingOutputIdentifier]
+        inputs:Set[MappingOutputIdentifier]
     ) extends BaseMapping {
         override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = {
             Map("main" -> input.values.head)
@@ -49,7 +49,7 @@ object RootExecutionTest {
     case class RangeMapping(
         instanceProperties: Mapping.Properties
     ) extends BaseMapping {
-        override def inputs: Seq[MappingOutputIdentifier] = Seq()
+        override def inputs: Set[MappingOutputIdentifier] = Set.empty
 
         override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = {
             val spark = execution.spark
@@ -61,7 +61,7 @@ object RootExecutionTest {
         override def instantiate(context: Context): Mapping = {
             TestMapping(
                 Mapping.Properties(context, name),
-                inputs.map(i => MappingOutputIdentifier(i))
+                inputs.map(i => MappingOutputIdentifier(i)).toSet
             )
         }
     }

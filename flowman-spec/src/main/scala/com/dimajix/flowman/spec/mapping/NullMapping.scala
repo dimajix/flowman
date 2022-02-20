@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ case class NullMapping(
      *
      * @return
      */
-    override def inputs: Seq[MappingOutputIdentifier] = Seq()
+    override def inputs: Set[MappingOutputIdentifier] = Set.empty
 
     /**
      * Executes this Mapping and returns a corresponding map of DataFrames per output

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,11 +59,10 @@ extends BaseMapping {
       *
       * @return
       */
-    override def inputs : Seq[MappingOutputIdentifier] = {
+    override def inputs : Set[MappingOutputIdentifier] = {
         SqlParser.resolveDependencies(statement)
             .filter(_.toLowerCase(Locale.ROOT) != "__this__")
             .map(MappingOutputIdentifier.parse)
-            .toSeq
     }
 
     /**

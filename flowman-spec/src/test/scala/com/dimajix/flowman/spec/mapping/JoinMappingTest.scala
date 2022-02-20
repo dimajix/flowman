@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,9 +67,8 @@ class JoinMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession{
             Seq("key"),
             mode="left"
         )
-        mapping.inputs should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
+        mapping.inputs should be (Set(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
         mapping.columns should be (Seq("key" ))
-        mapping.inputs should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
 
         val resultDf = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df1, MappingOutputIdentifier("df2") -> df2))("main")
             .orderBy("key")
@@ -120,9 +119,8 @@ class JoinMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession{
             condition="df1.key = df2.key",
             mode="left"
         )
-        mapping.inputs should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
+        mapping.inputs should be (Set(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
         mapping.condition should be ("df1.key = df2.key")
-        mapping.inputs should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
 
         val resultDf = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df1, MappingOutputIdentifier("df2") -> df2))("main")
             .orderBy("df1.key")
@@ -154,8 +152,7 @@ class JoinMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession{
         mapping shouldBe a[JoinMappingSpec]
 
         val join = mapping.instantiate(session.context).asInstanceOf[JoinMapping]
-        join.inputs should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
+        join.inputs should be (Set(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
         join.condition should be ("df1.key = df2.key")
-        join.inputs should be (Seq(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
     }
 }

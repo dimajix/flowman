@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,23 @@ case class MockMapping(
      *
      * @return
      */
-    override def inputs: Seq[MappingOutputIdentifier] = Seq()
+    override def inputs: Set[MappingOutputIdentifier] = Set.empty
+
+    /**
+     * Creates an output identifier for the primary output
+     *
+     * @return
+     */
+    override def output: MappingOutputIdentifier = {
+        MappingOutputIdentifier(identifier, mocked.output.output)
+    }
+
+    /**
+     * Lists all outputs of this mapping. Every mapping should have one "main" output
+     *
+     * @return
+     */
+    override def outputs: Set[String] = mocked.outputs
 
     /**
      * Executes this Mapping and returns a corresponding map of DataFrames per output
@@ -73,23 +89,6 @@ case class MockMapping(
             }
         }
     }
-
-
-    /**
-     * Creates an output identifier for the primary output
-     *
-     * @return
-     */
-    override def output: MappingOutputIdentifier = {
-        MappingOutputIdentifier(identifier, mocked.output.output)
-    }
-
-    /**
-     * Lists all outputs of this mapping. Every mapping should have one "main" output
-     *
-     * @return
-     */
-    override def outputs: Seq[String] = mocked.outputs
 
     /**
      * Returns the schema as produced by this mapping, relative to the given input schema. The map might not contain

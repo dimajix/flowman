@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,8 +193,8 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             overrideMappingContext = ctx
             overrideMapping
         }
-        (overrideMapping.inputs _).expects().atLeastOnce().returns(Seq())
-        (overrideMapping.outputs _).expects().atLeastOnce().returns(Seq("main"))
+        (overrideMapping.inputs _).expects().atLeastOnce().returns(Set())
+        (overrideMapping.outputs _).expects().atLeastOnce().returns(Set("main"))
         (overrideMapping.identifier _).expects().atLeastOnce().returns(MappingIdentifier("map"))
         (overrideMapping.context _).expects().onCall(() => overrideMappingContext)
         (overrideMapping.broadcast _).expects().returns(false)
@@ -312,8 +312,8 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
             mappingContext = ctx
             mapping
         }
-        (mapping.inputs _).expects().atLeastOnce().returns(Seq())
-        (mapping.outputs _).expects().atLeastOnce().returns(Seq("main"))
+        (mapping.inputs _).expects().atLeastOnce().returns(Set())
+        (mapping.outputs _).expects().atLeastOnce().returns(Set("main"))
         (mapping.identifier _).expects().atLeastOnce().returns(MappingIdentifier("map"))
         (mapping.context _).expects().onCall(() => mappingContext)
         (mapping.broadcast _).expects().returns(false)

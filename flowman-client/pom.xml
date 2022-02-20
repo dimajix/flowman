@@ -51,7 +51,7 @@
                     </transformers>
                     <artifactSet>
                         <excludes>
-                            <exclude>*:*:sources</exclude>
+                            <exclude>*:sources</exclude>
                         </excludes>
                     </artifactSet>
                     <filters>

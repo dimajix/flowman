@@ -52,7 +52,7 @@ class ProjectMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         mapping.input should be (MappingOutputIdentifier("myview"))
         mapping.columns should be (Seq(ProjectTransformer.Column(Path("_2"))))
-        mapping.inputs should be (Seq(MappingOutputIdentifier("myview")))
+        mapping.inputs should be (Set(MappingOutputIdentifier("myview")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("_2").collect()

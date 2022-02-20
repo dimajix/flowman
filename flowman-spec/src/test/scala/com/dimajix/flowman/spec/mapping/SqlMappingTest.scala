@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ class SqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t1"))
-        mapping.inputs should be (Seq(MappingOutputIdentifier("t0")))
+        mapping.inputs should be (Set(MappingOutputIdentifier("t0")))
     }
 
     it should "also be correct with subqueries" in {
@@ -143,7 +143,7 @@ class SqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t1"))
-        mapping.inputs.map(_.name).sorted should be (Seq("other_table", "some_table", "some_table_archive"))
+        mapping.inputs.map(_.name) should be (Set("other_table", "some_table", "some_table_archive"))
     }
 
     it should "execute the SQL query" in {

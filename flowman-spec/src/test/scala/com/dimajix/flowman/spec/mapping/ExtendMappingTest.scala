@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ class ExtendMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Map("new_f" -> "2*_2")
         )
         xfs.input should be (MappingOutputIdentifier("myview"))
+        xfs.inputs should be (Set(MappingOutputIdentifier("myview")))
         xfs.columns should be (Map("new_f" -> "2*_2"))
-        xfs.inputs should be (Seq(MappingOutputIdentifier("myview")))
 
         val result = xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("_1").collect()

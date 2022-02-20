@@ -50,8 +50,8 @@ case class StackMapping(
      * Returns the dependencies (i.e. names of tables in the Dataflow model)
      * @return
      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
+    override def inputs : Set[MappingOutputIdentifier] = {
+        Set(input)
     }
 
     /**

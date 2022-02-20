@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@ case class UnionMapping(
       *
       * @return
       */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        input
+    override def inputs : Set[MappingOutputIdentifier] = {
+        input.toSet
     }
 
     /**
@@ -58,7 +58,7 @@ case class UnionMapping(
         require(execution != null)
         require(tables != null)
 
-        val dfs = inputs.map(tables(_))
+        val dfs = input.map(tables(_))
 
         // Now create a union of all tables
         val union =

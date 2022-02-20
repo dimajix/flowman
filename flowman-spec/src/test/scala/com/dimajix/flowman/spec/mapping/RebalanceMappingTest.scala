@@ -51,7 +51,7 @@ class RebalanceMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
 
         val typedInstance = instance.asInstanceOf[RebalanceMapping]
         typedInstance.input should be (MappingOutputIdentifier("some_mapping"))
-        typedInstance.outputs should be (Seq("main"))
+        typedInstance.outputs should be (Set("main"))
         typedInstance.partitions should be (2)
     }
 

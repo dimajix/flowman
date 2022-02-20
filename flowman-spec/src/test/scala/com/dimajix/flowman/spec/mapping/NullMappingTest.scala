@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,8 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         ))
         mapping1.schema should be (None)
         mapping1.output should be (MappingOutputIdentifier("project/empty1:main"))
-        mapping1.outputs should be (Seq("main"))
+        mapping1.outputs should be (Set("main"))
+        mapping1.inputs should be (Set.empty)
     }
 
     it should "create empty DataFrames with specified columns" in {
@@ -90,7 +91,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         mapping.category should be (Category.MAPPING)
         //mapping.kind should be ("null")
-        mapping.outputs should be (Seq("main"))
+        mapping.outputs should be (Set("main"))
         mapping.output should be (MappingOutputIdentifier("empty"))
 
         mapping.describe(executor, Map()) should be (Map(
@@ -131,7 +132,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         mapping.category should be (Category.MAPPING)
         //mapping.kind should be ("null")
-        mapping.outputs should be (Seq("main"))
+        mapping.outputs should be (Set("main"))
         mapping.output should be (MappingOutputIdentifier("empty"))
 
         mapping.describe(executor, Map()) should be (Map(

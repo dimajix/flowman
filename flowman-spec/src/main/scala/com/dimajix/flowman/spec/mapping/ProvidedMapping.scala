@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,7 @@ extends BaseMapping {
      *
      * @return
      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq()
-    }
+    override def inputs : Set[MappingOutputIdentifier] = Set.empty
 
     /**
       * Instantiates the specified table, which must be available in the Spark session

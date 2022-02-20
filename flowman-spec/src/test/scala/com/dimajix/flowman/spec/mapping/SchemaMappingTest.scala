@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         project.mappings.contains("t1") should be (true)
 
         val mapping = context.getMapping(MappingIdentifier("t1")).asInstanceOf[SchemaMapping]
-        mapping.inputs should be (Seq(MappingOutputIdentifier("t0")))
+        mapping.inputs should be (Set(MappingOutputIdentifier("t0")))
         mapping.output should be (MappingOutputIdentifier("project/t1:main"))
         mapping.identifier should be (MappingIdentifier("project/t1"))
         mapping.schema should be (None)
@@ -90,7 +90,7 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
         mapping.input should be (MappingOutputIdentifier("myview"))
         mapping.columns should be (Seq(Field("_2", FieldType.of("int"))))
-        mapping.inputs should be (Seq(MappingOutputIdentifier("myview")))
+        mapping.inputs should be (Set(MappingOutputIdentifier("myview")))
         mapping.output should be (MappingOutputIdentifier("map:main"))
         mapping.identifier should be (MappingIdentifier("map"))
 
@@ -128,8 +128,8 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         )
 
         mapping.input should be (MappingOutputIdentifier("myview"))
-        mapping.inputs should be (Seq(MappingOutputIdentifier("myview")))
-        mapping.outputs should be (Seq("main"))
+        mapping.inputs should be (Set(MappingOutputIdentifier("myview")))
+        mapping.outputs should be (Set("main"))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("_2")

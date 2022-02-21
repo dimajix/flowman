@@ -122,7 +122,7 @@ case class ReadRelationMapping(
      * Params: linker - The linker object to use for creating new edges
      */
     override def link(linker: Linker): Unit = {
-        linker.read(relation.identifier, partitions)
+        linker.read(relation, partitions)
     }
 }
 

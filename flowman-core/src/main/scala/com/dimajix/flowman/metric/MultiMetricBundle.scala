@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,12 @@ final case class MultiMetricBundle(override val name:String, override val labels
         bundleMetrics.remove(metric)
     }
 
-    def getOrCreateMetric[T <: Metric](query:Selector)(creator: => T) : T = {
-        bundleMetrics.find(metric => query.name.forall(_ == metric.name) && metric.labels == query.labels)
+    def getOrCreateMetric[T <: Metric](name:String, labels:Map[String,String])(creator: => T) : T = {
+        bundleMetrics.find(metric => name == metric.name && metric.labels == labels)
             .map(_.asInstanceOf[T])
             .getOrElse{
                 val metric = creator
-                if (!query.name.forall(_ == metric.name) || query.labels != metric.labels)
+                if (name != metric.name || labels != metric.labels)
                     throw new IllegalArgumentException("Newly created metric needs to match query")
                 addMetric(metric)
                 metric

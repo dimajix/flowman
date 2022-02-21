@@ -31,6 +31,13 @@ jobs:
         phase: ${phase}
         datetime: ${processing_datetime}
       metrics:
+        # Collect everything
+        - selector:
+            name: .*
+          labels:
+            category: ${category}
+            kind: ${kind}
+            name: ${name}
         # This metric contains the number of records per output. It will search all metrics called
         # `target_records` and export them as `flowman_output_records`. It will also label each metric with
         # the name of each Flowman build target (in case you have multiple targets)

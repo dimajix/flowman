@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,16 +81,16 @@ class MetricSystemTest extends AnyFlatSpec with Matchers {
         r7.size should be (1)
         r7.forall(m => m.labels("label") == "acc1" && m.labels("sublabel") == "a") should be (true)
 
-        val r8 = registry.findMetric(Selector(name=Some("no_such_metric")))
+        val r8 = registry.findMetric(Selector(name="no_such_metric"))
         r8.size should be (0)
 
-        val r9 = registry.findMetric(Selector(name=Some("some_metric_1")))
+        val r9 = registry.findMetric(Selector(name="some_metric_1"))
         r9.size should be (2)
 
-        val r10 = registry.findMetric(Selector(name=Some("some_metric_1"), labels=Map("label" -> "acc1")))
+        val r10 = registry.findMetric(Selector(name="some_metric_1", labels=Map("label" -> "acc1")))
         r10.size should be (2)
 
-        val r11 = registry.findMetric(Selector(name=Some("some_metric_1"), labels=Map("label" -> "acc2")))
+        val r11 = registry.findMetric(Selector(name="some_metric_1", labels=Map("label" -> "acc2")))
         r11.size should be (0)
     }
 
@@ -98,17 +98,22 @@ class MetricSystemTest extends AnyFlatSpec with Matchers {
         val registry = new MetricSystem
 
         val accumulator1 = new CounterAccumulator()
-        registry.addBundle(new CounterAccumulatorMetricBundle("some_metric_1", Map("label" -> "acc1"), accumulator1, "sublabel"))
+        registry.addBundle(CounterAccumulatorMetricBundle("some_metric_1", Map("label" -> "acc1"), accumulator1, "sublabel"))
 
         val accumulator2 = new CounterAccumulator()
-        registry.addBundle(new CounterAccumulatorMetricBundle("some_metric_2", Map("label" -> "acc2"), accumulator2, "sublabel"))
+        registry.addBundle(CounterAccumulatorMetricBundle("some_metric_2", Map("label" -> "acc2"), accumulator2, "sublabel"))
 
         registry.findBundle(Selector()).size should be (2)
         registry.findBundle(Selector(labels=Map("label" -> "acc2"))).size should be (1)
         registry.findBundle(Selector(labels=Map("label" -> "acc3"))).size should be (0)
-        registry.findBundle(Selector(name=Some("no_such_metric"))).size should be (0)
-        registry.findBundle(Selector(name=Some("some_metric_1"))).size should be (1)
-        registry.findBundle(Selector(name=Some("some_metric_1"), labels=Map("label" -> "acc1"))).size should be (1)
-        registry.findBundle(Selector(name=Some("some_metric_1"), labels=Map("label" -> "acc2"))).size should be (0)
+        registry.findBundle(Selector(name="no_such_metric")).size should be (0)
+        registry.findBundle(Selector(name="some_metric_1")).size should be (1)
+        registry.findBundle(Selector(name="some_metric_1", labels=Map("label" -> "acc1"))).size should be (1)
+        registry.findBundle(Selector(name="some_metric_1", labels=Map("label" -> "acc2"))).size should be (0)
+
+        registry.findBundle(Selector(labels=Map("label" -> ".*2"))).size should be (1)
+        registry.findBundle(Selector(labels=Map("label" -> ".*3"))).size should be (0)
+        registry.findBundle(Selector(name="no_such_.*")).size should be (0)
+        registry.findBundle(Selector(name="some_metric_.*")).size should be (2)
     }
 }

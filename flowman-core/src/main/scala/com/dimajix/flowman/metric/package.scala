@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,11 +63,11 @@ package object metric {
         // Create and register bundle
         val metricName = metadata.category + "_runtime"
         val bundleLabels = metadata.asMap + ("phase" -> phase.toString)
-        val bundle = registry.getOrCreateBundle(Selector(Some(metricName), bundleLabels))(MultiMetricBundle(metricName, bundleLabels))
+        val bundle = registry.getOrCreateBundle(metricName, bundleLabels)(MultiMetricBundle(metricName, bundleLabels))
 
         // Create and register metric
         val metricLabels = bundleLabels ++ Map("name" -> metadata.name) ++ metadata.labels
-        val metric = bundle.getOrCreateMetric(Selector(Some(metricName), metricLabels))(WallTimeMetric(metricName, metricLabels))
+        val metric = bundle.getOrCreateMetric(metricName, metricLabels)(WallTimeMetric(metricName, metricLabels))
         metric.reset()
 
         // Execute function itself, and catch any exception

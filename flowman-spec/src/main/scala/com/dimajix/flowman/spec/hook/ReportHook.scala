@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,7 +192,7 @@ case class ReportHook(
                 None
             }
 
-        // Register custom metrics board
+        // Reset metrics of custom metrics board without adding it
         metrics.foreach { board =>
             board.reset(execution.metricSystem)
         }
@@ -235,7 +235,7 @@ case class ReportHook(
                 "phase" -> result.instance.phase.toString,
                 "status" -> result.status.toString,
                 "result" -> JobResultWrapper(result),
-                "metrics" -> (boardMetrics ++ sinkMetrics).asJava
+                "metrics" -> (boardMetrics ++ sinkMetrics).sortBy(_.getName()).asJava
             )
             val text = context.evaluate(jobFinishVtl, vars)
             p.print(text)

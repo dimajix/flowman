@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package com.dimajix.flowman.metric
+
+import scala.util.matching.Regex
 
 import com.dimajix.common.IdentityHashSet
 import com.dimajix.common.SynchronizedSet
@@ -81,12 +83,12 @@ class MetricSystem extends MetricCatalog {
         metricBundles.remove(bundle)
     }
 
-    def getOrCreateBundle[T <: MetricBundle](query:Selector)(creator: => T) : T = {
-        metricBundles.find(bundle => query.name.forall(_ == bundle.name) && bundle.labels == query.labels)
+    def getOrCreateBundle[T <: MetricBundle](name:String, labels:Map[String,String])(creator: => T) : T = {
+        metricBundles.find(bundle => name == bundle.name && bundle.labels == labels)
             .map(_.asInstanceOf[T])
             .getOrElse{
                 val bundle = creator
-                if (!query.name.forall(_ == bundle.name) || query.labels != bundle.labels)
+                if (name != bundle.name || labels != bundle.labels)
                     throw new IllegalArgumentException("Newly created bundle needs to match query")
                 addBundle(bundle)
                 bundle
@@ -181,13 +183,13 @@ class MetricSystem extends MetricCatalog {
         // Matches bundle labels to query. Only existing labels need to match
         def matchBundle(bundle:MetricBundle) : Boolean = {
             val labels = bundle.labels
-            selector.name.forall(_ == bundle.name) &&
-                labels.keySet.intersect(selector.labels.keySet).forall(key => selector.labels(key) == labels(key))
+            selector.name.forall(_.unapplySeq(bundle.name).nonEmpty) &&
+                labels.keySet.intersect(selector.labels.keySet).forall(key => selector.labels(key).unapplySeq(labels(key)).nonEmpty)
         }
         // Matches metric labels to query. All labels need to match
-        def matchMetric(metric:Metric, query:Map[String,String]) : Boolean = {
+        def matchMetric(metric:Metric, query:Map[String,Regex]) : Boolean = {
             val labels = metric.labels
-            query.forall(kv => labels.get(kv._1).contains(kv._2))
+            query.forall(kv => labels.get(kv._1).exists(v => kv._2.unapplySeq(v).nonEmpty))
         }
         // Query a bundle and return all matching metrics within that bundle
         def queryBundle(bundle:MetricBundle) : Seq[Metric] = {
@@ -214,8 +216,8 @@ class MetricSystem extends MetricCatalog {
 
         def matchBundle(bundle:MetricBundle) : Boolean = {
             val labels = bundle.labels
-            selector.name.forall(_ == bundle.name) &&
-                selector.labels.forall(kv => labels.get(kv._1).contains(kv._2))
+            selector.name.forall(_.unapplySeq(bundle.name).nonEmpty) &&
+                selector.labels.forall(kv => labels.get(kv._1).exists(v => kv._2.unapplySeq(v).nonEmpty))
         }
 
         metricBundles.toSeq

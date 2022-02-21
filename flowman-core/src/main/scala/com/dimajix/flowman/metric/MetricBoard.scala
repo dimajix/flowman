@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package com.dimajix.flowman.metric
+
+import scala.util.matching.Regex
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Status
@@ -54,7 +56,8 @@ final case class MetricBoard(
         selections.flatMap { sel =>
             // Relabeling should happen has late as possible, since some values might be dynamic
             def relabel(metric:Metric) : Metric = metric match {
-                case gauge:GaugeMetric => FixedGaugeMetric(sel.name, env.evaluate(labels ++ sel.labels, gauge.labels + ("status" -> status)), gauge.value)
+                // Remove "project" from gauge.labels
+                case gauge:GaugeMetric => FixedGaugeMetric(sel.name.getOrElse(gauge.name), env.evaluate(labels ++ sel.labels, gauge.labels - "project" + ("status" -> status)), gauge.value)
                 case _ => throw new IllegalArgumentException(s"Metric of type ${metric.getClass} not supported")
             }
 
@@ -67,7 +70,7 @@ final case class MetricBoard(
 /**
  * A MetricSelection represents a possibly dynamic set of Metrics to be published inside a MetricBoard
  */
-final case class MetricSelection(name:String, selector:Selector, labels:Map[String,String]) {
+final case class MetricSelection(name:Option[String], selector:Selector, labels:Map[String,String]) {
     /**
      * Returns all metrics identified by this selection. This operation may be expensive, since the set of metrics may be
      * dynamic and change over time
@@ -83,8 +86,18 @@ final case class MetricSelection(name:String, selector:Selector, labels:Map[Stri
     def bundles(implicit catalog:MetricCatalog) : Seq[MetricBundle] = catalog.findBundle(selector)
 }
 
-
+object Selector {
+    def apply(labels:Map[String,String]) : Selector = {
+        new Selector(None, labels.map { case(k,v) => k -> v.r } )
+    }
+    def apply(name:String) : Selector = {
+        new Selector(Some(name.r), Map.empty )
+    }
+    def apply(name:String, labels:Map[String,String]) : Selector = {
+        new Selector(Some(name.r), labels.map { case(k,v) => k -> v.r } )
+    }
+}
 final case class Selector(
-    name:Option[String] = None,
-    labels:Map[String,String] = Map()
+    name:Option[Regex] = None,
+    labels:Map[String,Regex] = Map()
 )

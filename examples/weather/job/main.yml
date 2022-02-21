@@ -13,4 +13,7 @@ jobs:
       - stations
       - aggregates
       - validate_stations_raw
+      # Collect some measures which will be published as metrics
+      - metrics
+      # Generate documentation
       - documentation

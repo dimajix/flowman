@@ -18,6 +18,46 @@ connections:
     password: $System.getenv('FLOWMAN_HISTORY_PASSWORD', '')
 
 
+# This adds a hook for creating an execution log in a file
+hooks:
+  kind: report
+  location: ${project.basedir}/generated-report.txt
+  metrics:
+    # Define common labels for all metrics
+    labels:
+      project: ${project.name}
+    metrics:
+      # Collect everything
+      - selector:
+          name: .*
+        labels:
+          category: ${category}
+          kind: ${kind}
+          name: ${name}
+      # This metric contains the number of records per output
+      - name: output_records
+        selector:
+          name: target_records
+          labels:
+            category: target
+        labels:
+          target: ${name}
+      # This metric contains the processing time per output
+      - name: output_time
+        selector:
+          name: target_runtime
+          labels:
+            category: target
+        labels:
+          target: ${name}
+      # This metric contains the overall processing time
+      - name: processing_time
+        selector:
+          name: job_runtime
+          labels:
+            category: job
+
+
 # This configures where metrics should be written to. Since we cannot assume a working Prometheus push gateway, we
 # simply print them onto the console
 metrics:

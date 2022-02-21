@@ -1,0 +1,24 @@
+targets:
+  metrics:
+    kind: measure
+    description: "Collect relevant metrics from measurements, to be published to a metrics collector"
+    measures:
+      measurement_metrics:
+        kind: sql
+        # The following SQL will provide the following metrics:
+        #  - valid_wind_direction
+        #  - invalid_wind_direction
+        #  - valid_wind_speed
+        #  - invalid_wind_speed
+        #  - valid_air_temperature
+        #  - invalid_air_temperature
+        query: "
+          SELECT
+            SUM(IF(wind_direction_qual = '1', 1, 0)) AS valid_wind_direction,
+            SUM(IF(wind_direction_qual <> '1', 1, 0)) AS invalid_wind_direction,
+            SUM(IF(wind_speed_qual = '1', 1, 0)) AS valid_wind_speed,
+            SUM(IF(wind_speed_qual <> '1', 1, 0)) AS invalid_wind_speed,
+            SUM(IF(air_temperature_qual = '1', 1, 0)) AS valid_air_temperature,
+            SUM(IF(air_temperature_qual <> '1', 1, 0)) AS invalid_air_temperature
+          FROM measurements
+        "

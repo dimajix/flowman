@@ -166,7 +166,19 @@ final case class ProjectDocWrapper(project:ProjectDoc) extends FragmentWrapper(p
         }.orNull
     }
 
-    def getMappings() : java.util.List[MappingDocWrapper] = project.mappings.map(MappingDocWrapper).asJava
-    def getRelations() : java.util.List[RelationDocWrapper] = project.relations.map(RelationDocWrapper).asJava
-    def getTargets() : java.util.List[TargetDocWrapper] = project.targets.map(TargetDocWrapper).asJava
+    def getMappings() : java.util.List[MappingDocWrapper] =
+        project.mappings
+            .sortBy(_.identifier.toString)
+            .map(MappingDocWrapper)
+            .asJava
+    def getRelations() : java.util.List[RelationDocWrapper] =
+        project.relations
+            .sortBy(_.identifier.toString)
+            .map(RelationDocWrapper)
+            .asJava
+    def getTargets() : java.util.List[TargetDocWrapper] =
+        project.targets
+            .sortBy(_.identifier.toString)
+            .map(TargetDocWrapper)
+            .asJava
 }

@@ -120,7 +120,7 @@ case class DeltaVacuumTarget(
      */
     override def link(linker: Linker, phase:Phase): Unit = {
         if (phase == Phase.BUILD) {
-            linker.write(relation.identifier, Map.empty[String,SingleValue])
+            linker.write(relation, Map.empty[String,SingleValue])
         }
     }
 

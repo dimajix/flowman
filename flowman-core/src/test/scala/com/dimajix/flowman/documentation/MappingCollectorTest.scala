@@ -80,6 +80,7 @@ class MappingCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
         (mapping1.inputs _).expects().returns(Set(MappingOutputIdentifier("project/m2")))
         (mapping1.describe: (Execution,Map[MappingOutputIdentifier,StructType]) => Map[String,StructType] ).expects(*,*).returns(Map("main" -> StructType(Seq())))
         (mapping1.documentation _).expects().returns(None)
+        (mapping1.context _).expects().returns(context)
         (mapping2.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m2"))
         (mapping2.inputs _).expects().returns(Set())
         (mapping2.describe: (Execution,Map[MappingOutputIdentifier,StructType]) => Map[String,StructType] ).expects(*,*).returns(Map("main" -> StructType(Seq())))

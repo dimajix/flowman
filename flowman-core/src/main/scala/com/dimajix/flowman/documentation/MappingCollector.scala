@@ -16,18 +16,17 @@
 
 package com.dimajix.flowman.documentation
 
-import scala.collection.mutable
 import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
+import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
 import com.dimajix.flowman.graph.MappingRef
 import com.dimajix.flowman.graph.ReadRelation
 import com.dimajix.flowman.model.Mapping
-import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
@@ -36,17 +35,15 @@ class MappingCollector extends Collector {
     private val logger = LoggerFactory.getLogger(getClass)
 
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
-        val mappings = mutable.Map[MappingIdentifier, MappingDoc]()
+        val mappings = IdentityHashMap[Mapping, MappingDoc]()
         val parent = documentation.reference
 
         def getMappingDoc(node:MappingRef) : MappingDoc = {
             val mapping = node.mapping
-            mappings.getOrElseUpdate(mapping.identifier, genDoc(node))
+            mappings.getOrElseUpdate(mapping, genDoc(node))
         }
-        def getOutputDoc(mappingOutput:MappingOutputIdentifier) : Option[MappingOutputDoc] = {
-            val mapping = mappingOutput.mapping
+        def getOutputDoc(mapping:Mapping, output:String) : Option[MappingOutputDoc] = {
             val doc = mappings.getOrElseUpdate(mapping, genDoc(graph.mapping(mapping)))
-            val output = mappingOutput.output
             doc.outputs.find(_.identifier.output == output)
         }
         def genDoc(node:MappingRef) : MappingDoc = {
@@ -54,7 +51,10 @@ class MappingCollector extends Collector {
             logger.info(s"Collecting documentation for mapping '${mapping.identifier}'")
 
             // Collect fundamental basis information
-            val inputs = mapping.inputs.flatMap(in => getOutputDoc(in).map(in -> _)).toMap
+            val inputs = mapping.inputs.flatMap { in =>
+                val inmap = mapping.context.getMapping(in.mapping)
+                getOutputDoc(inmap, in.output).map(in -> _)
+            }.toMap
             val doc = document(execution, parent, mapping, inputs)
 
             // Add additional inputs from non-mapping entities
@@ -88,6 +88,7 @@ class MappingCollector extends Collector {
         val ref = doc.reference
 
         val outputs = try {
+            // Do not use Execution.describe because that wouldn't use our hand-crafted input documentation
             val schemas = mapping.describe(execution, inputSchemas)
             schemas.map { case(output,schema) =>
                 val doc = MappingOutputDoc(

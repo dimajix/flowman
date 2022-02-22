@@ -129,6 +129,13 @@
             flex: 25%;
         }
 
+        span.success {
+            color: forestgreen;
+        }
+        span.failure {
+            color: orangered;
+        }
+
         span.bubble {
             display: inline-flex;
             background-color: #0e84b5;
@@ -139,6 +146,11 @@
         }
     </style>
 </head>
+
+
+#macro(testStatus $test)
+#if(${test.success})<span class="success">#elseif(${test.failure})<span class="failure">#else<span>#end${test.status}</span>
+#end
 
 #macro(schema $schema)
 <table class="blueTable">
@@ -164,7 +176,7 @@
                 #foreach($test in ${column.tests})
                     <tr>
                         <td>${test.name}</td>
-                        <td>${test.status}</td>
+                        <td>#testStatus($test)</td>
                         <td>#if(${test.result})${test.result.description}#end</td>
                     </tr>
                 #end
@@ -188,7 +200,7 @@
     #foreach($test in ${schema.tests})
     <tr>
         <td>${test.name}</td>
-        <td>${test.status}</td>
+        <td>#testStatus($test)</td>
         <td>#if(${test.result})${test.result.description}#end</td>
     </tr>
     #end

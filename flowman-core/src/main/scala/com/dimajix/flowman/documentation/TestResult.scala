@@ -16,13 +16,34 @@
 
 package com.dimajix.flowman.documentation
 
-sealed abstract class TestStatus extends Product with Serializable
+
+sealed abstract class TestStatus extends Product with Serializable {
+    def success : Boolean
+    def failure : Boolean
+    def run : Boolean
+}
 
 object TestStatus {
-    final case object FAILED extends TestStatus
-    final case object SUCCESS extends TestStatus
-    final case object ERROR extends TestStatus
-    final case object NOT_RUN extends TestStatus
+    final case object FAILED extends TestStatus {
+        def success : Boolean = false
+        def failure : Boolean = true
+        def run : Boolean = true
+    }
+    final case object SUCCESS extends TestStatus {
+        def success : Boolean = true
+        def failure : Boolean = false
+        def run : Boolean = true
+    }
+    final case object ERROR extends TestStatus {
+        def success : Boolean = false
+        def failure : Boolean = true
+        def run : Boolean = true
+    }
+    final case object NOT_RUN extends TestStatus {
+        def success : Boolean = false
+        def failure : Boolean = false
+        def run : Boolean = false
+    }
 }
 
 
@@ -55,4 +76,8 @@ final case class TestResult(
             details = details.map(_.reparent(ref))
         )
     }
+
+    def success : Boolean = status.success
+    def failure : Boolean = status.failure
+    def run : Boolean = status.run
 }

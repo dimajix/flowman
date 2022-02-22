@@ -47,6 +47,8 @@ final case class TestResultWrapper(result:TestResult) extends FragmentWrapper(re
     override def toString: String = result.status.toString
 
     def getStatus() : String = result.status.toString
+    def getSuccess() : Boolean = result.success
+    def getFailure() : Boolean = result.failure
 }
 
 
@@ -56,6 +58,8 @@ final case class ColumnTestWrapper(test:ColumnTest) extends FragmentWrapper(test
     def getName() : String = test.name
     def getResult() : TestResultWrapper = test.result.map(TestResultWrapper).orNull
     def getStatus() : String = test.result.map(_.status.toString).getOrElse("NOT_RUN")
+    def getSuccess() : Boolean = test.result.exists(_.success)
+    def getFailure() : Boolean = test.result.exists(_.failure)
 }
 
 
@@ -79,6 +83,8 @@ final case class SchemaTestWrapper(test:SchemaTest) extends FragmentWrapper(test
     def getName() : String = test.name
     def getResult() : TestResultWrapper = test.result.map(TestResultWrapper).orNull
     def getStatus() : String = test.result.map(_.status.toString).getOrElse("NOT_RUN")
+    def getSuccess() : Boolean = test.result.exists(_.success)
+    def getFailure() : Boolean = test.result.exists(_.failure)
 }
 
 

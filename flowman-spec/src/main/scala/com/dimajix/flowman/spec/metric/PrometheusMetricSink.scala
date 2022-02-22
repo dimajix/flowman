@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.metric
+package com.dimajix.flowman.spec.metric
 
 import java.io.IOException
 import java.net.URI
 
 import scala.util.control.NonFatal
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.http.HttpResponse
 import org.apache.http.client.HttpResponseException
 import org.apache.http.client.ResponseHandler
@@ -29,14 +30,19 @@ import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClients
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.metric.AbstractMetricSink
+import com.dimajix.flowman.metric.GaugeMetric
+import com.dimajix.flowman.metric.MetricBoard
+import com.dimajix.flowman.metric.MetricSink
 
 
 class PrometheusMetricSink(
     url:String,
     labels:Map[String,String]
 )
-extends AbstractMetricSink {
+    extends AbstractMetricSink {
     private val logger = LoggerFactory.getLogger(classOf[PrometheusMetricSink])
 
     override def commit(board:MetricBoard, status:Status) : Unit = {
@@ -100,5 +106,18 @@ extends AbstractMetricSink {
 
     private def sanitize(str:String) : String = {
         str.replace("\"","\\\"").replace("\n","").trim
+    }
+}
+
+
+class PrometheusMetricSinkSpec extends MetricSinkSpec {
+    @JsonProperty(value = "url", required = true) private var url:String = ""
+    @JsonProperty(value = "labels", required = false) private var labels:Map[String,String] = Map()
+
+    override def instantiate(context: Context): MetricSink = {
+        new PrometheusMetricSink(
+            context.evaluate(url),
+            labels
+        )
     }
 }

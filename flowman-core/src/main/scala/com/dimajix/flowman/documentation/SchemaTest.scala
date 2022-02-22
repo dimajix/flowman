@@ -103,7 +103,7 @@ class DefaultSchemaTestExecutor extends SchemaTestExecutor {
         test match {
             case p:PrimaryKeySchemaTest =>
                 val cols = p.columns.map(df(_))
-                val agg = df.filter(cols.map(_.isNotNull).reduce(_ && _)).groupBy(cols:_*).count()
+                val agg = df.filter(cols.map(_.isNotNull).reduce(_ || _)).groupBy(cols:_*).count()
                 val result = agg.groupBy(agg(agg.columns(cols.length)) > 1).count().collect()
                 val numSuccess = result.find(_.getBoolean(0) == false).map(_.getLong(1)).getOrElse(0L)
                 val numFailed = result.find(_.getBoolean(0) == true).map(_.getLong(1)).getOrElse(0L)
@@ -121,7 +121,11 @@ class DefaultSchemaTestExecutor extends SchemaTestExecutor {
                         execution.instantiate(mapping, map.output)
                     }).getOrElse(throw new IllegalArgumentException(s"Need either mapping or relation in foreignKey test ${test.reference.toString}"))
                 val cols = f.columns.map(df(_))
-                val otherCols = f.references.map(otherDf(_))
+                val otherCols =
+                    if (f.references.nonEmpty)
+                        f.references.map(otherDf(_))
+                    else
+                        f.columns.map(otherDf(_))
                 val joined = df.join(otherDf, cols.zip(otherCols).map(lr => lr._1 === lr._2).reduce(_ && _), "left")
                 executePredicateTest(joined, test, otherCols.map(_.isNotNull).reduce(_ || _))
 

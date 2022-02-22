@@ -19,6 +19,7 @@ fi
 # Set basic Spark options
 : ${SPARK_SUBMIT:="$SPARK_HOME"/bin/spark-submit}
 : ${SPARK_OPTS:=""}
+: ${SPARK_JARS:=""}
 : ${SPARK_DRIVER_JAVA_OPTS:="-server"}
 : ${SPARK_EXECUTOR_JAVA_OPTS:="-server"}
 
@@ -84,11 +85,17 @@ flowman_lib() {
 
 
 spark_submit() {
+    if [ "$SPARK_JARS" != "" ]; then
+        extra_jars=",$SPARK_JARS"
+    else
+        extra_jars=""
+    fi
+
     $SPARK_SUBMIT \
       --driver-java-options "$SPARK_DRIVER_JAVA_OPTS" \
       --conf spark.execution.extraJavaOptions="$SPARK_EXECUTOR_JAVA_OPTS" \
       --class $3 \
       $SPARK_OPTS \
-      --jars "$(flowman_lib $2)" \
+      --jars "$(flowman_lib $2)$extra_jars" \
       $FLOWMAN_HOME/lib/$1 "${@:4}"
 }

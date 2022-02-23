@@ -58,7 +58,7 @@ final case class PrimaryKeySchemaTest(
     columns:Seq[String] = Seq.empty,
     result:Option[TestResult] = None
 ) extends SchemaTest {
-    override def name : String = s"PRIMARY KEY(${columns.mkString(",")})"
+    override def name : String = s"PRIMARY KEY (${columns.mkString(",")})"
     override def withResult(result: TestResult): SchemaTest = copy(result=Some(result))
     override def reparent(parent: Reference): PrimaryKeySchemaTest = {
         val ref = SchemaTestReference(Some(parent))

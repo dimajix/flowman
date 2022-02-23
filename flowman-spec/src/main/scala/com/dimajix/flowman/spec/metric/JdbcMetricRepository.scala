@@ -78,10 +78,10 @@ private[metric] class JdbcMetricRepository(
     private lazy val db = {
         val url = connection.url
         val driver = connection.driver
-        val user = connection.username
-        val password = connection.password
         val props = new Properties()
         connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
+        connection.username.foreach(props.setProperty("user", _))
+        connection.password.foreach(props.setProperty("password", _))
         logger.debug(s"Connecting via JDBC to $url with driver $driver")
         val executor = slick.util.AsyncExecutor(
             name="Flowman.jdbc_metric_sink",
@@ -89,7 +89,8 @@ private[metric] class JdbcMetricRepository(
             maxThreads = 20,
             queueSize = 1000,
             maxConnections = 20)
-        Database.forURL(url, driver=driver, user=user.orNull, password=password.orNull, prop=props, executor=executor)
+        // Do not set username and password, since a bug in Slick would discard all other connection properties
+        Database.forURL(url, driver=driver, prop=props, executor=executor)
     }
 
     class Commits(tag: Tag) extends Table[Commit](tag, commitTable) {

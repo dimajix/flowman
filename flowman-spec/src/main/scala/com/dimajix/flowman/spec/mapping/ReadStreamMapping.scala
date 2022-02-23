@@ -102,7 +102,7 @@ case class ReadStreamMapping (
         }
         else {
             val relation = this.relation.value
-            relation.describe(execution)
+            execution.describe(relation)
         }
 
         // Apply documentation

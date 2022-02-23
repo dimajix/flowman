@@ -128,7 +128,7 @@ class RelationCollector extends Collector {
             }
         val mergedSchema = {
             Try {
-                SchemaDoc.ofStruct(ref, relation.describe(execution, partitions))
+                SchemaDoc.ofStruct(ref, execution.describe(relation, partitions))
             } match {
                 case Success(desc) =>
                     Some(desc.merge(schema))

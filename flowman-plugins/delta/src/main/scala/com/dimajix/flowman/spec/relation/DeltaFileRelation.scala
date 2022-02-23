@@ -288,6 +288,8 @@ case class DeltaFileRelation(
                 properties,
                 description
             )
+
+            provides.foreach(execution.refreshResource)
         }
     }
 
@@ -344,6 +346,7 @@ case class DeltaFileRelation(
         else {
             logger.info(s"Destroying Delta file relation '$identifier' by deleting directory '$location'")
             fs.delete(location, true)
+            provides.foreach(execution.refreshResource)
         }
     }
 

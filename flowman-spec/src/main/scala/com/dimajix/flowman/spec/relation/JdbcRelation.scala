@@ -420,6 +420,7 @@ class JdbcRelationBase(
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
                 doCreate(con, options)
+                provides.foreach(execution.refreshResource)
             }
         }
     }
@@ -453,6 +454,7 @@ class JdbcRelationBase(
         withConnection{ (con,options) =>
             if (!ifExists || JdbcUtils.tableExists(con, tableIdentifier, options)) {
                 JdbcUtils.dropTable(con, tableIdentifier, options)
+                provides.foreach(execution.refreshResource)
             }
         }
     }
@@ -469,6 +471,7 @@ class JdbcRelationBase(
                     val currentSchema = JdbcUtils.getSchema(con, tableIdentifier, options)
                     if (TableChange.requiresMigration(currentSchema, targetSchema, migrationPolicy)) {
                         doMigration(currentSchema, targetSchema, migrationPolicy, migrationStrategy)
+                        provides.foreach(execution.refreshResource)
                     }
                 }
             }

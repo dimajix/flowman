@@ -65,6 +65,8 @@ class DescribeMappingFailedException(val mapping:MappingIdentifier, cause:Throwa
     extends ExecutionException(s"Describing mapping $mapping failed", cause)
 class InstantiateMappingFailedException(val mapping:MappingIdentifier, cause:Throwable = None.orNull)
     extends ExecutionException(s"Instantiating mapping $mapping failed", cause)
+class DescribeRelationFailedException(val relation:RelationIdentifier, cause:Throwable = None.orNull)
+    extends ExecutionException(s"Describing relation $relation failed", cause)
 
 class ValidationFailedException(val target:TargetIdentifier, cause:Throwable = None.orNull)
     extends ExecutionException(s"Validation of target $target failed", cause)

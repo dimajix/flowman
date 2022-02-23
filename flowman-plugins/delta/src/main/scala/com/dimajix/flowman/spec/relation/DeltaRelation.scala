@@ -129,6 +129,7 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
 
         if (requiresMigration) {
             doMigration(execution, table, sourceSchema, targetSchema, migrationPolicy, migrationStrategy)
+            provides.foreach(execution.refreshResource)
         }
     }
     private def doMigration(execution: Execution, table:DeltaTableV2, currentSchema:com.dimajix.flowman.types.StructType, targetSchema:com.dimajix.flowman.types.StructType, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {

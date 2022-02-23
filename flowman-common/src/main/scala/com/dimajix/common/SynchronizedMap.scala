@@ -91,6 +91,16 @@ case class SynchronizedMap[K,V](impl:mutable.Map[K,V]) {
         }
     }
 
+    /**
+     * Remove a value from the map
+     * @param key
+     */
+    def remove(key: K) : Unit = {
+        synchronized {
+            impl.remove(key)
+        }
+    }
+
     /** Retrieves the value which is associated with the given key. This
      *  method invokes the `default` method of the map if there is no mapping
      *  from the given key to a value. Unless overridden, the `default` method throws a

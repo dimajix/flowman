@@ -55,7 +55,7 @@ class DescribeCommand extends Command {
             }
             else {
                 val execution = session.execution
-                val schema = relation.describe(execution, partition)
+                val schema = execution.describe(relation, partition)
                 schema.printTree()
             }
             Status.SUCCESS

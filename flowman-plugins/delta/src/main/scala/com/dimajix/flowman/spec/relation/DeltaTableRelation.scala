@@ -296,6 +296,8 @@ case class DeltaTableRelation(
                 properties,
                 description
             )
+
+            provides.foreach(execution.refreshResource)
         }
     }
 
@@ -336,6 +338,7 @@ case class DeltaTableRelation(
         if (!ifExists || catalog.tableExists(tableIdentifier)) {
             logger.info(s"Destroying Delta table relation '$identifier' by dropping table $tableIdentifier")
             catalog.dropTable(tableIdentifier)
+            provides.foreach(execution.refreshResource)
         }
     }
 
@@ -385,7 +388,6 @@ case class DeltaTableRelation(
         )
     }
 }
-
 
 
 @RelationType(kind="deltaTable")

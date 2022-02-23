@@ -225,7 +225,7 @@ case class FileRelation(
         else
             doWriteStaticPartitions(execution, df, partition, mode)
 
-        execution.refreshResource(ResourceIdentifier.ofFile(qualifiedLocation))
+        provides.foreach(execution.refreshResource)
     }
     private def doWriteDynamicPartitions(execution:Execution, df:DataFrame,  mode:OutputMode) : Unit = {
         val outputPath = qualifiedLocation
@@ -412,6 +412,8 @@ case class FileRelation(
                 throw new FileSystemException(qualifiedLocation.toString, "", "Cannot create directory.")
             }
         }
+
+        provides.foreach(execution.refreshResource)
     }
 
     /**
@@ -469,6 +471,8 @@ case class FileRelation(
             val fs = collector.fs
             fs.delete(qualifiedLocation, true)
         }
+
+        provides.foreach(execution.refreshResource)
     }
 
     /**

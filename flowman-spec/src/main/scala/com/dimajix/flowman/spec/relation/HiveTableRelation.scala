@@ -168,6 +168,8 @@ case class HiveTableRelation(
             writeSpark(execution, df, partitionSpec, mode)
         else
             throw new IllegalArgumentException("Hive relations only support write modes 'hive' and 'spark'")
+
+        provides.foreach(execution.refreshResource)
     }
 
     /**
@@ -486,6 +488,7 @@ case class HiveTableRelation(
             // Create table
             val catalog = execution.catalog
             catalog.createTable(catalogTable, false)
+            provides.foreach(execution.refreshResource)
         }
     }
 
@@ -501,6 +504,7 @@ case class HiveTableRelation(
         if (!ifExists || catalog.tableExists(tableIdentifier)) {
             logger.info(s"Destroying Hive table relation '$identifier' by dropping table $tableIdentifier")
             catalog.dropTable(tableIdentifier)
+            provides.foreach(execution.refreshResource)
         }
     }
 
@@ -525,6 +529,7 @@ case class HiveTableRelation(
                         logger.warn(s"TABLE target $tableIdentifier is currently a VIEW, dropping...")
                         catalog.dropView(tableIdentifier, false)
                         create(execution, false)
+                        provides.foreach(execution.refreshResource)
                 }
             }
             else {
@@ -540,6 +545,7 @@ case class HiveTableRelation(
                 val requiresMigration = TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
                 if (requiresMigration) {
                     doMigration(execution, sourceSchema, targetSchema, migrationPolicy, migrationStrategy)
+                    provides.foreach(execution.refreshResource)
                 }
             }
         }

@@ -119,8 +119,8 @@ case class RelationDataset(
       * @return
       */
     override def describe(execution:Execution) : Option[StructType] = {
-        val instance = relation.value
-        Some(instance.describe(execution, partition))
+        val schema = execution.describe(relation.value, partition)
+        Some(schema)
     }
 }
 

@@ -164,6 +164,7 @@ case class HiveViewRelation(
         if (!ifNotExists || !catalog.tableExists(tableIdentifier)) {
             logger.info(s"Creating Hive view relation '$identifier' with VIEW $tableIdentifier")
             catalog.createView(tableIdentifier, select, ifNotExists)
+            provides.foreach(execution.refreshResource)
         }
     }
 
@@ -184,6 +185,7 @@ case class HiveViewRelation(
             else {
                 migrateFromTable(catalog, newSelect, migrationStrategy)
             }
+            provides.foreach(execution.refreshResource)
         }
     }
 
@@ -228,6 +230,7 @@ case class HiveViewRelation(
         if (!ifExists || catalog.tableExists(tableIdentifier)) {
             logger.info(s"Destroying Hive view relation '$identifier' with VIEW $tableIdentifier")
             catalog.dropView(tableIdentifier)
+            provides.foreach(execution.refreshResource)
         }
     }
 

@@ -109,7 +109,7 @@ case class ReadRelationMapping(
         }
         else {
             val relation = this.relation.value
-            relation.describe(execution, partitions)
+            execution.describe(relation, partitions)
         }
 
         // Apply documentation

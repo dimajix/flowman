@@ -190,6 +190,11 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
     private def describeRelation(relation:Relation, partitions:Map[String,FieldValue] = Map()) : StructType = {
         try {
             logger.info(s"Describing relation '${relation.identifier}'")
+            listeners.foreach { l =>
+                Try {
+                    l._1.describeRelation(this, relation, l._2)
+                }
+            }
             relation.describe(this, partitions)
         }
         catch {

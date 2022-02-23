@@ -6,6 +6,7 @@
 * Add new `drop` target for removing tables
 * Speed up project loading by reusing Jackson mapper
 * Implement new `jdbc` metric sink
+* Implement schema cache in Executor to speed up documentation and similar tasks
 
 
 # Version 0.21.1 - 2022-01-28

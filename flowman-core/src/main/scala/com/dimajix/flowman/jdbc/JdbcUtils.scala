@@ -35,6 +35,13 @@ import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.createConnectio
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.savePartition
 import org.apache.spark.sql.jdbc.JdbcDialects
 import org.slf4j.LoggerFactory
+import slick.jdbc.DerbyProfile
+import slick.jdbc.H2Profile
+import slick.jdbc.JdbcProfile
+import slick.jdbc.MySQLProfile
+import slick.jdbc.PostgresProfile
+import slick.jdbc.SQLServerProfile
+import slick.jdbc.SQLiteProfile
 
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
@@ -339,6 +346,26 @@ object JdbcUtils {
         }
         repartitionedDF.rdd.foreachPartition { iterator => savePartition(
             getConnection, quotedTarget, iterator, sourceSchema, insertStmt, batchSize, sparkDialect, isolationLevel, options)
+        }
+    }
+
+    def getProfile(driver:String) : JdbcProfile = {
+        val derbyPattern = """.*\.derby\..*""".r
+        val sqlitePattern = """.*\.sqlite\..*""".r
+        val h2Pattern = """.*\.h2\..*""".r
+        val mariadbPattern = """.*\.mariadb\..*""".r
+        val mysqlPattern = """.*\.mysql\..*""".r
+        val postgresqlPattern = """.*\.postgresql\..*""".r
+        val sqlserverPattern = """.*\.sqlserver\..*""".r
+        driver match {
+            case derbyPattern() => DerbyProfile
+            case sqlitePattern() => SQLiteProfile
+            case h2Pattern() => H2Profile
+            case mysqlPattern() => MySQLProfile
+            case mariadbPattern() => MySQLProfile
+            case postgresqlPattern() => PostgresProfile
+            case sqlserverPattern() => SQLServerProfile
+            case _ => throw new UnsupportedOperationException(s"Database with driver ${driver} is not supported")
         }
     }
 }

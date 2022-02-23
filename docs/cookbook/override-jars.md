@@ -4,9 +4,10 @@ A common problem with Spark and specifically with many Hadoop environments (like
 application jar versions and jars provided by the runtime environment. Flowman is built with carefully set dependency
 version to match those of each supported runtime environment. But sometimes this might not be enough.
 
-For example Cloudera ships with a rather old JDBC driver for MS SQL Server / Aure SQL Server which is not compatible
-with the `sqlserver` relation type provided by the [MS SQL Server plugin](../plugins/mssqlserver.md). But it is still
-possible to force Spark to use the newer JDBC driver by changing some config options
+For example Cloudera ships with a rather old JDBC driver for MS SQL Server / Azure SQL Server which is not compatible
+with the `sqlserver` relation type provided by the [MS SQL Server plugin](../plugins/mssqlserver.md). This will result
+in `ClassNotFound` or `MethodNotFound` exceptions during execution. But it is still
+possible to force Spark to use the newer JDBC driver by changing some config options.
 
 
 ## Configuration

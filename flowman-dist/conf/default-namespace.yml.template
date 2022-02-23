@@ -61,7 +61,18 @@ hooks:
 # This configures where metrics should be written to. Since we cannot assume a working Prometheus push gateway, we
 # simply print them onto the console
 metrics:
-  kind: console
+  - kind: console
+  # Optionally add a JDBC metric sink
+  #- kind: jdbc
+  #  labels:
+  #    project: ${project.name}
+  #    version: ${project.version}
+  #  connection:
+  #    kind: jdbc
+  #    url: jdbc:sqlserver://localhost:1433;databaseName=flowman_metrics
+  #    driver: "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+  #    username: "sa"
+  #    password: "yourStrong(!)Password"
 
 
 # This section contains global configuration properties. These still can be overwritten within projects or profiles

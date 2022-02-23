@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ object MetricSinkSpec extends TypeRegistry[MetricSinkSpec] {
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "console", value = classOf[ConsoleMetricSinkSpec]),
+    new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcMetricSinkSpec]),
     new JsonSubTypes.Type(name = "null", value = classOf[NullMetricSinkSpec]),
     new JsonSubTypes.Type(name = "prometheus", value = classOf[PrometheusMetricSinkSpec])
 ))

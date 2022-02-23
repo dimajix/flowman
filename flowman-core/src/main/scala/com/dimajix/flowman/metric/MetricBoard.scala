@@ -70,7 +70,7 @@ final case class MetricBoard(
 /**
  * A MetricSelection represents a possibly dynamic set of Metrics to be published inside a MetricBoard
  */
-final case class MetricSelection(name:Option[String], selector:Selector, labels:Map[String,String]) {
+final case class MetricSelection(name:Option[String] = None, selector:Selector, labels:Map[String,String] = Map()) {
     /**
      * Returns all metrics identified by this selection. This operation may be expensive, since the set of metrics may be
      * dynamic and change over time

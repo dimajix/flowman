@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,19 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter {
             """
               |kind: jdbc
               |connection: logger
+            """.stripMargin
+
+        val monitor = ObjectMapper.parse[HistorySpec](spec)
+        monitor shouldBe a[JdbcHistorySpec]
+    }
+
+    it should "be parseable with embedded connection" in {
+        val spec =
+            """
+              |kind: jdbc
+              |connection:
+              |  kind: jdbc
+              |  url: some_url
             """.stripMargin
 
         val monitor = ObjectMapper.parse[HistorySpec](spec)

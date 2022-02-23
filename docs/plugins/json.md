@@ -1,5 +1,8 @@
 # JSON Plugin
 
+The OpenAPI plugin provides compatibility with JSON schema definition files.
+
+
 ## Provided Entities
 * [`json` schema](../spec/schema/json.md)
 

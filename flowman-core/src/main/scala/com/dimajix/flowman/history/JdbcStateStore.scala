@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.dimajix.flowman.history.JdbcStateRepository.JobRun
 import com.dimajix.flowman.history.JdbcStateRepository.TargetRun
 import com.dimajix.flowman.history.JdbcStateStore.JdbcJobToken
 import com.dimajix.flowman.history.JdbcStateStore.JdbcTargetToken
+import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.metric.GaugeMetric
 import com.dimajix.flowman.metric.Metric
 import com.dimajix.flowman.model.Job
@@ -98,7 +99,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             None
         )
         logger.debug(s"Checking last state of '${run.phase}' job '${run.name}' in history database")
-        withSession { repository =>
+        withRepository { repository =>
             repository.getJobState(run)
         }
     }
@@ -109,7 +110,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
      * @return
      */
     override def getJobMetrics(jobId:String) : Seq[Measurement] = {
-        withSession { repository =>
+        withRepository { repository =>
             repository.getJobMetrics(jobId.toLong)
         }
     }
@@ -121,7 +122,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
      * @return
      */
     override def getJobGraph(jobId: String): Option[Graph] = {
-        withSession { repository =>
+        withRepository { repository =>
             repository.getJobGraph(jobId.toLong)
         }
     }
@@ -133,7 +134,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
      * @return
      */
     override def getJobEnvironment(jobId: String): Map[String, String] = {
-        withSession { repository =>
+        withRepository { repository =>
             repository.getJobEnvironment(jobId.toLong)
         }
     }
@@ -167,7 +168,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             }
 
         logger.debug(s"Start '${digest.phase}' job '${run.name}' in history database")
-        val run2 = withSession { repository =>
+        val run2 = withRepository { repository =>
             repository.insertJobRun(run, digest.args, env)
         }
 
@@ -187,7 +188,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         val graph = Graph.ofGraph(jdbcToken.graph.build())
-        withSession{ repository =>
+        withRepository{ repository =>
             repository.setJobStatus(run.copy(end_ts = Some(now), status=status.upper, error=result.exception.map(_.toString)))
             repository.insertJobMetrics(run.id, metrics)
             repository.insertJobGraph(run.id, graph)
@@ -215,13 +216,13 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             None
         )
         logger.debug(s"Checking state of target '${run.name}' in history database")
-        withSession { repository =>
+        withRepository { repository =>
             repository.getTargetState(run, target.partitions)
         }
     }
 
     def getTargetState(targetId: String): TargetState = {
-        withSession { repository =>
+        withRepository { repository =>
             repository.getTargetState(targetId.toLong)
         }
     }
@@ -251,7 +252,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         )
 
         logger.debug(s"Start '${digest.phase}' target '${run.name}' in history database")
-        val run2 = withSession { repository =>
+        val run2 = withRepository { repository =>
             repository.insertTargetRun(run, digest.partitions)
         }
         JdbcTargetToken(run2, parentRun)
@@ -269,7 +270,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         logger.info(s"Mark '${run.phase}' target '${run.name}' as $status in history database")
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
-        withSession{ repository =>
+        withRepository{ repository =>
             repository.setTargetStatus(run.copy(end_ts = Some(now), status=status.upper, error=result.exception.map(_.toString)))
         }
 
@@ -289,21 +290,21 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       * @return
       */
     override def findJobs(query:JobQuery, order:Seq[JobOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[JobState] = {
-        withSession { repository =>
+        withRepository { repository =>
             repository.findJobs(query, order, limit, offset)
         }
     }
 
 
     override def countJobs(query: JobQuery): Int = {
-        withSession { repository =>
+        withRepository { repository =>
             repository.countJobs(query)
         }
     }
 
 
     override def countJobs(query: JobQuery, grouping: JobColumn): Map[String, Int] = {
-        withSession { repository =>
+        withRepository { repository =>
             repository.countJobs(query, grouping).toMap
         }
     }
@@ -317,25 +318,25 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       * @return
       */
     override def findTargets(query:TargetQuery, order:Seq[TargetOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[TargetState] = {
-        withSession { repository =>
+        withRepository { repository =>
             repository.findTargets(query, order, limit, offset)
         }
     }
 
     override def countTargets(query: TargetQuery): Int = {
-        withSession { repository =>
+        withRepository { repository =>
             repository.countTargets(query)
         }
     }
 
     override def countTargets(query: TargetQuery, grouping: TargetColumn): Map[String, Int] = {
-        withSession { repository =>
+        withRepository { repository =>
             repository.countTargets(query, grouping).toMap
         }
     }
 
     override def findJobMetrics(jobQuery: JobQuery, groupings: Seq[String]): Seq[MetricSeries] = {
-        withSession { repository =>
+        withRepository { repository =>
             repository.findMetrics(jobQuery, groupings)
         }
     }
@@ -362,7 +363,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
       * @tparam T
       * @return
       */
-    private def withSession[T](query: JdbcStateRepository => T) : T = {
+    private def withRepository[T](query: JdbcStateRepository => T) : T = {
         def retry[T](n:Int)(fn: => T) : T = {
             try {
                 fn
@@ -376,42 +377,20 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         }
 
         retry(retries) {
-            val repository = newRepository()
+            ensureTables()
             query(repository)
         }
     }
 
     private var tablesCreated:Boolean = false
+    private lazy val repository = new JdbcStateRepository(connection, JdbcUtils.getProfile(connection.driver))
 
-    private def newRepository() : JdbcStateRepository = {
-        // Get Connection
-        val derbyPattern = """.*\.derby\..*""".r
-        val sqlitePattern = """.*\.sqlite\..*""".r
-        val h2Pattern = """.*\.h2\..*""".r
-        val mariadbPattern = """.*\.mariadb\..*""".r
-        val mysqlPattern = """.*\.mysql\..*""".r
-        val postgresqlPattern = """.*\.postgresql\..*""".r
-        val sqlserverPattern = """.*\.sqlserver\..*""".r
-        val profile = connection.driver match {
-            case derbyPattern() => DerbyProfile
-            case sqlitePattern() => SQLiteProfile
-            case h2Pattern() => H2Profile
-            case mysqlPattern() => MySQLProfile
-            case mariadbPattern() => MySQLProfile
-            case postgresqlPattern() => PostgresProfile
-            case sqlserverPattern() => SQLServerProfile
-            case _ => throw new UnsupportedOperationException(s"Database with driver ${connection.driver} is not supported")
-        }
-
-        val repository = new JdbcStateRepository(connection, profile)
-
+    private def ensureTables() : Unit = {
         // Create Database if not exists
         if (!tablesCreated) {
             repository.create()
             tablesCreated = true
         }
-
-        repository
     }
 
 }

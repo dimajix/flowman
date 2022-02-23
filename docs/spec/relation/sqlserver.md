@@ -1,7 +1,10 @@
 # SQL Server Relations
 
 The SQL Server relation allows you to access MS SQL Server and Azure SQL databases using a JDBC driver. It uses the
-`spark-sql-connector` from Microsoft to speed up processing.
+`spark-sql-connector` from Microsoft to speed up processing. The `sqlserver` relation will also make use of a 
+global temporary table as an intermediate staging target and then atomically replace the contents of the target
+table with the contents of the temp table within a single transaction.
+
 
 ## Plugin
 

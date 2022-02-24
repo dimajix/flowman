@@ -16,7 +16,10 @@
 
 package com.dimajix.flowman.metric
 
+import scala.util.control.NonFatal
 import scala.util.matching.Regex
+
+import org.slf4j.LoggerFactory
 
 import com.dimajix.common.IdentityHashSet
 import com.dimajix.common.SynchronizedSet
@@ -55,6 +58,7 @@ trait MetricCatalog {
 
 
 class MetricSystem extends MetricCatalog {
+    private val logger = LoggerFactory.getLogger(getClass)
     private val metricBundles : SynchronizedSet[MetricBundle] = SynchronizedSet(IdentityHashSet())
     private val metricBoards : SynchronizedSet[MetricBoard] = SynchronizedSet(IdentityHashSet())
     private val metricSinks : SynchronizedSet[MetricSink] = SynchronizedSet(IdentityHashSet())
@@ -134,7 +138,15 @@ class MetricSystem extends MetricCatalog {
     def commitBoard(board:MetricBoard, status:Status) : Unit = {
         if (!metricBoards.contains(board))
             throw new IllegalArgumentException("MetricBoard not registered")
-        metricSinks.foreach(_.commit(board, status))
+
+        metricSinks.foreach { sink =>
+            try {
+                sink.commit(board, status)
+            }
+            catch {
+                case NonFatal(ex) => logger.warn(s"Error while committing metrics to sink: ${ex.getMessage}")
+            }
+        }
     }
 
     /**

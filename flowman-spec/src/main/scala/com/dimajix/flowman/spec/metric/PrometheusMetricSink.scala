@@ -42,7 +42,7 @@ class PrometheusMetricSink(
     url:String,
     labels:Map[String,String]
 )
-    extends AbstractMetricSink {
+extends AbstractMetricSink {
     private val logger = LoggerFactory.getLogger(classOf[PrometheusMetricSink])
 
     override def commit(board:MetricBoard, status:Status) : Unit = {
@@ -53,7 +53,8 @@ class PrometheusMetricSink(
         val labels = rawLabels.map(l => l._1 -> board.context.evaluate(l._2, Map("status" -> status.toString)))
         val path = labels.map(kv => kv._1 + "/" + kv._2).mkString("/")
         val url = new URI(this.url).resolve("/metrics/" + path)
-        logger.info(s"Publishing all metrics to Prometheus at '$url'")
+
+        logger.info(s"Committing metrics to Prometheus at '$url'")
 
         /*
           # TYPE some_metric counter
@@ -97,7 +98,7 @@ class PrometheusMetricSink(
             case ex:HttpResponseException =>
                 logger.warn(s"Got error response ${ex.getStatusCode} from Prometheus at '$url': ${ex.getMessage}. Payload was:\n$payload")
             case NonFatal(ex) =>
-                logger.warn(s"Cannot publishing metrics to Prometheus at '$url': ${ex.getMessage}")
+                logger.warn(s"Error while publishing metrics to Prometheus at '$url': ${ex.getMessage}")
         }
         finally {
             httpClient.close()

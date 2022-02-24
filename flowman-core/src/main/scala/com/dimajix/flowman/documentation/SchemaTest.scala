@@ -75,7 +75,11 @@ final case class ForeignKeySchemaTest(
     references: Seq[String] = Seq.empty,
     result:Option[TestResult] = None
 ) extends SchemaTest {
-    override def name : String = s"FOREIGN KEY (${columns.mkString(",")}) REFERENCES ${relation.map(_.toString).orElse(mapping.map(_.toString)).getOrElse("")}(${references.mkString(",")})"
+    override def name : String = {
+        val otherEntity = relation.map(_.toString).orElse(mapping.map(_.toString)).getOrElse("")
+        val otherColumns = if (references.isEmpty) columns else references
+        s"FOREIGN KEY (${columns.mkString(",")}) REFERENCES ${otherEntity}(${otherColumns.mkString(",")})"
+    }
     override def withResult(result: TestResult): SchemaTest = copy(result=Some(result))
     override def reparent(parent: Reference): ForeignKeySchemaTest = {
         val ref = SchemaTestReference(Some(parent))

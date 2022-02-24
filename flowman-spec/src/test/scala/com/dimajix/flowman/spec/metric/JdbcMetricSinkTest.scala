@@ -105,7 +105,7 @@ class JdbcMetricSinkTest extends AnyFlatSpec with Matchers with MockFactory with
         sink.commit(metricBoard, Status.SUCCESS)
     }
 
-    it should "not throw on non-existing database" in {
+    it should "throw on non-existing database" in {
         val db = tempDir.resolve("mydb2")
         val context = RootContext.builder().build()
 
@@ -128,6 +128,7 @@ class JdbcMetricSinkTest extends AnyFlatSpec with Matchers with MockFactory with
         )
 
         sink.addBoard(metricBoard, metricSystem)
-        noException should be thrownBy(sink.commit(metricBoard, Status.SUCCESS))
+        an[Exception] should be thrownBy(sink.commit(metricBoard, Status.SUCCESS))
+        an[Exception] should be thrownBy(sink.commit(metricBoard, Status.SUCCESS))
     }
 }

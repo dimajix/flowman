@@ -19,8 +19,6 @@ package com.dimajix.flowman.spec.metric
 import java.sql.SQLRecoverableException
 import java.sql.SQLTransientException
 
-import scala.util.control.NonFatal
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 
@@ -57,14 +55,9 @@ class JdbcMetricSink(
         val metrics = board.metrics(catalog(board), status).collect {
             case metric:GaugeMetric => metric
         }
-        try {
-            withRepository { session =>
-                session.commit(metrics, labels)
-            }
-        }
-        catch {
-            case NonFatal(ex) =>
-                logger.warn(s"Cannot publishing metrics to JDBC sink at ${jdbcConnection.url}: ${ex.getMessage}")
+
+        withRepository { session =>
+            session.commit(metrics, labels)
         }
     }
 
@@ -81,7 +74,7 @@ class JdbcMetricSink(
                 fn
             } catch {
                 case e @(_:SQLRecoverableException|_:SQLTransientException) if n > 1 => {
-                    logger.error("Retrying after error while executing SQL: {}", e.getMessage)
+                    logger.warn("Retrying after error while executing SQL: {}", e.getMessage)
                     Thread.sleep(timeout)
                     retry(n - 1)(fn)
                 }

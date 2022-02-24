@@ -21,18 +21,10 @@ import java.sql.SQLRecoverableException
 import java.sql.SQLTransientException
 import java.sql.Timestamp
 import java.time.Clock
-import java.time.ZoneId
 
 import javax.xml.bind.DatatypeConverter
 import org.slf4j.LoggerFactory
-import slick.jdbc.DerbyProfile
-import slick.jdbc.H2Profile
-import slick.jdbc.MySQLProfile
-import slick.jdbc.PostgresProfile
-import slick.jdbc.SQLServerProfile
-import slick.jdbc.SQLiteProfile
 
-import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.GraphBuilder
 import com.dimajix.flowman.history.JdbcStateRepository.JobRun
@@ -40,8 +32,6 @@ import com.dimajix.flowman.history.JdbcStateRepository.TargetRun
 import com.dimajix.flowman.history.JdbcStateStore.JdbcJobToken
 import com.dimajix.flowman.history.JdbcStateStore.JdbcTargetToken
 import com.dimajix.flowman.jdbc.JdbcUtils
-import com.dimajix.flowman.metric.GaugeMetric
-import com.dimajix.flowman.metric.Metric
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobResult
@@ -369,7 +359,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
                 fn
             } catch {
                 case e @(_:SQLRecoverableException|_:SQLTransientException) if n > 1 => {
-                    logger.error("Retrying after error while executing SQL: {}", e.getMessage)
+                    logger.warn("Retrying after error while executing SQL: {}", e.getMessage)
                     Thread.sleep(timeout)
                     retry(n - 1)(fn)
                 }

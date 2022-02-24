@@ -118,7 +118,11 @@ final case class ForeignKeyColumnTest(
     column: Option[String] = None,
     result:Option[TestResult] = None
 ) extends ColumnTest {
-    override def name : String = s"FOREIGN KEY REFERENCES ${relation.map(_.toString).orElse(mapping.map(_.toString)).getOrElse("")} (${column.getOrElse("")})"
+    override def name : String = {
+        val otherEntity = relation.map(_.toString).orElse(mapping.map(_.toString)).getOrElse("")
+        val otherColumn = column.getOrElse("")
+        s"FOREIGN KEY REFERENCES ${otherEntity} (${otherColumn})"
+    }
     override def withResult(result: TestResult): ColumnTest = copy(result=Some(result))
     override def reparent(parent: Reference): ForeignKeyColumnTest = {
         val ref = ColumnTestReference(Some(parent))

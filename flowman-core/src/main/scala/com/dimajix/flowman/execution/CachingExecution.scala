@@ -57,6 +57,8 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         }
     }
     private lazy val parallelism = flowmanConf.getConf(FlowmanConf.EXECUTION_MAPPING_PARALLELISM)
+    private lazy val useMappingSchemaCache = flowmanConf.getConf(FlowmanConf.EXECUTION_MAPPING_SCHEMA_CACHE)
+    private lazy val useRelationSchemaCache = flowmanConf.getConf(FlowmanConf.EXECUTION_RELATION_SCHEMA_CACHE)
 
     private val frameCache:SynchronizedMap[Mapping,Map[String,DataFrame]] = {
         parent match {
@@ -140,8 +142,13 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      * @return
      */
     override def describe(mapping:Mapping, output:String) : StructType = {
-        mappingSchemaCache.getOrElseUpdate(mapping, TrieMap())
-            .getOrElseUpdate(output, describeMapping(mapping, output))
+        if (useMappingSchemaCache) {
+            mappingSchemaCache.getOrElseUpdate(mapping, TrieMap())
+                .getOrElseUpdate(output, describeMapping(mapping, output))
+        }
+        else {
+            describeMapping(mapping, output)
+        }
     }
 
     private def describeMapping(mapping:Mapping, output:String) : StructType = {
@@ -184,7 +191,12 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      * @return
      */
     override def describe(relation:Relation, partitions:Map[String,FieldValue] = Map()) : StructType = {
-        relationSchemaCache.getOrElseUpdate(relation, describeRelation(relation, partitions))
+        if (useRelationSchemaCache) {
+            relationSchemaCache.getOrElseUpdate(relation, describeRelation(relation, partitions))
+        }
+        else {
+            describeRelation(relation, partitions)
+        }
     }
 
     private def describeRelation(relation:Relation, partitions:Map[String,FieldValue] = Map()) : StructType = {

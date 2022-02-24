@@ -101,6 +101,14 @@ object FlowmanConf {
         .doc("Parallelism of mapping instantiation")
         .intConf
         .createWithDefault(1)
+    val EXECUTION_MAPPING_SCHEMA_CACHE = buildConf("flowman.execution.mapping.schemaCache")
+        .doc("Cache schema information of mapping instances")
+        .booleanConf
+        .createWithDefault(true)
+    val EXECUTION_RELATION_SCHEMA_CACHE = buildConf("flowman.execution.relation.schemaCache")
+        .doc("Cache schema information of relation instances")
+        .booleanConf
+        .createWithDefault(true)
 
     val DEFAULT_RELATION_MIGRATION_POLICY = buildConf("flowman.default.relation.migrationPolicy")
         .doc("Default migration policy. Allowed values are 'relaxed' and 'strict'")

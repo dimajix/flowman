@@ -12,6 +12,8 @@ which is useful for providing a documentation of the data model.
    *
 ```
 
+![Flowman Documentation](../images/flowman-documentation.png)
+
 ### Providing Descriptions
 
 Although Flowman will generate many valuable documentation bits by inspecting the project, the most important entities

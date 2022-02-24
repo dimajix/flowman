@@ -36,7 +36,9 @@ Some additional commands in `flowshell` which are not available via `flowexec` a
 
 Start the Flowman shell for your project via
 
-    flowshell -f /path/to/your/project
+```shell
+flowshell -f /path/to/your/project
+```
     
 Now you can list all jobs via
 

@@ -1,4 +1,4 @@
-# Project Specification
+# **Reference Documentation**
 
 Flowman uses so called *flow specifications* which contain all details of data transformations
 and additional processing steps. Flow specifications are provided by the user as (potentially 

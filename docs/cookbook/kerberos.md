@@ -1,6 +1,6 @@
-# Kerberos
+# Using Kerberos Authentication
 
-Of course you can also run Flowman in a Kerberos environment, as long as the components you use actually support
+Of course, you can also run Flowman in a Kerberos environment, as long as the components you use actually support
 Kerberos. This includes Spark, Hadoop and Kafka.
 
 ## Configuring Kerberos

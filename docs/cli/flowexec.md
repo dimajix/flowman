@@ -29,7 +29,7 @@ or for inspecting individual entities.
 
 
 ## Project Commands
-The most important command group is for executing a specific lifecycle or a individual phase for the whole project.
+The most important command group is for executing a specific lifecycle or an individual phase for the whole project.
 ```shell script
 flowexec project <create|build|verify|truncate|destroy> <args>
 ```
@@ -48,6 +48,21 @@ individual targets with `-d`.
 * `-nl` or `--no-lifecycle` only execute the specified lifecycle phase, without all preceding phases. For example
 the whole lifecycle for `verify` includes the phases `create` and `build` and these phases would be executed before
 `verify`. If this is not what you want, then use the option `-nl`
+
+### Examples
+In order to build a project (i.e. run `VALIDATE`, `CREATE` and `BUILD` execution phases) stored in the subdirectory
+`examples/weather` which defines an (optional) parameter `year`, simply run
+
+```shell
+flowexec -f examples/weather project build year=2018
+```
+
+If you only want to execute the `BUILD` phase and skip the first two other phases, then you need to add the
+command line option `-nl` to skip the lifecycle:
+
+```shell
+flowexec -f examples/weather project build year=2018 -nl
+```
 
 
 ## Job Commands
@@ -78,6 +93,22 @@ This will execute the whole job by executing the desired lifecycle for the `main
 * `-nl` or `--no-lifecycle` only execute the specified lifecycle phase, without all preceeding phases. For example
 the whole lifecycle for `verify` includes the phases `create` and `build` and these phases would be executed before
 `verify`. If this is not what you want, then use the option `-nl`
+
+
+### Examples
+In order to build  (i.e. run `VALIDATE`, `CREATE` and `BUILD` execution phases) the `main` job of a project stored 
+in the subdirectory `examples/weather` which defines an (optional) parameter `year`, simply run
+
+```shell
+flowexec -f examples/weather job build main year=2018
+```
+
+If you only want to execute the `BUILD` phase and skip the first two other phases, then you need to add the
+command line option `-nl` to skip the lifecycle:
+
+```shell
+flowexec -f examples/weather job build main year=2018 -nl
+```
 
 The following example will only execute the `BUILD` phase of the job `daily`, which defines a parameter
 `processing_datetime` with type datetiem. The job will be executed for the whole date range from 2021-06-01 until 

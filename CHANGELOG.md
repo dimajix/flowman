@@ -11,6 +11,11 @@
 * Add new config variable `flowman.default.target.verifyPolicy` to ignore empty tables during VERIFY phase
 
 
+# Version 0.21.2 - 2022-02-14
+
+* Fix importing projects
+
+
 # Version 0.21.1 - 2022-01-28
 
 * flowexec now returns different exit codes depending on the processing result

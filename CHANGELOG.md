@@ -7,6 +7,8 @@
 * Speed up project loading by reusing Jackson mapper
 * Implement new `jdbc` metric sink
 * Implement schema cache in Executor to speed up documentation and similar tasks
+* Add new config variables `flowman.execution.mapping.schemaCache` and `flowman.execution.relation.schemaCache`
+* Add new config variable `flowman.default.target.verifyPolicy` to ignore empty tables during VERIFY phase
 
 
 # Version 0.21.1 - 2022-01-28

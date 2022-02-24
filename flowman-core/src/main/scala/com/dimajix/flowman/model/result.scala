@@ -302,6 +302,14 @@ final case class TargetResult(
     override def category : Category = target.category
     override def kind : String = target.kind
     override def description: Option[String] = None
+
+    def withoutTime : TargetResult = {
+        val ts = Instant.ofEpochSecond(0)
+        copy(
+            startTime=ts,
+            endTime=ts
+        )
+    }
 }
 
 

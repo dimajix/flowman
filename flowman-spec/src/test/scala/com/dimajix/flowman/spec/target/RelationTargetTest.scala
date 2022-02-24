@@ -23,6 +23,7 @@ import java.util.UUID
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.StructType
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -32,17 +33,20 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.metric.GaugeMetric
 import com.dimajix.flowman.metric.Selector
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.dataset.DatasetSpec
 import com.dimajix.flowman.spec.dataset.RelationDatasetSpec
@@ -51,7 +55,7 @@ import com.dimajix.flowman.spec.relation.NullRelation
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with LocalSparkSession {
     "The RelationTarget" should "support embedded relations" in {
         val spec =
             """
@@ -314,5 +318,122 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         target.execute(executor, Phase.BUILD)
         metric.value should be (4)
+    }
+
+    it should "behave correctly with VerifyPolicy=EMPTY_AS_FAILURE" in {
+        val relationGen = mock[Prototype[Relation]]
+        val relation = mock[Relation]
+        val project = Project(
+            name = "test",
+            relations = Map("relation" -> relationGen)
+        )
+
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .withConfig("flowman.default.target.verifyPolicy","empty_as_failure")
+            .build()
+        val executor = session.execution
+        val context = session.getContext(project)
+
+        val target = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        )
+        (relationGen.instantiate _).expects(context).returns(relation)
+
+        (relation.loaded _).expects(*,*).returns(Yes)
+        target.execute(executor, Phase.VERIFY).withoutTime should be(TargetResult(target, Phase.VERIFY, Status.SUCCESS).withoutTime)
+
+        (relation.loaded _).expects(*,*).returns(Unknown)
+        target.execute(executor, Phase.VERIFY).withoutTime should be(TargetResult(target, Phase.VERIFY, Status.SUCCESS).withoutTime)
+
+        (relation.loaded _).expects(*,*).returns(No)
+        target.execute(executor, Phase.VERIFY).status should be(Status.FAILED)
+    }
+
+    it should "behave correctly with VerifyPolicy=EMPTY_AS_SUCCESS" in {
+        val relationGen = mock[Prototype[Relation]]
+        val relation = mock[Relation]
+        val project = Project(
+            name = "test",
+            relations = Map("relation" -> relationGen)
+        )
+
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .withConfig("flowman.default.target.verifyPolicy","EMPTY_AS_SUCCESS")
+            .build()
+        val executor = session.execution
+        val context = session.getContext(project)
+
+        val target = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        )
+        (relationGen.instantiate _).expects(context).returns(relation)
+
+        (relation.loaded _).expects(*,*).returns(Yes)
+        target.execute(executor, Phase.VERIFY).withoutTime should be(TargetResult(target, Phase.VERIFY, Status.SUCCESS).withoutTime)
+
+        (relation.loaded _).expects(*,*).returns(Unknown)
+        target.execute(executor, Phase.VERIFY).withoutTime should be(TargetResult(target, Phase.VERIFY, Status.SUCCESS).withoutTime)
+
+        (relation.loaded _).expects(*,*).returns(No)
+        (relation.exists _).expects(*).returns(Yes)
+        target.execute(executor, Phase.VERIFY).withoutTime should be(TargetResult(target, Phase.VERIFY, Status.SUCCESS).withoutTime)
+
+        (relation.loaded _).expects(*,*).returns(No)
+        (relation.exists _).expects(*).returns(Unknown)
+        target.execute(executor, Phase.VERIFY).status should be(Status.SUCCESS)
+
+        (relation.loaded _).expects(*,*).returns(No)
+        (relation.exists _).expects(*).returns(No)
+        target.execute(executor, Phase.VERIFY).status should be(Status.FAILED)
+    }
+
+    it should "behave correctly with VerifyPolicy=EMPTY_AS_SUCCESS_WITH_ERRORS" in {
+        val relationGen = mock[Prototype[Relation]]
+        val relation = mock[Relation]
+        val project = Project(
+            name = "test",
+            relations = Map("relation" -> relationGen)
+        )
+
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .withConfig("flowman.default.target.verifyPolicy","EMPTY_AS_SUCCESS_WITH_ERRORS")
+            .build()
+        val executor = session.execution
+        val context = session.getContext(project)
+
+        val target = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        )
+        (relationGen.instantiate _).expects(context).returns(relation)
+
+        (relation.loaded _).expects(*,*).returns(Yes)
+        target.execute(executor, Phase.VERIFY).withoutTime should be(TargetResult(target, Phase.VERIFY, Status.SUCCESS).withoutTime)
+
+        (relation.loaded _).expects(*,*).returns(Unknown)
+        target.execute(executor, Phase.VERIFY).withoutTime should be(TargetResult(target, Phase.VERIFY, Status.SUCCESS).withoutTime)
+
+        (relation.loaded _).expects(*,*).returns(No)
+        (relation.exists _).expects(*).returns(Yes)
+        target.execute(executor, Phase.VERIFY).withoutTime should be(TargetResult(target, Phase.VERIFY, Status.SUCCESS_WITH_ERRORS).withoutTime)
+
+        (relation.loaded _).expects(*,*).returns(No)
+        (relation.exists _).expects(*).returns(Unknown)
+        target.execute(executor, Phase.VERIFY).status should be(Status.SUCCESS_WITH_ERRORS)
+
+        (relation.loaded _).expects(*,*).returns(No)
+        (relation.exists _).expects(*).returns(No)
+        target.execute(executor, Phase.VERIFY).status should be(Status.FAILED)
     }
 }

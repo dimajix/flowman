@@ -109,6 +109,14 @@ Sets the strategy to use how tables should be migrated. Possible values are:
   actual defined columns. Per default Flowman will add/remove columns to/from records such that they match the current
   physical layout. See [relations](spec/relation/index.md) for possible options and more details.
 
+- `flowman.default.target.verifyPolicy` *(type: string)* *(default:`EMPTY_AS_FAILURE`)* (since Flowman 0.22.0)
+Defines the default target policy that is used during the `VERIFY` execution phase. The setting controls how Flowman
+interprets an empty table. Normally you'd expect that all target tables contain records, but this might not always
+be the case, for example when the source tables are already empty. Possible values are
+  - *`EMPTY_AS_FAILURE`*: Flowman will report an empty target table as an error in the `VERIFY` phase.
+  - *`EMPTY_AS_SUCCESS`*: Flowman will ignore empty tables, but still check for existence in the `VERIFY` phase.
+  - *`EMPTY_AS_SUCCESS_WITH_ERRORS`*: An empty output table is handled as partially successful.
+
 - `flowman.default.target.outputMode` *(type: string)* *(default:`OVERWRITE`)*
 Sets the default target output mode. Possible values are 
   - *`OVERWRITE`*: Will overwrite existing data. Only supported in batch output.

@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.model
 
+import java.util.Locale
+
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.common.Trilean
@@ -28,6 +30,25 @@ import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.metric.LongAccumulatorMetric
 import com.dimajix.flowman.metric.Selector
 import com.dimajix.spark.sql.functions.count_records
+
+
+sealed abstract class VerifyPolicy extends Product with Serializable
+object VerifyPolicy {
+    case object EMPTY_AS_SUCCESS extends VerifyPolicy
+    case object EMPTY_AS_FAILURE extends VerifyPolicy
+    case object EMPTY_AS_SUCCESS_WITH_ERRORS extends VerifyPolicy
+
+    def ofString(mode:String) : VerifyPolicy = {
+        mode.toLowerCase(Locale.ROOT) match {
+            case "empty_as_success" => VerifyPolicy.EMPTY_AS_SUCCESS
+            case "empty_as_failure" => VerifyPolicy.EMPTY_AS_FAILURE
+            case "empty_as_success_with_errors" => VerifyPolicy.EMPTY_AS_SUCCESS_WITH_ERRORS
+            case _ => throw new IllegalArgumentException(s"Unknown verify policy: '$mode'. " +
+                "Accepted verify policies are 'empty_as_success', 'empty_as_failure' and 'empty_as_success_with_errors'.")
+        }
+    }
+}
+
 
 /**
   *

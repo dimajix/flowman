@@ -22,8 +22,10 @@ import java.util.Locale
 import java.util.Properties
 
 import scala.concurrent.Await
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.language.higherKinds
+import scala.util.Success
 import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
@@ -165,22 +167,27 @@ private[metric] class JdbcMetricRepository(
     }
 
     def commit(metrics:Seq[GaugeMetric], labels:Map[String,String]) : Unit = {
+        implicit val ec = db.executor.executionContext
         val ts = Timestamp.from(Instant.now())
 
         val cmQuery = (commits returning commits.map(_.id) into((jm, id) => jm.copy(id=id))) += Commit(0, ts)
-        val commit = Await.result(db.run(cmQuery), Duration.Inf)
-        val lbls = labels.map(l => CommitLabel(commit.id, l._1, l._2))
-        val clQuery = commitLabels ++= lbls
-        Await.result(db.run(clQuery), Duration.Inf)
-
-        metrics.foreach { m =>
-            val metrics = this.metrics
-            val mtQuery = (metrics returning metrics.map(_.id) into((jm, id) => jm.copy(id=id))) += Measurement(0, commit.id, m.name, ts, m.value)
-            val metric = Await.result(db.run(mtQuery), Duration.Inf)
-
-            val lbls = m.labels.map(l => MetricLabel(metric.id, l._1, l._2))
-            val mlQuery = metricLabels ++= lbls
-            Await.result(db.run(mlQuery), Duration.Inf)
+        val commit = db.run(cmQuery).flatMap { commit =>
+            val lbls = labels.map(l => CommitLabel(commit.id, l._1, l._2))
+            val clQuery = commitLabels ++= lbls
+            db.run(clQuery).flatMap(_ => Future.successful(commit))
         }
+
+        val result = commit.flatMap { commit =>
+             Future.sequence(metrics.map { m =>
+                 val metrics = this.metrics
+                 val mtQuery = (metrics returning metrics.map(_.id) into ((jm, id) => jm.copy(id = id))) += Measurement(0, commit.id, m.name, ts, m.value)
+                 db.run(mtQuery).flatMap { metric =>
+                     val lbls = m.labels.map(l => MetricLabel(metric.id, l._1, l._2))
+                     val mlQuery = metricLabels ++= lbls
+                     db.run(mlQuery)
+                 }
+             })
+        }
+        Await.result(result, Duration.Inf)
     }
 }

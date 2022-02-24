@@ -22,8 +22,8 @@ import java.time.ZonedDateTime
 import java.util.Locale
 import java.util.Properties
 
-import scala.collection.mutable
 import scala.concurrent.Await
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.language.higherKinds
 import scala.util.control.NonFatal
@@ -443,15 +443,19 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     }
 
     def insertJobMetrics(jobId:Long, metrics:Seq[Measurement]) : Unit = {
-        metrics.foreach { m =>
+        implicit val ec = db.executor.executionContext
+
+        val result = metrics.map { m =>
             val jobMetric = JobMetric(0, jobId, m.name, new Timestamp(m.ts.toInstant.toEpochMilli), m.value)
             val jmQuery = (jobMetrics returning jobMetrics.map(_.id) into((jm,id) => jm.copy(id=id))) += jobMetric
-            val jmResult = Await.result(db.run(jmQuery), Duration.Inf)
-
-            val labels = m.labels.map(l => JobMetricLabel(jmResult.id, l._1, l._2))
-            val mlQuery = jobMetricLabels ++= labels
-            Await.result(db.run(mlQuery), Duration.Inf)
+            db.run(jmQuery).flatMap { metric =>
+                val labels = m.labels.map(l => JobMetricLabel(metric.id, l._1, l._2))
+                val mlQuery = jobMetricLabels ++= labels
+                db.run(mlQuery)
+            }
         }
+
+        Await.result(Future.sequence(result), Duration.Inf)
     }
 
     def getJobMetrics(jobId:Long) : Seq[Measurement] = {

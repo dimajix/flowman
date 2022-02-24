@@ -13,7 +13,7 @@
 
 # Version 0.21.1 - 2022-01-28
 
-* `flowexec` now returns different exit codes depending on the processing result
+* flowexec now returns different exit codes depending on the processing result
 
 
 # Version 0.21.0 - 2022-01-26

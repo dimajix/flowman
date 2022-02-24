@@ -1,4 +1,4 @@
-# Data Quality
+# Data Quality Checks
 
 Data quality is an important topic, which is also addressed in Flowman in multiple, complementary ways. 
 
@@ -36,7 +36,7 @@ targets:
 ```
 
 
-## Data Quality Tests as Documentation
+## Data Quality Checks as Documentation
 
 With the new [documentation framework](../documenting/index.md), Flowman adds the possibility not only to document
 mappings and relations, but also to add test cases. These will be executed as part of the documentation (which is

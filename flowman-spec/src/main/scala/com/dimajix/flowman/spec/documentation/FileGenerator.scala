@@ -60,12 +60,7 @@ case class FileGenerator(
         props.load(new StringReader(loadResource("template.properties")))
 
         val fs = execution.fs
-
-        val uri = location.toUri
-        val outputDir = if (uri.getAuthority == null && uri.getScheme == null)
-            fs.local(location)
-        else
-            fs.file(location)
+        val outputDir = fs.file(location)
 
         // Cleanup any existing output directory
         if (outputDir.isDirectory()) {

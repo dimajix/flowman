@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.catalog
 
+import java.util.Locale
+
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 
@@ -29,18 +31,30 @@ object TableDefinition {
         TableDefinition(table.identifier, sourceSchema.fields)
     }
 }
-case class TableDefinition(
+final case class TableDefinition(
     identifier: TableIdentifier,
-    fields: Seq[Field],
+    columns: Seq[Field] = Seq.empty,
     comment: Option[String] = None,
-    primaryKey: Seq[String] = Seq(),
-    indexes: Seq[TableIndex] = Seq()
+    primaryKey: Seq[String] = Seq.empty,
+    indexes: Seq[TableIndex] = Seq.empty
 ) {
-    def schema : StructType = StructType(fields)
+    def schema : StructType = StructType(columns)
+
+    def normalize() : TableDefinition = copy(
+        columns = columns.map(f => f.copy(name = f.name.toLowerCase(Locale.ROOT))),
+        primaryKey = primaryKey.map(_.toLowerCase(Locale.ROOT)).sorted,
+        indexes = indexes.map(_.normalize())
+    )
+
 }
 
 
-case class TableIndex(
+final case class TableIndex(
     name: String,
     columns: Seq[String]
-)
+) {
+    def normalize() : TableIndex = copy(
+        name = name.toLowerCase(Locale.ROOT),
+        columns = columns.map(_.toLowerCase(Locale.ROOT)).sorted
+    )
+}

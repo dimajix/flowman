@@ -229,7 +229,7 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
 
     override def createTable(table: TableDefinition): String = {
         // Column definitions
-        val columns = table.fields.map { field =>
+        val columns = table.columns.map { field =>
             val name = dialect.quoteIdentifier(field.name)
             val typ = dialect.getJdbcType(field.ftype).databaseTypeDefinition
             val nullable = if (field.nullable) ""

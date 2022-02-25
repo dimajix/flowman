@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,11 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.AddIndex
+import com.dimajix.flowman.catalog.TableChange.AddPrimaryKey
 import com.dimajix.flowman.catalog.TableChange.DropColumn
+import com.dimajix.flowman.catalog.TableChange.DropIndex
+import com.dimajix.flowman.catalog.TableChange.DropPrimaryKey
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.execution.MigrationPolicy
@@ -29,7 +33,6 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.types.StringType
-import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.types.VarcharType
 
 
@@ -196,6 +199,77 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
         ) should be (true)
     }
 
+    it should "handle changed primary key" in {
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f2", "f1")),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1")),
+            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            MigrationPolicy.RELAXED
+        ) should be (true)
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq()),
+            MigrationPolicy.RELAXED
+        ) should be (true)
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq()),
+            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            MigrationPolicy.RELAXED
+        ) should be (true)
+    }
+
+    it should "handle changed index" in {
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c1")))),
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c1")))),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c1")))),
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("C1")))),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c1")))),
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("NAME", Seq("C1")))),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq()),
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("NAME", Seq("C1")))),
+            MigrationPolicy.RELAXED
+        ) should be (true)
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c1")))),
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq()),
+            MigrationPolicy.RELAXED
+        ) should be (true)
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c1")))),
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("other", Seq("C1")))),
+            MigrationPolicy.RELAXED
+        ) should be (true)
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c1")))),
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("C1","c2")))),
+            MigrationPolicy.RELAXED
+        ) should be (true)
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c2","c1")))),
+            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("C1","c2")))),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+    }
+
     "TableChange.migrate" should "work in strict mode" in {
         val oldTable = TableDefinition(TableIdentifier(""),
             Seq(
@@ -253,5 +327,152 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             AddColumn(Field("F5", StringType)),
             UpdateColumnNullability("f6", true)
         ))
+    }
+
+    it should "do nothing on unchanged PK" in {
+        val oldTable = TableDefinition(TableIdentifier(""),
+            Seq(
+                Field("f1", StringType),
+                Field("f2", LongType),
+                Field("f3", StringType)
+            ),
+            primaryKey = Seq("f1", "f2")
+        )
+        val newTable = TableDefinition(TableIdentifier(""),
+            Seq(
+                Field("F1", StringType),
+                Field("F2", LongType),
+                Field("F3", StringType)
+            ),
+            primaryKey = Seq("F2", "f1")
+        )
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
+
+        changes should be (Seq())
+    }
+
+    it should "add PK" in {
+        val oldTable = TableDefinition(TableIdentifier(""),
+            Seq(
+                Field("f1", StringType),
+                Field("f2", LongType),
+                Field("f3", StringType)
+            ),
+            primaryKey = Seq()
+        )
+        val newTable = TableDefinition(TableIdentifier(""),
+            Seq(
+                Field("F1", StringType),
+                Field("F2", LongType),
+                Field("F3", StringType)
+            ),
+            primaryKey = Seq("f1", "f2")
+        )
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
+
+        changes should be (Seq(
+            AddPrimaryKey(Seq("f1", "f2"))
+        ))
+    }
+
+    it should "drop PK" in {
+        val oldTable = TableDefinition(TableIdentifier(""),
+            Seq(
+                Field("f1", StringType),
+                Field("f2", LongType),
+                Field("f3", StringType)
+            ),
+            primaryKey = Seq("f1", "f2")
+        )
+        val newTable = TableDefinition(TableIdentifier(""),
+            Seq(
+                Field("f1", StringType),
+                Field("f2", LongType),
+                Field("f3", StringType)
+            ),
+            primaryKey = Seq()
+        )
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
+
+        changes should be (Seq(
+            DropPrimaryKey()
+        ))
+    }
+
+    it should "drop/add PK" in {
+        val oldTable = TableDefinition(TableIdentifier(""),
+            Seq(
+                Field("f1", StringType),
+                Field("f2", LongType),
+                Field("f3", StringType)
+            ),
+            primaryKey = Seq("f1", "f2")
+        )
+        val newTable = TableDefinition(TableIdentifier(""),
+            Seq(
+                Field("f1", StringType),
+                Field("f2", LongType),
+                Field("f3", StringType)
+            ),
+            primaryKey = Seq("f2")
+        )
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
+
+        changes should be (Seq(
+            DropPrimaryKey(),
+            AddPrimaryKey(Seq("f2"))
+        ))
+    }
+
+    it should "do nothing on an unchanged index" in {
+        val oldTable = TableDefinition(TableIdentifier(""),
+            indexes = Seq(TableIndex("name", Seq("col1", "col2")))
+        )
+        val newTable = TableDefinition(TableIdentifier(""),
+            indexes = Seq(TableIndex("NAME", Seq("col2", "COL1")))
+        )
+
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
+
+        changes should be (Seq.empty)
+    }
+
+    it should "add an index" in {
+        val oldTable = TableDefinition(TableIdentifier(""),
+            indexes = Seq()
+        )
+        val newTable = TableDefinition(TableIdentifier(""),
+            indexes = Seq(TableIndex("NAME", Seq("col2", "COL1")))
+        )
+
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
+
+        changes should be (Seq(AddIndex("NAME", Seq("col2", "COL1"))))
+    }
+
+    it should "drop an index" in {
+        val oldTable = TableDefinition(TableIdentifier(""),
+            indexes = Seq(TableIndex("name", Seq("col1", "col2")))
+        )
+        val newTable = TableDefinition(TableIdentifier(""),
+            indexes = Seq()
+        )
+
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
+
+        changes should be (Seq(DropIndex("name")))
+    }
+
+    it should "drop/add an index" in {
+        val oldTable = TableDefinition(TableIdentifier(""),
+            indexes = Seq(TableIndex("name", Seq("col1", "col3")))
+        )
+        val newTable = TableDefinition(TableIdentifier(""),
+            indexes = Seq(TableIndex("NAME", Seq("col2", "COL1")))
+        )
+
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
+
+        changes should be (Seq(DropIndex("name"), AddIndex("NAME", Seq("col2", "COL1"))))
     }
 }

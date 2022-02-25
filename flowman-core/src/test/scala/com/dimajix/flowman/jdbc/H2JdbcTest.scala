@@ -29,6 +29,9 @@ import org.apache.spark.sql.types.StructField
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.catalog
+import com.dimajix.flowman.catalog
+import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.UpdateClause
@@ -74,7 +77,7 @@ class H2JdbcTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "JdbcUtils.mergeTable()" should "work with complex clauses" in {
         val options = new JDBCOptions(url, "table_002", Map(JDBCOptions.JDBC_DRIVER_CLASS -> driver))
         val conn = JdbcUtils.createConnection(options)
-        val table = TableDefinition(
+        val table = catalog.TableDefinition(
             TableIdentifier("table_001"),
             Seq(
                 Field("id", IntegerType),
@@ -171,7 +174,7 @@ class H2JdbcTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     it should "work with trivial clauses" in {
         val options = new JDBCOptions(url, "table_002", Map(JDBCOptions.JDBC_DRIVER_CLASS -> driver))
         val conn = JdbcUtils.createConnection(options)
-        val table = TableDefinition(
+        val table = catalog.TableDefinition(
             TableIdentifier("table_001"),
             Seq(
                 Field("id", IntegerType),

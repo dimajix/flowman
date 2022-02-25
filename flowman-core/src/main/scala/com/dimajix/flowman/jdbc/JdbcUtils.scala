@@ -49,6 +49,7 @@ import com.dimajix.flowman.catalog.TableChange.DropColumn
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
+import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
@@ -154,6 +155,18 @@ object JdbcUtils {
                 result.close()
             }
         }
+    }
+
+    /**
+     * Returns the table definition of a table
+     * @param conn
+     * @param table
+     * @param options
+     * @return
+     */
+    def getTable(conn: Connection, table:TableIdentifier, options: JDBCOptions) : TableDefinition = {
+        val currentSchema = JdbcUtils.getSchema(conn, table, options)
+        TableDefinition(table, currentSchema.fields)
     }
 
     /**

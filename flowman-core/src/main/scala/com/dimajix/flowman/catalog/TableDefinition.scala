@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,33 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.jdbc
+package com.dimajix.flowman.catalog
 
 import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.catalog.CatalogTable
 
 import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.StructType
 
 
+object TableDefinition {
+    def ofTable(table:CatalogTable) : TableDefinition = {
+        val sourceSchema = com.dimajix.flowman.types.StructType.of(table.dataSchema)
+        TableDefinition(table.identifier, sourceSchema.fields)
+    }
+}
 case class TableDefinition(
     identifier: TableIdentifier,
     fields: Seq[Field],
     comment: Option[String] = None,
-    primaryKey: Seq[String] = Seq()
+    primaryKey: Seq[String] = Seq(),
+    indexes: Seq[TableIndex] = Seq()
 ) {
+    def schema : StructType = StructType(fields)
 }
+
+
+case class TableIndex(
+    name: String,
+    columns: Seq[String]
+)

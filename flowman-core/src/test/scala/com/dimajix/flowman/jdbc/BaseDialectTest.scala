@@ -25,7 +25,9 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.catalog
 import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.UpdateClause
@@ -79,7 +81,7 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
     it should "provide CREATE statements with PK" in {
         val dialect = NoopDialect
         val table = TableIdentifier("table_1", Some("my_db"))
-        val tableDefinition = TableDefinition(
+        val tableDefinition = catalog.TableDefinition(
             table,
             Seq(
                 Field("id", com.dimajix.flowman.types.IntegerType, nullable = false),

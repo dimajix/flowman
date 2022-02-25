@@ -22,6 +22,7 @@ import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.delta.catalog.DeltaTableV2
 import org.apache.spark.sql.delta.commands.AlterTableAddColumnsDeltaCommand
 import org.apache.spark.sql.delta.commands.AlterTableChangeColumnDeltaCommand
@@ -39,6 +40,7 @@ import com.dimajix.flowman.catalog.TableChange.DropColumn
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
+import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -124,30 +126,32 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
         val table = deltaCatalogTable(execution)
         val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
         val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
+        val sourceTable = TableDefinition(TableIdentifier(""), sourceSchema.fields)
+        val targetTable = TableDefinition(TableIdentifier(""), targetSchema.fields)
 
-        val requiresMigration = TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
+        val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
 
         if (requiresMigration) {
-            doMigration(execution, table, sourceSchema, targetSchema, migrationPolicy, migrationStrategy)
+            doMigration(execution, table, sourceTable, targetTable, migrationPolicy, migrationStrategy)
             provides.foreach(execution.refreshResource)
         }
     }
-    private def doMigration(execution: Execution, table:DeltaTableV2, currentSchema:com.dimajix.flowman.types.StructType, targetSchema:com.dimajix.flowman.types.StructType, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+    private def doMigration(execution: Execution, table:DeltaTableV2, currentTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
-                logger.warn(s"Migration required for Delta relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                logger.warn(s"Migration required for Delta relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
             case MigrationStrategy.FAIL =>
-                logger.error(s"Cannot migrate Delta relation '$identifier', since migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                logger.error(s"Cannot migrate Delta relation '$identifier', since migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                 throw new MigrationFailedException(identifier)
             case MigrationStrategy.ALTER =>
-                val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
+                val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
                 if (migrations.exists(m => !supported(m))) {
-                    logger.error(s"Cannot migrate Delta relation '$identifier', since that would require unsupported changes.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                    logger.error(s"Cannot migrate Delta relation '$identifier', since that would require unsupported changes.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                     throw new MigrationFailedException(identifier)
                 }
                 alter(migrations)
             case MigrationStrategy.ALTER_REPLACE =>
-                val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
+                val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
                 if (migrations.forall(m => supported(m))) {
                     alter(migrations)
                 }
@@ -159,7 +163,7 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
         }
 
         def alter(migrations:Seq[TableChange]) : Unit = {
-            logger.info(s"Migrating Delta relation '$identifier'. New schema:\n${targetSchema.treeString}")
+            logger.info(s"Migrating Delta relation '$identifier'. New schema:\n${targetTable.schema.treeString}")
 
             try {
                 val spark = execution.spark

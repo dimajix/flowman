@@ -30,7 +30,10 @@ object SchemaUtils {
      * @return
      */
     def normalize(schema:StructType) : StructType = {
-        com.dimajix.flowman.types.StructType(schema.fields.map(normalize))
+        com.dimajix.flowman.types.StructType(normalize(schema.fields))
+    }
+    def normalize(fields:Seq[Field]) : Seq[Field] = {
+        fields.map(normalize)
     }
     private def normalize(field:Field) : Field = {
         Field(field.name.toLowerCase(Locale.ROOT), normalize(field.ftype), field.nullable, description=field.description)

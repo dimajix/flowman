@@ -24,6 +24,7 @@ import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.delta.catalog.DeltaTableV2
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.streaming.StreamingQuery
@@ -37,6 +38,7 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
+import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
@@ -223,7 +225,9 @@ case class DeltaFileRelation(
                 val table = deltaCatalogTable(execution)
                 val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
                 val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
-                !TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
+                val sourceTable = TableDefinition(TableIdentifier(""), sourceSchema.fields)
+                val targetTable = TableDefinition(TableIdentifier(""), targetSchema.fields)
+                !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
             }
             else {
                 true

@@ -24,11 +24,12 @@ import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
+import com.dimajix.flowman.catalog
+import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialects
-import com.dimajix.flowman.jdbc.TableDefinition
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Reference
@@ -108,7 +109,7 @@ case class SqlServerRelation(
         }
 
         // Create temp table with specified schema, but without any primary key or indices
-        val table = TableDefinition(
+        val table = catalog.TableDefinition(
             tempTableIdentifier,
             schema.fields
         )

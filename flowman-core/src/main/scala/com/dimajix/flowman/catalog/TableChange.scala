@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,9 @@ import com.dimajix.flowman.types.SchemaUtils.coerce
 import com.dimajix.flowman.types.StructType
 
 
-abstract sealed class TableChange
+abstract sealed class TableChange extends Product with Serializable
 abstract sealed class ColumnChange extends TableChange
+abstract sealed class IndexChange extends TableChange
 
 object TableChange {
     case class ReplaceTable(schema:StructType) extends TableChange
@@ -38,6 +39,11 @@ object TableChange {
     case class UpdateColumnType(column:String, dataType:FieldType) extends ColumnChange
     case class UpdateColumnComment(column:String, comment:Option[String]) extends ColumnChange
 
+    case class AddPrimaryKey(columns:Seq[String]) extends IndexChange
+    case class DropPrimaryKey() extends IndexChange
+    case class AddIndex(name:String, columns:Seq[String]) extends IndexChange
+    case class DropIndex(name:String) extends IndexChange
+
     /**
      * Creates a Sequence of [[TableChange]] objects, which will transform a source schema into a target schema.
      * The specified [[MigrationPolicy]] is used to decide on a per-column basis, if a migration is required.
@@ -46,10 +52,10 @@ object TableChange {
      * @param migrationPolicy
      * @return
      */
-    def migrate(sourceSchema:StructType, targetSchema:StructType, migrationPolicy:MigrationPolicy) : Seq[TableChange] = {
-        val targetFields = targetSchema.fields.map(f => (f.name.toLowerCase(Locale.ROOT), f))
+    def migrate(sourceTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy) : Seq[TableChange] = {
+        val targetFields = targetTable.fields.map(f => (f.name.toLowerCase(Locale.ROOT), f))
         val targetFieldsByName = targetFields.toMap
-        val sourceFieldsByName = sourceSchema.fields.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+        val sourceFieldsByName = sourceTable.fields.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
 
         val dropFields = (sourceFieldsByName.keySet -- targetFieldsByName.keySet).toSeq.flatMap { fieldName =>
             if (migrationPolicy == MigrationPolicy.STRICT)
@@ -89,19 +95,18 @@ object TableChange {
         dropFields ++ changeFields
     }
 
-    def requiresMigration(sourceSchema:StructType, targetSchema:StructType, migrationPolicy:MigrationPolicy) : Boolean = {
+    def requiresMigration(sourceTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy) : Boolean = {
         // Ensure that current real Hive schema is compatible with specified schema
         migrationPolicy match {
             case MigrationPolicy.RELAXED =>
-                val sourceFields = sourceSchema.fields.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
-                targetSchema.fields.exists { tgt =>
+                val sourceFields = sourceTable.fields.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+                targetTable.fields.exists { tgt =>
                     !sourceFields.get(tgt.name.toLowerCase(Locale.ROOT))
                         .exists(src => SchemaUtils.isCompatible(tgt, src))
                 }
             case MigrationPolicy.STRICT =>
-                SchemaUtils.normalize(sourceSchema)
-                val sourceFields = SchemaUtils.normalize(sourceSchema).fields.sortBy(_.name)
-                val targetFields = SchemaUtils.normalize(targetSchema).fields.sortBy(_.name)
+                val sourceFields = SchemaUtils.normalize(sourceTable.fields).sortBy(_.name)
+                val targetFields = SchemaUtils.normalize(targetTable.fields).sortBy(_.name)
                 sourceFields != targetFields
         }
     }

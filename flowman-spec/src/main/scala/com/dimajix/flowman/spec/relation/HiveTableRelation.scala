@@ -49,6 +49,7 @@ import com.dimajix.flowman.catalog.TableChange.DropColumn
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
+import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -352,7 +353,7 @@ case class HiveTableRelation(
                     false
                 }
                 else {
-                    val sourceSchema = com.dimajix.flowman.types.StructType.of(table.dataSchema)
+                    val sourceTable = TableDefinition.ofTable(table)
                     val targetSchema = {
                         val dataSchema = com.dimajix.flowman.types.StructType(schema.get.fields)
                         if (hiveVarcharSupported)
@@ -360,8 +361,9 @@ case class HiveTableRelation(
                         else
                             SchemaUtils.replaceCharVarchar(dataSchema)
                     }
+                    val targetTable = TableDefinition(tableIdentifier, targetSchema.fields)
 
-                    !TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
+                    !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
                 }
             }
             else {
@@ -533,7 +535,7 @@ case class HiveTableRelation(
                 }
             }
             else {
-                val sourceSchema = com.dimajix.flowman.types.StructType.of(table.dataSchema)
+                val sourceTable = TableDefinition.ofTable(table)
                 val targetSchema = {
                     val dataSchema = com.dimajix.flowman.types.StructType(schema.get.fields)
                     if (hiveVarcharSupported)
@@ -541,32 +543,33 @@ case class HiveTableRelation(
                     else
                         SchemaUtils.replaceCharVarchar(dataSchema)
                 }
+                val targetTable = TableDefinition(tableIdentifier, targetSchema.fields)
 
-                val requiresMigration = TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
+                val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
                 if (requiresMigration) {
-                    doMigration(execution, sourceSchema, targetSchema, migrationPolicy, migrationStrategy)
+                    doMigration(execution, sourceTable, targetTable, migrationPolicy, migrationStrategy)
                     provides.foreach(execution.refreshResource)
                 }
             }
         }
     }
 
-    private def doMigration(execution: Execution, currentSchema:com.dimajix.flowman.types.StructType, targetSchema:com.dimajix.flowman.types.StructType, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+    private def doMigration(execution: Execution, currentTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
-                logger.warn(s"Migration required for HiveTable relation '$identifier' of Hive table $tableIdentifier, but migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                logger.warn(s"Migration required for HiveTable relation '$identifier' of Hive table $tableIdentifier, but migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
             case MigrationStrategy.FAIL =>
-                logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $tableIdentifier, since migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $tableIdentifier, since migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                 throw new MigrationFailedException(identifier)
             case MigrationStrategy.ALTER =>
-                val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
+                val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
                 if (migrations.exists(m => !supported(m))) {
-                    logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $tableIdentifier, since that would require unsupported changes.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                    logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $tableIdentifier, since that would require unsupported changes.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                     throw new MigrationFailedException(identifier)
                 }
                 alter(migrations)
             case MigrationStrategy.ALTER_REPLACE =>
-                val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
+                val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
                 if (migrations.forall(m => supported(m))) {
                     alter(migrations)
                 }
@@ -578,7 +581,7 @@ case class HiveTableRelation(
         }
 
         def alter(migrations:Seq[TableChange]) : Unit = {
-            logger.info(s"Migrating HiveTable relation '$identifier', this will alter the Hive table $tableIdentifier. New schema:\n${targetSchema.treeString}")
+            logger.info(s"Migrating HiveTable relation '$identifier', this will alter the Hive table $tableIdentifier. New schema:\n${targetTable.schema.treeString}")
             if (migrations.isEmpty) {
                 logger.warn("Empty list of migrations - nothing to do")
             }

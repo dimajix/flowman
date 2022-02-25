@@ -36,6 +36,7 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
+import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
@@ -229,7 +230,9 @@ case class DeltaTableRelation(
                 val table = deltaCatalogTable(execution)
                 val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
                 val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
-                !TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
+                val sourceTable = TableDefinition(tableIdentifier, sourceSchema.fields)
+                val targetTable = TableDefinition(tableIdentifier, targetSchema.fields)
+                !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
             }
             else {
                 true

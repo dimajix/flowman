@@ -40,7 +40,9 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
+import com.dimajix.flowman.catalog
 import com.dimajix.flowman.catalog.TableChange
+import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.Execution
@@ -55,7 +57,6 @@ import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialect
 import com.dimajix.flowman.jdbc.SqlDialects
-import com.dimajix.flowman.jdbc.TableDefinition
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.PartitionField
@@ -369,9 +370,10 @@ class JdbcRelationBase(
             withConnection { (con, options) =>
                 if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
                     if (schema.nonEmpty) {
-                        val targetSchema = fullSchema.get
-                        val currentSchema = JdbcUtils.getSchema(con, tableIdentifier, options)
-                        !TableChange.requiresMigration(currentSchema, targetSchema, migrationPolicy)
+                        val currentTable = JdbcUtils.getTable(con, tableIdentifier, options)
+                        val targetTable = TableDefinition(tableIdentifier, fullSchema.get.fields)
+
+                        !TableChange.requiresMigration(currentTable, targetTable, migrationPolicy)
                     }
                     else {
                         true
@@ -431,7 +433,7 @@ class JdbcRelationBase(
             throw new UnspecifiedSchemaException(identifier)
         }
         val schema = this.schema.get
-        val table = TableDefinition(
+        val table = catalog.TableDefinition(
             tableIdentifier,
             schema.fields ++ partitions.map(_.field),
             schema.description,
@@ -467,10 +469,11 @@ class JdbcRelationBase(
         if (schema.isDefined) {
             withConnection { (con, options) =>
                 if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                    val targetSchema = fullSchema.get
-                    val currentSchema = JdbcUtils.getSchema(con, tableIdentifier, options)
-                    if (TableChange.requiresMigration(currentSchema, targetSchema, migrationPolicy)) {
-                        doMigration(currentSchema, targetSchema, migrationPolicy, migrationStrategy)
+                    val currentTable = JdbcUtils.getTable(con, tableIdentifier, options)
+                    val targetTable = TableDefinition(tableIdentifier, fullSchema.get.fields)
+
+                    if (TableChange.requiresMigration(currentTable, targetTable, migrationPolicy)) {
+                        doMigration(currentTable, targetTable, migrationPolicy, migrationStrategy)
                         provides.foreach(execution.refreshResource)
                     }
                 }
@@ -478,25 +481,25 @@ class JdbcRelationBase(
         }
     }
 
-    private def doMigration(currentSchema:FlowmanStructType, targetSchema:FlowmanStructType, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+    private def doMigration(currentTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
         withConnection { (con, options) =>
             migrationStrategy match {
                 case MigrationStrategy.NEVER =>
-                    logger.warn(s"Migration required for relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                    logger.warn(s"Migration required for relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                 case MigrationStrategy.FAIL =>
-                    logger.error(s"Cannot migrate relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                    logger.error(s"Cannot migrate relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                     throw new MigrationFailedException(identifier)
                 case MigrationStrategy.ALTER =>
                     val dialect = SqlDialects.get(options.url)
-                    val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
+                    val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
                     if (migrations.exists(m => !dialect.supportsChange(tableIdentifier, m))) {
-                        logger.error(s"Cannot migrate relation JDBC relation '$identifier' of table $tableIdentifier, since that would require unsupported changes.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                        logger.error(s"Cannot migrate relation JDBC relation '$identifier' of table $tableIdentifier, since that would require unsupported changes.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                         throw new MigrationFailedException(identifier)
                     }
                     alter(migrations, con, options)
                 case MigrationStrategy.ALTER_REPLACE =>
                     val dialect = SqlDialects.get(options.url)
-                    val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
+                    val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
                     if (migrations.forall(m => dialect.supportsChange(tableIdentifier, m))) {
                         try {
                             alter(migrations, con, options)
@@ -516,7 +519,7 @@ class JdbcRelationBase(
         }
 
         def alter(migrations:Seq[TableChange], con:java.sql.Connection, options:JDBCOptions) : Unit = {
-            logger.info(s"Migrating JDBC relation '$identifier', this will alter JDBC table $tableIdentifier. New schema:\n${targetSchema.treeString}")
+            logger.info(s"Migrating JDBC relation '$identifier', this will alter JDBC table $tableIdentifier. New schema:\n${targetTable.schema.treeString}")
             if (migrations.isEmpty)
                 logger.warn("Empty list of migrations - nothing to do")
 
@@ -530,7 +533,7 @@ class JdbcRelationBase(
 
         def recreate(con:java.sql.Connection, options:JDBCOptions) : Unit = {
             try {
-                logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier. New schema:\n${targetSchema.treeString}")
+                logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier. New schema:\n${targetTable.schema.treeString}")
                 JdbcUtils.dropTable(con, tableIdentifier, options)
                 doCreate(con, options)
             }

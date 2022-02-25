@@ -321,7 +321,7 @@ final class RootContext private[execution](
             }
 
         // We need to instantiate the projects job within its context, so we create a very temporary context
-        def getJob(name:String) : Job = {
+        def getImportJob(name:String) : Job = {
             try {
                 val projectContext = ProjectContext.builder(this, project)
                     .withEnvironment(project.environment, SettingLevel.PROJECT_SETTING)
@@ -337,10 +337,10 @@ final class RootContext private[execution](
         _imports.get(project.name).foreach { case(context,imprt) =>
             val job = context.evaluate(imprt.job) match {
                 case Some(name) =>
-                    Some(getJob(name))
+                    Some(getImportJob(name))
                 case None =>
                     if (project.jobs.contains("main"))
-                        Some(getJob("main"))
+                        Some(getImportJob("main"))
                     else None
             }
             job.foreach { job =>

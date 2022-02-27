@@ -51,7 +51,8 @@ final case class TableDefinition(
 
 final case class TableIndex(
     name: String,
-    columns: Seq[String]
+    columns: Seq[String],
+    unique:Boolean = false
 ) {
     def normalize() : TableIndex = copy(
         name = name.toLowerCase(Locale.ROOT),

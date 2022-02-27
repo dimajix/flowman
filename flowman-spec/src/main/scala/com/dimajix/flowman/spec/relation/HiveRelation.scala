@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,7 @@ import com.dimajix.flowman.types.FieldValue
 abstract class HiveRelation extends BaseRelation with PartitionedRelation {
     protected val logger:Logger
 
-    def database: Option[String]
-    def table: String
-    def tableIdentifier: TableIdentifier = new TableIdentifier(table, database)
+    def table: TableIdentifier
 
     /**
       * Reads data from the relation, possibly from specific partitions
@@ -46,10 +44,10 @@ abstract class HiveRelation extends BaseRelation with PartitionedRelation {
         require(execution != null)
         require(partitions != null)
 
-        logger.info(s"Reading Hive relation '$identifier' from table $tableIdentifier using partition values $partitions")
+        logger.info(s"Reading Hive relation '$identifier' from table $table using partition values $partitions")
 
         val reader = execution.spark.read
-        val tableDf = reader.table(tableIdentifier.unquotedString)
+        val tableDf = reader.table(table.unquotedString)
         val filteredDf = filterPartition(tableDf, partitions)
 
         applyInputSchema(execution, filteredDf)
@@ -64,6 +62,6 @@ abstract class HiveRelation extends BaseRelation with PartitionedRelation {
         require(execution != null)
 
         val catalog = execution.catalog
-        catalog.tableExists(tableIdentifier)
+        catalog.tableExists(table)
     }
 }

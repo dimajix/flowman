@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,11 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.VarcharType
 import com.dimajix.spark.testing.LocalTempDir
 
 
@@ -44,21 +46,39 @@ class DerbyJdbcTest extends AnyFlatSpec with Matchers with LocalTempDir {
     "A Derby Table" should "be creatable" in {
         val options = new JDBCOptions(url, "table_001", Map(JDBCOptions.JDBC_DRIVER_CLASS -> driver))
         val conn = JdbcUtils.createConnection(options)
-        val table = TableDefinition(
+        val table1 = TableDefinition(
             TableIdentifier("table_001"),
             Seq(
                 Field("Id", IntegerType, nullable=false),
-                Field("str_field", StringType),
+                Field("str_field", VarcharType(32)),
                 Field("int_field", IntegerType)
             ),
-            None,
-            Seq("Id")
+            primaryKey = Seq("Id"),
+            indexes = Seq(
+                TableIndex("table_001_idx1", Seq("str_field", "int_field"))
+            )
         )
-        JdbcUtils.tableExists(conn, table.identifier, options) should be (false)
-        JdbcUtils.createTable(conn, table, options)
-        JdbcUtils.tableExists(conn, table.identifier, options) should be (true)
-        JdbcUtils.dropTable(conn, table.identifier, options)
-        JdbcUtils.tableExists(conn, table.identifier, options) should be (false)
+
+        //==== CREATE ================================================================================================
+        JdbcUtils.tableExists(conn, table1.identifier, options) should be (false)
+        JdbcUtils.createTable(conn, table1, options)
+        JdbcUtils.tableExists(conn, table1.identifier, options) should be (true)
+
+        JdbcUtils.getTable(conn, table1.identifier, options) should be (table1)
+
+        //==== DROP INDEX ============================================================================================
+        val table2 = table1.copy(indexes = Seq.empty)
+        JdbcUtils.dropIndex(conn, table1.identifier, "table_001_idx1", options)
+        JdbcUtils.getTable(conn, table1.identifier, options) should be (table2)
+
+        //==== CREATE INDEX ============================================================================================
+        val table3 = table2.copy(indexes = Seq(TableIndex("table_001_idx1", Seq("str_field", "Id"))))
+        JdbcUtils.createIndex(conn, table3.identifier, table3.indexes.head, options)
+        JdbcUtils.getTable(conn, table3.identifier, options) should be (table3)
+
+        //==== DROP ==================================================================================================
+        JdbcUtils.dropTable(conn, table1.identifier, options)
+        JdbcUtils.tableExists(conn, table1.identifier, options) should be (false)
         conn.close()
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package com.dimajix.flowman.dsl.relation
+
+import org.apache.spark.sql.catalyst.TableIdentifier
 
 import com.dimajix.flowman.dsl.RelationGen
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -33,8 +35,7 @@ case class HiveView(
     override def apply(props: Relation.Properties): HiveViewRelation = {
         HiveViewRelation(
             props,
-            database,
-            view,
+            TableIdentifier(view, database),
             partitions,
             sql,
             mapping

@@ -86,8 +86,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         val relation = relationSpec.instantiate(session.context).asInstanceOf[DeltaTableRelation]
         relation.description should be (Some("Some Delta Table"))
         relation.partitions should be (Seq())
-        relation.database should be ("some_db")
-        relation.table should be ("some_table")
+        relation.table should be (TableIdentifier("some_table", Some("some_db")))
         relation.location should be (Some(new Path("hdfs://ns/some/path")))
         relation.options should be (Map())
         relation.properties should be (Map())
@@ -107,8 +106,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
                     Field("int_col", ftypes.IntegerType)
                 ))
             ),
-            database = "default",
-            table = "delta_table"
+            table = TableIdentifier("delta_table", Some("default"))
         )
 
         relation.fields should be (Seq(
@@ -216,8 +214,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         val location = new File(tempDir, "delta/default/lala2")
         val relation = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table2",
+            table = TableIdentifier("delta_table2", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -373,8 +370,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         val relation = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table2",
+            table = TableIdentifier("delta_table2", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -479,8 +475,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         val location = new File(tempDir, "delta/default/lala2")
         val relation = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table2",
+            table = TableIdentifier("delta_table2", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -575,8 +570,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         val relation = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table2",
+            table = TableIdentifier("delta_table2", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -632,8 +626,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         val relation = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table2",
+            table = TableIdentifier("delta_table2", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -737,8 +730,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         val relation0 = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table2",
+            table = TableIdentifier("delta_table2", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -767,8 +759,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Check =================================================================================================
         val relation = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table2",
+            table = TableIdentifier("delta_table2", Some("default")),
             partitions = Seq(
                 PartitionField("part", ftypes.StringType)
             )
@@ -892,8 +883,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         val relation = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table2",
+            table = TableIdentifier("delta_table2", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -967,8 +957,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         val relation = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table2",
+            table = TableIdentifier("delta_table2", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -1157,8 +1146,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         val location = new File(tempDir, "delta/default/lala3")
         val relation = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table2",
+            table =TableIdentifier("delta_table2", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -1240,8 +1228,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         val rel_1 = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table",
+            table =TableIdentifier("delta_table", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -1252,8 +1239,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         )
         val rel_2 = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table",
+            table = TableIdentifier("delta_table", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -1354,8 +1340,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         val rel_1 = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table",
+            table = TableIdentifier("delta_table", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -1366,8 +1351,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         )
         val rel_2 = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table",
+            table = TableIdentifier("delta_table", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -1447,8 +1431,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         val rel_1 = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table",
+            table = TableIdentifier("delta_table", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -1459,8 +1442,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         )
         val rel_2 = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "delta_table",
+            table = TableIdentifier("delta_table", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -1549,8 +1531,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         val relation = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "streaming_test",
+            table = TableIdentifier("streaming_test", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
@@ -1610,8 +1591,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         val relation = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            database = "default",
-            table = "streaming_test",
+            table = TableIdentifier("streaming_test", Some("default")),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(

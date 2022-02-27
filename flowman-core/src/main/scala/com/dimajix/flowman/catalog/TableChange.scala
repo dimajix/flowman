@@ -39,9 +39,9 @@ object TableChange {
     case class UpdateColumnType(column:String, dataType:FieldType) extends ColumnChange
     case class UpdateColumnComment(column:String, comment:Option[String]) extends ColumnChange
 
-    case class AddPrimaryKey(columns:Seq[String]) extends IndexChange
+    case class CreatePrimaryKey(columns:Seq[String]) extends IndexChange
     case class DropPrimaryKey() extends IndexChange
-    case class AddIndex(name:String, columns:Seq[String]) extends IndexChange
+    case class CreateIndex(name:String, columns:Seq[String], unique:Boolean) extends IndexChange
     case class DropIndex(name:String) extends IndexChange
 
     /**
@@ -117,7 +117,7 @@ object TableChange {
 
         // Create new PK
         val createPk = if (normalizedTarget.primaryKey.nonEmpty && normalizedTarget.primaryKey != normalizedSource.primaryKey)
-            Some(AddPrimaryKey(targetTable.primaryKey))
+            Some(CreatePrimaryKey(targetTable.primaryKey))
                 else
             None
 
@@ -125,10 +125,10 @@ object TableChange {
         val addIndexes = targetTable.indexes.flatMap { tgt =>
             sourceTable.indexes.find(_.name.toLowerCase(Locale.ROOT) == tgt.name.toLowerCase(Locale.ROOT)) match {
                 case None =>
-                    Some(AddIndex(tgt.name, tgt.columns))
+                    Some(CreateIndex(tgt.name, tgt.columns, tgt.unique))
                 case Some(src) =>
                     if (src.normalize() != tgt.normalize())
-                        Some(AddIndex(tgt.name, tgt.columns))
+                        Some(CreateIndex(tgt.name, tgt.columns, tgt.unique))
                     else
                         None
             }

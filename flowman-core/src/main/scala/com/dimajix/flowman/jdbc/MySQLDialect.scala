@@ -81,4 +81,8 @@ class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
     override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean): String = {
         throw new SQLFeatureNotSupportedException(s"UpdateColumnNullability is not supported")
     }
+
+    override def dropIndex(table: TableIdentifier, indexName: String): String = {
+        s"DROP INDEX ${dialect.quoteIdentifier(indexName)} ON ${dialect.quote(table)}"
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -442,8 +442,8 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
                     Field("f3", com.dimajix.flowman.types.StringType)
                 )
             )),
-            tablePrefix = "zz_",
-            view = "some_union_table_122"
+            tablePrefix = TableIdentifier("zz_"),
+            view = TableIdentifier("some_union_table_122")
         )
 
         // == Create ================================================================================================
@@ -529,8 +529,8 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             partitions = Seq(
                 PartitionField("part", com.dimajix.flowman.types.StringType)
             ),
-            tablePrefix = "zz_",
-            view = "some_union_table_123"
+            tablePrefix = TableIdentifier("zz_"),
+            view = TableIdentifier("some_union_table_123")
         )
 
         // == Create ================================================================================================

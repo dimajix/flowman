@@ -22,6 +22,7 @@ import java.time.Duration
 import io.delta.sql.DeltaSparkSessionExtension
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.functions.col
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -149,8 +150,7 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
                     Field("int_col", IntegerType)
                 )
             )),
-            database = "default",
-            table = "delta_table",
+            table = TableIdentifier("delta_table", Some("default")),
             location = Some(new Path(location.toURI))
         )
 
@@ -193,8 +193,7 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
                     Field("int_col", IntegerType)
                 )
             )),
-            database = "default",
-            table = "delta_table",
+            table = TableIdentifier("delta_table", Some("default")),
             location = Some(new Path(location.toURI))
         )
 
@@ -252,8 +251,7 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
             partitions = Seq(
                 PartitionField("part", StringType)
             ),
-            database = "default",
-            table = "delta_table",
+            table = TableIdentifier("delta_table", Some("default")),
             location = Some(new Path(location.toURI))
         )
 

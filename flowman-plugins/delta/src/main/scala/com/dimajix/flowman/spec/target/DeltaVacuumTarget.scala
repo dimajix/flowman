@@ -99,7 +99,7 @@ case class DeltaVacuumTarget(
      */
     override protected def build(execution: Execution): Unit = {
         val deltaTable = relation.value match {
-            case table:DeltaTableRelation => DeltaTable.forName(execution.spark, TableIdentifier(table.table, Some(table.database)).toString())
+            case table:DeltaTableRelation => DeltaTable.forName(execution.spark, table.table.toString())
             case files:DeltaFileRelation => DeltaTable.forPath(execution.spark, files.location.toString)
             case rel:Relation => throw new IllegalArgumentException(s"DeltaVacuumTarget only supports relations of type deltaTable and deltaFiles, but it was given relation '${rel.identifier}' of kind '${rel.kind}'")
         }
@@ -127,7 +127,7 @@ case class DeltaVacuumTarget(
     private def compact(deltaTable:DeltaTable) : Unit = {
         val spark = deltaTable.toDF.sparkSession
         val deltaLog = relation.value match {
-            case table:DeltaTableRelation => DeltaLog.forTable(spark, TableIdentifier(table.table, Some(table.database)))
+            case table:DeltaTableRelation => DeltaLog.forTable(spark, table.table)
             case files:DeltaFileRelation => DeltaLog.forTable(spark, files.location.toString)
             case rel:Relation => throw new IllegalArgumentException(s"DeltaVacuumTarget only supports relations of type deltaTable and deltaFiles, but it was given relation '${rel.identifier}' of kind '${rel.kind}'")
         }
@@ -149,7 +149,7 @@ case class DeltaVacuumTarget(
         filter.map(writer.option("replaceWhere", _))
 
         relation.value match {
-            case table:DeltaTableRelation => writer.insertInto(TableIdentifier(table.table, Some(table.database)).toString())
+            case table:DeltaTableRelation => writer.insertInto(table.table.toString())
             case files:DeltaFileRelation => writer.save(files.location.toString)
             case rel:Relation => throw new IllegalArgumentException(s"DeltaVacuumTarget only supports relations of type deltaTable and deltaFiles, but it was given relation '${rel.identifier}' of kind '${rel.kind}'")
         }

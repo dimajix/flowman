@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,11 +72,8 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
 
     val relation = HiveViewRelation(
       Relation.Properties(context),
-      Some("default"),
-      "v0",
-      Seq(),
-      None,
-      Some(MappingOutputIdentifier("t0"))
+      table = TableIdentifier("v0", Some("default")),
+      mapping = Some(MappingOutputIdentifier("t0"))
     )
 
     relation.provides should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
@@ -160,11 +157,8 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
 
     val relation = HiveViewRelation(
       Relation.Properties(context),
-      Some("default"),
-      "v0",
-      Seq(),
-      None,
-      Some(MappingOutputIdentifier("union"))
+      table = TableIdentifier("v0", Some("default")),
+      mapping = Some(MappingOutputIdentifier("union"))
     )
 
     relation.provides should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
@@ -235,8 +229,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
 
         val view = HiveViewRelation(
             Relation.Properties(context),
-            database = Some("default"),
-            table = "table_or_view",
+            table = TableIdentifier("table_or_view", Some("default")),
             mapping = Some(MappingOutputIdentifier("t0"))
         )
         val table = HiveTableRelation(
@@ -249,8 +242,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
                     Field("f3", com.dimajix.flowman.types.IntegerType)
                 )
             )),
-            table = "table_or_view",
-            database = Some("default")
+            table = TableIdentifier("table_or_view", Some("default"))
         )
 
         // == Create TABLE ============================================================================================
@@ -326,8 +318,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
 
         val view = HiveViewRelation(
             Relation.Properties(context),
-            database = Some("default"),
-            table = "view",
+            table = TableIdentifier("view", Some("default")),
             sql = Some("SELECT * FROM table")
         )
         val table = HiveTableRelation(
@@ -340,8 +331,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
                     Field("f3", com.dimajix.flowman.types.IntegerType)
                 )
             )),
-            table = "table",
-            database = Some("default")
+            table = TableIdentifier("table", Some("default"))
         )
         val table2 = HiveTableRelation(
             Relation.Properties(context, "rel_1"),
@@ -353,8 +343,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
                     Field("f4", com.dimajix.flowman.types.IntegerType)
                 )
             )),
-            table = "table",
-            database = Some("default")
+            table =TableIdentifier("table", Some("default"))
         )
 
         // == Create TABLE ============================================================================================

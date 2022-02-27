@@ -105,4 +105,8 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
         val nullable = if (isNullable) "NULL" else "NOT NULL"
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $dataType $nullable"
     }
+
+    override def dropIndex(table: TableIdentifier, indexName: String): String = {
+        s"DROP INDEX ${dialect.quote(table)}.${dialect.quoteIdentifier(indexName)}"
+    }
 }

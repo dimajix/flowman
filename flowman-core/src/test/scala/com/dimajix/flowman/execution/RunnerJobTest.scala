@@ -403,7 +403,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             name = "default",
             targets = Map(
                 "t0" -> genTarget("t0", true, Yes, produces=Set(ResourceIdentifier.ofHivePartition("some_table", Map("p1" -> "123")))),
-                "t1" -> genTarget("t1", true, No, requires=Set(ResourceIdentifier.ofHivePartition("some_table", Map()))),
+                "t1" -> genTarget("t1", true, No, requires=Set(ResourceIdentifier.ofHivePartition("some_table", Map.empty[String,Any]))),
                 "t2" -> genTarget("t2", false, No)
             )
         )

@@ -75,11 +75,9 @@ case class HiveUnionTableRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq(),
-    tableDatabase: Option[String] = None,
-    tablePrefix: String,
+    tablePrefix: TableIdentifier,
     locationPrefix: Option[Path] = None,
-    viewDatabase: Option[String] = None,
-    view: String,
+    view: TableIdentifier,
     external: Boolean = false,
     format: Option[String] = None,
     options: Map[String,String] = Map(),
@@ -91,15 +89,22 @@ case class HiveUnionTableRelation(
 )  extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[HiveUnionTableRelation])
 
-    def viewIdentifier: TableIdentifier = TableIdentifier(view, viewDatabase)
-    def tableIdentifier(version:Int) : TableIdentifier = {
-        TableIdentifier(tablePrefix + "_" + version.toString, tableDatabase)
+    private lazy val tableRegex : TableIdentifier = {
+        TableIdentifier(tablePrefix.table + "_[0-9]+", tablePrefix.database.orElse(view.database))
     }
+    private lazy val viewIdentifier : TableIdentifier = {
+        TableIdentifier(view.table, view.database.orElse(tablePrefix.database))
+    }
+    private def tableIdentifier(version:Int) : TableIdentifier = {
+        TableIdentifier(tablePrefix.table + "_" + version.toString, tablePrefix.database.orElse(view.database))
+    }
+
+    private def resolve(execution: Execution, table:TableIdentifier) : TableIdentifier = TableIdentifier(table.table, table.database.orElse(view.database).orElse(Some(execution.catalog.currentDatabase)))
 
     private def listTables(executor: Execution) : Seq[TableIdentifier] = {
         val catalog = executor.catalog
-        val regex = (TableIdentifier(tablePrefix, tableDatabase.orElse(Some(catalog.currentDatabase))).unquotedString + "_[0-9]+").r
-        catalog.listTables(tableDatabase.getOrElse(catalog.currentDatabase), tablePrefix + "_*")
+        val regex = resolve(executor, tableRegex).unquotedString.r
+        catalog.listTables(tablePrefix.database.getOrElse(catalog.currentDatabase), tablePrefix.table + "_*")
             .filter { table =>
                 table.unquotedString match {
                     case regex() => true
@@ -110,7 +115,7 @@ case class HiveUnionTableRelation(
 
     private def tableRelation(version:Int) : HiveTableRelation =
         tableRelation(
-            TableIdentifier(tablePrefix + "_" + version.toString, tableDatabase),
+            TableIdentifier(tablePrefix.table + "_" + version.toString, tablePrefix.database.orElse(view.database)),
             locationPrefix.map(p => new Path(p.toString + "_" + version.toString))
         )
 
@@ -118,8 +123,7 @@ case class HiveUnionTableRelation(
         instanceProperties,
         schema,
         partitions,
-        tableIdentifier.database,
-        tableIdentifier.table,
+        tableIdentifier,
         external,
         location,
         format,
@@ -135,7 +139,6 @@ case class HiveUnionTableRelation(
     private def viewRelationFromSql(sql:String) : HiveViewRelation = {
         HiveViewRelation(
             instanceProperties,
-            viewDatabase,
             view,
             partitions,
             Some(sql),
@@ -158,8 +161,8 @@ case class HiveUnionTableRelation(
       * @return
       */
     override def provides: Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofHiveTable(tablePrefix + "_[0-9]+", tableDatabase),
-        ResourceIdentifier.ofHiveTable(view, viewDatabase.orElse(tableDatabase))
+        ResourceIdentifier.ofHiveTable(tableRegex),
+        ResourceIdentifier.ofHiveTable(viewIdentifier)
     )
 
     /**
@@ -168,8 +171,8 @@ case class HiveUnionTableRelation(
       * @return
       */
     override def requires: Set[ResourceIdentifier] = {
-        tableDatabase.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet ++
-        viewDatabase.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet ++
+        tablePrefix.database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet ++
+            viewIdentifier.database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet ++
             super.requires
     }
 
@@ -188,7 +191,7 @@ case class HiveUnionTableRelation(
 
         // Only return Hive table partitions!
         val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
-        allPartitions.map(p => ResourceIdentifier.ofHivePartition(tablePrefix + "_[0-9]+", tableDatabase, p.toMap)).toSet
+        allPartitions.map(p => ResourceIdentifier.ofHivePartition(tableRegex, p.toMap)).toSet
     }
 
 
@@ -416,7 +419,7 @@ case class HiveUnionTableRelation(
 
             // Create initial view
             val spark = execution.spark
-            val df = spark.read.table(hiveTableRelation.tableIdentifier.unquotedString)
+            val df = spark.read.table(hiveTableRelation.table.unquotedString)
             val sql = new SqlBuilder(df).toSQL
             val hiveViewRelation = viewRelationFromSql(sql)
             hiveViewRelation.create(execution, ifNotExists)
@@ -541,7 +544,7 @@ case class HiveUnionTableRelation(
 
 class HiveUnionTableRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
     @JsonProperty(value = "tableDatabase", required = false) private var tableDatabase: Option[String] = None
-    @JsonProperty(value = "tablePrefix", required = true) private var tablePrefix: String = ""
+    @JsonProperty(value = "tablePrefix", required = true) private var tablePrefix: String = "zz"
     @JsonProperty(value = "locationPrefix", required = false) private var locationPrefix: Option[String] = None
     @JsonProperty(value = "viewDatabase", required = false) private var viewDatabase: Option[String] = None
     @JsonProperty(value = "view", required = true) private var view: String = ""
@@ -564,11 +567,9 @@ class HiveUnionTableRelationSpec extends RelationSpec with SchemaRelationSpec wi
             instanceProperties(context),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
-            context.evaluate(tableDatabase),
-            context.evaluate(tablePrefix),
+            TableIdentifier(context.evaluate(tablePrefix), context.evaluate(tableDatabase)),
             context.evaluate(locationPrefix).map(p => new Path(context.evaluate(p))),
-            context.evaluate(viewDatabase),
-            context.evaluate(view),
+            TableIdentifier(context.evaluate(view), context.evaluate(viewDatabase)),
             context.evaluate(external).toBoolean,
             context.evaluate(format),
             context.evaluate(options),

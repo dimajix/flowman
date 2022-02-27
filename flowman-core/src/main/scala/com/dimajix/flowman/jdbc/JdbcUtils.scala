@@ -17,6 +17,7 @@
 package com.dimajix.flowman.jdbc
 
 import java.sql.Connection
+import java.sql.DatabaseMetaData
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.ResultSetMetaData
@@ -45,11 +46,16 @@ import slick.jdbc.SQLiteProfile
 
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.CreateIndex
+import com.dimajix.flowman.catalog.TableChange.CreatePrimaryKey
 import com.dimajix.flowman.catalog.TableChange.DropColumn
+import com.dimajix.flowman.catalog.TableChange.DropIndex
+import com.dimajix.flowman.catalog.TableChange.DropPrimaryKey
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
@@ -165,8 +171,65 @@ object JdbcUtils {
      * @return
      */
     def getTable(conn: Connection, table:TableIdentifier, options: JDBCOptions) : TableDefinition = {
-        val currentSchema = JdbcUtils.getSchema(conn, table, options)
-        TableDefinition(table, currentSchema.fields)
+        val meta = conn.getMetaData
+        val realTable = resolveTable(meta, table)
+
+        val currentSchema = getSchema(conn, table, options)
+        val pk = getPrimaryKey(meta, realTable)
+        val idxs = getIndexes(meta, realTable)
+            // Remove primary key
+            .filter { idx =>
+                idx.normalize().columns != pk.map(_.toLowerCase(Locale.ROOT)).sorted
+            }
+
+        TableDefinition(table, currentSchema.fields, primaryKey=pk, indexes=idxs)
+    }
+
+    private def getPrimaryKey(meta: DatabaseMetaData, table:TableIdentifier) : Seq[String] = {
+        val pkrs = meta.getPrimaryKeys(null, table.database.orNull, table.table)
+        val pk = mutable.ListBuffer[String]()
+        while(pkrs.next()) {
+            val col = pkrs.getString(4)
+            pk.append(col)
+        }
+        pkrs.close()
+        pk
+    }
+
+    private def getIndexes(meta: DatabaseMetaData, table:TableIdentifier) : Seq[TableIndex] = {
+        val idxrs = meta.getIndexInfo(null, table.database.orNull, table.table, false, true)
+        val idxcols = mutable.ListBuffer[(String, String, Boolean)]()
+        while(idxrs.next()) {
+            val unique = !idxrs.getBoolean(4)
+            val name = idxrs.getString(6)
+            val col = idxrs.getString(9)
+            idxcols.append((name, col, unique))
+        }
+        idxrs.close()
+
+        idxcols.groupBy(_._1).map { case(name,cols) =>
+            TableIndex(name, cols.map(_._2), cols.foldLeft(false)(_ || _._3))
+        }.toSeq
+    }
+
+    /**
+     * Resolves the table name, even if upper/lower case does not match
+     * @param conn
+     * @param table
+     * @return
+     */
+    private def resolveTable(meta: DatabaseMetaData, table:TableIdentifier) : TableIdentifier = {
+        val tblrs = meta.getTables(null, table.database.orNull, null, Array("TABLE"))
+        var name = table.table
+        val db = table.database
+        while(tblrs.next()) {
+            val thisName = tblrs.getString(3)
+            if (name.toLowerCase(Locale.ROOT) == thisName.toLowerCase(Locale.ROOT))
+                name = thisName
+        }
+        tblrs.close()
+
+        TableIdentifier(name, db)
     }
 
     /**
@@ -205,7 +268,13 @@ object JdbcUtils {
         val dialect = SqlDialects.get(options.url)
 
         withStatement(conn, dialect.statement.schema(table), options) { statement =>
-            getJdbcSchemaImpl(statement.executeQuery())
+            val rs = statement.executeQuery()
+            try {
+                getJdbcSchemaImpl(rs)
+            }
+            finally {
+                rs.close()
+            }
         }
     }
 
@@ -252,9 +321,11 @@ object JdbcUtils {
      */
     def createTable(conn:Connection, table:TableDefinition, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val sql = dialect.statement.createTable(table)
+        val tableSql = dialect.statement.createTable(table)
+        val indexSql = table.indexes.map(idx => dialect.statement.createIndex(table.identifier, idx))
         withStatement(conn, options) { statement =>
-            statement.executeUpdate(sql)
+            statement.executeUpdate(tableSql)
+            indexSql.foreach(statement.executeUpdate)
         }
     }
 
@@ -267,6 +338,7 @@ object JdbcUtils {
     def dropTable(conn:Connection, table:TableIdentifier, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
         withStatement(conn, options) { statement =>
+            // TODO: Drop indices(?)
             statement.executeUpdate(s"DROP TABLE ${dialect.quote(table)}")
         }
     }
@@ -282,6 +354,35 @@ object JdbcUtils {
         val dialect = SqlDialects.get(options.url)
         withStatement(conn, options) { statement =>
             statement.executeUpdate(s"TRUNCATE TABLE ${dialect.quote(table)}")
+        }
+    }
+
+    /**
+     * Adds an index to an existing table
+     * @param conn
+     * @param table
+     * @param index
+     * @param options
+     */
+    def createIndex(conn:Connection, table:TableIdentifier, index:TableIndex, options: JDBCOptions) : Unit = {
+        val dialect = SqlDialects.get(options.url)
+        val indexSql = dialect.statement.createIndex(table, index)
+        withStatement(conn, options) { statement =>
+            statement.executeUpdate(indexSql)
+        }
+    }
+
+    /**
+     * Drops an index from an existing table
+     * @param conn
+     * @param indexName
+     * @param options
+     */
+    def dropIndex(conn:Connection, table:TableIdentifier, indexName:String, options: JDBCOptions) : Unit = {
+        val dialect = SqlDialects.get(options.url)
+        val indexSql = dialect.statement.dropIndex(table, indexName)
+        withStatement(conn, options) { statement =>
+            statement.executeUpdate(indexSql)
         }
     }
 
@@ -325,6 +426,18 @@ object JdbcUtils {
             case u:UpdateColumnComment =>
                 logger.info(s"Updating comment of column ${u.column} in JDBC table $table")
                 None
+            case idx:CreateIndex =>
+                logger.info(s"Adding index ${idx.name} to JDBC table $table on columns ${idx.columns.mkString(",")}")
+                Some(statements.createIndex(table, TableIndex(idx.name, idx.columns, idx.unique)))
+            case idx:DropIndex =>
+                logger.info(s"Dropping index ${idx.name} from JDBC table $table")
+                Some(statements.dropIndex(table, idx.name))
+            case pk:CreatePrimaryKey =>
+                logger.info(s"Creating primary key for JDBC table $table on columns ${pk.columns.mkString(",")}")
+                Some(statements.addPrimaryKey(table, pk.columns))
+            case pk:DropPrimaryKey =>
+                logger.info(s"Removing primary key from JDBC table $table}")
+                Some(statements.dropPrimaryKey(table))
             case chg:TableChange => throw new SQLException(s"Unsupported table change $chg for JDBC table $table")
         }
 

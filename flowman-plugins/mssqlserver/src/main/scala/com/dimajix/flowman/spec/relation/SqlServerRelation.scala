@@ -26,6 +26,7 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
 import com.dimajix.flowman.catalog
 import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.jdbc.JdbcUtils
@@ -44,15 +45,15 @@ import com.dimajix.flowman.types.StructType
 case class SqlServerRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
-    override val partitions: Seq[PartitionField] = Seq(),
+    override val partitions: Seq[PartitionField] = Seq.empty,
     connection: Reference[Connection],
-    properties: Map[String,String] = Map(),
-    database: Option[String] = None,
-    table: Option[String] = None,
+    properties: Map[String,String] = Map.empty,
+    table: Option[TableIdentifier] = None,
     query: Option[String] = None,
-    mergeKey: Seq[String] = Seq(),
-    primaryKey: Seq[String] = Seq()
-) extends JdbcRelationBase(instanceProperties, schema, partitions, connection, properties, database, table, query, mergeKey, primaryKey) {
+    mergeKey: Seq[String] = Seq.empty,
+    primaryKey: Seq[String] = Seq.empty,
+    indexes: Seq[TableIndex] = Seq.empty
+) extends JdbcRelationBase(instanceProperties, schema, partitions, connection, properties, table, query, mergeKey, primaryKey, indexes) {
     private val tempTableIdentifier = TableIdentifier(s"##${tableIdentifier.table}_temp_staging")
 
     override protected def doOverwriteAll(execution: Execution, df:DataFrame) : Unit = {
@@ -134,14 +135,14 @@ case class SqlServerRelation(
 
 
 @RelationType(kind="sqlserver")
-class SqlServerRelationSpec extends RelationSpec with PartitionedRelationSpec with SchemaRelationSpec {
+class SqlServerRelationSpec extends RelationSpec with PartitionedRelationSpec with SchemaRelationSpec with IndexedRelationSpec {
     @JsonProperty(value = "connection", required = true) private var connection: ConnectionReferenceSpec = _
-    @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
+    @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map.empty
     @JsonProperty(value = "database", required = false) private var database: Option[String] = None
     @JsonProperty(value = "table", required = false) private var table: Option[String] = None
     @JsonProperty(value = "query", required = false) private var query: Option[String] = None
-    @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq()
-    @JsonProperty(value = "primaryKey", required = false) private var primaryKey: Seq[String] = Seq()
+    @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq.empty
+    @JsonProperty(value = "primaryKey", required = false) private var primaryKey: Seq[String] = Seq.empty
 
     override def instantiate(context: Context): SqlServerRelation = {
         new SqlServerRelation(
@@ -150,11 +151,11 @@ class SqlServerRelationSpec extends RelationSpec with PartitionedRelationSpec wi
             partitions.map(_.instantiate(context)),
             connection.instantiate(context),
             context.evaluate(properties),
-            database.map(context.evaluate).filter(_.nonEmpty),
-            table.map(context.evaluate).filter(_.nonEmpty),
-            query.map(context.evaluate).filter(_.nonEmpty),
+            context.evaluate(table).map(t => TableIdentifier(t, context.evaluate(database))),
+            context.evaluate(query),
             mergeKey.map(context.evaluate),
-            primaryKey.map(context.evaluate)
+            primaryKey.map(context.evaluate),
+            indexes.map(_.instantiate(context))
         )
     }
 }

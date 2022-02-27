@@ -21,8 +21,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.catalog.TableChange.AddColumn
-import com.dimajix.flowman.catalog.TableChange.AddIndex
-import com.dimajix.flowman.catalog.TableChange.AddPrimaryKey
+import com.dimajix.flowman.catalog.TableChange.CreateIndex
+import com.dimajix.flowman.catalog.TableChange.CreatePrimaryKey
 import com.dimajix.flowman.catalog.TableChange.DropColumn
 import com.dimajix.flowman.catalog.TableChange.DropIndex
 import com.dimajix.flowman.catalog.TableChange.DropPrimaryKey
@@ -371,7 +371,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
         val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
 
         changes should be (Seq(
-            AddPrimaryKey(Seq("f1", "f2"))
+            CreatePrimaryKey(Seq("f1", "f2"))
         ))
     }
 
@@ -420,7 +420,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
 
         changes should be (Seq(
             DropPrimaryKey(),
-            AddPrimaryKey(Seq("f2"))
+            CreatePrimaryKey(Seq("f2"))
         ))
     }
 
@@ -447,7 +447,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
 
         val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
 
-        changes should be (Seq(AddIndex("NAME", Seq("col2", "COL1"))))
+        changes should be (Seq(CreateIndex("NAME", Seq("col2", "COL1"), false)))
     }
 
     it should "drop an index" in {
@@ -473,6 +473,6 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
 
         val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
 
-        changes should be (Seq(DropIndex("name"), AddIndex("NAME", Seq("col2", "COL1"))))
+        changes should be (Seq(DropIndex("name"), CreateIndex("NAME", Seq("col2", "COL1"), false)))
     }
 }

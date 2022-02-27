@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.mapping
 
+import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
@@ -69,8 +70,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val relation = HiveTableRelation(
             Relation.Properties(context, "t0"),
-            database = Some("default"),
-            table = "lala_0007",
+            table = TableIdentifier("lala_0007", Some("default")),
             format = Some("parquet"),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context),
@@ -116,8 +116,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val relation = HiveTableRelation(
             Relation.Properties(context, "t0"),
-            database = Some("default"),
-            table = "lala_0007",
+            table = TableIdentifier("lala_0007", Some("default")),
             format = Some("parquet"),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context),

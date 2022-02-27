@@ -39,6 +39,7 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MergeClause
@@ -336,6 +337,22 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
         }
 
         newExpr.sql
+    }
+
+    override def dropPrimaryKey(table: TableIdentifier): String = ???
+
+    override def addPrimaryKey(table: TableIdentifier, columns: Seq[String]): String = ???
+
+    override def dropIndex(table: TableIdentifier, indexName: String): String = {
+        s"DROP INDEX ${dialect.quoteIdentifier(indexName)}"
+    }
+
+    override def createIndex(table: TableIdentifier, index: TableIndex): String = {
+        // Column definitions
+        val columns = index.columns.map(dialect.quoteIdentifier)
+        val unique = if (index.unique) "UNIQUE" else ""
+
+        s"CREATE $unique INDEX ${dialect.quoteIdentifier(index.name)} ON ${dialect.quote(table)} (${columns.mkString(",")})"
     }
 }
 

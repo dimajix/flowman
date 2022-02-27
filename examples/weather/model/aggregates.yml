@@ -38,24 +38,24 @@ relations:
       description: "The aggregate table contains min/max temperature value per year and country"
       columns:
         - name: country
-          tests:
+          checks:
             - kind: notNull
         - name: year
-          tests:
+          checks:
             - kind: notNull
         - name: min_wind_speed
-          tests:
+          checks:
             - kind: expression
               expression: "min_wind_speed >= 0"
         - name: min_temperature
-          tests:
+          checks:
             - kind: expression
               expression: "min_temperature >= -100"
         - name: max_temperature
-          tests:
+          checks:
             - kind: expression
               expression: "max_temperature <= 100"
-      tests:
+      checks:
         kind: primaryKey
         columns:
           - country

@@ -20,7 +20,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.documentation.ColumnReference
-import com.dimajix.flowman.documentation.NotNullColumnTest
+import com.dimajix.flowman.documentation.NotNullColumnCheck
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.spec.ObjectMapper
 
@@ -33,7 +33,7 @@ class MappingDocTest extends AnyFlatSpec with Matchers {
               |columns:
               |  - name: col_a
               |    description: "This is column a"
-              |    tests:
+              |    checks:
               |      - kind: notNull
               |outputs:
               |  other:
@@ -56,9 +56,9 @@ class MappingDocTest extends AnyFlatSpec with Matchers {
         mainSchema.columns.size should be (1)
         mainSchema.columns(0).name should be ("col_a")
         mainSchema.columns(0).description should be (Some("This is column a"))
-        mainSchema.columns(0).tests.size should be (1)
-        mainSchema.columns(0).tests(0) shouldBe a[NotNullColumnTest]
-        mainSchema.tests.size should be (0)
+        mainSchema.columns(0).checks.size should be (1)
+        mainSchema.columns(0).checks(0) shouldBe a[NotNullColumnCheck]
+        mainSchema.checks.size should be (0)
 
         val other = mapping.outputs.find(_.name == "other").get
         other.description should be (Some("This is an additional output"))
@@ -66,7 +66,7 @@ class MappingDocTest extends AnyFlatSpec with Matchers {
         otherSchema.columns.size should be (1)
         otherSchema.columns(0).name should be ("col_x")
         otherSchema.columns(0).description should be (Some("Column of other output"))
-        otherSchema.columns(0).tests.size should be (0)
-        otherSchema.tests.size should be (0)
+        otherSchema.columns(0).checks.size should be (0)
+        otherSchema.checks.size should be (0)
     }
 }

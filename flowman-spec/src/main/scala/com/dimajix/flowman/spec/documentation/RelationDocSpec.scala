@@ -28,7 +28,7 @@ import com.dimajix.flowman.spec.Spec
 class RelationDocSpec extends Spec[RelationDoc] {
     @JsonProperty(value="description", required=false) private var description:Option[String] = None
     @JsonProperty(value="columns", required=false) private var columns:Seq[ColumnDocSpec] = Seq()
-    @JsonProperty(value="tests", required=false) private var tests:Seq[SchemaTestSpec] = Seq()
+    @JsonProperty(value="checks", required=false) private var checks:Seq[SchemaCheckSpec] = Seq()
 
     override def instantiate(context: Context): RelationDoc = {
         val doc = RelationDoc(
@@ -39,16 +39,16 @@ class RelationDocSpec extends Spec[RelationDoc] {
         val ref = doc.reference
 
         val schema =
-            if (columns.nonEmpty || tests.nonEmpty) {
+            if (columns.nonEmpty || checks.nonEmpty) {
                 val schema = SchemaDoc(
                     Some(ref)
                 )
                 val ref2 = schema.reference
                 val cols = columns.map(_.instantiate(context, ref2))
-                val tests = this.tests.map(_.instantiate(context, ref2))
+                val tests = this.checks.map(_.instantiate(context, ref2))
                 Some(schema.copy(
                     columns=cols,
-                    tests=tests
+                    checks=tests
                 ))
             }
             else {

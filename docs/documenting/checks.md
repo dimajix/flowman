@@ -1,7 +1,7 @@
-# Testing Model Properties
+# Checking Model Properties
 
 In addition to provide pure descriptions of model entities, the documentation framework in Flowman also provides
-the ability to specify model properties (like unqiue values in a column, not null etc). These properties will not only
+the ability to specify model properties (like unique values in a column, not null etc). These properties will not only
 be part of the documentation, they will also be verified as part of generating the documentation.
 
 
@@ -27,30 +27,40 @@ relations:
       columns:
         - name: year
           description: "The year of the measurement, used for partitioning the data"
-          tests:
+          checks:
             - kind: notNull
         - name: usaf
-          tests:
+          checks:
             - kind: notNull
         - name: wban
-          tests:
+          checks:
             - kind: notNull
         - name: air_temperature_qual
-          tests:
+          checks:
             - kind: notNull
             - kind: values
               values: [0,1,2,3,4,5,6,7,8,9]
         - name: air_temperature
-          tests:
+          checks:
             - kind: expression
               expression: "air_temperature >= -100 OR air_temperature_qual <> 1"
             - kind: expression
               expression: "air_temperature <= 100  OR air_temperature_qual <> 1"
+      # Schema tests, which might involve multiple columns
+      checks:
+          kind: foreignKey
+          relation: stations
+          columns:
+              - usaf
+              - wban
+          references:
+              - usaf
+              - wban
 ```
 
-## Available Column Tests
+## Available Column Checks
 
-Flowman implements a couple of different test cases on a per column basis. 
+Flowman implements a couple of different check types on a per column basis. 
 
 ### Not NULL
 

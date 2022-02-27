@@ -31,7 +31,7 @@ import com.dimajix.flowman.spec.Spec
 class MappingOutputDocSpec {
     @JsonProperty(value="description", required=false) private var description:Option[String] = None
     @JsonProperty(value="columns", required=false) private var columns:Seq[ColumnDocSpec] = Seq()
-    @JsonProperty(value="tests", required=false) private var tests:Seq[SchemaTestSpec] = Seq()
+    @JsonProperty(value="checks", required=false) private var checks:Seq[SchemaCheckSpec] = Seq()
 
     def instantiate(context: Context, parent:MappingReference, name:String): MappingOutputDoc = {
         val doc = MappingOutputDoc(
@@ -43,7 +43,7 @@ class MappingOutputDocSpec {
         val ref = doc.reference
 
         val schema =
-            if (columns.nonEmpty || tests.nonEmpty) {
+            if (columns.nonEmpty || checks.nonEmpty) {
                 val schema = SchemaDoc(
                     Some(ref),
                     None,
@@ -52,10 +52,10 @@ class MappingOutputDocSpec {
                 )
                 val ref2 = schema.reference
                 val cols = columns.map(_.instantiate(context, ref2))
-                val tests = this.tests.map(_.instantiate(context, ref2))
+                val tests = this.checks.map(_.instantiate(context, ref2))
                 Some(schema.copy(
                     columns=cols,
-                    tests=tests
+                    checks=tests
                 ))
             }
             else {
@@ -73,7 +73,7 @@ class MappingDocSpec extends Spec[MappingDoc] {
     @JsonProperty(value="description", required=false) private var description:Option[String] = None
     @JsonProperty(value="outputs", required=false) private var outputs:Map[String,MappingOutputDocSpec] = Map()
     @JsonProperty(value="columns", required=false) private var columns:Seq[ColumnDocSpec] = Seq()
-    @JsonProperty(value="tests", required=false) private var tests:Seq[SchemaTestSpec] = Seq()
+    @JsonProperty(value="tests", required=false) private var tests:Seq[SchemaCheckSpec] = Seq()
 
     def instantiate(context: Context): MappingDoc = {
         val doc = MappingDoc(
@@ -101,7 +101,7 @@ class MappingDocSpec extends Spec[MappingDoc] {
                     output.copy(
                         schema = Some(schema.copy(
                             columns=cols,
-                            tests=tsts
+                            checks=tsts
                         ))
                     )
                 )

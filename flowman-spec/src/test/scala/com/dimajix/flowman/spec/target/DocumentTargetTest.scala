@@ -36,8 +36,8 @@ class DocumentTargetTest extends AnyFlatSpec with Matchers {
               |      - kind: mappings
               |      # Collect documentation of build targets
               |      - kind: targets
-              |      # Execute all tests
-              |      - kind: tests
+              |      # Execute all checks
+              |      - kind: checks
               |
               |    generators:
               |      # Create an output file in the project directory

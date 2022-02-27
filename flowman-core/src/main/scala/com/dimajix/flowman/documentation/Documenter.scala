@@ -42,7 +42,7 @@ object Documenter {
             new RelationCollector(),
             new MappingCollector(),
             new TargetCollector(),
-            new TestCollector()
+            new CheckCollector()
         )
         Documenter(
             collectors=collectors

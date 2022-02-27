@@ -23,14 +23,14 @@ import java.lang.annotation.Target;
 
 
 /**
- * This annotation marks a specific class as a [[ColumnTest]] to be used in a data flow spec. The specific ColumnTest itself has
- * to derive from the ColumnTest class
+ * This annotation marks a specific class as a [[SchemaCheck]] to be used in a data flow spec. The specific SchemaCheck itself has
+ * to derive from the SchemaCheck class
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-public @interface ColumnTestType {
+public @interface SchemaCheckType {
     /**
-     * Specifies the kind of the column test which is used in data flow specifications.
+     * Specifies the kind of the schema test which is used in data flow specifications.
      * @return
      */
     String kind();

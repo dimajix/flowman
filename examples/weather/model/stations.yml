@@ -9,7 +9,7 @@ relations:
       file: "${project.basedir}/schema/stations.avsc"
 
     documentation:
-      tests:
+      checks:
         kind: primaryKey
         columns:
           - usaf

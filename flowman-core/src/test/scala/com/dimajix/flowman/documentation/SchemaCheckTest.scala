@@ -30,14 +30,14 @@ import com.dimajix.flowman.model.Prototype
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class SchemaTestTest extends AnyFlatSpec with Matchers with MockFactory with LocalSparkSession {
-    "A PrimaryKeySchemaTest" should "be executable" in {
+class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with LocalSparkSession {
+    "A PrimaryKeySchemaCheck" should "be executable" in {
         val session = Session.builder()
             .withSparkSession(spark)
             .build()
         val execution = session.execution
         val context = session.context
-        val testExecutor = new DefaultSchemaTestExecutor
+        val testExecutor = new DefaultSchemaCheckExecutor
 
         val df = spark.createDataFrame(Seq(
             (Some(1),2,3),
@@ -45,38 +45,38 @@ class SchemaTestTest extends AnyFlatSpec with Matchers with MockFactory with Loc
             (None,3,5)
         ))
 
-        val test1 = PrimaryKeySchemaTest(None, columns=Seq("_1","_3"))
+        val test1 = PrimaryKeySchemaCheck(None, columns=Seq("_1","_3"))
         val result1 = testExecutor.execute(execution, context, df, test1)
-        result1 should be (Some(TestResult(Some(test1.reference), TestStatus.SUCCESS, description=Some("3 keys are unique, 0 keys are non-unique"))))
+        result1 should be (Some(CheckResult(Some(test1.reference), CheckStatus.SUCCESS, description=Some("3 keys are unique, 0 keys are non-unique"))))
 
-        val test2 = PrimaryKeySchemaTest(None, columns=Seq("_1","_2"))
+        val test2 = PrimaryKeySchemaCheck(None, columns=Seq("_1","_2"))
         val result2 = testExecutor.execute(execution, context, df, test2)
-        result2 should be (Some(TestResult(Some(test1.reference), TestStatus.FAILED, description=Some("1 keys are unique, 1 keys are non-unique"))))
+        result2 should be (Some(CheckResult(Some(test1.reference), CheckStatus.FAILED, description=Some("1 keys are unique, 1 keys are non-unique"))))
     }
 
-    "An ExpressionSchemaTest" should "work" in {
+    "An ExpressionSchemaCheck" should "work" in {
         val session = Session.builder()
             .withSparkSession(spark)
             .build()
         val execution = session.execution
         val context = session.context
-        val testExecutor = new DefaultSchemaTestExecutor
+        val testExecutor = new DefaultSchemaCheckExecutor
 
         val df = spark.createDataFrame(Seq(
             (Some(1),2,1),
             (None,3,2)
         ))
 
-        val test1 = ExpressionSchemaTest(None, expression="_2 > _3")
+        val test1 = ExpressionSchemaCheck(None, expression="_2 > _3")
         val result1 = testExecutor.execute(execution, context, df, test1)
-        result1 should be (Some(TestResult(Some(test1.reference), TestStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
+        result1 should be (Some(CheckResult(Some(test1.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
 
-        val test2 = ExpressionSchemaTest(None, expression="_2 < _3")
+        val test2 = ExpressionSchemaCheck(None, expression="_2 < _3")
         val result2 = testExecutor.execute(execution, context, df, test2)
-        result2 should be (Some(TestResult(Some(test1.reference), TestStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
+        result2 should be (Some(CheckResult(Some(test1.reference), CheckStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
     }
 
-    "A ForeignKeySchemaTest" should "work" in {
+    "A ForeignKeySchemaCheck" should "work" in {
         val mappingSpec = mock[Prototype[Mapping]]
         val mapping = mock[Mapping]
 
@@ -90,7 +90,7 @@ class SchemaTestTest extends AnyFlatSpec with Matchers with MockFactory with Loc
         val context = session.getContext(project)
         val execution = session.execution
 
-        val testExecutor = new DefaultSchemaTestExecutor
+        val testExecutor = new DefaultSchemaCheckExecutor
 
         val df = spark.createDataFrame(Seq(
             (Some(1),1,1),
@@ -111,19 +111,19 @@ class SchemaTestTest extends AnyFlatSpec with Matchers with MockFactory with Loc
         (mapping.identifier _).expects().returns(MappingIdentifier("project/mapping"))
         (mapping.execute _).expects(*,*).returns(Map("main" -> otherDf))
 
-        val test1 = ForeignKeySchemaTest(None, mapping=Some(MappingOutputIdentifier("mapping")), columns=Seq("_1"))
+        val test1 = ForeignKeySchemaCheck(None, mapping=Some(MappingOutputIdentifier("mapping")), columns=Seq("_1"))
         val result1 = testExecutor.execute(execution, context, df, test1)
-        result1 should be (Some(TestResult(Some(test1.reference), TestStatus.FAILED, description=Some("1 records passed, 1 records failed"))))
+        result1 should be (Some(CheckResult(Some(test1.reference), CheckStatus.FAILED, description=Some("1 records passed, 1 records failed"))))
 
-        val test2 = ForeignKeySchemaTest(None, mapping=Some(MappingOutputIdentifier("mapping")), columns=Seq("_3"), references=Seq("_2"))
+        val test2 = ForeignKeySchemaCheck(None, mapping=Some(MappingOutputIdentifier("mapping")), columns=Seq("_3"), references=Seq("_2"))
         val result2 = testExecutor.execute(execution, context, df, test2)
-        result2 should be (Some(TestResult(Some(test1.reference), TestStatus.FAILED, description=Some("1 records passed, 1 records failed"))))
+        result2 should be (Some(CheckResult(Some(test1.reference), CheckStatus.FAILED, description=Some("1 records passed, 1 records failed"))))
 
-        val test3 = ForeignKeySchemaTest(None, mapping=Some(MappingOutputIdentifier("mapping")), columns=Seq("_2"))
+        val test3 = ForeignKeySchemaCheck(None, mapping=Some(MappingOutputIdentifier("mapping")), columns=Seq("_2"))
         val result3 = testExecutor.execute(execution, context, df, test3)
-        result3 should be (Some(TestResult(Some(test3.reference), TestStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
+        result3 should be (Some(CheckResult(Some(test3.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
 
-        val test4 = ForeignKeySchemaTest(None, mapping=Some(MappingOutputIdentifier("mapping")), columns=Seq("_2"), references=Seq("_3"))
+        val test4 = ForeignKeySchemaCheck(None, mapping=Some(MappingOutputIdentifier("mapping")), columns=Seq("_2"), references=Seq("_3"))
         an[Exception] should be thrownBy(testExecutor.execute(execution, context, df, test4))
     }
 }

@@ -24,9 +24,9 @@ import com.dimajix.flowman.spec.assertion.AssertionSpec
 import com.dimajix.flowman.spec.catalog.CatalogSpec
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.dataset.DatasetSpec
-import com.dimajix.flowman.spec.documentation.ColumnTestSpec
+import com.dimajix.flowman.spec.documentation.ColumnCheckSpec
 import com.dimajix.flowman.spec.documentation.GeneratorSpec
-import com.dimajix.flowman.spec.documentation.SchemaTestSpec
+import com.dimajix.flowman.spec.documentation.SchemaCheckSpec
 import com.dimajix.flowman.spec.history.HistorySpec
 import com.dimajix.flowman.spec.mapping.MappingSpec
 import com.dimajix.flowman.spec.measure.MeasureSpec
@@ -71,8 +71,8 @@ object ObjectMapper extends CoreObjectMapper {
             val metricSinkTypes = MetricSinkSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
             val parcelTypes = ParcelSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
             val generatorTypes = GeneratorSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-            val columnTestTypes = ColumnTestSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-            val schemaTestTypes = SchemaTestSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val columnTestTypes = ColumnCheckSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val schemaTestTypes = SchemaCheckSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
             val mapper = super.mapper
             mapper.registerSubtypes(stateStoreTypes: _*)
             mapper.registerSubtypes(catalogTypes: _*)

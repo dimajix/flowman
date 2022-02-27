@@ -26,7 +26,7 @@ import com.dimajix.flowman.execution.Context
 class SchemaDocSpec {
     @JsonProperty(value="description", required=false) private var description:Option[String] = None
     @JsonProperty(value="columns", required=false) private var columns:Seq[ColumnDocSpec] = Seq()
-    @JsonProperty(value="tests", required=false) private var tests:Seq[SchemaTestSpec] = Seq()
+    @JsonProperty(value="checks", required=false) private var checks:Seq[SchemaCheckSpec] = Seq()
 
     def instantiate(context: Context, parent:Reference): SchemaDoc = {
         val doc = SchemaDoc(
@@ -36,10 +36,10 @@ class SchemaDocSpec {
         val ref = doc.reference
 
         val cols = columns.map(_.instantiate(context, ref))
-        val tests = this.tests.map(_.instantiate(context, ref))
+        val tests = this.checks.map(_.instantiate(context, ref))
         doc.copy(
             columns = cols,
-            tests = tests
+            checks = tests
         )
     }
 }

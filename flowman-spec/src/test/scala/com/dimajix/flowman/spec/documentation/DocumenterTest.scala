@@ -34,7 +34,7 @@ class DocumenterTest extends AnyFlatSpec with Matchers {
               |  # Collect documentation of build targets
               |  - kind: targets
               |  # Execute all tests
-              |  - kind: tests
+              |  - kind: checks
               |
               |generators:
               |  # Create an output file in the project directory

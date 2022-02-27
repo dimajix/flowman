@@ -28,6 +28,7 @@ final case class ReferenceWrapper(reference:Reference) {
     def getKind() : String = reference.kind
     def getSql() : String = reference match {
         case m:MappingReference => m.sql
+        case m:MappingOutputReference => m.sql
         case m:RelationReference => m.sql
         case m:ColumnReference => m.sql
         case m:SchemaReference => m.sql
@@ -43,7 +44,7 @@ class FragmentWrapper(fragment:Fragment) {
 }
 
 
-final case class TestResultWrapper(result:TestResult) extends FragmentWrapper(result) {
+final case class CheckResultWrapper(result:CheckResult) extends FragmentWrapper(result) {
     override def toString: String = result.status.toString
 
     def getStatus() : String = result.status.toString
@@ -52,14 +53,14 @@ final case class TestResultWrapper(result:TestResult) extends FragmentWrapper(re
 }
 
 
-final case class ColumnTestWrapper(test:ColumnTest) extends FragmentWrapper(test) {
-    override def toString: String = test.name
+final case class ColumnCheckWrapper(check:ColumnCheck) extends FragmentWrapper(check) {
+    override def toString: String = check.name
 
-    def getName() : String = test.name
-    def getResult() : TestResultWrapper = test.result.map(TestResultWrapper).orNull
-    def getStatus() : String = test.result.map(_.status.toString).getOrElse("NOT_RUN")
-    def getSuccess() : Boolean = test.result.exists(_.success)
-    def getFailure() : Boolean = test.result.exists(_.failure)
+    def getName() : String = check.name
+    def getResult() : CheckResultWrapper = check.result.map(CheckResultWrapper).orNull
+    def getStatus() : String = check.result.map(_.status.toString).getOrElse("NOT_RUN")
+    def getSuccess() : Boolean = check.result.exists(_.success)
+    def getFailure() : Boolean = check.result.exists(_.failure)
 }
 
 
@@ -73,24 +74,24 @@ final case class ColumnDocWrapper(column:ColumnDoc) extends FragmentWrapper(colu
     def getSparkType() : String = column.sparkType
     def getCatalogType() : String = column.catalogType
     def getColumns() : java.util.List[ColumnDocWrapper] = column.children.map(ColumnDocWrapper).asJava
-    def getTests() : java.util.List[ColumnTestWrapper] = column.tests.map(ColumnTestWrapper).asJava
+    def getChecks() : java.util.List[ColumnCheckWrapper] = column.checks.map(ColumnCheckWrapper).asJava
 }
 
 
-final case class SchemaTestWrapper(test:SchemaTest) extends FragmentWrapper(test) {
-    override def toString: String = test.name
+final case class SchemaCheckWrapper(check:SchemaCheck) extends FragmentWrapper(check) {
+    override def toString: String = check.name
 
-    def getName() : String = test.name
-    def getResult() : TestResultWrapper = test.result.map(TestResultWrapper).orNull
-    def getStatus() : String = test.result.map(_.status.toString).getOrElse("NOT_RUN")
-    def getSuccess() : Boolean = test.result.exists(_.success)
-    def getFailure() : Boolean = test.result.exists(_.failure)
+    def getName() : String = check.name
+    def getResult() : CheckResultWrapper = check.result.map(CheckResultWrapper).orNull
+    def getStatus() : String = check.result.map(_.status.toString).getOrElse("NOT_RUN")
+    def getSuccess() : Boolean = check.result.exists(_.success)
+    def getFailure() : Boolean = check.result.exists(_.failure)
 }
 
 
 final case class SchemaDocWrapper(schema:SchemaDoc)  extends FragmentWrapper(schema) {
     def getColumns() : java.util.List[ColumnDocWrapper] = schema.columns.map(ColumnDocWrapper).asJava
-    def getTests() : java.util.List[SchemaTestWrapper] = schema.tests.map(SchemaTestWrapper).asJava
+    def getChecks() : java.util.List[SchemaCheckWrapper] = schema.checks.map(SchemaCheckWrapper).asJava
 }
 
 
@@ -165,9 +166,10 @@ final case class ProjectDocWrapper(project:ProjectDoc) extends FragmentWrapper(p
             case t:TargetDoc => TargetDocWrapper(t)
             case p:TargetPhaseDoc => TargetPhaseDocWrapper(p)
             case s:SchemaDoc => SchemaDocWrapper(s)
-            case t:TestResult => TestResultWrapper(t)
+            case s:SchemaCheck => SchemaCheckWrapper(s)
+            case t:CheckResult => CheckResultWrapper(t)
             case c:ColumnDoc => ColumnDocWrapper(c)
-            case t:ColumnTest => ColumnTestWrapper(t)
+            case t:ColumnCheck => ColumnCheckWrapper(t)
             case f:Fragment => new FragmentWrapper(f)
         }.orNull
     }

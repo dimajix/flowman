@@ -84,16 +84,16 @@ final case class SchemaDoc(
     parent:Option[Reference],
     description:Option[String] = None,
     columns:Seq[ColumnDoc] = Seq(),
-    tests:Seq[SchemaTest] = Seq()
+    checks:Seq[SchemaCheck] = Seq()
 ) extends EntityDoc {
     override def reference: SchemaReference = SchemaReference(parent)
-    override def fragments: Seq[Fragment] = columns ++ tests
+    override def fragments: Seq[Fragment] = columns ++ checks
     override def reparent(parent: Reference): SchemaDoc = {
         val ref = SchemaReference(Some(parent))
         copy(
             parent = Some(parent),
             columns = columns.map(_.reparent(ref)),
-            tests = tests.map(_.reparent(ref))
+            checks = checks.map(_.reparent(ref))
         )
     }
 
@@ -118,9 +118,9 @@ final case class SchemaDoc(
      */
     def merge(other:SchemaDoc) : SchemaDoc = {
         val desc = other.description.orElse(this.description)
-        val tsts = tests ++ other.tests
+        val tsts = checks ++ other.checks
         val cols = ColumnDoc.merge(columns, other.columns)
-        val result = copy(description=desc, columns=cols, tests=tsts)
+        val result = copy(description=desc, columns=cols, checks=tsts)
         parent.orElse(other.parent)
             .map(result.reparent)
             .getOrElse(result)

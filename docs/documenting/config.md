@@ -15,8 +15,8 @@ collectors:
   - kind: mappings
   # Collect documentation of build targets
   - kind: targets
-  # Execute all tests
-  - kind: tests
+  # Execute all checks
+  - kind: checks
 
 generators:
   # Create an output file in the project directory
@@ -34,9 +34,10 @@ generators:
 ## Collectors
 
 Flowman uses so called *collectors* which create an internal model of the documentation from the core entities like
-relations, mappings and build targets. The default configuration uses the three collectors `relations`, `mappings` 
-and `targets`, with each of them being responsible for one entity type. If you really do not require documentation
-for one of these targets, you may want to simply remove the corresponding collector from that list.
+relations, mappings and build targets. The default configuration uses the four collectors `relations`, `mappings`, 
+`targets` and `checks`, with each of them being responsible for one entity type and the last one will execute all
+data quality checks. If you really do not require documentation for one of these targets, you may want to simply 
+remove the corresponding collector from that list.
 
 
 ## File Generator Fields

@@ -19,7 +19,7 @@ package com.dimajix.flowman.spec.documentation
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.documentation.NotNullColumnTest
+import com.dimajix.flowman.documentation.NotNullColumnCheck
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.spec.ObjectMapper
 
@@ -32,7 +32,7 @@ class RelationDocTest extends AnyFlatSpec with Matchers {
               |columns:
               |  - name: col_a
               |    description: "This is column a"
-              |    tests:
+              |    checks:
               |      - kind: notNull
               |  - name: col_x
               |    description: "Column of other output"
@@ -51,11 +51,11 @@ class RelationDocTest extends AnyFlatSpec with Matchers {
         mainSchema.columns.size should be (2)
         mainSchema.columns(0).name should be ("col_a")
         mainSchema.columns(0).description should be (Some("This is column a"))
-        mainSchema.columns(0).tests.size should be (1)
-        mainSchema.columns(0).tests(0) shouldBe a[NotNullColumnTest]
+        mainSchema.columns(0).checks.size should be (1)
+        mainSchema.columns(0).checks(0) shouldBe a[NotNullColumnCheck]
         mainSchema.columns(1).name should be ("col_x")
         mainSchema.columns(1).description should be (Some("Column of other output"))
-        mainSchema.columns(1).tests.size should be (0)
-        mainSchema.tests.size should be (0)
+        mainSchema.columns(1).checks.size should be (0)
+        mainSchema.checks.size should be (0)
     }
 }

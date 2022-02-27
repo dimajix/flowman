@@ -22,11 +22,11 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
 
 
-class TestCollector extends Collector {
+class CheckCollector extends Collector {
     private val logger = LoggerFactory.getLogger(getClass)
 
     /**
-     * This will execute all tests and change the documentation accordingly
+     * This will execute all checks and change the documentation accordingly
      * @param execution
      * @param graph
      * @param documentation
@@ -34,7 +34,7 @@ class TestCollector extends Collector {
      */
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
         val resolver = new ReferenceResolver(graph)
-        val executor = new TestExecutor(execution)
+        val executor = new CheckExecutor(execution)
         val mappings = documentation.mappings.map { m =>
             resolver.resolve(m.reference) match {
                 case None =>

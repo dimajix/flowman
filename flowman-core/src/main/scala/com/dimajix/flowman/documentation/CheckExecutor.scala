@@ -26,17 +26,17 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Relation
-import com.dimajix.flowman.spi.ColumnTestExecutor
-import com.dimajix.flowman.spi.SchemaTestExecutor
+import com.dimajix.flowman.spi.ColumnCheckExecutor
+import com.dimajix.flowman.spi.SchemaCheckExecutor
 
 
-class TestExecutor(execution: Execution) {
+class CheckExecutor(execution: Execution) {
     private val logger = LoggerFactory.getLogger(getClass)
-    private val columnTestExecutors = ColumnTestExecutor.executors
-    private val schemaTestExecutors = SchemaTestExecutor.executors
+    private val columnTestExecutors = ColumnCheckExecutor.executors
+    private val schemaTestExecutors = SchemaCheckExecutor.executors
 
     /**
-     * Executes all tests for a relation as defined within the documentation
+     * Executes all checks for a relation as defined within the documentation
      * @param relation
      * @param doc
      * @return
@@ -44,13 +44,13 @@ class TestExecutor(execution: Execution) {
     def executeTests(relation:Relation, doc:RelationDoc) : RelationDoc = {
         val schemaDoc = doc.schema.map { schema =>
             if (containsTests(schema)) {
-                logger.info(s"Conducting tests on relation '${relation.identifier}'")
+                logger.info(s"Conducting checks on relation '${relation.identifier}'")
                 try {
                     val df = relation.read(execution, doc.partitions)
                     runSchemaTests(relation.context, df, schema)
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Error executing tests for relation '${relation.identifier}': ${reasons(ex)}")
+                        logger.warn(s"Error executing checks for relation '${relation.identifier}': ${reasons(ex)}")
                         failSchemaTests(schema)
                 }
             }
@@ -62,7 +62,7 @@ class TestExecutor(execution: Execution) {
     }
 
     /**
-     * Executes all tests for a mapping as defined within the documentation
+     * Executes all checks for a mapping as defined within the documentation
      * @param relation
      * @param doc
      * @return
@@ -71,13 +71,13 @@ class TestExecutor(execution: Execution) {
         val outputs = doc.outputs.map { output =>
             val schema = output.schema.map { schema =>
                 if (containsTests(schema)) {
-                    logger.info(s"Conducting tests on mapping '${mapping.identifier}'")
+                    logger.info(s"Conducting checks on mapping '${mapping.identifier}'")
                     try {
                         val df = execution.instantiate(mapping, output.name)
                         runSchemaTests(mapping.context, df, schema)
                     } catch {
                         case NonFatal(ex) =>
-                            logger.warn(s"Error executing tests for mapping '${mapping.identifier}': ${reasons(ex)}")
+                            logger.warn(s"Error executing checks for mapping '${mapping.identifier}': ${reasons(ex)}")
                             failSchemaTests(schema)
                     }
                 }
@@ -91,35 +91,35 @@ class TestExecutor(execution: Execution) {
     }
 
     private def containsTests(doc:SchemaDoc) : Boolean = {
-        doc.tests.nonEmpty || containsTests(doc.columns)
+        doc.checks.nonEmpty || containsTests(doc.columns)
     }
     private def containsTests(docs:Seq[ColumnDoc]) : Boolean = {
-        docs.exists(col => col.tests.nonEmpty || containsTests(col.children))
+        docs.exists(col => col.checks.nonEmpty || containsTests(col.children))
     }
 
     private def failSchemaTests(schema:SchemaDoc) : SchemaDoc = {
         val columns = failColumnTests(schema.columns)
-        val tests = schema.tests.map { test =>
-            val result = TestResult(Some(test.reference), status = TestStatus.ERROR)
+        val tests = schema.checks.map { test =>
+            val result = CheckResult(Some(test.reference), status = CheckStatus.ERROR)
             test.withResult(result)
         }
-        schema.copy(columns=columns, tests=tests)
+        schema.copy(columns=columns, checks=tests)
     }
     private def failColumnTests(columns:Seq[ColumnDoc]) : Seq[ColumnDoc] = {
         columns.map(col => failColumnTests(col))
     }
     private def failColumnTests(column:ColumnDoc) : ColumnDoc = {
-        val tests = column.tests.map { test =>
-            val result = TestResult(Some(test.reference), status = TestStatus.ERROR)
+        val tests = column.checks.map { test =>
+            val result = CheckResult(Some(test.reference), status = CheckStatus.ERROR)
             test.withResult(result)
         }
         val children = failColumnTests(column.children)
-        column.copy(children=children, tests=tests)
+        column.copy(children=children, checks=tests)
     }
 
     private def runSchemaTests(context:Context, df:DataFrame, schema:SchemaDoc) : SchemaDoc = {
         val columns = runColumnTests(context, df, schema.columns)
-        val tests = schema.tests.map { test =>
+        val tests = schema.checks.map { test =>
             logger.info(s" - Executing schema test '${test.name}'")
             val result =
                 try {
@@ -127,27 +127,27 @@ class TestExecutor(execution: Execution) {
                     result match {
                         case None =>
                             logger.warn(s"Could not find appropriate test executor for testing schema")
-                            TestResult(Some(test.reference), status = TestStatus.NOT_RUN)
+                            CheckResult(Some(test.reference), status = CheckStatus.NOT_RUN)
                         case Some(result) =>
                             result.reparent(test.reference)
                     }
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Error executing column test: ${reasons(ex)}")
-                        TestResult(Some(test.reference), status = TestStatus.ERROR)
+                        CheckResult(Some(test.reference), status = CheckStatus.ERROR)
 
                 }
             test.withResult(result)
         }
 
-        schema.copy(columns=columns, tests=tests)
+        schema.copy(columns=columns, checks=tests)
     }
     private def runColumnTests(context:Context, df:DataFrame, columns:Seq[ColumnDoc], path:String = "") : Seq[ColumnDoc] = {
         columns.map(col => runColumnTests(context, df, col, path))
     }
     private def runColumnTests(context:Context, df:DataFrame, column:ColumnDoc, path:String) : ColumnDoc = {
         val columnPath = path + column.name
-        val tests = column.tests.map { test =>
+        val tests = column.checks.map { test =>
             logger.info(s" - Executing test '${test.name}' on column ${columnPath}")
             val result =
                 try {
@@ -155,19 +155,19 @@ class TestExecutor(execution: Execution) {
                     result match {
                         case None =>
                             logger.warn(s"Could not find appropriate test executor for testing column $columnPath")
-                            TestResult(Some(test.reference), status = TestStatus.NOT_RUN)
+                            CheckResult(Some(test.reference), status = CheckStatus.NOT_RUN)
                         case Some(result) =>
                             result.reparent(test.reference)
                     }
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Error executing column test: ${reasons(ex)}")
-                        TestResult(Some(test.reference), status = TestStatus.ERROR)
+                        CheckResult(Some(test.reference), status = CheckStatus.ERROR)
 
                 }
             test.withResult(result)
         }
         val children = runColumnTests(context, df, column.children, path + column.name + ".")
-        column.copy(children=children, tests=tests)
+        column.copy(children=children, checks=tests)
     }
 }

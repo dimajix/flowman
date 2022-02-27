@@ -59,7 +59,7 @@ final case class ColumnDoc(
     parent:Option[Reference],
     field:Field,
     children:Seq[ColumnDoc] = Seq(),
-    tests:Seq[ColumnTest] = Seq()
+    checks:Seq[ColumnCheck] = Seq()
 ) extends EntityDoc {
     override def reference: ColumnReference = ColumnReference(parent, name)
     override def fragments: Seq[Fragment] = children
@@ -68,7 +68,7 @@ final case class ColumnDoc(
         copy(
             parent = Some(parent),
             children = children.map(_.reparent(ref)),
-            tests = tests.map(_.reparent(ref))
+            checks = checks.map(_.reparent(ref))
         )
     }
 
@@ -101,11 +101,11 @@ final case class ColumnDoc(
             else
                 this.children ++ other.children
         val desc = other.description.orElse(description)
-        val tsts = tests ++ other.tests
+        val tsts = checks ++ other.checks
         val ftyp = if (field.ftype == NullType) other.field.ftype else field.ftype
         val nll = if (field.ftype == NullType) other.field.nullable else field.nullable
         val fld = field.copy(ftype=ftyp, nullable=nll, description=desc)
-        copy(field=fld, children=childs, tests=tsts)
+        copy(field=fld, children=childs, checks=tsts)
     }
 
     /**

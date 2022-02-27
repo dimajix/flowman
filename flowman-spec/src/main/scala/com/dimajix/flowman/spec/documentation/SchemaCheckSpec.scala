@@ -21,64 +21,64 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.common.TypeRegistry
-import com.dimajix.flowman.documentation.ExpressionSchemaTest
-import com.dimajix.flowman.documentation.ForeignKeySchemaTest
-import com.dimajix.flowman.documentation.PrimaryKeySchemaTest
+import com.dimajix.flowman.documentation.ExpressionSchemaCheck
+import com.dimajix.flowman.documentation.ForeignKeySchemaCheck
+import com.dimajix.flowman.documentation.PrimaryKeySchemaCheck
 import com.dimajix.flowman.documentation.SchemaReference
-import com.dimajix.flowman.documentation.SchemaTest
+import com.dimajix.flowman.documentation.SchemaCheck
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
-import com.dimajix.flowman.spec.annotation.SchemaTestType
+import com.dimajix.flowman.spec.annotation.SchemaCheckType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
-object SchemaTestSpec extends TypeRegistry[SchemaTestSpec] {
+object SchemaCheckSpec extends TypeRegistry[SchemaCheckSpec] {
 }
 
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "expression", value = classOf[ExpressionSchemaTestSpec]),
-    new JsonSubTypes.Type(name = "foreignKey", value = classOf[ForeignKeySchemaTestSpec]),
-    new JsonSubTypes.Type(name = "primaryKey", value = classOf[PrimaryKeySchemaTestSpec])
+    new JsonSubTypes.Type(name = "expression", value = classOf[ExpressionSchemaCheckSpec]),
+    new JsonSubTypes.Type(name = "foreignKey", value = classOf[ForeignKeySchemaCheckSpec]),
+    new JsonSubTypes.Type(name = "primaryKey", value = classOf[PrimaryKeySchemaCheckSpec])
 ))
-abstract class SchemaTestSpec {
-    def instantiate(context: Context, parent:SchemaReference): SchemaTest
+abstract class SchemaCheckSpec {
+    def instantiate(context: Context, parent:SchemaReference): SchemaCheck
 }
 
 
-class SchemaTestSpecAnnotationHandler extends ClassAnnotationHandler {
-    override def annotation: Class[_] = classOf[SchemaTestType]
+class SchemaCheckSpecAnnotationHandler extends ClassAnnotationHandler {
+    override def annotation: Class[_] = classOf[SchemaCheckType]
 
     override def register(clazz: Class[_]): Unit =
-        SchemaTestSpec.register(clazz.getAnnotation(classOf[SchemaTestType]).kind(), clazz.asInstanceOf[Class[_ <: SchemaTestSpec]])
+        SchemaCheckSpec.register(clazz.getAnnotation(classOf[SchemaCheckType]).kind(), clazz.asInstanceOf[Class[_ <: SchemaCheckSpec]])
 }
 
 
-class PrimaryKeySchemaTestSpec extends SchemaTestSpec {
+class PrimaryKeySchemaCheckSpec extends SchemaCheckSpec {
     @JsonProperty(value="columns", required=false) private var columns:Seq[String] = Seq.empty
 
-    override def instantiate(context: Context, parent:SchemaReference): PrimaryKeySchemaTest = PrimaryKeySchemaTest(
+    override def instantiate(context: Context, parent:SchemaReference): PrimaryKeySchemaCheck = PrimaryKeySchemaCheck(
         Some(parent),
         columns = columns.map(context.evaluate)
     )
 }
-class ExpressionSchemaTestSpec extends SchemaTestSpec {
+class ExpressionSchemaCheckSpec extends SchemaCheckSpec {
     @JsonProperty(value="expression", required=true) private var expression:String = _
 
-    override def instantiate(context: Context, parent:SchemaReference): ExpressionSchemaTest = ExpressionSchemaTest(
+    override def instantiate(context: Context, parent:SchemaReference): ExpressionSchemaCheck = ExpressionSchemaCheck(
         Some(parent),
         expression = context.evaluate(expression)
     )
 }
-class ForeignKeySchemaTestSpec extends SchemaTestSpec {
+class ForeignKeySchemaCheckSpec extends SchemaCheckSpec {
     @JsonProperty(value="mapping", required=false) private var mapping:Option[String] = None
     @JsonProperty(value="relation", required=false) private var relation:Option[String] = None
     @JsonProperty(value="columns", required=false) private var columns:Seq[String] = Seq.empty
     @JsonProperty(value="references", required=false) private var references:Seq[String] = Seq.empty
 
-    override def instantiate(context: Context, parent:SchemaReference): ForeignKeySchemaTest = ForeignKeySchemaTest(
+    override def instantiate(context: Context, parent:SchemaReference): ForeignKeySchemaCheck = ForeignKeySchemaCheck(
         Some(parent),
         columns=columns.map(context.evaluate),
         relation=context.evaluate(relation).map(RelationIdentifier(_)),

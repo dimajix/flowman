@@ -20,32 +20,32 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.documentation.ColumnReference
-import com.dimajix.flowman.documentation.ExpressionColumnTest
-import com.dimajix.flowman.documentation.RangeColumnTest
-import com.dimajix.flowman.documentation.UniqueColumnTest
-import com.dimajix.flowman.documentation.ValuesColumnTest
+import com.dimajix.flowman.documentation.ExpressionColumnCheck
+import com.dimajix.flowman.documentation.RangeColumnCheck
+import com.dimajix.flowman.documentation.UniqueColumnCheck
+import com.dimajix.flowman.documentation.ValuesColumnCheck
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.spec.ObjectMapper
 
 
-class ColumnTestTest extends AnyFlatSpec with Matchers {
-    "A ColumnTest" should "be deserializable" in {
+class ColumnCheckTest extends AnyFlatSpec with Matchers {
+    "A ColumnCheck" should "be deserializable" in {
         val yaml =
             """
               |kind: unique
             """.stripMargin
 
-        val spec = ObjectMapper.parse[ColumnTestSpec](yaml)
-        spec shouldBe a[UniqueColumnTestSpec]
+        val spec = ObjectMapper.parse[ColumnCheckSpec](yaml)
+        spec shouldBe a[UniqueColumnCheckSpec]
 
         val context = RootContext.builder().build()
         val test = spec.instantiate(context, ColumnReference(None, "col0"))
-        test should be (UniqueColumnTest(
+        test should be (UniqueColumnCheck(
             Some(ColumnReference(None, "col0"))
         ))
     }
 
-    "A RangeColumnTest" should "be deserializable" in {
+    "A RangeColumnCheck" should "be deserializable" in {
         val yaml =
             """
               |kind: range
@@ -53,49 +53,49 @@ class ColumnTestTest extends AnyFlatSpec with Matchers {
               |upper: 23
             """.stripMargin
 
-        val spec = ObjectMapper.parse[ColumnTestSpec](yaml)
-        spec shouldBe a[RangeColumnTestSpec]
+        val spec = ObjectMapper.parse[ColumnCheckSpec](yaml)
+        spec shouldBe a[RangeColumnCheckSpec]
 
         val context = RootContext.builder().build()
         val test = spec.instantiate(context, ColumnReference(None, "col0"))
-        test should be (RangeColumnTest(
+        test should be (RangeColumnCheck(
             Some(ColumnReference(None, "col0")),
             lower="7",
             upper="23"
         ))
     }
 
-    "A ValuesColumnTest" should "be deserializable" in {
+    "A ValuesColumnCheck" should "be deserializable" in {
         val yaml =
             """
               |kind: values
               |values: ['a', 12, null]
             """.stripMargin
 
-        val spec = ObjectMapper.parse[ColumnTestSpec](yaml)
-        spec shouldBe a[ValuesColumnTestSpec]
+        val spec = ObjectMapper.parse[ColumnCheckSpec](yaml)
+        spec shouldBe a[ValuesColumnCheckSpec]
 
         val context = RootContext.builder().build()
         val test = spec.instantiate(context, ColumnReference(None, "col0"))
-        test should be (ValuesColumnTest(
+        test should be (ValuesColumnCheck(
             Some(ColumnReference(None, "col0")),
             values = Seq("a", "12", null)
         ))
     }
 
-    "A ExpressionColumnTest" should "be deserializable" in {
+    "A ExpressionColumnCheck" should "be deserializable" in {
         val yaml =
             """
               |kind: expression
               |expression: "col1 < col2"
             """.stripMargin
 
-        val spec = ObjectMapper.parse[ColumnTestSpec](yaml)
-        spec shouldBe a[ExpressionColumnTestSpec]
+        val spec = ObjectMapper.parse[ColumnCheckSpec](yaml)
+        spec shouldBe a[ExpressionColumnCheckSpec]
 
         val context = RootContext.builder().build()
         val test = spec.instantiate(context, ColumnReference(None, "col0"))
-        test should be (ExpressionColumnTest(
+        test should be (ExpressionColumnCheck(
             Some(ColumnReference(None, "col0")),
             expression = "col1 < col2"
         ))

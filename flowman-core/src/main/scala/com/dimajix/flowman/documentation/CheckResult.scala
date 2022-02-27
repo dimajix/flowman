@@ -17,29 +17,29 @@
 package com.dimajix.flowman.documentation
 
 
-sealed abstract class TestStatus extends Product with Serializable {
+sealed abstract class CheckStatus extends Product with Serializable {
     def success : Boolean
     def failure : Boolean
     def run : Boolean
 }
 
-object TestStatus {
-    final case object FAILED extends TestStatus {
+object CheckStatus {
+    final case object FAILED extends CheckStatus {
         def success : Boolean = false
         def failure : Boolean = true
         def run : Boolean = true
     }
-    final case object SUCCESS extends TestStatus {
+    final case object SUCCESS extends CheckStatus {
         def success : Boolean = true
         def failure : Boolean = false
         def run : Boolean = true
     }
-    final case object ERROR extends TestStatus {
+    final case object ERROR extends CheckStatus {
         def success : Boolean = false
         def failure : Boolean = true
         def run : Boolean = true
     }
-    final case object NOT_RUN extends TestStatus {
+    final case object NOT_RUN extends CheckStatus {
         def success : Boolean = false
         def failure : Boolean = false
         def run : Boolean = false
@@ -47,7 +47,7 @@ object TestStatus {
 }
 
 
-final case class TestResultReference(
+final case class CheckResultReference(
     parent:Option[Reference]
 ) extends Reference {
     override def toString: String = {
@@ -56,21 +56,21 @@ final case class TestResultReference(
             case None => ""
         }
     }
-    override def kind : String = "test_result"
+    override def kind : String = "check_result"
 }
 
 
-final case class TestResult(
+final case class CheckResult(
     parent:Some[Reference],
-    status:TestStatus,
+    status:CheckStatus,
     description:Option[String] = None,
     details:Option[Fragment] = None
 ) extends Fragment {
-    override def reference: TestResultReference = TestResultReference(parent)
+    override def reference: CheckResultReference = CheckResultReference(parent)
     override def fragments: Seq[Fragment] = details.toSeq
 
-    override def reparent(parent:Reference) : TestResult = {
-        val ref = TestResultReference(Some(parent))
+    override def reparent(parent:Reference) : CheckResult = {
+        val ref = CheckResultReference(Some(parent))
         copy(
             parent = Some(parent),
             details = details.map(_.reparent(ref))

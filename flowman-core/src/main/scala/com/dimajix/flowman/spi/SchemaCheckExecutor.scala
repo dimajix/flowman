@@ -22,29 +22,19 @@ import scala.collection.JavaConverters._
 
 import org.apache.spark.sql.DataFrame
 
-import com.dimajix.flowman.documentation.ColumnTest
-import com.dimajix.flowman.documentation.TestResult
+import com.dimajix.flowman.documentation.SchemaCheck
+import com.dimajix.flowman.documentation.CheckResult
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.graph.Graph
 
 
-object ColumnTestExecutor {
-    def executors : Seq[ColumnTestExecutor] = {
-        val loader = ServiceLoader.load(classOf[ColumnTestExecutor])
+object SchemaCheckExecutor {
+    def executors : Seq[SchemaCheckExecutor] = {
+        val loader = ServiceLoader.load(classOf[SchemaCheckExecutor])
         loader.iterator().asScala.toSeq
     }
 }
 
-trait ColumnTestExecutor {
-    /**
-     * Executes a column test
-     * @param execution - execution to use
-     * @param context - context that can be used for resource lookups like relations or mappings
-     * @param df - DataFrame containing the output to test
-     * @param column - Path of the column to test
-     * @param test - Test to execute
-     * @return
-     */
-    def execute(execution: Execution, context:Context, df: DataFrame, column:String, test: ColumnTest): Option[TestResult]
+trait SchemaCheckExecutor {
+    def execute(execution: Execution, context:Context, df:DataFrame, test:SchemaCheck) : Option[CheckResult]
 }

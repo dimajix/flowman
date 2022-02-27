@@ -41,17 +41,17 @@
             border-left: none;
         }
 
-        table.columnTests {
+        table.columnChecks {
             width: 100%;
         }
-        table.columnTests tbody td {
+        table.columnChecks tbody td {
             font-size: 12px;
             border-width: 0;
         }
-        table.columnTests tr {
+        table.columnChecks tr {
             background: transparent;
         }
-        table.columnTests tr:nth-child(even) {
+        table.columnChecks tr:nth-child(even) {
             background: transparent;
         }
 
@@ -148,8 +148,8 @@
 </head>
 
 
-#macro(testStatus $test)
-#if(${test.success})<span class="success">#elseif(${test.failure})<span class="failure">#else<span>#end${test.status}</span>
+#macro(testStatus $check)
+#if(${check.success})<span class="success">#elseif(${check.failure})<span class="failure">#else<span>#end${check.status}</span>
 #end
 
 #macro(schema $schema)
@@ -160,7 +160,7 @@
         <td>Data Type</td>
         <td>Constraints</td>
         <td>Description</td>
-        <td>Tests</td>
+        <td>Quality Checks</td>
     </tr>
     </thead>
     <tbody>
@@ -172,12 +172,12 @@
             <td class="dataType">#if(!$column.nullable) NOT NULL #end</td>
             <td>${column.description}</td>
             <td>
-                <table class="columnTests">
-                #foreach($test in ${column.tests})
+                <table class="columnChecks">
+                #foreach($check in ${column.checks})
                     <tr>
-                        <td>${test.name}</td>
-                        <td>#testStatus($test)</td>
-                        <td>#if(${test.result})${test.result.description}#end</td>
+                        <td>${check.name}</td>
+                        <td>#testStatus($check)</td>
+                        <td>#if(${check.result})${check.result.description}#end</td>
                     </tr>
                 #end
                 </table>
@@ -187,21 +187,21 @@
     #end
     </tbody>
 </table>
-#if($schema.tests)
+#if($schema.checks)
 <table class="blueTable">
     <thead>
     <tr>
-        <td>Schema Test</td>
+        <td>Quality Check</td>
         <td>Result</td>
         <td>Remarks</td>
     </tr>
     </thead>
     <tbody>
-    #foreach($test in ${schema.tests})
+    #foreach($check in ${schema.checks})
     <tr>
-        <td>${test.name}</td>
-        <td>#testStatus($test)</td>
-        <td>#if(${test.result})${test.result.description}#end</td>
+        <td>${check.name}</td>
+        <td>#testStatus($check)</td>
+        <td>#if(${check.result})${check.result.description}#end</td>
     </tr>
     #end
     </tbody>

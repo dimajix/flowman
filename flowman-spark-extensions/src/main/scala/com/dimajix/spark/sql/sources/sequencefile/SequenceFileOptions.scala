@@ -93,7 +93,7 @@ object WritableConverter {
             case StringType => WritableConverter(
                 classOf[Text],
                 classOf[String],
-                (w:Writable) => UTF8String.fromBytes(w.asInstanceOf[Text].getBytes),
+                (w:Writable) => UTF8String.fromBytes(w.asInstanceOf[Text].copyBytes()),
                 (row:InternalRow) => if (row.isNullAt(idx)) new Text() else  new Text(row.getString(idx)),
                 () => new Text()
             )

@@ -16,8 +16,7 @@
 
 package com.dimajix.flowman.dsl.relation
 
-import org.apache.spark.sql.catalyst.TableIdentifier
-
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.dsl.RelationGen
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.PartitionField

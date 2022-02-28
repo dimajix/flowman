@@ -24,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkShim
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
@@ -50,6 +49,7 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -465,7 +465,7 @@ case class HiveTableRelation(
 
             // Configure catalog table by assembling all options
             val catalogTable = CatalogTable(
-                identifier = table,
+                identifier = table.toSpark,
                 tableType =
                     if (external)
                         CatalogTableType.EXTERNAL
@@ -697,7 +697,7 @@ class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
             instanceProperties(context),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
-            TableIdentifier(context.evaluate(table), context.evaluate(database)),
+            TableIdentifier(context.evaluate(table), context.evaluate(database).toSeq),
             context.evaluate(external).toBoolean,
             context.evaluate(location).map(p => new Path(p)),
             context.evaluate(format),

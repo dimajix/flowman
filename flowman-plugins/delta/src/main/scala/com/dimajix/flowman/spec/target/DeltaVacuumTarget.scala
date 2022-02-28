@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,9 @@ import java.time.Duration
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.delta.tables.DeltaTable
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.delta.DeltaLog
 import org.apache.spark.sql.functions
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.functions.count
 import org.apache.spark.sql.functions.lit
 import org.slf4j.LoggerFactory
 
@@ -127,7 +125,7 @@ case class DeltaVacuumTarget(
     private def compact(deltaTable:DeltaTable) : Unit = {
         val spark = deltaTable.toDF.sparkSession
         val deltaLog = relation.value match {
-            case table:DeltaTableRelation => DeltaLog.forTable(spark, table.table)
+            case table:DeltaTableRelation => DeltaLog.forTable(spark, table.table.toSpark)
             case files:DeltaFileRelation => DeltaLog.forTable(spark, files.location.toString)
             case rel:Relation => throw new IllegalArgumentException(s"DeltaVacuumTarget only supports relations of type deltaTable and deltaFiles, but it was given relation '${rel.identifier}' of kind '${rel.kind}'")
         }

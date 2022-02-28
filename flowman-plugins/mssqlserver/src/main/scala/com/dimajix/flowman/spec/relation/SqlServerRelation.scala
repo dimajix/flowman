@@ -21,11 +21,10 @@ import scala.collection.mutable
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
 import com.dimajix.flowman.catalog
-import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution

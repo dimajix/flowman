@@ -9,6 +9,7 @@
 * Implement schema cache in Executor to speed up documentation and similar tasks
 * Add new config variables `flowman.execution.mapping.schemaCache` and `flowman.execution.relation.schemaCache`
 * Add new config variable `flowman.default.target.verifyPolicy` to ignore empty tables during VERIFY phase
+* Implement initial support for indexes in JDBC relations
 
 
 # Version 0.21.2 - 2022-02-14

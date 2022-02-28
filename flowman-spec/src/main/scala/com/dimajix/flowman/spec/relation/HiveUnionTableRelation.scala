@@ -19,7 +19,6 @@ package com.dimajix.flowman.spec.relation
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
@@ -30,6 +29,7 @@ import com.dimajix.common.No
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.ExecutionException
@@ -48,7 +48,6 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.transforms.UnionTransformer
 import com.dimajix.flowman.types.FieldValue
@@ -519,7 +518,7 @@ case class HiveUnionTableRelation(
     private def doMigrateAlterTable(execution:Execution, table:CatalogTable, rawMissingFields:Seq[StructField], migrationStrategy:MigrationStrategy) : Unit = {
         doMigrate(migrationStrategy) {
             val catalog = execution.catalog
-            val id = table.identifier
+            val id = TableIdentifier.of(table.identifier)
             val targetSchema = table.dataSchema
             val missingFields = HiveTableRelation.cleanupFields(rawMissingFields)
             val newSchema = StructType(targetSchema.fields ++ missingFields)

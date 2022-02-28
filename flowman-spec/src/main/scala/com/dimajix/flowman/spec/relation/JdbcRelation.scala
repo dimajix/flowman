@@ -29,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions.Expression
@@ -43,6 +42,7 @@ import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.DeleteClause
@@ -87,9 +87,9 @@ class JdbcRelationBase(
     primaryKey: Seq[String] = Seq.empty,
     indexes: Seq[TableIndex] = Seq.empty
 ) extends BaseRelation with PartitionedRelation with SchemaRelation {
-    protected val logger : Logger = LoggerFactory.getLogger(getClass)
-    protected val tableIdentifier = table.getOrElse(TableIdentifier(""))
-    protected lazy val tableDefinition : Option[TableDefinition] = {
+    protected val logger: Logger = LoggerFactory.getLogger(getClass)
+    protected val tableIdentifier: TableIdentifier = table.getOrElse(TableIdentifier.empty)
+    protected lazy val tableDefinition: Option[TableDefinition] = {
         schema.map { schema =>
             val pk = if (primaryKey.nonEmpty) primaryKey else schema.primaryKey
 

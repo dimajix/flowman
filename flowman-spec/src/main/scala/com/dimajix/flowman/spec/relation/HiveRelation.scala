@@ -17,10 +17,10 @@
 package com.dimajix.flowman.spec.relation
 
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.slf4j.Logger
 
 import com.dimajix.common.Trilean
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionedRelation

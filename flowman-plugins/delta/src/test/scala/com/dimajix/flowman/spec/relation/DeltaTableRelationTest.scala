@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import io.delta.sql.DeltaSparkSessionExtension
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
@@ -40,6 +39,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -50,14 +50,12 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
-import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.{types => ftypes}
-import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.sql.streaming.StreamingUtils
 import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.QueryTest
@@ -139,7 +137,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // Inspect Hive table
         val table_1 = session.catalog.getTable(TableIdentifier("delta_table", Some("default")))
-        table_1.identifier should be (TableIdentifier("delta_table", Some("default")))
+        table_1.identifier should be (TableIdentifier("delta_table", Some("default")).toSpark)
         table_1.tableType should be (CatalogTableType.MANAGED)
         table_1.schema should be (StructType(Seq()))
         table_1.dataSchema should be (StructType(Seq()))
@@ -251,7 +249,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // Inspect Hive table
         val table_1 = session.catalog.getTable(TableIdentifier("delta_table2", Some("default")))
-        table_1.identifier should be (TableIdentifier("delta_table2", Some("default")))
+        table_1.identifier should be (TableIdentifier("delta_table2", Some("default")).toSpark)
         table_1.tableType should be (CatalogTableType.EXTERNAL)
         table_1.schema should be (StructType(Seq()))
         table_1.dataSchema should be (StructType(Seq()))
@@ -1264,7 +1262,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // Inspect Hive table
         val table_1 = session.catalog.getTable(TableIdentifier("delta_table", Some("default")))
-        table_1.identifier should be (TableIdentifier("delta_table", Some("default")))
+        table_1.identifier should be (TableIdentifier("delta_table", Some("default")).toSpark)
         table_1.tableType should be (CatalogTableType.MANAGED)
         table_1.schema should be (StructType(Seq()))
         table_1.dataSchema should be (StructType(Seq()))

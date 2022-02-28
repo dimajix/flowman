@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.delta.catalog.DeltaTableV2
 import org.apache.spark.sql.delta.commands.AlterTableAddColumnsDeltaCommand
 import org.apache.spark.sql.delta.commands.AlterTableChangeColumnDeltaCommand
@@ -34,6 +33,7 @@ import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.SetIgnoreCase
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
 import com.dimajix.flowman.catalog.TableChange.DropColumn
@@ -126,8 +126,8 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
         val table = deltaCatalogTable(execution)
         val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
         val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
-        val sourceTable = TableDefinition(TableIdentifier(""), sourceSchema.fields)
-        val targetTable = TableDefinition(TableIdentifier(""), targetSchema.fields)
+        val sourceTable = TableDefinition(TableIdentifier.empty, sourceSchema.fields)
+        val targetTable = TableDefinition(TableIdentifier.empty, targetSchema.fields)
 
         val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
 

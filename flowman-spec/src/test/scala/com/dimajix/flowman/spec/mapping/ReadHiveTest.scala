@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.spec.mapping
 
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
@@ -25,6 +24,7 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
@@ -58,8 +58,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         mapping shouldBe a[ReadHiveMapping]
         val rrm = mapping.asInstanceOf[ReadHiveMapping]
-        rrm.database should be (Some("default"))
-        rrm.table should be ("t0")
+        rrm.table should be (TableIdentifier("t0", Some("default")))
         rrm.filter should be (Some("landing_date > 123"))
     }
 
@@ -84,8 +83,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val mapping = ReadHiveMapping(
             Mapping.Properties(context, "readHive"),
-            Some("default"),
-            "lala_0007"
+            TableIdentifier("lala_0007", Some("default"))
         )
 
         mapping.requires should be (Set(
@@ -130,8 +128,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val mapping = ReadHiveMapping(
             Mapping.Properties(context, "readHive"),
-            Some("default"),
-            "lala_0007",
+            table = TableIdentifier("lala_0007", Some("default")),
             columns = Seq(
                 Field("int_col", ftypes.DoubleType)
             )

@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spec.relation
 
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
@@ -37,6 +36,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
@@ -118,7 +118,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val view = session.catalog.getTable(TableIdentifier("lala", Some("default")))
         view.provider should be (None)
         view.comment should be (None)
-        view.identifier should be (TableIdentifier("lala", Some("default")))
+        view.identifier should be (TableIdentifier("lala", Some("default")).toSpark)
         view.tableType should be (CatalogTableType.VIEW)
         if (hiveVarcharSupported) {
             SchemaUtils.dropMetadata(view.schema) should be(StructType(Seq(
@@ -143,7 +143,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val table = session.catalog.getTable(TableIdentifier("lala_1", Some("default")))
         table.provider should be (Some("hive"))
         table.comment should be(Some("This is a test table"))
-        table.identifier should be (TableIdentifier("lala_1", Some("default")))
+        table.identifier should be (TableIdentifier("lala_1", Some("default")).toSpark)
         table.tableType should be (CatalogTableType.MANAGED)
         if (hiveVarcharSupported) {
             SchemaUtils.dropMetadata(table.schema) should be(StructType(Seq(
@@ -352,7 +352,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val view = session.catalog.getTable(TableIdentifier("lala", Some("default")))
         view.provider should be (None)
         view.comment should be (None)
-        view.identifier should be (TableIdentifier("lala", Some("default")))
+        view.identifier should be (TableIdentifier("lala", Some("default")).toSpark)
         view.tableType should be (CatalogTableType.VIEW)
         view.schema should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -366,7 +366,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val table = session.catalog.getTable(TableIdentifier("lala_1", Some("default")))
         table.provider should be (Some("hive"))
         table.comment should be(Some("This is a test table"))
-        table.identifier should be (TableIdentifier("lala_1", Some("default")))
+        table.identifier should be (TableIdentifier("lala_1", Some("default")).toSpark)
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -701,7 +701,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val view_1 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
         view_1.provider should be (None)
         view_1.comment should be (None)
-        view_1.identifier should be (TableIdentifier("lala", Some("default")))
+        view_1.identifier should be (TableIdentifier("lala", Some("default")).toSpark)
         view_1.tableType should be (CatalogTableType.VIEW)
         view_1.schema should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -713,7 +713,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
 
         // Inspect Hive table
         val table_1 = session.catalog.getTable(TableIdentifier("lala_1", Some("default")))
-        table_1.identifier should be (TableIdentifier("lala_1", Some("default")))
+        table_1.identifier should be (TableIdentifier("lala_1", Some("default")).toSpark)
         table_1.tableType should be (CatalogTableType.MANAGED)
         table_1.schema should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -754,7 +754,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val view_2 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
         view_2.provider should be (None)
         view_2.comment should be (None)
-        view_2.identifier should be (TableIdentifier("lala", Some("default")))
+        view_2.identifier should be (TableIdentifier("lala", Some("default")).toSpark)
         view_2.tableType should be (CatalogTableType.VIEW)
         if (hiveVarcharSupported) {
             SchemaUtils.dropMetadata(view_2.schema) should be(StructType(Seq(
@@ -777,7 +777,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
 
         // Inspect Hive table
         val table_2 = session.catalog.getTable(TableIdentifier("lala_1", Some("default")))
-        table_2.identifier should be (TableIdentifier("lala_1", Some("default")))
+        table_2.identifier should be (TableIdentifier("lala_1", Some("default")).toSpark)
         table_2.tableType should be (CatalogTableType.MANAGED)
         if (hiveVarcharSupported) {
             SchemaUtils.dropMetadata(table_2.schema) should be(StructType(Seq(
@@ -922,7 +922,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val view_1 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
         view_1.provider should be (None)
         view_1.comment should be (None)
-        view_1.identifier should be (TableIdentifier("lala", Some("default")))
+        view_1.identifier should be (TableIdentifier("lala", Some("default")).toSpark)
         view_1.tableType should be (CatalogTableType.VIEW)
         view_1.schema should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -934,7 +934,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
 
         // Inspect Hive table
         val table_1 = session.catalog.getTable(TableIdentifier("lala_1", Some("default")))
-        table_1.identifier should be (TableIdentifier("lala_1", Some("default")))
+        table_1.identifier should be (TableIdentifier("lala_1", Some("default")).toSpark)
         table_1.tableType should be (CatalogTableType.MANAGED)
         table_1.schema should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -975,7 +975,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val view_2 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
         view_2.provider should be (None)
         view_2.comment should be (None)
-        view_2.identifier should be (TableIdentifier("lala", Some("default")))
+        view_2.identifier should be (TableIdentifier("lala", Some("default")).toSpark)
         view_2.tableType should be (CatalogTableType.VIEW)
         view_2.schema should be (StructType(
             StructField("str_col", StringType) ::
@@ -988,7 +988,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
 
         // Inspect Hive table
         val table_2 = session.catalog.getTable(TableIdentifier("lala_2", Some("default")))
-        table_2.identifier should be (TableIdentifier("lala_2", Some("default")))
+        table_2.identifier should be (TableIdentifier("lala_2", Some("default")).toSpark)
         table_2.tableType should be (CatalogTableType.MANAGED)
         table_2.schema should be (StructType(Seq(
             StructField("str_col", StringType),

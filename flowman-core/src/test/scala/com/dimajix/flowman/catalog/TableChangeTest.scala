@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.catalog
 
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

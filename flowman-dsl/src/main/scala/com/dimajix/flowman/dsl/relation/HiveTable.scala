@@ -17,8 +17,8 @@
 package com.dimajix.flowman.dsl.relation
 
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.catalyst.TableIdentifier
 
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.dsl.RelationGen
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
@@ -48,7 +48,7 @@ case class HiveTable(
             props,
             schema = schema.map(s => s.instantiate(props.context)),
             partitions = partitions,
-            table = TableIdentifier(table, database),
+            table = TableIdentifier(table, database.toSeq),
             external = external,
             location = location,
             format = format,

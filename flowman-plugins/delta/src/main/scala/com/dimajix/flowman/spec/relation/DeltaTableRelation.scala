@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@ package com.dimajix.flowman.spec.relation
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.delta.catalog.DeltaTableV2
@@ -37,9 +35,9 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
@@ -83,7 +81,7 @@ case class DeltaTableRelation(
      * @return
      */
     override def requires: Set[ResourceIdentifier] = {
-        table.database.map(ResourceIdentifier.ofHiveDatabase).toSet
+        table.space.headOption.map(ResourceIdentifier.ofHiveDatabase).toSet
     }
 
     /**
@@ -177,7 +175,7 @@ case class DeltaTableRelation(
      */
     override def readStream(execution: Execution): DataFrame = {
         logger.info(s"Streaming from Delta table relation '$identifier' at $table")
-        val location = DeltaUtils.getLocation(execution, table)
+        val location = DeltaUtils.getLocation(execution, table.toSpark)
         readStreamFrom(execution, location)
     }
 
@@ -190,7 +188,7 @@ case class DeltaTableRelation(
      */
     override def writeStream(execution: Execution, df: DataFrame, mode: OutputMode, trigger: Trigger, checkpointLocation: Path): StreamingQuery = {
         logger.info(s"Streaming to Delta table relation '$identifier' $table")
-        val location = DeltaUtils.getLocation(execution, table)
+        val location = DeltaUtils.getLocation(execution, table.toSpark)
         writeStreamTo(execution, df, location, mode, trigger, checkpointLocation)
     }
 
@@ -259,7 +257,7 @@ case class DeltaTableRelation(
         }
         else if (partitions.nonEmpty) {
             val partitionSpec = PartitionSchema(partitions).spec(partition)
-            DeltaUtils.isLoaded(execution, table, partitionSpec)
+            DeltaUtils.isLoaded(execution, table.toSpark, partitionSpec)
         }
         else {
             val location = catalog.getTableLocation(table)
@@ -287,7 +285,7 @@ case class DeltaTableRelation(
 
             DeltaUtils.createTable(
                 execution,
-                Some(table),
+                Some(table.toSpark),
                 location,
                 sparkSchema,
                 partitions,

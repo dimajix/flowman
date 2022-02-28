@@ -23,7 +23,6 @@ import scala.collection.mutable
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.SparkShim
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.DatabaseAlreadyExistsException
 import org.apache.spark.sql.catalyst.analysis.NoSuchDatabaseException
 import org.apache.spark.sql.catalyst.analysis.NoSuchPartitionException
@@ -138,7 +137,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         val dbName = formatDatabaseName(database)
         catalog.externalCatalog
             .listTables(dbName)
-            .map(name =>TableIdentifier(name, Some(database)))
+            .map(name =>TableIdentifier(name, Seq(database)))
     }
 
     /**
@@ -151,7 +150,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         val dbName = formatDatabaseName(database)
         catalog.externalCatalog
             .listTables(dbName, pattern)
-            .map(name =>TableIdentifier(name, Some(database)))
+            .map(name =>TableIdentifier(name, Seq(database)))
     }
 
     /**
@@ -164,7 +163,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
     def createTable(table:CatalogTable, ignoreIfExists:Boolean) : Unit = {
         require(table != null)
 
-        val exists = tableExists(table.identifier)
+        val exists = tableExists(TableIdentifier.of(table))
         if (!ignoreIfExists && exists) {
             throw new TableAlreadyExistsException(table.identifier.database.getOrElse(""), table.identifier.table)
         }
@@ -205,7 +204,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         }
 
         if (config.flowmanConf.hiveAnalyzeTable) {
-            val cmd = AnalyzeTableCommand(table, false)
+            val cmd = AnalyzeTableCommand(table.toSpark, false)
             cmd.run(spark)
         }
 
@@ -222,7 +221,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
       * @return
       */
     def tableExists(name:TableIdentifier) : Boolean = {
-        catalog.tableExists(name)
+        catalog.tableExists(name.toSpark)
     }
 
     /**
@@ -237,7 +236,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         val db = formatDatabaseName(name.database.getOrElse(catalog.getCurrentDatabase))
         val table = formatTableName(name.table)
         requireDbExists(db)
-        requireTableExists(TableIdentifier(table, Some(db)))
+        requireTableExists(TableIdentifier(table, Seq(db)))
         catalog.externalCatalog.getTable(db, table)
     }
 
@@ -276,7 +275,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
             // Delete all partitions
             if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
-                catalog.listPartitions(table).foreach { p =>
+                catalog.listPartitions(table.toSpark).foreach { p =>
                     val location = new Path(p.location)
                     val fs = location.getFileSystem(hadoopConf)
                     FileUtils.deleteLocation(fs, location)
@@ -284,7 +283,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             }
 
             // Delete table itself
-            val cmd = DropTableCommand(table, ignoreIfNotExists, false, true)
+            val cmd = DropTableCommand(table.toSpark, ignoreIfNotExists, false, true)
             cmd.run(spark)
 
             // Delete location to cleanup any remaining files
@@ -312,7 +311,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
         // First drop partitions
         if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
-            dropPartitions(table, catalog.listPartitions(table).map(p => PartitionSpec(p.spec)))
+            dropPartitions(table, catalog.listPartitions(table.toSpark).map(p => PartitionSpec(p.spec)))
         }
 
         // Then cleanup directory from any remainders
@@ -349,18 +348,18 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
                 logger.info(s"Updating nullability of column ${u.column} to ${u.nullable} in Hive table '$table'")
                 val field = tableColumns.getOrElse(u.column.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Table column ${u.column} does not exist in table $table"))
                     .copy(nullable = u.nullable)
-                val cmd = AlterTableChangeColumnCommand(table, u.column, field)
+                val cmd = AlterTableChangeColumnCommand(table.toSpark, u.column, field)
                 cmd.run(spark)
             case u:UpdateColumnComment =>
                 logger.info(s"Updating comment of column ${u.column} in Hive table '$table'")
                 val field = tableColumns.getOrElse(u.column.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Table column ${u.column} does not exist in table $table"))
                     .withComment(u.comment.getOrElse(""))
-                val cmd = AlterTableChangeColumnCommand(table, u.column, field)
+                val cmd = AlterTableChangeColumnCommand(table.toSpark, u.column, field)
                 cmd.run(spark)
             case x:TableChange => throw new UnsupportedOperationException(s"Unsupported table change $x for Hive table $table")
         }
 
-        val cmd = AlterTableAddColumnsCommand(table, colsToAdd)
+        val cmd = AlterTableAddColumnsCommand(table.toSpark, colsToAdd)
         cmd.run(spark)
 
         externalCatalogs.foreach(_.alterTable(catalogTable))
@@ -381,7 +380,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         val catalogTable = getTable(table)
         require(catalogTable.tableType != CatalogTableType.VIEW)
 
-        val cmd = AlterTableAddColumnsCommand(table, colsToAdd)
+        val cmd = AlterTableAddColumnsCommand(table.toSpark, colsToAdd)
         cmd.run(spark)
 
         externalCatalogs.foreach(_.alterTable(catalogTable))
@@ -398,7 +397,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
     def partitionExists(table:TableIdentifier, partition:PartitionSpec) : Boolean = {
         require(table != null)
         require(partition != null)
-        catalog.listPartitions(table, Some(partition.mapValues(_.toString).toMap).filter(_.nonEmpty)).nonEmpty
+        catalog.listPartitions(table.toSpark, Some(partition.mapValues(_.toString).toMap).filter(_.nonEmpty)).nonEmpty
     }
 
     /**
@@ -409,7 +408,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
     @throws[NoSuchTableException]
     @throws[NoSuchPartitionException]
     def getPartition(table: TableIdentifier, partition:PartitionSpec): CatalogTablePartition = {
-        catalog.getPartition(table, partition.mapValues(_.toString).toMap)
+        catalog.getPartition(table.toSpark, partition.mapValues(_.toString).toMap)
     }
 
     /**
@@ -455,14 +454,14 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
         logger.info(s"Adding partition ${partition.spec} to table $table at '$location'")
         val sparkPartition = partition.mapValues(_.toString).toMap
-        val cmd = AlterTableAddPartitionCommand(table, Seq((sparkPartition, Some(location.toString))), false)
+        val cmd = AlterTableAddPartitionCommand(table.toSpark, Seq((sparkPartition, Some(location.toString))), false)
         cmd.run(spark)
 
         analyzePartition(table, sparkPartition)
 
         externalCatalogs.foreach { ec =>
             val catalogTable = getTable(table)
-            val catalogPartition = catalog.getPartition(table, sparkPartition)
+            val catalogPartition = catalog.getPartition(table.toSpark, sparkPartition)
             ec.addPartition(catalogTable, catalogPartition)
         }
     }
@@ -483,7 +482,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         val sparkPartition = partition.mapValues(_.toString).toMap
         if (partitionExists(table, partition)) {
             logger.info(s"Replacing partition ${partition.spec} of table $table with location '$location'")
-            val cmd = AlterTableSetLocationCommand(table, Some(sparkPartition), location.toString)
+            val cmd = AlterTableSetLocationCommand(table.toSpark, Some(sparkPartition), location.toString)
             cmd.run(spark)
 
             refreshPartition(table, partition)
@@ -516,14 +515,14 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
         externalCatalogs.foreach { ec =>
             val catalogTable = getTable(table)
-            val catalogPartition = catalog.getPartition(table, sparkPartition)
+            val catalogPartition = catalog.getPartition(table.toSpark, sparkPartition)
             ec.alterPartition(catalogTable, catalogPartition)
         }
     }
 
     private def analyzePartition(table:TableIdentifier, sparkPartition:Map[String,String]) : Unit = {
         def doIt(): Unit = {
-            val cmd = AnalyzePartitionCommand(table, sparkPartition.map { case (k, v) => k -> Some(v) }, false)
+            val cmd = AnalyzePartitionCommand(table.toSpark, sparkPartition.map { case (k, v) => k -> Some(v) }, false)
             cmd.run(spark)
         }
 
@@ -560,7 +559,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         externalCatalogs.foreach { ec =>
             val sparkPartition = partition.mapValues(_.toString).toMap
             val catalogTable = getTable(table)
-            val catalogPartition = catalog.getPartition(table, sparkPartition)
+            val catalogPartition = catalog.getPartition(table.toSpark, sparkPartition)
             ec.truncatePartition(catalogTable, catalogPartition)
         }
     }
@@ -599,7 +598,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         // Convert to Spark partitions
         val sparkPartitions = dropPartitions.map(_.mapValues(_.toString).toMap)
         // Convert to external catalog partitions which can be reused in the last step
-        val catalogPartitions = sparkPartitions.map(catalog.getPartition(table, _)).filter(_ != null)
+        val catalogPartitions = sparkPartitions.map(catalog.getPartition(table.toSpark, _)).filter(_ != null)
 
         logger.info(s"Dropping partitions ${dropPartitions.map(_.spec).mkString(",")} from Hive table $table")
         catalogPartitions.foreach { partition =>
@@ -609,7 +608,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         }
 
         // Note that "purge" is not supported with Hive < 1.2
-        val cmd = AlterTableDropPartitionCommand(table, sparkPartitions, ignoreIfNotExists, purge = false, retainData = false)
+        val cmd = AlterTableDropPartitionCommand(table.toSpark, sparkPartitions, ignoreIfNotExists, purge = false, retainData = false)
         cmd.run(spark)
 
         externalCatalogs.foreach { ec =>
@@ -632,7 +631,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             logger.info(s"Creating Hive view $table")
 
             val plan = spark.sql(select).queryExecution.analyzed
-            val cmd = SparkShim.createView(table, select, plan, false, false)
+            val cmd = SparkShim.createView(table.toSpark, select, plan, false, false)
             cmd.run(spark)
 
             // Publish view to external catalog
@@ -648,7 +647,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         logger.info(s"Redefining Hive view $table")
 
         val plan = spark.sql(select).queryExecution.analyzed
-        val cmd = SparkShim.alterView(table, select, plan)
+        val cmd = SparkShim.alterView(table.toSpark, select, plan)
         cmd.run(spark)
 
         // Publish view to external catalog
@@ -675,7 +674,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             require(catalogTable.tableType == CatalogTableType.VIEW)
 
             // Delete table itself
-            val cmd = DropTableCommand(table, ignoreIfNotExists, true, false)
+            val cmd = DropTableCommand(table.toSpark, ignoreIfNotExists, true, false)
             cmd.run(spark)
 
             // Remove table from external catalog

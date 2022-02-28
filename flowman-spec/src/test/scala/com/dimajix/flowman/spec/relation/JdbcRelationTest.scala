@@ -23,11 +23,9 @@ import java.sql.Statement
 import java.util.Properties
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
 import scala.util.control.NonFatal
 
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.execution.datasources.jdbc.DriverRegistry
 import org.apache.spark.sql.execution.datasources.jdbc.DriverWrapper
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
@@ -41,6 +39,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.common.No
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
@@ -60,7 +59,6 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.ValueConnectionReference
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.DateType
 import com.dimajix.flowman.types.DoubleType

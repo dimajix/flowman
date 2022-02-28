@@ -17,10 +17,10 @@
 package com.dimajix.flowman.jdbc
 
 import org.apache.spark.sql.Column
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.execution.MergeClause
 

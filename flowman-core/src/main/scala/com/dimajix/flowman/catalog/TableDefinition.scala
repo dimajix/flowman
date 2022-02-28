@@ -18,7 +18,6 @@ package com.dimajix.flowman.catalog
 
 import java.util.Locale
 
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 
 import com.dimajix.flowman.types.Field
@@ -27,8 +26,9 @@ import com.dimajix.flowman.types.StructType
 
 object TableDefinition {
     def ofTable(table:CatalogTable) : TableDefinition = {
-        val sourceSchema = com.dimajix.flowman.types.StructType.of(table.dataSchema)
-        TableDefinition(table.identifier, sourceSchema.fields)
+        val id = table.identifier
+        val schema = com.dimajix.flowman.types.StructType.of(table.dataSchema)
+        TableDefinition(TableIdentifier(id.table, id.database.toSeq), schema.fields)
     }
 }
 final case class TableDefinition(

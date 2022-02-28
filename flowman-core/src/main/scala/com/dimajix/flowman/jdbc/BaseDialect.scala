@@ -23,13 +23,11 @@ import java.util.Locale
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.Column
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.jdbc.JdbcType
 import org.apache.spark.sql.types.StructType
 
-import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
@@ -39,6 +37,7 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
@@ -163,8 +162,8 @@ abstract class BaseDialect extends SqlDialect {
       * @return
       */
     override def quote(table:TableIdentifier) : String = {
-        if (table.database.isDefined)
-            quoteIdentifier(table.database.get) + "." + quoteIdentifier(table.table)
+        if (table.space.nonEmpty)
+            table.space.map(quoteIdentifier).mkString(".") + "." + quoteIdentifier(table.table)
         else
             quoteIdentifier(table.table)
     }

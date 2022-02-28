@@ -187,13 +187,15 @@ object JdbcUtils {
 
     private def getPrimaryKey(meta: DatabaseMetaData, table:TableIdentifier) : Seq[String] = {
         val pkrs = meta.getPrimaryKeys(null, table.database.orNull, table.table)
-        val pk = mutable.ListBuffer[String]()
+        val pk = mutable.ListBuffer[(Short,String)]()
         while(pkrs.next()) {
             val col = pkrs.getString(4)
-            pk.append(col)
+            val seq = pkrs.getShort(5)
+            // val name = pkrs.getString(6)
+            pk.append((seq,col))
         }
         pkrs.close()
-        pk
+        pk.sortBy(_._1).map(_._2)
     }
 
     private def getIndexes(meta: DatabaseMetaData, table:TableIdentifier) : Seq[TableIndex] = {
@@ -201,15 +203,16 @@ object JdbcUtils {
         val idxcols = mutable.ListBuffer[(String, String, Boolean)]()
         while(idxrs.next()) {
             val unique = !idxrs.getBoolean(4)
-            val name = idxrs.getString(6)
+            val name = idxrs.getString(6) // May be null for statistics
             val col = idxrs.getString(9)
             idxcols.append((name, col, unique))
         }
         idxrs.close()
 
-        idxcols.groupBy(_._1).map { case(name,cols) =>
-            TableIndex(name, cols.map(_._2), cols.foldLeft(false)(_ || _._3))
-        }.toSeq
+        idxcols.filter(_._1 != null)
+            .groupBy(_._1).map { case(name,cols) =>
+                TableIndex(name, cols.map(_._2), cols.foldLeft(false)(_ || _._3))
+            }.toSeq
     }
 
     /**

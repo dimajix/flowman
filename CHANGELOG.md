@@ -1,4 +1,4 @@
-# Version 0.22.0
+# Version 0.22.0 - 2022-03-01
 
 * Add new `sqlserver` relation
 * Implement new documentation subsystem

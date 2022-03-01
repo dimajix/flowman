@@ -53,8 +53,8 @@ case class ExtractJsonMapping(
       *
       * @return
       */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
+    override def inputs : Set[MappingOutputIdentifier] = {
+        Set(input)
     }
 
 
@@ -63,7 +63,7 @@ case class ExtractJsonMapping(
       *
       * @return
       */
-    override def outputs: Seq[String] = Seq("main", "error")
+    override def outputs: Set[String] = Set("main", "error")
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -129,10 +129,13 @@ case class ExtractJsonMapping(
 
         val mainSchema = ftypes.StructType(schema.map(_.fields).getOrElse(Seq()))
         val errorSchema = ftypes.StructType(Seq(Field("record", ftypes.StringType, false)))
-        Map(
+        val schemas = Map(
             "main" -> mainSchema,
             "error" -> errorSchema
         )
+
+        // Apply documentation
+        applyDocumentation(schemas)
     }
 }
 

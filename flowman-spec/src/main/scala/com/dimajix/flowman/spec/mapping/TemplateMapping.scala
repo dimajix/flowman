@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.common.ParserUtils.splitSettings
+import com.dimajix.flowman.documentation.MappingDoc
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.ScopeContext
@@ -55,6 +56,12 @@ case class TemplateMapping(
         }
     }
 
+    /**
+     * Returns a (static) documentation of this mapping
+     *
+     * @return
+     */
+    override def documentation: Option[MappingDoc] = mappingInstance.documentation.map(_.merge(instanceProperties.documentation))
 
     /**
       * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings
@@ -71,7 +78,7 @@ case class TemplateMapping(
  *
       * @return
       */
-    override def outputs : Seq[String] = {
+    override def outputs : Set[String] = {
         mappingInstance.outputs
     }
 
@@ -80,7 +87,7 @@ case class TemplateMapping(
       *
       * @return
       */
-    override def inputs: Seq[MappingOutputIdentifier] = {
+    override def inputs: Set[MappingOutputIdentifier] = {
         mappingInstance.inputs
     }
 
@@ -110,7 +117,8 @@ case class TemplateMapping(
         require(execution != null)
         require(input != null)
 
-        mappingInstance.describe(execution, input)
+        val schemas = mappingInstance.describe(execution, input)
+        applyDocumentation(schemas)
     }
 
     /**
@@ -124,7 +132,8 @@ case class TemplateMapping(
         require(input != null)
         require(output != null && output.nonEmpty)
 
-        mappingInstance.describe(execution, input, output)
+        val schema = mappingInstance.describe(execution, input, output)
+        applyDocumentation(output, schema)
     }
 
     /**

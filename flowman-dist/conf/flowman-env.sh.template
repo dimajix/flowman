@@ -53,6 +53,9 @@ SPARK_DRIVER_MEMORY="3G"
 #
 #SPARK_SUBMIT=
 
+# Add some more jars to spark-submit. This can be a comma-separated list of jars.
+#
+#SPARK_JARS=
 
 # Apply any proxy settings from the system environment
 #

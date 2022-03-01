@@ -23,14 +23,17 @@ import io.delta.sql.DeltaSparkSessionExtension
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.{types => stypes}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.Schema
@@ -44,9 +47,6 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
-import org.apache.spark.sql.{types => stypes}
-
-import com.dimajix.flowman.model.PartitionField
 
 
 class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
@@ -149,8 +149,7 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
                     Field("int_col", IntegerType)
                 )
             )),
-            database = "default",
-            table = "delta_table",
+            table = TableIdentifier("delta_table", Some("default")),
             location = Some(new Path(location.toURI))
         )
 
@@ -193,8 +192,7 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
                     Field("int_col", IntegerType)
                 )
             )),
-            database = "default",
-            table = "delta_table",
+            table = TableIdentifier("delta_table", Some("default")),
             location = Some(new Path(location.toURI))
         )
 
@@ -252,8 +250,7 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
             partitions = Seq(
                 PartitionField("part", StringType)
             ),
-            database = "default",
-            table = "delta_table",
+            table = TableIdentifier("delta_table", Some("default")),
             location = Some(new Path(location.toURI))
         )
 

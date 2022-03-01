@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ extends BaseMapping {
      *
      * @return
      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
+    override def inputs : Set[MappingOutputIdentifier] = {
+        Set(input)
     }
 
     /**
@@ -87,7 +87,7 @@ class SelectMappingSpec extends MappingSpec {
         SelectMapping(
             instanceProperties(context),
             MappingOutputIdentifier(context.evaluate(input)),
-            context.evaluate(columns).toSeq,
+            columns.toSeq.map { case(k,v) => k -> context.evaluate(v) },
             context.evaluate(filter)
         )
     }

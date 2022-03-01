@@ -197,8 +197,9 @@ case class FileRelation(
         appendPartitionColumns(df1)
     }
     private def readSpark(execution:Execution, partitions:Map[String,FieldValue]) : DataFrame = {
-        val df = this.reader(execution, format, options)
-                .load(qualifiedLocation.toString)
+        val reader = this.reader(execution, format, options)
+        val reader1 = if (execution.fs.file(qualifiedLocation).isDirectory()) reader.option("basePath", qualifiedLocation.toString) else reader
+        val df = reader1.load(qualifiedLocation.toString)
 
         // Filter partitions
         val parts = MapIgnoreCase(this.partitions.map(p => p.name -> p))
@@ -224,7 +225,7 @@ case class FileRelation(
         else
             doWriteStaticPartitions(execution, df, partition, mode)
 
-        execution.refreshResource(ResourceIdentifier.ofFile(qualifiedLocation))
+        provides.foreach(execution.refreshResource)
     }
     private def doWriteDynamicPartitions(execution:Execution, df:DataFrame,  mode:OutputMode) : Unit = {
         val outputPath = qualifiedLocation
@@ -411,6 +412,8 @@ case class FileRelation(
                 throw new FileSystemException(qualifiedLocation.toString, "", "Cannot create directory.")
             }
         }
+
+        provides.foreach(execution.refreshResource)
     }
 
     /**
@@ -468,6 +471,8 @@ case class FileRelation(
             val fs = collector.fs
             fs.delete(qualifiedLocation, true)
         }
+
+        provides.foreach(execution.refreshResource)
     }
 
     /**

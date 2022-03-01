@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ case class MeasureTarget(
         // Publish result as metrics
         val metrics = execution.metricSystem
         result.flatMap(_.measurements).foreach { measurement =>
-            val gauge = metrics.findMetric(Selector(Some(measurement.name), measurement.labels))
+            val gauge = metrics.findMetric(Selector(measurement.name, measurement.labels))
                 .headOption
                 .map(_.asInstanceOf[SettableGaugeMetric])
                 .getOrElse {

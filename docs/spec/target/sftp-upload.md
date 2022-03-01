@@ -47,8 +47,9 @@ jobs:
 
 ## Fields
 * `kind` **(mandatory)** *(type: string)*: `sftp-upload`
+
 * `description` **(optional)** *(type: string)*: 
-A textual description of the task.
+A textual description of the build target.
 
 * `source` **(mandatory)** *(type: string)*:
 Specifies the source location in the Hadoop compatible filesystem. This may be either a single
@@ -75,3 +76,9 @@ Set to `true` in order to overwrite existing files on the SFTP server. Otherwise
 file will result in an error.
 
 ## Description
+
+
+## Supported Execution Phases
+* `BUILD` - This will upload the specified file via SFTP
+
+Read more about [execution phases](../../lifecycle.md).

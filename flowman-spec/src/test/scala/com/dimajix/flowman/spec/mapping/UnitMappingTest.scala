@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,14 +78,14 @@ class UnitMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val executor = session.execution
 
         val instance0 = context.getMapping(MappingIdentifier("instance_0"))
-        instance0.inputs should be (Seq())
-        instance0.outputs should be (Seq("input"))
+        instance0.inputs should be (Set())
+        instance0.outputs should be (Set("input"))
         val df0 = executor.instantiate(instance0, "input")
         df0.collect() should be (inputDf0.collect())
 
         val instance1 = context.getMapping(MappingIdentifier("instance_1"))
-        instance1.inputs should be (Seq())
-        instance1.outputs should be (Seq("input"))
+        instance1.inputs should be (Set())
+        instance1.outputs should be (Set("input"))
         val df1 = executor.instantiate(instance1, "input")
         df1.collect() should be (inputDf1.collect())
     }
@@ -118,8 +118,8 @@ class UnitMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val executor = session.execution
 
         val unit = context.getMapping(MappingIdentifier("macro"))
-        unit.inputs should be (Seq(MappingOutputIdentifier("outside")))
-        unit.outputs.sorted should be (Seq("inside", "output"))
+        unit.inputs should be (Set(MappingOutputIdentifier("outside")))
+        unit.outputs should be (Set("inside", "output"))
 
         val df_inside = executor.instantiate(unit, "inside")
         df_inside.collect() should be (inputDf0.collect())
@@ -151,8 +151,8 @@ class UnitMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val executor = session.execution
 
         val instance0 = context.getMapping(MappingIdentifier("alias"))
-        instance0.inputs should be (Seq(MappingOutputIdentifier("macro:input")))
-        instance0.outputs should be (Seq("main"))
+        instance0.inputs should be (Set(MappingOutputIdentifier("macro:input")))
+        instance0.outputs should be (Set("main"))
         val df0 = executor.instantiate(instance0, "main")
         df0.collect() should be (inputDf0.collect())
     }

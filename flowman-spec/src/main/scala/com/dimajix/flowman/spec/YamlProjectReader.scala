@@ -18,13 +18,15 @@ package com.dimajix.flowman.spec
 
 import java.io.IOException
 
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.JsonMappingException
+
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spi.ProjectReader
 
 
 class YamlProjectReader extends ProjectReader {
-
     override def name: String = "yaml project reader"
 
     override def format: String = "yaml"
@@ -38,11 +40,21 @@ class YamlProjectReader extends ProjectReader {
      * @return
      */
     @throws[IOException]
+    @throws[JsonProcessingException]
+    @throws[JsonMappingException]
     override def file(file:File) : Project = {
-        ObjectMapper.read[ProjectSpec](file).instantiate()
+        if (file.isDirectory()) {
+            this.file(file / "project.yml")
+        }
+        else {
+            val prj = ObjectMapper.read[ProjectSpec](file).instantiate()
+            prj.copy(basedir = Some(file.parent.absolute), filename = Some(file))
+        }
     }
 
     @throws[IOException]
+    @throws[JsonProcessingException]
+    @throws[JsonMappingException]
     override def string(text:String) : Project = {
         ObjectMapper.parse[ProjectSpec](text).instantiate()
     }

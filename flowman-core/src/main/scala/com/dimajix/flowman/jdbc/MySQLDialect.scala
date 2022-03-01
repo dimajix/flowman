@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,7 @@ package com.dimajix.flowman.jdbc
 import java.sql.SQLFeatureNotSupportedException
 import java.sql.Types
 
-import org.apache.spark.sql.catalyst.TableIdentifier
-
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.types.BooleanType
@@ -80,5 +79,9 @@ class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
     // We don't have column data type here, so throw Exception for now
     override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean): String = {
         throw new SQLFeatureNotSupportedException(s"UpdateColumnNullability is not supported")
+    }
+
+    override def dropIndex(table: TableIdentifier, indexName: String): String = {
+        s"DROP INDEX ${dialect.quoteIdentifier(indexName)} ON ${dialect.quote(table)}"
     }
 }

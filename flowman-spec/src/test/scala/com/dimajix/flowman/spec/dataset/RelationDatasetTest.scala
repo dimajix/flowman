@@ -108,7 +108,8 @@ class RelationDatasetTest extends AnyFlatSpec with Matchers with MockFactory wit
         (relation.write _).expects(executor,spark.emptyDataFrame,*,OutputMode.APPEND).returns(Unit)
         dataset.write(executor, spark.emptyDataFrame, OutputMode.APPEND)
 
-        (relation.describe _).expects(executor).returns(new StructType())
+        (relation.identifier _).expects().returns(RelationIdentifier("relation"))
+        (relation.describe _).expects(executor, *).returns(new StructType())
         dataset.describe(executor) should be (Some(new StructType()))
     }
 }

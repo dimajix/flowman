@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.dimajix.flowman.dsl.relation
 
 import org.apache.hadoop.fs.Path
 
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.dsl.RelationGen
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
@@ -49,11 +50,9 @@ case class HiveUnionTable(
             props,
             schema.map(_.instantiate(context)),
             partitions,
-            tableDatabase,
-            tablePrefix,
+            TableIdentifier(tablePrefix, tableDatabase),
             locationPrefix,
-            viewDatabase,
-            view,
+            TableIdentifier(view, viewDatabase),
             external,
             format,
             options,

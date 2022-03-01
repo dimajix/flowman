@@ -16,13 +16,17 @@ targets:
 
 ## Fields
  * `kind` **(mandatory)** *(string)*: `mergeFiles`
+ * `description` **(optional)** *(type: string)*:
+   Optional descriptive text of the build target
  * `source` **(mandatory)** *(string)*: Source directory containing all files to be concatenated
  * `target` **(optional)** *(string)*: Name of single target file
  * `overwrite` **(optional)** *(boolean)* *(default: true)*: 
 
 
-## Supported Phases
+## Supported Execution Phases
 * `BUILD`
 * `VERIFY`
 * `TRUNCATE`
 * `DESTROY`
+
+Read more about [execution phases](../../lifecycle.md).

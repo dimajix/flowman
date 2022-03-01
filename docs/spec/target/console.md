@@ -16,10 +16,15 @@ targets:
 ## Fields
 
 * `kind` **(mandatory)** *(type: string)*: `console`
+* `description` **(optional)** *(type: string)*:
+Optional descriptive text of the build target
 * `input` **(mandatory)** *(type: dataset)*:
 Specified the [dataset](../dataset/index.md) containing the records to be dumped 
 * `limit` **(optional)** *(type: integer)* *(default: 100)*: 
 Specified the number of records to be displayed
 
-## Supported Phases
+
+## Supported Execution Phases
 * `BUILD` - The target will only be executed in the *build* phase
+
+Read more about [execution phases](../../lifecycle.md).

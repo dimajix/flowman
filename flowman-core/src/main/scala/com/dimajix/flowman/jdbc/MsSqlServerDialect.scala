@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,11 @@
 
 package com.dimajix.flowman.jdbc
 
-import java.sql.SQLFeatureNotSupportedException
 import java.util.Locale
 
-import org.apache.spark.sql.Column
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.jdbc.JdbcType
-import org.apache.spark.sql.types.StructType
 
-import com.dimajix.flowman.execution.MergeClause
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.FieldType
@@ -104,5 +100,9 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
     override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $dataType $nullable"
+    }
+
+    override def dropIndex(table: TableIdentifier, indexName: String): String = {
+        s"DROP INDEX ${dialect.quote(table)}.${dialect.quoteIdentifier(indexName)}"
     }
 }

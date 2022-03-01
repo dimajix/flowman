@@ -1,6 +1,13 @@
 name: "weather"
 version: "1.0"
+description: "
+    This is a simple but very comprehensive example project for Flowman using publicly available weather data.
+    The project will demonstrate many features of Flowman, like reading and writing data, performing data transformations,
+    joining, filtering and aggregations. The project will also create a meaningful documentation containing data quality
+    tests.
+  "
 
+# The following modules simply contain a list of subdirectories containing the specification files
 modules:
  - model
  - mapping

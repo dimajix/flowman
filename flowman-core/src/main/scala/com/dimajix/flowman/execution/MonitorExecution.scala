@@ -25,7 +25,9 @@ import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.StructType
 
 
@@ -97,6 +99,14 @@ final class MonitorExecution(parent:Execution, override val listeners:Seq[(Execu
      * @return
      */
     override def describe(mapping: Mapping, output: String): StructType = parent.describe(mapping, output)
+
+    /**
+     * Returns the schema for a specific relation
+     * @param relation
+     * @param partitions
+     * @return
+     */
+    override def describe(relation:Relation, partitions:Map[String,FieldValue] = Map()) : StructType = parent.describe(relation, partitions)
 
     override def addResource(key:ResourceIdentifier)(refresh: => Unit) : Unit = parent.addResource(key)(refresh)
     override def refreshResource(key:ResourceIdentifier) : Unit = parent.refreshResource(key)

@@ -43,6 +43,7 @@ object MeasureSpec extends TypeRegistry[MeasureSpec] {
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlMeasureSpec])
 ))
 abstract class MeasureSpec  extends NamedSpec[Measure] {
+    @JsonProperty(value="kind", required = true) protected var kind: String = _
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
 
     override def instantiate(context: Context): Measure

@@ -22,8 +22,8 @@ import java.time.ZonedDateTime
 import java.util.Locale
 import java.util.Properties
 
-import scala.collection.mutable
 import scala.concurrent.Await
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.language.higherKinds
 import scala.util.control.NonFatal
@@ -154,10 +154,10 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     private lazy val db = {
         val url = connection.url
         val driver = connection.driver
-        val user = connection.user
-        val password = connection.password
         val props = new Properties()
         connection.properties.foreach(kv => props.setProperty(kv._1, kv._2))
+        connection.user.foreach(props.setProperty("user", _))
+        connection.password.foreach(props.setProperty("password", _))
         logger.debug(s"Connecting via JDBC to $url with driver $driver")
         val executor = slick.util.AsyncExecutor(
             name="Flowman.default",
@@ -165,7 +165,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             maxThreads = 20,
             queueSize = 1000,
             maxConnections = 20)
-        Database.forURL(url, driver=driver, user=user.orNull, password=password.orNull, prop=props, executor=executor)
+        // Do not set username and password, since a bug in Slick would discard all other connection properties
+        Database.forURL(url, driver=driver, prop=props, executor=executor)
     }
 
     val jobRuns = TableQuery[JobRuns]
@@ -381,7 +382,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             Await.result(query, Duration.Inf)
         }
         catch {
-            case NonFatal(ex) => logger.error("Cannot connect to JDBC history database", ex)
+            case NonFatal(ex) => logger.error(s"Cannot create tables of JDBC history database: ${ex.getMessage}")
         }
     }
 
@@ -442,15 +443,19 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     }
 
     def insertJobMetrics(jobId:Long, metrics:Seq[Measurement]) : Unit = {
-        metrics.foreach { m =>
+        implicit val ec = db.executor.executionContext
+
+        val result = metrics.map { m =>
             val jobMetric = JobMetric(0, jobId, m.name, new Timestamp(m.ts.toInstant.toEpochMilli), m.value)
             val jmQuery = (jobMetrics returning jobMetrics.map(_.id) into((jm,id) => jm.copy(id=id))) += jobMetric
-            val jmResult = Await.result(db.run(jmQuery), Duration.Inf)
-
-            val labels = m.labels.map(l => JobMetricLabel(jmResult.id, l._1, l._2))
-            val mlQuery = jobMetricLabels ++= labels
-            Await.result(db.run(mlQuery), Duration.Inf)
+            db.run(jmQuery).flatMap { metric =>
+                val labels = m.labels.map(l => JobMetricLabel(metric.id, l._1, l._2))
+                val mlQuery = jobMetricLabels ++= labels
+                db.run(mlQuery)
+            }
         }
+
+        Await.result(Future.sequence(result), Duration.Inf)
     }
 
     def getJobMetrics(jobId:Long) : Seq[Measurement] = {

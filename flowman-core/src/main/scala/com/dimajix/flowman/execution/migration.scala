@@ -20,7 +20,6 @@ import java.util.Locale
 
 
 sealed abstract class MigrationPolicy extends Product with Serializable
-
 object MigrationPolicy {
     case object RELAXED extends MigrationPolicy
     case object STRICT extends MigrationPolicy
@@ -37,7 +36,6 @@ object MigrationPolicy {
 
 
 sealed abstract class MigrationStrategy extends Product with Serializable
-
 object MigrationStrategy {
     case object NEVER extends MigrationStrategy
     case object FAIL extends MigrationStrategy
@@ -50,7 +48,7 @@ object MigrationStrategy {
             case "never" => MigrationStrategy.NEVER
             case "fail" => MigrationStrategy.FAIL
             case "alter" => MigrationStrategy.ALTER
-            case "alter_replace" => MigrationStrategy.ALTER_REPLACE
+            case "alter_replace"|"alterreplace" => MigrationStrategy.ALTER_REPLACE
             case "replace" => MigrationStrategy.REPLACE
             case _ => throw new IllegalArgumentException(s"Unknown migration strategy: '$mode'. " +
                 "Accepted migration strategy are 'NEVER', 'FAIL', 'ALTER', 'ALTER_REPLACE' and 'REPLACE'.")

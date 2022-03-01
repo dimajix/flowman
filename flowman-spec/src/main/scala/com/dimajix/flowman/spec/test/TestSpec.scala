@@ -80,7 +80,7 @@ class TestSpec extends NamedSpec[Test] {
         val name = context.evaluate(this.name)
         Test.Properties(
             context,
-            metadata.map(_.instantiate(context, name, Category.TEST, kind)).getOrElse(Metadata(context, name, Category.TEST, kind)),
+            metadata.map(_.instantiate(context, name, Category.TEST, "test")).getOrElse(Metadata(context, name, Category.TEST, "test")),
             description.map(context.evaluate)
         )
     }

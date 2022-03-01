@@ -225,8 +225,10 @@ case class MockRelation(
      * @param execution
      * @return
      */
-    override def describe(execution: Execution): types.StructType = {
-        types.StructType(mocked.fields)
+    override def describe(execution: Execution, partitions:Map[String,FieldValue] = Map()): types.StructType = {
+        val result = types.StructType(mocked.fields)
+
+        applyDocumentation(result)
     }
 
     /**

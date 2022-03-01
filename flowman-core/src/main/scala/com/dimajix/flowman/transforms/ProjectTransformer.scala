@@ -46,7 +46,9 @@ final case class ProjectTransformer(
         val tree = ColumnTree.ofSchema(df.schema)
 
         def col(spec:ProjectTransformer.Column) = {
-            val input = tree.find(spec.column).get.mkValue()
+            val input = tree.find(spec.column)
+                .getOrElse(throw new NoSuchColumnException(spec.column.toString))
+                .mkValue()
             val typed = spec.dtype match {
                 case None => input
                 case Some(ft) => input.cast(ft.sparkType)
@@ -71,7 +73,9 @@ final case class ProjectTransformer(
         val tree = SchemaTree.ofSchema(schema)
 
         def col(spec:ProjectTransformer.Column) = {
-            val input = tree.find(spec.column).get.mkValue()
+            val input = tree.find(spec.column)
+                .getOrElse(throw new NoSuchColumnException(spec.column.toString))
+                .mkValue()
             val typed = spec.dtype match {
                 case None => input
                 case Some(ft) => input.copy(ftype = ft)

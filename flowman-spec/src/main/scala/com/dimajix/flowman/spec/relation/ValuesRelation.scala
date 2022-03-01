@@ -213,8 +213,10 @@ case class ValuesRelation(
      * @param execution
      * @return
      */
-    override def describe(execution: Execution): types.StructType = {
-        types.StructType(effectiveSchema.fields)
+    override def describe(execution: Execution, partitions:Map[String,FieldValue] = Map()): types.StructType = {
+        val result = types.StructType(effectiveSchema.fields)
+
+        applyDocumentation(result)
     }
 
     /**

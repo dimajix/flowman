@@ -22,6 +22,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.ConnectionIdentifier
+import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Namespace
@@ -30,6 +31,7 @@ import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Prototype
+import com.dimajix.flowman.types.StringType
 
 
 class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
@@ -237,5 +239,53 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
         rootContext.getRelation(RelationIdentifier("my_project/m1"), false) should be (projectRelation1)
         rootContext.getRelation(RelationIdentifier("my_project/m2")) should be (overrideRelation)
         rootContext.getRelation(RelationIdentifier("my_project/m2"), false) should be (projectRelation2)
+    }
+
+    it should "support importing projects" in {
+        val session = Session.builder()
+            .disableSpark()
+            .build()
+        val rootContext = RootContext.builder(session.context)
+            .build()
+
+        val project1 = Project(
+            name = "project1",
+            imports = Seq(
+                Project.Import(project="project2"),
+                Project.Import(project="project3"),
+                Project.Import(project="project4", job=Some("job"), arguments=Map("arg1" -> "val1"))
+            )
+        )
+        val project1Ctx = rootContext.getProjectContext(project1)
+        project1Ctx.evaluate("$project") should be ("project1")
+
+        val project2 = Project(
+            name = "project2",
+            environment = Map("env1" -> "val1")
+        )
+        val project2Ctx = rootContext.getProjectContext(project2)
+        project2Ctx.evaluate("$project") should be ("project2")
+        project2Ctx.evaluate("$env1") should be ("val1")
+
+        val project3JobGen = mock[Prototype[Job]]
+        (project3JobGen.instantiate _).expects(*).onCall((ctx:Context) => Job.builder(ctx).setName("main").addEnvironment("jobenv", "jobval").build())
+        val project3 = Project(
+            name = "project3",
+            jobs = Map("main" -> project3JobGen)
+        )
+        val project3Ctx = rootContext.getProjectContext(project3)
+        project3Ctx.evaluate("$project") should be ("project3")
+        project3Ctx.evaluate("$jobenv") should be ("jobval")
+
+        val project4JobGen = mock[Prototype[Job]]
+        (project4JobGen.instantiate _).expects(*).onCall((ctx:Context) => Job.builder(ctx).setName("job").addParameter("arg1", StringType).addParameter("arg2", StringType, value=Some("default")).build())
+        val project4 = Project(
+            name = "project4",
+            jobs = Map("job" -> project4JobGen)
+        )
+        val project4Ctx = rootContext.getProjectContext(project4)
+        project4Ctx.evaluate("$project") should be ("project4")
+        project4Ctx.evaluate("$arg1") should be ("val1")
+        project4Ctx.evaluate("$arg2") should be ("default")
     }
 }

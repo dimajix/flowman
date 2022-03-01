@@ -11,3 +11,6 @@ com.dimajix.flowman.spec.storage.StoreSpecAnnotationHandler
 com.dimajix.flowman.spec.target.TargetSpecAnnotationHandler
 com.dimajix.flowman.spec.assertion.AssertionSpecAnnotationHandler
 com.dimajix.flowman.spec.storage.ParcelSpecAnnotationHandler
+com.dimajix.flowman.spec.documentation.GeneratorSpecAnnotationHandler
+com.dimajix.flowman.spec.documentation.ColumnCheckSpecAnnotationHandler
+com.dimajix.flowman.spec.documentation.SchemaCheckSpecAnnotationHandler

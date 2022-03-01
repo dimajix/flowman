@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.dimajix.flowman.execution.Status
 class ConsoleMetricSink extends AbstractMetricSink {
     override def commit(board:MetricBoard, status:Status): Unit = {
         println("Collected metrics")
-        board.metrics(catalog(board), status).foreach{ metric =>
+        board.metrics(catalog(board), status).sortBy(_.name).foreach{ metric =>
             val name = metric.name
             val labels = metric.labels.map(kv => kv._1 + "=" + kv._2)
             metric match {

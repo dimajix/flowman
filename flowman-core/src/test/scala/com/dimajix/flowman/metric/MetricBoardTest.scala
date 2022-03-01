@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,8 @@ class MetricBoardTest extends AnyFlatSpec with Matchers {
         registry.addBundle(CounterAccumulatorMetricBundle("some_metric", Map("raw_label" -> "raw_value"), accumulator1, "sublabel"))
         val selections = Seq(
             MetricSelection(
-                "m1",
-                Selector(Some("some_metric"),
+                Some("m1"),
+                Selector("some_metric",
                     Map("raw_label" -> "raw_value", "sublabel" -> "a")
                 ),
                 Map("rl" -> "$raw_label", "sl" -> "$sublabel", "ev" -> "$env_var")

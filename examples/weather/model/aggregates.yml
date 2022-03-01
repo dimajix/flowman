@@ -5,8 +5,10 @@ relations:
     format: parquet
     # Specify the base directory where all data is stored. This location does not include the partition pattern
     location: "$basedir/aggregates/"
-    # Specify the pattern how to identify files and/or partitions. This pattern is relative to the `location`
-    pattern: "${year}"
+    # You could specify the pattern how to identify files and/or partitions. This pattern is relative to the `location`.
+    # Actually, it is highly recommended NOT to explicitly specify a partition pattern for outgoing relations
+    # and let Spark generate this according to the Hive standard.
+    #pattern: "${year}"
     # Add partition column, which can be used in the `pattern`
     partitions:
       - name: year
@@ -31,3 +33,30 @@ relations:
           type: FLOAT
         - name: avg_temperature
           type: FLOAT
+
+    documentation:
+      description: "The aggregate table contains min/max temperature value per year and country"
+      columns:
+        - name: country
+          checks:
+            - kind: notNull
+        - name: year
+          checks:
+            - kind: notNull
+        - name: min_wind_speed
+          checks:
+            - kind: expression
+              expression: "min_wind_speed >= 0"
+        - name: min_temperature
+          checks:
+            - kind: expression
+              expression: "min_temperature >= -100"
+        - name: max_temperature
+          checks:
+            - kind: expression
+              expression: "max_temperature <= 100"
+      checks:
+        kind: primaryKey
+        columns:
+          - country
+          - year

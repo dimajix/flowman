@@ -29,6 +29,7 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.MappingType
+import com.dimajix.flowman.spec.documentation.MappingDocSpec
 import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
@@ -89,9 +90,11 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "values", value = classOf[ValuesMappingSpec])
 ))
 abstract class MappingSpec extends NamedSpec[Mapping] {
-    @JsonProperty("broadcast") protected var broadcast:String = "false"
-    @JsonProperty("checkpoint") protected var checkpoint:String = "false"
-    @JsonProperty("cache") protected var cache:String = "NONE"
+    @JsonProperty(value="kind", required = true) protected var kind: String = _
+    @JsonProperty(value="broadcast", required = false) protected var broadcast:String = "false"
+    @JsonProperty(value="checkpoint", required = false) protected var checkpoint:String = "false"
+    @JsonProperty(value="cache", required = false) protected var cache:String = "NONE"
+    @JsonProperty(value="documentation", required = false) private var documentation: Option[MappingDocSpec] = None
 
     /**
       * Creates an instance of this specification and performs the interpolation of all variables
@@ -113,7 +116,8 @@ abstract class MappingSpec extends NamedSpec[Mapping] {
             metadata.map(_.instantiate(context, name, Category.MAPPING, kind)).getOrElse(Metadata(context, name, Category.MAPPING, kind)),
             context.evaluate(broadcast).toBoolean,
             context.evaluate(checkpoint).toBoolean,
-            StorageLevel.fromString(context.evaluate(cache))
+            StorageLevel.fromString(context.evaluate(cache)),
+            documentation.map(_.instantiate(context))
         )
     }
 }

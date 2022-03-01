@@ -38,8 +38,8 @@ case class SortMapping(
      * Returns the dependencies (i.e. names of tables in the Dataflow model)
      * @return
      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
+    override def inputs : Set[MappingOutputIdentifier] = {
+        Set(input)
     }
 
     /**
@@ -79,7 +79,9 @@ case class SortMapping(
 
         val result = input(this.input)
 
-        Map("main" -> result)
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 }
 

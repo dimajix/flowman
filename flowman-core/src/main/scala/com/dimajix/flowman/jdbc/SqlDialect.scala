@@ -16,11 +16,10 @@
 
 package com.dimajix.flowman.jdbc
 
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.jdbc.JdbcType
-import org.apache.spark.sql.types.DataType
 
 import com.dimajix.flowman.catalog.TableChange
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.types.FieldType
 
 

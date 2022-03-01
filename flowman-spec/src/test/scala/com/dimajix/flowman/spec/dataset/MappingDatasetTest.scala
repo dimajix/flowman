@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ object MappingDatasetTest {
     ) extends BaseMapping {
         protected override def instanceProperties: Mapping.Properties = Mapping.Properties(context, name)
 
-        override def inputs: Seq[MappingOutputIdentifier] = Seq()
+        override def inputs: Set[MappingOutputIdentifier] = Set.empty
         override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = Map("main" ->  execution.spark.emptyDataFrame)
         override def describe(execution: Execution, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = Map("main"-> new StructType())
     }

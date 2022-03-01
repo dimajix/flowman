@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,15 +53,15 @@ case class ExplodeMapping(
     flatten: Boolean = false,
     naming: CaseFormat = CaseFormat.SNAKE_CASE
 ) extends BaseMapping {
-    override def outputs: Seq[String] = Seq("main", "explode")
+    override def outputs: Set[String] = Set("main", "explode")
 
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
       * @return
       */
-    override def inputs: Seq[MappingOutputIdentifier] =  {
-        Seq(input)
+    override def inputs: Set[MappingOutputIdentifier] =  {
+        Set(input)
     }
 
     /**
@@ -123,7 +123,10 @@ case class ExplodeMapping(
                 lift.transform(exploded)
         val result = flat.transform(lifted)
 
-        Map("main" -> result, "explode" -> exploded)
+        val schemas = Map("main" -> result, "explode" -> exploded)
+
+        // Apply documentation
+        applyDocumentation(schemas)
     }
 
     private def explode = ExplodeTransformer(array, outerColumns.keep, outerColumns.drop, outerColumns.rename)

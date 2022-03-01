@@ -50,8 +50,8 @@ case class StackMapping(
      * Returns the dependencies (i.e. names of tables in the Dataflow model)
      * @return
      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
+    override def inputs : Set[MappingOutputIdentifier] = {
+        Set(input)
     }
 
     /**
@@ -86,7 +86,9 @@ case class StackMapping(
         val result = xfs.transform(schema)
         val assembledResult = asm.map(_.reassemble(result)).getOrElse(result)
 
-        Map("main" -> assembledResult)
+        // Apply documentation
+        val schemas = Map("main" -> assembledResult)
+        applyDocumentation(schemas)
     }
 
     private lazy val xfs : StackTransformer =
@@ -138,7 +140,7 @@ class StackMappingSpec extends MappingSpec {
             MappingOutputIdentifier(context.evaluate(input)),
             context.evaluate(nameColumn),
             context.evaluate(valueColumn),
-            ListMap(context.evaluate(stackColumns).toSeq:_*),
+            ListMap(stackColumns.toSeq.map {case(k,v) => k -> context.evaluate(v) }:_*),
             context.evaluate(dropNulls).toBoolean,
             keepColumns.map(context.evaluate),
             dropColumns.map(context.evaluate),

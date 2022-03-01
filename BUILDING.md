@@ -55,7 +55,7 @@ appropriate build profiles, you can easily create a custom build.
 Although you can normally build Flowman on Windows, it is recommended to use Linux instead. But nevertheless Windows
 is still supported to some extend, but requires some extra care. You will need the Hadoop WinUtils installed. You can 
 download the binaries from https://github.com/cdarlint/winutils and install an appropriate version somewhere onto 
-your machine. Do not forget to set the HADOOP_HOME or PATH environment variable to the installation directory of these 
+your machine. Do not forget to set the `HADOOP_HOME` or `PATH` environment variable to the installation directory of these 
 utils!
 
 You should also configure git such that all files are checked out using "LF" endings instead of "CRLF", otherwise

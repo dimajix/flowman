@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.graph
 
+import scala.annotation.tailrec
+
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.NoSuchRelationException
@@ -32,6 +34,10 @@ import com.dimajix.flowman.model.TargetIdentifier
 
 
 object Graph {
+    def empty(context:Context) : Graph = {
+        Graph(context, Seq.empty, Seq.empty, Seq.empty)
+    }
+
     /**
      * Creates a Graph from a given project. The [[Context]] required for lookups and instantiation is retrieved from
      * the given [[Session]]
@@ -75,7 +81,18 @@ final case class Graph(
     relations:Seq[RelationRef],
     targets:Seq[TargetRef]
 ) {
-    def nodes : Seq[Node] = mappings ++ relations ++ targets
+    def project : Option[Project] = context.project
+
+    def nodes : Seq[Node] = {
+        def collectChildren(nodes:Seq[Node]) : Seq[Node] = {
+            val children = nodes.flatMap(_.children)
+            val next = if (children.nonEmpty) collectChildren(children) else Seq.empty
+            nodes ++ next
+        }
+
+        val roots = mappings ++ relations ++ targets
+        collectChildren(roots)
+    }
     def edges : Seq[Edge] = nodes.flatMap(_.outgoing)
 
     /**

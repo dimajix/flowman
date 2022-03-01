@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.21.2</version>
+        <version>0.22.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -51,7 +51,7 @@
                     </transformers>
                     <artifactSet>
                         <excludes>
-                            <exclude>*:*:sources</exclude>
+                            <exclude>*:sources</exclude>
                         </excludes>
                     </artifactSet>
                     <filters>

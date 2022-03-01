@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.spec.relation.IdentifierRelationReferenceSpec
 import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.spec.target.MergeTargetSpec.MergeClauseSpec
+import com.dimajix.flowman.types.SingleValue
 
 
 object MergeTarget {
@@ -155,12 +156,12 @@ case class MergeTarget(
     override def link(linker: Linker, phase:Phase): Unit = {
         phase match {
             case Phase.CREATE|Phase.DESTROY =>
-                linker.write(relation.identifier, Map())
+                linker.write(relation, Map.empty[String,SingleValue])
             case Phase.BUILD =>
                 linker.input(mapping.mapping, mapping.output)
-                linker.write(relation.identifier, Map())
+                linker.write(relation, Map.empty[String,SingleValue])
             case Phase.TRUNCATE =>
-                linker.write(relation.identifier, Map())
+                linker.write(relation, Map.empty[String,SingleValue])
             case _ =>
         }
     }

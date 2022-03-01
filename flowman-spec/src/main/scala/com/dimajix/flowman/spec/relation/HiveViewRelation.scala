@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.HiveCatalog
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
@@ -44,8 +45,7 @@ import com.dimajix.spark.sql.catalyst.SqlBuilder
 
 case class HiveViewRelation(
     override val instanceProperties:Relation.Properties,
-    override val database: Option[String],
-    override val table: String,
+    override val table: TableIdentifier,
     override val partitions: Seq[PartitionField] = Seq(),
     sql: Option[String] = None,
     mapping: Option[MappingOutputIdentifier] = None
@@ -63,7 +63,7 @@ case class HiveViewRelation(
         mapping.map(m => MappingUtils.requires(context, m.mapping))
             .orElse(
                 // Only return Hive Table Partitions!
-                sql.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHivePartition(t, Map()).asInstanceOf[ResourceIdentifier]))
+                sql.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHivePartition(t, Map.empty[String,Any]).asInstanceOf[ResourceIdentifier]))
             )
             .getOrElse(Set())
     }
@@ -74,7 +74,7 @@ case class HiveViewRelation(
       * @return
       */
     override def provides : Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofHiveTable(table, database)
+        ResourceIdentifier.ofHiveTable(table)
     )
 
     /**
@@ -83,7 +83,7 @@ case class HiveViewRelation(
       * @return
       */
     override def requires : Set[ResourceIdentifier] = {
-        val db = database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
+        val db = table.database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
         val other = mapping.map {m =>
                 MappingUtils.requires(context, m.mapping)
                     // Replace all Hive partitions with Hive tables
@@ -120,13 +120,13 @@ case class HiveViewRelation(
      */
     override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
         val catalog = execution.catalog
-        if (catalog.tableExists(tableIdentifier)) {
+        if (catalog.tableExists(table)) {
             val newSelect = getSelect(execution)
-            val curTable = catalog.getTable(tableIdentifier)
+            val curTable = catalog.getTable(table)
             // Check if current table is a VIEW or a table
             if (curTable.tableType == CatalogTableType.VIEW) {
                 // Check that both SQL and schema are correct
-                val curTable = catalog.getTable(tableIdentifier)
+                val curTable = catalog.getTable(table)
                 val curSchema = SchemaUtils.normalize(curTable.schema)
                 val newSchema = SchemaUtils.normalize(catalog.spark.sql(newSelect).schema)
                 curTable.viewText.get == newSelect && curSchema == newSchema
@@ -161,9 +161,10 @@ case class HiveViewRelation(
     override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
         val select = getSelect(execution)
         val catalog = execution.catalog
-        if (!ifNotExists || !catalog.tableExists(tableIdentifier)) {
-            logger.info(s"Creating Hive view relation '$identifier' with VIEW $tableIdentifier")
-            catalog.createView(tableIdentifier, select, ifNotExists)
+        if (!ifNotExists || !catalog.tableExists(table)) {
+            logger.info(s"Creating Hive view relation '$identifier' with VIEW $table")
+            catalog.createView(table, select, ifNotExists)
+            provides.foreach(execution.refreshResource)
         }
     }
 
@@ -174,9 +175,9 @@ case class HiveViewRelation(
      */
     override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
         val catalog = execution.catalog
-        if (catalog.tableExists(tableIdentifier)) {
+        if (catalog.tableExists(table)) {
             val newSelect = getSelect(execution)
-            val curTable = catalog.getTable(tableIdentifier)
+            val curTable = catalog.getTable(table)
             // Check if current table is a VIEW or a table
             if (curTable.tableType == CatalogTableType.VIEW) {
                 migrateFromView(catalog, newSelect, migrationStrategy)
@@ -184,23 +185,24 @@ case class HiveViewRelation(
             else {
                 migrateFromTable(catalog, newSelect, migrationStrategy)
             }
+            provides.foreach(execution.refreshResource)
         }
     }
 
     private def migrateFromView(catalog:HiveCatalog, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
-        val curTable = catalog.getTable(tableIdentifier)
+        val curTable = catalog.getTable(table)
         val curSchema = SchemaUtils.normalize(curTable.schema)
         val newSchema = SchemaUtils.normalize(catalog.spark.sql(newSelect).schema)
         if (curTable.viewText.get != newSelect || curSchema != newSchema) {
             migrationStrategy match {
                 case MigrationStrategy.NEVER =>
-                    logger.warn(s"Migration required for HiveView relation '$identifier' of Hive view $tableIdentifier, but migrations are disabled.")
+                    logger.warn(s"Migration required for HiveView relation '$identifier' of Hive view $table, but migrations are disabled.")
                 case MigrationStrategy.FAIL =>
-                    logger.error(s"Cannot migrate relation HiveView '$identifier' of Hive view $tableIdentifier, since migrations are disabled.")
+                    logger.error(s"Cannot migrate relation HiveView '$identifier' of Hive view $table, since migrations are disabled.")
                     throw new MigrationFailedException(identifier)
                 case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
-                    logger.info(s"Migrating HiveView relation '$identifier' with VIEW $tableIdentifier")
-                    catalog.alterView(tableIdentifier, newSelect)
+                    logger.info(s"Migrating HiveView relation '$identifier' with VIEW $table")
+                    catalog.alterView(table, newSelect)
             }
         }
     }
@@ -208,14 +210,14 @@ case class HiveViewRelation(
     private def migrateFromTable(catalog:HiveCatalog, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
-                logger.warn(s"Migration required for HiveView relation '$identifier' from TABLE to a VIEW $tableIdentifier, but migrations are disabled.")
+                logger.warn(s"Migration required for HiveView relation '$identifier' from TABLE to a VIEW $table, but migrations are disabled.")
             case MigrationStrategy.FAIL =>
-                logger.error(s"Cannot migrate relation HiveView '$identifier' from TABLE to a VIEW $tableIdentifier, since migrations are disabled.")
+                logger.error(s"Cannot migrate relation HiveView '$identifier' from TABLE to a VIEW $table, since migrations are disabled.")
                 throw new MigrationFailedException(identifier)
             case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
-                logger.info(s"Migrating HiveView relation '$identifier' from TABLE to a VIEW $tableIdentifier")
-                catalog.dropTable(tableIdentifier, false)
-                catalog.createView(tableIdentifier, newSelect, false)
+                logger.info(s"Migrating HiveView relation '$identifier' from TABLE to a VIEW $table")
+                catalog.dropTable(table, false)
+                catalog.createView(table, newSelect, false)
         }
     }
 
@@ -225,9 +227,10 @@ case class HiveViewRelation(
      */
     override def destroy(execution:Execution, ifExists:Boolean=false) : Unit = {
         val catalog = execution.catalog
-        if (!ifExists || catalog.tableExists(tableIdentifier)) {
-            logger.info(s"Destroying Hive view relation '$identifier' with VIEW $tableIdentifier")
-            catalog.dropView(tableIdentifier)
+        if (!ifExists || catalog.tableExists(table)) {
+            logger.info(s"Destroying Hive view relation '$identifier' with VIEW $table")
+            catalog.dropView(table)
+            provides.foreach(execution.refreshResource)
         }
     }
 
@@ -235,7 +238,7 @@ case class HiveViewRelation(
         val select = sql.orElse(mapping.map(id => buildMappingSql(executor, id)))
             .getOrElse(throw new IllegalArgumentException("HiveView either requires explicit SQL SELECT statement or mapping"))
 
-        logger.debug(s"Hive SQL SELECT statement for VIEW $tableIdentifier: $select")
+        logger.debug(s"Hive SQL SELECT statement for VIEW $table: $select")
 
         select
     }
@@ -263,8 +266,7 @@ class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
     override def instantiate(context: Context): HiveViewRelation = {
         HiveViewRelation(
             instanceProperties(context),
-            context.evaluate(database),
-            context.evaluate(view),
+            TableIdentifier(context.evaluate(view), context.evaluate(database)),
             partitions.map(_.instantiate(context)),
             context.evaluate(sql),
             context.evaluate(mapping).map(MappingOutputIdentifier.parse)

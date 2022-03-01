@@ -70,10 +70,10 @@ object Module {
         }
 
         private def readFile(file:File) : Module = {
-            if (file.isDirectory) {
+            if (file.isDirectory()) {
                 logger.info(s"Reading all module files in directory ${file.toString}")
                 file.list()
-                    .filter(_.isFile)
+                    .filter(_.isFile())
                     .map(f => loadFile(f))
                     .foldLeft(Module())((l,r) => l.merge(r))
             }

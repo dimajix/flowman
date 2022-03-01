@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         mapping.kind should be ("mock")
         mapping.mapping should be (MappingIdentifier("empty"))
         mapping.output should be (MappingOutputIdentifier("project/mock:main"))
-        mapping.outputs should be (Seq("main"))
+        mapping.outputs should be (Set("main"))
         mapping.records should be (Seq(
             ArrayRecord("a","12","3"),
             ArrayRecord("cat","","7"),
@@ -113,14 +113,14 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         mapping.category should be (Category.MAPPING)
 
         (baseMappingTemplate.instantiate _).expects(context).returns(baseMapping)
-        (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Seq("other", "error"))
-        mapping.outputs should be (Seq("other", "error"))
+        (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Set("other", "error"))
+        mapping.outputs should be (Set("other", "error"))
 
         (baseMapping.output _).expects().returns(MappingOutputIdentifier("base", "other", Some(project.name)))
         mapping.output should be (MappingOutputIdentifier("my_project/mock:other"))
 
         (baseMapping.context _).expects().anyNumberOfTimes().returns(context)
-        (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Seq())
+        (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Set())
         (baseMapping.identifier _).expects().anyNumberOfTimes().returns(MappingIdentifier("my_project/base"))
         (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"other")
             .anyNumberOfTimes().returns(otherSchema)
@@ -177,14 +177,14 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val mapping = context.getMapping(MappingIdentifier("mock"))
 
         (baseMappingTemplate.instantiate _).expects(context).returns(baseMapping)
-        (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Seq("main"))
-        mapping.outputs should be (Seq("main"))
+        (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Set("main"))
+        mapping.outputs should be (Set("main"))
 
         (baseMapping.output _).expects().returns(MappingOutputIdentifier("mock", "main", Some(project.name)))
         mapping.output should be (MappingOutputIdentifier("my_project/mock:main"))
 
         (baseMapping.context _).expects().anyNumberOfTimes().returns(context)
-        (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Seq())
+        (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Set())
         (baseMapping.identifier _).expects().anyNumberOfTimes().returns(MappingIdentifier("my_project/base"))
         (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"main")
             .anyNumberOfTimes().returns(schema)
@@ -233,8 +233,8 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
 
         (baseMappingTemplate.instantiate _).expects(context).returns(baseMapping)
         (baseMapping.context _).expects().anyNumberOfTimes().returns(context)
-        (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Seq("main"))
-        (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Seq())
+        (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Set("main"))
+        (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Set())
         (baseMapping.identifier _).expects().anyNumberOfTimes().returns(MappingIdentifier("my_project/base"))
         (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"main")
             .anyNumberOfTimes().returns(schema)

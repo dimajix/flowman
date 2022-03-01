@@ -12,3 +12,12 @@ move to Spark 3.0+.
 * [`deltaTable` relation](../spec/relation/deltaTable.md)
 * [`deltaFile` relation](../spec/relation/deltaFile.md)
 * ['deltaVacuum' target](../spec/target/deltaVacuum.md)
+
+
+## Activation
+
+The plugin can be easily activated by adding the following section to the [default-namespace.yml](../spec/namespace.md)
+```yaml
+plugins:
+  - flowman-delta 
+```

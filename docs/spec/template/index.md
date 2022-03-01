@@ -12,17 +12,24 @@ There are some differences when creating an instance of a template as opposed to
 
 ## Example
 ```yaml
+# The 'templates' section contains template definitions for relation, mappings, connections and more
 templates:
+  # Define a new template called "key_value" 
   key_value:
+    # The template is a mapping template  
     kind: mapping
+    # Specify a list of template parameters, which then can be provided during instantiation
     parameters:
       - name: key
         type: string
       - name: value
         type: int
         default: 12
+    # Now comes the template definition itself.    
     template:
+      # Specify the kind within the "mapping" entitiy class  
       kind: values
+      # The following settings are all specific to the "values" mapping kind
       records:
         - ["$key",$value]
       schema:
@@ -33,10 +40,17 @@ templates:
           - name: value_column
             type: integer
 
+# Now we can use the "key_value" template in the "mappings" section
 mappings:
+  # First instance  
   mapping_1:
+    # You need to prefix the template name with "template/"
     kind: template/key_value
+    # Provide a value for the "key" parameter. 
+    # The "value" parameter has a default value, so it doesn't need to be provided
     key: some_value
+    
+  # Second instance
   mapping_2:
     kind: template/key_value
     key: some_other_value

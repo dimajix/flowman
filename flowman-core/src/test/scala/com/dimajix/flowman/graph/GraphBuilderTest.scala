@@ -49,11 +49,13 @@ class GraphBuilderTest extends AnyFlatSpec with Matchers with MockFactory {
 
         (mappingTemplate1.instantiate _).expects(context).returns(mapping1)
         (mapping1.context _).expects().returns(context)
+        (mapping1.outputs _).expects().returns(Set("main"))
         (mapping1.kind _).expects().returns("m1_kind")
         (mapping1.name _).expects().atLeastOnce().returns("m1")
         (mapping1.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.input(MappingIdentifier("m2"), "main")))
         (mappingTemplate2.instantiate _).expects(context).returns(mapping2)
         (mapping2.context _).expects().returns(context)
+        (mapping2.outputs _).expects().returns(Set("main"))
         (mapping2.kind _).expects().returns("m2_kind")
         (mapping2.name _).expects().atLeastOnce().returns("m2")
         (mapping2.link _).expects(*).returns(Unit)
@@ -66,13 +68,14 @@ class GraphBuilderTest extends AnyFlatSpec with Matchers with MockFactory {
 
         val ref1 = nodes.find(_.name == "m1").head.asInstanceOf[MappingRef]
         val ref2 = nodes.find(_.name == "m2").head.asInstanceOf[MappingRef]
+        val out2main = ref2.outputs.head
 
         ref1.category should be (Category.MAPPING)
         ref1.kind should be ("m1_kind")
         ref1.name should be ("m1")
         ref1.mapping should be (mapping1)
         ref1.incoming should be (Seq(
-            InputMapping(ref2, ref1, "main")
+            InputMapping(out2main, ref1)
         ))
         ref1.outgoing should be (Seq())
 
@@ -81,8 +84,9 @@ class GraphBuilderTest extends AnyFlatSpec with Matchers with MockFactory {
         ref2.name should be ("m2")
         ref2.mapping should be (mapping2)
         ref2.incoming should be (Seq())
-        ref2.outgoing should be (Seq(
-            InputMapping(ref2, ref1, "main")
+        ref2.outgoing should be (Seq())
+        ref2.outputs.head.outgoing should be (Seq(
+            InputMapping(out2main, ref1)
         ))
     }
 }

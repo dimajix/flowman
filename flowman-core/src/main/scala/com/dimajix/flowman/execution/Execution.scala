@@ -35,9 +35,11 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Measure
 import com.dimajix.flowman.model.MeasureResult
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
+import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.StructType
 
 
@@ -185,6 +187,14 @@ abstract class Execution {
 
         mapping.describe(this, deps)
     }
+
+    /**
+     * Returns the schema for a specific relation
+     * @param relation
+     * @param partitions
+     * @return
+     */
+    def describe(relation:Relation, partitions:Map[String,FieldValue] = Map()) : StructType
 
     /**
      * Registers a refresh function associated with a [[ResourceIdentifier]]

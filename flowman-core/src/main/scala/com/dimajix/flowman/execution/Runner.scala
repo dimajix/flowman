@@ -51,6 +51,8 @@ import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.flowman.spi.LogFilter
+import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.util.ConsoleColors._
 import com.dimajix.spark.SparkUtils.withJobGroup
 
@@ -94,25 +96,6 @@ private[execution] sealed class RunnerImpl {
                 logger.warn(yellow(s"Finished '$phase' for target '${target.identifier}' with unknown status ${status.upper}"))
         }
 
-        result
-    }
-
-    def withExecution[T](parent:Execution, isolated:Boolean=false)(fn:Execution => T) : T = {
-        val execution : Execution = new ScopedExecution(parent, isolated)
-        val result = fn(execution)
-
-        // Wait for any running background operation, and do not perform a cleanup
-        val ops = execution.operations
-        val activeOps = ops.listActive()
-        if (activeOps.nonEmpty) {
-            logger.info("Some background operations are still active:")
-            activeOps.foreach(o => logger.info(s"  - s${o.name}"))
-            logger.info("Waiting for termination...")
-            ops.awaitTermination()
-        }
-
-        // Finally release any resources
-        execution.cleanup()
         result
     }
 
@@ -237,7 +220,6 @@ private[execution] sealed class RunnerImpl {
 private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
     private val stateStore = runner.stateStore
     private val stateStoreListener = new StateStoreAdaptorListener(stateStore)
-    private val parentExecution = runner.parentExecution
 
     /**
      * Executes a single job using the given execution and a map of parameters. The Runner may decide not to
@@ -257,7 +239,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
 
         val startTime = Instant.now()
         val isolated2 = isolated || job.parameters.nonEmpty || job.environment.nonEmpty
-        withExecution(parentExecution, isolated2) { execution =>
+        runner.withExecution(isolated2) { execution =>
             runner.withJobContext(job, args, Some(execution), force, dryRun, isolated2) { (context, arguments) =>
                 val title = s"lifecycle for job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
                 val listeners = if (!dryRun) stateStoreListener +: (runner.hooks ++ job.hooks).map(_.instantiate(context)) else Seq()
@@ -452,10 +434,8 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
  * @param runner
  */
 private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl {
-    private val parentExecution = runner.parentExecution
-
     def executeTest(test:Test, keepGoing:Boolean=false, dryRun:Boolean=false) : Status = {
-        withExecution(parentExecution, true) { execution =>
+        runner.withExecution(true) { execution =>
             runner.withTestContext(test, Some(execution), dryRun) { context =>
                 val title = s"Running test '${test.identifier}'"
                 logTitle(title)
@@ -635,7 +615,7 @@ final class Runner(
      * @param phases
      * @return
      */
-    def executeTargets(targets:Seq[Target], phases:Seq[Phase], force:Boolean, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : Status = {
+    def executeTargets(targets:Seq[Target], phases:Seq[Phase], jobName:String="execute-target", force:Boolean, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : Status = {
         if (targets.nonEmpty) {
             val context = targets.head.context
 
@@ -645,16 +625,36 @@ final class Runner(
                 .withTargets(targets.map(tgt => (tgt.name, Prototype.of(tgt))).toMap)
                 .build()
             val job = Job.builder(jobContext)
-                .setName("execute-target-" + Clock.systemUTC().millis())
+                .setName(jobName)
                 .setTargets(targets.map(_.identifier))
+                .setParameters(Seq(Job.Parameter("execution_ts", LongType)))
                 .build()
 
-            executeJob(job, phases, force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=isolated)
+            executeJob(job, phases, args=Map("execution_ts" -> Clock.systemUTC().millis()), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=isolated)
         }
         else {
             Status.SUCCESS
         }
    }
+
+    def withExecution[T](isolated:Boolean=false)(fn:Execution => T) : T = {
+        val execution : Execution = new ScopedExecution(parentExecution, isolated)
+        val result = fn(execution)
+
+        // Wait for any running background operation, and do not perform a cleanup
+        val ops = execution.operations
+        val activeOps = ops.listActive()
+        if (activeOps.nonEmpty) {
+            logger.info("Some background operations are still active:")
+            activeOps.foreach(o => logger.info(s"  - s${o.name}"))
+            logger.info("Waiting for termination...")
+            ops.awaitTermination()
+        }
+
+        // Finally release any resources
+        execution.cleanup()
+        result
+    }
 
     /**
      * Provides a context for the given job. This will apply all environment variables of the job and add

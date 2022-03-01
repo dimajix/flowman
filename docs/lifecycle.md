@@ -5,7 +5,7 @@ multiple different phases, each of them representing one stage of the whole life
 
 ## Lifecycle Phases
 
-The full lifecycle consists out of specific phases, as follows:
+The full lifecycle consists out of specific execution phases, as follows:
 
 1. **VALIDATE**.
 This first phase is used for validation and any error will stop the next steps. A validation step might for example
@@ -29,7 +29,7 @@ some specific user defined tests that compare data. If verification fails, the b
 tables (i.e. it will delete data), but it will keep tables alive.
 
 6. **DESTROY**.
-The final phase *destroy* is used to phyiscally remove relations including their data. This will also remove table
+The final phase *destroy* is used to physically remove relations including their data. This will also remove table
 definitions, views and directories. It performs the opposite operation than the *create* phase.
 
 

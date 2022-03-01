@@ -176,6 +176,8 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         writer.format(format)
             .mode(mode.batchMode)
             .save(outputFile)
+
+        provides.foreach(execution.refreshResource)
     }
 
     /**
@@ -276,6 +278,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         else {
             logger.info(s"Creating local directory '$localDirectory' for local file relation")
             path.mkdirs()
+            provides.foreach(execution.refreshResource)
         }
     }
 
@@ -312,6 +315,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         }
 
         delete(root)
+        provides.foreach(execution.refreshResource)
     }
 
     /**

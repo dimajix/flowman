@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,10 +61,10 @@ class AggregateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
         )
 
         xfs.input should be (MappingOutputIdentifier("myview"))
-        xfs.outputs should be (Seq("main"))
+        xfs.outputs should be (Set("main"))
         xfs.dimensions should be (Array("_1", "_2"))
         xfs.aggregations should be (Map("agg3" -> "sum(_3)", "agg4" -> "sum(_4)", "agg5" -> "sum(_4)", "agg6" -> "sum(_4)", "agg7" -> "sum(_4)"))
-        xfs.inputs should be (Seq(MappingOutputIdentifier("myview")))
+        xfs.inputs should be (Set(MappingOutputIdentifier("myview")))
 
         val df2 = xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("_1", "_2")
@@ -107,10 +107,10 @@ class AggregateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
         )
 
         xfs.input should be (MappingOutputIdentifier("myview"))
-        xfs.outputs should be (Seq("main"))
+        xfs.outputs should be (Set("main"))
         xfs.dimensions should be (Seq("_1 AS dim1", "upper(_2) AS dim2"))
         xfs.aggregations should be (Map("agg3" -> "sum(_3)"))
-        xfs.inputs should be (Seq(MappingOutputIdentifier("myview")))
+        xfs.inputs should be (Set(MappingOutputIdentifier("myview")))
 
         val df2 = xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("dim1", "dim2")

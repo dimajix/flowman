@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,11 @@ package com.dimajix.flowman.jdbc
 
 object HiveDialect extends BaseDialect {
     override def canHandle(url : String): Boolean = url.startsWith("jdbc:hive")
+
+    def quote(table:org.apache.spark.sql.catalyst.TableIdentifier): String = {
+        table.database.map(db => quoteIdentifier(db) + "." + quoteIdentifier(table.table))
+            .getOrElse(quoteIdentifier(table.table))
+    }
 
     /**
       * Quotes the identifier. This is used to put quotes around the identifier in case the column

@@ -1,6 +1,7 @@
 targets:
   measurements:
     kind: relation
+    description: "Write extracted measurements per year"
     mapping: measurements_extracted
     relation: measurements
     partition:

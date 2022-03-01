@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Kaya Kupferschmidt
+ * Copyright 2020-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.kohsuke.args4j.spi.SubCommands
 
 import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.tools.exec.VersionCommand
+import com.dimajix.flowman.tools.exec.documentation.DocumentationCommand
 import com.dimajix.flowman.tools.exec.info.InfoCommand
 import com.dimajix.flowman.tools.exec.mapping.MappingCommand
 import com.dimajix.flowman.tools.exec.model.ModelCommand
@@ -38,6 +39,7 @@ import com.dimajix.flowman.tools.exec.history.HistoryCommand
 class ParsedCommand {
     @Argument(required=false,index=0,metaVar="<command-group>",usage="the object to work with",handler=classOf[SubCommandHandler])
     @SubCommands(Array(
+        new SubCommand(name="documentation",impl=classOf[DocumentationCommand]),
         new SubCommand(name="eval",impl=classOf[EvaluateCommand]),
         new SubCommand(name="exit",impl=classOf[ExitCommand]),
         new SubCommand(name="history",impl=classOf[HistoryCommand]),

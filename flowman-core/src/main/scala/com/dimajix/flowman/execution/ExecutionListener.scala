@@ -26,6 +26,7 @@ import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Measure
 import com.dimajix.flowman.model.MeasureResult
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
@@ -126,6 +127,14 @@ trait ExecutionListener {
      * @param parent
      */
     def describeMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit
+
+    /**
+     * Informs the listener that a specific relation is about to be described
+     * @param execution
+     * @param relation
+     * @param parent
+     */
+    def describeRelation(execution: Execution, relation:Relation, parent:Option[Token]) : Unit
 }
 
 
@@ -142,4 +151,5 @@ abstract class AbstractExecutionListener extends ExecutionListener {
     override def finishMeasure(execution:Execution, token: MeasureToken, result: MeasureResult): Unit = {}
     override def instantiateMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit = {}
     override def describeMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit = {}
+    override def describeRelation(execution: Execution, relation:Relation, parent:Option[Token]) : Unit = {}
 }

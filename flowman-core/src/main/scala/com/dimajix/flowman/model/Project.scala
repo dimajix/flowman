@@ -26,8 +26,15 @@ import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.spi.ProjectReader
 
 
+
 object Project {
     private lazy val loader = ServiceLoader.load(classOf[ProjectReader]).iterator().asScala.toSeq
+
+    case class Import(
+        project:String,
+        job:Option[String] = None,
+        arguments:Map[String,String] = Map()
+    )
 
     class Reader {
         private val logger = LoggerFactory.getLogger(classOf[Reader])
@@ -46,10 +53,12 @@ object Project {
          */
         def file(file: File): Project = {
             if (!file.isAbsolute()) {
-                readFile(file.absolute)
+                this.file(file.absolute)
             }
             else {
-                readFile(file)
+                logger.info(s"Reading project from $file")
+                val spec = reader.file(file)
+                loadModules(spec, spec.basedir.getOrElse(file))
             }
         }
 
@@ -63,38 +72,14 @@ object Project {
             if (!file.isAbsolute()) {
                 manifest(file.absolute)
             }
-            else if (file.isDirectory) {
-                logger.info(s"Reading project manifest in directory $file")
-                manifest(file / "project.yml")
-            }
             else {
                 logger.info(s"Reading project manifest from $file")
-                val project = reader.file(file)
-                project.copy(
-                    filename = Some(file.absolute),
-                    basedir = Some(file.absolute.parent)
-                )
+                reader.file(file)
             }
         }
 
         def string(text: String): Project = {
             reader.string(text)
-        }
-
-        private def readFile(file: File): Project = {
-            if (file.isDirectory) {
-                logger.info(s"Reading project in directory $file")
-                this.file(file / "project.yml")
-            }
-            else {
-                logger.info(s"Reading project from $file")
-                val spec = reader.file(file)
-                val project = loadModules(spec, file.parent)
-                project.copy(
-                    filename = Some(file.absolute),
-                    basedir = Some(file.absolute.parent)
-                )
-            }
         }
 
         private def loadModules(project: Project, directory: File): Project = {
@@ -138,7 +123,9 @@ final case class Project(
     config : Map[String,String] = Map(),
     environment : Map[String,String] = Map(),
 
+    imports: Seq[Project.Import] = Seq(),
     profiles : Map[String,Profile] = Map(),
+
     relations : Map[String,Prototype[Relation]] = Map(),
     connections : Map[String,Prototype[Connection]] = Map(),
     mappings : Map[String,Prototype[Mapping]] = Map(),

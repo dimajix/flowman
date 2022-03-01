@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,9 +136,9 @@ case class StreamTarget(
         phase match {
             case Phase.BUILD =>
                 linker.input(mapping.mapping, mapping.output)
-                linker.write(relation.identifier, Map())
+                linker.write(relation, Map.empty[String,SingleValue])
             case Phase.TRUNCATE|Phase.DESTROY =>
-                linker.write(relation.identifier, Map())
+                linker.write(relation, Map.empty[String,SingleValue])
             case _ =>
         }
     }

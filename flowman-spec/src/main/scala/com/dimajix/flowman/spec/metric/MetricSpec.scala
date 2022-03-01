@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.dimajix.flowman.spec.Spec
 
 
 class MetricSpec extends Spec[MetricSelection] {
-    @JsonProperty(value = "name", required = true) var name:String = _
+    @JsonProperty(value = "name", required = true) var name:Option[String] = None
     @JsonProperty(value = "labels", required = false) var labels:Map[String,String] = Map()
     @JsonProperty(value = "selector", required = true) var selector:SelectorSpec = _
 
@@ -46,8 +46,8 @@ class SelectorSpec extends Spec[Selector] {
 
     def instantiate(context: Context): Selector = {
         Selector(
-            name.map(context.evaluate),
-            context.evaluate(labels)
+            name.map(context.evaluate).map(_.r),
+            context.evaluate(labels).map { case(k,v) => k -> v.r }
         )
     }
 }

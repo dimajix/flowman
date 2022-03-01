@@ -1,4 +1,4 @@
-# Impala
+# Updating Impala Metadata
 
 Impala is another "SQL on Hadoop" execution engine mainly developed and backed up by Cloudera. Impala allows you to
 access data stored in Hadoop and registered in the Hive metastore, just like Hive itself, but often at a significantly

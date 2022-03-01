@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         mapping.input should be (MappingOutputIdentifier("df1"))
         mapping.keyColumns should be (Seq("id" ))
         mapping.versionColumns should be (Seq("ts"))
-        mapping.inputs should be (Seq(MappingOutputIdentifier("df1")))
+        mapping.inputs should be (Set(MappingOutputIdentifier("df1")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
         result.schema should be (df.schema)
@@ -112,7 +112,7 @@ class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         mapping.input should be (MappingOutputIdentifier("df1"))
         mapping.keyColumns should be (Seq("id" ))
         mapping.versionColumns should be (Seq("ts"))
-        mapping.inputs should be (Seq(MappingOutputIdentifier("df1")))
+        mapping.inputs should be (Set(MappingOutputIdentifier("df1")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
         result.schema should be (df.schema)
@@ -177,7 +177,7 @@ class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         mapping.input should be (MappingOutputIdentifier("df1"))
         mapping.keyColumns should be (Seq("id._1" ))
         mapping.versionColumns should be (Seq("ts._2"))
-        mapping.inputs should be (Seq(MappingOutputIdentifier("df1")))
+        mapping.inputs should be (Set(MappingOutputIdentifier("df1")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
         result.schema should be (df.schema)

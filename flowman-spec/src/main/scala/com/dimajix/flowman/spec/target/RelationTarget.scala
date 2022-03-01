@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,12 @@
 
 package com.dimajix.flowman.spec.target
 
+import java.time.Instant
+
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 
@@ -23,6 +29,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
@@ -35,6 +42,7 @@ import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseTarget
@@ -46,6 +54,8 @@ import com.dimajix.flowman.model.RelationReference
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
+import com.dimajix.flowman.model.TargetResult
+import com.dimajix.flowman.model.VerifyPolicy
 import com.dimajix.flowman.spec.relation.IdentifierRelationReferenceSpec
 import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.types.SingleValue
@@ -200,14 +210,14 @@ case class RelationTarget(
     override def link(linker: Linker, phase:Phase): Unit = {
         phase match {
             case Phase.CREATE|Phase.DESTROY =>
-                linker.write(relation.identifier, Map())
+                linker.write(relation, Map.empty[String,SingleValue])
             case Phase.BUILD if (mapping.nonEmpty) =>
                 val partition = this.partition.mapValues(v => SingleValue(v))
                 linker.input(mapping.mapping, mapping.output)
-                linker.write(relation.identifier, partition)
+                linker.write(relation, partition)
             case Phase.TRUNCATE =>
                 val partition = this.partition.mapValues(v => SingleValue(v))
-                linker.write(relation.identifier, partition)
+                linker.write(relation, partition)
             case _ =>
         }
     }
@@ -266,16 +276,42 @@ case class RelationTarget(
     /**
       * Performs a verification of the build step or possibly other checks.
       *
-      * @param executor
+      * @param execution
       */
-    override def verify(executor: Execution) : Unit = {
-        require(executor != null)
+    override def verify2(execution: Execution) : TargetResult = {
+        require(execution != null)
 
-        val partition = this.partition.mapValues(v => SingleValue(v))
-        val rel = relation.value
-        if (rel.loaded(executor, partition) == No) {
-            logger.error(s"Verification of target '$identifier' failed - partition $partition of relation '${relation.identifier}' does not exist")
-            throw new VerificationFailedException(identifier)
+        val startTime = Instant.now()
+        Try {
+            val partition = this.partition.mapValues(v => SingleValue(v))
+            val rel = relation.value
+            if (rel.loaded(execution, partition) == No) {
+                val policy = VerifyPolicy.ofString(execution.flowmanConf.getConf(FlowmanConf.DEFAULT_TARGET_VERIFY_POLICY))
+                policy match {
+                    case VerifyPolicy.EMPTY_AS_FAILURE =>
+                        logger.error(s"Verification of target '$identifier' failed - partition $partition of relation '${relation.identifier}' does not exist")
+                        throw new VerificationFailedException(identifier)
+                    case VerifyPolicy.EMPTY_AS_SUCCESS|VerifyPolicy.EMPTY_AS_SUCCESS_WITH_ERRORS =>
+                        if (rel.exists(execution) != No) {
+                            logger.warn(s"Verification of target '$identifier' failed - partition $partition of relation '${relation.identifier}' does not exist. Ignoring.")
+                            if (policy == VerifyPolicy.EMPTY_AS_SUCCESS_WITH_ERRORS)
+                                Status.SUCCESS_WITH_ERRORS
+                            else
+                                Status.SUCCESS
+                        }
+                        else {
+                            logger.error(s"Verification of target '$identifier' failed - relation '${relation.identifier}' does not exist")
+                            throw new VerificationFailedException(identifier)
+                        }
+                }
+            }
+            else {
+                Status.SUCCESS
+            }
+        }
+        match {
+            case Success(status) => TargetResult(this, Phase.VERIFY, status, startTime)
+            case Failure(ex) => TargetResult(this, Phase.VERIFY, ex, startTime)
         }
     }
 

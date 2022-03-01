@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,8 +68,8 @@ case class AggregateMapping(
       *
       * @return
       */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq(input)
+    override def inputs : Set[MappingOutputIdentifier] = {
+        Set(input)
     }
 }
 
@@ -92,7 +92,7 @@ class AggregateMappingSpec extends MappingSpec {
             instanceProperties(context),
             MappingOutputIdentifier.parse(context.evaluate(input)),
             dimensions.map(context.evaluate),
-            context.evaluate(aggregations),
+            ListMap(aggregations.toSeq.map { case(k,v) => k -> context.evaluate(v) }:_*),
             context.evaluate(filter),
             if (partitions.isEmpty) 0 else context.evaluate(partitions).toInt
         )

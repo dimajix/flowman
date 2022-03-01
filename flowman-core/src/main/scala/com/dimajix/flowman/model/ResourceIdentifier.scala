@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import scala.annotation.tailrec
 
 import org.apache.hadoop.fs.Path
 
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.hadoop.GlobPattern
 
 
@@ -36,26 +37,34 @@ object ResourceIdentifier {
         GlobbingResourceIdentifier("local", new Path(file.toURI.getPath).toString)
     def ofHiveDatabase(database:String): RegexResourceIdentifier =
         RegexResourceIdentifier("hiveDatabase", database)
+    def ofHiveTable(table:TableIdentifier): RegexResourceIdentifier =
+        ofHiveTable(table.table, table.space.headOption)
     def ofHiveTable(table:String): RegexResourceIdentifier =
         RegexResourceIdentifier("hiveTable", table)
     def ofHiveTable(table:String, database:Option[String]): RegexResourceIdentifier =
         RegexResourceIdentifier("hiveTable", fqTable(table, database))
+    def ofHivePartition(table:TableIdentifier, partition:Map[String,Any]): RegexResourceIdentifier =
+        ofHivePartition(table.table, table.space.headOption, partition)
     def ofHivePartition(table:String, partition:Map[String,Any]): RegexResourceIdentifier =
         RegexResourceIdentifier("hiveTablePartition", table, partition.map { case(k,v) => k -> v.toString })
     def ofHivePartition(table:String, database:Option[String], partition:Map[String,Any]): RegexResourceIdentifier =
         RegexResourceIdentifier("hiveTablePartition", fqTable(table, database), partition.map { case(k,v) => k -> v.toString })
     def ofJdbcDatabase(database:String): RegexResourceIdentifier =
         RegexResourceIdentifier("jdbcDatabase", database)
+    def ofJdbcTable(table:TableIdentifier): RegexResourceIdentifier =
+        ofJdbcTable(table.table, table.space.headOption)
     def ofJdbcTable(table:String, database:Option[String]): RegexResourceIdentifier =
         RegexResourceIdentifier("jdbcTable", fqTable(table, database))
     def ofJdbcQuery(query:String): SimpleResourceIdentifier =
         SimpleResourceIdentifier("jdbcQuery", "<sql_query>")
+    def ofJdbcTablePartition(table:TableIdentifier, partition:Map[String,Any]): RegexResourceIdentifier =
+        ofJdbcTablePartition(table.table, table.space.headOption, partition)
     def ofJdbcTablePartition(table:String, database:Option[String], partition:Map[String,Any]): RegexResourceIdentifier =
         RegexResourceIdentifier("jdbcTablePartition", fqTable(table, database), partition.map { case(k,v) => k -> v.toString })
     def ofURL(url:URL): RegexResourceIdentifier =
         RegexResourceIdentifier("url", url.toString)
 
-    private def fqTable(table:String, database:Option[String]) : String = database.map(_ + ".").getOrElse("") + table
+    private def fqTable(table:String, database:Option[String]) : String = database.filter(_.nonEmpty).map(_ + ".").getOrElse("") + table
 }
 
 

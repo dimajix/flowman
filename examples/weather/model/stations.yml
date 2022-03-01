@@ -1,8 +1,16 @@
 relations:
   stations:
     kind: file
+    description: "The 'stations' table contains meta data on all weather stations"
     format: parquet
     location: "$basedir/stations/"
     schema:
       kind: avro
       file: "${project.basedir}/schema/stations.avsc"
+
+    documentation:
+      checks:
+        kind: primaryKey
+        columns:
+          - usaf
+          - wban

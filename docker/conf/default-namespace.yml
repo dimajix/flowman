@@ -13,6 +13,28 @@ connections:
     username: $System.getenv('FLOWMAN_LOGDB_USER', '')
     password: $System.getenv('FLOWMAN_LOGDB_PASSWORD', '')
 
+# This adds a hook for creating an execution log in a file
+hooks:
+  kind: report
+  location: ${project.basedir}/generated-report.txt
+  metrics:
+    # Define common labels for all metrics
+    labels:
+      project: ${project.name}
+    metrics:
+      # Collect everything
+      - selector:
+          name: .*
+        labels:
+          category: ${category}
+          kind: ${kind}
+          name: ${name}
+
+# This configures where metrics should be written to. Since we cannot assume a working Prometheus push gateway, we
+# simply print them onto the console
+metrics:
+  - kind: console
+
 config:
   - spark.sql.warehouse.dir=/opt/flowman/hive/warehouse
   - spark.hadoop.hive.metastore.uris=
@@ -21,7 +43,7 @@ config:
 
 store:
   kind: file
-  location: /opt/flowman/examples
+  location: $System.getenv('FLOWMAN_HOME')/examples
 
 plugins:
   - flowman-aws

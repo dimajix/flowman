@@ -11,10 +11,21 @@ targets:
     kind: null
 ```
 
-## Supported Phases
+
+## Fields
+
+* `kind` **(mandatory)** *(type: string)*: `null`
+
+* `description` **(optional)** *(type: string)*:
+  Optional descriptive text of the build target
+
+
+## Supported Execution Phases
 * `CREATE`
 * `MIGRATE`
 * `BUILD`
 * `VERIFY`
 * `TRUNCATE`
 * `DESTROY`
+
+Read more about [execution phases](../../lifecycle.md).

@@ -201,7 +201,7 @@ class UpsertMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         mapping shouldBe an[UpsertMappingSpec]
 
         val updateMapping = mapping.instantiate(session.context).asInstanceOf[UpsertMapping]
-        updateMapping.inputs should be (Seq(MappingOutputIdentifier("t0"),MappingOutputIdentifier("t1")))
+        updateMapping.inputs should be (Set(MappingOutputIdentifier("t0"),MappingOutputIdentifier("t1")))
         updateMapping.input should be (MappingOutputIdentifier("t0"))
         updateMapping.updates should be (MappingOutputIdentifier("t1"))
         updateMapping.keyColumns should be (Seq("id"))

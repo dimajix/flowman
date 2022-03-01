@@ -20,6 +20,9 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.JsonMappingException
+
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.spi.NamespaceReader
 
@@ -39,16 +42,22 @@ class YamlNamespaceReader extends NamespaceReader {
      * @return
      */
     @throws[IOException]
+    @throws[JsonProcessingException]
+    @throws[JsonMappingException]
     override def file(file:File) : Namespace = {
         ObjectMapper.read[NamespaceSpec](file).instantiate()
     }
 
     @throws[IOException]
+    @throws[JsonProcessingException]
+    @throws[JsonMappingException]
     override def stream(stream:InputStream) : Namespace = {
         ObjectMapper.read[NamespaceSpec](stream).instantiate()
     }
 
     @throws[IOException]
+    @throws[JsonProcessingException]
+    @throws[JsonMappingException]
     override def string(text:String) : Namespace = {
         ObjectMapper.parse[NamespaceSpec](text).instantiate()
     }

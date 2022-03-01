@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,12 @@ package com.dimajix.flowman.model
 import com.dimajix.flowman.execution.Context
 
 
-abstract class Reference[T] {
+sealed abstract class Reference[T] {
     val value:T
     def name:String
     def identifier:Identifier[T]
 }
+
 
 object RelationReference {
     def apply(context:Context, prototype:Prototype[Relation]) : ValueRelationReference =

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@
 package com.dimajix.flowman.jdbc
 
 import org.apache.spark.sql.Column
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.execution.MergeClause
 
 
@@ -56,6 +58,12 @@ abstract class SqlStatements {
     def deleteColumn(table: TableIdentifier, columnName: String): String
     def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String): String
     def updateColumnNullability(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean): String
+
+    def dropPrimaryKey(table: TableIdentifier) : String
+    def addPrimaryKey(table: TableIdentifier, columns:Seq[String]) : String
+
+    def dropIndex(table: TableIdentifier, indexName: String) : String
+    def createIndex(table: TableIdentifier, index:TableIndex) : String
 
     def merge(table: TableIdentifier, targetAlias:String, targetSchema:Option[StructType], sourceAlias:String, sourceSchema:StructType, condition:Column, clauses:Seq[MergeClause]) : String
 }

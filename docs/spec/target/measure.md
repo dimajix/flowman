@@ -21,3 +21,19 @@ targets:
 
 This example will provide two metrics, `record_count` and `column_sum`, which then can be sent to a 
 [metric sink](../metric) configured in the [namespace](../namespace.md).
+
+
+## Provided Metrics
+All metrics defined as named columns are exported with the following labels:
+    - `name` - The name of the measure (i.e. `record_stats` above)
+    - `category` - Always set to `measure`
+    - `kind` - Always set to `sql`
+    - `namespace` - Name of the namespace (typically `default`)
+    - `project` - Name of the project
+    - `version` - Version of the project
+
+
+## Supported Execution Phases
+* `VERIFY` - The evaluation of all measures will only be performed in the `VERIFY` phase
+
+Read more about [execution phases](../../lifecycle.md).

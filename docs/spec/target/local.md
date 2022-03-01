@@ -18,6 +18,8 @@ targets:
 
 ## Fields
  * `kind` **(mandatory)** *(string)*: `local`
+ * `description` **(optional)** *(type: string)*:
+  Optional descriptive text of the build target
  * `mapping` **(mandatory)** *(string)*:
  Specifies the name of the input mapping to be counted
  * `filename` **(mandatory)** *(string)*:
@@ -30,11 +32,13 @@ targets:
  * `columns` **(optional)** *(list)* *(default: [])*: 
 
 
-## Supported Phases
-* `BUILD`
-* `VERIFY`
-* `TRUNCATE`
-* `DESTROY`
+## Supported Execution Phases
+* `BUILD` - build the target files containing records
+* `VERIFY` - verifies that the target file exists
+* `TRUNCATE` - removes the target file
+* `DESTROY` - removes the target file, equivalent to `TRUNCATE`
+
+Read more about [execution phases](../../lifecycle.md).
 
 
 ## Provided Metrics

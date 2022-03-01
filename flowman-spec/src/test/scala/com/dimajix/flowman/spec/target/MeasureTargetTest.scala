@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,12 +102,12 @@ class MeasureTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         measureResult.measurements should be (Seq(Measurement("m1", Map("name" -> "a1", "category" -> "measure", "kind" -> "sql", "phase" -> "VERIFY"), 23)))
 
         val metrics = execution.metricSystem
-        metrics.findMetric(Selector(Some("m1"), Map("name" -> "a1", "category" -> "measure", "kind" -> "sql", "phase" -> "VERIFY"))).size should be (1)
-        metrics.findMetric(Selector(Some("m1"), Map("name" -> "a1", "category" -> "measure", "kind" -> "sql" ))).size should be (1)
-        metrics.findMetric(Selector(Some("m1"), Map("name" -> "a1", "category" -> "measure"))).size should be (1)
-        metrics.findMetric(Selector(Some("m1"), Map("name" -> "a1"))).size should be (1)
-        metrics.findMetric(Selector(Some("m1"), Map())).size should be (1)
-        val gauges = metrics.findMetric(Selector(Some("m1"), Map("name" -> "a1", "category" -> "measure", "kind" -> "sql", "phase" -> "VERIFY")))
+        metrics.findMetric(Selector("m1", Map("name" -> "a1", "category" -> "measure", "kind" -> "sql", "phase" -> "VERIFY"))).size should be (1)
+        metrics.findMetric(Selector("m1", Map("name" -> "a1", "category" -> "measure", "kind" -> "sql" ))).size should be (1)
+        metrics.findMetric(Selector("m1", Map("name" -> "a1", "category" -> "measure"))).size should be (1)
+        metrics.findMetric(Selector("m1", Map("name" -> "a1"))).size should be (1)
+        metrics.findMetric(Selector("m1")).size should be (1)
+        val gauges = metrics.findMetric(Selector("m1", Map("name" -> "a1", "category" -> "measure", "kind" -> "sql", "phase" -> "VERIFY")))
         gauges.head.asInstanceOf[GaugeMetric].value should be (23.0)
     }
 }

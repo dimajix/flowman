@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,8 @@ import java.nio.file.FileAlreadyExistsException
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.delta.tables.DeltaTable
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.delta.catalog.DeltaTableV2
-import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.StructType
@@ -37,9 +35,10 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
+import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
@@ -223,7 +222,9 @@ case class DeltaFileRelation(
                 val table = deltaCatalogTable(execution)
                 val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
                 val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
-                !TableChange.requiresMigration(sourceSchema, targetSchema, migrationPolicy)
+                val sourceTable = TableDefinition(TableIdentifier.empty, sourceSchema.fields)
+                val targetTable = TableDefinition(TableIdentifier.empty, targetSchema.fields)
+                !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
             }
             else {
                 true
@@ -288,6 +289,8 @@ case class DeltaFileRelation(
                 properties,
                 description
             )
+
+            provides.foreach(execution.refreshResource)
         }
     }
 
@@ -344,6 +347,7 @@ case class DeltaFileRelation(
         else {
             logger.info(s"Destroying Delta file relation '$identifier' by deleting directory '$location'")
             fs.delete(location, true)
+            provides.foreach(execution.refreshResource)
         }
     }
 

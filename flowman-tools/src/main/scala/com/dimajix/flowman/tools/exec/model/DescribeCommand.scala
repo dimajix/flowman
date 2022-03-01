@@ -22,6 +22,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.common.ParserUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchRelationException
 import com.dimajix.flowman.execution.Session
@@ -29,6 +30,7 @@ import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.tools.exec.Command
+import com.dimajix.flowman.types.SingleValue
 
 
 class DescribeCommand extends Command {
@@ -38,19 +40,22 @@ class DescribeCommand extends Command {
     var useSpark: Boolean = false
     @Argument(usage = "specifies the relation to describe", metaVar = "<relation>", required = true)
     var relation: String = ""
+    @Option(name="-p", aliases=Array("--partition"), usage = "specify partition to work on, as partition1=value1,partition2=value2")
+    var partition: String = ""
 
     override def execute(session: Session, project: Project, context:Context) : Status = {
         try {
             val identifier = RelationIdentifier(this.relation)
             val relation = context.getRelation(identifier)
+            val partition = ParserUtils.parseDelimitedKeyValues(this.partition).map { case(k,v) => (k,SingleValue(v)) }
 
             if (useSpark) {
-                val df = relation.read(session.execution, Map())
+                val df = relation.read(session.execution, partition)
                 df.printSchema()
             }
             else {
                 val execution = session.execution
-                val schema = relation.describe(execution)
+                val schema = execution.describe(relation, partition)
                 schema.printTree()
             }
             Status.SUCCESS

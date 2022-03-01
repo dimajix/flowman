@@ -166,8 +166,10 @@ case class NullRelation(
       * @param execution
       * @return
       */
-    override def describe(execution:Execution) : types.StructType = {
-        types.StructType(fields)
+    override def describe(execution:Execution, partitions:Map[String,FieldValue] = Map()) : types.StructType = {
+        val result = types.StructType(fields)
+
+        applyDocumentation(result)
     }
 
     /**

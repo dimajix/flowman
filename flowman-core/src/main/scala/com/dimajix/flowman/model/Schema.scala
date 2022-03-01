@@ -86,9 +86,13 @@ trait Schema extends Instance {
       */
     def sparkSchema : org.apache.spark.sql.types.StructType
 
+    /**
+     * Returns a Spark schema useable for Catalog entries. This Schema may include VARCHAR(n) and CHAR(n) entries
+     * @return
+     */
     def catalogSchema : org.apache.spark.sql.types.StructType
 
-    /**
+        /**
       * Provides a human readable string representation of the schema
       */
     def printTree() : Unit = {
@@ -118,6 +122,10 @@ abstract class BaseSchema extends AbstractInstance with Schema {
         org.apache.spark.sql.types.StructType(fields.map(_.sparkField))
     }
 
+    /**
+     * Returns a Spark schema useable for Catalog entries. This Schema may include VARCHAR(n) and CHAR(n) entries
+     * @return
+     */
     override def catalogSchema : org.apache.spark.sql.types.StructType = {
         org.apache.spark.sql.types.StructType(fields.map(_.catalogField))
     }

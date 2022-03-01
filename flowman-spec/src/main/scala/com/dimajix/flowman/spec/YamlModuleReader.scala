@@ -19,6 +19,9 @@ package com.dimajix.flowman.spec
 import java.io.IOException
 import java.io.InputStream
 
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.JsonMappingException
+
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.spi.ModuleReader
@@ -39,16 +42,22 @@ class YamlModuleReader extends ModuleReader {
      * @return
      */
     @throws[IOException]
+    @throws[JsonProcessingException]
+    @throws[JsonMappingException]
     override def file(file:File) : Module = {
         ObjectMapper.read[ModuleSpec](file).instantiate()
     }
 
     @throws[IOException]
+    @throws[JsonProcessingException]
+    @throws[JsonMappingException]
     override def stream(stream:InputStream) : Module = {
         ObjectMapper.read[ModuleSpec](stream).instantiate()
     }
 
     @throws[IOException]
+    @throws[JsonProcessingException]
+    @throws[JsonMappingException]
     override def string(text:String) : Module = {
         ObjectMapper.parse[ModuleSpec](text).instantiate()
     }

@@ -19,10 +19,14 @@ package com.dimajix.flowman.spec
 import com.fasterxml.jackson.databind.jsontype.NamedType
 import com.fasterxml.jackson.databind.{ObjectMapper => JacksonMapper}
 
+import com.dimajix.flowman.plugin.Plugin
 import com.dimajix.flowman.spec.assertion.AssertionSpec
 import com.dimajix.flowman.spec.catalog.CatalogSpec
 import com.dimajix.flowman.spec.connection.ConnectionSpec
 import com.dimajix.flowman.spec.dataset.DatasetSpec
+import com.dimajix.flowman.spec.documentation.ColumnCheckSpec
+import com.dimajix.flowman.spec.documentation.GeneratorSpec
+import com.dimajix.flowman.spec.documentation.SchemaCheckSpec
 import com.dimajix.flowman.spec.history.HistorySpec
 import com.dimajix.flowman.spec.mapping.MappingSpec
 import com.dimajix.flowman.spec.measure.MeasureSpec
@@ -32,6 +36,7 @@ import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.spec.storage.ParcelSpec
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spi.ClassAnnotationScanner
+import com.dimajix.flowman.spi.PluginListener
 import com.dimajix.flowman.util.{ObjectMapper => CoreObjectMapper}
 
 
@@ -40,41 +45,62 @@ import com.dimajix.flowman.util.{ObjectMapper => CoreObjectMapper}
   * extensions and can directly be used for reading flowman specification files
   */
 object ObjectMapper extends CoreObjectMapper {
+    private var _mapper:JacksonMapper = null
+
     /**
       * Create a new Jackson ObjectMapper
       * @return
       */
-    override def mapper : JacksonMapper = {
-        // Ensure that all extensions are loaded
-        ClassAnnotationScanner.load()
+    override def mapper : JacksonMapper = synchronized {
+        // Implement a stupidly simple cache
+        if (_mapper == null) {
+            // Ensure that all extensions are loaded
+            ClassAnnotationScanner.load()
 
-        val stateStoreTypes = HistorySpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val catalogTypes = CatalogSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val monitorTypes = HistorySpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val relationTypes = RelationSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val mappingTypes = MappingSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val targetTypes = TargetSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val schemaTypes = SchemaSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val connectionTypes = ConnectionSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val assertionTypes = AssertionSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val measureTypes = MeasureSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val datasetTypes = DatasetSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val metricSinkTypes = MetricSinkSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val parcelTypes = ParcelSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
-        val mapper = super.mapper
-        mapper.registerSubtypes(stateStoreTypes:_*)
-        mapper.registerSubtypes(catalogTypes:_*)
-        mapper.registerSubtypes(monitorTypes:_*)
-        mapper.registerSubtypes(relationTypes:_*)
-        mapper.registerSubtypes(mappingTypes:_*)
-        mapper.registerSubtypes(targetTypes:_*)
-        mapper.registerSubtypes(schemaTypes:_*)
-        mapper.registerSubtypes(connectionTypes:_*)
-        mapper.registerSubtypes(assertionTypes:_*)
-        mapper.registerSubtypes(measureTypes:_*)
-        mapper.registerSubtypes(datasetTypes:_*)
-        mapper.registerSubtypes(metricSinkTypes:_*)
-        mapper.registerSubtypes(parcelTypes:_*)
-        mapper
+            val stateStoreTypes = HistorySpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val catalogTypes = CatalogSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val monitorTypes = HistorySpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val relationTypes = RelationSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val mappingTypes = MappingSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val targetTypes = TargetSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val schemaTypes = SchemaSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val connectionTypes = ConnectionSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val assertionTypes = AssertionSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val measureTypes = MeasureSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val datasetTypes = DatasetSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val metricSinkTypes = MetricSinkSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val parcelTypes = ParcelSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val generatorTypes = GeneratorSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val columnTestTypes = ColumnCheckSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val schemaTestTypes = SchemaCheckSpec.subtypes.map(kv => new NamedType(kv._2, kv._1))
+            val mapper = super.mapper
+            mapper.registerSubtypes(stateStoreTypes: _*)
+            mapper.registerSubtypes(catalogTypes: _*)
+            mapper.registerSubtypes(monitorTypes: _*)
+            mapper.registerSubtypes(relationTypes: _*)
+            mapper.registerSubtypes(mappingTypes: _*)
+            mapper.registerSubtypes(targetTypes: _*)
+            mapper.registerSubtypes(schemaTypes: _*)
+            mapper.registerSubtypes(connectionTypes: _*)
+            mapper.registerSubtypes(assertionTypes: _*)
+            mapper.registerSubtypes(measureTypes: _*)
+            mapper.registerSubtypes(datasetTypes: _*)
+            mapper.registerSubtypes(metricSinkTypes: _*)
+            mapper.registerSubtypes(parcelTypes: _*)
+            mapper.registerSubtypes(generatorTypes: _*)
+            mapper.registerSubtypes(columnTestTypes: _*)
+            mapper.registerSubtypes(schemaTestTypes: _*)
+            _mapper = mapper
+        }
+        _mapper
     }
+
+    def invalidate(): Unit = synchronized {
+        _mapper = null
+    }
+}
+
+
+class ObjectMapperPluginListener extends PluginListener {
+    override def pluginLoaded(plugin: Plugin, classLoader: ClassLoader): Unit = ObjectMapper.invalidate()
 }

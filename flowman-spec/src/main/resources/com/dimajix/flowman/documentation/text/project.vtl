@@ -1,0 +1,67 @@
+Project: ${project.name} version ${project.version}
+Description: ${project.description}
+
+
+=========== Mappings: =================================================================================================
+#foreach($mapping in ${project.mappings})
+Mapping '${mapping}' (${mapping.reference})
+  Description: ${mapping.description}
+  Inputs:
+    #foreach($input in ${mapping.inputs})
+    - ${input.kind}: ${input}
+    #end
+  Outputs:
+  #foreach($output in ${mapping.outputs})
+   - '${output.name}':
+    #foreach($column in ${output.schema.columns})
+      ${column.name} ${column.catalogType} #if(!$column.nullable)NOT NULL #end- ${column.description}
+      #foreach($test in $column.tests)
+          Test: '${test.name}' => ${test.result.status}
+      #end
+    #end
+  #end
+
+#end
+
+
+=========== Relations: ================================================================================================
+#foreach($relation in ${project.relations})
+Relation '${relation}' (${relation.reference})
+  Description: ${relation.description}
+  Resources:
+    #foreach($resource in ${relation.resources})
+    - ${resource.category} : ${resource.name}
+    #end
+  Inputs:
+    #foreach($input in ${relation.inputs})
+    - ${input}
+    #end
+  Schema:
+  #foreach($column in ${relation.schema.columns})
+      ${column.name} ${column.catalogType} #if(!$column.nullable)NOT NULL #end- ${column.description}
+      #foreach($test in $column.tests)
+          Test: '${test.name}' => ${test.result.status}
+      #end
+  #end
+
+#end
+
+
+=========== Targets: ==================================================================================================
+#foreach($target in ${project.targets})
+Target '${target}' (${target.reference})
+  Description: ${target.description}
+  Inputs:
+    #foreach($input in ${target.inputs})
+    - ${input}
+    #end
+  Outputs:
+    #foreach($output in ${target.outputs})
+    - ${output}
+    #end
+  Phases:
+    #foreach($phase in ${target.phases})
+    - ${phase.name} ${phase.description}
+    #end
+
+#end

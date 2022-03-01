@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ case class DropMapping(
       *
       * @return
       */
-    override def inputs: Seq[MappingOutputIdentifier] = {
-        Seq(input)
+    override def inputs: Set[MappingOutputIdentifier] = {
+        Set(input)
     }
 
     /**
@@ -56,13 +56,14 @@ case class DropMapping(
         require(deps != null)
 
         val df = deps(input)
+
+        // Apply optional filter, before dropping columns!
+        val filtered = filter.map(df.filter).getOrElse(df)
+
         val asm = assembler
-        val result = asm.reassemble(df)
+        val result = asm.reassemble(filtered)
 
-        // Apply optional filter
-        val filteredResult = filter.map(result.filter).getOrElse(result)
-
-        Map("main" -> filteredResult)
+        Map("main" -> result)
     }
 
     /**
@@ -78,12 +79,14 @@ case class DropMapping(
         val asm = assembler
         val result = asm.reassemble(schema)
 
-        Map("main" -> result)
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 
     private def assembler : Assembler = {
         val builder = Assembler.builder()
-                .columns(_.drop(columns))
+            .columns(_.drop(columns))
         builder.build()
     }
 }

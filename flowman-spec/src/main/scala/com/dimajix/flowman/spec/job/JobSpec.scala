@@ -94,7 +94,7 @@ final class JobSpec extends NamedSpec[Job] {
         val name = context.evaluate(this.name)
         Job.Properties(
             context,
-            metadata.map(_.instantiate(context, name, Category.JOB, kind)).getOrElse(Metadata(context, name, Category.JOB, kind)),
+            metadata.map(_.instantiate(context, name, Category.JOB, "job")).getOrElse(Metadata(context, name, Category.JOB, "job")),
             description.map(context.evaluate)
         )
     }

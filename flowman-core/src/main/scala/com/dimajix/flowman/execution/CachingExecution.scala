@@ -39,7 +39,9 @@ import com.dimajix.flowman.common.ThreadUtils
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.StructType
 
 
@@ -55,6 +57,8 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         }
     }
     private lazy val parallelism = flowmanConf.getConf(FlowmanConf.EXECUTION_MAPPING_PARALLELISM)
+    private lazy val useMappingSchemaCache = flowmanConf.getConf(FlowmanConf.EXECUTION_MAPPING_SCHEMA_CACHE)
+    private lazy val useRelationSchemaCache = flowmanConf.getConf(FlowmanConf.EXECUTION_RELATION_SCHEMA_CACHE)
 
     private val frameCache:SynchronizedMap[Mapping,Map[String,DataFrame]] = {
         parent match {
@@ -74,12 +78,21 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         }
     }
 
-    private val schemaCache:SynchronizedMap[Mapping,TrieMap[String,StructType]] = {
+    private val mappingSchemaCache:SynchronizedMap[Mapping,TrieMap[String,StructType]] = {
         parent match {
             case Some(ce:CachingExecution) if !isolated =>
-                ce.schemaCache
+                ce.mappingSchemaCache
             case _ =>
                 SynchronizedMap(IdentityHashMap[Mapping,TrieMap[String,StructType]]())
+        }
+    }
+
+    private val relationSchemaCache:SynchronizedMap[Relation,StructType] = {
+        parent match {
+            case Some(ce:CachingExecution) if !isolated =>
+                ce.relationSchemaCache
+            case _ =>
+                SynchronizedMap(IdentityHashMap[Relation,StructType]())
         }
     }
 
@@ -129,11 +142,16 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      * @return
      */
     override def describe(mapping:Mapping, output:String) : StructType = {
-        schemaCache.getOrElseUpdate(mapping, TrieMap())
-            .getOrElseUpdate(output, createSchema(mapping, output))
+        if (useMappingSchemaCache) {
+            mappingSchemaCache.getOrElseUpdate(mapping, TrieMap())
+                .getOrElseUpdate(output, describeMapping(mapping, output))
+        }
+        else {
+            describeMapping(mapping, output)
+        }
     }
 
-    private def createSchema(mapping:Mapping, output:String) : StructType = {
+    private def describeMapping(mapping:Mapping, output:String) : StructType = {
         if (!mapping.outputs.contains(output))
             throw new NoSuchMappingOutputException(mapping.identifier, output)
         val context = mapping.context
@@ -167,6 +185,36 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
     }
 
     /**
+     * Returns the schema for a specific relation
+     * @param relation
+     * @param partitions
+     * @return
+     */
+    override def describe(relation:Relation, partitions:Map[String,FieldValue] = Map()) : StructType = {
+        if (useRelationSchemaCache) {
+            relationSchemaCache.getOrElseUpdate(relation, describeRelation(relation, partitions))
+        }
+        else {
+            describeRelation(relation, partitions)
+        }
+    }
+
+    private def describeRelation(relation:Relation, partitions:Map[String,FieldValue] = Map()) : StructType = {
+        try {
+            logger.info(s"Describing relation '${relation.identifier}'")
+            listeners.foreach { l =>
+                Try {
+                    l._1.describeRelation(this, relation, l._2)
+                }
+            }
+            relation.describe(this, partitions)
+        }
+        catch {
+            case NonFatal(e) => throw new DescribeRelationFailedException(relation.identifier, e)
+        }
+    }
+
+    /**
      * Registers a refresh function associated with a [[ResourceIdentifier]]
      * @param key
      * @param refresh
@@ -186,6 +234,12 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
             resources.filter(kv => kv._1.contains(key) || key.contains(kv._1)).foreach(_._2())
         }
         parent.foreach(_.refreshResource(key))
+
+        // Invalidate schema caches
+        relationSchemaCache.toSeq
+            .map(_._1)
+            .filter(_.provides.exists(_.contains(key)))
+            .foreach(relationSchemaCache.impl.remove)
     }
 
     /**
@@ -201,7 +255,8 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         if (!sharedCache) {
             frameCache.values.foreach(_.values.foreach(_.unpersist(true)))
             frameCache.clear()
-            schemaCache.clear()
+            mappingSchemaCache.clear()
+            relationSchemaCache.clear()
             resources.clear()
         }
     }

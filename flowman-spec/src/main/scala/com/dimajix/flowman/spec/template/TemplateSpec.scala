@@ -83,6 +83,7 @@ object TemplateSpec {
     new JsonSubTypes.Type(name = "target", value = classOf[TargetTemplateSpec])
 ))
 abstract class TemplateSpec extends NamedSpec[Template[_]] {
+    @JsonProperty(value="kind", required = true) protected var kind: String = _
     @JsonProperty(value="parameters", required=false) protected var parameters : Seq[TemplateSpec.Parameter] = Seq()
 
     protected def instanceProperties(context:Context) : Template.Properties = {

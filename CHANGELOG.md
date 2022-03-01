@@ -1,3 +1,17 @@
+# Version 0.22.0 - 2022-03-01
+
+* Add new `sqlserver` relation
+* Implement new documentation subsystem
+* Change default build to Spark 3.2.1 and Hadoop 3.3.1
+* Add new `drop` target for removing tables
+* Speed up project loading by reusing Jackson mapper
+* Implement new `jdbc` metric sink
+* Implement schema cache in Executor to speed up documentation and similar tasks
+* Add new config variables `flowman.execution.mapping.schemaCache` and `flowman.execution.relation.schemaCache`
+* Add new config variable `flowman.default.target.verifyPolicy` to ignore empty tables during VERIFY phase
+* Implement initial support for indexes in JDBC relations
+
+
 # Version 0.21.2 - 2022-02-14
 
 * Fix importing projects

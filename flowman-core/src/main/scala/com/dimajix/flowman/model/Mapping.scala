@@ -19,6 +19,7 @@ package com.dimajix.flowman.model
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.storage.StorageLevel
 
+import com.dimajix.flowman.documentation.MappingDoc
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.NoSuchMappingOutputException
@@ -35,7 +36,8 @@ object Mapping {
                 Metadata(context, name, Category.MAPPING, kind),
                 false,
                 false,
-                StorageLevel.NONE
+                StorageLevel.NONE,
+                None
             )
         }
     }
@@ -44,7 +46,8 @@ object Mapping {
         metadata:Metadata,
         broadcast:Boolean,
         checkpoint:Boolean,
-        cache:StorageLevel
+        cache:StorageLevel,
+        documentation:Option[MappingDoc]
     ) extends Instance.Properties[Properties] {
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
@@ -69,6 +72,12 @@ trait Mapping extends Instance {
       * @return
       */
     def identifier : MappingIdentifier
+
+    /**
+     * Returns a (static) documentation of this mapping
+     * @return
+     */
+    def documentation : Option[MappingDoc]
 
     /**
       * This method should return true, if the resulting dataframe should be broadcast for map-side joins
@@ -99,7 +108,7 @@ trait Mapping extends Instance {
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       * @return
       */
-    def inputs : Seq[MappingOutputIdentifier]
+    def inputs : Set[MappingOutputIdentifier]
 
     /**
      * Lists all outputs of this mapping. Every mapping should have one "main" output, which is the default output
@@ -107,7 +116,7 @@ trait Mapping extends Instance {
      * recommended.
      * @return
      */
-    def outputs : Seq[String]
+    def outputs : Set[String]
 
     /**
      * Creates an output identifier for the primary output
@@ -170,6 +179,12 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
     override def identifier : MappingIdentifier = instanceProperties.identifier
 
     /**
+     * Returns a (static) documentation of this mapping
+     * @return
+     */
+    override def documentation : Option[MappingDoc] = instanceProperties.documentation
+
+    /**
      * This method should return true, if the resulting dataframe should be broadcast for map-side joins
      * @return
      */
@@ -198,7 +213,7 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
      * Lists all outputs of this mapping. Every mapping should have one "main" output
      * @return
      */
-    override def outputs : Seq[String] = Seq("main")
+    override def outputs : Set[String] = Set("main")
 
     /**
      * Creates an output identifier for the primary output
@@ -238,7 +253,10 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
         val results = execute(execution, replacements)
 
         // Extract schemas
-        results.map { case (name,df) => name -> StructType.of(df.schema)}
+        val schemas = results.map { case (name,df) => name -> StructType.of(df.schema)}
+
+        // Apply documentation
+        applyDocumentation(schemas)
     }
 
     /**
@@ -263,5 +281,25 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
         inputs.foreach( in =>
             linker.input(in.mapping, in.output)
         )
+    }
+
+    /**
+     * Applies optional documentation to the result of a [[describe]]
+     * @param schemas
+     * @return
+     */
+    protected def applyDocumentation(schemas:Map[String,StructType]) : Map[String,StructType] = {
+        val outputDoc = documentation.map(_.outputs.map(o => o.identifier.output -> o).toMap).getOrElse(Map())
+        schemas.map { case (output,schema) =>
+            output -> outputDoc.get(output)
+                .flatMap(_.schema.map(_.enrich(schema)))
+                .getOrElse(schema)
+        }
+    }
+
+    protected def applyDocumentation(output:String, schema:StructType) : StructType = {
+        documentation.flatMap(_.outputs.find(_.identifier.output == output))
+            .flatMap(_.schema.map(_.enrich(schema)))
+            .getOrElse(schema)
     }
 }

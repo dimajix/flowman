@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +180,7 @@ class MergeTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         target.execute(executor, Phase.BUILD)
 
         val metric = executor.metricSystem
-            .findMetric(Selector(Some("target_records"), target.metadata.asMap))
+            .findMetric(Selector("target_records", target.metadata.asMap))
             .head
             .asInstanceOf[GaugeMetric]
 

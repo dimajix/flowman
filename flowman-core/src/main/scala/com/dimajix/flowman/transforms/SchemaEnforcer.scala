@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import com.dimajix.flowman.util.SchemaUtils.coerce
 import com.dimajix.spark.sql.functions.nullable_struct
 
 
-sealed abstract class ColumnMismatchStrategy
+sealed abstract class ColumnMismatchStrategy extends Product with Serializable
 object ColumnMismatchStrategy {
     case object IGNORE extends ColumnMismatchStrategy
     case object ERROR extends ColumnMismatchStrategy
@@ -65,7 +65,7 @@ object ColumnMismatchStrategy {
 }
 
 
-sealed abstract class TypeMismatchStrategy
+sealed abstract class TypeMismatchStrategy extends Product with Serializable
 object TypeMismatchStrategy {
     case object IGNORE extends TypeMismatchStrategy
     case object ERROR extends TypeMismatchStrategy

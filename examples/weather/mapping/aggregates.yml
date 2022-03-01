@@ -12,3 +12,29 @@ mappings:
       min_temperature: "MIN(air_temperature)"
       max_temperature: "MAX(air_temperature)"
       avg_temperature: "AVG(air_temperature)"
+
+    documentation:
+      description: "This mapping calculates the aggregated metrics per year and per country"
+      columns:
+        - name: country
+          checks:
+            - kind: notNull
+            - kind: unique
+        - name: min_wind_speed
+          description: Minimum wind speed
+          checks:
+            - kind: expression
+              expression: "min_wind_speed >= 0"
+        - name: max_wind_speed
+          description: Maximum wind speed
+          checks:
+            - kind: expression
+              expression: "max_wind_speed <= 60"
+        - name: min_temperature
+          checks:
+            - kind: expression
+              expression: "min_temperature >= -100"
+        - name: max_temperature
+          checks:
+            - kind: expression
+              expression: "max_temperature <= 100"

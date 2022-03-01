@@ -29,19 +29,21 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
-import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.StructType
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.TableChange
+import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.Execution
@@ -56,7 +58,6 @@ import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialect
 import com.dimajix.flowman.jdbc.SqlDialects
-import com.dimajix.flowman.jdbc.TableDefinition
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.PartitionField
@@ -72,24 +73,44 @@ import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.{StructType => FlowmanStructType}
-import com.dimajix.spark.sql.SchemaUtils
 
 
-case class JdbcRelation(
+class JdbcRelationBase(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
-    override val partitions: Seq[PartitionField] = Seq(),
+    override val partitions: Seq[PartitionField] = Seq.empty,
     connection: Reference[Connection],
-    properties: Map[String,String] = Map(),
-    database: Option[String] = None,
-    table: Option[String] = None,
+    properties: Map[String,String] = Map.empty,
+    table: Option[TableIdentifier] = None,
     query: Option[String] = None,
-    mergeKey: Seq[String] = Seq(),
-    primaryKey: Seq[String] = Seq()
+    mergeKey: Seq[String] = Seq.empty,
+    primaryKey: Seq[String] = Seq.empty,
+    indexes: Seq[TableIndex] = Seq.empty
 ) extends BaseRelation with PartitionedRelation with SchemaRelation {
-    private val logger = LoggerFactory.getLogger(classOf[JdbcRelation])
+    protected val logger: Logger = LoggerFactory.getLogger(getClass)
+    protected val tableIdentifier: TableIdentifier = table.getOrElse(TableIdentifier.empty)
+    protected lazy val tableDefinition: Option[TableDefinition] = {
+        schema.map { schema =>
+            val pk = if (primaryKey.nonEmpty) primaryKey else schema.primaryKey
 
-    def tableIdentifier : TableIdentifier = TableIdentifier(table.getOrElse(""), database)
+            // Make Primary key columns not-nullable
+            val pkSet = SetIgnoreCase(pk)
+            val columns = fullSchema.get.fields.map { f =>
+                if (pkSet.contains(f.name))
+                    f.copy(nullable=false)
+                else
+                    f
+            }
+
+            TableDefinition(
+                tableIdentifier,
+                columns,
+                schema.description,
+                pk,
+                indexes
+            )
+        }
+    }
 
     if (query.nonEmpty && table.nonEmpty)
         throw new IllegalArgumentException(s"JDBC relation '$identifier' cannot have both a table and a SQL query defined")
@@ -105,7 +126,7 @@ case class JdbcRelation(
     override def provides: Set[ResourceIdentifier] = {
         // Only return a resource if a table is defined, which implies that this relation can be used for creating
         // and destroying JDBC tables
-        table.map(t => ResourceIdentifier.ofJdbcTable(t, database)).toSet
+        table.map(t => ResourceIdentifier.ofJdbcTable(t)).toSet
     }
 
     /**
@@ -116,7 +137,7 @@ case class JdbcRelation(
     override def requires: Set[ResourceIdentifier] = {
         // Only return a resource if a table is defined, which implies that this relation can be used for creating
         // and destroying JDBC tables
-        database.map(db => ResourceIdentifier.ofJdbcDatabase(db)).toSet ++ super.requires
+        table.flatMap(_.database.map(db => ResourceIdentifier.ofJdbcDatabase(db))).toSet ++ super.requires
     }
 
     /**
@@ -137,7 +158,7 @@ case class JdbcRelation(
         }
         else {
             val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-            allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(table.get, database, p.toMap)).toSet
+            allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(tableIdentifier, p.toMap)).toSet
         }
     }
 
@@ -147,8 +168,8 @@ case class JdbcRelation(
      * @param execution
      * @return
      */
-    override def describe(execution:Execution) : FlowmanStructType = {
-        if (schema.nonEmpty) {
+    override def describe(execution:Execution, partitions:Map[String,FieldValue] = Map()) : FlowmanStructType = {
+        val result = if (schema.nonEmpty) {
             FlowmanStructType(fields)
         }
         else {
@@ -156,6 +177,8 @@ case class JdbcRelation(
                 JdbcUtils.getSchema(con, tableIdentifier, options)
             }
         }
+
+        applyDocumentation(result)
     }
 
     /**
@@ -168,7 +191,7 @@ case class JdbcRelation(
         require(partitions != null)
 
         // Get Connection
-        val (_,props) = createProperties()
+        val (_,props) = createConnectionProperties()
 
         // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
         val reader = execution.spark.read
@@ -218,43 +241,59 @@ case class JdbcRelation(
         // Write partition into DataBase
         mode match {
             case OutputMode.OVERWRITE if partition.isEmpty =>
-                withConnection { (con, options) =>
-                    JdbcUtils.truncateTable(con, tableIdentifier, options)
-                }
-                doWrite(execution, dfExt)
+                doOverwriteAll(execution, dfExt)
             case OutputMode.OVERWRITE =>
-                withStatement { (statement, options) =>
-                    val dialect = SqlDialects.get(options.url)
-                    val condition = partitionCondition(dialect, partition)
-                    val query = "DELETE FROM " + dialect.quote(tableIdentifier) + " WHERE " + condition
-                    statement.executeUpdate(query)
-                }
-                doWrite(execution, dfExt)
+                doOverwritePartition(execution, dfExt, partition)
             case OutputMode.APPEND =>
-                doWrite(execution, dfExt)
+                doAppend(execution, dfExt)
             case OutputMode.IGNORE_IF_EXISTS =>
                 if (!checkPartition(partition)) {
-                    doWrite(execution, dfExt)
+                    doAppend(execution, dfExt)
                 }
             case OutputMode.ERROR_IF_EXISTS =>
                 if (!checkPartition(partition)) {
-                    doWrite(execution, dfExt)
+                    doAppend(execution, dfExt)
                 }
                 else {
-                    throw new PartitionAlreadyExistsException(database.getOrElse(""), table.get, partition.mapValues(_.value))
+                    throw new PartitionAlreadyExistsException(tableIdentifier.database.getOrElse(""), tableIdentifier.table, partition.mapValues(_.value))
                 }
+            case OutputMode.UPDATE =>
+                doUpdate(execution, df)
             case _ => throw new IllegalArgumentException(s"Unsupported save mode: '$mode'. " +
-                "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists'.")
+                "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'update', 'errorifexists'.")
         }
     }
-    private def doWrite(execution: Execution, df:DataFrame): Unit = {
-        val (_,props) = createProperties()
+    protected def doOverwriteAll(execution: Execution, df:DataFrame) : Unit = {
+        withConnection { (con, options) =>
+            JdbcUtils.truncateTable(con, tableIdentifier, options)
+        }
+        doAppend(execution, df)
+    }
+    protected def doOverwritePartition(execution: Execution, df:DataFrame, partition:Map[String,SingleValue]) : Unit = {
+        withStatement { (statement, options) =>
+            val dialect = SqlDialects.get(options.url)
+            val condition = partitionCondition(dialect, partition)
+            val query = "DELETE FROM " + dialect.quote(tableIdentifier) + " WHERE " + condition
+            statement.executeUpdate(query)
+        }
+        doAppend(execution, df)
+    }
+    protected def doAppend(execution: Execution, df:DataFrame): Unit = {
+        val (_,props) = createConnectionProperties()
         this.writer(execution, df, "jdbc", Map(), SaveMode.Append)
             .options(props)
             .option(JDBCOptions.JDBC_TABLE_NAME, tableIdentifier.unquotedString)
             .save()
     }
+    protected def doUpdate(execution: Execution, df:DataFrame): Unit = {
+        val mergeCondition = this.mergeCondition
+        val clauses = Seq(
+            InsertClause(),
+            UpdateClause()
+        )
 
+        doMerge(execution, df, mergeCondition, clauses)
+    }
 
     /**
      * Performs a merge operation. Either you need to specify a [[mergeKey]], or the relation needs to provide some
@@ -270,30 +309,33 @@ case class JdbcRelation(
         if (query.nonEmpty)
             throw new UnsupportedOperationException(s"Cannot write into JDBC relation '$identifier' which is defined by an SQL query")
 
-        val mergeCondition =
-            condition.getOrElse {
-                val withinPartitionKeyColumns =
-                    if (mergeKey.nonEmpty)
-                        mergeKey
-                    else if (primaryKey.nonEmpty)
-                        primaryKey
-                    else if (schema.exists(_.primaryKey.nonEmpty))
-                        schema.map(_.primaryKey).get
-                    else
-                        throw new IllegalArgumentException(s"Merging JDBC relation '$identifier' requires primary key in schema, explicit merge key or merge condition")
-                (SetIgnoreCase(partitions.map(_.name)) ++ withinPartitionKeyColumns)
-                    .toSeq
-                    .map(c => col("source." + c) === col("target." + c))
-                    .reduce(_ && _)
-            }
-
-        val sourceColumns = collectColumns(mergeCondition.expr, "source") ++ clauses.flatMap(c => collectColumns(df.schema, c, "source"))
+        val mergeCondition = condition.getOrElse(this.mergeCondition)
+        doMerge(execution, df, mergeCondition, clauses)
+    }
+    protected def doMerge(execution: Execution, df: DataFrame, condition:Column, clauses: Seq[MergeClause]) : Unit = {
+        val sourceColumns = collectColumns(condition.expr, "source") ++ clauses.flatMap(c => collectColumns(df.schema, c, "source"))
         val sourceDf = df.select(sourceColumns.toSeq.map(col):_*)
 
-        val (url, props) = createProperties()
+        val (url, props) = createConnectionProperties()
         val options = new JDBCOptions(url, tableIdentifier.unquotedString, props)
         val targetSchema = outputSchema(execution)
-        JdbcUtils.mergeTable(tableIdentifier, "target", targetSchema, sourceDf, "source", mergeCondition, clauses, options)
+        JdbcUtils.mergeTable(tableIdentifier, "target", targetSchema, sourceDf, "source", condition, clauses, options)
+    }
+
+    protected def mergeCondition : Column = {
+        val withinPartitionKeyColumns =
+            if (mergeKey.nonEmpty)
+                mergeKey
+            else if (primaryKey.nonEmpty)
+                primaryKey
+            else if (schema.exists(_.primaryKey.nonEmpty))
+                schema.map(_.primaryKey).get
+            else
+                throw new IllegalArgumentException(s"Merging JDBC relation '$identifier' requires primary key in schema, explicit merge key or merge condition")
+        (SetIgnoreCase(partitions.map(_.name)) ++ withinPartitionKeyColumns)
+            .toSeq
+            .map(c => col("source." + c) === col("target." + c))
+            .reduce(_ && _)
     }
 
     /**
@@ -359,13 +401,11 @@ case class JdbcRelation(
         else {
             withConnection { (con, options) =>
                 if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                    if (schema.nonEmpty) {
-                        val targetSchema = fullSchema.get
-                        val currentSchema = JdbcUtils.getSchema(con, tableIdentifier, options)
-                        !TableChange.requiresMigration(currentSchema, targetSchema, migrationPolicy)
-                    }
-                    else {
-                        true
+                    tableDefinition match {
+                        case Some(targetTable) =>
+                            val currentTable = JdbcUtils.getTable(con, tableIdentifier, options)
+                            !TableChange.requiresMigration(currentTable, targetTable, migrationPolicy)
+                        case None => true
                     }
                 }
                 else {
@@ -411,23 +451,22 @@ case class JdbcRelation(
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
                 doCreate(con, options)
+                provides.foreach(execution.refreshResource)
             }
         }
     }
 
-    private def doCreate(con:java.sql.Connection, options:JDBCOptions): Unit = {
-        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier with schema\n${this.schema.map(_.treeString).orNull}")
-        if (this.schema.isEmpty) {
-            throw new UnspecifiedSchemaException(identifier)
+    protected def doCreate(con:java.sql.Connection, options:JDBCOptions): Unit = {
+        val pk = tableDefinition.filter(_.primaryKey.nonEmpty).map(t => s"\n  Primary key ${t.primaryKey.mkString(",")}").getOrElse("")
+        val idx = tableDefinition.map(t => t.indexes.map(i => s"\n  Index '${i.name}' on ${i.columns.mkString(",")}").foldLeft("")(_ + _)).getOrElse("")
+        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier with schema\n${schema.map(_.treeString).orNull}$pk$idx")
+
+        tableDefinition match {
+            case Some(table) =>
+                JdbcUtils.createTable(con, table, options)
+            case None =>
+                throw new UnspecifiedSchemaException(identifier)
         }
-        val schema = this.schema.get
-        val table = TableDefinition(
-            tableIdentifier,
-            schema.fields ++ partitions.map(_.field),
-            schema.description,
-            if (primaryKey.nonEmpty) primaryKey else schema.primaryKey
-        )
-        JdbcUtils.createTable(con, table, options)
     }
 
     /**
@@ -444,6 +483,7 @@ case class JdbcRelation(
         withConnection{ (con,options) =>
             if (!ifExists || JdbcUtils.tableExists(con, tableIdentifier, options)) {
                 JdbcUtils.dropTable(con, tableIdentifier, options)
+                provides.foreach(execution.refreshResource)
             }
         }
     }
@@ -453,38 +493,39 @@ case class JdbcRelation(
             throw new UnsupportedOperationException(s"Cannot migrate JDBC relation '$identifier' which is defined by an SQL query")
 
         // Only try migration if schema is explicitly specified
-        if (schema.isDefined) {
+        tableDefinition.foreach { targetTable =>
             withConnection { (con, options) =>
                 if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                    val targetSchema = fullSchema.get
-                    val currentSchema = JdbcUtils.getSchema(con, tableIdentifier, options)
-                    if (TableChange.requiresMigration(currentSchema, targetSchema, migrationPolicy)) {
-                        doMigration(currentSchema, targetSchema, migrationPolicy, migrationStrategy)
+                    val currentTable = JdbcUtils.getTable(con, tableIdentifier, options)
+
+                    if (TableChange.requiresMigration(currentTable, targetTable, migrationPolicy)) {
+                        doMigration(currentTable, targetTable, migrationPolicy, migrationStrategy)
+                        provides.foreach(execution.refreshResource)
                     }
                 }
             }
         }
     }
 
-    private def doMigration(currentSchema:FlowmanStructType, targetSchema:FlowmanStructType, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+    private def doMigration(currentTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
         withConnection { (con, options) =>
             migrationStrategy match {
                 case MigrationStrategy.NEVER =>
-                    logger.warn(s"Migration required for relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                    logger.warn(s"Migration required for relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                 case MigrationStrategy.FAIL =>
-                    logger.error(s"Cannot migrate relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                    logger.error(s"Cannot migrate relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                     throw new MigrationFailedException(identifier)
                 case MigrationStrategy.ALTER =>
                     val dialect = SqlDialects.get(options.url)
-                    val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
+                    val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
                     if (migrations.exists(m => !dialect.supportsChange(tableIdentifier, m))) {
-                        logger.error(s"Cannot migrate relation JDBC relation '$identifier' of table $tableIdentifier, since that would require unsupported changes.\nCurrent schema:\n${currentSchema.treeString}New schema:\n${targetSchema.treeString}")
+                        logger.error(s"Cannot migrate relation JDBC relation '$identifier' of table $tableIdentifier, since that would require unsupported changes.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                         throw new MigrationFailedException(identifier)
                     }
                     alter(migrations, con, options)
                 case MigrationStrategy.ALTER_REPLACE =>
                     val dialect = SqlDialects.get(options.url)
-                    val migrations = TableChange.migrate(currentSchema, targetSchema, migrationPolicy)
+                    val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
                     if (migrations.forall(m => dialect.supportsChange(tableIdentifier, m))) {
                         try {
                             alter(migrations, con, options)
@@ -504,7 +545,7 @@ case class JdbcRelation(
         }
 
         def alter(migrations:Seq[TableChange], con:java.sql.Connection, options:JDBCOptions) : Unit = {
-            logger.info(s"Migrating JDBC relation '$identifier', this will alter JDBC table $tableIdentifier. New schema:\n${targetSchema.treeString}")
+            logger.info(s"Migrating JDBC relation '$identifier', this will alter JDBC table $tableIdentifier. New schema:\n${targetTable.schema.treeString}")
             if (migrations.isEmpty)
                 logger.warn("Empty list of migrations - nothing to do")
 
@@ -518,7 +559,7 @@ case class JdbcRelation(
 
         def recreate(con:java.sql.Connection, options:JDBCOptions) : Unit = {
             try {
-                logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier. New schema:\n${targetSchema.treeString}")
+                logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier. New schema:\n${targetTable.schema.treeString}")
                 JdbcUtils.dropTable(con, tableIdentifier, options)
                 doCreate(con, options)
             }
@@ -553,7 +594,7 @@ case class JdbcRelation(
         }
     }
 
-    private def createProperties() : (String,Map[String,String]) = {
+    protected def createConnectionProperties() : (String,Map[String,String]) = {
         val connection = this.connection.value.asInstanceOf[JdbcConnection]
         val props = mutable.Map[String,String]()
         props.put(JDBCOptions.JDBC_URL, connection.url)
@@ -567,8 +608,8 @@ case class JdbcRelation(
         (connection.url,props.toMap)
     }
 
-    private def withConnection[T](fn:(java.sql.Connection,JDBCOptions) => T) : T = {
-        val (url,props) = createProperties()
+    protected def withConnection[T](fn:(java.sql.Connection,JDBCOptions) => T) : T = {
+        val (url,props) = createConnectionProperties()
         logger.debug(s"Connecting to jdbc source at $url")
 
         val options = new JDBCOptions(url, tableIdentifier.unquotedString, props)
@@ -588,16 +629,24 @@ case class JdbcRelation(
         }
     }
 
-    private def withStatement[T](fn:(Statement,JDBCOptions) => T) : T = {
+    protected def withTransaction[T](con:java.sql.Connection)(fn: => T) : T = {
+        JdbcUtils.withTransaction(con)(fn)
+    }
+
+    protected def withStatement[T](fn:(Statement,JDBCOptions) => T) : T = {
         withConnection { (con, options) =>
-            val statement = con.createStatement()
-            try {
-                statement.setQueryTimeout(JdbcUtils.queryTimeout(options))
-                fn(statement, options)
-            }
-            finally {
-                statement.close()
-            }
+            withStatement(con,options)(fn)
+        }
+    }
+
+    protected def withStatement[T](con:java.sql.Connection,options:JDBCOptions)(fn:(Statement,JDBCOptions) => T) : T = {
+        val statement = con.createStatement()
+        try {
+            statement.setQueryTimeout(JdbcUtils.queryTimeout(options))
+            fn(statement, options)
+        }
+        finally {
+            statement.close()
         }
     }
 
@@ -649,16 +698,40 @@ case class JdbcRelation(
 }
 
 
+case class JdbcRelation(
+    override val instanceProperties:Relation.Properties,
+    override val schema:Option[Schema] = None,
+    override val partitions: Seq[PartitionField] = Seq.empty,
+    connection: Reference[Connection],
+    properties: Map[String,String] = Map.empty,
+    table: Option[TableIdentifier] = None,
+    query: Option[String] = None,
+    mergeKey: Seq[String] = Seq.empty,
+    primaryKey: Seq[String] = Seq.empty,
+    indexes: Seq[TableIndex] = Seq.empty
+) extends JdbcRelationBase(
+    instanceProperties,
+    schema,
+    partitions,
+    connection,
+    properties,
+    table,
+    query,
+    mergeKey,
+    primaryKey,
+    indexes
+) {
+}
 
 
-class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with SchemaRelationSpec {
+class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with SchemaRelationSpec with IndexedRelationSpec {
     @JsonProperty(value = "connection", required = true) private var connection: ConnectionReferenceSpec = _
-    @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
+    @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map.empty
     @JsonProperty(value = "database", required = false) private var database: Option[String] = None
     @JsonProperty(value = "table", required = false) private var table: Option[String] = None
     @JsonProperty(value = "query", required = false) private var query: Option[String] = None
-    @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq()
-    @JsonProperty(value = "primaryKey", required = false) private var primaryKey: Seq[String] = Seq()
+    @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq.empty
+    @JsonProperty(value = "primaryKey", required = false) private var primaryKey: Seq[String] = Seq.empty
 
     /**
       * Creates the instance of the specified Relation with all variable interpolation being performed
@@ -672,11 +745,11 @@ class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with Sc
             partitions.map(_.instantiate(context)),
             connection.instantiate(context),
             context.evaluate(properties),
-            database.map(context.evaluate).filter(_.nonEmpty),
-            table.map(context.evaluate).filter(_.nonEmpty),
-            query.map(context.evaluate).filter(_.nonEmpty),
+            context.evaluate(table).map(t => TableIdentifier(t, context.evaluate(database))),
+            context.evaluate(query),
             mergeKey.map(context.evaluate),
-            primaryKey.map(context.evaluate)
+            primaryKey.map(context.evaluate),
+            indexes.map(_.instantiate(context))
         )
     }
 }

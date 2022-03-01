@@ -34,3 +34,7 @@ relations:
 
 * `format` **(optional)** *(string)* *(default: empty)*:
   Specifies the name of the Spark data source format to use. 
+
+
+## Automatic Migrations
+The `generic` relation does not support any automatic migration like adding/removing columns. 

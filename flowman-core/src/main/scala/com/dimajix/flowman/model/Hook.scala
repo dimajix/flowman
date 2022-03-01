@@ -147,4 +147,5 @@ abstract class BaseHook extends AbstractInstance with Hook {
     override def finishMeasure(execution:Execution, token:MeasureToken, result:MeasureResult) : Unit = {}
     override def instantiateMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit = {}
     override def describeMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit = {}
+    override def describeRelation(execution: Execution, relation:Relation, parent:Option[Token]) : Unit = {}
 }

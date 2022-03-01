@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,9 +66,7 @@ case class ReadRelationMapping(
      *
      * @return
      */
-    override def inputs : Seq[MappingOutputIdentifier] = {
-        Seq()
-    }
+    override def inputs : Set[MappingOutputIdentifier] = Set.empty
 
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
@@ -105,16 +103,18 @@ case class ReadRelationMapping(
         require(execution != null)
         require(input != null)
 
-        val schema = if (columns.nonEmpty) {
+        val result = if (columns.nonEmpty) {
             // Use user specified schema
             StructType(columns)
         }
         else {
             val relation = this.relation.value
-            relation.describe(execution)
+            execution.describe(relation, partitions)
         }
 
-        Map("main" -> schema)
+        // Apply documentation
+        val schemas = Map("main" -> result)
+        applyDocumentation(schemas)
     }
 
     /**
@@ -122,7 +122,7 @@ case class ReadRelationMapping(
      * Params: linker - The linker object to use for creating new edges
      */
     override def link(linker: Linker): Unit = {
-        linker.read(relation.identifier, partitions)
+        linker.read(relation, partitions)
     }
 }
 

@@ -29,6 +29,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.TargetType
+import com.dimajix.flowman.spec.documentation.TargetDocSpec
 import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
@@ -48,6 +49,9 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "copyFile", value = classOf[CopyFileTargetSpec]),
     new JsonSubTypes.Type(name = "count", value = classOf[CountTargetSpec]),
     new JsonSubTypes.Type(name = "deleteFile", value = classOf[DeleteFileTargetSpec]),
+    new JsonSubTypes.Type(name = "document", value = classOf[DocumentTargetSpec]),
+    new JsonSubTypes.Type(name = "documentation", value = classOf[DocumentTargetSpec]),
+    new JsonSubTypes.Type(name = "drop", value = classOf[DropTargetSpec]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileTargetSpec]),
     new JsonSubTypes.Type(name = "getFile", value = classOf[GetFileTargetSpec]),
     new JsonSubTypes.Type(name = "hiveDatabase", value = classOf[HiveDatabaseTargetSpec]),
@@ -67,8 +71,11 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "verify", value = classOf[VerifyTargetSpec])
 ))
 abstract class TargetSpec extends NamedSpec[Target] {
+    @JsonProperty(value = "kind", required=true) protected var kind: String = _
     @JsonProperty(value = "before", required=false) protected[spec] var before:Seq[String] = Seq()
     @JsonProperty(value = "after", required=false) protected[spec] var after:Seq[String] = Seq()
+    @JsonProperty(value="description", required = false) private var description: Option[String] = None
+    @JsonProperty(value = "documentation", required=false) private var documentation: Option[TargetDocSpec] = None
 
     override def instantiate(context: Context): Target
 
@@ -84,7 +91,9 @@ abstract class TargetSpec extends NamedSpec[Target] {
             context,
             metadata.map(_.instantiate(context, name, Category.TARGET, kind)).getOrElse(Metadata(context, name, Category.TARGET, kind)),
             before.map(context.evaluate).map(TargetIdentifier.parse),
-            after.map(context.evaluate).map(TargetIdentifier.parse)
+            after.map(context.evaluate).map(TargetIdentifier.parse),
+            context.evaluate(description),
+            documentation.map(_.instantiate(context))
         )
     }
 }

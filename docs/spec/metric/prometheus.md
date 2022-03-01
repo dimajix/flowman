@@ -1,5 +1,9 @@
 # Prometheus Metric Sink
 
+The `prometheus` metric sink allows you to publish collected metrics to a Prometheus push gateway. This then can
+be scraped by a Prometheus server.
+
+
 ## Example
 The following example configures a prometheus sink in a namespace. You would need to include this snippet
 for example in the `default-namespace.yml` in the Flowman configuration directory
@@ -18,3 +22,10 @@ metrics:
 ```
 
 ## Fields
+
+* `kind` **(mandatory)** *(string)*: `prometheus`
+
+* `url` **(mandatory)** *(string)*:  Specifies the URL of the prometheus push gateway
+
+* `labels` **(optional)** *(map)*: Specifies an additional set of labels to be pushed to prometheus. This set
+of labels will determine the path in Prometheus push gateway, under which all metrics will be atomically published.

@@ -16,10 +16,13 @@
 
 package com.dimajix.flowman.model
 
+import java.util.Locale
+
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
+import com.dimajix.flowman.documentation.TargetDoc
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
@@ -27,6 +30,25 @@ import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.metric.LongAccumulatorMetric
 import com.dimajix.flowman.metric.Selector
 import com.dimajix.spark.sql.functions.count_records
+
+
+sealed abstract class VerifyPolicy extends Product with Serializable
+object VerifyPolicy {
+    case object EMPTY_AS_SUCCESS extends VerifyPolicy
+    case object EMPTY_AS_FAILURE extends VerifyPolicy
+    case object EMPTY_AS_SUCCESS_WITH_ERRORS extends VerifyPolicy
+
+    def ofString(mode:String) : VerifyPolicy = {
+        mode.toLowerCase(Locale.ROOT) match {
+            case "empty_as_success" => VerifyPolicy.EMPTY_AS_SUCCESS
+            case "empty_as_failure" => VerifyPolicy.EMPTY_AS_FAILURE
+            case "empty_as_success_with_errors" => VerifyPolicy.EMPTY_AS_SUCCESS_WITH_ERRORS
+            case _ => throw new IllegalArgumentException(s"Unknown verify policy: '$mode'. " +
+                "Accepted verify policies are 'empty_as_success', 'empty_as_failure' and 'empty_as_success_with_errors'.")
+        }
+    }
+}
+
 
 /**
   *
@@ -60,7 +82,9 @@ object Target {
                 context,
                 Metadata(context, name, Category.TARGET, kind),
                 Seq(),
-                Seq()
+                Seq(),
+                None,
+                None
             )
         }
     }
@@ -68,7 +92,9 @@ object Target {
         context:Context,
         metadata:Metadata,
         before: Seq[TargetIdentifier],
-        after: Seq[TargetIdentifier]
+        after: Seq[TargetIdentifier],
+        description:Option[String],
+        documentation: Option[TargetDoc]
     ) extends Instance.Properties[Properties] {
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
@@ -93,6 +119,18 @@ trait Target extends Instance {
       * @return
       */
     def identifier : TargetIdentifier
+
+    /**
+     * Returns a description of the build target
+     * @return
+     */
+    def description : Option[String]
+
+    /**
+     * Returns a (static) documentation of this target
+     * @return
+     */
+    def documentation : Option[TargetDoc]
 
     /**
       * Returns an instance representing this target with the context
@@ -168,6 +206,20 @@ abstract class BaseTarget extends AbstractInstance with Target {
      * @return
      */
     override def identifier : TargetIdentifier = instanceProperties.identifier
+
+    /**
+     * Returns a description of the build target
+     *
+     * @return
+     */
+    override def description: Option[String] = instanceProperties.description
+
+    /**
+     * Returns a (static) documentation of this target
+ *
+     * @return
+     */
+    override def documentation : Option[TargetDoc] = instanceProperties.documentation
 
     /**
      * Returns an instance representing this target with the context
@@ -359,7 +411,7 @@ abstract class BaseTarget extends AbstractInstance with Target {
 
     protected def countRecords(execution:Execution, df:DataFrame, phase:Phase=Phase.BUILD) : DataFrame = {
         val labels = metadata.asMap + ("phase" -> phase.upper)
-        val counter = execution.metricSystem.findMetric(Selector(Some("target_records"), labels))
+        val counter = execution.metricSystem.findMetric(Selector("target_records", labels))
             .headOption
             .map(_.asInstanceOf[LongAccumulatorMetric].counter)
             .getOrElse {

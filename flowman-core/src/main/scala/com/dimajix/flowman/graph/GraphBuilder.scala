@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,8 @@ final class GraphBuilder(context:Context, phase:Phase) {
         }
         else {
             // Create new node and *first* put it into map of known mappings
-            val node = MappingRef(nextNodeId(), mapping)
+            val outputs = mapping.outputs.toSeq.map(o => MappingOutput(nextNodeId(), null, o))
+            val node = MappingRef(nextNodeId(), mapping, outputs)
             mappings.put(mapping, node)
             // Now recursively run the linking process on the newly created node
             val linker = Linker(this, mapping.context, node)

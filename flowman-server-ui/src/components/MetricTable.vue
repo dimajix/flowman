@@ -17,13 +17,13 @@
       <tbody>
       <tr
         v-for="item in metrics.entries()"
-        :key="item[0]"
+        :key="hash(item[0])"
       >
         <td>{{ item[1].name }}</td>
         <td>
           <v-chip
             v-for="p in Object.entries(item[1].labels) "
-            :key="p"
+            :key="hash(p)"
           >
             {{ p[0] }} : {{ p[1] }}
           </v-chip>
@@ -36,11 +36,19 @@
 </template>
 
 <script>
+let hash = require('object-hash');
+
 export default {
   name: 'MetricTable',
 
   props: {
     metrics: Array[String]
   },
+
+  methods: {
+    hash(obj) {
+      return hash(obj)
+    }
+  }
 }
 </script>

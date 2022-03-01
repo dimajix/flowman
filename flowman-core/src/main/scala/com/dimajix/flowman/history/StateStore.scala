@@ -34,6 +34,7 @@ import com.dimajix.flowman.model.TargetResult
 abstract class JobToken
 abstract class TargetToken
 
+
 abstract class StateStore {
     /**
      * Returns the state of a job, or None if no information is available

@@ -16,7 +16,7 @@ targets:
     parallelism: 32
     rebalance: true
     partition:
-      processing_date: "${processing_date}"
+      year: "${processing_date}"
 
 relations:
   stations:
@@ -26,11 +26,15 @@ relations:
     schema:
       kind: avro
       file: "${project.basedir}/schema/stations.avsc"
+    partitions:
+      - name: year
+        type: integer
+        granularity: 1
 ```
 
 Since Flowman 0.18.0, you can also directly specify the relation inside the target definition. This saves you
-from having to create a separate relation definition in the `relations` section. This is only recommeneded, if you
-do not access the target relation otherwise, such that a shared definition would not provide any benefir.
+from having to create a separate relation definition in the `relations` section. This is only recommended, if you
+do not access the target relation otherwise, such that a shared definition would not provide any benefit.
 ```yaml
 targets:
   stations:
@@ -44,22 +48,29 @@ targets:
       schema:
         kind: avro
         file: "${project.basedir}/schema/stations.avsc"
+      partitions:
+        - name: year
+          type: integer
+          granularity: 1
     mode: overwrite
     parallelism: 32
     rebalance: true
     partition:
-      processing_date: "${processing_date}"
+      year: "${processing_date}"
 ```
 
 ## Fields
 
 * `kind` **(mandatory)** *(type: string)*: `relation`
 
+* `description` **(optional)** *(type: string)*:
+  Optional descriptive text of the build target
+
 * `mapping` **(optional)** *(type: string)*: 
 Specifies the name of the input mapping to be written
 
 * `relation` **(mandatory)** *(type: string)*: 
-Specifies the name of the relation to write to
+Specifies the name of the relation to write to, or alternatively directly embeds the relation.
 
 * `mode` **(optional)** *(type: string)* *(default=overwrite)*: 
 Specifies the behavior when data or table or partition already exists. Options include:
@@ -102,7 +113,7 @@ the relation during the `CREATE`, `TRUNCATE` and `DESTROY` phase. In this case, 
 target.
 
 
-## Supported Phases
+## Supported Execution Phases
 * `CREATE` - This will create the target relation or migrate it to the newest schema (if possible).
 * `BUILD` - This will write the output of the specified mapping into the relation. If no mapping is specified, nothing
  will be done. 
@@ -110,6 +121,8 @@ target.
 * `TRUNCATE` - This removes the contents of the specified relation. The relation itself will not be removed (for example
 if the relation refers to a Hive table)
 * `DESTROY` - This drops the relation itself and all its content.
+
+Read more about [execution phases](../../lifecycle.md).
 
 
 ## Provided Metrics

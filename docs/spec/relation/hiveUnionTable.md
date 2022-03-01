@@ -116,14 +116,13 @@ following changes to a data schema are supported
 ## Output Modes
 The `hiveUnionTable` relation supports the following output modes in a [`relation` target](../target/relation.md):
 
-|Output Mode |Supported  | Comments|
---- | --- | ---
-|`errorIfExists`|yes|Throw an error if the Hive table already exists|
-|`ignoreIfExists`|yes|Do nothing if the Hive table already exists|
-|`overwrite`|yes|Overwrite the whole table or the specified partitions|
-|`append`|yes|Append new records to the existing table|
-|`update`|no|-|
-|`merge`|no|-|
+| Output Mode      | Supported | Comments                                              |
+|------------------|-----------|-------------------------------------------------------|
+| `errorIfExists`  | yes       | Throw an error if the Hive table already exists       |
+| `ignoreIfExists` | yes       | Do nothing if the Hive table already exists           |
+| `overwrite`      | yes       | Overwrite the whole table or the specified partitions |
+| `append`         | yes       | Append new records to the existing table              |
+| `update`         | no        | -                                                     |
 
 
 ## Remarks

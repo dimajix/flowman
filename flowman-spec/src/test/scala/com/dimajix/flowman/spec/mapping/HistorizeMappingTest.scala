@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,12 +67,12 @@ class HistorizeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
             "valid_to"
         )
         mapping.input should be (MappingOutputIdentifier("df1"))
-        mapping.outputs should be (Seq("main"))
+        mapping.inputs should be (Set(MappingOutputIdentifier("df1")))
+        mapping.outputs should be (Set("main"))
         mapping.keyColumns should be (Seq("id" ))
         mapping.timeColumn should be ("ts")
         mapping.validFromColumn should be ("valid_from")
         mapping.validToColumn should be ("valid_to")
-        mapping.inputs should be (Seq(MappingOutputIdentifier("df1")))
 
         val expectedSchema = StructType(Seq(
             StructField("a", ArrayType(LongType)),
@@ -123,12 +123,12 @@ class HistorizeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
             InsertPosition.BEGINNING
         )
         mapping.input should be (MappingOutputIdentifier("df1"))
-        mapping.outputs should be (Seq("main"))
+        mapping.inputs should be (Set(MappingOutputIdentifier("df1")))
+        mapping.outputs should be (Set("main"))
         mapping.keyColumns should be (Seq("id" ))
         mapping.timeColumn should be ("ts")
         mapping.validFromColumn should be ("valid_from")
         mapping.validToColumn should be ("valid_to")
-        mapping.inputs should be (Seq(MappingOutputIdentifier("df1")))
 
         val expectedSchema = StructType(Seq(
             StructField("valid_from", LongType),

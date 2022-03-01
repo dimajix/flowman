@@ -21,7 +21,6 @@ import java.io.File
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
@@ -40,6 +39,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
@@ -112,7 +112,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val table = session.catalog.getTable(TableIdentifier("lala_0001", Some("default")))
         table.provider should be (Some("hive"))
         table.comment should be(Some("This is a test table"))
-        table.identifier should be (TableIdentifier("lala_0001", Some("default")))
+        table.identifier should be (TableIdentifier("lala_0001", Some("default")).toSpark)
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -194,7 +194,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val table = session.catalog.getTable(TableIdentifier("lala_0002", Some("default")))
         table.provider should be (Some("hive"))
         table.comment should be(None)
-        table.identifier should be (TableIdentifier("lala_0002", Some("default")))
+        table.identifier should be (TableIdentifier("lala_0002", Some("default")).toSpark)
         table.tableType should be (CatalogTableType.EXTERNAL)
         table.schema should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -262,7 +262,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val table = session.catalog.getTable(TableIdentifier("lala_0003", Some("default")))
         table.provider should be (Some("hive"))
         table.comment should be(None)
-        table.identifier should be (TableIdentifier("lala_0003", Some("default")))
+        table.identifier should be (TableIdentifier("lala_0003", Some("default")).toSpark)
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
@@ -326,7 +326,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val table = session.catalog.getTable(TableIdentifier("lala_0004", Some("default")))
         table.provider should be (Some("hive"))
         table.comment should be(None)
-        table.identifier should be (TableIdentifier("lala_0004", Some("default")))
+        table.identifier should be (TableIdentifier("lala_0004", Some("default")).toSpark)
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
@@ -385,7 +385,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val table = session.catalog.getTable(TableIdentifier("lala_0005", Some("default")))
         table.provider should be (Some("hive"))
         table.comment should be(None)
-        table.identifier should be (TableIdentifier("lala_0005", Some("default")))
+        table.identifier should be (TableIdentifier("lala_0005", Some("default")).toSpark)
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
@@ -409,8 +409,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = HiveTableRelation(
             Relation.Properties(context, "t0"),
-            database = Some("default"),
-            table = "lala_0006",
+            table = TableIdentifier("lala_0006", Some("default")),
             format = Some("parquet"),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context),
@@ -427,7 +426,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Check =================================================================================================
         val table = session.catalog.getTable(TableIdentifier("lala_0006", Some("default")))
         table.comment should be(None)
-        table.identifier should be (TableIdentifier("lala_0006", Some("default")))
+        table.identifier should be (TableIdentifier("lala_0006", Some("default")).toSpark)
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
@@ -453,8 +452,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = HiveTableRelation(
             Relation.Properties(context, "t0"),
-            database = Some("default"),
-            table = "lala_0007",
+            table = TableIdentifier("lala_0007", Some("default")),
             format = Some("avro"),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context),
@@ -471,7 +469,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Check =================================================================================================
         val table = session.catalog.getTable(TableIdentifier("lala_0007", Some("default")))
         table.comment should be(None)
-        table.identifier should be (TableIdentifier("lala_0007", Some("default")))
+        table.identifier should be (TableIdentifier("lala_0007", Some("default")).toSpark)
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -496,8 +494,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = HiveTableRelation(
             Relation.Properties(context, "t0"),
-            database = Some("default"),
-            table = "lala_0007",
+            table = TableIdentifier("lala_0007", Some("default")),
             format = Some("textfile"),
             rowFormat = Some("org.apache.hadoop.hive.serde2.OpenCSVSerde"),
             serdeProperties = Map(
@@ -519,7 +516,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Check =================================================================================================
         val table = session.catalog.getTable(TableIdentifier("lala_0007", Some("default")))
         table.comment should be(None)
-        table.identifier should be (TableIdentifier("lala_0007", Some("default")))
+        table.identifier should be (TableIdentifier("lala_0007", Some("default")).toSpark)
         table.tableType should be (CatalogTableType.MANAGED)
         SchemaUtils.dropMetadata(table.schema) should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -545,8 +542,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = HiveTableRelation(
             Relation.Properties(context, "t0"),
-            database = Some("default"),
-            table = "lala_0008",
+            table = TableIdentifier("lala_0008", Some("default")),
             rowFormat = Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context),
@@ -563,7 +559,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Check =================================================================================================
         val table = session.catalog.getTable(TableIdentifier("lala_0008", Some("default")))
         table.comment should be(None)
-        table.identifier should be (TableIdentifier("lala_0008", Some("default")))
+        table.identifier should be (TableIdentifier("lala_0008", Some("default")).toSpark)
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -588,8 +584,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = HiveTableRelation(
             Relation.Properties(context, "t0"),
-            database = Some("default"),
-            table = "lala_0009",
+            table = TableIdentifier("lala_0009", Some("default")),
             rowFormat = Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"),
             inputFormat = Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat"),
             outputFormat = Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"),
@@ -608,7 +603,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Check =================================================================================================
         val table = session.catalog.getTable(TableIdentifier("lala_0009", Some("default")))
         table.comment should be(None)
-        table.identifier should be (TableIdentifier("lala_0009", Some("default")))
+        table.identifier should be (TableIdentifier("lala_0009", Some("default")).toSpark)
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
@@ -865,7 +860,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val table = session.catalog.getTable(TableIdentifier("lala_0012", Some("default")))
         table.comment should be(None)
-        table.identifier should be (TableIdentifier("lala_0012", Some("default")))
+        table.identifier should be (TableIdentifier("lala_0012", Some("default")).toSpark)
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
@@ -1024,8 +1019,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                     Field("f3", com.dimajix.flowman.types.StringType)
                 )
             )),
-            table = "some_table",
-            database = Some("default")
+            table = TableIdentifier("some_table", Some("default"))
         )
 
         // == Create ================================================================================================
@@ -1111,8 +1105,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             partitions = Seq(
                 PartitionField("part", com.dimajix.flowman.types.StringType)
             ),
-            table = "some_table",
-            database = Some("default")
+            table = TableIdentifier("some_table", Some("default"))
         )
 
         // == Create ================================================================================================
@@ -1234,8 +1227,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             partitions = Seq(
                 PartitionField("part", com.dimajix.flowman.types.StringType)
             ),
-            table = "some_table",
-            database = Some("default")
+            table = TableIdentifier("some_table", Some("default"))
         )
 
         // == Create =================================================================================================
@@ -1340,8 +1332,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             partitions = Seq(
                 PartitionField("part", com.dimajix.flowman.types.StringType)
             ),
-            table = "some_table",
-            database = Some("default")
+            table = TableIdentifier("some_table", Some("default"))
         )
 
         // == Inspect ===============================================================================================
@@ -1471,7 +1462,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // Inspect Hive table
         val table = session.catalog.getTable(TableIdentifier("lala", Some("default")))
-        table.identifier should be (TableIdentifier("lala", Some("default")))
+        table.identifier should be (TableIdentifier("lala", Some("default")).toSpark)
         table.tableType should be (CatalogTableType.MANAGED)
         table.schema should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -1531,8 +1522,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                     Field("f3", com.dimajix.flowman.types.StringType)
                 )
             )),
-            table = "some_table",
-            database = Some("default")
+            table = TableIdentifier("some_table", Some("default"))
         )
 
         // == Create ==================================================================================================
@@ -1544,15 +1534,15 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // Inspect Hive table
         val table_1 = session.catalog.getTable(TableIdentifier("some_table", Some("default")))
-        table_1.identifier should be (TableIdentifier("some_table", Some("default")))
+        table_1.identifier should be (TableIdentifier("some_table", Some("default")).toSpark)
         table_1.tableType should be (CatalogTableType.MANAGED)
         if (hiveVarcharSupported) {
-            table_1.schema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table_1.schema) should be(StructType(Seq(
                 StructField("f1", VarcharType(4)),
                 StructField("f2", CharType(4)),
                 StructField("f3", StringType)
             )))
-            table_1.dataSchema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table_1.dataSchema) should be(StructType(Seq(
                 StructField("f1", VarcharType(4)),
                 StructField("f2", CharType(4)),
                 StructField("f3", StringType)
@@ -1656,7 +1646,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // Inspect Hive table
         val table_1 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
-        table_1.identifier should be (TableIdentifier("lala", Some("default")))
+        table_1.identifier should be (TableIdentifier("lala", Some("default")).toSpark)
         table_1.tableType should be (CatalogTableType.MANAGED)
         table_1.schema should be (StructType(Seq(
             StructField("str_col", StringType),
@@ -1691,16 +1681,16 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // Inspect Hive table
         val table_2 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
-        table_2.identifier should be (TableIdentifier("lala", Some("default")))
+        table_2.identifier should be (TableIdentifier("lala", Some("default")).toSpark)
         table_2.tableType should be (CatalogTableType.MANAGED)
         if (hiveVarcharSupported) {
-            table_2.schema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table_2.schema) should be(StructType(Seq(
                 StructField("str_col", StringType),
                 StructField("int_col", IntegerType),
                 StructField("char_col", VarcharType(10)),
                 StructField("partition_col", StringType, nullable = false)
             )))
-            table_2.dataSchema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table_2.dataSchema) should be(StructType(Seq(
                 StructField("str_col", StringType),
                 StructField("int_col", IntegerType),
                 StructField("char_col", VarcharType(10))
@@ -1781,8 +1771,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                     Field("f3", com.dimajix.flowman.types.IntegerType)
                 )
             )),
-            table = "some_table",
-            database = Some("default")
+            table = TableIdentifier("some_table", Some("default"))
         )
         val relation_2 = HiveTableRelation(
             Relation.Properties(context, "rel_2"),
@@ -1794,8 +1783,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                     Field("f4", com.dimajix.flowman.types.LongType)
                 )
             )),
-            table = "some_table",
-            database = Some("default")
+            table = TableIdentifier("some_table", Some("default"))
         )
 
         // == Create ===================================================================
@@ -1804,7 +1792,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
-        session.catalog.getTable(relation_1.tableIdentifier).schema should be (StructType(Seq(
+        session.catalog.getTable(relation_1.table).schema should be (StructType(Seq(
             StructField("f1", StringType),
             StructField("f2", IntegerType),
             StructField("f3", IntegerType)
@@ -1816,7 +1804,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
         relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
         relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
-        session.catalog.getTable(relation_1.tableIdentifier).schema should be (StructType(Seq(
+        session.catalog.getTable(relation_1.table).schema should be (StructType(Seq(
             StructField("f1", StringType),
             StructField("f2", IntegerType),
             StructField("f3", IntegerType)
@@ -1849,7 +1837,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
 
-        session.catalog.getTable(relation_2.tableIdentifier).schema should be (StructType(Seq(
+        session.catalog.getTable(relation_2.table).schema should be (StructType(Seq(
             StructField("f1", StringType),
             StructField("f2", IntegerType),
             StructField("f3", IntegerType),
@@ -1864,7 +1852,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
-        session.catalog.getTable(relation_2.tableIdentifier).schema should be (StructType(Seq(
+        session.catalog.getTable(relation_2.table).schema should be (StructType(Seq(
             StructField("f1", StringType),
             StructField("f2", ShortType),
             StructField("f4", LongType)
@@ -2037,8 +2025,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val view = HiveViewRelation(
             Relation.Properties(context),
-            database = Some("default"),
-            table = "table_or_view",
+            table = TableIdentifier("table_or_view", Some("default")),
             mapping = Some(MappingOutputIdentifier("t0"))
         )
         val table = HiveTableRelation(
@@ -2051,8 +2038,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                     Field("f3", com.dimajix.flowman.types.IntegerType)
                 )
             )),
-            table = "table_or_view",
-            database = Some("default")
+            table = TableIdentifier("table_or_view", Some("default"))
         )
 
         // == Create VIEW ============================================================================================

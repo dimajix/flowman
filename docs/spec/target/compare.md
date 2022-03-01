@@ -24,13 +24,20 @@ targets:
 ## Fields
 
 * `kind` **(mandatory)** *(type: string)*: `relation`
+
+* `description` **(optional)** *(type: string)*:
+  Optional descriptive text of the build target
+
 * `actual` **(mandatory)** *(type: dataset)*: 
 Specifies the data set containing the actual data. Often you will either use a relation written to by Flowman or
 a mapping. 
+
 * `expected` **(mandatory)** *(type: dataset)*: 
 Specifies the data set containing the expected data. In most cases you probably will use a file data set referencing
 some predefined results
 
-## Supported Phases
+## Supported Execution Phases
 * `VERIFY` - Comparison will be performed in the *verify* build phase. If the comparison fails, the build will stop
 with an error
+
+Read more about [execution phases](../../lifecycle.md).

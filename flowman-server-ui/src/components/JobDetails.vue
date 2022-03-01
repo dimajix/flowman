@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-card-title>
       <v-icon>gavel</v-icon>
-      Job '{{properties.project}}/{{properties.name}}' {{ properties.phase }} id {{job}} status {{properties.status}}
+      Job '{{ details.project }}/{{ details.job }}' {{ details.phase }} id {{ job }} status {{ details.status }}
     </v-card-title>
 
     <v-container fluid>
@@ -80,7 +80,7 @@
               <v-chip small
                 color="#aacccc"
                 v-for="p in Object.entries(item.partitions) "
-                :key="p"
+                :key="hash(p)"
               >
                 {{ p[0] }} : {{ p[1] }}
               </v-chip>
@@ -120,6 +120,8 @@ import EnvironmentTable from '@/components/EnvironmentTable.vue'
 import MetricTable from '@/components/MetricTable.vue'
 import moment from "moment";
 
+let hash = require('object-hash');
+
 export default {
   name: 'JobDetails',
   components: {Status,EnvironmentTable,MetricTable},
@@ -130,7 +132,7 @@ export default {
 
   data () {
     return {
-      properties: {},
+      details: {},
       metrics: [],
       targets: [],
       environment: []
@@ -144,18 +146,7 @@ export default {
   methods: {
     refresh() {
       this.$api.getJobDetails(this.job).then(response => {
-        this.properties = {
-          namespace: response.namespace,
-          project: response.project,
-          name: response.job,
-          args: response.args,
-          phase: response.phase,
-          status: response.status,
-          startDt: response.startDateTime,
-          endDt: response.endDateTime,
-          parameters: response.args,
-          metrics: response.metrics
-        }
+        this.details = response
         this.metrics = response.metrics
       })
 
@@ -175,6 +166,10 @@ export default {
     },
     duration(dt) {
       return moment.duration(dt).humanize()
+    },
+
+    hash(obj) {
+      return hash(obj)
     }
   }
 }

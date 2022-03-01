@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flowman Project '${project.name}' version ${project.version}</title>
+    <style>
+        body {
+            font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+        }
+        table.blueTable {
+            border: 1px solid #1C6EA4;
+            background-color: #EEEEEE;
+            width: 100%;
+            text-align: left;
+            border-collapse: collapse;
+        }
+        table.blueTable td, table.blueTable th {
+            border: 1px solid #AAAAAA;
+            padding: 3px 2px;
+        }
+        table.blueTable tbody td {
+            font-size: 13px;
+        }
+        table.blueTable tr:nth-child(even) {
+            background: #D0E4F5;
+        }
+        table.blueTable thead {
+            background: #1C6EA4;
+            background: -moz-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+            background: -webkit-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+            background: linear-gradient(to bottom, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+            border-bottom: 2px solid #444444;
+        }
+        table.blueTable thead th {
+            font-size: 15px;
+            font-weight: bold;
+            color: #FFFFFF;
+            border-left: 2px solid #D0E4F5;
+        }
+        table.blueTable thead th:first-child {
+            border-left: none;
+        }
+
+        table.columnChecks {
+            width: 100%;
+        }
+        table.columnChecks tbody td {
+            font-size: 12px;
+            border-width: 0;
+        }
+        table.columnChecks tr {
+            background: transparent;
+        }
+        table.columnChecks tr:nth-child(even) {
+            background: transparent;
+        }
+
+        h3 {
+            margin-top: 4px;
+            font-size: x-large;
+        }
+        h4 {
+            margin-top: 2px;
+            font-size: large;
+        }
+        h2.separator {
+            background-color: #6ab0de;
+            border-radius: 20px;
+            margin: 4px;
+            padding: 20px;
+            font-size: xx-large;
+        }
+
+        .identifier {
+            font-family: monospace;
+        }
+        .dataType {
+            font-family: monospace;
+        }
+
+        div.indexBox {
+            background-color: #D0E4F5;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 20px;
+        }
+        div.mainEntity {
+            background-color: #D0E4F5;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 20px;
+        }
+        div.subEntity {
+            background-color: ghostwhite;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        div.titleBox {
+            background-color: #5592bb;
+            margin: 4px;
+            padding: 20px;
+            border-radius: 20px;
+        }
+        div.detailsBox {
+            background-color: #9fbed4;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 10px;
+        }
+        div.infoBox {
+            background-color: #5592bb;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        div.description {
+            padding: 10px 20px;
+        }
+
+        div.multicolumn {
+            display: flex;
+        }
+        div.column_2 {
+            flex: 50%;
+        }
+        div.column_3 {
+            flex: 33%;
+        }
+        div.column_4 {
+            flex: 25%;
+        }
+
+        span.success {
+            color: forestgreen;
+        }
+        span.failure {
+            color: orangered;
+        }
+
+        span.bubble {
+            display: inline-flex;
+            background-color: #0e84b5;
+            margin: 4px;
+            padding: 6px;
+            border-radius: 20px;
+            font-size: small;
+        }
+    </style>
+</head>
+
+
+#macro(testStatus $check)
+#if(${check.success})<span class="success">#elseif(${check.failure})<span class="failure">#else<span>#end${check.status}</span>
+#end
+
+#macro(schema $schema)
+<table class="blueTable">
+    <thead>
+    <tr>
+        <td>Column Name</td>
+        <td>Data Type</td>
+        <td>Constraints</td>
+        <td>Description</td>
+        <td>Quality Checks</td>
+    </tr>
+    </thead>
+    <tbody>
+    #if($schema)
+    #foreach($column in ${schema.columns})
+        <tr>
+            <td class="identifier">${column.name}</td>
+            <td class="dataType">${column.catalogType}</td>
+            <td class="dataType">#if(!$column.nullable) NOT NULL #end</td>
+            <td>${column.description}</td>
+            <td>
+                <table class="columnChecks">
+                #foreach($check in ${column.checks})
+                    <tr>
+                        <td>${check.name}</td>
+                        <td>#testStatus($check)</td>
+                        <td>#if(${check.result})${check.result.description}#end</td>
+                    </tr>
+                #end
+                </table>
+            </td>
+        </tr>
+    #end
+    #end
+    </tbody>
+</table>
+#if($schema.checks)
+<table class="blueTable">
+    <thead>
+    <tr>
+        <td>Quality Check</td>
+        <td>Result</td>
+        <td>Remarks</td>
+    </tr>
+    </thead>
+    <tbody>
+    #foreach($check in ${schema.checks})
+    <tr>
+        <td>${check.name}</td>
+        <td>#testStatus($check)</td>
+        <td>#if(${check.result})${check.result.description}#end</td>
+    </tr>
+    #end
+    </tbody>
+</table>
+#end
+#end
+
+#macro(references $refs)
+    <table>
+    #foreach($input in ${refs})
+        <tr>
+        #if(${project.resolve($input)})
+            <td>${input.kind}</td>
+            <td><a href="#${input}">${project.resolve($input)}</a></td>
+        #else
+            <td>${input.kind}</td>
+            <td>${input}</td>
+        #end
+        </tr>
+    #end
+    </table>
+#end
+
+#macro(resources $res)
+    <table>
+    #foreach($source in ${res})
+        <tr>
+            <td>${source.category}</td>
+            <td>${source.name}</td>
+        </tr>
+    #end
+    </table>
+#end
+
+
+<body>
+<div class="titleBox">
+    <h1>Flowman Project '${project.name}' version ${project.version}</h1>
+    <div class="description">Description: ${project.description}</div>
+    <div>Generated at ${Timestamp.now()}</div>
+</div>
+
+<div class="indexBox">
+    <h2>Index</h2>
+    #if(${project.mappings})
+    <h4><a href="#mappings">Mappings</a></h4>
+    <ul>
+        #foreach($mapping in ${project.mappings})
+            <li><a href="#${mapping.reference}">'${mapping.identifier}'</a></li>
+        #end
+    </ul>
+    #end
+
+    #if(${project.relations})
+    <h4><a href="#relations">Relations</a></h4>
+    <ul>
+        #foreach($relation in ${project.relations})
+            <li><a href="#${relation.reference}">'${relation.identifier}'</a></li>
+        #end
+    </ul>
+    #end
+
+    #if(${project.targets})
+    <h4><a href="#targets">Targets</a></h4>
+    <ul>
+        #foreach($target in ${project.targets})
+            <li><a href="#${target.reference}">'${target.identifier}'</a></li>
+        #end
+    </ul>
+    #end
+</div>
+
+#if(${project.mappings})
+<h2 id="mappings" class="separator">Mappings</h2>
+#foreach($mapping in ${project.mappings})
+<div class="mainEntity">
+    <div class="infoBox">
+    <h3 id="${mapping.reference}">Mapping '${mapping.identifier}'</h3>
+    <div class="description">Description: ${mapping.description}</div>
+    </div>
+
+    #if(${mapping.inputs})
+    <div class="detailsBox">
+    <h4>Inputs</h4>
+    #references(${mapping.inputs})
+    </div>
+    #end
+
+    <h4>Outputs</h4>
+    <div class="subEntity">
+    #foreach($output in ${mapping.outputs})
+        <h4 id="${output.reference}">Output '${output.name}'</h4>
+        #if(${output.description})<div class="description">Description: ${output.description}</div>#end
+        #schema($output.schema)
+    #end
+    </div>
+</div>
+#end
+#end
+
+#if(${project.relations})
+<h2 id="relations" class="separator">Relations</h2>
+#foreach($relation in ${project.relations})
+<div class="mainEntity">
+    <div class="infoBox">
+        <h3 id="${relation.reference}">Relation '${relation.identifier}'</h3>
+        <div class="description">Description: ${relation.description}</div>
+    </div>
+
+    #if(${relation.resources})
+    <div class="detailsBox">
+    <h4>Physical Resources</h4>
+    #resources(${relation.resources})
+    </div>
+    #end
+
+    <div class="multicolumn">
+        #if(${relation.sources})
+        <div class="column_2">
+            <div class="detailsBox">
+            <h4>Sources</h4>
+            #resources(${relation.sources})
+            </div>
+        </div>
+        #end
+
+        #if(${relation.inputs})
+        <div class="column_2">
+            <div class="detailsBox">
+            <h4>Direct Inputs</h4>
+            #references(${relation.inputs})
+            </div>
+        </div>
+        #end
+    </div>
+
+    <h4>Schema</h4>
+    #schema($relation.schema)
+</div>
+#end
+#end
+
+#if(${project.targets})
+<h2 id="targets" class="separator">Targets</h2>
+#foreach($target in ${project.targets})
+<div class="mainEntity">
+    <div class="infoBox">
+        <h3 id="${target.reference}">Target '${target.identifier}'</h3>
+        <div class="description">Description: ${target.description}</div>
+    </div>
+
+    <div class="multicolumn">
+        <div class="column_3">
+            <div class="detailsBox">
+            <h4>Inputs</h4>
+            #references(${target.inputs})
+            </div>
+        </div>
+
+        <div class="column_3">
+            <div class="detailsBox">
+            <h4>Outputs</h4>
+            #references(${target.outputs})
+            </div>
+        </div>
+
+        <div class="column_3">
+            <div class="detailsBox">
+            <h4>Phases</h4>
+            #foreach($phase in ${target.phases})
+                <span class="bubble">${phase.name}</span>
+            #end
+            </div>
+        </div>
+    </div>
+</div>
+#end
+#end
+</body>

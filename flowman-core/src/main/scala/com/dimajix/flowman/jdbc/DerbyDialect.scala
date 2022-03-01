@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,11 @@
 
 package com.dimajix.flowman.jdbc
 
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.jdbc.JdbcType
 
 import com.dimajix.flowman.catalog.TableChange
-import com.dimajix.flowman.catalog.TableChange.AddColumn
-import com.dimajix.flowman.catalog.TableChange.DropColumn
-import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
-import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.ByteType
 import com.dimajix.flowman.types.DecimalType
@@ -45,8 +41,8 @@ object DerbyDialect extends BaseDialect {
      * @return
      */
     override def quote(table:TableIdentifier) : String = {
-        if (table.database.isDefined)
-            table.database.get + "." + table.table
+        if (table.space.nonEmpty)
+            table.space.mkString(".") + "." + table.table
         else
             table.table
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
@@ -57,8 +58,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         mapping shouldBe a[ReadHiveMapping]
         val rrm = mapping.asInstanceOf[ReadHiveMapping]
-        rrm.database should be (Some("default"))
-        rrm.table should be ("t0")
+        rrm.table should be (TableIdentifier("t0", Some("default")))
         rrm.filter should be (Some("landing_date > 123"))
     }
 
@@ -69,8 +69,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val relation = HiveTableRelation(
             Relation.Properties(context, "t0"),
-            database = Some("default"),
-            table = "lala_0007",
+            table = TableIdentifier("lala_0007", Some("default")),
             format = Some("parquet"),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context),
@@ -84,15 +83,14 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val mapping = ReadHiveMapping(
             Mapping.Properties(context, "readHive"),
-            Some("default"),
-            "lala_0007"
+            TableIdentifier("lala_0007", Some("default"))
         )
 
         mapping.requires should be (Set(
             ResourceIdentifier.ofHiveTable("lala_0007", Some("default")),
             ResourceIdentifier.ofHiveDatabase("default")
         ))
-        mapping.inputs should be (Seq())
+        mapping.inputs should be (Set())
         mapping.describe(execution, Map()) should be (Map(
             "main" -> ftypes.StructType(Seq(
                 Field("str_col", ftypes.StringType),
@@ -116,8 +114,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val relation = HiveTableRelation(
             Relation.Properties(context, "t0"),
-            database = Some("default"),
-            table = "lala_0007",
+            table = TableIdentifier("lala_0007", Some("default")),
             format = Some("parquet"),
             schema = Some(EmbeddedSchema(
                 Schema.Properties(context),
@@ -131,8 +128,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val mapping = ReadHiveMapping(
             Mapping.Properties(context, "readHive"),
-            Some("default"),
-            "lala_0007",
+            table = TableIdentifier("lala_0007", Some("default")),
             columns = Seq(
                 Field("int_col", ftypes.DoubleType)
             )
@@ -142,7 +138,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             ResourceIdentifier.ofHiveTable("lala_0007", Some("default")),
             ResourceIdentifier.ofHiveDatabase("default")
         ))
-        mapping.inputs should be (Seq())
+        mapping.inputs should be (Set())
         mapping.describe(execution, Map()) should be (Map(
             "main" -> ftypes.StructType(Seq(
                 Field("int_col", ftypes.DoubleType)

@@ -31,6 +31,9 @@ targets:
 
 * `kind` **(mandatory)** *(type: string)*: `verify`
 
+* `description` **(optional)** *(type: string)*:
+  Optional descriptive text of the build target
+
 * `assertions` **(optional)** *(type: map:assertion)*:
   Map of [assertions](../assertion/index.md) to be executed. The verification is marked as *failed* if a single
   assertion fails.
@@ -39,8 +42,10 @@ targets:
   Specify how to proceed in case individual assertions fail. Possible values are `failFast`, `failAtEnd` and `failNever`
 
 
-## Supported Phases
+## Supported Execution Phases
 * `VERIDY` - The specified assertions will be run in the `VERIFY` phase after the `CREATE` and `BUILD` phases.
+
+Read more about [execution phases](../../lifecycle.md).
 
 
 ## Remarks

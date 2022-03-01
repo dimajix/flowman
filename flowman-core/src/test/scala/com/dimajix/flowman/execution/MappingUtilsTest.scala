@@ -35,7 +35,7 @@ object MappingUtilsTest {
     case class DummyMapping(
         override val context: Context,
         override val name: String,
-        override val inputs: Seq[MappingOutputIdentifier],
+        override val inputs: Set[MappingOutputIdentifier],
         override val requires: Set[ResourceIdentifier]
     ) extends BaseMapping {
         protected override def instanceProperties: Mapping.Properties = Mapping.Properties(context, name)
@@ -47,7 +47,7 @@ object MappingUtilsTest {
         inputs: Seq[MappingOutputIdentifier],
         requires: Set[ResourceIdentifier]
     ) extends Prototype[Mapping] {
-        override def instantiate(context: Context): Mapping = DummyMapping(context, name, inputs, requires)
+        override def instantiate(context: Context): Mapping = DummyMapping(context, name, inputs.toSet, requires)
     }
 }
 

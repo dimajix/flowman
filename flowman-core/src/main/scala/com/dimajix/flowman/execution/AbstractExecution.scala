@@ -20,15 +20,9 @@ import java.time.Instant
 
 import scala.util.control.NonFatal
 
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.catalog.HiveCatalog
-import com.dimajix.flowman.config.FlowmanConf
-import com.dimajix.flowman.hadoop.FileSystem
 import com.dimajix.flowman.metric.MetricBoard
-import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.metric.withWallTime
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
@@ -37,13 +31,10 @@ import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobLifecycle
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
-import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Measure
 import com.dimajix.flowman.model.MeasureResult
-import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
-import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.util.withShutdownHook
 
 

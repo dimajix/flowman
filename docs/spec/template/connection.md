@@ -5,6 +5,7 @@
 # All template definitions (independent of their kind) go into the templates section
 templates:
   default_connection:
+    # The template is a connection template  
     kind: connection
     parameters:
       - name: dir
@@ -32,14 +33,14 @@ relations:
       dir: /opt/flowman/derby_new
     table: "advertiser_setting"
     schema:
-        kind: embedded
-        fields:
-            - name: id
-              type: Integer
-            - name: business_rule_id
-              type: Integer
-            - name: rtb_advertiser_id
-              type: Integer
+      kind: embedded
+      fields:
+        - name: id
+          type: Integer
+        - name: business_rule_id
+          type: Integer
+        - name: rtb_advertiser_id
+          type: Integer
 
   rel_2:
     kind: jdbc
@@ -49,5 +50,15 @@ relations:
         *
       FROM line_item li
     "
-
 ```
+
+Once a relation template is defined, you can create instances of the template at any place where a connection can be
+specified. You need to use the special syntax `template/<template_name>` when creating an instance of the template.
+The template instance then can also contain values for all parameters defined in the template.
+
+
+## Fields
+
+* `kind` **(mandatory)** *(type: string)*: `connection`
+* `parameters` **(optional)** *(type: list[parameter])*: list of parameter definitions.
+* `template` **(mandatory)** *(type: mapping)*: The actual definition of a connection.

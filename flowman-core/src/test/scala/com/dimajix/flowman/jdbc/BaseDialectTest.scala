@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.jdbc
 
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.functions.expr
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
@@ -25,7 +24,10 @@ import org.apache.spark.sql.types.StructType
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.catalog
 import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.UpdateClause
@@ -79,7 +81,7 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
     it should "provide CREATE statements with PK" in {
         val dialect = NoopDialect
         val table = TableIdentifier("table_1", Some("my_db"))
-        val tableDefinition = TableDefinition(
+        val tableDefinition = catalog.TableDefinition(
             table,
             Seq(
                 Field("id", com.dimajix.flowman.types.IntegerType, nullable = false),

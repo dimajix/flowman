@@ -5,23 +5,27 @@
   "fields": [
     {
       "name": "usaf",
-      "type": "int"
+      "type": "int",
+      "doc": "USAF station id"
     },
     {
       "name": "wban",
-      "type": "int"
+      "type": "int",
+      "doc": "WBAN station id"
     },
     {
       "name": "date",
-      "type": { "type": "int", "logicalType": "date" }
+      "type": { "type": "int", "logicalType": "date" },
+      "doc": "The date when the measurement was made"
     },
     {
       "name": "time",
-      "type": "string"
+      "type": "string",
+      "doc": "The time when the measurement was made"
     },
     {
       "name": "wind_direction",
-      "type": [ "string", "null" ]
+      "type": [ "int", "null" ]
     },
     {
       "name": "wind_direction_qual",

@@ -1,6 +1,6 @@
 # Installation Guide
 
-## Requirements
+## 1. Requirements
 
 Flowman brings many dependencies with the installation archive, but everything related to Hadoop or Spark needs to 
 be provided by your platform. This approach ensures that the existing Spark and Hadoop installation is used together
@@ -14,10 +14,44 @@ components present on your system:
 Note that Flowman can be built for different Hadoop and Spark versions, and the major and minor version of the build
 needs to match the ones of your platform
 
+### Download & Install Spark
 
-## Downloading Flowman
+As of this writing, the latest release of Flowman is 0.22.0 and is available prebuilt for Spark 3.2.1 on the Spark
+homepage. So we download the appropriate Spark distribution from the Apache archive and unpack it.
 
-Since version 0.14.1, prebuilt releases are provided on the [FLowman Homepage](https://flowman.io) or on 
+```shell
+# Create a nice playground which doesn't mess up your system
+mkdir playground
+cd playground
+
+# Download and unpack Spark & Hadoop
+curl -L https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.2.1-bin-hadoop3.2.tgz | tar xvzf -# Create a nice link
+ln -snf spark-3.2.1-bin-hadoop3.2 spark
+```
+The Spark package already contains Hadoop, so with this single download you already have both installed and integrated with each other.
+
+Once you have installed Spark, you should set the environment variable `SPARK_HOME`, so Flowman can find it
+```shell
+export SPARK_HOME=<your-spark-installation-directory>
+```
+It might be a good idea to add a corresponding line to your `.bashrc` or `.profile`.
+
+### Download & Install Hadoop Utils for Windows
+
+If you are trying to run the application on Windows, you also need the *Hadoop Winutils*, which is a set of
+DLLs required for the Hadoop libraries to be working. You can get a copy at https://github.com/kontext-tech/winutils .
+Once you downloaded the appropriate version, you need to place the DLLs into a directory `$HADOOP_HOME/bin`, where
+`HADOOP_HOME` refers to some arbitrary location of your choice on your Windows PC. You also need to set the following
+environment variables:
+* `HADOOP_HOME` should point to the parent directory of the `bin` directory
+* `PATH` should also contain `$HADOOP_HOME/bin`
+
+The documentation contains a [dedicated section for Windows users](cookbook/windows.md)
+
+
+## 2. Downloading Flowman
+
+Since version 0.14.1, prebuilt releases are provided on the [Flowman Homepage](https://flowman.io) or on 
 [GitHub](https://github.com/dimajix/flowman/releases). This probably is the simplest way to grab a working Flowman 
 package. Note that for each release, there are different packages being provided, for different Spark and Hadoop 
 versions. The naming is very simple:
@@ -35,15 +69,14 @@ https://github.com/dimajix/flowman/releases/download/0.20.1/flowman-dist-0.20.1-
 ```
 
 
-
-## Building Flowman
+### Building Flowman
 
 As an alternative to downloading a pre-built distribution of Flowman, you might also want to 
 [build Flowman](building.md) yourself in order to match your environment. A task which is not difficult for someone who
  has basic  experience with Maven.
 
 
-## Local Installation
+## 3. Local Installation
 
 Flowman is distributed as a `tar.gz` file, which simply needs to be extracted at some location on your computer or 
 server. This can be done via
@@ -57,8 +90,6 @@ tar xvzf flowman-dist-X.Y.Z-bin.tar.gz
 ├── bin
 ├── conf
 ├── examples
-│   ├── plugin-example
-│   │   └── job
 │   ├── sftp-upload
 │   │   ├── config
 │   │   ├── data
@@ -89,7 +120,7 @@ tar xvzf flowman-dist-X.Y.Z-bin.tar.gz
 * The `examples` directory contains some example projects 
 
 
-## Configuration
+## 4. Configuration (optional)
 
 You probably need to perform some basic global configuration of Flowman. The relevant files are stored in the `conf`
 directory.
@@ -187,7 +218,7 @@ plugins:
 
 ### `default-namespace.yml`
 On top of the very global settings, Flowman also supports so called *namespaces*. Each project is executed within the
-context of one namespace, if nothing else is specified the *defautlt namespace*. Each namespace contains some 
+context of one namespace, if nothing else is specified the *default namespace*. Each namespace contains some 
 configuration, such that different namespaces might represent different tenants or different staging environments.
 
 #### Example
@@ -229,9 +260,27 @@ store:
 ```
 
 
-## Running in a Kerberized Environment
+## 5. Running Flowman
+
+Now when you have installed Spark and Flowman, you can easily start Flowman via
+```shell
+cd <your-flowman-directory>
+export SPARK_HOME=<our-spark-directory>
+
+bin/flowshell -f examples/weather
+```
+
+
+## 6. Related Topics
+
+### Running Flowman on Windows
+Please have a look at [Running Flowman on Windows](cookbook/windows.md) for detailed information.
+
+
+### Running in a Kerberized Environment
 Please have a look at [Kerberos](cookbook/kerberos.md) for detailed information.
 
-## Deploying with Docker
-It is also possible to run Flowman inside Docker. This simply requires a Docker image with a working Spark and
-Hadoop installation such that Flowman can be installed inside the image just as it is installed locally.
+
+### Running in Docker
+It is also possible to run Flowman inside Docker. We now also provide some images at
+[Docker Hub](https://hub.docker.com/repository/docker/dimajix/flowman)

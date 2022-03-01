@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,21 +23,26 @@ import java.util.Locale
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.Column
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.jdbc.JdbcType
 import org.apache.spark.sql.types.StructType
 
-import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.CreateIndex
+import com.dimajix.flowman.catalog.TableChange.CreatePrimaryKey
 import com.dimajix.flowman.catalog.TableChange.DropColumn
+import com.dimajix.flowman.catalog.TableChange.DropIndex
+import com.dimajix.flowman.catalog.TableChange.DropPrimaryKey
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
+import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MergeClause
@@ -161,8 +166,8 @@ abstract class BaseDialect extends SqlDialect {
       * @return
       */
     override def quote(table:TableIdentifier) : String = {
-        if (table.database.isDefined)
-            quoteIdentifier(table.database.get) + "." + quoteIdentifier(table.table)
+        if (table.space.nonEmpty)
+            table.space.map(quoteIdentifier).mkString(".") + "." + quoteIdentifier(table.table)
         else
             quoteIdentifier(table.table)
     }
@@ -203,6 +208,10 @@ abstract class BaseDialect extends SqlDialect {
             case _:UpdateColumnNullability => true
             case _:UpdateColumnType => true
             case _:UpdateColumnComment => true
+            case _:CreateIndex => true
+            case _:DropIndex => true
+            case _:CreatePrimaryKey => true
+            case _:DropPrimaryKey => true
             case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
         }
     }
@@ -228,7 +237,7 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
 
     override def createTable(table: TableDefinition): String = {
         // Column definitions
-        val columns = table.fields.map { field =>
+        val columns = table.columns.map { field =>
             val name = dialect.quoteIdentifier(field.name)
             val typ = dialect.getJdbcType(field.ftype).databaseTypeDefinition
             val nullable = if (field.nullable) ""
@@ -335,6 +344,22 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
         }
 
         newExpr.sql
+    }
+
+    override def dropPrimaryKey(table: TableIdentifier): String = ???
+
+    override def addPrimaryKey(table: TableIdentifier, columns: Seq[String]): String = ???
+
+    override def dropIndex(table: TableIdentifier, indexName: String): String = {
+        s"DROP INDEX ${dialect.quoteIdentifier(indexName)}"
+    }
+
+    override def createIndex(table: TableIdentifier, index: TableIndex): String = {
+        // Column definitions
+        val columns = index.columns.map(dialect.quoteIdentifier)
+        val unique = if (index.unique) "UNIQUE" else ""
+
+        s"CREATE $unique INDEX ${dialect.quoteIdentifier(index.name)} ON ${dialect.quote(table)} (${columns.mkString(",")})"
     }
 }
 

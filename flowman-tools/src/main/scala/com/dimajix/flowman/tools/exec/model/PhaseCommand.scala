@@ -59,15 +59,12 @@ class PhaseCommand(phase:Phase) extends Command {
                 project.relations.keys.toSeq
         val partition = ParserUtils.parseDelimitedKeyValues(this.partition)
         val targets = toRun.map { rel =>
-            // Create Properties without a project. Otherwise the lookup of the relation will fail, since its identifier
-            // will refer to the project. And since the relation are not part of the project, this is also really correct
-            val name = rel + "-" + Clock.systemUTC().millis()
-            val props = Target.Properties(context.root, name, "relation")
+            val props = Target.Properties(context.root, rel, "relation")
             RelationTarget(props, RelationIdentifier(rel, project.name), MappingOutputIdentifier.empty, partition)
         }
 
         val runner = session.runner
-        runner.executeTargets(targets, Seq(phase), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
+        runner.executeTargets(targets, Seq(phase), jobName="cli-tools", force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
     }
 }
 

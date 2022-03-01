@@ -45,7 +45,7 @@ case class RelationSchema(
             case Some(schema) => schema.fields ++ rel.partitions.map(_.field)
             case None =>
                 val execution = context.execution
-                rel.describe(execution).fields
+                execution.describe(rel).fields
         }
     }
     private lazy val cachedDescription = {

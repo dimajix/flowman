@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,9 @@ import java.sql.Statement
 import java.util.Properties
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
 import scala.util.control.NonFatal
 
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.execution.datasources.jdbc.DriverRegistry
 import org.apache.spark.sql.execution.datasources.jdbc.DriverWrapper
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
@@ -40,6 +38,9 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -58,15 +59,16 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.ValueConnectionReference
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.DateType
 import com.dimajix.flowman.types.DoubleType
 import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FloatType
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.types.VarcharType
 import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -115,6 +117,16 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                |      type: string
                |    - name: int_col
                |      type: integer
+               |    - name: float_col
+               |      type: float
+               |  primaryKey:
+               |    - int_col
+               |indexes:
+               |  - name: idx0
+               |    columns: [str_col, int_col]
+               |    unique: false
+               |primaryKey:
+               |  - str_col
             """.stripMargin
         val relationSpec = ObjectMapper.parse[RelationSpec](spec).asInstanceOf[JdbcRelationSpec]
 
@@ -127,12 +139,16 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 Schema.Properties(context, name="embedded", kind="inline"),
                 fields = Seq(
                     Field("str_col", StringType),
-                    Field("int_col", IntegerType)
-                )
+                    Field("int_col", IntegerType),
+                    Field("float_col", FloatType)
+                ),
+                primaryKey = Seq("int_col")
             )))
         relation.connection shouldBe a[ValueConnectionReference]
         relation.connection.identifier should be (ConnectionIdentifier("some_connection"))
         relation.connection.name should be ("some_connection")
+        relation.indexes should be (Seq(TableIndex("idx0", Seq("str_col", "int_col"))))
+        relation.primaryKey should be (Seq("str_col"))
     }
 
     it should "support the full lifecycle" in {
@@ -824,6 +840,105 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map()) should be (No)
     }
 
+    it should "support upsert operations" in {
+        val db = tempDir.toPath.resolve("mydb")
+        val url = "jdbc:h2:" + db
+        val driver = "org.h2.Driver"
+
+        val spec =
+            s"""
+               |connections:
+               |  c0:
+               |    kind: jdbc
+               |    driver: $driver
+               |    url: $url
+               |relations:
+               |  t0:
+               |    kind: jdbc
+               |    description: "This is a test table"
+               |    connection: c0
+               |    table: lala_001
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: id
+               |          type: integer
+               |        - name: name
+               |          type: string
+               |        - name: sex
+               |          type: string
+               |      primaryKey: ID
+               |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
+
+        // == Create ==================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.read(execution).count() should be (0)
+
+        // ===== Write Table ==========================================================================================
+        val tableSchema = org.apache.spark.sql.types.StructType(Seq(
+            StructField("id", org.apache.spark.sql.types.IntegerType),
+            StructField("name", org.apache.spark.sql.types.StringType),
+            StructField("sex", org.apache.spark.sql.types.StringType)
+        ))
+        val df0 = DataFrameBuilder.ofRows(
+            spark,
+            Seq(
+                Row(10, "Alice", "male"),
+                Row(20, "Bob", "male")
+            ),
+            tableSchema
+        )
+        relation.write(execution, df0, mode=OutputMode.APPEND)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+
+        // ===== Read Table ===========================================================================================
+        val df1 = relation.read(execution)
+        df1.sort(col("id")).collect() should be (Seq(
+            Row(10, "Alice", "male"),
+            Row(20, "Bob", "male")
+        ))
+
+        // ===== Merge Table ==========================================================================================
+        val updateSchema = org.apache.spark.sql.types.StructType(Seq(
+            StructField("id", org.apache.spark.sql.types.IntegerType),
+            StructField("name", org.apache.spark.sql.types.StringType),
+            StructField("sex", org.apache.spark.sql.types.StringType)
+        ))
+        val df2 = DataFrameBuilder.ofRows(
+            spark,
+            Seq(
+                Row(10, "Alice", "female"),
+                Row(50, "Debora", "female")
+            ),
+            updateSchema
+        )
+        relation.write(execution, df2, mode=OutputMode.UPDATE)
+
+        // ===== Read Table ===========================================================================================
+        val df3 = relation.read(execution)
+        df3.sort(col("id")).collect() should be (Seq(
+            Row(10, "Alice", "female"),
+            Row(20, "Bob", "male"),
+            Row(50, "Debora", "female")
+        ))
+
+        // == Destroy =================================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+    }
+
     it should "support SQL queries" in {
         val db = tempDir.toPath.resolve("mydb")
         val url = "jdbc:derby:" + db + ";create=true"
@@ -853,7 +968,7 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 )
             )),
             connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            table = Some("lala_004")
+            table = Some(TableIdentifier("lala_004"))
         )
         val relation_t1 = JdbcRelation(
             Relation.Properties(context, "t1"),
@@ -924,7 +1039,7 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 )
             )),
             connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            table = Some("lala_005")
+            table = Some(TableIdentifier("lala_005"))
         )
         val rel1 = JdbcRelation(
             Relation.Properties(context, "t1"),
@@ -936,7 +1051,7 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 )
             )),
             connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            table = Some("lala_005")
+            table = Some(TableIdentifier("lala_005"))
         )
 
         // == Create =================================================================================================
@@ -1002,6 +1117,132 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         rel1.exists(execution) should be (No)
         rel1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         rel1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+    }
+
+    it should "support a primary key" in {
+        val db = tempDir.toPath.resolve("mydb")
+        val url = "jdbc:derby:" + db + ";create=true"
+        val driver = "org.apache.derby.jdbc.EmbeddedDriver"
+
+        val spec =
+            s"""
+               |connections:
+               |  c0:
+               |    kind: jdbc
+               |    driver: $driver
+               |    url: $url
+               |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        val rel0 = JdbcRelation(
+            Relation.Properties(context, "t0"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", StringType),
+                    Field("int_col", IntegerType),
+                    Field("varchar_col", VarcharType(32))
+                )
+            )),
+            connection = ConnectionReference(context, ConnectionIdentifier("c0")),
+            table = Some(TableIdentifier("lala_005")),
+            primaryKey = Seq("int_col", "varchar_col")
+        )
+
+        // == Create ==================================================================================================
+        rel0.exists(execution) should be (No)
+        rel0.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        rel0.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        rel0.create(execution)
+        rel0.exists(execution) should be (Yes)
+        rel0.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        rel0.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+        // == Inspect =================================================================================================
+        withConnection(url, "lala_005") { (con, options) =>
+            JdbcUtils.getTable(con, TableIdentifier("lala_005"), options)
+        } should be (
+            TableDefinition(
+                TableIdentifier("lala_005"),
+                columns = Seq(
+                    Field("str_col", StringType),
+                    Field("int_col", IntegerType, nullable=false),
+                    Field("varchar_col", VarcharType(32), nullable=false)
+                ),
+                primaryKey = Seq("int_col", "varchar_col")
+            ))
+
+        // == Destroy =================================================================================================
+        rel0.exists(execution) should be (Yes)
+        rel0.destroy(execution)
+        rel0.exists(execution) should be (No)
+    }
+
+    it should "support indexes" in {
+        val db = tempDir.toPath.resolve("mydb")
+        val url = "jdbc:derby:" + db + ";create=true"
+        val driver = "org.apache.derby.jdbc.EmbeddedDriver"
+
+        val spec =
+            s"""
+               |connections:
+               |  c0:
+               |    kind: jdbc
+               |    driver: $driver
+               |    url: $url
+               |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        val rel0 = JdbcRelation(
+            Relation.Properties(context, "t0"),
+            schema = Some(EmbeddedSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", StringType),
+                    Field("int_col", IntegerType),
+                    Field("varchar_col", VarcharType(32))
+                )
+            )),
+            connection = ConnectionReference(context, ConnectionIdentifier("c0")),
+            table = Some(TableIdentifier("lala_005")),
+            indexes = Seq(TableIndex("idx0",Seq("int_col", "varchar_col")))
+        )
+
+        // == Create ==================================================================================================
+        rel0.exists(execution) should be (No)
+        rel0.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        rel0.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        rel0.create(execution)
+        rel0.exists(execution) should be (Yes)
+        rel0.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        rel0.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+        // == Inspect =================================================================================================
+        withConnection(url, "lala_005") { (con, options) =>
+            JdbcUtils.getTable(con, TableIdentifier("lala_005"), options)
+        } should be (
+            TableDefinition(
+                TableIdentifier("lala_005"),
+                columns = Seq(
+                    Field("str_col", StringType),
+                    Field("int_col", IntegerType),
+                    Field("varchar_col", VarcharType(32))
+                ),
+                indexes = Seq(TableIndex("idx0",Seq("int_col", "varchar_col")))
+        ))
+
+        // == Destroy =================================================================================================
+        rel0.exists(execution) should be (Yes)
+        rel0.destroy(execution)
+        rel0.exists(execution) should be (No)
     }
 
     private def withConnection[T](url:String, table:String)(fn:(Connection,JDBCOptions) => T) : T = {

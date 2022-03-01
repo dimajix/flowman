@@ -31,6 +31,7 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.SimpleExecutor
 import com.dimajix.flowman.execution.DependencyScheduler
 import com.dimajix.flowman.execution.Scheduler
+import com.dimajix.flowman.model.VerifyPolicy
 import com.dimajix.flowman.transforms.ColumnMismatchStrategy
 import com.dimajix.flowman.transforms.TypeMismatchStrategy
 import com.dimajix.spark.features
@@ -101,6 +102,14 @@ object FlowmanConf {
         .doc("Parallelism of mapping instantiation")
         .intConf
         .createWithDefault(1)
+    val EXECUTION_MAPPING_SCHEMA_CACHE = buildConf("flowman.execution.mapping.schemaCache")
+        .doc("Cache schema information of mapping instances")
+        .booleanConf
+        .createWithDefault(true)
+    val EXECUTION_RELATION_SCHEMA_CACHE = buildConf("flowman.execution.relation.schemaCache")
+        .doc("Cache schema information of relation instances")
+        .booleanConf
+        .createWithDefault(true)
 
     val DEFAULT_RELATION_MIGRATION_POLICY = buildConf("flowman.default.relation.migrationPolicy")
         .doc("Default migration policy. Allowed values are 'relaxed' and 'strict'")
@@ -128,6 +137,10 @@ object FlowmanConf {
         .stringConf
         .createWithDefault(TypeMismatchStrategy.CAST_ALWAYS.toString)
 
+    val DEFAULT_TARGET_VERIFY_POLICY = buildConf("flowman.default.target.verifyPolicy")
+        .doc("Policy for verifying a target. Accepted verify policies are 'empty_as_success', 'empty_as_failure' and 'empty_as_success_with_errors'.")
+        .stringConf
+        .createWithDefault(VerifyPolicy.EMPTY_AS_FAILURE.toString)
     val DEFAULT_TARGET_OUTPUT_MODE = buildConf("flowman.default.target.outputMode")
         .doc("Default output mode of targets")
         .stringConf

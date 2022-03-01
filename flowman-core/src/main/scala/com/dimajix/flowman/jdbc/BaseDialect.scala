@@ -32,7 +32,11 @@ import com.dimajix.common.SetIgnoreCase
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.CreateIndex
+import com.dimajix.flowman.catalog.TableChange.CreatePrimaryKey
 import com.dimajix.flowman.catalog.TableChange.DropColumn
+import com.dimajix.flowman.catalog.TableChange.DropIndex
+import com.dimajix.flowman.catalog.TableChange.DropPrimaryKey
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
@@ -204,6 +208,10 @@ abstract class BaseDialect extends SqlDialect {
             case _:UpdateColumnNullability => true
             case _:UpdateColumnType => true
             case _:UpdateColumnComment => true
+            case _:CreateIndex => true
+            case _:DropIndex => true
+            case _:CreatePrimaryKey => true
+            case _:DropPrimaryKey => true
             case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
         }
     }

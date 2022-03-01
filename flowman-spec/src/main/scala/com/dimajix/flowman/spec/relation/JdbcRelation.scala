@@ -448,7 +448,9 @@ class JdbcRelationBase(
     }
 
     protected def doCreate(con:java.sql.Connection, options:JDBCOptions): Unit = {
-        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier with schema\n${this.schema.map(_.treeString).orNull}")
+        val pk = tableDefinition.filter(_.primaryKey.nonEmpty).map(t => s"\n  Primary key ${t.primaryKey.mkString(",")}").getOrElse("")
+        val idx = tableDefinition.map(t => t.indexes.map(i => s"\n  Index '${i.name}' on ${i.columns.mkString(",")}").foldLeft("")(_ + _)).getOrElse("")
+        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier with schema\n${schema.map(_.treeString).orNull}$pk$idx")
 
         tableDefinition match {
             case Some(table) =>

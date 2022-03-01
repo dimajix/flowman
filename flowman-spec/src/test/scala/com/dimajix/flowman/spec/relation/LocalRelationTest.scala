@@ -433,4 +433,8 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("p2" -> SingleValue("2"))) should be (No)
     }
+
+    it should "support using partitions without a pattern" in {
+        // TODO
+    }
 }

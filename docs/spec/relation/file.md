@@ -75,8 +75,12 @@ relations:
  Please see the section [Partitioning](#Partitioning) below. 
 
 
+## Automatic Migrations
+The `file` relation does not support any automatic migration like adding/removing columns. 
+
+
 ## Schema Conversion
-The file relation fully supports automatic schema conversion on input and output operations as described in the
+The `file` relation fully supports automatic schema conversion on input and output operations as described in the
 corresponding section of [relations](index.md).
 
 
@@ -93,7 +97,6 @@ The `file` relation supports the following output modes in a [`relation` target]
 | `overwrite_dynamic` | yes       | Overwrite only partitions dynamically determined by the data itself |
 | `append`            | yes       | Append new records to the existing files                            |
 | `update`            | no        | -                                                                   |
-| `merge`             | no        | -                                                                   |
 
 ### Stream Writing
 In addition to batch writing, the file relation also supports stream writing via the
@@ -126,7 +129,7 @@ in all situations where only schema information is required.
 
 ### Partitioning
 
-Flowman also supports partitioning, i.e. written to different sub directories. You can explicitly specify a *partition
+Flowman also supports partitioning, i.e. written to different subdirectories. You can explicitly specify a *partition
 pattern* via the `pattern` field, but it is highly recommended to NOT explicitly set this field and let Spark manage
 partitions itself. This way Spark can infer partition values from directory names and will also list directories more
 efficiently.

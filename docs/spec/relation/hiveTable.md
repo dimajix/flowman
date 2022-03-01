@@ -154,7 +154,6 @@ The `hive` relation supports the following output modes in a [`relation` target]
 | `overwrite_dynamic` | yes       | Overwrite only the partitions dynamically inferred from the data.                                                   |
 | `append`            | yes       | Append new records to the existing table                                                                            |
 | `update`            | no        | -                                                                                                                   |
-| `merge`             | no        | -                                                                                                                   |
 
 
 ## Remarks

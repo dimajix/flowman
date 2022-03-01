@@ -61,22 +61,21 @@ List of Kafka bootstrap servers to contact. This list does not need to be exhaus
 ### Batch Writing
 The `kafa` relation supports the following output modes in a [`relation` target](../target/relation.md):
 
-|Output Mode |Supported  | Comments|
---- | --- | ---
-|`errorIfExists`|yes|Throw an error if the Kafka topic already exists|
-|`ignoreIfExists`|yes|Do nothing if the Kafka topic already exists|
-|`overwrite`|no|-|
-|`overwrite_dynamic`|no|-|
-|`append`|yes|Append new records to the existing Kafka topic|
-|`update`|no|-|
-|`merge`|no|-|
+| Output Mode         | Supported | Comments                                         |
+|---------------------|-----------|--------------------------------------------------|
+| `errorIfExists`     | yes       | Throw an error if the Kafka topic already exists |
+| `ignoreIfExists`    | yes       | Do nothing if the Kafka topic already exists     |
+| `overwrite`         | no        | -                                                |
+| `overwrite_dynamic` | no        | -                                                |
+| `append`            | yes       | Append new records to the existing Kafka topic   |
+| `update`            | no        | -                                                |
 
 ### Stream Writing
 In addition to batch writing, the Kafka relation also supports stream writing via the 
 [`stream` target](../target/stream.md) with the following semantics:
 
-|Output Mode |Supported  | Comments|
---- | --- | ---
-|`append`|yes|Append new records from the streaming process once they don't change any more|
-|`update`|yes|Append records every time they are updated|
-|`complete`|no|-|
+| Output Mode | Supported | Comments                                                                      |
+|-------------|-----------|-------------------------------------------------------------------------------|
+| `append`    | yes       | Append new records from the streaming process once they don't change any more |
+| `update`    | yes       | Append records every time they are updated                                    |
+| `complete`  | no        | -                                                                             |

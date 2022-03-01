@@ -52,6 +52,7 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
     new JsonSubTypes.Type(name = "hiveUnionTable", value = classOf[HiveUnionTableRelationSpec]),
     new JsonSubTypes.Type(name = "hiveView", value = classOf[HiveViewRelationSpec]),
     new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelationSpec]),
+    new JsonSubTypes.Type(name = "jdbcTable", value = classOf[JdbcRelationSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalRelationSpec]),
     new JsonSubTypes.Type(name = "mock", value = classOf[MockRelationSpec]),
     new JsonSubTypes.Type(name = "null", value = classOf[NullRelationSpec]),

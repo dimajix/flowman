@@ -62,8 +62,19 @@ whole lifecycle of the directory for you. This means that
 * The directory specified in `location` will be truncated or individual partitions will be dropped during `clean` phase
 * The directory specified in `location` tables will be removed during `destroy` phase
 
+
+## Automatic Migrations
+The `local` relation does not support any automatic migration like adding/removing columns.
+
+
 ## Supported File Format
+
+The `local` relation only supports a very limited set of file formats (currently only `CSV` files)
 
 ### CSV
 
+
 ## Partitioning
+
+The `local` relation also supports partitioning by storing different partitions in separate files or subdirectories.
+You need to explicitly specify a *partition pattern* via the `pattern` field.

@@ -840,6 +840,105 @@ class JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map()) should be (No)
     }
 
+    it should "support upsert operations" in {
+        val db = tempDir.toPath.resolve("mydb")
+        val url = "jdbc:h2:" + db
+        val driver = "org.h2.Driver"
+
+        val spec =
+            s"""
+               |connections:
+               |  c0:
+               |    kind: jdbc
+               |    driver: $driver
+               |    url: $url
+               |relations:
+               |  t0:
+               |    kind: jdbc
+               |    description: "This is a test table"
+               |    connection: c0
+               |    table: lala_001
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: id
+               |          type: integer
+               |        - name: name
+               |          type: string
+               |        - name: sex
+               |          type: string
+               |      primaryKey: ID
+               |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0"))
+
+        // == Create ==================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.read(execution).count() should be (0)
+
+        // ===== Write Table ==========================================================================================
+        val tableSchema = org.apache.spark.sql.types.StructType(Seq(
+            StructField("id", org.apache.spark.sql.types.IntegerType),
+            StructField("name", org.apache.spark.sql.types.StringType),
+            StructField("sex", org.apache.spark.sql.types.StringType)
+        ))
+        val df0 = DataFrameBuilder.ofRows(
+            spark,
+            Seq(
+                Row(10, "Alice", "male"),
+                Row(20, "Bob", "male")
+            ),
+            tableSchema
+        )
+        relation.write(execution, df0, mode=OutputMode.APPEND)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+
+        // ===== Read Table ===========================================================================================
+        val df1 = relation.read(execution)
+        df1.sort(col("id")).collect() should be (Seq(
+            Row(10, "Alice", "male"),
+            Row(20, "Bob", "male")
+        ))
+
+        // ===== Merge Table ==========================================================================================
+        val updateSchema = org.apache.spark.sql.types.StructType(Seq(
+            StructField("id", org.apache.spark.sql.types.IntegerType),
+            StructField("name", org.apache.spark.sql.types.StringType),
+            StructField("sex", org.apache.spark.sql.types.StringType)
+        ))
+        val df2 = DataFrameBuilder.ofRows(
+            spark,
+            Seq(
+                Row(10, "Alice", "female"),
+                Row(50, "Debora", "female")
+            ),
+            updateSchema
+        )
+        relation.write(execution, df2, mode=OutputMode.UPDATE)
+
+        // ===== Read Table ===========================================================================================
+        val df3 = relation.read(execution)
+        df3.sort(col("id")).collect() should be (Seq(
+            Row(10, "Alice", "female"),
+            Row(20, "Bob", "male"),
+            Row(50, "Debora", "female")
+        ))
+
+        // == Destroy =================================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+    }
+
     it should "support SQL queries" in {
         val db = tempDir.toPath.resolve("mydb")
         val url = "jdbc:derby:" + db + ";create=true"

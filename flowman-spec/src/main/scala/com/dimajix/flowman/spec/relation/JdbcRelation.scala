@@ -286,7 +286,13 @@ class JdbcRelationBase(
             .save()
     }
     protected def doUpdate(execution: Execution, df:DataFrame): Unit = {
-        throw new IllegalArgumentException(s"Unsupported save mode: 'UPDATE' for generic JDBC relation.")
+        val mergeCondition = this.mergeCondition
+        val clauses = Seq(
+            InsertClause(),
+            UpdateClause()
+        )
+
+        doMerge(execution, df, mergeCondition, clauses)
     }
 
     /**
@@ -303,30 +309,33 @@ class JdbcRelationBase(
         if (query.nonEmpty)
             throw new UnsupportedOperationException(s"Cannot write into JDBC relation '$identifier' which is defined by an SQL query")
 
-        val mergeCondition =
-            condition.getOrElse {
-                val withinPartitionKeyColumns =
-                    if (mergeKey.nonEmpty)
-                        mergeKey
-                    else if (primaryKey.nonEmpty)
-                        primaryKey
-                    else if (schema.exists(_.primaryKey.nonEmpty))
-                        schema.map(_.primaryKey).get
-                    else
-                        throw new IllegalArgumentException(s"Merging JDBC relation '$identifier' requires primary key in schema, explicit merge key or merge condition")
-                (SetIgnoreCase(partitions.map(_.name)) ++ withinPartitionKeyColumns)
-                    .toSeq
-                    .map(c => col("source." + c) === col("target." + c))
-                    .reduce(_ && _)
-            }
-
-        val sourceColumns = collectColumns(mergeCondition.expr, "source") ++ clauses.flatMap(c => collectColumns(df.schema, c, "source"))
+        val mergeCondition = condition.getOrElse(this.mergeCondition)
+        doMerge(execution, df, mergeCondition, clauses)
+    }
+    protected def doMerge(execution: Execution, df: DataFrame, condition:Column, clauses: Seq[MergeClause]) : Unit = {
+        val sourceColumns = collectColumns(condition.expr, "source") ++ clauses.flatMap(c => collectColumns(df.schema, c, "source"))
         val sourceDf = df.select(sourceColumns.toSeq.map(col):_*)
 
         val (url, props) = createConnectionProperties()
         val options = new JDBCOptions(url, tableIdentifier.unquotedString, props)
         val targetSchema = outputSchema(execution)
-        JdbcUtils.mergeTable(tableIdentifier, "target", targetSchema, sourceDf, "source", mergeCondition, clauses, options)
+        JdbcUtils.mergeTable(tableIdentifier, "target", targetSchema, sourceDf, "source", condition, clauses, options)
+    }
+
+    protected def mergeCondition : Column = {
+        val withinPartitionKeyColumns =
+            if (mergeKey.nonEmpty)
+                mergeKey
+            else if (primaryKey.nonEmpty)
+                primaryKey
+            else if (schema.exists(_.primaryKey.nonEmpty))
+                schema.map(_.primaryKey).get
+            else
+                throw new IllegalArgumentException(s"Merging JDBC relation '$identifier' requires primary key in schema, explicit merge key or merge condition")
+        (SetIgnoreCase(partitions.map(_.name)) ++ withinPartitionKeyColumns)
+            .toSeq
+            .map(c => col("source." + c) === col("target." + c))
+            .reduce(_ && _)
     }
 
     /**

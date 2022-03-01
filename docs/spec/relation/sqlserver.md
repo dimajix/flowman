@@ -35,6 +35,9 @@ relations:
       file: "${project.basedir}/schema/users.avsc"
     primaryKey:
       - user_id
+    indexes:
+      - name: "users_idx0"
+        columns: [user_first_name, user_last_name]
 ```
 It is also possible to directly embed the connection as follows:
 ```yaml
@@ -90,6 +93,9 @@ specific qualification, meaning that the default database will be used or the on
  The connection properties are applied first, then the relation properties. This means that
  a relation property can overwrite a connection property if it has the same name.
 
+ * `indexes` **(optional)** *(type: list:index)* *(default: empty)*:
+ Specifies a list of database indexes to be created. Each index has the properties `name`, `columns` and `unique`.
+
 
 ## Automatic Migrations
 Flowman supports some automatic migrations, specifically with the migration strategies `ALTER`, `ALTER_REPLACE`
@@ -101,9 +107,11 @@ The migration strategy `ALTER` supports the following alterations for JDBC relat
 * Adding new columns
 * Dropping columns
 * Changing the column type
+* Adding / dropping indexes
+* Changing the primary key
 
 Note that although Flowman will try to apply these changes, not all SQL databases support all of these changes in
-all variations. Therefore it may well be the case, that the SQL database will fail performing these changes. If
+all variations. Therefore, it may well be the case, that the SQL database will fail performing these changes. If
 the migration strategy is set to `ALTER_REPLACE`, then Flowman will fall back to trying to replace the whole table
 altogether on *any* non-recoverable exception during migration.
 
@@ -114,7 +122,7 @@ corresponding section of [relations](index.md).
 
 
 ## Output Modes
-The `jdbc` relation supports the following output modes in a [`relation` target](../target/relation.md):
+The `sqlserver` relation supports the following output modes in a [`relation` target](../target/relation.md):
 
 | Output Mode         | Supported | Comments                                              |
 |---------------------|-----------|-------------------------------------------------------|
@@ -123,8 +131,9 @@ The `jdbc` relation supports the following output modes in a [`relation` target]
 | `overwrite`         | yes       | Overwrite the whole table or the specified partitions |
 | `overwrite_dynamic` | no        | -                                                     |
 | `append`            | yes       | Append new records to the existing table              |
-| `update`            | no        | -                                                     |
-| `merge`             | no        | -                                                     |
+| `update`            | yes       | -                                                     |
+
+In addition, the `sqlserver` relation also supports complex merge operations in a [`merge` target](../target/merge.md).
 
 
 ## Remarks

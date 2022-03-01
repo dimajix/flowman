@@ -114,7 +114,8 @@ The `deltaTable` relation supports the following output modes in a [`relation` t
 | `overwrite_dynamic` | no        | -                                                                                              |
 | `append`            | yes       | Append new records to the existing table                                                       |
 | `update`            | yes       | Updates existing records, either using `mergeKey` or the primary key of the specified `schema` |
-| `merge`             | no        | -                                                                                              |
+
+In addition, the `deltaFile` relation also supports complex merge operations in a [`merge` target](../target/merge.md).
 
 ### Stream Writing
 In addition to batch writing, the Delta table relation also supports stream writing via the

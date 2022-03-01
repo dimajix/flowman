@@ -1,6 +1,6 @@
-# JDBC Relations
+# JDBC Table Relations
 
-The JDBC relation allows you to access databases using a JDBC driver. Note that you need to put an appropriate JDBC
+The `jdbcTable` relation allows you to access databases using a JDBC driver. Note that you need to put an appropriate JDBC
 driver onto the classpath of Flowman. This can be done by using an appropriate plugin.
 
 
@@ -18,7 +18,7 @@ connections:
 
 relations:
   frontend_users:
-    kind: jdbc
+    kind: jdbcTable
     # Specify the name of the connection to use
     connection: frontend
     # Specify the table
@@ -28,12 +28,15 @@ relations:
       file: "${project.basedir}/schema/users.avsc"
     primaryKey:
       - user_id
+    indexes:
+      - name: "users_idx0"
+        columns: [user_first_name, user_last_name]
 ```
 It is also possible to directly embed the connection as follows:
 ```yaml
 relations:
   frontend_users:
-    kind: jdbc
+    kind: jdbcTable
     # Specify the name of the connection to use
     connection:
       kind: jdbc
@@ -47,9 +50,38 @@ relations:
 For most cases, it is recommended not to embed the connection, since this prevents reusing the same connection in
 multiple places.
 
+It is also possible to access the results of an arbitrary SQL query, which is executed inside the target database:
+```yaml
+relations:
+  lineitem:
+    kind: jdbc
+    connection: frontend
+    query: "
+      SELECT
+        CONCAT('DIR_', li.id) AS lineitem,
+        li.campaign_id AS campaign,
+        IF(c.demand_type_system = 1, 'S', IF(li.demand_type_system = 1, 'S', 'D')) AS demand_type
+      FROM
+        line_item AS li
+      INNER JOIN
+        campaign c
+        ON c.id = li.campaign_id
+    "
+    schema:
+      kind: embedded
+      fields:
+        - name: lineitem
+          type: string
+        - name: campaign
+          type: long
+        - name: demand_type
+          type: string
+```
+The schema is still optional in this case, but it will help [mocking](mock.md) the relation for unittests.
+
 
 ## Fields
- * `kind` **(mandatory)** *(type: string)*: `jdbc`
+ * `kind` **(mandatory)** *(type: string)*: `jdbcTable` or `jdbc`
    
  * `schema` **(optional)** *(type: schema)* *(default: empty)*: 
  Explicitly specifies the schema of the JDBC source. Alternatively Flowman will automatically
@@ -75,8 +107,14 @@ as the fallback for merge/upsert operations, when no `mergeKey` and no explicit 
  table is accessed without any specific qualification, meaning that the default database
  will be used or the one specified in the connection.
 
- * `table` **(mandatory)** *(type: string)*:
- Specifies the name of the table in the relational database.
+ * `table` **(optional)** *(type: string)*:
+ Specifies the name of the table in the relational database. You either need to specify this `table` property
+or the `query` property.
+
+ * `query` **(optional)** *(type: string)*:
+As an alternative to directly accessing a table, you can also specify an SQL query which will be executed by the
+database for retrieving data. Of course, then only read operations are possible. You either need to specify this 
+`query` property or the `table` property.
   
  * `properties` **(optional)** *(type: map:string)* *(default: empty)*:
  Specifies any additional properties passed to the JDBC connection.  Note that both the JDBC
@@ -84,6 +122,9 @@ as the fallback for merge/upsert operations, when no `mergeKey` and no explicit 
  common properties in the connection and more table specific properties in the relation.
  The connection properties are applied first, then the relation properties. This means that
  a relation property can overwrite a connection property if it has the same name.
+
+ * `indexes` **(optional)** *(type: list:index)* *(default: empty)*:
+   Specifies a list of database indexes to be created. Each index has the properties `name`, `columns` and `unique`.
 
 
 ## Automatic Migrations
@@ -96,9 +137,11 @@ The migration strategy `ALTER` supports the following alterations for JDBC relat
 * Adding new columns
 * Dropping columns
 * Changing the column type
+* Adding / dropping indexes
+* Changing the primary key
 
 Note that although Flowman will try to apply these changes, not all SQL databases support all of these changes in
-all variations. Therefore it may well be the case, that the SQL database will fail performing these changes. If
+all variations. Therefore, it may well be the case, that the SQL database will fail performing these changes. If
 the migration strategy is set to `ALTER_REPLACE`, then Flowman will fall back to trying to replace the whole table
 altogether on *any* non-recoverable exception during migration.
 
@@ -109,17 +152,18 @@ corresponding section of [relations](index.md).
 
 
 ## Output Modes
-The `jdbc` relation supports the following output modes in a [`relation` target](../target/relation.md):
+The `jdbcTable` relation supports the following output modes in a [`relation` target](../target/relation.md):
 
-| Output Mode         | Supported | Comments                                              |
-|---------------------|-----------|-------------------------------------------------------|
-| `errorIfExists`     | yes       | Throw an error if the JDBC table already exists       |
-| `ignoreIfExists`    | yes       | Do nothing if the JDBC table already exists           |
-| `overwrite`         | yes       | Overwrite the whole table or the specified partitions |
-| `overwrite_dynamic` | no        | -                                                     |
-| `append`            | yes       | Append new records to the existing table              |
-| `update`            | no        | -                                                     |
-| `merge`             | no        | -                                                     |
+| Output Mode         | Supported | Comments                                                     |
+|---------------------|-----------|--------------------------------------------------------------|
+| `errorIfExists`     | yes       | Throw an error if the JDBC table already exists              |
+| `ignoreIfExists`    | yes       | Do nothing if the JDBC table already exists                  |
+| `overwrite`         | yes       | Overwrite the whole table or the specified partitions        |
+| `overwrite_dynamic` | no        | -                                                            |
+| `append`            | yes       | Append new records to the existing table                     |
+| `update`            | yes       | Perform upsert operations using the merge key or primary key |
+
+In addition, the `jdbcTable` relation also supports complex merge operations in a [`merge` target](../target/merge.md).
 
 
 ## Remarks

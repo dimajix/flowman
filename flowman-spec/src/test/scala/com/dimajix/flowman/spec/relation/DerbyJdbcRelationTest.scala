@@ -101,7 +101,7 @@ class DerbyJdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         }
     }
 
-    "The JdbcRelation" should "support embedding the connection" in {
+    "The (Derby) JdbcRelation" should "support embedding the connection" in {
         val spec =
             s"""
                |kind: jdbc
@@ -859,7 +859,6 @@ class DerbyJdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                 columns = Map("name" -> expr("source.name"), "sex" -> expr("source.sex"))
             )
         )
-        df2.select(df2("name").cast(org.apache.spark.sql.types.VarcharType(10))).schema
 
         relation.merge(execution, df2, Some(expr("source.id = target.id")), clauses)
 

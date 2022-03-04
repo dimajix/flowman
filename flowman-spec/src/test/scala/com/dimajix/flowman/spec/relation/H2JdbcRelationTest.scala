@@ -100,7 +100,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         }
     }
 
-    "The JdbcRelation" should "support embedding the connection" in {
+    "The (H2) JdbcRelation" should "support embedding the connection" in {
         val spec =
             s"""
                |kind: jdbc

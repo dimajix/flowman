@@ -260,6 +260,11 @@ object JdbcUtils {
         StructType(fields)
     }
 
+    def getSchema(resultSet: ResultSet, dialect: SqlDialect) : StructType = {
+        val schema = getJdbcSchema(resultSet)
+        getSchema(schema, dialect)
+    }
+
     /**
      * Returns the list of [[JdbcField]] definitions containing the deatiled JDBC schema of the specified table.
      * @param conn
@@ -273,7 +278,7 @@ object JdbcUtils {
         withStatement(conn, dialect.statement.schema(table), options) { statement =>
             val rs = statement.executeQuery()
             try {
-                getJdbcSchemaImpl(rs)
+                getJdbcSchema(rs)
             }
             finally {
                 rs.close()
@@ -287,7 +292,7 @@ object JdbcUtils {
      * @return A [[StructType]] giving the Catalyst schema.
      * @throws SQLException if the schema contains an unsupported type.
      */
-    private def getJdbcSchemaImpl(resultSet: ResultSet): Seq[JdbcField] = {
+    def getJdbcSchema(resultSet: ResultSet): Seq[JdbcField] = {
         val rsmd = resultSet.getMetaData
         val ncols = rsmd.getColumnCount
         val fields = new Array[JdbcField](ncols)
@@ -338,12 +343,16 @@ object JdbcUtils {
      * @param table
      * @param options
      */
-    def dropTable(conn:Connection, table:TableIdentifier, options: JDBCOptions) : Unit = {
-        val dialect = SqlDialects.get(options.url)
+    def dropTable(conn:Connection, table:TableIdentifier, options: JDBCOptions, ifExists:Boolean=false) : Unit = {
         withStatement(conn, options) { statement =>
-            // TODO: Drop indices(?)
-            statement.executeUpdate(s"DROP TABLE ${dialect.quote(table)}")
+            if (!ifExists || tableExists(conn, table, options)) {
+                dropTable(statement, table, options)
+            }
         }
+    }
+    def dropTable(statement:Statement, table:TableIdentifier, options: JDBCOptions) : Unit = {
+        val dialect = SqlDialects.get(options.url)
+        statement.executeUpdate(s"DROP TABLE ${dialect.quote(table)}")
     }
 
     /**
@@ -354,10 +363,105 @@ object JdbcUtils {
      * @param options
      */
     def truncateTable(conn:Connection, table:TableIdentifier, options: JDBCOptions) : Unit = {
-        val dialect = SqlDialects.get(options.url)
         withStatement(conn, options) { statement =>
-            statement.executeUpdate(s"TRUNCATE TABLE ${dialect.quote(table)}")
+            truncateTable(statement, table, options)
         }
+    }
+    def truncateTable(statement:Statement, table:TableIdentifier, options: JDBCOptions) : Unit = {
+        val dialect = SqlDialects.get(options.url)
+        statement.executeUpdate(s"TRUNCATE TABLE ${dialect.quote(table)}")
+    }
+
+    /**
+     * Deletes individual records (representing a logical partition) via a predicate condition
+     * @param statement
+     * @param table
+     * @param condition
+     * @param options
+     */
+    def truncatePartition(statement:Statement, table:TableIdentifier, condition:String, options: JDBCOptions) : Unit = {
+        val dialect = SqlDialects.get(options.url)
+        statement.executeUpdate(s"DELETE FROM ${dialect.quote(table)} WHERE $condition")
+    }
+
+    /**
+     * Inserts new records into an existing table from a different existing table
+     * @param statement
+     * @param targetTable
+     * @param sourceTable
+     * @param options
+     */
+    def appendTable(statement:Statement, targetTable:TableIdentifier, sourceTable:TableIdentifier, options: JDBCOptions) : Unit = {
+        val dialect = SqlDialects.get(options.url)
+        statement.executeUpdate(s"INSERT INTO ${dialect.quote(targetTable)}  SELECT * FROM ${dialect.quote(sourceTable)}")
+    }
+
+    /**
+     * Perform an SQL MERGE operation withpout an intermediate staging table
+     * @param target
+     * @param targetAlias
+     * @param targetSchema
+     * @param source
+     * @param sourceAlias
+     * @param condition
+     * @param clauses
+     * @param options
+     */
+    def mergeTable(target:TableIdentifier,
+                   targetAlias:String,
+                   targetSchema:Option[org.apache.spark.sql.types.StructType],
+                   source: DataFrame,
+                   sourceAlias:String,
+                   condition:Column,
+                   clauses:Seq[MergeClause],
+                   options: JDBCOptions) : Unit = {
+        val url = options.url
+        val dialect = SqlDialects.get(url)
+        val sparkDialect = JdbcDialects.get(url)
+        val quotedTarget = dialect.quote(target)
+        val getConnection: () => Connection = createConnectionFactory(options)
+        val sourceSchema = source.schema
+        val batchSize = options.batchSize
+        val isolationLevel = options.isolationLevel
+        val insertStmt = dialect.statement.merge(target, targetAlias, targetSchema, sourceAlias, sourceSchema, condition, clauses)
+        val repartitionedDF = options.numPartitions match {
+            case Some(n) if n <= 0 => throw new IllegalArgumentException("Invalid number of partitions")
+            case Some(n) if n < source.rdd.getNumPartitions => source.coalesce(n)
+            case _ => source
+        }
+        repartitionedDF.rdd.foreachPartition { iterator => savePartition(
+            getConnection, quotedTarget, iterator, sourceSchema, insertStmt, batchSize, sparkDialect, isolationLevel, options)
+        }
+    }
+
+    /**
+     * Perform an SQL MERGE operation from a source table into a target table
+     * @param statement
+     * @param target
+     * @param targetAlias
+     * @param targetSchema
+     * @param source
+     * @param sourceAlias
+     * @param sourceSchema
+     * @param condition
+     * @param clauses
+     * @param options
+     */
+    def mergeTable(
+        statement:Statement,
+        target:TableIdentifier,
+        targetAlias:String,
+        targetSchema:Option[org.apache.spark.sql.types.StructType],
+        source: TableIdentifier,
+        sourceAlias:String,
+        sourceSchema:org.apache.spark.sql.types.StructType,
+        condition:Column,
+        clauses:Seq[MergeClause],
+        options: JDBCOptions) : Unit = {
+        val url = options.url
+        val dialect = SqlDialects.get(url)
+        val sql = dialect.statement.merge(target, targetAlias, targetSchema, source, sourceAlias, sourceSchema, condition, clauses)
+        statement.executeUpdate(sql)
     }
 
     /**
@@ -448,33 +552,6 @@ object JdbcUtils {
             sqls.foreach { sql =>
                 statement.executeUpdate(sql)
             }
-        }
-    }
-
-    def mergeTable(target:TableIdentifier,
-                   targetAlias:String,
-                   targetSchema:Option[org.apache.spark.sql.types.StructType],
-                   source: DataFrame,
-                   sourceAlias:String,
-                   condition:Column,
-                   clauses:Seq[MergeClause],
-                   options: JDBCOptions) : Unit = {
-        val url = options.url
-        val dialect = SqlDialects.get(url)
-        val sparkDialect = JdbcDialects.get(url)
-        val quotedTarget = dialect.quote(target)
-        val getConnection: () => Connection = createConnectionFactory(options)
-        val sourceSchema = source.schema
-        val batchSize = options.batchSize
-        val isolationLevel = options.isolationLevel
-        val insertStmt = dialect.statement.merge(target, targetAlias, targetSchema, sourceAlias, sourceSchema, condition, clauses)
-        val repartitionedDF = options.numPartitions match {
-            case Some(n) if n <= 0 => throw new IllegalArgumentException("Invalid number of partitions")
-            case Some(n) if n < source.rdd.getNumPartitions => source.coalesce(n)
-            case _ => source
-        }
-        repartitionedDF.rdd.foreachPartition { iterator => savePartition(
-            getConnection, quotedTarget, iterator, sourceSchema, insertStmt, batchSize, sparkDialect, isolationLevel, options)
         }
     }
 

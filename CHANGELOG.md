@@ -1,3 +1,9 @@
+# Version 0.22.1
+
+* github-148: Support staging table for all JDBC relations
+* github-120: Use staging tables for UPSERT and MERGE operations in JDBC relations
+
+
 # Version 0.22.0 - 2022-03-01
 
 * Add new `sqlserver` relation

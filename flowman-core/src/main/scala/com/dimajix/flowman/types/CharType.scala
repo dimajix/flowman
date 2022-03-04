@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.apache.spark.sql.types.DataType
   *
   * @param length
   */
-case class CharType(length: Int) extends FieldType {
+final case class CharType(length: Int) extends FieldType {
     override def typeName: String = s"char($length)"
     override def sparkType : DataType = org.apache.spark.sql.types.StringType
     override def catalogType : DataType = org.apache.spark.sql.types.CharType(length)

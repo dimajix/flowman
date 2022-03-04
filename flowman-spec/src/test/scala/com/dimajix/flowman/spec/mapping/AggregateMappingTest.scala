@@ -32,6 +32,7 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.{types => ft}
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -126,6 +127,36 @@ class AggregateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
         result(0) should be (Row("c1_v1", "C2_V1", 25l))
         result(1) should be (Row("c1_v2", "C2_V1", 118l))
         result(2) should be (Row("c1_v2", "C2_V2", 113l))
+    }
+
+    it should "provide an appropriate description" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.execution
+
+        val xfs = AggregateMapping(
+            Mapping.Properties(session.context),
+            MappingOutputIdentifier("input"),
+            Seq("country", "year"),
+            ListMap(
+                "total_net_amount" -> "sum(net_amount)",
+                "total_gross_amount" -> "sum(gross_amount)"
+            )
+        )
+
+        val input = ft.StructType(Seq(
+            ft.Field("country", ft.VarcharType(3), description=Some("The country")),
+            ft.Field("year", ft.IntegerType, nullable=false, description=Some("The year")),
+            ft.Field("net_amount", ft.IntegerType, description=Some("The net amount")),
+            ft.Field("gross_amount", ft.IntegerType, description=Some("The gross amount"))
+        ))
+        val result = xfs.describe(executor, Map(MappingOutputIdentifier("input") -> input))
+
+        result should be (Map("main" -> ft.StructType(Seq(
+            ft.Field("country", ft.VarcharType(3), description=Some("The country")),
+            ft.Field("year", ft.IntegerType, nullable=false, description=Some("The year")),
+            ft.Field("total_net_amount", ft.LongType),
+            ft.Field("total_gross_amount", ft.LongType)
+        ))))
     }
 
     "An appropriate project" should "be readable from YML" in {

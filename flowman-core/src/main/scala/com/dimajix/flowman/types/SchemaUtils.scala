@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,26 @@ object SchemaUtils {
             case map:MapType => MapType(replaceCharVarchar(map.keyType), replaceCharVarchar(map.valueType), map.containsNull)
             case _:CharType => StringType
             case _:VarcharType => StringType
+            case dt:FieldType => dt
+        }
+    }
+
+    /**
+     * Mark all fields of a struct as being "nullable"
+     * @param schema
+     * @return
+     */
+    def toNullable(schema:StructType) : StructType = {
+        StructType(schema.fields.map(toNullable))
+    }
+    def toNullable(field:Field) : Field = {
+        field.copy(ftype = toNullable(field.ftype), nullable=true)
+    }
+    private def toNullable(dtype:FieldType) : FieldType = {
+        dtype match {
+            case struct:StructType => toNullable(struct)
+            case array:ArrayType => ArrayType(toNullable(array.elementType), containsNull=true)
+            case map:MapType => MapType(toNullable(map.keyType), toNullable(map.valueType), containsNull=true)
             case dt:FieldType => dt
         }
     }

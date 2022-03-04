@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,8 @@ object Field {
     }
 
     def of(field:org.apache.spark.sql.types.StructField) : Field = {
-        val ftype = FieldType.of(field.dataType)
+        val recoveredField = com.dimajix.spark.sql.SchemaUtils.recoverCharVarchar(field)
+        val ftype = FieldType.of(recoveredField.dataType)
         val description = field.getComment()
         val size = if (field.metadata.contains("size")) Some(field.metadata.getLong("size").toInt) else None
         val default = if (field.metadata.contains("default")) Some(field.metadata.getString("default")) else None
@@ -56,7 +57,7 @@ object Field {
 /**
   * A Field represents a single entry in a Schema or a Struct.
   */
-class Field {
+final class Field {
     @JsonProperty(value="name", required = true) private var _name: String = _
     @JsonProperty(value="type", required = false) private var _type: FieldType = StringType
     @JsonProperty(value="nullable", required = false) private var _nullable: Boolean = true
@@ -140,7 +141,7 @@ class Field {
       * @return
       */
     def sparkField : StructField = {
-        StructField(name, sparkType, nullable, metadata)
+        com.dimajix.spark.sql.SchemaUtils.replaceCharVarchar(catalogField)
     }
 
     /**

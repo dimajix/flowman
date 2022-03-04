@@ -142,7 +142,7 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
               |WHEN NOT MATCHED AND (source."op" = 'INSERT') THEN INSERT("id","name") VALUES(source."id",source."name")
               |WHEN MATCHED AND (source."op" = 'DELETE') THEN DELETE
               |WHEN MATCHED THEN UPDATE SET "name" = source."name", "sex" = source."sex"
-              |;""".stripMargin)
+              |""".stripMargin)
     }
 
     it should "provide MERGE statements with trivial clauses" in {
@@ -170,6 +170,6 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
               |ON (source."id" = target."id")
               |WHEN NOT MATCHED THEN INSERT("id","name","sex") VALUES(source."id",source."name",source."sex")
               |WHEN MATCHED THEN UPDATE SET "id" = source."id", "name" = source."name", "sex" = source."sex"
-              |;""".stripMargin)
+              |""".stripMargin)
     }
 }

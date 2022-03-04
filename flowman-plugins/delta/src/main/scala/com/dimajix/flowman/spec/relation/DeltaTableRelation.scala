@@ -32,6 +32,7 @@ import com.dimajix.common.No
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
+import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableDefinition
@@ -274,7 +275,7 @@ case class DeltaTableRelation(
     override def create(execution: Execution, ifNotExists: Boolean): Unit = {
         val tableExists = exists(execution) == Yes
         if (!ifNotExists || !tableExists) {
-            val sparkSchema = HiveTableRelation.cleanupSchema(StructType(fields.map(_.catalogField)))
+            val sparkSchema = HiveCatalog.cleanupSchema(StructType(fields.map(_.catalogField)))
             logger.info(s"Creating Delta table relation '$identifier' with table $table and schema\n${sparkSchema.treeString}")
             if (schema.isEmpty) {
                 throw new UnspecifiedSchemaException(identifier)

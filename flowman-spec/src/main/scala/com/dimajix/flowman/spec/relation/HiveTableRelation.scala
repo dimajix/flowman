@@ -33,7 +33,6 @@ import org.apache.spark.sql.hive.execution.InsertIntoHiveTable
 import org.apache.spark.sql.internal.HiveSerDe
 import org.apache.spark.sql.types.CharType
 import org.apache.spark.sql.types.StringType
-import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.VarcharType
 import org.slf4j.LoggerFactory
@@ -66,29 +65,14 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.types.FieldValue
-import com.dimajix.flowman.types.SchemaUtils
 import com.dimajix.flowman.types.SchemaWriter
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.features.hiveVarcharSupported
-import com.dimajix.spark.sql.SchemaUtils.replaceCharVarchar
 import com.dimajix.spark.sql.{SchemaUtils => SparkSchemaUtils}
 
 
 object HiveTableRelation {
     val AVRO_SCHEMA_URL = "avro.schema.url"
-
-    def cleanupSchema(schema:StructType) : StructType = {
-        if (hiveVarcharSupported)
-            schema
-        else
-            replaceCharVarchar(schema)
-    }
-    def cleanupFields(schema:Seq[StructField]) : Seq[StructField] = {
-        if (hiveVarcharSupported)
-            schema
-        else
-            schema.map(replaceCharVarchar)
-    }
 }
 
 
@@ -353,13 +337,7 @@ case class HiveTableRelation(
                 }
                 else {
                     val sourceTable = TableDefinition.ofTable(table)
-                    val targetSchema = {
-                        val dataSchema = com.dimajix.flowman.types.StructType(schema.get.fields)
-                        if (hiveVarcharSupported)
-                            dataSchema
-                        else
-                            SchemaUtils.replaceCharVarchar(dataSchema)
-                    }
+                    val targetSchema =  com.dimajix.flowman.types.StructType(schema.get.fields)
                     val targetTable = TableDefinition(this.table, targetSchema.fields)
 
                     !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
@@ -417,7 +395,7 @@ case class HiveTableRelation(
         require(execution != null)
 
         if (!ifNotExists || exists(execution) == No) {
-            val catalogSchema = HiveTableRelation.cleanupSchema(StructType(fields.map(_.catalogField)))
+            val catalogSchema = StructType(fields.map(_.catalogField))
             logger.info(s"Creating Hive table relation '$identifier' with table $table and schema\n${catalogSchema.treeString}")
             if (schema.isEmpty) {
                 throw new UnspecifiedSchemaException(identifier)
@@ -535,13 +513,7 @@ case class HiveTableRelation(
             }
             else {
                 val sourceTable = TableDefinition.ofTable(table)
-                val targetSchema = {
-                    val dataSchema = com.dimajix.flowman.types.StructType(schema.get.fields)
-                    if (hiveVarcharSupported)
-                        dataSchema
-                    else
-                        SchemaUtils.replaceCharVarchar(dataSchema)
-                }
+                val targetSchema =  com.dimajix.flowman.types.StructType(schema.get.fields)
                 val targetTable = TableDefinition(this.table, targetSchema.fields)
 
                 val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)

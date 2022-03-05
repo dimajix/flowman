@@ -139,7 +139,9 @@ class AggregateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
             Seq("country", "year"),
             ListMap(
                 "total_net_amount" -> "sum(net_amount)",
-                "total_gross_amount" -> "sum(gross_amount)"
+                "total_gross_amount" -> "sum(gross_amount)",
+                "avg_gross_amount" -> "avg(gross_amount)",
+                "min_gross_amount" -> "min(gross_amount)"
             )
         )
 
@@ -154,8 +156,10 @@ class AggregateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
         result should be (Map("main" -> ft.StructType(Seq(
             ft.Field("country", ft.VarcharType(3), description=Some("The country")),
             ft.Field("year", ft.IntegerType, nullable=false, description=Some("The year")),
-            ft.Field("total_net_amount", ft.LongType),
-            ft.Field("total_gross_amount", ft.LongType)
+            ft.Field("total_net_amount", ft.LongType, description=Some("The net amount (SUM)")),
+            ft.Field("total_gross_amount", ft.LongType, description=Some("The gross amount (SUM)")),
+            ft.Field("avg_gross_amount", ft.DoubleType, description=Some("The gross amount (AVG)")),
+            ft.Field("min_gross_amount", ft.IntegerType, description=Some("The gross amount (MIN)"))
         ))))
     }
 

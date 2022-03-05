@@ -102,7 +102,7 @@ final case class TypeReplacer(replace:Map[String, FieldType]) extends Transforme
                 case dt:stypes.DataType =>
                     typeMap.get(dt.sql.toLowerCase(Locale.ROOT)).map(t => col(fqn).cast(t.sparkType))
             }
-            column.map(_.as(field.name))
+            column.map(_.as(field.name, field.metadata))
         }
 
         val fields = df.schema.fields.map(f => (col(f.name), processField("", f)))

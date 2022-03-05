@@ -47,6 +47,7 @@ import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.catalog.HiveCatalog.cleanupField
 import com.dimajix.flowman.catalog.HiveCatalog.cleanupFields
 import com.dimajix.flowman.catalog.TableChange.AddColumn
@@ -364,22 +365,22 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
         val catalogTable = getTable(table)
         require(catalogTable.tableType != CatalogTableType.VIEW)
-        val tableColumns = catalogTable.schema.fields.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+        val tableColumns = MapIgnoreCase(catalogTable.schema.fields.map(f => (f.name -> f)))
 
         val colsToAdd = mutable.Buffer[StructField]()
         changes.foreach {
             case a:AddColumn =>
-                logger.info(s"Adding column ${a.column.name} with type ${a.column.catalogType.sql} to Hive table '$table'")
+                logger.info(s"Adding column ${a.column.name} with type ${a.column.catalogType.sql} to Hive table $table")
                 colsToAdd.append(cleanupField(a.column.catalogField))
             case u:UpdateColumnNullability =>
-                logger.info(s"Updating nullability of column ${u.column} to ${u.nullable} in Hive table '$table'")
-                val field = tableColumns.getOrElse(u.column.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Table column ${u.column} does not exist in table $table"))
+                logger.info(s"Updating nullability of column ${u.column} to ${u.nullable} in Hive table $table")
+                val field = tableColumns.getOrElse(u.column, throw new IllegalArgumentException(s"Table column ${u.column} does not exist in table $table"))
                     .copy(nullable = u.nullable)
                 val cmd = AlterTableChangeColumnCommand(table.toSpark, u.column, cleanupField(field))
                 cmd.run(spark)
             case u:UpdateColumnComment =>
-                logger.info(s"Updating comment of column ${u.column} in Hive table '$table'")
-                val field = tableColumns.getOrElse(u.column.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Table column ${u.column} does not exist in table $table"))
+                logger.info(s"Updating comment of column ${u.column} in Hive table $table")
+                val field = tableColumns.getOrElse(u.column, throw new IllegalArgumentException(s"Table column ${u.column} does not exist in table $table"))
                     .withComment(u.comment.getOrElse(""))
                 val cmd = AlterTableChangeColumnCommand(table.toSpark, u.column, cleanupField(field))
                 cmd.run(spark)

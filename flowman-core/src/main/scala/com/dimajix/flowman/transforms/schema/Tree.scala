@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.dimajix.flowman.transforms.schema
 
 import java.util.Locale
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.transforms.NoSuchColumnException
 
 
@@ -331,7 +332,7 @@ case class LeafNode[T](name:String, value:T, nullable:Boolean=true, metadata:Map
 
 
 case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nullable:Boolean=true, metadata:Map[String,String]=Map()) extends Node[T] {
-    private val nameToChild = children.map(node => (node.name.toLowerCase(Locale.ROOT), node)).toMap
+    private val nameToChild = MapIgnoreCase(children.map(node => (node.name -> node)))
 
     override def isEmpty: Boolean = children.isEmpty
 
@@ -346,7 +347,7 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
         if (node.isEmpty)
             true
         else
-            nameToChild.contains(node.toLowerCase(Locale.ROOT))
+            nameToChild.contains(node)
     }
 
     /**
@@ -358,7 +359,7 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
         if (node.isEmpty)
             Some(this)
         else
-            nameToChild.get(node.toLowerCase(Locale.ROOT))
+            nameToChild.get(node)
     }
 
     /**

@@ -156,6 +156,7 @@ trait Relation extends Instance {
      * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
      * the physical source
      * @param execution
+     * @param partitions - Optional partition as a hint for schema inference
      * @return
      */
     def describe(execution:Execution, partitions:Map[String,FieldValue] = Map()) : StructType

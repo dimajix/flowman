@@ -21,6 +21,7 @@ import java.util.Locale
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
 
+import com.dimajix.common.SetIgnoreCase
 import com.dimajix.flowman.{types => ftypes}
 
 
@@ -36,13 +37,13 @@ final case class UnionTransformer() {
 
         val projectedDf = input.map { df =>
             // Get set of available field names
-            val fields = df.schema.fields.map(_.name.toLowerCase(Locale.ROOT)).toSet
+            val fields = SetIgnoreCase(df.schema.fields.map(_.name))
             // Either select corresponding field or NULL
             df.select(allColumns.map(col =>
-                if (fields.contains(col.name.toLowerCase(Locale.ROOT)))
+                if (fields.contains(col.name))
                     df(col.name).cast(col.dataType)
                 else
-                    lit(null).cast(col.dataType).as(col.name)
+                    lit(null).cast(col.dataType).as(col.name, col.metadata)
             ):_*)
         }
 

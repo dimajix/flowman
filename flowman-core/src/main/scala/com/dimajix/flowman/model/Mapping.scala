@@ -17,6 +17,27 @@
 package com.dimajix.flowman.model
 
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.expressions.Alias
+import org.apache.spark.sql.catalyst.expressions.Cast
+import org.apache.spark.sql.catalyst.expressions.Coalesce
+import org.apache.spark.sql.catalyst.expressions.DateFormatClass
+import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.catalyst.expressions.FromUTCTimestamp
+import org.apache.spark.sql.catalyst.expressions.FromUnixTime
+import org.apache.spark.sql.catalyst.expressions.If
+import org.apache.spark.sql.catalyst.expressions.IfNull
+import org.apache.spark.sql.catalyst.expressions.NamedExpression
+import org.apache.spark.sql.catalyst.expressions.Nvl
+import org.apache.spark.sql.catalyst.expressions.Nvl2
+import org.apache.spark.sql.catalyst.expressions.String2StringExpression
+import org.apache.spark.sql.catalyst.expressions.ToUTCTimestamp
+import org.apache.spark.sql.catalyst.expressions.ToUnixTimestamp
+import org.apache.spark.sql.catalyst.expressions.TruncInstant
+import org.apache.spark.sql.catalyst.expressions.UnaryExpression
+import org.apache.spark.sql.catalyst.expressions.UnixTimestamp
+import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateExpression
+import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateFunction
+import org.apache.spark.sql.types.StructField
 import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.flowman.documentation.MappingDoc
@@ -244,6 +265,47 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
         require(execution != null)
         require(input != null)
 
+        def extractComment2(expressions: Seq[Expression]) : Option[String] = {
+            expressions.collectFirst { case e => extractComment(e) }.flatten
+        }
+        def extractComment(expression: Expression) : Option[String] = {
+            expression match {
+                case n:NamedExpression if n.metadata.contains("comment")=> Some(n.metadata.getString("comment"))
+                case c:Cast => extractComment(c.child)
+                case a:Alias => extractComment(a.child)
+                case c:Coalesce => extractComment2(c.children)
+                case a:AggregateExpression => extractComment(a.aggregateFunction)
+                case a:AggregateFunction => extractComment2(a.children).map(_ + s" (${a.prettyName.toUpperCase})")
+                case s:String2StringExpression => extractComment(s.asInstanceOf[UnaryExpression].child)
+                case i:If => extractComment(i.trueValue).orElse(extractComment(i.falseValue))
+                case n:IfNull => extractComment(n.left).orElse(extractComment(n.right))
+                case n:Nvl => extractComment(n.left).orElse(extractComment(n.right))
+                case n:Nvl2 => extractComment(n.expr2).orElse(extractComment(n.expr3))
+                case t:TruncInstant => extractComment(t.right)
+                case f:DateFormatClass => extractComment(f.left)
+                case u:UnixTimestamp => extractComment(u.left)
+                case u:FromUnixTime => extractComment(u.left)
+                case t:ToUnixTimestamp => extractComment(t.left)
+                case u:FromUTCTimestamp => extractComment(u.left)
+                case u:ToUTCTimestamp => extractComment(u.left)
+                case _ => None
+            }
+        }
+        def extractSchema(df:DataFrame) : StructType = {
+            val output = df.queryExecution.analyzed.output
+            val expressions = df.queryExecution.analyzed.expressions.collect { case n:NamedExpression => n.exprId -> n }.toMap
+            val attributes = output.map(a => expressions.getOrElse(a.exprId, a))
+                .map { a =>
+                    val field = StructField(a.name, a.dataType, a.nullable, a.metadata)
+                    extractComment(a) match {
+                        case Some(comment) => field.withComment(comment)
+                        case None => field
+                    }
+                }
+
+            StructType.of(attributes)
+        }
+
         // Create dummy data frames
         val replacements = input.map { case (name,schema) =>
             name -> DataFrameBuilder.singleRow(execution.spark, schema.sparkType)
@@ -253,7 +315,7 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
         val results = execute(execution, replacements)
 
         // Extract schemas
-        val schemas = results.map { case (name,df) => name -> StructType.of(df.schema)}
+        val schemas = results.map { case (name,df) => name -> extractSchema(df) }
 
         // Apply documentation
         applyDocumentation(schemas)

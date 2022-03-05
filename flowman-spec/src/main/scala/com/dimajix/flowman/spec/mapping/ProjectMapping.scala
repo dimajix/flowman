@@ -105,14 +105,16 @@ object ProjectMappingSpec {
     }
     class Column {
         @JsonProperty(value = "column", required = true) private var column:String = _
-        @JsonProperty(value = "name", required = true) private var name:Option[String] = None
-        @JsonProperty(value = "type", required = true) private var dtype:Option[FieldType] = None
+        @JsonProperty(value = "name", required = false) private var name:Option[String] = None
+        @JsonProperty(value = "type", required = false) private var dtype:Option[FieldType] = None
+        @JsonProperty(value = "description", required = false) private var description:Option[String] = None
 
         def instantiate(context: Context) : ProjectTransformer.Column = {
             ProjectTransformer.Column(
                 Path(context.evaluate(column)),
-                name.map(context.evaluate),
-                dtype
+                context.evaluate(name),
+                dtype,
+                context.evaluate(description)
             )
         }
     }
@@ -145,7 +147,7 @@ class ProjectMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonDeserialize(contentUsing=classOf[ColumnDeserializer])
     @JsonProperty(value = "columns", required = true) private var columns: Seq[Column] = Seq()
-    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
+    @JsonProperty(value = "filter", required=false) private var filter: Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed

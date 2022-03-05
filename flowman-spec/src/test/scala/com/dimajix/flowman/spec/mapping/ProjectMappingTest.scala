@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,11 +47,11 @@ class ProjectMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val mapping = ProjectMapping(
             Mapping.Properties(session.context),
             MappingOutputIdentifier("myview"),
-            Seq(ProjectTransformer.Column(Path("_2")))
+            Seq(ProjectTransformer.Column(Path("_2"), description=Some("Some description")))
         )
 
         mapping.input should be (MappingOutputIdentifier("myview"))
-        mapping.columns should be (Seq(ProjectTransformer.Column(Path("_2"))))
+        mapping.columns should be (Seq(ProjectTransformer.Column(Path("_2"), description=Some("Some description"))))
         mapping.inputs should be (Set(MappingOutputIdentifier("myview")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
@@ -63,7 +63,7 @@ class ProjectMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val schema = mapping.describe(executor, Map(MappingOutputIdentifier("myview") -> StructType.of(df.schema)))
         schema("main") should be (
             StructType(Seq(
-                Field("_2", IntegerType, false)
+                Field("_2", IntegerType, false, description=Some("Some description"))
             ))
         )
     }

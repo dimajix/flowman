@@ -1,8 +1,28 @@
-
 # JSON Unpack Mapping
 
 ## Example
-```
+```yaml
+mappings:
+  m0:
+    kind: unpackJson
+    input: source
+    columns:
+      - name: json_column
+        schema:
+          kind: embedded
+          fields:
+            - name: name
+              type: String
+            - name: age
+              type: Integer
+            - name: details
+              type:
+                kind: struct
+                fields:
+                  - name: firstName
+                    type: string
+                  - name: lastName
+                    type: string
 ```
 
 ## Fields

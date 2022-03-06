@@ -95,6 +95,7 @@ Flowman also provides optional plugins which extend functionality. You can find 
    concepts
    installation
    lifecycle
+   connectors/index
    spec/index
    testing/index
    documenting/index

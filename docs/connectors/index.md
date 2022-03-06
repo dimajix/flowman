@@ -25,6 +25,7 @@ The following table gives an overview of all currently supported data sources an
 | MySQL          | yes            | yes            | [MySQL](../plugins/mysql.md)               | [`jdbc`](../spec/relation/jdbcTable.md)                                                      |
 | ORC files      | yes            | yes            | N/A                                        | [`file`](../spec/relation/file.md)                                                           |
 | Parquet files  | yes            | yes            | N/A                                        | [`file`](../spec/relation/file.md)                                                           |
+| PostgreSQL     | yes            | yes            | N/A                                        | [`jdbc`](../spec/relation/jdbcTable.md)                                                      |
 | SQL Server     | yes            | yes            | [MS SQL Server](../plugins/mssqlserver.md) | [`sqlserver`](../spec/relation/sqlserver.md)                                                 |
 | Sequence files | yes            | yes            | N/A                                        | [`file`](../spec/relation/file.md)                                                           |
 | Text files     | yes            | yes            | N/A                                        | [`file`](../spec/relation/file.md)                                                           |

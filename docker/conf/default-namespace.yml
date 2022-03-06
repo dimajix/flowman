@@ -53,6 +53,7 @@ plugins:
   - flowman-mariadb
   - flowman-mysql
   - flowman-mssqlserver
+  - flowman-postgresql
   - flowman-swagger
   - flowman-openapi
   - flowman-json

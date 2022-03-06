@@ -30,7 +30,7 @@ import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.TimestampType
 
 
-object MsSqlServerDialect extends BaseDialect {
+object SqlServerDialect extends BaseDialect {
     // Special JDBC types in Microsoft SQL Server.
     // https://github.com/microsoft/mssql-jdbc/blob/v8.2.2/src/main/java/microsoft/sql/Types.java
     private object SpecificTypes {

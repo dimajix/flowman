@@ -56,6 +56,7 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
@@ -172,7 +173,7 @@ object JdbcUtils {
      */
     def getTable(conn: Connection, table:TableIdentifier, options: JDBCOptions) : TableDefinition = {
         val meta = conn.getMetaData
-        val realTable = resolveTable(meta, table)
+        val (realTable,realType) = resolveTable(meta, table)
 
         val currentSchema = getSchema(conn, table, options)
         val pk = getPrimaryKey(meta, realTable)
@@ -182,7 +183,7 @@ object JdbcUtils {
                 idx.normalize().columns != pk.map(_.toLowerCase(Locale.ROOT)).sorted
             }
 
-        TableDefinition(table, currentSchema.fields, primaryKey=pk, indexes=idxs)
+        TableDefinition(table, realType, currentSchema.fields, primaryKey=pk, indexes=idxs)
     }
 
     private def getPrimaryKey(meta: DatabaseMetaData, table:TableIdentifier) : Seq[String] = {
@@ -221,18 +222,31 @@ object JdbcUtils {
      * @param table
      * @return
      */
-    private def resolveTable(meta: DatabaseMetaData, table:TableIdentifier) : TableIdentifier = {
+    private def resolveTable(meta: DatabaseMetaData, table:TableIdentifier) : (TableIdentifier,TableType) = {
         val tblrs = meta.getTables(null, table.database.orNull, null, Array("TABLE"))
-        var name = table.table
+        var tableName = table.table
+        var tableType:TableType = TableType.UNKNOWN
         val db = table.database
+
+        val TABLE = ".*TABLE.*".r
+        val VIEW = ".*VIEW.*".r
+
         while(tblrs.next()) {
             val thisName = tblrs.getString(3)
-            if (name.toLowerCase(Locale.ROOT) == thisName.toLowerCase(Locale.ROOT))
-                name = thisName
+            if (tableName.toLowerCase(Locale.ROOT) == thisName.toLowerCase(Locale.ROOT)) {
+                tableName = thisName
+                tableType = tblrs.getString(4) match {
+                    case VIEW() => TableType.VIEW
+                    case TABLE() => TableType.TABLE
+                    case "GLOBAL TEMPORARY" => TableType.TABLE
+                    case "LOCAL TEMPORARY" => TableType.TABLE
+                    case _ => TableType.UNKNOWN
+                }
+            }
         }
         tblrs.close()
 
-        TableIdentifier(name, db)
+        (TableIdentifier(tableName, db), tableType)
     }
 
     /**

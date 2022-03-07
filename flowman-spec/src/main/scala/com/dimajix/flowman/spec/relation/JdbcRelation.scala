@@ -50,6 +50,7 @@ import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.Execution
@@ -111,10 +112,11 @@ class JdbcRelationBase(
 
             TableDefinition(
                 tableIdentifier,
-                columns,
-                schema.description,
-                pk,
-                indexes
+                TableType.TABLE,
+                columns=columns,
+                comment=schema.description,
+                primaryKey=pk,
+                indexes=indexes
             )
         }
     }
@@ -368,6 +370,7 @@ class JdbcRelationBase(
         // Create temp table with specified schema, but without any primary key or indices
         val table = catalog.TableDefinition(
             stagingTable,
+            TableType.TABLE,
             stagingSchema.fields
         )
         JdbcUtils.createTable(con, table, options)

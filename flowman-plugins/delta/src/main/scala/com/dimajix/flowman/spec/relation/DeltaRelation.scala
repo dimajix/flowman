@@ -41,6 +41,7 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -126,8 +127,8 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
         val table = deltaCatalogTable(execution)
         val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
         val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
-        val sourceTable = TableDefinition(TableIdentifier.empty, sourceSchema.fields)
-        val targetTable = TableDefinition(TableIdentifier.empty, targetSchema.fields)
+        val sourceTable = TableDefinition(TableIdentifier.empty, columns=sourceSchema.fields)
+        val targetTable = TableDefinition(TableIdentifier.empty, columns=targetSchema.fields)
 
         val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
 

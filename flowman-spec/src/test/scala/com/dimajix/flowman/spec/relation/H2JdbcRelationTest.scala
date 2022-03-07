@@ -41,6 +41,7 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -1428,6 +1429,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         } should be (
             TableDefinition(
                 TableIdentifier("lala_006"),
+                TableType.TABLE,
                 columns = Seq(
                     Field("STR_COL", StringType),
                     Field("INT_COL", IntegerType, nullable=false),
@@ -1491,6 +1493,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         } should be (
             TableDefinition(
                 TableIdentifier("lala_007"),
+                TableType.TABLE,
                 columns = Seq(
                     Field("STR_COL", StringType),
                     Field("INT_COL", IntegerType),

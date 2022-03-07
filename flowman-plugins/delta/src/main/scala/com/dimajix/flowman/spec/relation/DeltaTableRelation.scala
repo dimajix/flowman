@@ -37,6 +37,7 @@ import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -224,8 +225,8 @@ case class DeltaTableRelation(
                 val table = deltaCatalogTable(execution)
                 val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
                 val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
-                val sourceTable = TableDefinition(this.table, sourceSchema.fields)
-                val targetTable = TableDefinition(this.table, targetSchema.fields)
+                val sourceTable = TableDefinition(this.table, TableType.TABLE, sourceSchema.fields)
+                val targetTable = TableDefinition(this.table, TableType.TABLE, targetSchema.fields)
                 !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
             }
             else {

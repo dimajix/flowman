@@ -28,6 +28,7 @@ import com.dimajix.flowman.catalog
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.UpdateClause
@@ -61,6 +62,7 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
         val table = TableIdentifier("table_1", Some("my_db"))
         val tableDefinition = TableDefinition(
             table,
+            TableType.TABLE,
             Seq(
                 Field("id", com.dimajix.flowman.types.IntegerType, nullable = false),
                 Field("name", com.dimajix.flowman.types.StringType),
@@ -83,6 +85,7 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
         val table = TableIdentifier("table_1", Some("my_db"))
         val tableDefinition = catalog.TableDefinition(
             table,
+            TableType.TABLE,
             Seq(
                 Field("id", com.dimajix.flowman.types.IntegerType, nullable = false),
                 Field("name", com.dimajix.flowman.types.StringType),

@@ -26,6 +26,7 @@ import com.dimajix.flowman.catalog
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.Field
@@ -52,6 +53,7 @@ class JdbcUtilsTest extends AnyFlatSpec with Matchers with LocalTempDir {
         val conn = JdbcUtils.createConnection(options)
         val table = TableDefinition(
             TableIdentifier("table_001"),
+            TableType.TABLE,
             Seq(
                 Field("str_field", StringType),
                 Field("int_field", IntegerType)
@@ -77,6 +79,7 @@ class JdbcUtilsTest extends AnyFlatSpec with Matchers with LocalTempDir {
         val conn = JdbcUtils.createConnection(options)
         val table = catalog.TableDefinition(
             TableIdentifier("table_001"),
+            TableType.TABLE,
             Seq(
                 Field("str_field", VarcharType(20)),
                 Field("int_field", IntegerType)
@@ -93,8 +96,8 @@ class JdbcUtilsTest extends AnyFlatSpec with Matchers with LocalTempDir {
             Field("BOOL_FIELD", BooleanType)
         ))
 
-        val curTable = TableDefinition(TableIdentifier(""), curSchema.fields)
-        val newTable = TableDefinition(TableIdentifier(""), newSchema.fields)
+        val curTable = TableDefinition(TableIdentifier(""), TableType.TABLE, curSchema.fields)
+        val newTable = TableDefinition(TableIdentifier(""), TableType.TABLE, newSchema.fields)
         val migrations = TableChange.migrate(curTable, newTable, MigrationPolicy.STRICT)
         JdbcUtils.alterTable(conn, table.identifier, migrations, options)
         JdbcUtils.getSchema(conn, table.identifier, options) should be (newSchema)

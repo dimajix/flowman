@@ -49,6 +49,7 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -338,7 +339,7 @@ case class HiveTableRelation(
                 else {
                     val sourceTable = TableDefinition.ofTable(table)
                     val targetSchema =  com.dimajix.flowman.types.StructType(schema.get.fields)
-                    val targetTable = TableDefinition(this.table, targetSchema.fields)
+                    val targetTable = TableDefinition(this.table, TableType.TABLE, targetSchema.fields)
 
                     !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
                 }
@@ -514,7 +515,7 @@ case class HiveTableRelation(
             else {
                 val sourceTable = TableDefinition.ofTable(table)
                 val targetSchema =  com.dimajix.flowman.types.StructType(schema.get.fields)
-                val targetTable = TableDefinition(this.table, targetSchema.fields)
+                val targetTable = TableDefinition(this.table, TableType.TABLE, targetSchema.fields)
 
                 val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
                 if (requiresMigration) {

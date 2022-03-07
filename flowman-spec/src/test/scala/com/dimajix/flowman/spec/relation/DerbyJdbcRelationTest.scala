@@ -41,6 +41,7 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -1203,6 +1204,7 @@ class DerbyJdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         } should be (
             TableDefinition(
                 TableIdentifier("lala_005"),
+                TableType.TABLE,
                 columns = Seq(
                     Field("str_col", StringType),
                     Field("int_col", IntegerType, nullable=false),
@@ -1266,6 +1268,7 @@ class DerbyJdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         } should be (
             TableDefinition(
                 TableIdentifier("lala_005"),
+                TableType.TABLE,
                 columns = Seq(
                     Field("str_col", StringType),
                     Field("int_col", IntegerType),

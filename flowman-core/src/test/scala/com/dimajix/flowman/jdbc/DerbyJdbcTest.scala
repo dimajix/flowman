@@ -25,6 +25,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
@@ -48,6 +49,7 @@ class DerbyJdbcTest extends AnyFlatSpec with Matchers with LocalTempDir {
         val conn = JdbcUtils.createConnection(options)
         val table1 = TableDefinition(
             TableIdentifier("table_001"),
+            TableType.TABLE,
             Seq(
                 Field("Id", IntegerType, nullable=false),
                 Field("str_field", VarcharType(32)),

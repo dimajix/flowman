@@ -23,7 +23,7 @@ connections:
   frontend:
     kind: jdbc
     driver: "org.mariadb.jdbc.Driver"
-    url: "jdbc:mariadb:my-postgres-database.domain.com"
+    url: "jdbc:mariadb://my-mariadb-database.domain.com"
     username: "my_username"
     password: "secret!password"
 

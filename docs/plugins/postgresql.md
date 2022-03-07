@@ -23,7 +23,7 @@ connections:
   frontend:
     kind: jdbc
     driver: "org.postgresql.Driver"
-    url: "jdbc:postgresql:my-postgres-database.domain.com/my_database"
+    url: "jdbc:postgresql://my-postgres-database.domain.com/my_database"
     username: "my_username"
     password: "secret!password"
 

@@ -23,7 +23,7 @@ connections:
   frontend:
     kind: jdbc
     driver: "com.mysql.cj.jdbc.Driver"
-    url: "jdbc:mysql:my-postgres-database.domain.com"
+    url: "jdbc:mysql://my-mysql-database.domain.com"
     username: "my_username"
     password: "secret!password"
 

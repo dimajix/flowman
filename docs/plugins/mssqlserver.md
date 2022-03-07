@@ -30,16 +30,19 @@ connections:
   frontend:
     kind: jdbc
     driver: "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-    url: "jdbc:sqlserver:my-postgres-database.domain.com/my_database"
+    url: "jdbc:sqlserver://my-azure-database.domain.com"
     username: "my_username"
     password: "secret!password"
+    properties:
+      # We need to specify the database name already as part of connection, otherwise the login won't work
+      databaseName: my_database
 
 relations:
   frontend_users:
     kind: jdbcTable
     # Specify the name of the connection to use
     connection: frontend
-    # Specify schema
+    # Specify schema (within the database)
     database: "dbo"
     # Specify the table
     table: "users"
@@ -53,16 +56,19 @@ instead of the generic `jdbc` relation:
 connections:
   frontend:
     kind: jdbc
-    url: "jdbc:sqlserver:my-postgres-database.domain.com/my_database"
+    url: "jdbc:sqlserver://my-azure-database.domain.com"
     username: "my_username"
     password: "secret!password"
+    properties:
+        # We need to specify the database name already as part of connection, otherwise the login won't work
+        databaseName: my_database
 
 relations:
   frontend_users:
     kind: sqlserver
     # Specify the name of the connection to use
     connection: frontend
-    # Specify schema
+    # Specify schema (within the database)
     database: "dbo"
     # Specify the table
     table: "users"

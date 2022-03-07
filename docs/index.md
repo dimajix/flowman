@@ -25,14 +25,14 @@ application.
 
 ### Notable Features
 
-* Declarative syntax in [YAML files](spec)
+* Declarative syntax in [YAML files](spec/index.md)
 * Full lifecycle management of data models (create, migrate and destroy Hive tables, JDBC tables or file based storage)
 * Flexible expression language
 * Jobs for managing build targets (like copying files or uploading data via sftp)
 * Automatic dependency analysis to build targets in the correct order
 * Powerful yet simple [command line tool for batch execution](cli/flowexec.md)
 * Powerful [Command line tool for interactive data flow analysis](cli/flowshell.md)
-* [History server](cli/flowman-server.md) that provides an overview of past jobs and targets including lineage
+* [History server](history-server/index.md) that provides an overview of past jobs and targets including lineage
 * [Metric system](cookbook/metrics.md) with the ability to publish these to servers like Prometheus
 * Extendable via Plugins
 
@@ -55,7 +55,7 @@ following sections:
 
 * [Flowman Executor](cli/flowexec.md): Documentation of the Flowman Executor CLI
 * [Flowman Shell](cli/flowshell.md): Documentation of the Flowman Shell CLI
-* [Flowman Server](cli/flowserver.md): Documentation of the Flowman Server CLI
+* [Flowman Server](history-server/index.md): Documentation of the Flowman Server CLI
 
 
 ### Specification Documentation
@@ -74,7 +74,7 @@ More detail on all these items is described in the following sections:
 
 ### Cookbooks
 
-* [Testing](cookbook/testing.md) How to implement tests in Flowman
+* [Testing](testing/index.md) How to implement tests in Flowman
 * [Kerberos](cookbook/kerberos.md) How to use Flowman in Kerberized environments
 
 

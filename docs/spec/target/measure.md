@@ -1,7 +1,7 @@
 # Measure Target
 
 The `measure` target will perform some measurements which then are provided as execution metrics. These measurements
-are used to assess data quality. The measures to be taken are specified as [measure](../measure) instances.
+are used to assess data quality. The measures to be taken are specified as [measure](../measure/index.md) instances.
 
 ## Example
 
@@ -20,7 +20,7 @@ targets:
 ```
 
 This example will provide two metrics, `record_count` and `column_sum`, which then can be sent to a 
-[metric sink](../metric) configured in the [namespace](../namespace.md).
+[metric sink](../metric/index.md) configured in the [namespace](../namespace.md).
 
 
 ## Provided Metrics

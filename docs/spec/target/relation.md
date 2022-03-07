@@ -79,7 +79,7 @@ Specifies the behavior when data or table or partition already exists. Options i
   * `overwrite_dynamic`: overwrite the existing data. If dynamically writing to a partitioned table, only those 
     partitions with new records will be replaced
   * `append`: append the data.
-  * `update`: perform upserts - not all relations support this ([JDBC](../relation/jdbc.md) and 
+  * `update`: perform upserts - not all relations support this ([JDBC](../relation/jdbcTable.md) and 
     [Delta Lake](../relation/deltaTable.md) are two examples supporting upserts).
   * `ignore`: ignore the operation (i.e. no-op).
   * `error` or `errorifexists`: throw an exception at runtime . 
@@ -88,7 +88,7 @@ The default value is controlled by the Flowman config variable `flowman.default.
 * `partition` **(optional)** *(type: map:string)* *(default=empty)*:
 Specifies the partition to be written to. When the target relation has defined partitions, Flowman always supports
   writing into individual partitions. Some relation types ([`hiveTable`](../relation/hiveTable.md), 
-  [`jdbc`](../relation/jdbc.md) and [`file`](../relation/file.md)) also support *dynamic partitioning*, where
+  [`jdbc`](../relation/jdbcTable.md) and [`file`](../relation/file.md)) also support *dynamic partitioning*, where
   you do not specify an explicit target partition, but simply pass in possibly multiple different partition values
   in the data itself (i.e. the output of the `mapping` which is written to the relation).
 

@@ -60,4 +60,4 @@ difference that it is executed after the `BUILD` phase.
 
 Note that when you are concerned about the quality of the data produced by your Flowman job, the `verify` target
 is only one of multiple possibilities to implement meaningful checks. Read more in the 
-[data quality cookbook](data-qualioty.md) about available options.
+[data quality cookbook](data-quality.md) about available options.

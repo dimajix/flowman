@@ -18,6 +18,7 @@ package com.dimajix.flowman.model
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.expressions.Alias
+import org.apache.spark.sql.catalyst.expressions.CaseWhen
 import org.apache.spark.sql.catalyst.expressions.Cast
 import org.apache.spark.sql.catalyst.expressions.Coalesce
 import org.apache.spark.sql.catalyst.expressions.DateFormatClass
@@ -281,6 +282,7 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
                 case n:IfNull => extractComment(n.left).orElse(extractComment(n.right))
                 case n:Nvl => extractComment(n.left).orElse(extractComment(n.right))
                 case n:Nvl2 => extractComment(n.expr2).orElse(extractComment(n.expr3))
+                case c:CaseWhen if c.branches.size == 1 => extractComment(c.branches.head._2)
                 case t:TruncInstant => extractComment(t.right)
                 case f:DateFormatClass => extractComment(f.left)
                 case u:UnixTimestamp => extractComment(u.left)

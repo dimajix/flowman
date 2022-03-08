@@ -40,6 +40,7 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.types.StructType
 
 
 case class TemplateRelation(
@@ -241,6 +242,17 @@ case class TemplateRelation(
     }
 
     /**
+     * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
+     * the physical source
+     * @param execution
+     * @return
+     */
+    override def describe(execution:Execution, partitions:Map[String,FieldValue] = Map()) : StructType = {
+        val schema = relationInstance.describe(execution, partitions)
+        applyDocumentation(schema)
+    }
+
+        /**
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */

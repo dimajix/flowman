@@ -88,6 +88,7 @@ class MappingCollector extends Collector {
         val ref = doc.reference
 
         val outputs = try {
+            // TODO: Check if we can use Execution.describe (with caching), since the documentation is now included
             // Do not use Execution.describe because that wouldn't use our hand-crafted input documentation
             val schemas = mapping.describe(execution, inputSchemas)
             schemas.map { case(output,schema) =>

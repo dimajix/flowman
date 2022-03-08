@@ -145,15 +145,17 @@ final case class MappingOutput(id:Int, var mapping: MappingRef, output:String) e
     override def upstream : Seq[Edge] = mapping.incoming
 }
 
-final case class MappingColumn(id:Int, mapping: Mapping, output:String, column:String) extends Node {
+final case class MappingColumn(id:Int, mapping: MappingOutput, column:String) extends Node {
     override def category: Category = Category.MAPPING_COLUMN
     override def kind: String = "mapping_column"
-    override def name: String = mapping.name + "." + output + "." + column
-    override def project: Option[String] = mapping.project.map(_.name)
+    override def parent: Option[Node] = Some(mapping)
+    override def name: String = mapping.name + "." + column
+    override def project: Option[String] = mapping.project
 }
-final case class RelationColumn(id:Int, relation: Relation, column:String) extends Node {
+final case class RelationColumn(id:Int, relation: RelationRef, column:String) extends Node {
     override def category: Category = Category.RELATION_COLUMN
     override def kind: String = "relation_column"
+    override def parent: Option[Node] = Some(relation)
     override def name: String = relation.name + "." + column
-    override def project: Option[String] = relation.project.map(_.name)
+    override def project: Option[String] = relation.project
 }

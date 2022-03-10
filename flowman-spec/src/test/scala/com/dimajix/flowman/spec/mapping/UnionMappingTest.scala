@@ -147,7 +147,7 @@ class UnionMappingTest  extends AnyFlatSpec with Matchers with MockFactory with 
             mappings = Map(
                 "union" -> unionGen,
                 "m1" -> m1Gen,
-                "m2" -> m2Gen,
+                "m2" -> m2Gen
             )
         )
         val session = Session.builder().withSparkSession(spark).build()

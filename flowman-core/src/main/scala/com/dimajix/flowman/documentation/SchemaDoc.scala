@@ -71,8 +71,8 @@ object SchemaDoc {
         }
         def genColumn(parent:Reference, field:Field, idx:Int) : ColumnDoc = {
             val doc = ColumnDoc(Some(parent), field, index=idx)
-            val children = genChildren(doc.reference, field.ftype)
-            doc.copy(children = children)
+            val childs = genChildren(doc.reference, field.ftype)
+            doc.copy(children = childs)
         }
         val columns = genColumns(doc.reference, fields)
         doc.copy(columns = columns)

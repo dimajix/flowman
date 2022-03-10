@@ -121,9 +121,9 @@ class ColumnDocTest extends AnyFlatSpec with Matchers {
             schema = Some(doc1p)
         )
 
-        doc0p.schema.get.columns(0).reference.sql should be ("rel1.col1")
-        doc0p.schema.get.columns(0).children(0).reference.sql should be ("rel1.col1.child1")
-        doc0p.schema.get.columns(0).children(1).reference.sql should be ("rel1.col1.child2")
+        doc0p.schema.get.columns(0).reference.sql should be ("[rel1].col1")
+        doc0p.schema.get.columns(0).children(0).reference.sql should be ("[rel1].col1.child1")
+        doc0p.schema.get.columns(0).children(1).reference.sql should be ("[rel1].col1.child2")
     }
 
     it should "support sql with a relation parent and a project" in {
@@ -153,9 +153,9 @@ class ColumnDocTest extends AnyFlatSpec with Matchers {
             relations = Seq(doc1p)
         )
 
-        doc0p.relations(0).schema.get.columns(0).reference.sql should be ("project/rel1.col1")
-        doc0p.relations(0).schema.get.columns(0).children(0).reference.sql should be ("project/rel1.col1.child1")
-        doc0p.relations(0).schema.get.columns(0).children(1).reference.sql should be ("project/rel1.col1.child2")
+        doc0p.relations(0).schema.get.columns(0).reference.sql should be ("[project/rel1].col1")
+        doc0p.relations(0).schema.get.columns(0).children(0).reference.sql should be ("[project/rel1].col1.child1")
+        doc0p.relations(0).schema.get.columns(0).children(1).reference.sql should be ("[project/rel1].col1.child2")
     }
 
     it should "support sql with a mapping parent and a no project" in {

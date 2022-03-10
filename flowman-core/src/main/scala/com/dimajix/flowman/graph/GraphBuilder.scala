@@ -16,8 +16,13 @@
 
 package com.dimajix.flowman.graph
 
+import scala.util.control.NonFatal
+
+import org.slf4j.LoggerFactory
+
 import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
@@ -25,13 +30,25 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.types.ArrayType
+import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.MapType
+import com.dimajix.flowman.types.StructType
 
 
 final class GraphBuilder(context:Context, phase:Phase) {
+    private val logger = LoggerFactory.getLogger(getClass)
     private val mappings:IdentityHashMap[Mapping,MappingRef] = IdentityHashMap()
     private val relations:IdentityHashMap[Relation,RelationRef] = IdentityHashMap()
     private val targets:IdentityHashMap[Target,TargetRef] = IdentityHashMap()
     private var currentNodeId:Int = 1
+
+    /**
+     * Returns an execution suitable for analysis (i.e. schema inference)
+     * @return
+     */
+    def execution: Execution = context.execution
 
     /**
      * Adds a single [[Mapping]] to the [[GraphBuilder]] and performs all required linking operations to connect the
@@ -104,9 +121,23 @@ final class GraphBuilder(context:Context, phase:Phase) {
             result.get
         }
         else {
+            // Create mapping outputs
+            val outputs = mapping.outputs.toSeq.map { o =>
+                // Create schema description
+                val schema = try {
+                    context.execution.describe(mapping, o)
+                } catch {
+                    case NonFatal(_) =>
+                        logger.warn(s"Error describing mapping '${mapping.identifier}', using empty schema instead")
+                        StructType(Seq.empty)
+                }
+                val fields = createFields(schema)
+
+                new MappingOutput(nextNodeId(), o, fields)
+            }
+
             // Create new node and *first* put it into map of known mappings
-            val outputs = mapping.outputs.toSeq.map(o => MappingOutput(nextNodeId(), null, o))
-            val node = MappingRef(nextNodeId(), mapping, outputs)
+            val node = new MappingRef(nextNodeId(), mapping, outputs)
             mappings.put(mapping, node)
             // Now recursively run the linking process on the newly created node
             val linker = Linker(this, mapping.context, node)
@@ -120,15 +151,26 @@ final class GraphBuilder(context:Context, phase:Phase) {
      * @param relation
      * @return
      */
-    def refRelation(relation: Relation) : RelationRef = {
+    def refRelation(relation: Relation, partitions:Map[String,FieldValue]=Map.empty) : RelationRef = {
         val result = relations.get(relation)
         if (result.nonEmpty) {
             result.get
         }
         else {
+            // Create schema description
+            val schema = try {
+                context.execution.describe(relation, partitions)
+            } catch {
+                case NonFatal(_) =>
+                    logger.warn(s"Error describing relation '${relation.identifier}', using empty schema instead")
+                    StructType(Seq.empty)
+            }
+            val fields = createFields(schema)
+
             // Create new node and *first* put it into map of known relations
-            val node = RelationRef(nextNodeId(), relation)
+            val node = new RelationRef(nextNodeId(), relation, fields)
             relations.put(relation, node)
+
             // Now recursively run the linking process on the newly created node
             val linker = Linker(this, relation.context, node)
             relation.link(linker)
@@ -148,7 +190,7 @@ final class GraphBuilder(context:Context, phase:Phase) {
         }
         else {
             // Create new node and *first* put it into map of known targets
-            val node = TargetRef(nextNodeId(), target, phase)
+            val node = new TargetRef(nextNodeId(), target, phase)
             targets.put(target, node)
             // Now recursively run the linking process on the newly created node
             val linker = Linker(this, target.context, node)
@@ -172,5 +214,20 @@ final class GraphBuilder(context:Context, phase:Phase) {
         val result = currentNodeId
         currentNodeId += 1
         result
+    }
+
+    private def createFields(schema:StructType) : Seq[Column] = {
+        def createColumn(ftype:FieldType) : Seq[Column] = {
+            ftype match {
+                case s: StructType => createFields(s)
+                case a: ArrayType => createColumn(a.elementType)
+                case m: MapType => createColumn(m.valueType)
+                case _ => Seq.empty
+            }
+        }
+        schema.fields.map { field =>
+            val children = createColumn(field.ftype)
+            new Column(nextNodeId(), field, children)
+        }
     }
 }

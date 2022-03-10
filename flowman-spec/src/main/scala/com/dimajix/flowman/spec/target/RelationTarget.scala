@@ -25,6 +25,7 @@ import scala.util.Try
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
@@ -213,8 +214,9 @@ case class RelationTarget(
                 linker.write(relation, Map.empty[String,SingleValue])
             case Phase.BUILD if (mapping.nonEmpty) =>
                 val partition = this.partition.mapValues(v => SingleValue(v))
-                linker.input(mapping.mapping, mapping.output)
-                linker.write(relation, partition)
+                val mapOut = linker.input(mapping.mapping, mapping.output)
+                val relRef = linker.write(relation, partition)
+                linker.write(mapOut, relRef)
             case Phase.TRUNCATE =>
                 val partition = this.partition.mapValues(v => SingleValue(v))
                 linker.write(relation, partition)

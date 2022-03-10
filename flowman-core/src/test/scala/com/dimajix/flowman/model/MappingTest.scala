@@ -34,6 +34,7 @@ import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -44,8 +45,13 @@ object MappingTest {
         override def inputs: Set[MappingOutputIdentifier] = ins
 
         override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = {
-            val df = input.head._2.groupBy("id").agg(f.sum("val"))
-            Map("main" -> df)
+            if (input.nonEmpty) {
+                val df = input.head._2.groupBy("id").agg(f.sum("val"))
+                Map("main" -> df)
+            }
+            else {
+                Map("main" -> DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(Field("id", StringType), Field("val", LongType))).sparkType))
+            }
         }
     }
 }
@@ -135,7 +141,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
                 "m2" -> mappingTemplate2
             )
         )
-        val session = Session.builder().disableSpark().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
 
         val mapping1 = new DummyMapping(

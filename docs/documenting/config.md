@@ -15,6 +15,8 @@ collectors:
   - kind: mappings
   # Collect documentation of build targets
   - kind: targets
+  # Collect column level lineage
+  - kind: lineage
   # Execute all checks
   - kind: checks
 

@@ -156,21 +156,31 @@
 <table class="blueTable">
     <thead>
     <tr>
+        <td>No</td>
         <td>Column Name</td>
         <td>Data Type</td>
         <td>Constraints</td>
         <td>Description</td>
+        <td>Source Columns</td>
         <td>Quality Checks</td>
     </tr>
     </thead>
     <tbody>
     #if($schema)
     #foreach($column in ${schema.columns})
-        <tr>
+        <tr id="${column.reference}">
+            <td>${column.index}</td>
             <td class="identifier">${column.name}</td>
             <td class="dataType">${column.catalogType}</td>
             <td class="dataType">#if(!$column.nullable) NOT NULL #end</td>
             <td>${column.description}</td>
+            <td>
+                #foreach($input in ${column.inputs})
+                    #if(${project.resolve($input)})
+                        <a href="#${input}">${project.resolve($input).fqName}</a>
+                    #end
+                #end
+            </td>
             <td>
                 <table class="columnChecks">
                 #foreach($check in ${column.checks})

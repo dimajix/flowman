@@ -67,20 +67,24 @@ class RelationCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
         val execution = session.execution
 
         (mappingTemplate1.instantiate _).expects(context).returns(mapping1)
+        (mapping1.identifier _).expects().returns(MappingIdentifier("project/m1"))
         (mapping1.context _).expects().returns(context)
         (mapping1.outputs _).expects().returns(Set("main"))
         (mapping1.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.input(MappingIdentifier("m2"), "main")))
 
         (mappingTemplate2.instantiate _).expects(context).returns(mapping2)
+        (mapping2.identifier _).expects().returns(MappingIdentifier("project/m2"))
         (mapping2.context _).expects().returns(context)
         (mapping2.outputs _).expects().returns(Set("main"))
         (mapping2.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.read(RelationIdentifier("src"), Map("pcol"-> SingleValue("part1")))))
 
         (sourceRelationTemplate.instantiate _).expects(context).returns(sourceRelation)
+        (sourceRelation.identifier _).expects().atLeastOnce().returns(RelationIdentifier("project/src"))
         (sourceRelation.context _).expects().returns(context)
         (sourceRelation.link _).expects(*).returns(Unit)
 
         (targetRelationTemplate.instantiate _).expects(context).returns(targetRelation)
+        (targetRelation.identifier _).expects().atLeastOnce().returns(RelationIdentifier("project/tgt"))
         (targetRelation.context _).expects().returns(context)
         (targetRelation.link _).expects(*).returns(Unit)
 
@@ -98,7 +102,6 @@ class RelationCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
         (mapping1.requires _).expects().returns(Set())
         (mapping2.requires _).expects().returns(Set())
 
-        (sourceRelation.identifier _).expects().atLeastOnce().returns(RelationIdentifier("project/src"))
         (sourceRelation.description _).expects().atLeastOnce().returns(Some("source relation"))
         (sourceRelation.documentation _).expects().returns(None)
         (sourceRelation.provides _).expects().returns(Set())
@@ -106,7 +109,6 @@ class RelationCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
         (sourceRelation.schema _).expects().returns(None)
         (sourceRelation.describe _).expects(*,Map("pcol"-> SingleValue("part1"))).returns(StructType(Seq()))
 
-        (targetRelation.identifier _).expects().atLeastOnce().returns(RelationIdentifier("project/tgt"))
         (targetRelation.description _).expects().atLeastOnce().returns(Some("target relation"))
         (targetRelation.documentation _).expects().returns(None)
         (targetRelation.provides _).expects().returns(Set())

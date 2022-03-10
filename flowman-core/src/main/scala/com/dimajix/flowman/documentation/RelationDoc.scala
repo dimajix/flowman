@@ -43,8 +43,8 @@ final case class RelationReference(
 
     def sql : String = {
         parent match {
-            case Some(ProjectReference(project)) => project + "/" + name
-            case _ => name
+            case Some(ProjectReference(project)) => s"[$project/$name]"
+            case _ => s"[$name]"
         }
     }
 }

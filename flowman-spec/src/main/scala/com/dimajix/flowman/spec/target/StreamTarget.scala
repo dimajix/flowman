@@ -135,8 +135,9 @@ case class StreamTarget(
     override def link(linker: Linker, phase:Phase): Unit = {
         phase match {
             case Phase.BUILD =>
-                linker.input(mapping.mapping, mapping.output)
-                linker.write(relation, Map.empty[String,SingleValue])
+                val mapOut = linker.input(mapping.mapping, mapping.output)
+                val relRef = linker.write(relation, Map.empty[String,SingleValue])
+                linker.write(mapOut, relRef)
             case Phase.TRUNCATE|Phase.DESTROY =>
                 linker.write(relation, Map.empty[String,SingleValue])
             case _ =>

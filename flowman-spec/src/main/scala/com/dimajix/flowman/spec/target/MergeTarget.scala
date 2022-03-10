@@ -160,6 +160,7 @@ case class MergeTarget(
             case Phase.BUILD =>
                 linker.input(mapping.mapping, mapping.output)
                 linker.write(relation, Map.empty[String,SingleValue])
+                // TODO: Link columns
             case Phase.TRUNCATE =>
                 linker.write(relation, Map.empty[String,SingleValue])
             case _ =>

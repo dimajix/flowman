@@ -34,9 +34,7 @@ class ColumnDocSpec {
     def instantiate(context: Context, parent:Reference): ColumnDoc = {
         val doc = ColumnDoc(
             Some(parent),
-            Field(context.evaluate(name), NullType, description=context.evaluate(description)),
-            Seq(),
-            Seq()
+            Field(context.evaluate(name), NullType, description=context.evaluate(description))
         )
         def ref = doc.reference
 

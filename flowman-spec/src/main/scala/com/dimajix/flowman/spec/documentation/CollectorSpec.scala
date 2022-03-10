@@ -24,6 +24,7 @@ import com.dimajix.flowman.documentation.MappingCollector
 import com.dimajix.flowman.documentation.RelationCollector
 import com.dimajix.flowman.documentation.TargetCollector
 import com.dimajix.flowman.documentation.CheckCollector
+import com.dimajix.flowman.documentation.LineageCollector
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.Spec
 
@@ -33,6 +34,7 @@ import com.dimajix.flowman.spec.Spec
     new JsonSubTypes.Type(name = "mappings", value = classOf[MappingCollectorSpec]),
     new JsonSubTypes.Type(name = "relations", value = classOf[RelationCollectorSpec]),
     new JsonSubTypes.Type(name = "targets", value = classOf[TargetCollectorSpec]),
+    new JsonSubTypes.Type(name = "lineage", value = classOf[LineageCollectorSpec]),
     new JsonSubTypes.Type(name = "checks", value = classOf[CheckCollectorSpec])
 ))
 abstract class CollectorSpec extends Spec[Collector] {
@@ -54,6 +56,12 @@ final class RelationCollectorSpec extends CollectorSpec {
 final class TargetCollectorSpec extends CollectorSpec {
     override def instantiate(context: Context): TargetCollector = {
         new TargetCollector()
+    }
+}
+
+final class LineageCollectorSpec extends CollectorSpec {
+    override def instantiate(context: Context): LineageCollector = {
+        new LineageCollector()
     }
 }
 

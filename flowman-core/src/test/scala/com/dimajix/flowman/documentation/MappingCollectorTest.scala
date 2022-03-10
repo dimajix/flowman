@@ -61,27 +61,28 @@ class MappingCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
         val execution = session.execution
 
         (mappingTemplate1.instantiate _).expects(context).returns(mapping1)
+        (mapping1.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m1"))
         (mapping1.context _).expects().returns(context)
         (mapping1.outputs _).expects().returns(Set("main"))
         (mapping1.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.input(MappingIdentifier("m2"), "main")))
 
         (mappingTemplate2.instantiate _).expects(context).returns(mapping2)
+        (mapping2.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m2"))
         (mapping2.context _).expects().returns(context)
         (mapping2.outputs _).expects().returns(Set("main"))
         (mapping2.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.read(RelationIdentifier("src"), Map("pcol"-> SingleValue("part1")))))
 
         (sourceRelationTemplate.instantiate _).expects(context).returns(sourceRelation)
+        (sourceRelation.identifier _).expects().atLeastOnce().returns(RelationIdentifier("project/src"))
         (sourceRelation.context _).expects().returns(context)
         (sourceRelation.link _).expects(*).returns(Unit)
 
         val graph = Graph.ofProject(session, project, Phase.BUILD)
 
-        (mapping1.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m1"))
         (mapping1.inputs _).expects().returns(Set(MappingOutputIdentifier("project/m2")))
         (mapping1.describe: (Execution,Map[MappingOutputIdentifier,StructType]) => Map[String,StructType] ).expects(*,*).returns(Map("main" -> StructType(Seq())))
         (mapping1.documentation _).expects().returns(None)
         (mapping1.context _).expects().returns(context)
-        (mapping2.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m2"))
         (mapping2.inputs _).expects().returns(Set())
         (mapping2.describe: (Execution,Map[MappingOutputIdentifier,StructType]) => Map[String,StructType] ).expects(*,*).returns(Map("main" -> StructType(Seq())))
         (mapping2.documentation _).expects().returns(None)

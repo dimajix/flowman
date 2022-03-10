@@ -1,6 +1,8 @@
 # Documenting Targets
 
-Flowman also supports documenting build targets.
+Flowman also supports documenting build targets. There aren't many options or properties, since targets do not represent
+any data or transformations themselves. Documenting them mainly serves to complete a technical reference for
+developers.
 
 ## Example
 

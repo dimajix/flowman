@@ -42,6 +42,7 @@ object Documenter {
             new RelationCollector(),
             new MappingCollector(),
             new TargetCollector(),
+            new LineageCollector(),
             new CheckCollector()
         )
         Documenter(

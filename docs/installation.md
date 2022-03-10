@@ -281,6 +281,6 @@ Please have a look at [Running Flowman on Windows](cookbook/windows.md) for deta
 Please have a look at [Kerberos](cookbook/kerberos.md) for detailed information.
 
 
-### Running in Docker
-It is also possible to run Flowman inside Docker. We now also provide some images at
+## 7. Running in Docker
+It is also possible to [run Flowman inside Docker](cookbook/docker.md). We now also provide some images at
 [Docker Hub](https://hub.docker.com/repository/docker/dimajix/flowman)

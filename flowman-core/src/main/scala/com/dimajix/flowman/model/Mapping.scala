@@ -16,12 +16,15 @@
 
 package com.dimajix.flowman.model
 
+import scala.util.control.NonFatal
+
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.expressions.Alias
 import org.apache.spark.sql.catalyst.expressions.CaseWhen
 import org.apache.spark.sql.catalyst.expressions.Cast
 import org.apache.spark.sql.catalyst.expressions.Coalesce
 import org.apache.spark.sql.catalyst.expressions.DateFormatClass
+import org.apache.spark.sql.catalyst.expressions.ExprId
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.expressions.FromUTCTimestamp
 import org.apache.spark.sql.catalyst.expressions.FromUnixTime
@@ -38,14 +41,20 @@ import org.apache.spark.sql.catalyst.expressions.UnaryExpression
 import org.apache.spark.sql.catalyst.expressions.UnixTimestamp
 import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateExpression
 import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateFunction
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.storage.StorageLevel
+import org.slf4j.LoggerFactory
 
+import com.dimajix.common.IdentityHashSet
 import com.dimajix.flowman.documentation.MappingDoc
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.NoSuchMappingOutputException
+import com.dimajix.flowman.graph.Column
 import com.dimajix.flowman.graph.Linker
+import com.dimajix.flowman.graph.MappingOutput
+import com.dimajix.flowman.graph.MappingRef
 import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.DataFrameBuilder
 
@@ -192,6 +201,7 @@ trait Mapping extends Instance {
  * Common base implementation for the MappingType interface
  */
 abstract class BaseMapping extends AbstractInstance with Mapping {
+    private val logger = LoggerFactory.getLogger(classOf[BaseMapping])
     protected override def instanceProperties : Mapping.Properties
 
     /**
@@ -342,9 +352,80 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
      * Params: linker - The linker object to use for creating new edges
      */
     override def link(linker:Linker) : Unit = {
-        inputs.foreach( in =>
-            linker.input(in.mapping, in.output)
-        )
+        val ins = inputs.toSeq.map { in =>
+            in -> linker.input(in.mapping, in.output)
+        }
+
+        try {
+            linkColumns(linker, ins)
+        }
+        catch {
+            case NonFatal(ex) =>
+                logger.warn(s"Cannot infer column lineage for mapping '${identifier}': ${ex.getMessage}")
+        }
+    }
+
+    private def linkColumns(linker:Linker, ins:Seq[(MappingOutputIdentifier,MappingOutput)]) : Unit = {
+        // Create lineage on column level
+        val execution = linker.execution
+        val dummyInputs = ins.map { case(id,in) =>
+            val schema = StructType(in.fields.map(_.field))
+            (id,in,DataFrameBuilder.singleRow(execution.spark, schema.sparkType))
+        }
+
+        // Execute mapping
+        val replacements = dummyInputs.map { case(id,_,df) => id -> df }.toMap
+        val results = execute(execution, replacements)
+
+        // Lookup source columns
+        val inputColumns = dummyInputs.flatMap { case(id,out,df) =>
+            val expressions = df.queryExecution.analyzed.expressions
+            expressions.collect { case e:NamedExpression => e.exprId -> out }
+        }.toMap
+
+        def lookupSourceColumns(expression: Expression) : Seq[Column] = {
+            expression match {
+                case n:NamedExpression => lookupColumn(n.name, n.exprId).toSeq ++ n.children.flatMap(lookupSourceColumns)
+                case e => e.children.flatMap(lookupSourceColumns)
+            }
+        }
+        def lookupColumn(name:String, exprId:ExprId) : Option[Column] = {
+            inputColumns.get(exprId).flatMap { out =>
+                // TODO: Support nested fields
+                out.fields.find(_.name == name)
+            }
+        }
+
+        val self = linker.node.asInstanceOf[MappingRef]
+        // For each generated mapping output
+        results.foreach { case(name,df) =>
+            val attributes = resolveAttributes(df)
+            // find an appropriate  MappingOutput in the graph
+            self.outputs.find(_.name == name).foreach { out =>
+                // For each field in the MappingOutput of the graph
+                out.fields.foreach { col =>
+                    // TODO: Support nested fields
+                    // Find the attribute of the transformed DataFrame
+                    attributes.find(_.name == col.name) match {
+                        case Some(att) =>
+                            // Use an IdentityHashset for deduplication
+                            IdentityHashSet(lookupSourceColumns(att):_*).foreach(src => linker.connect(src, col))
+                        case None =>
+                        // Should not happen
+                    }
+                }
+            }
+        }
+    }
+    private def resolveAttributes(df:DataFrame) : Seq[NamedExpression] = {
+        val expressions = collectExpressions(df.queryExecution.analyzed)
+        val output = df.queryExecution.analyzed.output
+        output.map(a => expressions.getOrElse(a.exprId, a))
+    }
+    private def collectExpressions(plan:LogicalPlan) : Map[ExprId, NamedExpression] = {
+        val expressions = plan.expressions.collect { case n:NamedExpression => n.exprId -> n }.toMap
+        val childExpressions = plan.children.flatMap(collectExpressions)
+        expressions ++ childExpressions
     }
 
     /**

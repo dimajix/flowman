@@ -41,9 +41,9 @@ import com.dimajix.spark.sql.DataFrameUtils
 
 case class ValuesMapping(
     instanceProperties:Mapping.Properties,
-    columns:Seq[Field] = Seq(),
+    columns:Seq[Field] = Seq.empty,
     schema:Option[Schema] = None,
-    records:Seq[Record] = Seq()
+    records:Seq[Record] = Seq.empty
 ) extends BaseMapping {
     if (schema.isEmpty && columns.isEmpty)
         throw new IllegalArgumentException(s"Require either schema or columns in mapping $name")

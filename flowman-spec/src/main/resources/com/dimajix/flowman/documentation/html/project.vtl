@@ -174,7 +174,7 @@
             <td class="dataType">${column.catalogType}</td>
             <td class="dataType">#if(!$column.nullable) NOT NULL #end</td>
             <td>${column.description}</td>
-            <td>
+            <td class="identifier">
                 #foreach($input in ${column.inputs})
                     #if(${project.resolve($input)})
                         <a href="#${input}">${project.resolve($input).fqName}</a>

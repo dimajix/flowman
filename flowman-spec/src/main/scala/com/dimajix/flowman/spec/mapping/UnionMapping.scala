@@ -34,9 +34,9 @@ import com.dimajix.flowman.types.StructType
 case class UnionMapping(
     instanceProperties:Mapping.Properties,
     input:Seq[MappingOutputIdentifier],
-    schema:Option[Schema],
-    distinct:Boolean,
-    filter:Option[String]
+    schema:Option[Schema] = None,
+    distinct:Boolean = false,
+    filter:Option[String] = None
 ) extends BaseMapping {
     /**
       * Creates the list of required dependencies

@@ -42,11 +42,13 @@ import org.apache.spark.sql.catalyst.expressions.UnixTimestamp
 import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateExpression
 import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateFunction
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.plans.logical.Union
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.IdentityHashSet
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.documentation.MappingDoc
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -399,14 +401,14 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
         val self = linker.node.asInstanceOf[MappingRef]
         // For each generated mapping output
         results.foreach { case(name,df) =>
-            val attributes = resolveAttributes(df)
             // find an appropriate  MappingOutput in the graph
             self.outputs.find(_.name == name).foreach { out =>
+                val attributes = MapIgnoreCase(resolveAttributes(df).map(a => a.name -> a))
                 // For each field in the MappingOutput of the graph
                 out.fields.foreach { col =>
                     // TODO: Support nested fields
                     // Find the attribute of the transformed DataFrame
-                    attributes.find(_.name == col.name) match {
+                    attributes.get(col.name) match {
                         case Some(att) =>
                             // Use an IdentityHashset for deduplication
                             IdentityHashSet(lookupSourceColumns(att):_*).foreach(src => linker.connect(src, col))
@@ -418,14 +420,27 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
         }
     }
     private def resolveAttributes(df:DataFrame) : Seq[NamedExpression] = {
-        val expressions = collectExpressions(df.queryExecution.analyzed)
-        val output = df.queryExecution.analyzed.output
+        resolveAttributes(df.queryExecution.analyzed)
+    }
+    private def resolveAttributes(plan:LogicalPlan) : Seq[NamedExpression] = {
+        val expressions = collectExpressions(plan)
+        val output = plan.output
         output.map(a => expressions.getOrElse(a.exprId, a))
     }
     private def collectExpressions(plan:LogicalPlan) : Map[ExprId, NamedExpression] = {
-        val expressions = plan.expressions.collect { case n:NamedExpression => n.exprId -> n }.toMap
-        val childExpressions = plan.children.flatMap(collectExpressions)
-        expressions ++ childExpressions
+        plan match {
+            // Special handling for UNIONs, which otherwise would only collect columns of first UNION child
+            case union:Union =>
+                val expressions = union.output
+                val childExpressions = union.children.map(resolveAttributes)
+                // The Alias(Coalesce()) expression is a workaround to collect all columns of all children into
+                // a single expression, which also needs to be a NamedExpression
+                expressions.zipWithIndex.map { case(e,i) => e.exprId -> Alias(Coalesce(childExpressions.map(_(i))),e.name)() }.toMap
+            case plan:LogicalPlan =>
+                val expressions = plan.expressions.collect { case n:NamedExpression => n.exprId -> n }.toMap
+                val childExpressions = plan.children.flatMap(collectExpressions)
+                expressions ++ childExpressions
+        }
     }
 
     /**

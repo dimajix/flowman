@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.documentation
 
+import scala.annotation.tailrec
+
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Execution
@@ -25,6 +27,7 @@ import com.dimajix.flowman.graph.InputColumn
 import com.dimajix.flowman.graph.InputMapping
 import com.dimajix.flowman.graph.MappingOutput
 import com.dimajix.flowman.graph.MappingRef
+import com.dimajix.flowman.graph.Node
 import com.dimajix.flowman.graph.RelationRef
 import com.dimajix.flowman.graph.WriteRelation
 
@@ -57,8 +60,20 @@ class LineageCollector extends Collector {
             }
         }
         def collectInputs(column:Column) : Seq[ColumnReference] = {
+            @tailrec
+            def isRelation(parent:Option[Node]) : Boolean = {
+                parent match {
+                    case Some(_:RelationRef) => true
+                    case Some(col:Column) => isRelation(col.parent)
+                    case _ => false
+                }
+            }
             column.incoming.flatMap {
+                // Stop at columns which are relations
+                case in: InputColumn if isRelation(in.input.parent) => Seq(resolveColumn(in.input))
+                // Recursively forward input
                 case in: InputColumn if in.input.incoming.nonEmpty => collectInputs(in.input)
+                // resolve column if no more input is present
                 case in: InputColumn => Seq(resolveColumn(in.input))
                 case _ => Seq.empty
             }
@@ -67,7 +82,7 @@ class LineageCollector extends Collector {
             fields.find(_.name == column.name) match {
                 case Some(field) =>
                     val children = column.children.map(c => genColumnDoc(c, field.fields, entity))
-                    val inputs = collectInputs(field)
+                    val inputs = collectInputs(field).distinct
                     column.copy(children=children, inputs=inputs)
                 case None =>
                     logger.warn(s"Cannot not find column '${column.name}' in inferred schema of $entity")

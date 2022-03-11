@@ -55,6 +55,7 @@ class JdbcMetricSinkTest extends AnyFlatSpec with Matchers with MockFactory with
             """
               |kind: jdbc
               |connection: metrics
+              |tablePrefix: prefix_
             """.stripMargin
 
         val monitor = ObjectMapper.parse[MetricSinkSpec](spec)

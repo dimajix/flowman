@@ -16,8 +16,8 @@ The following table gives an overview of all currently supported data sources an
 | CSV files      | yes            | yes            | N/A                                          | [`file`](../spec/relation/file.html)                                                             |
 | Delta Lake     | yes            | yes            | [Delta](../plugins/delta.html)               | [`deltaFile`](../spec/relation/deltaFile.html), [`deltaTable`](../spec/relation/deltaTable.html) |
 | HDFS           | yes            | yes            | N/A                                          | [`file`](../spec/relation/file.html)                                                             |
-| Hive           | yes            | yes            | N/A                                          | [`hiveTable`](../spec/relation/hiveTable.html)                                                   |
-| Impala         | yes (via Hive) | yes (via Hive) | [Impala](../plugins/impala.html)             | [`hiveTable`](../spec/relation/hiveTable.html)                                                   |
+| Hive           | yes            | yes            | N/A                                          | [`hiveTable`](../spec/relation/hiveTable.html), [`hiveView`](../spec/relation/hiveView.html)     |
+| Impala         | yes (via Hive) | yes (via Hive) | [Impala](../plugins/impala.html)             | [`hiveTable`](../spec/relation/hiveTable.html), [`hiveView`](../spec/relation/hiveView.html)     |
 | JSON files     | yes            | yes            | N/A                                          | [`file`](../spec/relation/file.html)                                                             |
 | Kafka          | yes            | yes            | [Kafka](../plugins/kafka.html)               | [`kafka`](../spec/relation/kafka.html)                                                           |
 | Local files    | yes            | yes            | N/A                                          | [`local`](../spec/relation/local.html)                                                           |

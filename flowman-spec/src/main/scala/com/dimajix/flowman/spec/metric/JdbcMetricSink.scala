@@ -38,10 +38,7 @@ import com.dimajix.flowman.spec.connection.JdbcConnection
 class JdbcMetricSink(
     connection: Reference[Connection],
     labels: Map[String,String] = Map(),
-    commitTable: String = "flowman_metric_commits",
-    commitLabelTable: String = "flowman_metric_commit_labels",
-    metricTable: String = "flowman_metrics",
-    metricLabelTable: String = "flowman_metric_labels"
+    tablePrefix: String = "flowman_"
 ) extends AbstractMetricSink {
     private val logger = LoggerFactory.getLogger(getClass)
     private val retries:Int = 3
@@ -91,10 +88,7 @@ class JdbcMetricSink(
     private lazy val repository = new JdbcMetricRepository(
         jdbcConnection,
         JdbcUtils.getProfile(jdbcConnection.driver),
-        commitTable,
-        commitLabelTable,
-        metricTable,
-        metricLabelTable
+        tablePrefix
     )
 
     private var tablesCreated:Boolean = false
@@ -111,19 +105,13 @@ class JdbcMetricSink(
 class JdbcMetricSinkSpec extends MetricSinkSpec {
     @JsonProperty(value = "connection", required = true) private var connection:ConnectionReferenceSpec = _
     @JsonProperty(value = "labels", required = false) private var labels:Map[String,String] = Map.empty
-    @JsonProperty(value = "commitTable", required = false) private var commitTable:String = "flowman_metric_commits"
-    @JsonProperty(value = "commitLabelTable", required = false) private var commitLabelTable:String = "flowman_metric_commit_labels"
-    @JsonProperty(value = "metricTable", required = false) private var metricTable:String = "flowman_metrics"
-    @JsonProperty(value = "metricLabelTable", required = false) private var metricLabelTable:String = "flowman_metric_labels"
+    @JsonProperty(value = "tablePrefix", required = false) private var tablePrefix:String = "flowman_"
 
     override def instantiate(context: Context): MetricSink = {
         new JdbcMetricSink(
             connection.instantiate(context),
             labels,
-            context.evaluate(commitTable),
-            context.evaluate(commitLabelTable),
-            context.evaluate(metricTable),
-            context.evaluate(metricLabelTable)
+            context.evaluate(tablePrefix)
         )
     }
 }

@@ -34,6 +34,8 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.createConnectionFactory
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.savePartition
 import org.apache.spark.sql.jdbc.JdbcDialects
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.{types => st}
 import org.slf4j.LoggerFactory
 import slick.jdbc.DerbyProfile
 import slick.jdbc.H2Profile
@@ -43,6 +45,7 @@ import slick.jdbc.PostgresProfile
 import slick.jdbc.SQLServerProfile
 import slick.jdbc.SQLiteProfile
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
 import com.dimajix.flowman.catalog.TableChange.CreateIndex
@@ -58,8 +61,11 @@ import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.MergeClause
+import com.dimajix.flowman.types.CharType
 import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.types.VarcharType
 
 
 case class JdbcField(
@@ -75,6 +81,38 @@ case class JdbcField(
 class JdbcUtils
 object JdbcUtils {
     private val logger = LoggerFactory.getLogger(classOf[JdbcUtils])
+
+    /**
+     * This method adjusts the schema of a JDBC target table to be compatible with an incoming Spark schema for
+     * write operations. This will be used for intermediate tables.
+     * @param tableSchema
+     * @param dataSchema
+     * @return
+     */
+    def createSchema(dataSchema:st.StructType, tableSchema:StructType) : StructType = {
+        def combineFields(dataField:st.StructField, tableField:Field) : Field = {
+            val ftype = dataField.dataType match {
+                // Try to keep original types for Sparks generic String type
+                case StringType =>
+                    tableField.ftype match {
+                        case t:VarcharType => t
+                        case t:CharType => t
+                        case _ => FieldType.of(dataField.dataType)
+                    }
+                // Use natural type for everything else
+                case _ => FieldType.of(dataField.dataType)
+            }
+
+            tableField.copy(ftype=ftype, nullable=dataField.nullable)
+        }
+        val dataFields = MapIgnoreCase(dataSchema.fields.map(f => f.name -> f))
+        val tableFields = tableSchema.fields.map { tgtField =>
+            dataFields.get(tgtField.name)
+                .map(srcField => combineFields(srcField, tgtField))
+                .getOrElse(tgtField)
+        }
+        StructType(tableFields)
+    }
 
     def queryTimeout(options: JDBCOptions) : Int = {
         // This is not very efficient, but in Spark 2.2 we cannot access parameters

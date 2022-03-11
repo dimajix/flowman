@@ -33,16 +33,11 @@ import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-import org.apache.spark.sql.execution.datasources.jdbc.JdbcOptionsInWrite
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.types.CharType
-import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.types.VarcharType
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog
@@ -77,7 +72,6 @@ import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.types.FieldValue
-import com.dimajix.flowman.types.SchemaUtils
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.{StructType => FlowmanStructType}
 
@@ -361,7 +355,7 @@ class JdbcRelationBase(
 
     private def createStagingTable(execution:Execution, con:java.sql.Connection, options: JDBCOptions, df:DataFrame, schema:Option[FlowmanStructType]) : Unit = {
         val stagingTable = this.stagingIdentifier.get
-        val stagingSchema = schema.map(SchemaUtils.toNullable).getOrElse(FlowmanStructType.of(df.schema))
+        val stagingSchema = schema.map(schema => JdbcUtils.createSchema(df.schema, schema)).getOrElse(FlowmanStructType.of(df.schema))
         logger.info(s"Creating staging table ${stagingTable} with schema\n${stagingSchema.treeString}")
 
         // First drop temp table if it already exists

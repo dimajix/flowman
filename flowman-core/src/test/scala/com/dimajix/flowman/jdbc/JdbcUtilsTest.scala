@@ -21,6 +21,7 @@ import java.nio.file.Path
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.apache.spark.sql.{types => st}
 
 import com.dimajix.flowman.catalog
 import com.dimajix.flowman.catalog.TableChange
@@ -29,7 +30,10 @@ import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.types.BooleanType
+import com.dimajix.flowman.types.CharType
+import com.dimajix.flowman.types.DoubleType
 import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FloatType
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.StructType
@@ -104,5 +108,31 @@ class JdbcUtilsTest extends AnyFlatSpec with Matchers with LocalTempDir {
 
         JdbcUtils.dropTable(conn, table.identifier, options)
         conn.close()
+    }
+
+    "JdbcUtils.createSchema()" should "work" in {
+        val dataSchema = st.StructType(Seq(
+            st.StructField("str_field", st.StringType, nullable=true),
+            st.StructField("charn_field", st.StringType, nullable=false),
+            st.StructField("vcharn_field", st.StringType, nullable=false),
+            st.StructField("double_field", st.DoubleType, nullable=false),
+            st.StructField("src_only_field", st.IntegerType, nullable=false)
+        ))
+        val tableSchema = StructType(Seq(
+            Field("str_field", StringType, nullable=false),
+            Field("charn_field", VarcharType(10), nullable=true),
+            Field("vcharn_field", CharType(20), nullable=false),
+            Field("double_field", FloatType, nullable=false),
+            Field("tgt_only_field", IntegerType, nullable=false)
+        ))
+
+        val result = JdbcUtils.createSchema(dataSchema, tableSchema)
+        result should be (StructType(Seq(
+            Field("str_field", StringType, nullable=true),
+            Field("charn_field", VarcharType(10), nullable=false),
+            Field("vcharn_field", CharType(20), nullable=false),
+            Field("double_field", DoubleType, nullable=false),
+            Field("tgt_only_field", IntegerType, nullable=false)
+        )))
     }
 }

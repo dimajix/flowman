@@ -33,7 +33,8 @@ class RelationDocSpec extends Spec[RelationDoc] {
     override def instantiate(context: Context): RelationDoc = {
         val doc = RelationDoc(
             None,
-            description = context.evaluate(description)
+            None,
+            context.evaluate(description)
         )
         val ref = doc.reference
 

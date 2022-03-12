@@ -78,7 +78,8 @@ class MappingDocSpec extends Spec[MappingDoc] {
     def instantiate(context: Context): MappingDoc = {
         val doc = MappingDoc(
             None,
-            description = context.evaluate(description)
+            None,
+            context.evaluate(description)
         )
         val ref = doc.reference
 

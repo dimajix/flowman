@@ -105,12 +105,13 @@ class RelationCollector extends Collector {
         val doc = RelationDoc(
             Some(parent),
             Some(relation),
-            description = relation.description,
-            inputs = inputs,
-            provides = relation.provides.toSeq,
-            requires = relation.requires.toSeq,
-            sources = sources,
-            partitions = partitions
+            relation.description,
+            None,
+            inputs,
+            relation.provides.toSeq,
+            relation.requires.toSeq,
+            sources,
+            partitions
         )
         val ref = doc.reference
 

@@ -31,7 +31,6 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.AbstractInstance
 import com.dimajix.flowman.model.BaseTemplate
-import com.dimajix.flowman.model.Instance
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Relation
@@ -53,7 +52,18 @@ case class RelationTemplate(
     spec:Prototype[Relation]
 ) extends BaseTemplate[Relation] with com.dimajix.flowman.model.RelationTemplate {
     override protected def instantiateInternal(context: Context, name: String): Relation = {
-        spec.instantiate(context)
+        spec match {
+            case spec:RelationSpec =>
+                // Temporarily set spec name. Project and namespace are already correctly provided by the context.
+                synchronized {
+                    val oldName = spec.name
+                    spec.name = name
+                    val instance = spec.instantiate(context)
+                    spec.name = oldName
+                    instance
+                }
+            case spec => spec.instantiate(context)
+        }
     }
 }
 

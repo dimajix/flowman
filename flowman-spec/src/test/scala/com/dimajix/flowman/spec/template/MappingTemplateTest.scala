@@ -95,6 +95,9 @@ class MappingTemplateTest extends AnyFlatSpec with Matchers {
         val map_1 = context.getMapping(MappingIdentifier("rel_1"))
         map_1 shouldBe a[MappingTemplateInstance]
         map_1.asInstanceOf[MappingTemplateInstance].instance shouldBe a [ValuesMapping]
+        map_1.asInstanceOf[MappingTemplateInstance].name should be ("rel_1")
+        map_1.asInstanceOf[MappingTemplateInstance].identifier should be (MappingIdentifier("project/rel_1"))
+        map_1.asInstanceOf[MappingTemplateInstance].kind should be ("values")
         map_1.name should be ("rel_1")
         map_1.identifier should be (MappingIdentifier("project/rel_1"))
         map_1.kind should be ("values")

@@ -45,7 +45,18 @@ case class MappingTemplate(
     spec:Prototype[Mapping]
 ) extends BaseTemplate[Mapping] with com.dimajix.flowman.model.MappingTemplate {
     override protected def instantiateInternal(context: Context, name: String): Mapping = {
-        spec.instantiate(context)
+        spec match {
+            case spec:MappingSpec =>
+                // Temporarily set spec name. Project and namespace are already correctly provided by the context.
+                synchronized {
+                    val oldName = spec.name
+                    spec.name = name
+                    val instance = spec.instantiate(context)
+                    spec.name = oldName
+                    instance
+                }
+            case spec => spec.instantiate(context)
+        }
     }
 }
 

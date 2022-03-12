@@ -159,9 +159,9 @@ case class FileTarget(
     override def build(executor: Execution): Unit = {
         require(executor != null)
 
-        logger.info(s"Writing mapping '$this.mapping' to directory '$qualifiedLocation'")
-        val mapping = context.getMapping(this.mapping.mapping)
-        val dfIn = executor.instantiate(mapping, this.mapping.output)
+        logger.info(s"Writing mapping output '${mapping}' to directory '$qualifiedLocation'")
+        val map = context.getMapping(mapping.mapping)
+        val dfIn = executor.instantiate(map, mapping.output)
         val table = {
             if (parallelism <= 0)
                 dfIn

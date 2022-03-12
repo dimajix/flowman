@@ -28,9 +28,6 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.AbstractInstance
 import com.dimajix.flowman.model.BaseTemplate
-import com.dimajix.flowman.model.Metadata
-import com.dimajix.flowman.model.Namespace
-import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
@@ -48,7 +45,18 @@ case class TargetTemplate(
     spec:Prototype[Target]
 ) extends BaseTemplate[Target] with com.dimajix.flowman.model.TargetTemplate {
     override protected def instantiateInternal(context: Context, name: String): Target = {
-        spec.instantiate(context)
+        spec match {
+            case spec:TargetSpec =>
+                // Temporarily set spec name. Project and namespace are already correctly provided by the context.
+                synchronized {
+                    val oldName = spec.name
+                    spec.name = name
+                    val instance = spec.instantiate(context)
+                    spec.name = oldName
+                    instance
+                }
+            case spec => spec.instantiate(context)
+        }
     }
 }
 

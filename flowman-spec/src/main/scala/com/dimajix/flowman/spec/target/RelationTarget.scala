@@ -258,9 +258,9 @@ case class RelationTarget(
         if (mapping.nonEmpty) {
             val partition = this.partition.mapValues(v => SingleValue(v))
 
-            logger.info(s"Writing mapping '${this.mapping}' to relation '${relation.identifier}' into partition (${partition.map(p => p._1 + "=" + p._2.value).mkString(",")}) with mode '$mode'")
-            val mapping = context.getMapping(this.mapping.mapping)
-            val dfIn = executor.instantiate(mapping, this.mapping.output)
+            logger.info(s"Writing mapping output '${mapping}' to relation '${relation.identifier}' into partition (${partition.map(p => p._1 + "=" + p._2.value).mkString(",")}) with mode '$mode'")
+            val map = context.getMapping(mapping.mapping)
+            val dfIn = executor.instantiate(map, mapping.output)
             val dfOut =
                 if (parallelism <= 0)
                     dfIn

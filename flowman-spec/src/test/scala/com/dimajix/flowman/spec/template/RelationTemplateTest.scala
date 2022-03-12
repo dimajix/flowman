@@ -92,6 +92,8 @@ class RelationTemplateTest extends AnyFlatSpec with Matchers {
         val rel_1 = context.getRelation(RelationIdentifier("rel_1"))
         rel_1 shouldBe a[RelationTemplateInstance]
         rel_1.asInstanceOf[RelationTemplateInstance].instance shouldBe a[ValuesRelation]
+        rel_1.asInstanceOf[RelationTemplateInstance].name should be ("rel_1")
+        rel_1.asInstanceOf[RelationTemplateInstance].identifier should be (RelationIdentifier("project/rel_1"))
         rel_1.name should be ("rel_1")
         rel_1.identifier should be (RelationIdentifier("project/rel_1"))
         rel_1.kind should be ("values")

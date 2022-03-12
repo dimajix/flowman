@@ -68,7 +68,12 @@ case class TemplateTarget(
  *
      * @return
      */
-    override def documentation : Option[TargetDoc] = targetInstance.documentation.map(_.merge(instanceProperties.documentation))
+    override def documentation : Option[TargetDoc] = {
+        targetInstance.documentation
+            .map(_.merge(instanceProperties.documentation))
+            .orElse(instanceProperties.documentation)
+            .map(_.copy(target=Some(this)))
+    }
 
     /**
      * Returns an instance representing this target with the context

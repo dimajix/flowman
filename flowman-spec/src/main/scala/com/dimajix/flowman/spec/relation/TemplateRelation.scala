@@ -99,7 +99,12 @@ case class TemplateRelation(
      * Returns a (static) documentation of this relation
      * @return
      */
-    override def documentation : Option[RelationDoc] = relationInstance.documentation.map(_.merge(instanceProperties.documentation))
+    override def documentation : Option[RelationDoc] = {
+        relationInstance.documentation
+            .map(_.merge(instanceProperties.documentation))
+            .orElse(instanceProperties.documentation)
+            .map(_.copy(relation=Some(this)))
+    }
 
     /**
       * Returns the schema of the relation

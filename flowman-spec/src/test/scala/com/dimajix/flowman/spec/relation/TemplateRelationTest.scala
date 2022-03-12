@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 Kaya Kupferschmidt
+ * Copyright 2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,67 +14,54 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.mapping
+package com.dimajix.flowman.spec.relation
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.documentation.MappingOutputDoc
-import com.dimajix.flowman.documentation.MappingOutputReference
-import com.dimajix.flowman.documentation.MappingReference
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.model.MappingIdentifier
-import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.model.RelationIdentifier
 
 
-class TemplateMappingTest extends AnyFlatSpec with Matchers {
-    "A TemplateMapping" should "work" in {
+class TemplateRelationTest extends AnyFlatSpec with Matchers {
+    "A TemplateRelation" should "work" in {
         val spec =
             """
-              |mappings:
+              |relations:
               |  xfs:
-              |    kind: schema
-              |    input: ${input}
+              |    kind: values
               |    columns:
               |      _2: string
               |      _1: string
               |
               |  template:
               |    kind: template
-              |    mapping: xfs
-              |    environment:
-              |      - input=$default_input
+              |    relation: xfs
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder()
-            .disableSpark()
-            .withEnvironment("default_input", "lala")
-            .build()
+        val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        val mapping = context.getMapping(MappingIdentifier("template"))
-        mapping should not be (null)
-        mapping shouldBe a[TemplateMapping]
-        mapping.name should be ("template")
-
-        mapping.inputs should be (Set(MappingOutputIdentifier("lala")))
+        val relation = context.getRelation(RelationIdentifier("template"))
+        relation should not be (null)
+        relation shouldBe a[TemplateRelation]
+        relation.name should be ("template")
     }
 
     it should "provide own documentation" in {
         val spec =
             """
-              |mappings:
+              |relations:
               |  xfs:
-              |    kind: schema
-              |    input: input
+              |    kind: values
               |    columns:
               |      col_1: string
               |
               |  template:
               |    kind: template
-              |    mapping: xfs
+              |    relation: xfs
               |    documentation:
               |      description: "This is the template"
             """.stripMargin
@@ -83,61 +70,57 @@ class TemplateMappingTest extends AnyFlatSpec with Matchers {
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        val mapping = context.getMapping(MappingIdentifier("template"))
-        val doc = mapping.documentation.get
-        doc.mapping should be (Some(mapping))
+        val relation = context.getRelation(RelationIdentifier("template"))
+        val doc = relation.documentation.get
+        doc.relation should be (Some(relation))
         doc.inputs should be (Seq.empty)
         doc.description should be (Some("This is the template"))
-        doc.outputs should be (Seq.empty)
     }
 
     it should "provide templated documentation" in {
         val spec =
             """
-              |mappings:
+              |relations:
               |  xfs:
-              |    kind: schema
-              |    input: input
+              |    kind: values
               |    columns:
               |      col_1: string
               |    documentation:
-              |      description: "This is the original mapping"
+              |      description: "This is the original relation"
               |
               |  template:
               |    kind: template
-              |    mapping: xfs
+              |    relation: xfs
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        val mapping = context.getMapping(MappingIdentifier("template"))
-        val doc = mapping.documentation.get
-        doc.mapping should be (Some(mapping))
+        val relation = context.getRelation(RelationIdentifier("template"))
+        val doc = relation.documentation.get
+        doc.relation should be (Some(relation))
         doc.inputs should be (Seq.empty)
-        doc.description should be (Some("This is the original mapping"))
-        doc.outputs should be (Seq.empty)
+        doc.description should be (Some("This is the original relation"))
     }
 
     it should "provide merged documentation" in {
         val spec =
             """
-              |mappings:
+              |relations:
               |  xfs:
-              |    kind: schema
-              |    input: input
+              |    kind: values
               |    columns:
               |      col_1: string
               |    documentation:
-              |      description: "This is the original mapping"
+              |      description: "This is the original relation"
               |      columns:
               |        - name: col_1
               |          description: "This is col_1"
               |
               |  template:
               |    kind: template
-              |    mapping: xfs
+              |    relation: xfs
               |    documentation:
               |      description: "This is the template"
               |      columns:
@@ -149,13 +132,12 @@ class TemplateMappingTest extends AnyFlatSpec with Matchers {
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        val mapping = context.getMapping(MappingIdentifier("template"))
-        val doc = mapping.documentation.get
-        doc.mapping should be (Some(mapping))
+        val relation = context.getRelation(RelationIdentifier("template"))
+        val doc = relation.documentation.get
+        doc.relation should be (Some(relation))
         doc.inputs should be (Seq.empty)
         doc.description should be (Some("This is the template"))
-        val output = doc.outputs.head
-        val outputSchema = output.schema.get
+        val outputSchema = doc.schema.get
         outputSchema.columns.length should be (2)
         outputSchema.columns(0).name should be ("col_1")
         outputSchema.columns(0).index should be (-1)

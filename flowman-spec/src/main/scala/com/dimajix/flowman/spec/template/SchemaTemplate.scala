@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.BaseTemplate
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.TemplateIdentifier
@@ -31,7 +32,7 @@ import com.dimajix.flowman.spec.schema.SchemaSpec
 case class SchemaTemplate(
     instanceProperties: Template.Properties,
     parameters: Seq[Template.Parameter],
-    spec:SchemaSpec
+    spec:Prototype[Schema]
 ) extends BaseTemplate[Schema] with com.dimajix.flowman.model.SchemaTemplate {
     override protected def instantiateInternal(context: Context, name: String): Schema = {
         spec.instantiate(context)

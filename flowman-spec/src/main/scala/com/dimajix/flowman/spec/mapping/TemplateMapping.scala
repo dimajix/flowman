@@ -61,7 +61,12 @@ case class TemplateMapping(
      *
      * @return
      */
-    override def documentation: Option[MappingDoc] = mappingInstance.documentation.map(_.merge(instanceProperties.documentation))
+    override def documentation: Option[MappingDoc] = {
+        mappingInstance.documentation
+            .map(_.merge(instanceProperties.documentation))
+            .orElse(instanceProperties.documentation)
+            .map(_.copy(mapping=Some(this)))
+    }
 
     /**
       * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings

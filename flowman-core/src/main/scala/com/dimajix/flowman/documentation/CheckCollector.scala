@@ -33,10 +33,9 @@ class CheckCollector extends Collector {
      * @return
      */
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
-        val resolver = new ReferenceResolver(graph)
         val executor = new CheckExecutor(execution)
         val mappings = documentation.mappings.map { m =>
-            resolver.resolve(m.reference) match {
+            m.mapping match {
                 case None =>
                     // This should not happen - but who knows...
                     logger.warn(s"Cannot find mapping for document reference '${m.reference.toString}'")
@@ -46,7 +45,7 @@ class CheckCollector extends Collector {
             }
         }
         val relations = documentation.relations.map { r =>
-            resolver.resolve(r.reference) match {
+            r.relation match {
                 case None =>
                     // This should not happen - but who knows...
                     logger.warn(s"Cannot find relation for document reference '${r.reference.toString}'")

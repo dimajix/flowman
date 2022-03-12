@@ -23,10 +23,8 @@ import scala.util.matching.Regex
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.common.io.Resources
-import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.documentation.BaseGenerator
-import com.dimajix.flowman.documentation.Generator
 import com.dimajix.flowman.documentation.MappingDoc
 import com.dimajix.flowman.documentation.MappingDocWrapper
 import com.dimajix.flowman.documentation.ProjectDoc

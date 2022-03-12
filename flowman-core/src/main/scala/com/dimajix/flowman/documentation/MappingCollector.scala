@@ -87,9 +87,8 @@ class MappingCollector extends Collector {
         val inputSchemas = inputs.map(kv => kv._1 -> kv._2.schema.map(_.toStruct).getOrElse(StructType(Seq())))
         val doc = MappingDoc(
             Some(parent),
-            mapping.identifier,
-            None,
-            inputs.map(_._2.reference).toSeq
+            Some(mapping),
+            inputs = inputs.map(_._2.reference).toSeq
         )
         val ref = doc.reference
 

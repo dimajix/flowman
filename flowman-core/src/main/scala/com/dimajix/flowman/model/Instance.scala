@@ -33,7 +33,7 @@ trait Prototype[T] {
 
 
 object Instance {
-    trait Properties[T <: Properties[T]] {
+    trait Properties[T <: Properties[T]] extends Product with Serializable {
         val context: Context
         val namespace: Option[Namespace]
         val project: Option[Project]

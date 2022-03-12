@@ -75,7 +75,7 @@ object Mapping {
         }
     }
     final case class Properties(
-        context: Context,
+        context:Context,
         metadata:Metadata,
         broadcast:Boolean,
         checkpoint:Boolean,
@@ -216,7 +216,8 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
      * Returns a (static) documentation of this mapping
      * @return
      */
-    override def documentation : Option[MappingDoc] = instanceProperties.documentation
+    override def documentation : Option[MappingDoc] =
+        instanceProperties.documentation.map(_.copy(mapping=Some(this)))
 
     /**
      * This method should return true, if the resulting dataframe should be broadcast for map-side joins

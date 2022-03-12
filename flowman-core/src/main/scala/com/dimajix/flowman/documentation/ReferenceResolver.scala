@@ -48,6 +48,7 @@ class ReferenceResolver(graph:Graph) {
      * @return
      */
     def resolve(ref:RelationReference) : Option[Relation] = {
+        // TODO: Also resolve nested relations!
         ref.parent match {
             case None =>
                 graph.relations.find(m => m.name == ref.name).map(_.relation)

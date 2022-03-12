@@ -21,6 +21,8 @@ import scala.annotation.tailrec
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.NoSuchMappingException
+import com.dimajix.flowman.execution.NoSuchRelationException
 import com.dimajix.flowman.graph.Column
 import com.dimajix.flowman.graph.Graph
 import com.dimajix.flowman.graph.InputColumn
@@ -30,6 +32,8 @@ import com.dimajix.flowman.graph.MappingRef
 import com.dimajix.flowman.graph.Node
 import com.dimajix.flowman.graph.RelationRef
 import com.dimajix.flowman.graph.WriteRelation
+import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.RelationIdentifier
 
 
 class LineageCollector extends Collector {
@@ -37,22 +41,28 @@ class LineageCollector extends Collector {
 
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
         def resolveMapping(mapping:MappingDoc) : MappingRef = {
-            graph.mapping(mapping.identifier)
+            mapping.mapping match {
+                case Some(mapping) => graph.mapping(mapping)
+                case None => throw new NoSuchMappingException(MappingIdentifier.empty)
+            }
         }
         def resolveRelation(relation:RelationDoc) : RelationRef = {
-            graph.relation(relation.identifier)
+            relation.relation match {
+                case Some(relation) => graph.relation(relation)
+                case None => throw new NoSuchRelationException(RelationIdentifier.empty)
+            }
         }
         def resolveColumn(column:Column) : ColumnReference = {
             column.parent match {
                 case None => ColumnReference(None, column.name)
                 case Some(col:Column) => ColumnReference(Some(resolveColumn(col)), column.name)
                 case Some(map:MappingOutput) =>
-                    documentation.mappings.find(_.identifier == map.mapping.identifier) match {
+                    documentation.mappings.find(_.mapping.exists(_ eq map.mapping.mapping)) match {
                         case Some(mapping) => ColumnReference(mapping.outputs.find(_.name == map.output).map(_.reference), column.name)
                         case None => ColumnReference(None, column.name)
                     }
                 case Some(rel:RelationRef) =>
-                    documentation.relations.find(_.identifier == rel.relation.identifier) match {
+                    documentation.relations.find(_.relation.exists(_ eq rel.relation)) match {
                         case Some(relation) => ColumnReference(relation.schema.map(_.reference), column.name)
                         case None => ColumnReference(None, column.name)
                     }

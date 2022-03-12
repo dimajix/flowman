@@ -95,6 +95,7 @@ final case class Linker private[graph](builder:GraphBuilder, context:Context, no
      */
     def read(relation: Reference[Relation], partitions:Map[String,FieldValue]) : RelationRef = {
         relation match {
+            // TODO: If it is a ValueRelation, then we can assume it is a child of the current node
             case ref:ValueRelationReference => read(ref.value, partitions)
             case ref:IdentifierRelationReference => read(ref.identifier, partitions)
         }
@@ -132,6 +133,7 @@ final case class Linker private[graph](builder:GraphBuilder, context:Context, no
      */
     def write(relation: Reference[Relation], partitions:Map[String,SingleValue]) : RelationRef = {
         relation match {
+            // TODO: If it is a ValueRelation, then we can assume it is a child of the current node
             case ref:ValueRelationReference => write(ref.value, partitions)
             case ref:IdentifierRelationReference => write(ref.identifier, partitions)
         }

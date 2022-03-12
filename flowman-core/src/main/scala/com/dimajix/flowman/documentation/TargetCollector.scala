@@ -65,7 +65,7 @@ class TargetCollector extends Collector {
 
         val doc = TargetDoc(
             Some(parent),
-            target.identifier,
+            Some(target),
             description = target.description,
             inputs = inputs,
             outputs = outputs

@@ -30,7 +30,6 @@ class TargetDocSpec extends Spec[TargetDoc] {
     override def instantiate(context: Context): TargetDoc = {
         val doc = TargetDoc(
             None,
-            TargetIdentifier.empty,
             description = context.evaluate(description)
         )
         doc

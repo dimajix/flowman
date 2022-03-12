@@ -62,12 +62,14 @@ class MappingCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
 
         (mappingTemplate1.instantiate _).expects(context).returns(mapping1)
         (mapping1.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m1"))
+        (mapping1.name _).expects().atLeastOnce().returns("m1")
         (mapping1.context _).expects().returns(context)
         (mapping1.outputs _).expects().returns(Set("main"))
         (mapping1.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.input(MappingIdentifier("m2"), "main")))
 
         (mappingTemplate2.instantiate _).expects(context).returns(mapping2)
         (mapping2.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m2"))
+        (mapping2.name _).expects().atLeastOnce().returns("m2")
         (mapping2.context _).expects().returns(context)
         (mapping2.outputs _).expects().returns(Set("main"))
         (mapping2.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.read(RelationIdentifier("src"), Map("pcol"-> SingleValue("part1")))))
@@ -95,7 +97,7 @@ class MappingCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
 
         mapping1Doc should be (Some(MappingDoc(
             parent = Some(ProjectReference("project")),
-            identifier = MappingIdentifier("project/m1"),
+            mapping = Some(mapping1),
             inputs = Seq(MappingOutputReference(Some(MappingReference(Some(ProjectReference("project")), "m2")), "main")),
             outputs = Seq(
                 MappingOutputDoc(
@@ -108,7 +110,7 @@ class MappingCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
         )))
         mapping2Doc should be (Some(MappingDoc(
             parent = Some(ProjectReference("project")),
-            identifier = MappingIdentifier("project/m2"),
+            mapping = Some(mapping2),
             inputs = Seq(),
             outputs = Seq(
                 MappingOutputDoc(

@@ -80,11 +80,13 @@ class RelationCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
 
         (sourceRelationTemplate.instantiate _).expects(context).returns(sourceRelation)
         (sourceRelation.identifier _).expects().atLeastOnce().returns(RelationIdentifier("project/src"))
+        (sourceRelation.name _).expects().returns("src")
         (sourceRelation.context _).expects().returns(context)
         (sourceRelation.link _).expects(*).returns(Unit)
 
         (targetRelationTemplate.instantiate _).expects(context).returns(targetRelation)
         (targetRelation.identifier _).expects().atLeastOnce().returns(RelationIdentifier("project/tgt"))
+        (targetRelation.name _).expects().returns("tgt")
         (targetRelation.context _).expects().returns(context)
         (targetRelation.link _).expects(*).returns(Unit)
 
@@ -124,7 +126,7 @@ class RelationCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
 
         sourceRelationDoc should be (Some(RelationDoc(
             parent = Some(ProjectReference("project")),
-            identifier = RelationIdentifier("project/src"),
+            relation = Some(sourceRelation),
             description = Some("source relation"),
             schema = Some(SchemaDoc(
                 parent = Some(RelationReference(Some(ProjectReference("project")), "src"))
@@ -134,7 +136,7 @@ class RelationCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
 
         targetRelationDoc should be (Some(RelationDoc(
             parent = Some(ProjectReference("project")),
-            identifier = RelationIdentifier("project/tgt"),
+            relation = Some(targetRelation),
             description = Some("target relation"),
             schema = Some(SchemaDoc(
                 parent = Some(RelationReference(Some(ProjectReference("project")), "tgt"))

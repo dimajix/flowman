@@ -88,6 +88,7 @@ class MappingCollector extends Collector {
         val doc = MappingDoc(
             Some(parent),
             Some(mapping),
+            None,
             inputs.map(_._2.reference).toSeq
         )
         val ref = doc.reference

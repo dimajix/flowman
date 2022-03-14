@@ -36,9 +36,11 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.mapping.ProvidedMapping
@@ -148,20 +150,20 @@ class MergeTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val data = Seq(("v1", 12), ("v2", 23)).toDF()
         data.createOrReplaceTempView("some_table")
 
-        val relationGen = (context:Context) => NullRelation(
+        val relationGen = Prototype.of((context:Context) => NullRelation(
             Relation.Properties(context)
-        )
-        val mappingGen = (context:Context) => ProvidedMapping(
+        ).asInstanceOf[Relation])
+        val mappingGen = Prototype.of((context:Context) => ProvidedMapping(
             Mapping.Properties(context),
             "some_table"
-        )
-        val targetGen = (context:Context) => MergeTarget(
+        ).asInstanceOf[Mapping])
+        val targetGen = Prototype.of((context:Context) => MergeTarget(
             context,
             RelationIdentifier("relation"),
             MappingOutputIdentifier("mapping"),
             Seq(),
             Seq()
-        )
+        ).asInstanceOf[Target])
         val project = Project(
             name = "test",
             targets = Map("target" -> targetGen),

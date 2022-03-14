@@ -51,9 +51,9 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 object RunnerJobTest {
     object NullTarget {
-        def apply(name:String, partition: Map[String,String] = Map()) : Context => NullTarget = {
-            ctx:Context => NullTarget(Target.Properties(ctx, name), ctx.evaluate(partition))
-        }
+        def apply(name:String, partition: Map[String,String] = Map()) : Prototype[Target] = Prototype.of(
+            (ctx:Context) => NullTarget(Target.Properties(ctx, name), ctx.evaluate(partition))
+        )
     }
     case class NullTarget(
         instanceProperties: Target.Properties,
@@ -206,7 +206,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
     }
 
     it should "only execute specified targets" in {
-        def genTarget(name:String, toBeExecuted:Boolean) : Context => Target = (ctx:Context) => {
+        def genTarget(name:String, toBeExecuted:Boolean) : Prototype[Target] = Prototype.of {
             val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = mock[Target]
             (target.name _).expects().atLeastOnce().returns(name)
@@ -235,7 +235,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
         def genProject(targets:Map[String, Boolean]) : Project = {
             Project(
                 name = "default",
-                targets = targets.map { case(name,toBeExecuted) => name -> Prototype.of(genTarget(name, toBeExecuted)) }
+                targets = targets.map { case(name,toBeExecuted) => name -> genTarget(name, toBeExecuted) }
             )
         }
 
@@ -252,7 +252,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
     }
 
     it should "not execute targets in dryMode" in {
-        def genTarget(name:String) : Context => Target = (ctx:Context) => {
+        def genTarget(name:String) : Prototype[Target] = Prototype.of {
             val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = mock[Target]
             (target.name _).expects().atLeastOnce().returns(name)
@@ -272,7 +272,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
 
         val project = Project(
             name = "default",
-            targets = Map("a" -> Prototype.of(genTarget("a")))
+            targets = Map("a" -> genTarget("a"))
         )
 
         val session = Session.builder()
@@ -288,7 +288,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
     }
 
     it should "stop execution in case of an exception" in {
-        def genTarget(name:String, throwsException:Boolean, toBeExecuted:Boolean, before:Seq[String]=Seq(), after:Seq[String]=Seq()) : Context => Target = (ctx:Context) => {
+        def genTarget(name:String, throwsException:Boolean, toBeExecuted:Boolean, before:Seq[String]=Seq(), after:Seq[String]=Seq()) : Prototype[Target] = Prototype.of {
             val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = mock[Target]
             (target.name _).expects().atLeastOnce().returns(name)
@@ -335,7 +335,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
     }
 
     it should "continue execution in case of an exception with keep-going enabled" in {
-        def genTarget(name:String, throwsException:Boolean, before:Seq[String]=Seq(), after:Seq[String]=Seq()) : Context => Target = (ctx:Context) => {
+        def genTarget(name:String, throwsException:Boolean, before:Seq[String]=Seq(), after:Seq[String]=Seq()) : Prototype[Target] = Prototype.of {
             val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = mock[Target]
             (target.name _).expects().atLeastOnce().returns(name)
@@ -378,7 +378,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
     }
 
     it should "execute dependent targets of dirty targets" in {
-        def genTarget(name:String, doRun:Boolean, dirty:Trilean, produces:Set[ResourceIdentifier]=Set(), requires:Set[ResourceIdentifier]=Set()) : Context => Target = (ctx:Context) => {
+        def genTarget(name:String, doRun:Boolean, dirty:Trilean, produces:Set[ResourceIdentifier]=Set(), requires:Set[ResourceIdentifier]=Set()) : Prototype[Target] = Prototype.of {
             val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = mock[Target]
             (target.name _).expects().atLeastOnce().returns(name)

@@ -182,9 +182,9 @@ class RecursiveSqlMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): RecursiveSqlMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): RecursiveSqlMapping = {
         RecursiveSqlMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             context.evaluate(sql),
             file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
             url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u))

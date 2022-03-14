@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,9 +176,9 @@ class WebHookSpec extends HookSpec {
     @JsonProperty(value="targetSkip", required=false) private var targetSkip:Option[String] = None
     @JsonProperty(value="targetFailure", required=false) private var targetFailure:Option[String] = None
 
-    override def instantiate(context: Context): WebHook = {
+    override def instantiate(context: Context, properties:Option[Hook.Properties] = None): WebHook = {
         new WebHook(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             jobStart,
             jobFinish,
             jobSuccess,

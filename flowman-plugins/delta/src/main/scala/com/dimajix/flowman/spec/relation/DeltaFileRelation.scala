@@ -384,9 +384,9 @@ class DeltaFileRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
     @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq()
 
-    override def instantiate(context: Context): DeltaFileRelation = {
+    override def instantiate(context: Context, props:Option[Relation.Properties] = None): DeltaFileRelation = {
         DeltaFileRelation(
-            instanceProperties(context),
+            instanceProperties(context, props),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             new Path(context.evaluate(location)),

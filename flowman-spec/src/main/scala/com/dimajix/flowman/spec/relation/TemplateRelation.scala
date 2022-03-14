@@ -32,6 +32,7 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseRelation
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
@@ -51,18 +52,11 @@ case class TemplateRelation(
     private val templateContext = ScopeContext.builder(context)
         .withEnvironment(environment)
         .build()
-    private val relationInstance = {
-        project.get.relations(relation.name) match {
-            case spec:RelationSpec => spec.synchronized {
-                // Temporarily rename template, such that its instance will get the current name
-                val oldName = name
-                spec.name = name
-                val instance = spec.instantiate(templateContext)
-                spec.name = oldName
-                instance
-            }
-            case spec => spec.instantiate(templateContext)
-        }
+    lazy val relationInstance : Relation = {
+        val meta = Metadata(templateContext, name, category, "")
+        val props = Relation.Properties(templateContext, meta, super.description, super.documentation)
+        val spec = project.get.relations(relation.name)
+        spec.instantiate(templateContext, Some(props))
     }
 
     /**
@@ -101,8 +95,6 @@ case class TemplateRelation(
      */
     override def documentation : Option[RelationDoc] = {
         relationInstance.documentation
-            .map(_.merge(instanceProperties.documentation))
-            .orElse(instanceProperties.documentation)
             .map(_.copy(relation=Some(this)))
     }
 
@@ -253,8 +245,7 @@ case class TemplateRelation(
      * @return
      */
     override def describe(execution:Execution, partitions:Map[String,FieldValue] = Map()) : StructType = {
-        val schema = relationInstance.describe(execution, partitions)
-        applyDocumentation(schema)
+        relationInstance.describe(execution, partitions)
     }
 
         /**
@@ -279,9 +270,9 @@ class TemplateRelationSpec extends RelationSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): TemplateRelation = {
+    override def instantiate(context: Context, properties:Option[Relation.Properties] = None): TemplateRelation = {
         TemplateRelation(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             RelationIdentifier(context.evaluate(relation)),
             splitSettings(environment).toMap
         )

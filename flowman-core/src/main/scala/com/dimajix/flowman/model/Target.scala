@@ -29,6 +29,7 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.metric.LongAccumulatorMetric
 import com.dimajix.flowman.metric.Selector
+import com.dimajix.flowman.model
 import com.dimajix.spark.sql.functions.count_records
 
 
@@ -62,7 +63,7 @@ final case class TargetDigest(
     project:String,
     target:String,
     phase:Phase,
-    partitions:Map[String,String] = Map()
+    partitions:Map[String,String] = Map.empty
 ) {
     def asMap: Map[String, String] =
         Map(
@@ -81,8 +82,8 @@ object Target {
             Properties(
                 context,
                 Metadata(context, name, Category.TARGET, kind),
-                Seq(),
-                Seq(),
+                Seq.empty,
+                Seq.empty,
                 None,
                 None
             )
@@ -95,19 +96,32 @@ object Target {
         after: Seq[TargetIdentifier],
         description:Option[String],
         documentation: Option[TargetDoc]
-    ) extends Instance.Properties[Properties] {
+    ) extends model.Properties[Properties] {
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
         override val kind : String = metadata.kind
         override val name : String = metadata.name
 
         override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
+
+        def merge(other: Properties): Properties = {
+            Properties(
+                context,
+                metadata.merge(other.metadata),
+                (before ++ other.before).distinct,
+                (after ++ other.after).distinct,
+                other.description.orElse(description),
+                documentation.map(_.merge(other.documentation)).orElse(other.documentation)
+            )
+        }
         def identifier : TargetIdentifier = TargetIdentifier(name, project.map(_.name))
     }
 }
 
 
 trait Target extends Instance {
+    override type PropertiesType = Target.Properties
+
     /**
       * Returns the category of this resource
       * @return

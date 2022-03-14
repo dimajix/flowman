@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,10 +111,10 @@ case class MappingDataset(
 class MappingDatasetSpec extends DatasetSpec {
     @JsonProperty(value="mapping", required = true) private var mapping: String = _
 
-    override def instantiate(context: Context): MappingDataset = {
+    override def instantiate(context: Context, properties:Option[Dataset.Properties] = None): MappingDataset = {
         val id = MappingOutputIdentifier(context.evaluate(mapping))
         MappingDataset(
-            instanceProperties(context, id.toString),
+            instanceProperties(context, id.toString, properties),
             id
         )
     }

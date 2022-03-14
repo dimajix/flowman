@@ -43,19 +43,20 @@ object HookSpec extends TypeRegistry[HookSpec] {
 abstract class HookSpec extends Spec[Hook] {
     @JsonProperty(value="kind", required = true) protected var kind: String = _
 
-    def instantiate(context:Context): Hook
+    def instantiate(context:Context, properties:Option[Hook.Properties] = None): Hook
 
     /**
      * Returns a set of common properties
      * @param context
      * @return
      */
-    protected def instanceProperties(context:Context) : Hook.Properties = {
+    protected def instanceProperties(context:Context, properties:Option[Hook.Properties]) : Hook.Properties = {
         require(context != null)
-        Hook.Properties(
+        val props = Hook.Properties(
             context,
             Metadata(context, kind, Category.HOOK, kind)
         )
+        properties.map(p => props.merge(p)).getOrElse(props)
     }
 }
 

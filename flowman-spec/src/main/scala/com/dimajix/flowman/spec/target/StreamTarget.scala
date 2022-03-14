@@ -236,7 +236,7 @@ class StreamTargetSpec extends TargetSpec {
     @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
     @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
 
-    override def instantiate(context: Context): Target = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): Target = {
         val conf = context.flowmanConf
         val checkpointLocation = context.evaluate(this.checkpointLocation)
             .getOrElse(new File(System.getProperty("java.io.tmpdir"), "flowman-streaming-sink-" + name + "-" + System.currentTimeMillis()).toString)
@@ -248,7 +248,7 @@ class StreamTargetSpec extends TargetSpec {
         }
 
         StreamTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
             relation.instantiate(context),
             OutputMode.ofString(context.evaluate(this.mode)),

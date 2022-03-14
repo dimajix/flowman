@@ -54,9 +54,9 @@ class ImpalaConnectionSpec extends ConnectionSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): Connection = {
+    override def instantiate(context: Context, props:Option[Connection.Properties] = None): Connection = {
         ImpalaConnection(
-            instanceProperties(context),
+            instanceProperties(context, props),
             username.map(context.evaluate),
             password.map(context.evaluate),
             context.evaluate(properties),

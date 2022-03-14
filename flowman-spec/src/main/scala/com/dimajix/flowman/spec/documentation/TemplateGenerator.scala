@@ -24,7 +24,7 @@ import scala.util.matching.Regex
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.common.io.Resources
 
-import com.dimajix.flowman.documentation.BaseGenerator
+import com.dimajix.flowman.documentation.AbstractGenerator
 import com.dimajix.flowman.documentation.MappingDoc
 import com.dimajix.flowman.documentation.MappingDocWrapper
 import com.dimajix.flowman.documentation.ProjectDoc
@@ -46,7 +46,7 @@ abstract class TemplateGenerator(
     excludeMappings:Seq[Regex] = Seq.empty,
     includeTargets:Seq[Regex] = Seq(".*".r),
     excludeTargets:Seq[Regex] = Seq.empty
-) extends BaseGenerator {
+) extends AbstractGenerator {
     override def generate(context:Context, execution: Execution, documentation: ProjectDoc): Unit = {
         def checkRegex(id:Identifier[_], regex:Regex) : Boolean = {
             regex.unapplySeq(id.toString).nonEmpty || regex.unapplySeq(id.name).nonEmpty

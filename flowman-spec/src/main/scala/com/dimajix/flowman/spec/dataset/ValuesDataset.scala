@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,9 +113,9 @@ class ValuesDatasetSpec extends DatasetSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): ValuesDataset = {
+    override def instantiate(context: Context, properties:Option[Dataset.Properties] = None): ValuesDataset = {
         ValuesDataset(
-            instanceProperties(context, "values"),
+            instanceProperties(context, "values", properties),
             context.evaluate(columns).toSeq.map(kv => Field(kv._1, FieldType.of(kv._2))),
             schema.map(_.instantiate(context)),
             records.map(_.map(context.evaluate))

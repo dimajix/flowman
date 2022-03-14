@@ -25,12 +25,12 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.spec.Spec
 
 
-class RelationDocSpec extends Spec[RelationDoc] {
+class RelationDocSpec {
     @JsonProperty(value="description", required=false) private var description:Option[String] = None
     @JsonProperty(value="columns", required=false) private var columns:Seq[ColumnDocSpec] = Seq()
     @JsonProperty(value="checks", required=false) private var checks:Seq[SchemaCheckSpec] = Seq()
 
-    override def instantiate(context: Context): RelationDoc = {
+    def instantiate(context: Context): RelationDoc = {
         val doc = RelationDoc(
             None,
             None,

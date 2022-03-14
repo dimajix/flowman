@@ -46,19 +46,20 @@ object DatasetSpec extends TypeRegistry[DatasetSpec] {
 abstract class DatasetSpec extends Spec[Dataset] {
     @JsonProperty(value="kind", required = true) protected var kind: String = _
 
-    override def instantiate(context:Context) : Dataset
+    override def instantiate(context:Context, properties:Option[Dataset.Properties] = None) : Dataset
 
     /**
       * Returns a set of common properties
       * @param context
       * @return
       */
-    protected def instanceProperties(context:Context, name:String) : Dataset.Properties = {
+    protected def instanceProperties(context:Context, name:String, properties:Option[Dataset.Properties]) : Dataset.Properties = {
         require(context != null)
-        Dataset.Properties(
+        val props = Dataset.Properties(
             context,
             Metadata(context, kind + "(" + name + ")", Category.DATASET, kind)
         )
+        properties.map(p => props.merge(p)).getOrElse(props)
     }
 }
 

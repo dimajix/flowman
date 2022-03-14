@@ -560,9 +560,9 @@ class HiveUnionTableRelationSpec extends RelationSpec with SchemaRelationSpec wi
       * @param context
       * @return
       */
-    override def instantiate(context: Context): HiveUnionTableRelation = {
+    override def instantiate(context: Context, props:Option[Relation.Properties] = None): HiveUnionTableRelation = {
         HiveUnionTableRelation(
-            instanceProperties(context),
+            instanceProperties(context, props),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             TableIdentifier(context.evaluate(tablePrefix), context.evaluate(tableDatabase)),

@@ -25,6 +25,7 @@ import com.dimajix.flowman.execution.LifecycleToken
 import com.dimajix.flowman.execution.MeasureToken
 import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.execution.Token
+import com.dimajix.flowman.model
 
 
 object Hook {
@@ -40,18 +41,24 @@ object Hook {
         context:Context,
         metadata:Metadata
     )
-    extends Instance.Properties[Properties] {
+    extends model.Properties[Properties] {
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
         override val kind : String = metadata.kind
         override val name : String  = metadata.name
 
         override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
+
+        def merge(other: Properties): Properties = {
+            Properties(context, metadata.merge(other.metadata))
+        }
     }
 }
 
 
 trait Hook extends Instance with ExecutionListener {
+    override type PropertiesType = Hook.Properties
+
     /**
      * Returns the category of this resource
      * @return

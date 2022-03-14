@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,20 @@ package com.dimajix.flowman.history
 
 import com.dimajix.flowman.execution
 import com.dimajix.flowman.execution.AbstractExecutionListener
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Token
 import com.dimajix.flowman.history
-import com.dimajix.flowman.metric.Metric
+import com.dimajix.flowman.model
+import com.dimajix.flowman.model.AbstractInstance
+import com.dimajix.flowman.model.Category
+import com.dimajix.flowman.model.Instance
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.Metadata
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
@@ -35,7 +41,30 @@ abstract class JobToken
 abstract class TargetToken
 
 
-abstract class StateStore {
+object StateStore {
+    final case class Properties(
+        kind:String
+    ) extends model.Properties[Properties] {
+        override val context : Context = null
+        override val namespace : Option[Namespace] = None
+        override val project : Option[Project] = None
+        override val name : String = ""
+        override val metadata : Metadata = Metadata(name="", category=model.Category.HISTORY_STORE.lower, kind=kind)
+
+        override def withName(name: String): Properties = ???
+    }
+}
+
+trait StateStore extends Instance {
+    override type PropertiesType = StateStore.Properties
+
+    /**
+     * Returns the category of the resource
+     *
+     * @return
+     */
+    final override def category: Category = Category.HISTORY_STORE
+
     /**
      * Returns the state of a job, or None if no information is available
      *
@@ -134,6 +163,11 @@ abstract class StateStore {
     def countTargets(query: TargetQuery, grouping: TargetColumn): Map[String, Int]
 
     def findJobMetrics(jobQuery: JobQuery, groupings: Seq[String]): Seq[MetricSeries]
+}
+
+
+abstract class AbstractStateStore extends AbstractInstance with StateStore {
+    override protected def instanceProperties: StateStore.Properties = StateStore.Properties(kind)
 }
 
 

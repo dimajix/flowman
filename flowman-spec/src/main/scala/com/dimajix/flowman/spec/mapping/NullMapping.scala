@@ -97,9 +97,9 @@ class NullMappingSpec extends MappingSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): NullMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): NullMapping = {
         NullMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             context.evaluate(columns).map { case(name,typ) => Field(name, FieldType.of(typ))}.toSeq,
             schema.map(_.instantiate(context))
         )

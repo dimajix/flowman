@@ -147,9 +147,9 @@ class ColumnsAssertionSpec extends AssertionSpec {
     @JsonProperty(value="mapping", required=true) private var mapping:String = ""
     @JsonProperty(value="expected", required=false) private var expected:Seq[String] = Seq()
 
-    override def instantiate(context: Context): ColumnsAssertion = {
+    override def instantiate(context: Context, properties:Option[Assertion.Properties] = None): ColumnsAssertion = {
         ColumnsAssertion(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(mapping)),
             expected.map(e => PredicateParser.parse(context.evaluate(e)))
         )

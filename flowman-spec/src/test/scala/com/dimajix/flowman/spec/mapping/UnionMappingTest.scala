@@ -172,9 +172,9 @@ class UnionMappingTest  extends AnyFlatSpec with Matchers with MockFactory with 
             )
         )
 
-        (unionGen.instantiate _).expects(context).returns(union)
-        (m1Gen.instantiate _).expects(context).returns(m1)
-        (m2Gen.instantiate _).expects(context).returns(m2)
+        (unionGen.instantiate _).expects(context, None).returns(union)
+        (m1Gen.instantiate _).expects(context, None).returns(m1)
+        (m2Gen.instantiate _).expects(context, None).returns(m2)
 
         val graph = Graph.ofProject(context, project, Phase.BUILD)
         val mapNode = graph.mapping(union)

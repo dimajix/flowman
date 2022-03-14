@@ -17,6 +17,7 @@
 package com.dimajix.flowman.model
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
 
@@ -33,13 +34,20 @@ object Schema {
     final case class Properties(
         context:Context,
         metadata:Metadata
-    ) extends Instance.Properties[Properties] {
+    ) extends model.Properties[Properties] {
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
         override val kind : String = metadata.kind
         override val name : String = metadata.name
 
         override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
+
+        def merge(other: Properties): Properties = {
+            Properties(
+                context,
+                metadata.merge(other.metadata)
+            )
+        }
     }
 }
 
@@ -48,6 +56,8 @@ object Schema {
   * Interface class for declaring relations (for sources and sinks) as part of a model
   */
 trait Schema extends Instance {
+    override type PropertiesType = Schema.Properties
+
     /**
       * Returns the category of the resource
       *

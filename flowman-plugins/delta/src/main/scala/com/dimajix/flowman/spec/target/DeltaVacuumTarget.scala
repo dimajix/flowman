@@ -208,9 +208,9 @@ class DeltaVacuumTargetSpec extends TargetSpec {
     @JsonProperty(value = "minFiles", required = false) private var minFiles: String = "16"
     @JsonProperty(value = "maxFiles", required = false) private var maxFiles: String = "64"
 
-    override def instantiate(context: Context): DeltaVacuumTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties]): DeltaVacuumTarget = {
         DeltaVacuumTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             relation.instantiate(context),
             context.evaluate(retentionTime).map(Duration.parse),
             context.evaluate(compaction).toBoolean,

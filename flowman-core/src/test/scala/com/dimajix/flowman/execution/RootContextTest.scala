@@ -103,9 +103,9 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
 
         // Access everything via root context
         val rootContext = session.context
-        (namespaceConnectionTemplate.instantiate _).expects(rootContext).returns(namespaceConnection)
+        (namespaceConnectionTemplate.instantiate _).expects(rootContext,None).returns(namespaceConnection)
         rootContext.getConnection(ConnectionIdentifier("con_namespace")) should be (namespaceConnection)
-        (namespaceProfileConnectionTemplate.instantiate _).expects(rootContext).returns(namespaceProfileConnection)
+        (namespaceProfileConnectionTemplate.instantiate _).expects(rootContext,None).returns(namespaceProfileConnection)
         rootContext.getConnection(ConnectionIdentifier("con_namespace_profile")) should be (namespaceProfileConnection)
         a[NoSuchConnectionException] should be thrownBy (rootContext.getConnection(ConnectionIdentifier("con_project")))
         a[NoSuchConnectionException] should be thrownBy (rootContext.getConnection(ConnectionIdentifier("con_project_profile")))
@@ -118,9 +118,9 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
         val projectContext = session.getContext(project)
         projectContext.getConnection(ConnectionIdentifier("con_namespace")) should be (namespaceConnection)
         projectContext.getConnection(ConnectionIdentifier("con_namespace_profile")) should be (namespaceProfileConnection)
-        (projectConnectionTemplate.instantiate _).expects(projectContext).returns(projectConnection)
+        (projectConnectionTemplate.instantiate _).expects(projectContext,None).returns(projectConnection)
         projectContext.getConnection(ConnectionIdentifier("con_project")) should be (projectConnection)
-        (projectProfileConnectionTemplate.instantiate _).expects(projectContext).returns(projectProfileConnection)
+        (projectProfileConnectionTemplate.instantiate _).expects(projectContext,None).returns(projectProfileConnection)
         projectContext.getConnection(ConnectionIdentifier("con_project_profile")) should be (projectProfileConnection)
         projectContext.getConnection(ConnectionIdentifier("my_project/con_project")) should be (projectConnection)
         a[NoSuchConnectionException] should be thrownBy (projectContext.getConnection(ConnectionIdentifier("my_project/con_namespace")))
@@ -167,15 +167,15 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
 
         // Access everything via project context
         val projectContext = rootContext.getProjectContext(project)
-        (projectMappingTemplate1.instantiate _).expects(projectContext).returns(projectMapping1)
+        (projectMappingTemplate1.instantiate _).expects(projectContext,None).returns(projectMapping1)
         projectContext.getMapping(MappingIdentifier("m1")) should be (projectMapping1)
         projectContext.getMapping(MappingIdentifier("my_project/m1")) should be (projectMapping1)
         projectContext.getMapping(MappingIdentifier("m1"), false) should be (projectMapping1)
         projectContext.getMapping(MappingIdentifier("my_project/m1"), false) should be (projectMapping1)
-        (overrideMappingTemplate.instantiate _).expects(projectContext).returns(overrideMapping)
+        (overrideMappingTemplate.instantiate _).expects(projectContext,None).returns(overrideMapping)
         projectContext.getMapping(MappingIdentifier("m2")) should be (overrideMapping)
         projectContext.getMapping(MappingIdentifier("my_project/m2")) should be (overrideMapping)
-        (projectMappingTemplate2.instantiate _).expects(projectContext).returns(projectMapping2)
+        (projectMappingTemplate2.instantiate _).expects(projectContext,None).returns(projectMapping2)
         projectContext.getMapping(MappingIdentifier("m2"), false) should be (projectMapping2)
         projectContext.getMapping(MappingIdentifier("my_project/m2"), false) should be (projectMapping2)
 
@@ -220,15 +220,15 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
 
         // Access everything via project context
         val projectContext = rootContext.getProjectContext(project)
-        (projectRelationTemplate1.instantiate _).expects(projectContext).returns(projectRelation1)
+        (projectRelationTemplate1.instantiate _).expects(projectContext,None).returns(projectRelation1)
         projectContext.getRelation(RelationIdentifier("m1")) should be (projectRelation1)
         projectContext.getRelation(RelationIdentifier("my_project/m1")) should be (projectRelation1)
         projectContext.getRelation(RelationIdentifier("m1"), false) should be (projectRelation1)
         projectContext.getRelation(RelationIdentifier("my_project/m1"), false) should be (projectRelation1)
-        (overrideRelationTemplate.instantiate _).expects(projectContext).returns(overrideRelation)
+        (overrideRelationTemplate.instantiate _).expects(projectContext,None).returns(overrideRelation)
         projectContext.getRelation(RelationIdentifier("m2")) should be (overrideRelation)
         projectContext.getRelation(RelationIdentifier("my_project/m2")) should be (overrideRelation)
-        (projectRelationTemplate2.instantiate _).expects(projectContext).returns(projectRelation2)
+        (projectRelationTemplate2.instantiate _).expects(projectContext,None).returns(projectRelation2)
         projectContext.getRelation(RelationIdentifier("m2"), false) should be (projectRelation2)
         projectContext.getRelation(RelationIdentifier("my_project/m2"), false) should be (projectRelation2)
 
@@ -268,7 +268,7 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
         project2Ctx.evaluate("$env1") should be ("val1")
 
         val project3JobGen = mock[Prototype[Job]]
-        (project3JobGen.instantiate _).expects(*).onCall((ctx:Context) => Job.builder(ctx).setName("main").addEnvironment("jobenv", "jobval").build())
+        (project3JobGen.instantiate _).expects(*,None).onCall((ctx:Context,_) => Job.builder(ctx).setName("main").addEnvironment("jobenv", "jobval").build())
         val project3 = Project(
             name = "project3",
             jobs = Map("main" -> project3JobGen)
@@ -278,7 +278,7 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
         project3Ctx.evaluate("$jobenv") should be ("jobval")
 
         val project4JobGen = mock[Prototype[Job]]
-        (project4JobGen.instantiate _).expects(*).onCall((ctx:Context) => Job.builder(ctx).setName("job").addParameter("arg1", StringType).addParameter("arg2", StringType, value=Some("default")).build())
+        (project4JobGen.instantiate _).expects(*,None).onCall((ctx:Context,_) => Job.builder(ctx).setName("job").addParameter("arg1", StringType).addParameter("arg2", StringType, value=Some("default")).build())
         val project4 = Project(
             name = "project4",
             jobs = Map("job" -> project4JobGen)

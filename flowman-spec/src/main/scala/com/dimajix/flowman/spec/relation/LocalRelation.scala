@@ -367,9 +367,9 @@ class LocalRelationSpec extends RelationSpec with SchemaRelationSpec with Partit
       * @param context
       * @return
       */
-    override def instantiate(context: Context): LocalRelation = {
+    override def instantiate(context: Context, properties:Option[Relation.Properties] = None): LocalRelation = {
         LocalRelation(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             makePath(context.evaluate(location)),

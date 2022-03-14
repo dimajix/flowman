@@ -152,8 +152,8 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
             Mapping.Properties(context, "m2"),
             Set()
         )
-        //(mappingTemplate1.instantiate _).expects(context).returns(mapping1)
-        (mappingTemplate2.instantiate _).expects(context).returns(mapping2)
+        //(mappingTemplate1.instantiate _).expects(context,None).returns(mapping1)
+        (mappingTemplate2.instantiate _).expects(context,None).returns(mapping2)
 
         val graphBuilder = new GraphBuilder(context, Phase.BUILD)
         val ref1 = graphBuilder.refMapping(mapping1)

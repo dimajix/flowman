@@ -38,35 +38,35 @@ import com.dimajix.flowman.spec.Spec
     new JsonSubTypes.Type(name = "checks", value = classOf[CheckCollectorSpec])
 ))
 abstract class CollectorSpec extends Spec[Collector] {
-    override def instantiate(context: Context): Collector
+    override def instantiate(context: Context, properties:Option[Collector.Properties] = None): Collector
 }
 
 final class MappingCollectorSpec extends CollectorSpec {
-    override def instantiate(context: Context): MappingCollector = {
+    override def instantiate(context: Context, properties:Option[Collector.Properties] = None): MappingCollector = {
         new MappingCollector()
     }
 }
 
 final class RelationCollectorSpec extends CollectorSpec {
-    override def instantiate(context: Context): RelationCollector = {
+    override def instantiate(context: Context, properties:Option[Collector.Properties] = None): RelationCollector = {
         new RelationCollector()
     }
 }
 
 final class TargetCollectorSpec extends CollectorSpec {
-    override def instantiate(context: Context): TargetCollector = {
+    override def instantiate(context: Context, properties:Option[Collector.Properties] = None): TargetCollector = {
         new TargetCollector()
     }
 }
 
 final class LineageCollectorSpec extends CollectorSpec {
-    override def instantiate(context: Context): LineageCollector = {
+    override def instantiate(context: Context, properties:Option[Collector.Properties] = None): LineageCollector = {
         new LineageCollector()
     }
 }
 
 final class CheckCollectorSpec extends CollectorSpec {
-    override def instantiate(context: Context): CheckCollector = {
+    override def instantiate(context: Context, properties:Option[Collector.Properties] = None): CheckCollector = {
         new CheckCollector()
     }
 }

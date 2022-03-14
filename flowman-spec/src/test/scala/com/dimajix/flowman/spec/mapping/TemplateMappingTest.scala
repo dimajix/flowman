@@ -58,8 +58,17 @@ class TemplateMappingTest extends AnyFlatSpec with Matchers {
         mapping should not be (null)
         mapping shouldBe a[TemplateMapping]
         mapping.name should be ("template")
-
+        mapping.kind should be ("template")
         mapping.inputs should be (Set(MappingOutputIdentifier("lala")))
+        mapping.identifier should be (MappingIdentifier("project/template"))
+        mapping.project should be (Some(project))
+
+        val instance = mapping.asInstanceOf[TemplateMapping].mappingInstance
+        instance shouldBe a[SchemaMapping]
+        instance.name should be ("template")
+        instance.kind should be ("schema")
+        instance.identifier should be (MappingIdentifier("project/template"))
+        instance.project should be (Some(project))
     }
 
     it should "provide own documentation" in {

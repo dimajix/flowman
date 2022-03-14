@@ -154,9 +154,9 @@ class ProjectMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): ProjectMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): ProjectMapping = {
         ProjectMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             columns.map(_.instantiate(context)),
             context.evaluate(filter)

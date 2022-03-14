@@ -107,7 +107,7 @@ class JdbcMetricSinkSpec extends MetricSinkSpec {
     @JsonProperty(value = "labels", required = false) private var labels:Map[String,String] = Map.empty
     @JsonProperty(value = "tablePrefix", required = false) private var tablePrefix:String = "flowman_"
 
-    override def instantiate(context: Context): MetricSink = {
+    override def instantiate(context: Context, properties:Option[MetricSink.Properties] = None): MetricSink = {
         new JdbcMetricSink(
             connection.instantiate(context),
             labels,

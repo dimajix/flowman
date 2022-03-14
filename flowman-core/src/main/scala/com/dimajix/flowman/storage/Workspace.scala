@@ -20,7 +20,7 @@ import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Project
 
 
-abstract class Workspace extends Store {
+trait Workspace extends Store {
     def name : String
 
     def root : File
@@ -60,4 +60,9 @@ abstract class Workspace extends Store {
      * @param parcel
      */
     def removeParcel(parcel:String) : Unit
+}
+
+
+abstract class AbstractWorkspace extends AbstractStore with Workspace {
+
 }

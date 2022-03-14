@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.dimajix.flowman.dsl
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Identifier
 import com.dimajix.flowman.model.Instance
+import com.dimajix.flowman.model.Properties
 import com.dimajix.flowman.model.Prototype
 
 
@@ -53,22 +54,22 @@ class FieldMap {
 
 
 
-trait Wrapper[T <: Instance, P <: Instance.Properties[P]] {
+trait Wrapper[T <: Instance, P <: Properties[P]] {
     def gen:P => T
     def props:Context => P
 }
 
-case class NamedWrapper[T <: Instance, P <: Instance.Properties[P]](name:String, wrapper:Wrapper[T,P]) extends Prototype[T] {
+case class NamedWrapper[T <: Instance, P <: Properties[P]](name:String, wrapper:Wrapper[T,P]) extends Prototype[T] {
     def identifier : Identifier[T] = Identifier[T](name, None)
 
-    override def instantiate(context: Context): T = {
+    override def instantiate(context: Context, properties:Option[T#PropertiesType] = None): T = {
         val props = wrapper.props(context).withName(name)
         wrapper.gen(props)
     }
 }
 
 
-final class WrapperList[S <: Instance,P <: Instance.Properties[P]](private var wrappers : Seq[NamedWrapper[S,P]] = Seq())
+final class WrapperList[S <: Instance,P <: Properties[P]](private var wrappers : Seq[NamedWrapper[S,P]] = Seq())
     extends Seq[NamedWrapper[S,P]] {
     override def length: Int = wrappers.length
     override def apply(idx: Int): NamedWrapper[S, P] = wrappers(idx)

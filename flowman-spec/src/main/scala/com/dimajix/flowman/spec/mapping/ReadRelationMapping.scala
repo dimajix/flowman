@@ -145,14 +145,14 @@ class ReadRelationMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): ReadRelationMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): ReadRelationMapping = {
         val partitions= this.partitions.mapValues {
                 case v: SingleValue => SingleValue(context.evaluate(v.value))
                 case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
                 case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), v.step.map(context.evaluate))
             }
         ReadRelationMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             relation.instantiate(context),
             context.evaluate(columns).map { case(name,typ) => Field(name, FieldType.of(typ))}.toSeq,
             partitions,

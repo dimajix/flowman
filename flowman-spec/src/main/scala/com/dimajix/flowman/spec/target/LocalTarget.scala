@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -209,9 +209,9 @@ class LocalTargetSpec extends TargetSpec {
     @JsonProperty(value="escape", required=true) private var escape:String = "\\"
     @JsonProperty(value="columns", required=true) private var columns:Seq[String] = Seq()
 
-    override def instantiate(context: Context): LocalTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): LocalTarget = {
         LocalTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
             context.evaluate(filename),
             context.evaluate(encoding),

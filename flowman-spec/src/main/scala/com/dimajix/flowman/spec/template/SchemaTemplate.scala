@@ -34,17 +34,17 @@ case class SchemaTemplate(
     parameters: Seq[Template.Parameter],
     spec:Prototype[Schema]
 ) extends BaseTemplate[Schema] with com.dimajix.flowman.model.SchemaTemplate {
-    override protected def instantiateInternal(context: Context, name: String): Schema = {
-        spec.instantiate(context)
+    override protected def instantiateInternal(context: Context, props: Schema.Properties): Schema = {
+        spec.instantiate(context, Some(props))
     }
 }
 
 class SchemaTemplateSpec extends TemplateSpec {
     @JsonProperty(value="template", required=true) private var spec:SchemaSpec = _
 
-    override def instantiate(context: Context): SchemaTemplate = {
+    override def instantiate(context: Context, properties:Option[Template.Properties] = None): SchemaTemplate = {
         SchemaTemplate(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             parameters.map(_.instantiate(context)),
             spec
         )
@@ -61,14 +61,15 @@ class SchemaTemplateInstanceSpec extends SchemaSpec {
         args = args.updated(name, value)
     }
 
-    override def instantiate(context: Context): Schema = {
+    override def instantiate(context: Context, properties:Option[Schema.Properties] = None): Schema = {
         // get template name from member "kind"
         // Lookup template in context
         val identifier = TemplateIdentifier(kind.stripPrefix("template/"))
         val template = context.getTemplate(identifier).asInstanceOf[SchemaTemplate]
+        val props = instanceProperties(context, "")
 
         // parse args
         val parsedArgs = template.arguments(context.evaluate(args))
-        template.instantiate(context, "", parsedArgs)
+        template.instantiate(context, props, parsedArgs)
     }
 }

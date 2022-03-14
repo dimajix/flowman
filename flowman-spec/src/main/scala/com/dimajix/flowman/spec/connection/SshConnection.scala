@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,9 +52,9 @@ class SshConnectionSpec extends ConnectionSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): SshConnection = {
+    override def instantiate(context: Context, properties:Option[Connection.Properties] = None): SshConnection = {
         SshConnection(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             context.evaluate(host),
             Option(context.evaluate(port)).map(_.toInt).getOrElse(22),
             Option(context.evaluate(keyFile)).filter(_.nonEmpty).map(f => new File(f)).orNull,

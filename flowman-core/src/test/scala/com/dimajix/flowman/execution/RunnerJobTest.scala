@@ -188,7 +188,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             .addTarget(TargetIdentifier("some_target"))
             .build()
 
-        (targetTemplate.instantiate _).expects(*).returns(target)
+        (targetTemplate.instantiate _).expects(*,None).returns(target)
         (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier("project/some_target"))
         (target.name _).expects().atLeastOnce().returns("some_target")
         (target.before _).expects().returns(Seq())
@@ -442,9 +442,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
 
         val ns = Namespace(
             name = "default",
-            hooks = Seq(new Prototype[Hook] {
-                override def instantiate(context: Context): Hook = namespaceHook
-            })
+            hooks = Seq(Prototype.of(namespaceHook))
         )
         val project = Project(
             name = "default",

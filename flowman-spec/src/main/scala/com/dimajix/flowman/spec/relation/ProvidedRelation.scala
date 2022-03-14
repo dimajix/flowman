@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,9 +157,9 @@ class ProvidedRelation(
 class ProvidedRelationSpec extends RelationSpec with SchemaRelationSpec {
     @JsonProperty(value="table") private var table: String = _
 
-    override def instantiate(context: Context): Relation = {
+    override def instantiate(context: Context, properties:Option[Relation.Properties] = None): Relation = {
         new ProvidedRelation(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             schema.map(_.instantiate(context)),
             context.evaluate(table)
         )

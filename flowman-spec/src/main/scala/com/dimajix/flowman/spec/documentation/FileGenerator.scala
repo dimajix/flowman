@@ -101,7 +101,7 @@ class FileGeneratorSpec extends TemplateGeneratorSpec {
     @JsonProperty(value="location", required=true) private var location:String = _
     @JsonProperty(value="template", required=false) private var template:String = FileGenerator.defaultTemplate.toString
 
-    override def instantiate(context: Context): Generator = {
+    override def instantiate(context: Context, properties:Option[Generator.Properties]): Generator = {
         val url = getTemplateUrl(context)
         FileGenerator(
             new Path(context.evaluate(location)),

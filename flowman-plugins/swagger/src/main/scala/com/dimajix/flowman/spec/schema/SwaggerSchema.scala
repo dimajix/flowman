@@ -68,9 +68,9 @@ class SwaggerSchemaSpec extends ExternalSchemaSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): SwaggerSchema = {
+    override def instantiate(context: Context, properties:Option[Schema.Properties] = None): SwaggerSchema = {
         SwaggerSchema(
-            Schema.Properties(context),
+            instanceProperties(context, file.getOrElse("")),
             file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
             url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)),
             context.evaluate(spec),

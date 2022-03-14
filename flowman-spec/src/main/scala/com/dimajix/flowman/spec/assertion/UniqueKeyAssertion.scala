@@ -92,9 +92,9 @@ class UniqueKeyAssertionSpec extends AssertionSpec {
     @JsonProperty(value="mapping", required=true) private var mapping:String = _
     @JsonProperty(value="key", required=true) private var key:Seq[String] = Seq()
 
-    override def instantiate(context: Context): UniqueKeyAssertion = {
+    override def instantiate(context: Context, properties:Option[Assertion.Properties] = None): UniqueKeyAssertion = {
         UniqueKeyAssertion(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
             key.map(context.evaluate)
         )

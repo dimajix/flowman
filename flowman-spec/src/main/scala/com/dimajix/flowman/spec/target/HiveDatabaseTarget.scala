@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,9 +116,9 @@ case class HiveDatabaseTarget(
 class HiveDatabaseTargetSpec extends TargetSpec {
     @JsonProperty(value="database", required=true) private var database:String = _
 
-    override def instantiate(context: Context): HiveDatabaseTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): HiveDatabaseTarget = {
         HiveDatabaseTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             context.evaluate(database)
         )
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.dimajix.flowman.model.Instance
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.Properties
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.TargetIdentifier
@@ -68,7 +69,7 @@ class Project {
 
 trait Converters {
     implicit class NamedRelation(name:String) {
-        def :=[T <: Instance,P <: Instance.Properties[P]](rel:Wrapper[T, P]) : NamedWrapper[T, P] = NamedWrapper[T,P](name, rel)
+        def :=[T <: Instance,P <: Properties[P]](rel:Wrapper[T, P]) : NamedWrapper[T, P] = NamedWrapper[T,P](name, rel)
     }
     implicit def wrapRelation(relation:model.Relation.Properties => model.Relation) : RelationWrapper = RelationGenHolder(relation)
     implicit def wrapMapping(mapping:model.Mapping.Properties => model.Mapping) : MappingWrapper = MappingGenHolder(mapping)
@@ -87,17 +88,17 @@ trait Converters {
     implicit def toSeq[T](v:T) : Seq[T] = Seq(v)
     implicit def toMap[K,V](kv:(K,V)) : Map[K,V] = Map(kv)
 
-    implicit def toIdentifierList[S <: Instance,P <: Instance.Properties[P]](wrappers:WrapperList[S,P]) : Seq[Identifier[S]] = wrappers.identifiers
+    implicit def toIdentifierList[S <: Instance,P <: Properties[P]](wrappers:WrapperList[S,P]) : Seq[Identifier[S]] = wrappers.identifiers
 }
 
 
 trait ContextAware {
-    def withContext[S <: Instance,P <: Instance.Properties[P]](fn:Context => Wrapper[S, P]): Wrapper[S, P] = new Wrapper[S, P] {
+    def withContext[S <: Instance,P <: Properties[P]](fn:Context => Wrapper[S, P]): Wrapper[S, P] = new Wrapper[S, P] {
         override def gen: P => S = p => fn(p.context).gen(p)
         override def props: Context => P = c => fn(c).props(c)
     }
 
-    def withEnvironment[S <: Instance,P <: Instance.Properties[P]](fn:Environment => Wrapper[S, P]): Wrapper[S, P] = new Wrapper[S, P] {
+    def withEnvironment[S <: Instance,P <: Properties[P]](fn:Environment => Wrapper[S, P]): Wrapper[S, P] = new Wrapper[S, P] {
         override def gen: P => S = p => fn(p.context.environment).gen(p)
         override def props: Context => P = c => fn(c.environment).props(c)
     }

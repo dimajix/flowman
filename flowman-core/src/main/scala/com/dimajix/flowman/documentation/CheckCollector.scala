@@ -22,7 +22,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
 
 
-class CheckCollector extends Collector {
+class CheckCollector extends AbstractCollector {
     private val logger = LoggerFactory.getLogger(getClass)
 
     /**

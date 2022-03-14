@@ -83,9 +83,9 @@ class DistinctMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
-    override def instantiate(context: Context): DistinctMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): DistinctMapping = {
         DistinctMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             context.evaluate(filter)
         )

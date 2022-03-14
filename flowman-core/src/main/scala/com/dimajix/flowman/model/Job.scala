@@ -31,6 +31,7 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.RangeValue
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.model
 
 
 /**
@@ -45,7 +46,7 @@ final case class JobDigest(
     project:String,
     job:String,
     phase:Phase,
-    args:Map[String,String] = Map()
+    args:Map[String,String] = Map.empty
 ) {
     def asMap: Map[String, String] =
          Map(
@@ -63,7 +64,7 @@ final case class JobLifecycle(
     project:String,
     job:String,
     phases:Seq[Phase],
-    args:Map[String,String] = Map()
+    args:Map[String,String] = Map.empty
 ) {
     def asMap: Map[String, String] =
         Map(
@@ -116,13 +117,17 @@ object Job {
         context: Context,
         metadata:Metadata,
         description:Option[String]
-   ) extends Instance.Properties[Properties] {
+   ) extends model.Properties[Properties] {
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
         override val kind : String = metadata.kind
         override val name : String = metadata.name
 
         override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
+
+        def merge(other: Properties): Properties = {
+            Properties(context, metadata.merge(other.metadata), description.orElse(other.description))
+        }
    }
 
     class Builder(context:Context) {
@@ -130,10 +135,10 @@ object Job {
         private var name:String = ""
         private var metadata:Metadata = Metadata(context, "", Category.JOB, "job")
         private var description:Option[String] = None
-        private var parameters:Seq[Parameter] = Seq()
-        private var targets:Seq[TargetIdentifier] = Seq()
-        private var environment:Map[String,String] = Map()
-        private var hooks:Seq[Prototype[Hook]] = Seq()
+        private var parameters:Seq[Parameter] = Seq.empty
+        private var targets:Seq[TargetIdentifier] = Seq.empty
+        private var environment:Map[String,String] = Map.empty
+        private var hooks:Seq[Prototype[Hook]] = Seq.empty
 
         def build() : Job = Job(
             Job.Properties(context, metadata.copy(name=name), description),
@@ -204,9 +209,7 @@ object Job {
         }
         def addHook(hook:Hook) : Builder = {
             require(hook != null)
-            val template = new Prototype[Hook] {
-                override def instantiate(context: Context): Hook = hook
-            }
+            val template = Prototype.of(hook)
             this.hooks = this.hooks :+ template
             this
         }
@@ -224,19 +227,19 @@ object Job {
         val parentParameters = parents
             .map(job => job.parameters.map(p => (p.name, p)).toMap)
             .reduceOption((params, elems) => params ++ elems)
-            .getOrElse(Map())
+            .getOrElse(Map.empty)
         val parentEnvironment = parents
             .map(job => job.environment)
             .reduceOption((envs, elems) => envs ++ elems)
-            .getOrElse(Map())
+            .getOrElse(Map.empty)
         val parentTargets = parents
             .map(job => job.targets)
             .reduceOption((targets, elems) => targets ++ elems)
-            .getOrElse(Seq())
+            .getOrElse(Seq.empty)
         val parentHooks = parents
             .map(job => job.hooks)
             .reduceOption((hooks, elems) => hooks ++ elems)
-            .getOrElse(Seq())
+            .getOrElse(Seq.empty)
         val parentMetrics = parents
             .flatMap(job => job.metrics)
             .headOption
@@ -265,12 +268,14 @@ object Job {
 
 final case class Job(
     instanceProperties:Job.Properties,
-    parameters:Seq[Job.Parameter] = Seq(),
-    environment:Map[String,String] = Map(),
-    targets:Seq[TargetIdentifier] = Seq(),
+    parameters:Seq[Job.Parameter] = Seq.empty,
+    environment:Map[String,String] = Map.empty,
+    targets:Seq[TargetIdentifier] = Seq.empty,
     metrics:Option[Prototype[MetricBoard]] = None,
-    hooks:Seq[Prototype[Hook]] = Seq()
+    hooks:Seq[Prototype[Hook]] = Seq.empty
 ) extends AbstractInstance {
+    override type PropertiesType = Job.Properties
+
     override def category: Category = Category.JOB
     override def kind : String = "job"
 
@@ -369,7 +374,7 @@ final case class Job(
 
         // Iterate by all parameters and create argument map
         val paramByName = parameters.map(p => (p.name, p)).toMap
-        args.toSeq.foldRight(Iterable[Map[String,Any]](Map()))((p,i) => interpolate(i, paramByName(p._1), p._2))
+        args.toSeq.foldRight(Iterable[Map[String,Any]](Map.empty))((p,i) => interpolate(i, paramByName(p._1), p._2))
     }
 
     /**

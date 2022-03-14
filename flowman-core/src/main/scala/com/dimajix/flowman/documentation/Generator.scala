@@ -18,13 +18,43 @@ package com.dimajix.flowman.documentation
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.model
+import com.dimajix.flowman.model.AbstractInstance
+import com.dimajix.flowman.model.Instance
+import com.dimajix.flowman.model.Metadata
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.Project
 
 
-abstract class Generator {
+object Generator {
+    final case class Properties(
+        kind:String
+    ) extends model.Properties[Properties] {
+        override val context : Context = null
+        override val namespace : Option[Namespace] = None
+        override val project : Option[Project] = None
+        override val name : String = ""
+        override val metadata : Metadata = Metadata(name="", category=model.Category.DOCUMENTATION_GENERATOR.lower, kind=kind)
+
+        override def withName(name: String): Properties = ???
+    }
+}
+
+
+trait Generator extends Instance {
+    override type PropertiesType = Generator.Properties
+
+    /**
+     * Returns the category of the resource
+     *
+     * @return
+     */
+    override def category: model.Category = model.Category.DOCUMENTATION_GENERATOR
+
     def generate(context:Context, execution: Execution, documentation: ProjectDoc) : Unit
 }
 
 
-abstract class BaseGenerator extends Generator {
-
+abstract class AbstractGenerator extends AbstractInstance with Generator {
+    override protected def instanceProperties: Generator.Properties = Generator.Properties(kind)
 }

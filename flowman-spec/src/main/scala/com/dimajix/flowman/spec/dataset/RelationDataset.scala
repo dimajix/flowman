@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,10 +129,10 @@ class RelationDatasetSpec extends DatasetSpec {
     @JsonProperty(value="relation", required = true) private var relation: RelationReferenceSpec = _
     @JsonProperty(value="partition", required = false) private var partition: Map[String, String] = Map()
 
-    override def instantiate(context: Context): RelationDataset = {
+    override def instantiate(context: Context, properties:Option[Dataset.Properties] = None): RelationDataset = {
         val rel = relation.instantiate(context)
         RelationDataset(
-            instanceProperties(context, rel.identifier.toString),
+            instanceProperties(context, rel.identifier.toString, properties),
             relation.instantiate(context),
             partition.map { case(n,p) => (n,SingleValue(context.evaluate(p))) }
         )

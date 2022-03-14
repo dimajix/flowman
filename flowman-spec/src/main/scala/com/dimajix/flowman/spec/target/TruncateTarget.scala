@@ -218,14 +218,14 @@ class TruncateTargetSpec extends TargetSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): TruncateTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): TruncateTarget = {
         val partitions= this.partitions.mapValues {
             case v: SingleValue => SingleValue(context.evaluate(v.value))
             case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
             case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), v.step.map(context.evaluate))
         }
         TruncateTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             relation.instantiate(context),
             partitions
         )

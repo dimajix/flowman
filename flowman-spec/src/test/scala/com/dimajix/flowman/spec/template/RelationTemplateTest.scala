@@ -58,6 +58,7 @@ class RelationTemplateTest extends AnyFlatSpec with Matchers {
               |        default: 12
               |    template:
               |      kind: values
+              |      description: "No description"
               |      records:
               |        - ["$p0",$p1]
               |      schema:
@@ -72,6 +73,7 @@ class RelationTemplateTest extends AnyFlatSpec with Matchers {
               |  rel_1:
               |    kind: template/user
               |    p0: some_value
+              |    description: "This is rel_1"
               |  rel_2:
               |    kind: template/user
               |    p1: 13
@@ -90,22 +92,20 @@ class RelationTemplateTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
 
         val rel_1 = context.getRelation(RelationIdentifier("rel_1"))
-        rel_1 shouldBe a[RelationTemplateInstance]
-        rel_1.asInstanceOf[RelationTemplateInstance].instance shouldBe a[ValuesRelation]
-        rel_1.asInstanceOf[RelationTemplateInstance].name should be ("rel_1")
-        rel_1.asInstanceOf[RelationTemplateInstance].identifier should be (RelationIdentifier("project/rel_1"))
+        rel_1 shouldBe a[ValuesRelation]
         rel_1.name should be ("rel_1")
         rel_1.identifier should be (RelationIdentifier("project/rel_1"))
         rel_1.kind should be ("values")
+        rel_1.description should be (Some("This is rel_1"))
 
         an[IllegalArgumentException] should be thrownBy(context.getRelation(RelationIdentifier("rel_2")))
 
         val rel_3 = context.getRelation(RelationIdentifier("rel_3"))
-        rel_3 shouldBe a[RelationTemplateInstance]
-        rel_3.asInstanceOf[RelationTemplateInstance].instance shouldBe a[ValuesRelation]
+        rel_3 shouldBe a[ValuesRelation]
         rel_3.name should be ("rel_3")
         rel_3.identifier should be (RelationIdentifier("project/rel_3"))
         rel_3.kind should be ("values")
+        rel_3.description should be (Some("No description"))
 
         an[IllegalArgumentException] should be thrownBy(context.getRelation(RelationIdentifier("rel_4")))
     }

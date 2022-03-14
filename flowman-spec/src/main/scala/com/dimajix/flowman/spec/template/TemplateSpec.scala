@@ -86,7 +86,9 @@ abstract class TemplateSpec extends NamedSpec[Template[_]] {
     @JsonProperty(value="kind", required = true) protected var kind: String = _
     @JsonProperty(value="parameters", required=false) protected var parameters : Seq[TemplateSpec.Parameter] = Seq()
 
-    protected def instanceProperties(context:Context) : Template.Properties = {
+    def instantiate(context:Context, properties:Option[Template.Properties] = None) : Template[_]
+
+    protected def instanceProperties(context:Context, properties:Option[Template.Properties]) : Template.Properties = {
         val name = context.evaluate(this.name)
         Template.Properties(
             context,

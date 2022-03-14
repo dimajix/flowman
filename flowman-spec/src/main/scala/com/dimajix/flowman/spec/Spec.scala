@@ -26,8 +26,8 @@ import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Prototype
 
 
-trait Spec[T] extends Prototype[T] {
-    def instantiate(context:Context) : T
+trait Spec[T <: Instance] extends Prototype[T] {
+    def instantiate(context:Context, properties:Option[T#PropertiesType] = None) : T
 }
 
 trait ToSpec[T] {
@@ -61,16 +61,16 @@ final class MetadataSpec {
 }
 
 
-abstract class NamedSpec[T] extends Spec[T] {
+abstract class NamedSpec[T <: Instance] extends Spec[T] {
     @JsonProperty(value="name", required = false) protected[spec] var name:String = ""
     @JsonProperty(value="metadata", required=false) protected var metadata:Option[MetadataSpec] = None
 
-    override def instantiate(context:Context) : T
+    override def instantiate(context:Context, properties:Option[T#PropertiesType] = None) : T
 
     /**
       * Returns a set of common properties
       * @param context
       * @return
       */
-    protected def instanceProperties(context:Context) : Instance.Properties[_]
+    protected def instanceProperties(context:Context, properties:Option[T#PropertiesType]) : T#PropertiesType
 }

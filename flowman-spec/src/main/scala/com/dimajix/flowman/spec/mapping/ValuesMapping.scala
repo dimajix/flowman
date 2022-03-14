@@ -115,9 +115,9 @@ class ValuesMappingSpec extends MappingSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): ValuesMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): ValuesMapping = {
         ValuesMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             columns.toSeq.map(kv => Field(kv._1, FieldType.of(context.evaluate(kv._2)))),
             schema.map(_.instantiate(context)),
             records.map(_.map(context.evaluate))

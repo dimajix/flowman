@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@ import com.dimajix.flowman.spec.Spec
 
 
 @JsonDeserialize(using=classOf[RelationReferenceDeserializer])
-abstract class RelationReferenceSpec extends Spec[Reference[Relation]]
+abstract class RelationReferenceSpec {
+    def instantiate(context: Context): Reference[Relation]
+}
 final case class IdentifierRelationReferenceSpec(relation:String) extends RelationReferenceSpec {
     override def instantiate(context: Context): Reference[Relation] = {
         val id = RelationIdentifier.parse(context.evaluate(relation))

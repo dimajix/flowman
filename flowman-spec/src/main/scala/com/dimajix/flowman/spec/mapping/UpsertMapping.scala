@@ -107,9 +107,9 @@ class UpsertMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): UpsertMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): UpsertMapping = {
         UpsertMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             MappingOutputIdentifier(context.evaluate(updates)),
             keyColumns.map(context.evaluate),

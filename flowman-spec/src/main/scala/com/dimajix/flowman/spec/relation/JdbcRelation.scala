@@ -842,9 +842,9 @@ class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with Sc
       * @param context
       * @return
       */
-    override def instantiate(context: Context): JdbcRelation = {
+    override def instantiate(context: Context, props:Option[Relation.Properties] = None): JdbcRelation = {
         JdbcRelation(
-            instanceProperties(context),
+            instanceProperties(context, props),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             connection.instantiate(context),

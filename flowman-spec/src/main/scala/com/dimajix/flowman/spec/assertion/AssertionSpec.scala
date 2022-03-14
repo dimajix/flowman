@@ -50,16 +50,17 @@ abstract class AssertionSpec  extends NamedSpec[Assertion] {
     @JsonProperty(value="kind", required = true) protected var kind: String = _
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
 
-    override def instantiate(context: Context): Assertion
+    override def instantiate(context: Context, properties:Option[Assertion.Properties] = None): Assertion
 
-    override protected def instanceProperties(context:Context) : Assertion.Properties = {
+    override protected def instanceProperties(context:Context, properties:Option[Assertion.Properties]) : Assertion.Properties = {
         require(context != null)
         val name = context.evaluate(this.name)
-        Assertion.Properties(
+        val props = Assertion.Properties(
             context,
             metadata.map(_.instantiate(context, name, Category.ASSERTION, kind)).getOrElse(Metadata(context, name, Category.ASSERTION, kind)),
             context.evaluate(description)
         )
+        properties.map(p => props.merge(p)).getOrElse(props)
     }
 }
 

@@ -77,17 +77,17 @@ abstract class TargetSpec extends NamedSpec[Target] {
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
     @JsonProperty(value = "documentation", required=false) private var documentation: Option[TargetDocSpec] = None
 
-    override def instantiate(context: Context): Target
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): Target
 
     /**
       * Returns a set of common properties
       * @param context
       * @return
       */
-    override protected def instanceProperties(context:Context) : Target.Properties = {
+    override protected def instanceProperties(context:Context, properties:Option[Target.Properties]) : Target.Properties = {
         require(context != null)
         val name = context.evaluate(this.name)
-        Target.Properties(
+        val props = Target.Properties(
             context,
             metadata.map(_.instantiate(context, name, Category.TARGET, kind)).getOrElse(Metadata(context, name, Category.TARGET, kind)),
             before.map(context.evaluate).map(TargetIdentifier.parse),
@@ -95,6 +95,7 @@ abstract class TargetSpec extends NamedSpec[Target] {
             context.evaluate(description),
             documentation.map(_.instantiate(context))
         )
+        properties.map(p => props.merge(p)).getOrElse(props)
     }
 }
 

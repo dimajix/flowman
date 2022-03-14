@@ -42,6 +42,7 @@ import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.graph.Linker
+import com.dimajix.flowman.model
 import com.dimajix.flowman.transforms.ColumnMismatchStrategy
 import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.transforms.TypeMismatchStrategy
@@ -68,13 +69,22 @@ object Relation {
         description:Option[String],
         documentation:Option[RelationDoc]
     )
-    extends Instance.Properties[Properties] {
+    extends model.Properties[Properties] {
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
         override val kind : String = metadata.kind
         override val name : String = metadata.name
 
         override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
+
+        def merge(other: Properties): Properties = {
+            Properties(
+                context,
+                metadata.merge(other.metadata),
+                other.description.orElse(description),
+                documentation.map(_.merge(other.documentation)).orElse(other.documentation)
+            )
+        }
         def identifier : RelationIdentifier = RelationIdentifier(name, project.map(_.name))
     }
 }
@@ -84,6 +94,8 @@ object Relation {
   * Interface class for declaring relations (for sources and sinks) as part of a model
   */
 trait Relation extends Instance {
+    override type PropertiesType = Relation.Properties
+
     /**
       * Returns the category of this resource
       * @return
@@ -131,7 +143,7 @@ trait Relation extends Instance {
       * @param partitions
       * @return
       */
-    def resources(partitions:Map[String,FieldValue] = Map()) : Set[ResourceIdentifier]
+    def resources(partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier]
 
     /**
       * Returns the schema of the relation, excluding partition columns
@@ -159,7 +171,7 @@ trait Relation extends Instance {
      * @param partitions - Optional partition as a hint for schema inference
      * @return
      */
-    def describe(execution:Execution, partitions:Map[String,FieldValue] = Map()) : StructType
+    def describe(execution:Execution, partitions:Map[String,FieldValue] = Map.empty) : StructType
 
         /**
       * Reads data from the relation, possibly from specific partitions
@@ -168,7 +180,7 @@ trait Relation extends Instance {
       * @param partitions - List of partitions. If none are specified, all the data will be read
       * @return
       */
-    def read(execution:Execution, partitions:Map[String,FieldValue] = Map()) : DataFrame
+    def read(execution:Execution, partitions:Map[String,FieldValue] = Map.empty) : DataFrame
 
     /**
       * Writes data into the relation, possibly into a specific partition
@@ -176,7 +188,7 @@ trait Relation extends Instance {
       * @param df - dataframe to write
       * @param partition - destination partition
       */
-    def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue] = Map(), mode:OutputMode = OutputMode.OVERWRITE) : Unit
+    def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue] = Map.empty, mode:OutputMode = OutputMode.OVERWRITE) : Unit
 
     /**
      * Performs a merge operation. Either you need to specify a [[mergeKey]], or the relation needs to provide some
@@ -193,7 +205,7 @@ trait Relation extends Instance {
       * @param execution
       * @param partitions
       */
-    def truncate(execution:Execution, partitions:Map[String,FieldValue] = Map()) : Unit
+    def truncate(execution:Execution, partitions:Map[String,FieldValue] = Map.empty) : Unit
 
     /**
       * Reads data from a streaming source
@@ -237,7 +249,7 @@ trait Relation extends Instance {
      * @param partition
      * @return
      */
-    def loaded(execution:Execution, partition:Map[String,SingleValue] = Map()) : Trilean
+    def loaded(execution:Execution, partition:Map[String,SingleValue] = Map.empty) : Trilean
 
     /**
       * This method will physically create the corresponding relation. This might be a Hive table or a directory. The
@@ -302,7 +314,7 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * Returns the list of partition columns
      * @return
      */
-    override def partitions : Seq[PartitionField] = Seq()
+    override def partitions : Seq[PartitionField] = Seq.empty
 
     /**
       * Returns a list of fields including the partition columns. This method should not perform any physical schema
@@ -321,7 +333,7 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      * @param execution
      * @return
      */
-    override def describe(execution:Execution, partitions:Map[String,FieldValue] = Map()) : StructType = {
+    override def describe(execution:Execution, partitions:Map[String,FieldValue] = Map.empty) : StructType = {
         val partitionNames = SetIgnoreCase(this.partitions.map(_.name))
         val result = if (!fields.forall(f => partitionNames.contains(f.name))) {
             // Use given fields if relation contains valid list of fields in addition to the partition columns

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.dimajix.flowman.spec.annotation.RelationType
 
 @RelationType(kind = "annotatedAssertion")
 class AnnotationAssertionSpec extends AssertionSpec {
-    override def instantiate(context: Context): Assertion = ???
+    override def instantiate(context: Context, properties:Option[Assertion.Properties] = None): Assertion = ???
 }
 
 class AssertionSpecTest extends AnyFlatSpec with Matchers {

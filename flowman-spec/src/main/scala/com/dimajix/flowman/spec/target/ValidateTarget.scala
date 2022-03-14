@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,9 +134,9 @@ class ValidateTargetSpec extends TargetSpec {
     @JsonProperty(value = "assertions", required = true) private var assertions: Map[String,AssertionSpec] = Map()
     @JsonProperty(value = "mode", required = false) private var mode: String = "failFast"
 
-    override def instantiate(context: Context): ValidateTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): ValidateTarget = {
         ValidateTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             assertions.map {case(name,assertion) => name -> assertion.instantiate(context) },
             ErrorMode.ofString(context.evaluate(mode))
         )

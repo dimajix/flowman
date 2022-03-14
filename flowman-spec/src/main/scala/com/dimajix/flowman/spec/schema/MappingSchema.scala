@@ -91,7 +91,7 @@ class MappingSchemaSpec extends SchemaSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): MappingSchema = {
+    override def instantiate(context: Context, properties:Option[Schema.Properties] = None): MappingSchema = {
         MappingSchema(
             instanceProperties(context, mapping),
             MappingOutputIdentifier(context.evaluate(mapping))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,16 +86,16 @@ object Namespace {
 
 final case class Namespace(
     name:String,
-    config:Map[String,String] = Map(),
-    environment:Map[String,String] = Map(),
-    profiles:Map[String,Profile] = Map(),
-    connections:Map[String,Prototype[Connection]] = Map(),
+    config:Map[String,String] = Map.empty,
+    environment:Map[String,String] = Map.empty,
+    profiles:Map[String,Profile] = Map.empty,
+    connections:Map[String,Prototype[Connection]] = Map.empty,
     store:Option[Prototype[Store]] = None,
-    catalogs:Seq[Prototype[ExternalCatalog]] = Seq(),
+    catalogs:Seq[Prototype[ExternalCatalog]] = Seq.empty,
     history:Option[Prototype[StateStore]] = None,
-    metrics:Seq[Prototype[MetricSink]] = Seq(),
-    plugins:Seq[String] = Seq(),
-    hooks:Seq[Prototype[Hook]] = Seq()
+    metrics:Seq[Prototype[MetricSink]] = Seq.empty,
+    plugins:Seq[String] = Seq.empty,
+    hooks:Seq[Prototype[Hook]] = Seq.empty
 ){
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -298,9 +298,9 @@ class SimpleReportHookSpec extends HookSpec {
     @JsonProperty(value="location", required=true) private var location:String = _
     @JsonProperty(value="mode", required=false) private var mode:Option[String] = None
 
-    override def instantiate(context: Context): SimpleReportHook = {
+    override def instantiate(context: Context, properties:Option[Hook.Properties] = None): SimpleReportHook = {
         SimpleReportHook(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             new Path(context.evaluate(location)),
             OutputMode.ofString(context.evaluate(mode).getOrElse("overwrite"))
         )

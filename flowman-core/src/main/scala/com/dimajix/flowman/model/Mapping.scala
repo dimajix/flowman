@@ -57,6 +57,7 @@ import com.dimajix.flowman.graph.Column
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.graph.MappingOutput
 import com.dimajix.flowman.graph.MappingRef
+import com.dimajix.flowman.model
 import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.DataFrameBuilder
 
@@ -81,19 +82,32 @@ object Mapping {
         checkpoint:Boolean,
         cache:StorageLevel,
         documentation:Option[MappingDoc]
-    ) extends Instance.Properties[Properties] {
+    ) extends model.Properties[Properties] {
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
         override val kind : String = metadata.kind
         override val name : String = metadata.name
 
         override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
+
+        def merge(other: Properties): Properties = {
+            Properties(
+                context,
+                metadata.merge(other.metadata),
+                broadcast || other.broadcast,
+                checkpoint || other.checkpoint,
+                if (other.cache != StorageLevel.NONE) other.cache else cache,
+                documentation.map(_.merge(other.documentation)).orElse(other.documentation)
+            )
+        }
         def identifier : MappingIdentifier = MappingIdentifier(name, project.map(_.name))
     }
 }
 
 
 trait Mapping extends Instance {
+    override type PropertiesType = Mapping.Properties
+
     /**
       * Returns the category of this resource
       * @return
@@ -242,7 +256,7 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
      * which actually read from physical data.
      * @return
      */
-    override def requires : Set[ResourceIdentifier] = Set()
+    override def requires : Set[ResourceIdentifier] = Set.empty
 
     /**
      * Lists all outputs of this mapping. Every mapping should have one "main" output

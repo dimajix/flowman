@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ object Project {
     case class Import(
         project:String,
         job:Option[String] = None,
-        arguments:Map[String,String] = Map()
+        arguments:Map[String,String] = Map.empty
     )
 
     class Reader {
@@ -118,19 +118,19 @@ final case class Project(
     filename : Option[File] = None,
     basedir : Option[File] = None,
 
-    modules : Seq[String] = Seq(),
+    modules : Seq[String] = Seq.empty,
 
-    config : Map[String,String] = Map(),
-    environment : Map[String,String] = Map(),
+    config : Map[String,String] = Map.empty,
+    environment : Map[String,String] = Map.empty,
 
-    imports: Seq[Project.Import] = Seq(),
-    profiles : Map[String,Profile] = Map(),
+    imports: Seq[Project.Import] = Seq.empty,
+    profiles : Map[String,Profile] = Map.empty,
 
-    relations : Map[String,Prototype[Relation]] = Map(),
-    connections : Map[String,Prototype[Connection]] = Map(),
-    mappings : Map[String,Prototype[Mapping]] = Map(),
-    targets : Map[String,Prototype[Target]] = Map(),
-    jobs : Map[String,Prototype[Job]] = Map(),
-    tests : Map[String,Prototype[Test]] = Map(),
-    templates: Map[String,Prototype[Template[_]]] = Map()
+    relations : Map[String,Prototype[Relation]] = Map.empty,
+    connections : Map[String,Prototype[Connection]] = Map.empty,
+    mappings : Map[String,Prototype[Mapping]] = Map.empty,
+    targets : Map[String,Prototype[Target]] = Map.empty,
+    jobs : Map[String,Prototype[Job]] = Map.empty,
+    tests : Map[String,Prototype[Test]] = Map.empty,
+    templates: Map[String,Prototype[Template[_]]] = Map.empty
 )

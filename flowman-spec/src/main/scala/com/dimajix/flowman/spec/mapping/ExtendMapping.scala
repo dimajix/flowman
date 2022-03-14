@@ -110,9 +110,9 @@ class ExtendMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): ExtendMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): ExtendMapping = {
         ExtendMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             context.evaluate(columns),
             context.evaluate(filter)

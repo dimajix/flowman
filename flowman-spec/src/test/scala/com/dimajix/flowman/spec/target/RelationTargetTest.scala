@@ -341,7 +341,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
             RelationIdentifier("relation"),
             MappingOutputIdentifier("mapping")
         )
-        (relationGen.instantiate _).expects(context).returns(relation)
+        (relationGen.instantiate _).expects(context, None).returns(relation)
 
         (relation.loaded _).expects(*,*).returns(Yes)
         target.execute(executor, Phase.VERIFY).withoutTime should be(TargetResult(target, Phase.VERIFY, Status.SUCCESS).withoutTime)
@@ -374,7 +374,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
             RelationIdentifier("relation"),
             MappingOutputIdentifier("mapping")
         )
-        (relationGen.instantiate _).expects(context).returns(relation)
+        (relationGen.instantiate _).expects(context, None).returns(relation)
 
         (relation.loaded _).expects(*,*).returns(Yes)
         target.execute(executor, Phase.VERIFY).withoutTime should be(TargetResult(target, Phase.VERIFY, Status.SUCCESS).withoutTime)
@@ -416,7 +416,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
             RelationIdentifier("relation"),
             MappingOutputIdentifier("mapping")
         )
-        (relationGen.instantiate _).expects(context).returns(relation)
+        (relationGen.instantiate _).expects(context, None).returns(relation)
 
         (relation.loaded _).expects(*,*).returns(Yes)
         target.execute(executor, Phase.VERIFY).withoutTime should be(TargetResult(target, Phase.VERIFY, Status.SUCCESS).withoutTime)

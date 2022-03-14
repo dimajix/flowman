@@ -20,32 +20,22 @@ import com.dimajix.flowman.execution.Context
 
 
 object Prototype {
-    implicit def of[T](instance:T) : Prototype[T] = new Prototype[T] {
-        override def instantiate(context: Context): T = instance
+    implicit def of[T <: Instance](instance:T) : Prototype[T] = new Prototype[T] {
+        override def instantiate(context: Context, properties:Option[T#PropertiesType] = None): T = instance
     }
-    implicit def of[T](fn:Context => T) : Prototype[T] = new Prototype[T] {
-        override def instantiate(context: Context): T = fn(context)
-    }
-}
-trait Prototype[T] {
-    def instantiate(context: Context) : T
-}
-
-
-object Instance {
-    trait Properties[T <: Properties[T]] extends Product with Serializable {
-        val context: Context
-        val namespace: Option[Namespace]
-        val project: Option[Project]
-        val name: String
-        val kind: String
-        val metadata: Metadata
-
-        def withName(name:String) : T
+    implicit def of[T <: Instance](fn:Context => T) : Prototype[T] = new Prototype[T] {
+        override def instantiate(context: Context, properties:Option[T#PropertiesType] = None): T = fn(context)
     }
 }
+trait Prototype[T <: Instance] {
+    def instantiate(context: Context, properties:Option[T#PropertiesType] = None) : T
+}
+
 
 trait Instance {
+    // Don't create a generic, this would overcomplicate using the Prototype trait
+    type PropertiesType <: Properties[PropertiesType]
+
     /**
       * Returns the name of the resource
       * @return
@@ -90,7 +80,7 @@ trait Instance {
 
 
 abstract class AbstractInstance extends Instance {
-    protected def instanceProperties : Instance.Properties[_]
+    protected def instanceProperties : PropertiesType
 
     /**
       * Returns the name of the resource

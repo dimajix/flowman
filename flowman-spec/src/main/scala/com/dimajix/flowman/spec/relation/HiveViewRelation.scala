@@ -263,9 +263,9 @@ class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
       * @param context
       * @return
       */
-    override def instantiate(context: Context): HiveViewRelation = {
+    override def instantiate(context: Context, properties:Option[Relation.Properties] = None): HiveViewRelation = {
         HiveViewRelation(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             TableIdentifier(context.evaluate(view), context.evaluate(database)),
             partitions.map(_.instantiate(context)),
             context.evaluate(sql),

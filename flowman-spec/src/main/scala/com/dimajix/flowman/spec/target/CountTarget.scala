@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,9 +93,9 @@ case class CountTarget(
 class CountTargetSpec extends TargetSpec {
     @JsonProperty(value = "mapping", required=true) private var mapping:String = _
 
-    override def instantiate(context: Context): CountTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): CountTarget = {
         CountTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier.parse(context.evaluate(mapping))
         )
     }

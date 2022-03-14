@@ -143,9 +143,9 @@ class ReadStreamMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): ReadStreamMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): ReadStreamMapping = {
         ReadStreamMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             relation.instantiate(context),
             context.evaluate(columns).map { case(name,typ) => Field(name, FieldType.of(typ))}.toSeq,
             context.evaluate(filter)

@@ -59,11 +59,13 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
               |    template:
               |      kind: blackhole
               |      mapping: $p0
+              |      description: "No description"
               |
               |targets:
               |  rel_1:
               |    kind: template/user
               |    p0: some_value
+              |    description: "This is rel_1"
               |  rel_2:
               |    kind: template/user
               |    p1: 13
@@ -82,23 +84,20 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
 
         val tgt_1 = context.getTarget(TargetIdentifier("rel_1"))
-        tgt_1 shouldBe a[TargetTemplateInstance]
-        tgt_1.asInstanceOf[TargetTemplateInstance].instance shouldBe a[BlackholeTarget]
-        tgt_1.asInstanceOf[TargetTemplateInstance].name should be ("rel_1")
-        tgt_1.asInstanceOf[TargetTemplateInstance].identifier should be (TargetIdentifier("project/rel_1"))
-        tgt_1.asInstanceOf[TargetTemplateInstance].kind should be ("blackhole")
+        tgt_1 shouldBe a[BlackholeTarget]
         tgt_1.name should be ("rel_1")
         tgt_1.identifier should be (TargetIdentifier("project/rel_1"))
         tgt_1.kind should be ("blackhole")
+        tgt_1.description should be (Some("This is rel_1"))
 
         an[IllegalArgumentException] should be thrownBy(context.getTarget(TargetIdentifier("rel_2")))
 
         val tgt_3 = context.getTarget(TargetIdentifier("rel_3"))
-        tgt_3 shouldBe a[TargetTemplateInstance]
-        tgt_3.asInstanceOf[TargetTemplateInstance].instance shouldBe a[BlackholeTarget]
+        tgt_3 shouldBe a[BlackholeTarget]
         tgt_3.name should be ("rel_3")
         tgt_3.identifier should be (TargetIdentifier("project/rel_3"))
         tgt_3.kind should be ("blackhole")
+        tgt_3.description should be (Some("No description"))
 
         an[IllegalArgumentException] should be thrownBy(context.getTarget(TargetIdentifier("rel_4")))
     }
@@ -152,13 +151,10 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
 
         val tgt = context.getTarget(TargetIdentifier("rel_1"))
-        tgt shouldBe a[TargetTemplateInstance]
-        tgt.asInstanceOf[TargetTemplateInstance].instance shouldBe a[BlackholeTarget]
-        tgt.asInstanceOf[TargetTemplateInstance].name should be ("rel_1")
-        tgt.asInstanceOf[TargetTemplateInstance].kind should be ("blackhole")
+        tgt shouldBe a[BlackholeTarget]
         tgt.name should be ("rel_1")
         tgt.kind should be ("blackhole")
-        tgt.before should be (Seq(TargetIdentifier("a"), TargetIdentifier("x")))
-        tgt.after should be (Seq(TargetIdentifier("c"), TargetIdentifier("d"), TargetIdentifier("y")))
+        tgt.before should be (Seq(TargetIdentifier("x"), TargetIdentifier("a")))
+        tgt.after should be (Seq(TargetIdentifier("y"), TargetIdentifier("c"), TargetIdentifier("d")))
     }
 }

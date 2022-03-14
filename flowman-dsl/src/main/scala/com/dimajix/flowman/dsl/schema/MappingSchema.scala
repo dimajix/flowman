@@ -27,7 +27,7 @@ case class MappingSchema(
     mapping: MappingOutputIdentifier
 )
 extends SchemaGen {
-    override def instantiate(context:Context) : schema.MappingSchema = {
+    override def instantiate(context:Context, properties:Option[Schema.Properties] = None) : schema.MappingSchema = {
         schema.MappingSchema(
             Schema.Properties(context),
             mapping

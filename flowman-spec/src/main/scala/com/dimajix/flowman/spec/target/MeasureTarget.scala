@@ -154,9 +154,9 @@ class MeasureTargetSpec extends TargetSpec {
     @JsonDeserialize(converter=classOf[MeasureSpec.NameResolver])
     @JsonProperty(value = "measures", required = true) private var measures: Map[String,MeasureSpec] = Map()
 
-    override def instantiate(context: Context): MeasureTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): MeasureTarget = {
         MeasureTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             measures.map { case(name,measure) => name -> measure.instantiate(context) }
         )
     }

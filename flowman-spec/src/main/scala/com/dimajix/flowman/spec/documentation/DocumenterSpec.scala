@@ -27,7 +27,7 @@ final class DocumenterSpec extends Spec[Documenter] {
     @JsonProperty(value="collectors") private var collectors: Seq[CollectorSpec] = Seq()
     @JsonProperty(value="generators") private var generators: Seq[GeneratorSpec] = Seq()
 
-    def instantiate(context:Context): Documenter = {
+    def instantiate(context:Context, properties:Option[Documenter.Properties]): Documenter = {
         Documenter(
             collectors.map(_.instantiate(context)),
             generators.map(_.instantiate(context))

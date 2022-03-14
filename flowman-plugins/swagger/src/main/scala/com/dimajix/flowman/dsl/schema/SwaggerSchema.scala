@@ -34,7 +34,7 @@ case class SwaggerSchema(
     nullable: Boolean = false
 )
     extends SchemaGen {
-    override def instantiate(context: Context): schema.SwaggerSchema = {
+    override def instantiate(context: Context, properties:Option[Schema.Properties] = None): schema.SwaggerSchema = {
         schema.SwaggerSchema(
             Schema.Properties(context),
             file,

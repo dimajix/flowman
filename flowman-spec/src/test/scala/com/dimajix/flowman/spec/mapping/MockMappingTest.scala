@@ -107,12 +107,12 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
             MappingIdentifier("base")
         )
 
-        (mockMappingTemplate.instantiate _).expects(context).returns(mockMapping)
+        (mockMappingTemplate.instantiate _).expects(context, None).returns(mockMapping)
         val mapping = context.getMapping(MappingIdentifier("mock"))
         mapping shouldBe a[MockMapping]
         mapping.category should be (Category.MAPPING)
 
-        (baseMappingTemplate.instantiate _).expects(context).returns(baseMapping)
+        (baseMappingTemplate.instantiate _).expects(context, None).returns(baseMapping)
         (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Set("other", "error"))
         mapping.outputs should be (Set("other", "error"))
 
@@ -173,10 +173,10 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
             MappingIdentifier("mock")
         )
 
-        (mockMappingTemplate.instantiate _).expects(context).returns(mockMapping)
+        (mockMappingTemplate.instantiate _).expects(context, None).returns(mockMapping)
         val mapping = context.getMapping(MappingIdentifier("mock"))
 
-        (baseMappingTemplate.instantiate _).expects(context).returns(baseMapping)
+        (baseMappingTemplate.instantiate _).expects(context, None).returns(baseMapping)
         (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Set("main"))
         mapping.outputs should be (Set("main"))
 
@@ -228,10 +228,10 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
             )
         )
 
-        (mockMappingTemplate.instantiate _).expects(context).returns(mockMapping)
+        (mockMappingTemplate.instantiate _).expects(context, None).returns(mockMapping)
         val mapping = context.getMapping(MappingIdentifier("mock"))
 
-        (baseMappingTemplate.instantiate _).expects(context).returns(baseMapping)
+        (baseMappingTemplate.instantiate _).expects(context, None).returns(baseMapping)
         (baseMapping.context _).expects().anyNumberOfTimes().returns(context)
         (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Set("main"))
         (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Set())

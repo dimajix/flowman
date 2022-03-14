@@ -363,10 +363,10 @@ class RelationTargetSpec extends TargetSpec {
     @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
     @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
 
-    override def instantiate(context: Context): RelationTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): RelationTarget = {
         val conf = context.flowmanConf
         RelationTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             relation.instantiate(context),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
             OutputMode.ofString(context.evaluate(mode).getOrElse(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE))),

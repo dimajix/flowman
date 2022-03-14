@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.dimajix.flowman.spec.annotation.RelationType
 
 @RelationType(kind = "annotatedMapping")
 class AnnotationMappingSpec extends MappingSpec {
-    override def instantiate(context: Context): Mapping = ???
+    override def instantiate(context: Context, properties:Option[Mapping.Properties]): Mapping = ???
 }
 
 class MappingSpecTest extends AnyFlatSpec with Matchers {

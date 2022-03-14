@@ -28,7 +28,7 @@ object Metadata {
             context.project.flatMap(_.version),
             category.lower,
             kind,
-            Map()
+            Map.empty
         )
 }
 final case class Metadata(
@@ -38,11 +38,34 @@ final case class Metadata(
     version: Option[String] = None,
     category: String,
     kind: String,
-    labels: Map[String,String] = Map()
+    labels: Map[String,String] = Map.empty
 ) {
     require(name != null)
     require(category != null && category.nonEmpty)
     require(kind != null)
+
+    /**
+     * Merges this Metadata object with another one. Settings in the other object have higher priority, except for the
+     * category and kind, which will not be changed at all.
+     * @param other
+     * @return
+     */
+    def merge(other:Metadata) : Metadata = {
+        Metadata(
+            other.namespace.orElse(namespace),
+            other.project.orElse(project),
+            other.name,
+            other.version.orElse(version),
+            category,
+            kind,
+            other.labels ++ labels
+        )
+    }
+
+    /**
+     * Returns the Metadata as a map, suitable to be used with a [[Context]]
+     * @return
+     */
     def asMap : Map[String,String] = {
         Map(
             "name" -> name,

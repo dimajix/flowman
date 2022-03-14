@@ -58,7 +58,7 @@ object RootExecutionTest {
     }
 
     case class TestMappingPrototype(name:String, inputs:Seq[String]) extends Prototype[Mapping] {
-        override def instantiate(context: Context): Mapping = {
+        override def instantiate(context: Context, properties:Option[Mapping.Properties]): Mapping = {
             TestMapping(
                 Mapping.Properties(context, name),
                 inputs.map(i => MappingOutputIdentifier(i)).toSet
@@ -66,7 +66,7 @@ object RootExecutionTest {
         }
     }
     case class RangeMappingPrototype(name:String) extends Prototype[Mapping] {
-        override def instantiate(context: Context): Mapping = {
+        override def instantiate(context: Context, properties:Option[Mapping.Properties]): Mapping = {
             RangeMapping(
                 Mapping.Properties(context, name)
             )

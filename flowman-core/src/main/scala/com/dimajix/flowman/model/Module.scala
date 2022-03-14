@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,17 +98,17 @@ object Module {
 
 
 final case class Module(
-    config : Map[String,String] = Map(),
-    environment : Map[String,String] = Map(),
+    config : Map[String,String] = Map.empty,
+    environment : Map[String,String] = Map.empty,
 
-    profiles : Map[String,Profile] = Map(),
-    relations : Map[String,Prototype[Relation]] = Map(),
-    connections : Map[String,Prototype[Connection]] = Map(),
-    mappings : Map[String,Prototype[Mapping]] = Map(),
-    targets : Map[String,Prototype[Target]] = Map(),
-    jobs : Map[String,Prototype[Job]] = Map(),
-    tests : Map[String,Prototype[Test]] = Map(),
-    templates: Map[String,Prototype[Template[_]]] = Map()
+    profiles : Map[String,Profile] = Map.empty,
+    relations : Map[String,Prototype[Relation]] = Map.empty,
+    connections : Map[String,Prototype[Connection]] = Map.empty,
+    mappings : Map[String,Prototype[Mapping]] = Map.empty,
+    targets : Map[String,Prototype[Target]] = Map.empty,
+    jobs : Map[String,Prototype[Job]] = Map.empty,
+    tests : Map[String,Prototype[Test]] = Map.empty,
+    templates: Map[String,Prototype[Template[_]]] = Map.empty
 ) {
     /**
      * Creates a new dataflow by merging this one with another one.

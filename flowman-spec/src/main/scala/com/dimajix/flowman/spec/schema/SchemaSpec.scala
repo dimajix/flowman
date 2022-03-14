@@ -53,7 +53,7 @@ object SchemaSpec extends TypeRegistry[SchemaSpec] {
 abstract class SchemaSpec extends Spec[Schema] {
     @JsonProperty(value="kind", required = true) protected var kind: String = "inline"
 
-    override def instantiate(context:Context) : Schema
+    override def instantiate(context:Context, properties:Option[Schema.Properties] = None) : Schema
 
     /**
      * Returns a set of common properties

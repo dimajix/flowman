@@ -116,9 +116,9 @@ class ConformMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): Mapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): Mapping = {
         ConformMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier.parse(context.evaluate(input)),
             types.map(kv => kv._1 -> FieldType.of(context.evaluate(kv._2))),
             context.evaluate(naming).filter(_.nonEmpty).map(CaseFormat.ofString),

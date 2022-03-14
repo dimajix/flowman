@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,9 +199,9 @@ class NullRelationSpec extends RelationSpec with SchemaRelationSpec with Partiti
       * @param context
       * @return
       */
-    override def instantiate(context: Context): NullRelation = {
+    override def instantiate(context: Context, properties:Option[Relation.Properties] = None): NullRelation = {
         NullRelation(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context))
         )

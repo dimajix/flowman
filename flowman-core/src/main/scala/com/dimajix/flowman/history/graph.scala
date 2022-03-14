@@ -165,6 +165,7 @@ object Graph {
                 val out = nodesById(write.output.id).asInstanceOf[RelationNode]
                 val p = write.partition.map { case(k,v) => (k -> v.value) }
                 builder.addEdge(WriteRelation(in, out, p))
+            case _ =>
         }
 
         builder.build()

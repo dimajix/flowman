@@ -91,9 +91,9 @@ class SqlServerRelationSpec extends RelationSpec with PartitionedRelationSpec wi
     @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq.empty
     @JsonProperty(value = "primaryKey", required = false) private var primaryKey: Seq[String] = Seq.empty
 
-    override def instantiate(context: Context): SqlServerRelation = {
+    override def instantiate(context: Context, props:Option[Relation.Properties] = None): SqlServerRelation = {
         new SqlServerRelation(
-            instanceProperties(context),
+            instanceProperties(context, props),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             connection.instantiate(context),

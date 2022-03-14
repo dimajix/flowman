@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ case class RelationDataset (
     relation: RelationIdentifier,
     partition:Map[String,SingleValue] = Map()
 ) extends DatasetGen {
-    override def instantiate(context: Context): dataset.RelationDataset = {
+    override def instantiate(context: Context, properties:Option[Dataset.Properties]): dataset.RelationDataset = {
         dataset.RelationDataset(
             context,
             relation,

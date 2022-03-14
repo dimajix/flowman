@@ -36,7 +36,7 @@ import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 
 
-class LineageCollector extends Collector {
+class LineageCollector extends AbstractCollector {
     private val logger = LoggerFactory.getLogger(getClass)
 
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {

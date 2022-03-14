@@ -35,7 +35,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-class MappingCollector extends Collector {
+class MappingCollector extends AbstractCollector {
     private val logger = LoggerFactory.getLogger(getClass)
 
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {

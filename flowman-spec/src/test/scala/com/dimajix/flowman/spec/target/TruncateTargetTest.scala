@@ -87,7 +87,7 @@ class TruncateTargetTest extends AnyFlatSpec with Matchers with MockFactory with
             )
         )
 
-        (relationTemplate.instantiate _).expects(*).returns(relation)
+        (relationTemplate.instantiate _).expects(*, None).returns(relation)
 
         target.phases should be (Set(Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE))
 
@@ -170,7 +170,7 @@ class TruncateTargetTest extends AnyFlatSpec with Matchers with MockFactory with
             RelationIdentifier("some_relation")
         )
 
-        (relationTemplate.instantiate _).expects(*).returns(relation)
+        (relationTemplate.instantiate _).expects(*, None).returns(relation)
 
         target.phases should be (Set(Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE))
 

@@ -67,22 +67,23 @@ abstract class RelationSpec extends NamedSpec[Relation] {
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
     @JsonProperty(value="documentation", required = false) private var documentation: Option[RelationDocSpec] = None
 
-    override def instantiate(context:Context) : Relation
+    override def instantiate(context:Context, properties:Option[Relation.Properties] = None) : Relation
 
     /**
       * Returns a set of common properties
       * @param context
       * @return
       */
-    override protected def instanceProperties(context:Context) : Relation.Properties = {
+    override protected def instanceProperties(context:Context, properties:Option[Relation.Properties]) : Relation.Properties = {
         require(context != null)
         val name = context.evaluate(this.name)
-        Relation.Properties(
+        val props = Relation.Properties(
             context,
             metadata.map(_.instantiate(context, name, Category.RELATION, kind)).getOrElse(Metadata(context, name, Category.RELATION, kind)),
             context.evaluate(description),
             documentation.map(_.instantiate(context))
         )
+        properties.map(p => props.merge(p)).getOrElse(props)
     }
 }
 

@@ -46,16 +46,17 @@ abstract class MeasureSpec  extends NamedSpec[Measure] {
     @JsonProperty(value="kind", required = true) protected var kind: String = _
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
 
-    override def instantiate(context: Context): Measure
+    override def instantiate(context: Context, properties:Option[Measure.Properties] = None): Measure
 
-    override protected def instanceProperties(context:Context) : Measure.Properties = {
+    override protected def instanceProperties(context:Context, properties:Option[Measure.Properties]) : Measure.Properties = {
         require(context != null)
         val name = context.evaluate(this.name)
-        Measure.Properties(
+        val props = Measure.Properties(
             context,
             metadata.map(_.instantiate(context, name, Category.MEASURE, kind)).getOrElse(Metadata(context, name, Category.MEASURE, kind)),
             context.evaluate(description)
         )
+        properties.map(p => props.merge(p)).getOrElse(props)
     }
 }
 

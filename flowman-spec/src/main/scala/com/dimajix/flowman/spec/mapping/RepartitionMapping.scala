@@ -102,9 +102,9 @@ class RepartitionMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): RepartitionMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): RepartitionMapping = {
         RepartitionMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             columns.map(context.evaluate),
             partitions.map(context.evaluate).map(_.toInt).getOrElse(0),

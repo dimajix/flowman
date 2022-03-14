@@ -104,7 +104,7 @@ class RelationSchemaSpec extends SchemaSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): RelationSchema = {
+    override def instantiate(context: Context, properties:Option[Schema.Properties] = None): RelationSchema = {
         RelationSchema(
             instanceProperties(context, relation),
             RelationIdentifier(context.evaluate(relation))

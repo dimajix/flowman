@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,9 +99,9 @@ class FlattenMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): FlattenMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): FlattenMapping = {
         FlattenMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             CaseFormat.ofString(context.evaluate(naming)),
             context.evaluate(filter)

@@ -22,6 +22,7 @@ import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.model
 import com.dimajix.flowman.types.StructType
 
 
@@ -38,18 +39,24 @@ object Dataset {
     final case class Properties(
         context:Context,
         metadata:Metadata
-    ) extends Instance.Properties[Properties] {
+    ) extends model.Properties[Properties] {
         override val namespace:Option[Namespace] = context.namespace
         override val project:Option[Project] = context.project
         override val kind : String = metadata.kind
         override val name : String  = metadata.name
 
         override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
+
+        def merge(other: Properties): Properties = {
+            Properties(context, metadata.merge(other.metadata))
+        }
     }
 }
 
 
 trait Dataset extends Instance {
+    override type PropertiesType = Dataset.Properties
+
     /**
       * Returns the category of the resource
       *

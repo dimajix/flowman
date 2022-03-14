@@ -71,7 +71,7 @@ class UnionSchemaSpec extends SchemaSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): UnionSchema = {
+    override def instantiate(context: Context, properties:Option[Schema.Properties] = None): UnionSchema = {
         UnionSchema(
             instanceProperties(context, ""),
             schema.map(_.instantiate(context))

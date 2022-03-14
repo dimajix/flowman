@@ -99,9 +99,9 @@ class DeduplicateMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): DeduplicateMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): DeduplicateMapping = {
         DeduplicateMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             columns.map(context.evaluate),
             context.evaluate(filter)

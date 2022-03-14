@@ -31,10 +31,14 @@ class TemplateTargetTest extends AnyFlatSpec with Matchers {
               |targets:
               |  xfs:
               |    kind: null
+              |    before: x
+              |    after: y
               |
               |  template:
               |    kind: template
               |    target: xfs
+              |    before: a
+              |    after: b
             """.stripMargin
 
         val project = Module.read.string(spec).toProject("project")
@@ -45,6 +49,19 @@ class TemplateTargetTest extends AnyFlatSpec with Matchers {
         target should not be (null)
         target shouldBe a[TemplateTarget]
         target.name should be ("template")
+        target.kind should be ("template")
+        target.identifier should be (TargetIdentifier("project/template"))
+        target.project should be (Some(project))
+        target.before should be (Seq(TargetIdentifier("x"), TargetIdentifier("a")))
+        target.after should be (Seq(TargetIdentifier("y"), TargetIdentifier("b")))
+
+        val instance = target.asInstanceOf[TemplateTarget].targetInstance
+        instance.name should be ("template")
+        instance.kind should be ("null")
+        instance.identifier should be (TargetIdentifier("project/template"))
+        instance.project should be (Some(project))
+        instance.before should be (Seq(TargetIdentifier("x"), TargetIdentifier("a")))
+        instance.after should be (Seq(TargetIdentifier("y"), TargetIdentifier("b")))
     }
 
     it should "provide own documentation" in {

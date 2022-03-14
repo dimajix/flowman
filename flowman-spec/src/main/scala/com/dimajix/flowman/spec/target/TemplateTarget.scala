@@ -27,6 +27,7 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseTarget
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
@@ -42,18 +43,11 @@ case class TemplateTarget(
     private val templateContext = ScopeContext.builder(context)
         .withEnvironment(environment)
         .build()
-    private val targetInstance = {
-        project.get.targets(target.name) match {
-            case spec:TargetSpec => spec.synchronized {
-                // Temporarily rename template, such that its instance will get the current name
-                val oldName = name
-                spec.name = name
-                val instance = spec.instantiate(templateContext)
-                spec.name = oldName
-                instance
-            }
-            case spec => spec.instantiate(templateContext)
-        }
+    lazy val targetInstance : Target = {
+        val meta = Metadata(templateContext, name, category, "")
+        val props = Target.Properties(templateContext, meta, super.before, super.after, super.description, super.documentation)
+        val spec = project.get.targets(target.name)
+        spec.instantiate(templateContext, Some(props))
     }
 
     /**
@@ -70,8 +64,6 @@ case class TemplateTarget(
      */
     override def documentation : Option[TargetDoc] = {
         targetInstance.documentation
-            .map(_.merge(instanceProperties.documentation))
-            .orElse(instanceProperties.documentation)
             .map(_.copy(target=Some(this)))
     }
 
@@ -102,9 +94,7 @@ case class TemplateTarget(
      *
      * @return
      */
-    override def before: Seq[TargetIdentifier] = {
-        super.before ++ targetInstance.before
-    }
+    override def before: Seq[TargetIdentifier] = targetInstance.before
 
     /**
      * Returns an explicit user defined list of targets to be executed before this target I.e. this
@@ -112,27 +102,21 @@ case class TemplateTarget(
      *
      * @return
      */
-    override def after: Seq[TargetIdentifier] = {
-        super.after ++ targetInstance.after
-    }
+    override def after: Seq[TargetIdentifier] = targetInstance.after
 
     /**
      * Returns a list of physical resources produced by this target
      *
      * @return
      */
-    override def provides(phase: Phase): Set[ResourceIdentifier] = {
-        targetInstance.provides(phase)
-    }
+    override def provides(phase: Phase): Set[ResourceIdentifier] = targetInstance.provides(phase)
 
     /**
      * Returns a list of physical resources required by this target
      *
      * @return
      */
-    override def requires(phase: Phase): Set[ResourceIdentifier] = {
-        targetInstance.requires(phase)
-    }
+    override def requires(phase: Phase): Set[ResourceIdentifier] = targetInstance.requires(phase)
 
     /**
      * Returns the state of the target, specifically of any artifacts produces. If this method return [[Yes]],
@@ -142,9 +126,7 @@ case class TemplateTarget(
      * @param phase
      * @return
      */
-    override def dirty(execution: Execution, phase: Phase): Trilean = {
-        targetInstance.dirty(execution, phase)
-    }
+    override def dirty(execution: Execution, phase: Phase): Trilean = targetInstance.dirty(execution, phase)
 
     /**
      * Executes a specific phase of this target. This method is should not throw a non-fatal exception, instead it
@@ -178,9 +160,9 @@ class TemplateTargetSpec extends TargetSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): TemplateTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): TemplateTarget = {
         TemplateTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             TargetIdentifier(context.evaluate(target)),
             splitSettings(environment).toMap
         )

@@ -27,7 +27,7 @@ import com.dimajix.flowman.graph.WriteRelation
 import com.dimajix.flowman.model.Target
 
 
-class TargetCollector extends Collector {
+class TargetCollector extends AbstractCollector {
     private val logger = LoggerFactory.getLogger(getClass)
 
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {

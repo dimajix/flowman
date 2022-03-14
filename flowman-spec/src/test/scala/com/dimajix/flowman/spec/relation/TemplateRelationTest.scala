@@ -48,6 +48,16 @@ class TemplateRelationTest extends AnyFlatSpec with Matchers {
         relation should not be (null)
         relation shouldBe a[TemplateRelation]
         relation.name should be ("template")
+        relation.kind should be ("template")
+        relation.identifier should be (RelationIdentifier("project/template"))
+        relation.project should be (Some(project))
+
+        val instance = relation.asInstanceOf[TemplateRelation].relationInstance
+        instance shouldBe a[ValuesRelation]
+        instance.name should be ("template")
+        instance.kind should be ("values")
+        instance.identifier should be (RelationIdentifier("project/template"))
+        instance.project should be (Some(project))
     }
 
     it should "provide own documentation" in {

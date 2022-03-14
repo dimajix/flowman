@@ -514,9 +514,9 @@ class FileRelationSpec extends RelationSpec with SchemaRelationSpec with Partiti
       * @param context
       * @return
       */
-    override def instantiate(context: Context): FileRelation = {
+    override def instantiate(context: Context, properties:Option[Relation.Properties] = None): FileRelation = {
         FileRelation(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             new Path(context.evaluate(location)),

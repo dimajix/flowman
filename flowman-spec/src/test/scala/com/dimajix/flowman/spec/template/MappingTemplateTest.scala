@@ -93,11 +93,7 @@ class MappingTemplateTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
 
         val map_1 = context.getMapping(MappingIdentifier("rel_1"))
-        map_1 shouldBe a[MappingTemplateInstance]
-        map_1.asInstanceOf[MappingTemplateInstance].instance shouldBe a [ValuesMapping]
-        map_1.asInstanceOf[MappingTemplateInstance].name should be ("rel_1")
-        map_1.asInstanceOf[MappingTemplateInstance].identifier should be (MappingIdentifier("project/rel_1"))
-        map_1.asInstanceOf[MappingTemplateInstance].kind should be ("values")
+        map_1 shouldBe a[ValuesMapping]
         map_1.name should be ("rel_1")
         map_1.identifier should be (MappingIdentifier("project/rel_1"))
         map_1.kind should be ("values")
@@ -108,8 +104,7 @@ class MappingTemplateTest extends AnyFlatSpec with Matchers {
         an[IllegalArgumentException] should be thrownBy(context.getMapping(MappingIdentifier("rel_2")))
 
         val map_3 = context.getMapping(MappingIdentifier("rel_3"))
-        map_3 shouldBe a[MappingTemplateInstance]
-        map_3.asInstanceOf[MappingTemplateInstance].instance shouldBe a [ValuesMapping]
+        map_3 shouldBe a[ValuesMapping]
         map_3.name should be ("rel_3")
         map_3.identifier should be (MappingIdentifier("project/rel_3"))
         map_3.kind should be ("values")

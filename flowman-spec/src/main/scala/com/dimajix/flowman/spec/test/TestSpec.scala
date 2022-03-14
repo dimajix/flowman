@@ -52,12 +52,12 @@ class TestSpec extends NamedSpec[Test] {
     @JsonDeserialize(converter=classOf[AssertionSpec.NameResolver])
     @JsonProperty(value="assertions") private var assertions: Map[String,AssertionSpec] = Map()
 
-    override def instantiate(context: Context): Test = {
+    override def instantiate(context: Context, properties:Option[Test.Properties] = None): Test = {
         require(context != null)
 
         val parents = this.parents.map(job => context.getTest(TestIdentifier(job)))
         val test = Test(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             environment = splitSettings(environment).toMap,
             targets = targets.map(context.evaluate).map(TargetIdentifier.parse),
             fixtures = fixtures,
@@ -75,13 +75,14 @@ class TestSpec extends NamedSpec[Test] {
      * @param context
      * @return
      */
-    override protected def instanceProperties(context: Context): Test.Properties = {
+    override protected def instanceProperties(context: Context, properties:Option[Test.Properties]): Test.Properties = {
         require(context != null)
         val name = context.evaluate(this.name)
-        Test.Properties(
+        val props = Test.Properties(
             context,
             metadata.map(_.instantiate(context, name, Category.TEST, "test")).getOrElse(Metadata(context, name, Category.TEST, "test")),
             description.map(context.evaluate)
         )
+        properties.map(p => props.merge(p)).getOrElse(props)
     }
 }

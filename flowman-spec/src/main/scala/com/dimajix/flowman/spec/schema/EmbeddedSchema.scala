@@ -45,7 +45,7 @@ class EmbeddedSchemaSpec extends SchemaSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): EmbeddedSchema = {
+    override def instantiate(context: Context, properties:Option[Schema.Properties] = None): EmbeddedSchema = {
         EmbeddedSchema(
             instanceProperties(context, "embedded"),
             description.map(context.evaluate),

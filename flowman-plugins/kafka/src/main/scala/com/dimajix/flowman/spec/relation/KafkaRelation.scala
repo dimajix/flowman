@@ -301,9 +301,9 @@ class KafkaRelationSpec extends RelationSpec {
     @JsonProperty(value = "endOffset", required = false) private var endOffset: String = "latest"
     @JsonProperty(value = "options", required=false) private var options:Map[String,String] = Map()
 
-    override def instantiate(context: Context): Relation = {
+    override def instantiate(context: Context, properties:Option[Relation.Properties] = None): Relation = {
         KafkaRelation(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             hosts.map(context.evaluate),
             topics.map(context.evaluate),
             context.evaluate(startOffset),

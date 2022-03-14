@@ -37,7 +37,7 @@ object StoreSpec extends TypeRegistry[StoreSpec] {
     new JsonSubTypes.Type(name = "null", value = classOf[NullStoreSpec])
 ))
 abstract class StoreSpec extends Spec[Store] {
-    override def instantiate(context:Context): Store
+    override def instantiate(context:Context, properties:Option[Store.Properties] = None): Store
 }
 
 

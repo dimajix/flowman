@@ -63,7 +63,7 @@ class RelationDatasetTest extends AnyFlatSpec with Matchers with MockFactory wit
     it should "work" in {
         val relation = mock[Relation]
         val relationSpec = mock[Prototype[Relation]]
-        (relationSpec.instantiate _).expects(*).returns(relation)
+        (relationSpec.instantiate _).expects(*, None).returns(relation)
 
         val project = Project(
             name="test",

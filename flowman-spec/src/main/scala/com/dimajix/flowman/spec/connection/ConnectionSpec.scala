@@ -55,7 +55,7 @@ abstract class ConnectionSpec extends NamedSpec[Connection] {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): Connection
+    override def instantiate(context: Context, properties:Option[Connection.Properties] = None) : Connection
 
     /**
      * Returns a set of common properties
@@ -63,13 +63,14 @@ abstract class ConnectionSpec extends NamedSpec[Connection] {
      * @param context
      * @return
      */
-    override protected def instanceProperties(context: Context): Connection.Properties = {
+    override protected def instanceProperties(context: Context, properties:Option[Connection.Properties]): Connection.Properties = {
         require(context != null)
         val name = context.evaluate(this.name)
-        Connection.Properties(
+        val props = Connection.Properties(
             context,
             metadata.map(_.instantiate(context, name, Category.CONNECTION, kind)).getOrElse(Metadata(context, name, Category.CONNECTION, kind))
         )
+        properties.map(p => props.merge(p)).getOrElse(props)
     }
 }
 

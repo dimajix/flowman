@@ -34,7 +34,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.FieldValue
 
 
-class RelationCollector extends Collector {
+class RelationCollector extends AbstractCollector {
     private val logger = LoggerFactory.getLogger(getClass)
 
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {

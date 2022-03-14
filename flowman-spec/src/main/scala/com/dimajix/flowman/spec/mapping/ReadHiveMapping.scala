@@ -126,9 +126,9 @@ class ReadHiveMappingSpec extends MappingSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): ReadHiveMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): ReadHiveMapping = {
         ReadHiveMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             TableIdentifier(context.evaluate(table), context.evaluate(database)),
             columns.toSeq.map { case(name,typ) => Field(name, FieldType.of(typ))},
             context.evaluate(filter)

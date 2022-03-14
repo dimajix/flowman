@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.dimajix.flowman.spec.connection.JdbcConnection
 class ImpalaCatalogSpec extends CatalogSpec {
     @JsonProperty(value="connection", required=true) private var connection:ConnectionReferenceSpec = _
 
-    override def instantiate(context: Context): ExternalCatalog = {
+    override def instantiate(context: Context, properties:Option[ExternalCatalog.Properties] = None): ExternalCatalog = {
         val computeStats = context.flowmanConf.getConf(FlowmanConf.IMPALA_COMPUTE_STATS)
         val con = this.connection.instantiate(context).value
         val connection = con match {

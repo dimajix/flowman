@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,5 +22,5 @@ import com.dimajix.flowman.storage.Store
 
 
 class NullStoreSpec extends StoreSpec {
-    override def instantiate(context:Context): Store = new NullStore
+    override def instantiate(context:Context, properties:Option[Store.Properties] = None): Store = new NullStore
 }

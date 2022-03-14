@@ -120,9 +120,9 @@ class UnionMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): UnionMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): UnionMapping = {
         UnionMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             inputs.map(i => MappingOutputIdentifier.parse(context.evaluate(i))),
             Option(schema).map(_.instantiate(context)),
             context.evaluate(distinct).toBoolean,

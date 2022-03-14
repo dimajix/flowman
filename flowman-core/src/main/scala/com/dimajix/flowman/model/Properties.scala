@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 Kaya Kupferschmidt
+ * Copyright 2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.spec.metric
+package com.dimajix.flowman.model
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.metric.MetricSink
-import com.dimajix.flowman.metric.NullMetricSink
 
 
-class NullMetricSinkSpec extends MetricSinkSpec {
-    override def instantiate(context: Context, properties:Option[MetricSink.Properties] = None) : MetricSink = {
-        new NullMetricSink()
-    }
+trait Properties[T <: Properties[T]] extends Product with Serializable {
+    val context: Context
+    val namespace: Option[Namespace]
+    val project: Option[Project]
+    val name: String
+    val kind: String
+    val metadata: Metadata
+
+    def withName(name:String) : T
 }

@@ -104,9 +104,9 @@ class DocumentTargetSpec extends TargetSpec {
     @JsonProperty(value="collectors") private var collectors: Seq[CollectorSpec] = Seq()
     @JsonProperty(value="generators") private var generators: Seq[GeneratorSpec] = Seq()
 
-    override def instantiate(context: Context): DocumentTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): DocumentTarget = {
         DocumentTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             collectors.map(_.instantiate(context)),
             generators.map(_.instantiate(context))
         )

@@ -27,6 +27,7 @@ import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.ToSpec
+import com.dimajix.flowman.storage.AbstractWorkspace
 import com.dimajix.flowman.storage.Parcel
 import com.dimajix.flowman.storage.Workspace
 
@@ -45,7 +46,7 @@ object LocalWorkspace {
     }
 }
 
-case class LocalWorkspace(override val root:File) extends Workspace {
+case class LocalWorkspace(override val root:File) extends AbstractWorkspace {
     private val _parcels = mutable.ListBuffer[Parcel]()
 
     root.mkdirs()

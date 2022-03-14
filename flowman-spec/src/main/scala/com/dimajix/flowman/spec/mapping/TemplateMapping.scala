@@ -29,6 +29,7 @@ import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.StructType
 
@@ -42,18 +43,11 @@ case class TemplateMapping(
     private val templateContext = ScopeContext.builder(context)
         .withEnvironment(environment)
         .build()
-    private val mappingInstance = {
-        project.get.mappings(mapping.name) match {
-            case spec:MappingSpec => spec.synchronized {
-                // Temporarily rename template, such that its instance will get the current name
-                val oldName = name
-                spec.name = name
-                val instance = spec.instantiate(templateContext)
-                spec.name = oldName
-                instance
-            }
-            case spec => spec.instantiate(templateContext)
-        }
+    lazy val mappingInstance : Mapping = {
+        val meta = Metadata(templateContext, name, category, "")
+        val props = Mapping.Properties(templateContext, meta, super.broadcast, super.checkpoint, super.cache, super.documentation)
+        val spec = project.get.mappings(mapping.name)
+        spec.instantiate(templateContext, Some(props))
     }
 
     /**
@@ -63,8 +57,6 @@ case class TemplateMapping(
      */
     override def documentation: Option[MappingDoc] = {
         mappingInstance.documentation
-            .map(_.merge(instanceProperties.documentation))
-            .orElse(instanceProperties.documentation)
             .map(_.copy(mapping=Some(this)))
     }
 
@@ -74,27 +66,21 @@ case class TemplateMapping(
       *
       * @return
       */
-    override def requires: Set[ResourceIdentifier] = {
-        mappingInstance.requires
-    }
+    override def requires: Set[ResourceIdentifier] = mappingInstance.requires
 
     /**
       * Lists all outputs of this mapping. Every mapping should have one "main" output
  *
       * @return
       */
-    override def outputs : Set[String] = {
-        mappingInstance.outputs
-    }
+    override def outputs : Set[String] = mappingInstance.outputs
 
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
       * @return
       */
-    override def inputs: Set[MappingOutputIdentifier] = {
-        mappingInstance.inputs
-    }
+    override def inputs: Set[MappingOutputIdentifier] = mappingInstance.inputs
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -122,8 +108,7 @@ case class TemplateMapping(
         require(execution != null)
         require(input != null)
 
-        val schemas = mappingInstance.describe(execution, input)
-        applyDocumentation(schemas)
+        mappingInstance.describe(execution, input)
     }
 
     /**
@@ -137,17 +122,14 @@ case class TemplateMapping(
         require(input != null)
         require(output != null && output.nonEmpty)
 
-        val schema = mappingInstance.describe(execution, input, output)
-        applyDocumentation(output, schema)
+        mappingInstance.describe(execution, input, output)
     }
 
     /**
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
-    override def link(linker: Linker): Unit = {
-        mappingInstance.link(linker)
-    }
+    override def link(linker: Linker): Unit = mappingInstance.link(linker)
 }
 
 
@@ -163,9 +145,9 @@ class TemplateMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): TemplateMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): TemplateMapping = {
         TemplateMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingIdentifier(context.evaluate(mapping)),
             splitSettings(environment).toMap,
             context.evaluate(filter)

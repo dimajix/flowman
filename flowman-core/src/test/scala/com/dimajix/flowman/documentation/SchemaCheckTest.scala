@@ -101,7 +101,7 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
             (2,2)
         ))
 
-        (mappingSpec.instantiate _).expects(*).returns(mapping)
+        (mappingSpec.instantiate _).expects(*,None).returns(mapping)
         (mapping.context _).expects().returns(context)
         (mapping.inputs _).expects().returns(Set())
         (mapping.outputs _).expects().atLeastOnce().returns(Set("main"))

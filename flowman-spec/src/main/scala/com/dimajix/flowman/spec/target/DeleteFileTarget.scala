@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,9 +97,9 @@ class DeleteFileTargetSpec extends TargetSpec {
     @JsonProperty(value = "location", required = true) private var location: String = ""
     @JsonProperty(value = "recursive", required = false) private var recursive: String = "true"
 
-    override def instantiate(context: Context): DeleteFileTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): DeleteFileTarget = {
         DeleteFileTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             new Path(context.evaluate(location)),
             context.evaluate(recursive).toBoolean
         )

@@ -115,7 +115,7 @@ class PrometheusMetricSinkSpec extends MetricSinkSpec {
     @JsonProperty(value = "url", required = true) private var url:String = ""
     @JsonProperty(value = "labels", required = false) private var labels:Map[String,String] = Map()
 
-    override def instantiate(context: Context): MetricSink = {
+    override def instantiate(context: Context, properties:Option[MetricSink.Properties] = None): MetricSink = {
         new PrometheusMetricSink(
             context.evaluate(url),
             labels

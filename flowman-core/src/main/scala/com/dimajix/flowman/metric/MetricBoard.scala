@@ -20,7 +20,27 @@ import scala.util.matching.Regex
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.model
+import com.dimajix.flowman.model.AbstractInstance
+import com.dimajix.flowman.model.Category
+import com.dimajix.flowman.model.Metadata
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.Project
 
+
+object MetricBoard {
+    final case class Properties(
+        context:Context
+    ) extends model.Properties[Properties] {
+        override val namespace : Option[Namespace] = context.namespace
+        override val project : Option[Project] = context.project
+        override val name : String = ""
+        override val kind : String = "metric_board"
+        override val metadata : Metadata = Metadata(name="", category=Category.METRIC_BOARD.lower, kind=kind)
+
+        override def withName(name: String): Properties = ???
+    }
+}
 
 /**
  * A MetricBoard is a collection of multiple MetricBundles to be published together to one or multiple MetricSinks
@@ -29,12 +49,22 @@ import com.dimajix.flowman.execution.Status
  * @param selections
  */
 final case class MetricBoard(
-    context:Context,
+    instanceProperties:MetricBoard.Properties,
     labels:Map[String,String],
     selections:Seq[MetricSelection]
-) {
+) extends AbstractInstance {
+    override type PropertiesType = MetricBoard.Properties
+
+    /**
+     * Returns the category of the resource
+     *
+     * @return
+     */
+    override def category: Category = Category.METRIC_BOARD
+
     /**
      * Resets all Metrics and MetricBundles matching the selections of the board
+     *
      * @param catalog
      */
     def reset(catalog:MetricCatalog) : Unit = {

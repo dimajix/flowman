@@ -24,10 +24,10 @@ import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.Spec
 
 
-class TargetDocSpec extends Spec[TargetDoc] {
+class TargetDocSpec {
     @JsonProperty(value="description", required=false) private var description:Option[String] = None
 
-    override def instantiate(context: Context): TargetDoc = {
+    def instantiate(context: Context): TargetDoc = {
         val doc = TargetDoc(
             None,
             description = context.evaluate(description)

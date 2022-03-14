@@ -16,10 +16,46 @@
 
 package com.dimajix.flowman.documentation
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Graph
+import com.dimajix.flowman.model
+import com.dimajix.flowman.model.AbstractInstance
+import com.dimajix.flowman.model.Instance
+import com.dimajix.flowman.model.Metadata
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.Project
 
 
-abstract class Collector {
+object Collector {
+    final case class Properties(
+        kind:String
+    ) extends model.Properties[Properties] {
+        override val context : Context = null
+        override val namespace : Option[Namespace] = None
+        override val project : Option[Project] = None
+        override val name : String = ""
+        override val metadata : Metadata = Metadata(name="", category=model.Category.DOCUMENTATION_COLLECTOR.lower, kind=kind)
+
+        override def withName(name: String): Properties = ???
+    }
+}
+
+
+trait Collector extends Instance {
+    override type PropertiesType = Collector.Properties
+
+    /**
+     * Returns the category of the resource
+     *
+     * @return
+     */
+    override def category: model.Category = model.Category.DOCUMENTATION_COLLECTOR
+
     def collect(execution: Execution, graph:Graph, documentation:ProjectDoc) : ProjectDoc
+}
+
+
+abstract class AbstractCollector extends AbstractInstance with Collector {
+    override protected def instanceProperties: Collector.Properties = Collector.Properties(kind)
 }

@@ -18,11 +18,13 @@ package com.dimajix.flowman.catalog
 
 import java.sql.Connection
 import java.sql.DriverManager
+import java.sql.SQLException
 import java.sql.SQLRecoverableException
 import java.sql.SQLTransientException
 import java.sql.Statement
 import java.util.Properties
 
+import com.cloudera.impala.support.exceptions.GeneralException
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTablePartition
 import org.slf4j.LoggerFactory
@@ -87,7 +89,13 @@ final case class ImpalaExternalCatalog(
         logger.info(s"INVALIDATE Impala metadata for dropped table ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
-            stmt.execute(s"INVALIDATE METADATA $identifier")
+            try {
+                stmt.execute(s"INVALIDATE METADATA $identifier")
+            }
+            catch {
+                // Ignore "TableNotFoundExceptions"
+                case ex:SQLException if ex.getMessage.contains("TableNotFoundException") =>
+            }
         }
     }
 

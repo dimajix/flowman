@@ -320,11 +320,6 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
                 case _ => None
             }
         }
-        def collectExpressions(plan:LogicalPlan) : Map[ExprId, NamedExpression] = {
-            val expressions = plan.expressions.collect { case n:NamedExpression => n.exprId -> n }.toMap
-            val childExpressions = plan.children.flatMap(collectExpressions)
-            expressions ++ childExpressions
-        }
         def extractSchema(df:DataFrame) : StructType = {
             val output = df.queryExecution.analyzed.output
             val expressions = collectExpressions(df.queryExecution.analyzed)

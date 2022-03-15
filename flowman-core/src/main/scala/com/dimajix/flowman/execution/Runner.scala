@@ -233,9 +233,10 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         require(phases != null)
         require(args != null)
 
+        val prj = job.project.map(prj => s" in project '${prj.name}'${prj.version.map(v => s" version $v").getOrElse("")}").getOrElse("")
         logger.info("")
         logger.info(separator)
-        logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.identifier}'")
+        logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.name}'$prj")
 
         val startTime = Instant.now()
         val isolated2 = isolated || job.parameters.nonEmpty || job.environment.nonEmpty

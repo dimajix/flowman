@@ -24,7 +24,7 @@ object StructType {
         StructType(Field.of(schema.fields))
     }
     def of(fields:Seq[org.apache.spark.sql.types.StructField]) : StructType = {
-        StructType(Field.of(fields))
+        StructType(fields.map(Field.of))
     }
 }
 

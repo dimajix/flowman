@@ -87,6 +87,8 @@ object Project {
                 .map(f => Module.read.file(directory / f))
                 .foldLeft(Module())((l, r) => l.merge(r))
 
+            logger.info(s"Loaded project '${project.name}'${project.version.map(v => s" version $v").getOrElse("")}")
+
             project.copy(
                 environment = module.environment,
                 config = module.config,

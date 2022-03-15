@@ -115,30 +115,36 @@ class RelationCollector extends AbstractCollector {
         )
         val ref = doc.reference
 
-        val schema = relation.schema.map { schema =>
+        // Get documentation of input mapping (if present)
+        val inputSchema = getInputSchema(execution, ref, node)
+
+        // Get documentation of relation itself
+        val relationSchema = relation.schema.map { schema =>
                 val fieldsDoc = SchemaDoc.ofFields(parent, schema.fields)
                 SchemaDoc(
                     Some(ref),
                     description = schema.description,
                     columns = fieldsDoc.columns
                 )
-            }.orElse {
-                // Try to infer schema from input
-                getInputSchema(execution, ref, node)
             }
-        val mergedSchema = {
+
+        // Merge schema from input and relation, with relation having a higher priority
+        val mergedSchema = inputSchema.map(_.merge(relationSchema)).orElse(relationSchema)
+
+        // Finally (try to) merge documentation from a Relation.describe
+        val schema = {
             Try {
                 SchemaDoc.ofStruct(ref, execution.describe(relation, partitions))
             } match {
                 case Success(desc) =>
-                    Some(desc.merge(schema))
+                    Some(desc.merge(mergedSchema))
                 case Failure(ex) =>
                     logger.warn(s"Error while inferring schema description of relation '${relation.identifier}': ${reasons(ex)}")
-                    schema
+                    mergedSchema
             }
         }
 
-        doc.copy(schema = mergedSchema).merge(relation.documentation)
+        doc.copy(schema = schema).merge(relation.documentation)
     }
 
     private def getInputSchema(execution:Execution, parent:Reference, node:RelationRef) : Option[SchemaDoc] = {
@@ -157,11 +163,7 @@ class RelationCollector extends AbstractCollector {
         }.headOption
 
         schema.map { schema =>
-            val fieldsDoc = SchemaDoc.ofFields(parent.parent.get, schema.fields)
-            SchemaDoc(
-                Some(parent),
-                columns = fieldsDoc.columns
-            )
+            SchemaDoc.ofFields(parent, schema.fields)
         }
     }
 }

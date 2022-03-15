@@ -16,9 +16,6 @@
 
 package com.dimajix.flowman.tools.exec
 
-import java.time.Duration
-import java.time.Instant
-
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -75,7 +72,7 @@ object Driver {
         // Check if only help or version is requested
         if (options.version) {
             println(s"Flowman $FLOWMAN_VERSION")
-            println(s"Flowman home: ${ToolConfig.homeDirectory.getOrElse("")}")
+            println(s"Flowman home: ${ToolConfig.homeDirectory.getOrElse("<unknown>")}")
             println(s"Spark version $SPARK_VERSION")
             println(s"Hadoop version $HADOOP_VERSION")
             println(s"Scala version $SCALA_VERSION")

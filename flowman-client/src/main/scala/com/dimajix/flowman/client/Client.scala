@@ -58,7 +58,7 @@ object Client {
         // Check if only help or version is requested
         if (options.version) {
             println(s"Flowman $FLOWMAN_VERSION")
-            println(s"Flowman home: ${ToolConfig.homeDirectory.getOrElse("")}")
+            println(s"Flowman home: ${ToolConfig.homeDirectory.getOrElse("<unknown>")}")
             println(s"Spark version $SPARK_BUILD_VERSION")
             println(s"Hadoop version $HADOOP_BUILD_VERSION")
             println(s"Java version $JAVA_VERSION")

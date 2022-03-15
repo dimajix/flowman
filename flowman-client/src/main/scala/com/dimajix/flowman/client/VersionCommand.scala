@@ -26,8 +26,8 @@ import com.dimajix.flowman.common.ToolConfig
 class VersionCommand extends Command {
     override def execute(httpClient:CloseableHttpClient, baseUri:URI): Boolean = {
         println(s"Flowman version $FLOWMAN_VERSION")
-        println(s"Flowman home directory ${ToolConfig.homeDirectory.getOrElse("")}")
-        println(s"Flowman config directory ${ToolConfig.confDirectory.getOrElse("")}")
+        println(s"Flowman home directory ${ToolConfig.homeDirectory.getOrElse("<unknown>")}")
+        println(s"Flowman config directory ${ToolConfig.confDirectory.getOrElse("<unknown>")}")
         println(s"Spark build version $SPARK_BUILD_VERSION")
         println(s"Hadoop build version $HADOOP_BUILD_VERSION")
         println(s"Scala version $SCALA_VERSION (build for $SCALA_BUILD_VERSION)")

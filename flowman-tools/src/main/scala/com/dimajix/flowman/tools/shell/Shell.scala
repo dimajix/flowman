@@ -77,7 +77,7 @@ object Shell {
         // Check if only help or version is requested
         if (options.version) {
             println(s"Flowman $FLOWMAN_VERSION")
-            println(s"Flowman home: ${ToolConfig.homeDirectory.getOrElse("")}")
+            println(s"Flowman home: ${ToolConfig.homeDirectory.getOrElse("<unknown>")}")
             println(s"Spark version $SPARK_VERSION")
             println(s"Java version $JAVA_VERSION")
             true

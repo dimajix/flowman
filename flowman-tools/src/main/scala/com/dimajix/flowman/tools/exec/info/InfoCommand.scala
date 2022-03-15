@@ -28,9 +28,9 @@ import com.dimajix.flowman.tools.exec.Command
 
 class InfoCommand extends Command {
     override def execute(session: Session, project:Project, context:Context): Status = {
-        println(s"Flowman home directory: ${ToolConfig.homeDirectory.getOrElse("")}")
-        println(s"Flowman config directory: ${ToolConfig.confDirectory.getOrElse("")}")
-        println(s"Flowman plugin directory: ${ToolConfig.pluginDirectory.getOrElse("")}")
+        println(s"Flowman home directory: ${ToolConfig.homeDirectory.getOrElse("<unknown>")}")
+        println(s"Flowman config directory: ${ToolConfig.confDirectory.getOrElse("<unknown>")}")
+        println(s"Flowman plugin directory: ${ToolConfig.pluginDirectory.getOrElse("<unknown>")}")
 
         println("Namespace:")
         session.namespace.foreach { ns =>

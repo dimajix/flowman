@@ -92,6 +92,7 @@
         <!-- Default Spark version (3.2) -->
         <scala.version>2.12.15</scala.version>
         <scala.api_version>2.12</scala.api_version>
+        <scapegoat.version>1.4.12</scapegoat.version>
         <scalatest.version>3.2.9</scalatest.version>
         <scalatest-api.version>3.2</scalatest-api.version>
         <scala-xml.version>1.2.0</scala-xml.version>
@@ -164,6 +165,7 @@
                 <java.version>1.8</java.version>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
+                <scapegoat.version>1.4.12</scapegoat.version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
                 <scala-xml.version>1.0.5</scala-xml.version>
@@ -222,6 +224,7 @@
                 <java.version>1.8</java.version>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
+                <scapegoat.version>1.4.12</scapegoat.version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
                 <scala-xml.version>1.0.5</scala-xml.version>
@@ -265,6 +268,7 @@
                 <java.version>1.8</java.version>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
+                <scapegoat.version>1.4.12</scapegoat.version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
                 <scala-xml.version>1.0.5</scala-xml.version>
@@ -301,6 +305,7 @@
             <properties>
                 <scala.version>2.12.10</scala.version>
                 <scala.api_version>2.12</scala.api_version>
+                <scapegoat.version>1.4.5</scapegoat.version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
                 <scala-xml.version>1.2.0</scala-xml.version>
@@ -337,6 +342,7 @@
             <properties>
                 <scala.version>2.12.10</scala.version>
                 <scala.api_version>2.12</scala.api_version>
+                <scapegoat.version>1.4.5</scapegoat.version>
                 <scalatest.version>3.2.5</scalatest.version>
                 <scalatest-api.version>3.2</scalatest-api.version>
                 <scala-xml.version>1.2.0</scala-xml.version>
@@ -373,6 +379,7 @@
             <properties>
                 <scala.version>2.12.15</scala.version>
                 <scala.api_version>2.12</scala.api_version>
+                <scapegoat.version>1.4.12</scapegoat.version>
                 <scalatest.version>3.2.9</scalatest.version>
                 <scalatest-api.version>3.2</scalatest-api.version>
                 <scala-xml.version>1.2.0</scala-xml.version>
@@ -689,6 +696,8 @@
                             <arg>-explaintypes</arg>
                             <arg>-Yno-adapted-args</arg>
                             <arg>-language:implicitConversions</arg>
+                            <arg>-P:scapegoat:dataDir:./target/scapegoat</arg>
+                            <arg>-P:scapegoat:disabledInspections:SwallowedException:VariableShadowing</arg>
                         </args>
                         <javacArgs>
                             <javacArg>-source</javacArg>
@@ -697,6 +706,13 @@
                             <javacArg>${java.version}</javacArg>
                             <javacArg>-Xlint:all,-serial,-path,-try</javacArg>
                         </javacArgs>
+                        <compilerPlugins>
+                            <compilerPlugin>
+                                <groupId>com.sksamuel.scapegoat</groupId>
+                                <artifactId>scalac-scapegoat-plugin_${scala.version}</artifactId>
+                                <version>${scapegoat.version}</version>
+                            </compilerPlugin>
+                        </compilerPlugins>
                     </configuration>
                     <executions>
                         <execution>
@@ -929,6 +945,13 @@
             </plugin>
         </plugins>
     </reporting>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.sksamuel.scapegoat</groupId>
+            <artifactId>scalac-scapegoat-plugin_${scala.version}</artifactId>
+        </dependency>
+    </dependencies>
 
     <dependencyManagement>
         <dependencies>
@@ -1842,6 +1865,12 @@
                 <artifactId>assertj-core</artifactId>
                 <version>${assertj.version}</version>
                 <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.sksamuel.scapegoat</groupId>
+                <artifactId>scalac-scapegoat-plugin_${scala.version}</artifactId>
+                <version>${scapegoat.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

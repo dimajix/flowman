@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,11 @@ import org.scalatest.Suite
 
 
 trait LocalSparkSession extends LocalTempDir { this:Suite =>
-    var spark: SparkSession = _
-    var sc: SparkContext = _
+    var _spark: Option[SparkSession] = None
+    var _sc: Option[SparkContext] = None
     val conf = new SparkConf(false)
+    def spark : SparkSession = _spark.getOrElse(throw new IllegalStateException("No active Spark session"))
+    def sc : SparkContext = _sc.getOrElse(throw new IllegalStateException("No active Spark session"))
 
     val hiveSupported: Boolean = try {
           org.apache.hadoop.hive.shims.ShimLoader.getMajorVersion
@@ -102,17 +104,20 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
 
         configureSpark(builder)
 
-        spark = builder.getOrCreate()
-        sc = spark.sparkContext
+        val spark = builder.getOrCreate()
+        val sc = spark.sparkContext
         sc.setLogLevel("WARN")
         sc.setCheckpointDir(checkpointPath)
+
+        _spark = Some(spark)
+        _sc = Some(sc)
 
         // Perform one Spark operation, this help to fix some race conditions with frequent setup/teardown
         spark.emptyDataFrame.count()
     }
 
     override def afterAll() : Unit = {
-        if (spark != null) {
+       _spark.foreach { spark =>
             if (hiveSupported) {
                 // Newer version of Hive have background thread-pools which screw up the local Derby database
                 // when not properly shut down
@@ -130,8 +135,8 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
             }
 
             spark.stop()
-            spark = null
-            sc = null
+            _spark = None
+            _sc = None
         }
 
         super.afterAll()

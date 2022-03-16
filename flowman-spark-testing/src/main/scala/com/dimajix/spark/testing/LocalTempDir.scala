@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,20 +25,21 @@ import org.scalatest.Suite
 
 
 trait LocalTempDir extends BeforeAndAfterAll {  this:Suite =>
-    var tempDir: File = _
+    var _tempDir : Option[File] = None
+    def tempDir: File = _tempDir.getOrElse(throw new IllegalStateException("No temp dir available"))
 
     override def beforeAll() : Unit = {
-        tempDir = createTempDir()
+        _tempDir = createTempDir()
     }
     override def afterAll() : Unit = {
-        if (tempDir != null) {
+        _tempDir.foreach { tempDir =>
             deleteTempDir(tempDir)
-            tempDir = null
+            _tempDir = None
         }
     }
 
     def withTempDir(f: File => Unit): Unit = {
-        val dir = createTempDir().getCanonicalFile
+        val dir = createTempDir().map(_.getCanonicalFile).getOrElse(throw new IllegalStateException("Cannot create temp dir"))
         try f(dir) finally {
             deleteRecursively(dir)
         }
@@ -49,22 +50,25 @@ trait LocalTempDir extends BeforeAndAfterAll {  this:Suite =>
       * The directory is guaranteed to be newly created, and is not marked for automatic
       * deletion.
       */
-    private def createDirectory(root: String): File = {
+    private def createDirectory(root: String): Option[File] = {
         var attempts = 0
         val maxAttempts = 10
-        var dir: File = null
-        while (dir == null) {
+        var dir: Option[File] = None
+        while (dir.isEmpty) {
             attempts += 1
             if (attempts > maxAttempts) {
                 throw new IOException(
                     s"Failed to create a temp directory (under ${root}) after ${maxAttempts}")
             }
             try {
-                dir = new File(root, "spark-" + UUID.randomUUID.toString)
-                if (dir.exists() || !dir.mkdirs()) {
-                    dir = null
+                val newdir = new File(root, "spark-" + UUID.randomUUID.toString)
+                if (newdir.exists() || !newdir.mkdirs()) {
+                    dir = None
                 }
-            } catch { case e: SecurityException => dir = null; }
+                else {
+                    dir = Some(newdir)
+                }
+            } catch { case e: SecurityException => dir = None }
         }
 
         dir
@@ -74,9 +78,8 @@ trait LocalTempDir extends BeforeAndAfterAll {  this:Suite =>
       * Create a temporary directory inside the given parent directory.
       * The directory will be automatically deleted when the VM shuts down.
       */
-    private def createTempDir(root: String = System.getProperty("java.io.tmpdir")): File = {
-        val dir = createDirectory(root)
-        dir
+    private def createTempDir(root: String = System.getProperty("java.io.tmpdir")): Option[File] = {
+        createDirectory(root)
     }
 
     private def deleteTempDir(dir:File) : Unit = {

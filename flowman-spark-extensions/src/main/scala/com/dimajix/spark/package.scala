@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ package object spark {
                 (m.group(1).toInt, m.group(2).toInt)
             case None =>
                 throw new IllegalArgumentException(s"Spark tried to parse '$sparkVersion' as a Spark" +
-                    s" version string, but it could not find the major and minor version numbers.")
+                    " version string, but it could not find the major and minor version numbers.")
         }
     }
 }

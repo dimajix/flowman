@@ -30,8 +30,9 @@ import org.scalatest.Suite
 
 
 trait LocalSparkSession extends LocalTempDir { this:Suite =>
-    var _spark: Option[SparkSession] = None
-    var _sc: Option[SparkContext] = None
+    private var _spark: Option[SparkSession] = None
+    private var _sc: Option[SparkContext] = None
+
     val conf = new SparkConf(false)
     def spark : SparkSession = _spark.getOrElse(throw new IllegalStateException("No active Spark session"))
     def sc : SparkContext = _sc.getOrElse(throw new IllegalStateException("No active Spark session"))

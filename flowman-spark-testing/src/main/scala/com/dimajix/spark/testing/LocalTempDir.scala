@@ -25,7 +25,7 @@ import org.scalatest.Suite
 
 
 trait LocalTempDir extends BeforeAndAfterAll {  this:Suite =>
-    var _tempDir : Option[File] = None
+    private var _tempDir : Option[File] = None
     def tempDir: File = _tempDir.getOrElse(throw new IllegalStateException("No temp dir available"))
 
     override def beforeAll() : Unit = {

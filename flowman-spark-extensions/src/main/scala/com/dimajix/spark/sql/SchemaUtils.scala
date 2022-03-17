@@ -217,6 +217,13 @@ object SchemaUtils {
         }
     }
 
+    def hasExtendedTypeinfo(field:StructField) : Boolean = {
+        field.metadata.contains(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
+    }
+    def hasExtendedTypeinfo(metadata:Metadata) : Boolean = {
+        metadata.contains(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
+    }
+
     /**
      * Recovers the original CHAR/VARCHAR types from a struct, which was previously cleaned via replaceCharVarchar
      * @param schema

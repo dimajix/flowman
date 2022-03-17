@@ -23,6 +23,7 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.types.CharType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
@@ -78,7 +79,8 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |    kind: sql
               |    sql: "
               |     SELECT
-              |         'x1' AS str_col,
+              |         'x1' AS char_col,
+              |         CAST('x1' AS STRING) AS str_col,
               |         12 AS int_col
               |    "
               |""".stripMargin
@@ -89,6 +91,7 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val schema = MappingSchema(context, "sql")
 
         schema.fields should be (Seq(
+            Field("char_col", CharType(2), nullable=false),
             Field("str_col", StringType, nullable=false),
             Field("int_col", IntegerType, nullable=false)
         ))

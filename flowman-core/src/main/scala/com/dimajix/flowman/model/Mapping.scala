@@ -23,6 +23,7 @@ import org.apache.spark.sql.catalyst.expressions.Alias
 import org.apache.spark.sql.catalyst.expressions.CaseWhen
 import org.apache.spark.sql.catalyst.expressions.Cast
 import org.apache.spark.sql.catalyst.expressions.Coalesce
+import org.apache.spark.sql.catalyst.expressions.Concat
 import org.apache.spark.sql.catalyst.expressions.DateFormatClass
 import org.apache.spark.sql.catalyst.expressions.ExprId
 import org.apache.spark.sql.catalyst.expressions.Expression
@@ -30,10 +31,12 @@ import org.apache.spark.sql.catalyst.expressions.FromUTCTimestamp
 import org.apache.spark.sql.catalyst.expressions.FromUnixTime
 import org.apache.spark.sql.catalyst.expressions.If
 import org.apache.spark.sql.catalyst.expressions.IfNull
+import org.apache.spark.sql.catalyst.expressions.Literal
 import org.apache.spark.sql.catalyst.expressions.NamedExpression
 import org.apache.spark.sql.catalyst.expressions.Nvl
 import org.apache.spark.sql.catalyst.expressions.Nvl2
 import org.apache.spark.sql.catalyst.expressions.String2StringExpression
+import org.apache.spark.sql.catalyst.expressions.Substring
 import org.apache.spark.sql.catalyst.expressions.ToUTCTimestamp
 import org.apache.spark.sql.catalyst.expressions.ToUnixTimestamp
 import org.apache.spark.sql.catalyst.expressions.TruncInstant
@@ -43,8 +46,11 @@ import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateExpression
 import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateFunction
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.Union
+import org.apache.spark.sql.types.DataType
+import org.apache.spark.sql.{types => st}
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.storage.StorageLevel
+import org.apache.spark.unsafe.types.UTF8String
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.IdentityHashSet
@@ -58,8 +64,15 @@ import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.graph.MappingOutput
 import com.dimajix.flowman.graph.MappingRef
 import com.dimajix.flowman.model
+import com.dimajix.flowman.types.CharType
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.SchemaUtils
 import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.types.VarcharType
 import com.dimajix.spark.sql.DataFrameBuilder
+import com.dimajix.spark.sql.SchemaUtils.CHAR_VARCHAR_TYPE_STRING_METADATA_KEY
+import com.dimajix.spark.sql.SchemaUtils.hasExtendedTypeinfo
 
 
 object Mapping {
@@ -320,19 +333,49 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
                 case _ => None
             }
         }
+        def extractType(expression: Expression) : FieldType = {
+            expression match {
+                case n:NamedExpression if hasExtendedTypeinfo(n.metadata) => Field.of(StructField(n.name, n.dataType, n.nullable, n.metadata)).ftype
+                case a:Alias => extractType(a.child)
+                case l:Literal if l.dataType == st.StringType =>
+                    l.value match {
+                        case str:UTF8String => CharType(str.numChars())
+                        case _ => FieldType.of(l.dataType)
+                    }
+                case c:Coalesce => c.children.map(extractType).reduce(SchemaUtils.coerce)
+                case c:Concat =>
+                    c.children.map(extractType).reduce { (lt,rt) =>
+                        (lt,rt) match {
+                            case (VarcharType(l), VarcharType(r)) => VarcharType(l + r)
+                            case (CharType(l), VarcharType(r)) => VarcharType(l + r)
+                            case (VarcharType(l), CharType(r)) => VarcharType(l + r)
+                            case (CharType(l), CharType(r)) => CharType(l + r)
+                            case _ => FieldType.of(expression.dataType)
+                        }
+                    }
+                case c:Substring =>
+                    (extractType(c.first), c.pos, c.len) match {
+                        case (VarcharType(l), Literal(pos:Int, _), Literal(len:Int, _)) => VarcharType(math.max(math.min(l-pos+1, len), 1))
+                        case (CharType(l), Literal(pos:Int, _), Literal(len:Int, _)) => CharType(math.max(math.min(l-pos+1, len), 1))
+                        case _ => FieldType.of(expression.dataType)
+                    }
+                case s:String2StringExpression => extractType(s.asInstanceOf[UnaryExpression].child)
+                case _ => FieldType.of(expression.dataType)
+            }
+        }
         def extractSchema(df:DataFrame) : StructType = {
             val output = df.queryExecution.analyzed.output
             val expressions = collectExpressions(df.queryExecution.analyzed)
-            val attributes = output.map(a => expressions.getOrElse(a.exprId, a))
-                .map { a =>
-                    val field = StructField(a.name, a.dataType, a.nullable, a.metadata)
-                    extractComment(a) match {
-                        case Some(comment) => field.withComment(comment)
-                        case None => field
-                    }
+            val attributes = output.map(a => a.name -> expressions.getOrElse(a.exprId, a))
+                .map { case (name,expr) =>
+                    val field = Field.of(StructField(name, expr.dataType, expr.nullable, expr.metadata))
+                    field.copy(
+                        ftype = extractType(expr),
+                        description = extractComment(expr).orElse(field.description)
+                    )
                 }
 
-            StructType.of(attributes)
+            StructType(attributes)
         }
 
         // Create dummy data frames

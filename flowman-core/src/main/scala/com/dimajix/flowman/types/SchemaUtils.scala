@@ -199,6 +199,7 @@ object SchemaUtils {
             case (VarcharType(lp), VarcharType(rp)) => VarcharType(scala.math.max(lp,rp))
             case (CharType(lp) ,VarcharType(rp)) => VarcharType(scala.math.max(lp,rp))
             case (VarcharType(lp) ,CharType(rp)) => VarcharType(scala.math.max(lp,rp))
+            case (CharType(lp) ,CharType(rp)) if lp == rp => CharType(lp)
             case (CharType(lp) ,CharType(rp)) => VarcharType(scala.math.max(lp,rp))
 
             case (CharType(_), _) => StringType

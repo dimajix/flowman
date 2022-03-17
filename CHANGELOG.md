@@ -5,6 +5,7 @@
 * github-147: Add support for PostgreSQL
 * github-151: Implement column level lineage in documentation
 * github-121: Correctly apply documentation, before/after and other common attributes to templates
+* github-152: Implement new 'cast' mapping
 
 
 # Version 0.22.0 - 2022-03-01

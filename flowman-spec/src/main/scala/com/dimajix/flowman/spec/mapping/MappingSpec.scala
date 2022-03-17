@@ -48,6 +48,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "alias", value = classOf[AliasMappingSpec]),
     new JsonSubTypes.Type(name = "assemble", value = classOf[AssembleMappingSpec]),
     new JsonSubTypes.Type(name = "case", value = classOf[CaseMappingSpec]),
+    new JsonSubTypes.Type(name = "cast", value = classOf[CastMappingSpec]),
     new JsonSubTypes.Type(name = "coalesce", value = classOf[CoalesceMappingSpec]),
     new JsonSubTypes.Type(name = "conform", value = classOf[ConformMappingSpec]),
     new JsonSubTypes.Type(name = "const", value = classOf[ValuesMappingSpec]),

@@ -354,7 +354,7 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
                         }
                     }
                 case c:Substring =>
-                    (extractType(c.first), c.pos, c.len) match {
+                    (extractType(c.str), c.pos, c.len) match {
                         case (VarcharType(l), Literal(pos:Int, _), Literal(len:Int, _)) => VarcharType(math.max(math.min(l-pos+1, len), 1))
                         case (CharType(l), Literal(pos:Int, _), Literal(len:Int, _)) => CharType(math.max(math.min(l-pos+1, len), 1))
                         case _ => FieldType.of(expression.dataType)

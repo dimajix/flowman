@@ -124,13 +124,19 @@ class DefaultSchemaCheckExecutor extends SchemaCheckExecutor {
                         val mapping = context.getMapping(map.mapping)
                         execution.instantiate(mapping, map.output)
                     }).getOrElse(throw new IllegalArgumentException(s"Need either mapping or relation in foreignKey test ${check.reference.toString}"))
-                val cols = f.columns.map(df(_))
+                val thisCols = f.columns.map(df(_))
                 val otherCols =
                     if (f.references.nonEmpty)
                         f.references.map(otherDf(_))
                     else
                         f.columns.map(otherDf(_))
-                val joined = df.join(otherDf, cols.zip(otherCols).map(lr => lr._1 === lr._2).reduce(_ && _), "left")
+                // Remove NULL entries and make data distinct to avoid explosion of join in case of duplicates
+                val otherDistinctDf = otherDf
+                    .filter(otherCols.map(_.isNotNull).reduce(_ || _))
+                    .select(otherCols:_*)
+                    .distinct()
+                val joined = df.filter(thisCols.map(_.isNotNull).reduce(_ && _))
+                    .join(otherDistinctDf, thisCols.zip(otherCols).map(lr => lr._1 === lr._2).reduce(_ && _), "left")
                 executePredicateTest(joined, check, otherCols.map(_.isNotNull).reduce(_ || _))
 
             case e:ExpressionSchemaCheck =>

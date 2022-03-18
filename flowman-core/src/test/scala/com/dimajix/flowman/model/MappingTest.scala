@@ -164,6 +164,33 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
         )))
     }
 
+    it should "support various functions" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val execution = session.execution
+
+        val mapping = new DummyMapping(
+            Mapping.Properties(context, "m1"),
+            Set(MappingOutputIdentifier("input:main"))
+        )(df => df.select(
+            f.lower(df("commented")).as("lower_id"),
+            f.coalesce(df("uncommented"), df("commented")).as("coalesce1"),
+            f.coalesce(df("commented"), df("uncommented")).as("coalesce2")
+        ))
+
+        val inputSchema = StructType(Seq(
+            Field("commented", VarcharType(20), description=Some("some id")),
+            Field("uncommented", IntegerType)
+        ))
+        val result = mapping.describe(execution, Map(MappingOutputIdentifier("input:main") -> inputSchema))
+
+        result("main") should be (StructType(Seq(
+            Field("lower_id", VarcharType(20), description=Some("some id")),
+            Field("coalesce1", StringType, description=Some("some id")),
+            Field("coalesce2", StringType, description=Some("some id"))
+        )))
+    }
+
     "Mapping.link default implementation" should "work" in {
         val mappingTemplate1 = mock[Prototype[Mapping]]
         val mappingTemplate2 = mock[Prototype[Mapping]]

@@ -307,7 +307,7 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
         require(input != null)
 
         def extractComment2(expressions: Seq[Expression]) : Option[String] = {
-            expressions.collectFirst { case e => extractComment(e) }.flatten
+            expressions.flatMap(extractComment).headOption
         }
         def extractComment(expression: Expression) : Option[String] = {
             expression match {

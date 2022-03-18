@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,11 +59,13 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
               |    template:
               |      kind: blackhole
               |      mapping: $p0
+              |      description: "No description"
               |
               |targets:
               |  rel_1:
               |    kind: template/user
               |    p0: some_value
+              |    description: "This is rel_1"
               |  rel_2:
               |    kind: template/user
               |    p1: 13
@@ -81,15 +83,21 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        val rel_1 = context.getTarget(TargetIdentifier("rel_1"))
-        rel_1 shouldBe a[BlackholeTarget]
-        rel_1.name should be ("rel_1")
+        val tgt_1 = context.getTarget(TargetIdentifier("rel_1"))
+        tgt_1 shouldBe a[BlackholeTarget]
+        tgt_1.name should be ("rel_1")
+        tgt_1.identifier should be (TargetIdentifier("project/rel_1"))
+        tgt_1.kind should be ("blackhole")
+        tgt_1.description should be (Some("This is rel_1"))
 
         an[IllegalArgumentException] should be thrownBy(context.getTarget(TargetIdentifier("rel_2")))
 
-        val rel_3 = context.getTarget(TargetIdentifier("rel_3"))
-        rel_3 shouldBe a[BlackholeTarget]
-        rel_3.name should be ("rel_3")
+        val tgt_3 = context.getTarget(TargetIdentifier("rel_3"))
+        tgt_3 shouldBe a[BlackholeTarget]
+        tgt_3.name should be ("rel_3")
+        tgt_3.identifier should be (TargetIdentifier("project/rel_3"))
+        tgt_3.kind should be ("blackhole")
+        tgt_3.description should be (Some("No description"))
 
         an[IllegalArgumentException] should be thrownBy(context.getTarget(TargetIdentifier("rel_4")))
     }
@@ -125,6 +133,8 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
               |    template:
               |      kind: blackhole
               |      mapping: $p0
+              |      before: x
+              |      after: y
               |
               |targets:
               |  rel_1:
@@ -140,11 +150,11 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        val rel = context.getTarget(TargetIdentifier("rel_1"))
-        rel shouldBe a[BlackholeTarget]
-        rel.name should be ("rel_1")
-        // TODO
-        //rel.before should be (Seq(TargetIdentifier("a")))
-        //rel.after should be (Seq(TargetIdentifier("b"), TargetIdentifier("c")))
+        val tgt = context.getTarget(TargetIdentifier("rel_1"))
+        tgt shouldBe a[BlackholeTarget]
+        tgt.name should be ("rel_1")
+        tgt.kind should be ("blackhole")
+        tgt.before should be (Seq(TargetIdentifier("x"), TargetIdentifier("a")))
+        tgt.after should be (Seq(TargetIdentifier("y"), TargetIdentifier("c"), TargetIdentifier("d")))
     }
 }

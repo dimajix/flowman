@@ -55,6 +55,7 @@ class JdbcMetricSinkTest extends AnyFlatSpec with Matchers with MockFactory with
             """
               |kind: jdbc
               |connection: metrics
+              |tablePrefix: prefix_
             """.stripMargin
 
         val monitor = ObjectMapper.parse[MetricSinkSpec](spec)
@@ -85,7 +86,7 @@ class JdbcMetricSinkTest extends AnyFlatSpec with Matchers with MockFactory with
             driver = "org.apache.derby.jdbc.EmbeddedDriver"
         )
         val connectionPrototype = mock[Prototype[Connection]]
-        (connectionPrototype.instantiate _).expects(context).returns(connection)
+        (connectionPrototype.instantiate _).expects(context, None).returns(connection)
 
         val sink = new JdbcMetricSink(
             ConnectionReference.apply(context, connectionPrototype),
@@ -93,7 +94,7 @@ class JdbcMetricSinkTest extends AnyFlatSpec with Matchers with MockFactory with
         )
 
         val metricSystem = new MetricSystem
-        val metricBoard = MetricBoard(context,
+        val metricBoard = MetricBoard(MetricBoard.Properties(context),
             Map("board_label" -> "v1"),
             Seq(MetricSelection(selector=Selector(".*"), labels=Map("target" -> "$target", "status" -> "$status")))
         )
@@ -115,14 +116,14 @@ class JdbcMetricSinkTest extends AnyFlatSpec with Matchers with MockFactory with
             driver = "org.apache.derby.jdbc.EmbeddedDriver"
         )
         val connectionPrototype = mock[Prototype[Connection]]
-        (connectionPrototype.instantiate _).expects(context).returns(connection)
+        (connectionPrototype.instantiate _).expects(context, None).returns(connection)
 
         val sink = new JdbcMetricSink(
             ConnectionReference.apply(context, connectionPrototype)
         )
 
         val metricSystem = new MetricSystem
-        val metricBoard = MetricBoard(context,
+        val metricBoard = MetricBoard(MetricBoard.Properties(context),
             Map("board_label" -> "v1"),
             Seq(MetricSelection(selector=Selector(".*"), labels=Map("target" -> "$target", "status" -> "$status")))
         )

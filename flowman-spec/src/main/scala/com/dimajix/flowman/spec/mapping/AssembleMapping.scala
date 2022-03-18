@@ -302,9 +302,9 @@ class AssembleMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): AssembleMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): AssembleMapping = {
         AssembleMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier.parse(context.evaluate(this.input)),
             columns.map(_.instantiate(context)),
             context.evaluate(filter)

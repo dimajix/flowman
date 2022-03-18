@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,9 +250,9 @@ class ValuesRelationSpec extends RelationSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): ValuesRelation = {
+    override def instantiate(context: Context, properties:Option[Relation.Properties] = None): ValuesRelation = {
         ValuesRelation(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             columns.toSeq.map(kv => Field(kv._1, FieldType.of(context.evaluate(kv._2)))),
             schema.map(_.instantiate(context)),
             records.map(_.map(context.evaluate))

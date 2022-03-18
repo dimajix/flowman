@@ -24,11 +24,12 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchProjectException
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.storage.AbstractStore
 import com.dimajix.flowman.storage.Store
 
 
 
-case class FileStore(root:File) extends Store {
+case class FileStore(root:File) extends AbstractStore {
     private val logger = LoggerFactory.getLogger(classOf[FileStore])
     private val globPattern = new Path("*/project.{yml,yaml}")
 
@@ -71,7 +72,7 @@ case class FileStore(root:File) extends Store {
 class FileStoreSpec extends StoreSpec {
     @JsonProperty(value="location", required=true) private var root:String = ""
 
-    override def instantiate(context:Context): Store = {
+    override def instantiate(context:Context, properties:Option[Store.Properties] = None): Store = {
         val root = context.fs.file(context.evaluate(this.root))
         new FileStore(root)
     }

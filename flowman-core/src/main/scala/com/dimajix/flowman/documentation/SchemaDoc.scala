@@ -50,10 +50,10 @@ final case class SchemaReference(
 object SchemaDoc {
     def ofStruct(parent:Reference, struct:StructType) : SchemaDoc = ofFields(parent, struct.fields)
     def ofFields(parent:Reference, fields:Seq[Field]) : SchemaDoc = {
-        val doc = SchemaDoc(Some(parent), None, Seq(), Seq())
+        val doc = SchemaDoc(Some(parent))
 
         def genColumns(parent:Reference, fields:Seq[Field]) : Seq[ColumnDoc] = {
-            fields.map(f => genColumn(parent, f))
+            fields.zipWithIndex.map { case(f,idx) => genColumn(parent, f, idx + 1) }
         }
         @tailrec
         def genChildren(parent:Reference, ftype:FieldType) : Seq[ColumnDoc] = {
@@ -65,14 +65,14 @@ object SchemaDoc {
                 case a:ArrayType =>
                     genChildren(parent, a.elementType)
                 case _ =>
-                    Seq()
+                    Seq.empty
             }
 
         }
-        def genColumn(parent:Reference, field:Field) : ColumnDoc = {
-            val doc = ColumnDoc(Some(parent), field, Seq(), Seq())
-            val children = genChildren(doc.reference, field.ftype)
-            doc.copy(children = children)
+        def genColumn(parent:Reference, field:Field, idx:Int) : ColumnDoc = {
+            val doc = ColumnDoc(Some(parent), field, index=idx)
+            val childs = genChildren(doc.reference, field.ftype)
+            doc.copy(children = childs)
         }
         val columns = genColumns(doc.reference, fields)
         doc.copy(columns = columns)
@@ -83,8 +83,8 @@ object SchemaDoc {
 final case class SchemaDoc(
     parent:Option[Reference],
     description:Option[String] = None,
-    columns:Seq[ColumnDoc] = Seq(),
-    checks:Seq[SchemaCheck] = Seq()
+    columns:Seq[ColumnDoc] = Seq.empty,
+    checks:Seq[SchemaCheck] = Seq.empty
 ) extends EntityDoc {
     override def reference: SchemaReference = SchemaReference(parent)
     override def fragments: Seq[Fragment] = columns ++ checks

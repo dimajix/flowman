@@ -23,14 +23,16 @@ import org.apache.spark.sql.jdbc.JdbcType
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
+import com.dimajix.flowman.types.CharType
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FloatType
 import com.dimajix.flowman.types.ShortType
 import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.TimestampType
+import com.dimajix.flowman.types.VarcharType
 
 
-object MsSqlServerDialect extends BaseDialect {
+object SqlServerDialect extends BaseDialect {
     // Special JDBC types in Microsoft SQL Server.
     // https://github.com/microsoft/mssql-jdbc/blob/v8.2.2/src/main/java/microsoft/sql/Types.java
     private object SpecificTypes {
@@ -45,6 +47,8 @@ object MsSqlServerDialect extends BaseDialect {
     override def getJdbcType(dt: FieldType): JdbcType = dt match {
         case TimestampType => JdbcType("DATETIME", java.sql.Types.TIMESTAMP)
         case StringType => JdbcType("NVARCHAR(MAX)", java.sql.Types.NVARCHAR)
+        case v : CharType => JdbcType(s"NCHAR(${v.length})", java.sql.Types.NCHAR)
+        case v : VarcharType => JdbcType(s"NVARCHAR(${v.length})", java.sql.Types.NVARCHAR)
         case BooleanType => JdbcType("BIT", java.sql.Types.BIT)
         case BinaryType => JdbcType("VARBINARY(MAX)", java.sql.Types.VARBINARY)
         case ShortType => JdbcType("SMALLINT", java.sql.Types.SMALLINT)

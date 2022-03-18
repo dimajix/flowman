@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,13 @@ package com.dimajix.flowman.catalog
 
 import java.sql.Connection
 import java.sql.DriverManager
+import java.sql.SQLException
 import java.sql.SQLRecoverableException
 import java.sql.SQLTransientException
 import java.sql.Statement
 import java.util.Properties
 
+import com.cloudera.impala.support.exceptions.GeneralException
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTablePartition
 import org.slf4j.LoggerFactory
@@ -48,7 +50,10 @@ object ImpalaExternalCatalog {
 }
 
 
-class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection, computeStats:Boolean) extends ExternalCatalog {
+final case class ImpalaExternalCatalog(
+    connection:ImpalaExternalCatalog.Connection,
+    computeStats:Boolean
+) extends AbstractExternalCatalog {
     private val logger = LoggerFactory.getLogger(classOf[ImpalaExternalCatalog])
     private val connect = createConnectionFactory(connection)
 
@@ -84,7 +89,13 @@ class ImpalaExternalCatalog(connection:ImpalaExternalCatalog.Connection, compute
         logger.info(s"INVALIDATE Impala metadata for dropped table ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
-            stmt.execute(s"INVALIDATE METADATA $identifier")
+            try {
+                stmt.execute(s"INVALIDATE METADATA $identifier")
+            }
+            catch {
+                // Ignore "TableNotFoundExceptions"
+                case ex:SQLException if ex.getMessage.contains("TableNotFoundException") =>
+            }
         }
     }
 

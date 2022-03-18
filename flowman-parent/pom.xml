@@ -10,7 +10,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.22.0</version>
+        <version>0.23.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -354,6 +354,12 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-impala</artifactId>
+                <version>${flowman.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-postgresql</artifactId>
                 <version>${flowman.version}</version>
                 <scope>provided</scope>
             </dependency>

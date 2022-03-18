@@ -20,9 +20,11 @@ relations:
         type: integer
         granularity: 1
         
+    # Explicit documentation section for annotating columns of the relation
     documentation:
       description: "The table contains all aggregated measurements"  
       columns:
+        # You can document any column you like, you don't have to provide a description for all of them
         - name: country
           description: "Country of the weather station"
         - name: min_temperature

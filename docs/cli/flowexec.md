@@ -30,7 +30,7 @@ or for inspecting individual entities.
 
 ## Project Commands
 The most important command group is for executing a specific lifecycle or an individual phase for the whole project.
-```shell script
+```shell
 flowexec project <create|build|verify|truncate|destroy> <args>
 ```
 This will execute the whole job by executing the desired lifecycle for the `main` job. Additional parameters are
@@ -70,12 +70,12 @@ Similar to the project commands, individual jobs with different names than `main
 
 ### List Jobs
 The following command will list all jobs defined in a project
-```shell script
+```shell
 flowexec job list
 ```
 
 ### Execute Job phase
-```shell script
+```shell
 flowexec job <create|build|verify|truncate|destroy> <job_name> <args>
 ```
 This will execute the whole job by executing the desired lifecycle for the `main` job. Additional parameters are
@@ -125,12 +125,12 @@ inferior to using the `job` interface above, since typical jobs will also define
 which might be required by targets.
 
 ### List Targets
-```shell script
+```shell
 flowexec target list
 ```
 
 ### Execute Target phase
-```shell script
+```shell
 flowexec target <create|build|verify|truncate|destroy> <target_name>
 ```
 This will execute an individual target by executing the desired lifecycle for the `main` job. Additional parameters are
@@ -144,6 +144,6 @@ the whole lifecycle for `verify` includes the phases `create` and `build` and th
 ## Info Command
 As a small debugging utility, Flowman also provides an `info` command, which simply shows all environment variables
 and configuration settings.
-```shell script
+```shell
 flowexec info
 ```

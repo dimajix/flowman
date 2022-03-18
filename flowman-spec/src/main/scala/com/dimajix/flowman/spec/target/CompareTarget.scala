@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,9 +112,9 @@ class CompareTargetSpec extends TargetSpec {
     @JsonProperty(value = "actual", required = true) private var actual: DatasetSpec = _
     @JsonProperty(value = "expected", required = true) private var expected: DatasetSpec = _
 
-    override def instantiate(context: Context): CompareTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): CompareTarget = {
         CompareTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             actual.instantiate(context),
             expected.instantiate(context)
         )

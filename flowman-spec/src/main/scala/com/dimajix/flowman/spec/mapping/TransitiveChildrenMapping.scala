@@ -151,9 +151,9 @@ class TransitiveChildrenMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): TransitiveChildrenMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): TransitiveChildrenMapping = {
         TransitiveChildrenMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             parentColumns.map(context.evaluate),
             childColumns.map(context.evaluate),

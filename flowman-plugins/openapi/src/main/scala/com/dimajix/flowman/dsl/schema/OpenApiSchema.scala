@@ -33,8 +33,8 @@ case class OpenApiSchema(
     entity: Option[String] = None,
     nullable: Boolean = false
 )
-    extends SchemaGen {
-    override def instantiate(context: Context): schema.OpenApiSchema = {
+extends SchemaGen {
+    override def instantiate(context: Context, properties:Option[Schema.Properties] = None): schema.OpenApiSchema = {
         schema.OpenApiSchema(
             Schema.Properties(context),
             file,

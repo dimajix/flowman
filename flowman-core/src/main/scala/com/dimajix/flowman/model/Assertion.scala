@@ -20,6 +20,7 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.model
 
 
 object Assertion {
@@ -37,19 +38,25 @@ object Assertion {
         context:Context,
         metadata:Metadata,
         description:Option[String]
-    ) extends Instance.Properties[Properties] {
+    ) extends model.Properties[Properties] {
         override val namespace:Option[Namespace] = context.namespace
         override val project:Option[Project] = context.project
         override val kind : String = metadata.kind
         override val name : String = metadata.name
 
         override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
+
+        def merge(other: Properties): Properties = {
+            Properties(context, metadata.merge(other.metadata), description.orElse(other.description))
+        }
         def identifier : AssertionIdentifier = AssertionIdentifier(name, project.map(_.name))
     }
 }
 
 
 trait Assertion extends Instance {
+    override type PropertiesType = Assertion.Properties
+
     override final def category: Category = Category.ASSERTION
 
     /**

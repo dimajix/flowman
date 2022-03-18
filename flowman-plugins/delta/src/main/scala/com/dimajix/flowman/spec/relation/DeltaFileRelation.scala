@@ -37,6 +37,7 @@ import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
@@ -222,8 +223,8 @@ case class DeltaFileRelation(
                 val table = deltaCatalogTable(execution)
                 val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
                 val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
-                val sourceTable = TableDefinition(TableIdentifier.empty, sourceSchema.fields)
-                val targetTable = TableDefinition(TableIdentifier.empty, targetSchema.fields)
+                val sourceTable = TableDefinition(TableIdentifier.empty, columns=sourceSchema.fields)
+                val targetTable = TableDefinition(TableIdentifier.empty, columns=targetSchema.fields)
                 !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
             }
             else {
@@ -383,9 +384,9 @@ class DeltaFileRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
     @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq()
 
-    override def instantiate(context: Context): DeltaFileRelation = {
+    override def instantiate(context: Context, props:Option[Relation.Properties] = None): DeltaFileRelation = {
         DeltaFileRelation(
-            instanceProperties(context),
+            instanceProperties(context, props),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             new Path(context.evaluate(location)),

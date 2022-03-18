@@ -44,8 +44,12 @@ import org.apache.spark.sql.execution.command.DropDatabaseCommand
 import org.apache.spark.sql.execution.command.DropTableCommand
 import org.apache.spark.sql.hive.HiveClientShim
 import org.apache.spark.sql.types.StructField
+import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.MapIgnoreCase
+import com.dimajix.flowman.catalog.HiveCatalog.cleanupField
+import com.dimajix.flowman.catalog.HiveCatalog.cleanupFields
 import com.dimajix.flowman.catalog.TableChange.AddColumn
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
@@ -54,8 +58,31 @@ import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.hadoop.FileUtils
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
+import com.dimajix.spark.features.hiveVarcharSupported
 import com.dimajix.spark.sql.SchemaUtils
+import com.dimajix.spark.sql.SchemaUtils.replaceCharVarchar
 
+
+object HiveCatalog {
+    def cleanupSchema(schema:StructType) : StructType = {
+        if (hiveVarcharSupported)
+            schema
+        else
+            replaceCharVarchar(schema)
+    }
+    def cleanupFields(schema:Seq[StructField]) : Seq[StructField] = {
+        if (hiveVarcharSupported)
+            schema
+        else
+            schema.map(replaceCharVarchar)
+    }
+    def cleanupField(field:StructField) : StructField = {
+        if (hiveVarcharSupported)
+            field
+        else
+            replaceCharVarchar(field)
+    }
+}
 
 /**
  * The HiveCatalog is a wrapper around the Spark external catalog, which mainly contains Hive tables.
@@ -171,7 +198,8 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         if (!exists) {
             // Cleanup table definition
             val cleanedSchema = SchemaUtils.truncateComments(table.schema, maxCommentLength)
-            val cleanedTable = table.copy(schema = cleanedSchema)
+            val catalogSchema = HiveCatalog.cleanupSchema(cleanedSchema)
+            val cleanedTable = table.copy(schema = catalogSchema)
 
             logger.info(s"Creating Hive table ${table.identifier}")
             val cmd = CreateTableCommand(cleanedTable, ignoreIfExists)
@@ -337,30 +365,32 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
         val catalogTable = getTable(table)
         require(catalogTable.tableType != CatalogTableType.VIEW)
-        val tableColumns = catalogTable.schema.fields.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+        val tableColumns = MapIgnoreCase(catalogTable.schema.fields.map(f => (f.name -> f)))
 
         val colsToAdd = mutable.Buffer[StructField]()
         changes.foreach {
             case a:AddColumn =>
-                logger.info(s"Adding column ${a.column.name} with type ${a.column.catalogType.sql} to Hive table '$table'")
-                colsToAdd.append(a.column.catalogField)
+                logger.info(s"Adding column ${a.column.name} with type ${a.column.catalogType.sql} to Hive table $table")
+                colsToAdd.append(cleanupField(a.column.catalogField))
             case u:UpdateColumnNullability =>
-                logger.info(s"Updating nullability of column ${u.column} to ${u.nullable} in Hive table '$table'")
-                val field = tableColumns.getOrElse(u.column.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Table column ${u.column} does not exist in table $table"))
+                logger.info(s"Updating nullability of column ${u.column} to ${u.nullable} in Hive table $table")
+                val field = tableColumns.getOrElse(u.column, throw new IllegalArgumentException(s"Table column ${u.column} does not exist in table $table"))
                     .copy(nullable = u.nullable)
-                val cmd = AlterTableChangeColumnCommand(table.toSpark, u.column, field)
+                val cmd = AlterTableChangeColumnCommand(table.toSpark, u.column, cleanupField(field))
                 cmd.run(spark)
             case u:UpdateColumnComment =>
-                logger.info(s"Updating comment of column ${u.column} in Hive table '$table'")
-                val field = tableColumns.getOrElse(u.column.toLowerCase(Locale.ROOT), throw new IllegalArgumentException(s"Table column ${u.column} does not exist in table $table"))
+                logger.info(s"Updating comment of column ${u.column} in Hive table $table")
+                val field = tableColumns.getOrElse(u.column, throw new IllegalArgumentException(s"Table column ${u.column} does not exist in table $table"))
                     .withComment(u.comment.getOrElse(""))
-                val cmd = AlterTableChangeColumnCommand(table.toSpark, u.column, field)
+                val cmd = AlterTableChangeColumnCommand(table.toSpark, u.column, cleanupField(field))
                 cmd.run(spark)
             case x:TableChange => throw new UnsupportedOperationException(s"Unsupported table change $x for Hive table $table")
         }
 
-        val cmd = AlterTableAddColumnsCommand(table.toSpark, colsToAdd)
-        cmd.run(spark)
+        if (colsToAdd.nonEmpty) {
+            val cmd = AlterTableAddColumnsCommand(table.toSpark, colsToAdd)
+            cmd.run(spark)
+        }
 
         externalCatalogs.foreach(_.alterTable(catalogTable))
     }
@@ -380,7 +410,8 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         val catalogTable = getTable(table)
         require(catalogTable.tableType != CatalogTableType.VIEW)
 
-        val cmd = AlterTableAddColumnsCommand(table.toSpark, colsToAdd)
+        val cleanedCols = cleanupFields(colsToAdd)
+        val cmd = AlterTableAddColumnsCommand(table.toSpark, cleanedCols)
         cmd.run(spark)
 
         externalCatalogs.foreach(_.alterTable(catalogTable))

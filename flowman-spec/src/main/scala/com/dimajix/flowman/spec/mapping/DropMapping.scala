@@ -102,9 +102,9 @@ class DropMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): DropMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): DropMapping = {
         DropMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             columns.map(c => Path(context.evaluate(c))),
             context.evaluate(filter)

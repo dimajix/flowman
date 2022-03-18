@@ -165,9 +165,9 @@ class ExplodeMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): ExplodeMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): ExplodeMapping = {
         ExplodeMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             Path(context.evaluate(array)),
             outerColumns.instantiate(context),

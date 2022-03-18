@@ -34,6 +34,8 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.createConnectionFactory
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.savePartition
 import org.apache.spark.sql.jdbc.JdbcDialects
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.{types => st}
 import org.slf4j.LoggerFactory
 import slick.jdbc.DerbyProfile
 import slick.jdbc.H2Profile
@@ -43,6 +45,7 @@ import slick.jdbc.PostgresProfile
 import slick.jdbc.SQLServerProfile
 import slick.jdbc.SQLiteProfile
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
 import com.dimajix.flowman.catalog.TableChange.CreateIndex
@@ -56,9 +59,13 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.MergeClause
+import com.dimajix.flowman.types.CharType
 import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.types.VarcharType
 
 
 case class JdbcField(
@@ -74,6 +81,38 @@ case class JdbcField(
 class JdbcUtils
 object JdbcUtils {
     private val logger = LoggerFactory.getLogger(classOf[JdbcUtils])
+
+    /**
+     * This method adjusts the schema of a JDBC target table to be compatible with an incoming Spark schema for
+     * write operations. This will be used for intermediate tables.
+     * @param tableSchema
+     * @param dataSchema
+     * @return
+     */
+    def createSchema(dataSchema:st.StructType, tableSchema:StructType) : StructType = {
+        def combineFields(dataField:st.StructField, tableField:Field) : Field = {
+            val ftype = dataField.dataType match {
+                // Try to keep original types for Sparks generic String type
+                case StringType =>
+                    tableField.ftype match {
+                        case t:VarcharType => t
+                        case t:CharType => t
+                        case _ => FieldType.of(dataField.dataType)
+                    }
+                // Use natural type for everything else
+                case _ => FieldType.of(dataField.dataType)
+            }
+
+            tableField.copy(ftype=ftype, nullable=dataField.nullable)
+        }
+        val dataFields = MapIgnoreCase(dataSchema.fields.map(f => f.name -> f))
+        val tableFields = tableSchema.fields.map { tgtField =>
+            dataFields.get(tgtField.name)
+                .map(srcField => combineFields(srcField, tgtField))
+                .getOrElse(tgtField)
+        }
+        StructType(tableFields)
+    }
 
     def queryTimeout(options: JDBCOptions) : Int = {
         // This is not very efficient, but in Spark 2.2 we cannot access parameters
@@ -172,7 +211,7 @@ object JdbcUtils {
      */
     def getTable(conn: Connection, table:TableIdentifier, options: JDBCOptions) : TableDefinition = {
         val meta = conn.getMetaData
-        val realTable = resolveTable(meta, table)
+        val (realTable,realType) = resolveTable(meta, table)
 
         val currentSchema = getSchema(conn, table, options)
         val pk = getPrimaryKey(meta, realTable)
@@ -182,7 +221,7 @@ object JdbcUtils {
                 idx.normalize().columns != pk.map(_.toLowerCase(Locale.ROOT)).sorted
             }
 
-        TableDefinition(table, currentSchema.fields, primaryKey=pk, indexes=idxs)
+        TableDefinition(table, realType, currentSchema.fields, primaryKey=pk, indexes=idxs)
     }
 
     private def getPrimaryKey(meta: DatabaseMetaData, table:TableIdentifier) : Seq[String] = {
@@ -221,18 +260,31 @@ object JdbcUtils {
      * @param table
      * @return
      */
-    private def resolveTable(meta: DatabaseMetaData, table:TableIdentifier) : TableIdentifier = {
+    private def resolveTable(meta: DatabaseMetaData, table:TableIdentifier) : (TableIdentifier,TableType) = {
         val tblrs = meta.getTables(null, table.database.orNull, null, Array("TABLE"))
-        var name = table.table
+        var tableName = table.table
+        var tableType:TableType = TableType.UNKNOWN
         val db = table.database
+
+        val TABLE = ".*TABLE.*".r
+        val VIEW = ".*VIEW.*".r
+
         while(tblrs.next()) {
             val thisName = tblrs.getString(3)
-            if (name.toLowerCase(Locale.ROOT) == thisName.toLowerCase(Locale.ROOT))
-                name = thisName
+            if (tableName.toLowerCase(Locale.ROOT) == thisName.toLowerCase(Locale.ROOT)) {
+                tableName = thisName
+                tableType = tblrs.getString(4) match {
+                    case VIEW() => TableType.VIEW
+                    case TABLE() => TableType.TABLE
+                    case "GLOBAL TEMPORARY" => TableType.TABLE
+                    case "LOCAL TEMPORARY" => TableType.TABLE
+                    case _ => TableType.UNKNOWN
+                }
+            }
         }
         tblrs.close()
 
-        TableIdentifier(name, db)
+        (TableIdentifier(tableName, db), tableType)
     }
 
     /**
@@ -260,6 +312,11 @@ object JdbcUtils {
         StructType(fields)
     }
 
+    def getSchema(resultSet: ResultSet, dialect: SqlDialect) : StructType = {
+        val schema = getJdbcSchema(resultSet)
+        getSchema(schema, dialect)
+    }
+
     /**
      * Returns the list of [[JdbcField]] definitions containing the deatiled JDBC schema of the specified table.
      * @param conn
@@ -273,7 +330,7 @@ object JdbcUtils {
         withStatement(conn, dialect.statement.schema(table), options) { statement =>
             val rs = statement.executeQuery()
             try {
-                getJdbcSchemaImpl(rs)
+                getJdbcSchema(rs)
             }
             finally {
                 rs.close()
@@ -287,7 +344,7 @@ object JdbcUtils {
      * @return A [[StructType]] giving the Catalyst schema.
      * @throws SQLException if the schema contains an unsupported type.
      */
-    private def getJdbcSchemaImpl(resultSet: ResultSet): Seq[JdbcField] = {
+    def getJdbcSchema(resultSet: ResultSet): Seq[JdbcField] = {
         val rsmd = resultSet.getMetaData
         val ncols = rsmd.getColumnCount
         val fields = new Array[JdbcField](ncols)
@@ -338,12 +395,16 @@ object JdbcUtils {
      * @param table
      * @param options
      */
-    def dropTable(conn:Connection, table:TableIdentifier, options: JDBCOptions) : Unit = {
-        val dialect = SqlDialects.get(options.url)
+    def dropTable(conn:Connection, table:TableIdentifier, options: JDBCOptions, ifExists:Boolean=false) : Unit = {
         withStatement(conn, options) { statement =>
-            // TODO: Drop indices(?)
-            statement.executeUpdate(s"DROP TABLE ${dialect.quote(table)}")
+            if (!ifExists || tableExists(conn, table, options)) {
+                dropTable(statement, table, options)
+            }
         }
+    }
+    def dropTable(statement:Statement, table:TableIdentifier, options: JDBCOptions) : Unit = {
+        val dialect = SqlDialects.get(options.url)
+        statement.executeUpdate(s"DROP TABLE ${dialect.quote(table)}")
     }
 
     /**
@@ -354,10 +415,105 @@ object JdbcUtils {
      * @param options
      */
     def truncateTable(conn:Connection, table:TableIdentifier, options: JDBCOptions) : Unit = {
-        val dialect = SqlDialects.get(options.url)
         withStatement(conn, options) { statement =>
-            statement.executeUpdate(s"TRUNCATE TABLE ${dialect.quote(table)}")
+            truncateTable(statement, table, options)
         }
+    }
+    def truncateTable(statement:Statement, table:TableIdentifier, options: JDBCOptions) : Unit = {
+        val dialect = SqlDialects.get(options.url)
+        statement.executeUpdate(s"TRUNCATE TABLE ${dialect.quote(table)}")
+    }
+
+    /**
+     * Deletes individual records (representing a logical partition) via a predicate condition
+     * @param statement
+     * @param table
+     * @param condition
+     * @param options
+     */
+    def truncatePartition(statement:Statement, table:TableIdentifier, condition:String, options: JDBCOptions) : Unit = {
+        val dialect = SqlDialects.get(options.url)
+        statement.executeUpdate(s"DELETE FROM ${dialect.quote(table)} WHERE $condition")
+    }
+
+    /**
+     * Inserts new records into an existing table from a different existing table
+     * @param statement
+     * @param targetTable
+     * @param sourceTable
+     * @param options
+     */
+    def appendTable(statement:Statement, targetTable:TableIdentifier, sourceTable:TableIdentifier, options: JDBCOptions) : Unit = {
+        val dialect = SqlDialects.get(options.url)
+        statement.executeUpdate(s"INSERT INTO ${dialect.quote(targetTable)}  SELECT * FROM ${dialect.quote(sourceTable)}")
+    }
+
+    /**
+     * Perform an SQL MERGE operation withpout an intermediate staging table
+     * @param target
+     * @param targetAlias
+     * @param targetSchema
+     * @param source
+     * @param sourceAlias
+     * @param condition
+     * @param clauses
+     * @param options
+     */
+    def mergeTable(target:TableIdentifier,
+                   targetAlias:String,
+                   targetSchema:Option[org.apache.spark.sql.types.StructType],
+                   source: DataFrame,
+                   sourceAlias:String,
+                   condition:Column,
+                   clauses:Seq[MergeClause],
+                   options: JDBCOptions) : Unit = {
+        val url = options.url
+        val dialect = SqlDialects.get(url)
+        val sparkDialect = JdbcDialects.get(url)
+        val quotedTarget = dialect.quote(target)
+        val getConnection: () => Connection = createConnectionFactory(options)
+        val sourceSchema = source.schema
+        val batchSize = options.batchSize
+        val isolationLevel = options.isolationLevel
+        val insertStmt = dialect.statement.merge(target, targetAlias, targetSchema, sourceAlias, sourceSchema, condition, clauses)
+        val repartitionedDF = options.numPartitions match {
+            case Some(n) if n <= 0 => throw new IllegalArgumentException("Invalid number of partitions")
+            case Some(n) if n < source.rdd.getNumPartitions => source.coalesce(n)
+            case _ => source
+        }
+        repartitionedDF.rdd.foreachPartition { iterator => savePartition(
+            getConnection, quotedTarget, iterator, sourceSchema, insertStmt, batchSize, sparkDialect, isolationLevel, options)
+        }
+    }
+
+    /**
+     * Perform an SQL MERGE operation from a source table into a target table
+     * @param statement
+     * @param target
+     * @param targetAlias
+     * @param targetSchema
+     * @param source
+     * @param sourceAlias
+     * @param sourceSchema
+     * @param condition
+     * @param clauses
+     * @param options
+     */
+    def mergeTable(
+        statement:Statement,
+        target:TableIdentifier,
+        targetAlias:String,
+        targetSchema:Option[org.apache.spark.sql.types.StructType],
+        source: TableIdentifier,
+        sourceAlias:String,
+        sourceSchema:org.apache.spark.sql.types.StructType,
+        condition:Column,
+        clauses:Seq[MergeClause],
+        options: JDBCOptions) : Unit = {
+        val url = options.url
+        val dialect = SqlDialects.get(url)
+        val sql = dialect.statement.merge(target, targetAlias, targetSchema, source, sourceAlias, sourceSchema, condition, clauses)
+        statement.executeUpdate(sql)
     }
 
     /**
@@ -448,33 +604,6 @@ object JdbcUtils {
             sqls.foreach { sql =>
                 statement.executeUpdate(sql)
             }
-        }
-    }
-
-    def mergeTable(target:TableIdentifier,
-                   targetAlias:String,
-                   targetSchema:Option[org.apache.spark.sql.types.StructType],
-                   source: DataFrame,
-                   sourceAlias:String,
-                   condition:Column,
-                   clauses:Seq[MergeClause],
-                   options: JDBCOptions) : Unit = {
-        val url = options.url
-        val dialect = SqlDialects.get(url)
-        val sparkDialect = JdbcDialects.get(url)
-        val quotedTarget = dialect.quote(target)
-        val getConnection: () => Connection = createConnectionFactory(options)
-        val sourceSchema = source.schema
-        val batchSize = options.batchSize
-        val isolationLevel = options.isolationLevel
-        val insertStmt = dialect.statement.merge(target, targetAlias, targetSchema, sourceAlias, sourceSchema, condition, clauses)
-        val repartitionedDF = options.numPartitions match {
-            case Some(n) if n <= 0 => throw new IllegalArgumentException("Invalid number of partitions")
-            case Some(n) if n < source.rdd.getNumPartitions => source.coalesce(n)
-            case _ => source
-        }
-        repartitionedDF.rdd.foreachPartition { iterator => savePartition(
-            getConnection, quotedTarget, iterator, sourceSchema, insertStmt, batchSize, sparkDialect, isolationLevel, options)
         }
     }
 

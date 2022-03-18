@@ -17,10 +17,16 @@
 package com.dimajix.flowman.storage
 
 import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.model.AbstractInstance
 
 
-abstract class Parcel extends Store {
+trait Parcel extends Store {
     def name : String
     def root : File
     def replace(targz:File) : Unit
+}
+
+
+abstract class AbstractParcel extends AbstractInstance with Parcel {
+    override protected def instanceProperties: Store.Properties = Store.Properties(kind)
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,9 +159,9 @@ case class FileTarget(
     override def build(executor: Execution): Unit = {
         require(executor != null)
 
-        logger.info(s"Writing mapping '$this.mapping' to directory '$qualifiedLocation'")
-        val mapping = context.getMapping(this.mapping.mapping)
-        val dfIn = executor.instantiate(mapping, this.mapping.output)
+        logger.info(s"Writing mapping output '${mapping}' to directory '$qualifiedLocation'")
+        val map = context.getMapping(mapping.mapping)
+        val dfIn = executor.instantiate(map, mapping.output)
         val table = {
             if (parallelism <= 0)
                 dfIn
@@ -232,10 +232,10 @@ class FileTargetSpec extends TargetSpec {
     @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
     @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
 
-    override def instantiate(context: Context): FileTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): FileTarget = {
         val conf = context.flowmanConf
         FileTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
             new Path(context.evaluate(location)),
             context.evaluate(format),

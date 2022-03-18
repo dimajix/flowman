@@ -18,6 +18,7 @@ package com.dimajix.flowman.documentation
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 
 
@@ -66,21 +67,35 @@ final case class TargetReference(
 
 final case class TargetDoc(
     parent:Option[Reference],
-    identifier:TargetIdentifier,
+    target:Option[Target] = None,
     description:Option[String] = None,
     phases:Seq[TargetPhaseDoc] = Seq.empty,
     inputs:Seq[Reference] = Seq.empty,
     outputs:Seq[Reference] = Seq.empty
 ) extends EntityDoc {
-    override def reference: TargetReference = TargetReference(parent, identifier.name)
+    override def reference: TargetReference = TargetReference(parent, name)
     override def fragments: Seq[Fragment] = phases
     override def reparent(parent: Reference): TargetDoc = {
-        val ref = TargetReference(Some(parent), identifier.name)
+        val ref = TargetReference(Some(parent), name)
         copy(
             parent = Some(parent),
             phases = phases.map(_.reparent(ref))
         )
     }
+
+    /**
+     * Returns the name of the project of this mapping
+     * @return
+     */
+    def project : Option[String] = target.flatMap(_.project.map(_.name))
+
+    /**
+     * Returns the name of this mapping
+     * @return
+     */
+    def name : String = target.map(_.name).getOrElse("")
+
+    def identifier:TargetIdentifier = target.map(_.identifier).getOrElse(TargetIdentifier.empty)
 
     /**
      * Merge this schema documentation with another target documentation. Note that while documentation attributes
@@ -97,11 +112,11 @@ final case class TargetDoc(
      * @param other
      */
     def merge(other:TargetDoc) : TargetDoc = {
-        val id = if (identifier.isEmpty) other.identifier else identifier
+        val tgt = target.orElse(other.target)
         val desc = other.description.orElse(this.description)
         val in = inputs.toSet ++ other.inputs.toSet
         val out = outputs.toSet ++ other.outputs.toSet
-        val result = copy(identifier=id, description=desc, inputs=in.toSeq, outputs=out.toSeq)
+        val result = copy(target=tgt, description=desc, inputs=in.toSeq, outputs=out.toSeq)
         parent.orElse(other.parent)
             .map(result.reparent)
             .getOrElse(result)

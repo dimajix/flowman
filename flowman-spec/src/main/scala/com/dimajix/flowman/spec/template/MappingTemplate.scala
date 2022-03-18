@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.BaseTemplate
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.TemplateIdentifier
 import com.dimajix.flowman.spec.mapping.MappingSpec
@@ -31,22 +32,19 @@ import com.dimajix.flowman.spec.mapping.MappingSpec
 case class MappingTemplate(
     instanceProperties: Template.Properties,
     parameters: Seq[Template.Parameter],
-    spec:MappingSpec
+    spec:Prototype[Mapping]
 ) extends BaseTemplate[Mapping] with com.dimajix.flowman.model.MappingTemplate {
-    override protected def instantiateInternal(context: Context, name: String): Mapping = {
-        synchronized {
-            spec.name = name
-            spec.instantiate(context)
-        }
+    override protected def instantiateInternal(context: Context, props: Mapping.Properties): Mapping = {
+        spec.instantiate(context, Some(props))
     }
 }
 
 class MappingTemplateSpec extends TemplateSpec {
     @JsonProperty(value="template", required=true) private var spec:MappingSpec = _
 
-    override def instantiate(context: Context): MappingTemplate = {
+    override def instantiate(context: Context, properties:Option[Template.Properties] = None): MappingTemplate = {
         MappingTemplate(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             parameters.map(_.instantiate(context)),
             spec
         )
@@ -63,14 +61,15 @@ class MappingTemplateInstanceSpec extends MappingSpec {
         args = args.updated(name, value)
     }
 
-    override def instantiate(context: Context): Mapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): Mapping = {
         // get template name from member "kind"
         // Lookup template in context
         val identifier = TemplateIdentifier(kind.stripPrefix("template/"))
         val template = context.getTemplate(identifier).asInstanceOf[MappingTemplate]
+        val props = instanceProperties(context, properties)
 
         // parse args
         val parsedArgs = template.arguments(context.evaluate(args))
-        template.instantiate(context, name, parsedArgs)
+        template.instantiate(context, props, parsedArgs)
     }
 }

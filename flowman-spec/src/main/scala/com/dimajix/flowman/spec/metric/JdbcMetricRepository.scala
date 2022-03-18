@@ -68,12 +68,13 @@ private[metric] object JdbcMetricRepository {
 private[metric] class JdbcMetricRepository(
     connection: JdbcConnection,
     val profile: JdbcProfile,
-    commitTable: String = "flowman_metric_commits",
-    commitLabelTable: String = "flowman_metric_commit_labels",
-    metricTable: String = "flowman_metrics",
-    metricLabelTable: String = "flowman_metric_labels"
+    tablePrefix: String = "flowman_"
 ) {
     private val logger = LoggerFactory.getLogger(getClass)
+    private val commitTable: String = tablePrefix + "metric_commits"
+    private val commitLabelTable: String = tablePrefix + "metric_commit_labels"
+    private val metricTable: String = tablePrefix + "metrics"
+    private val metricLabelTable: String = tablePrefix + "metric_labels"
 
     import profile.api._
 

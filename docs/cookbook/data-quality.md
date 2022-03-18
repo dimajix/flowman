@@ -66,7 +66,7 @@ targets:
 ```
 
 This example will publish two metrics, `record_count` and `column_sum`, which then can be sent to a
-[metric sink](../spec/metric) configured in the [namespace](../spec/namespace.md).
+[metric sink](../spec/metric/index.md) configured in the [namespace](../spec/namespace.md).
 
 
 ## When to use what

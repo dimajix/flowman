@@ -131,9 +131,9 @@ class MockMappingSpec extends MappingSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): MockMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): MockMapping = {
         MockMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingIdentifier(context.evaluate(mapping).getOrElse(name)),
             records.map(_.map(context.evaluate))
         )

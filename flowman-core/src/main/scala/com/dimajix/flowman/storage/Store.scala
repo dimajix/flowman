@@ -16,8 +16,29 @@
 
 package com.dimajix.flowman.storage
 
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model
+import com.dimajix.flowman.model.AbstractInstance
+import com.dimajix.flowman.model.Category
+import com.dimajix.flowman.model.Instance
+import com.dimajix.flowman.model.Metadata
+import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 
+
+object Store {
+    final case class Properties(
+        kind:String
+    ) extends model.Properties[Properties] {
+        override val context : Context = null
+        override val namespace : Option[Namespace] = None
+        override val project : Option[Project] = None
+        override val name : String = ""
+        override val metadata : Metadata = Metadata(name="", category=model.Category.PROJECT_STORE.lower, kind=kind)
+
+        override def withName(name: String): Properties = ???
+    }
+}
 
 /**
  * The [[Store]] is the abstract class for implementing project stores. These stores offer an abstraction of
@@ -25,7 +46,16 @@ import com.dimajix.flowman.model.Project
  * enable this flexibility, projects are references solely by their name and not by their physical storage location
  * like a path, filename or directory.
  */
-abstract class Store {
+trait Store extends Instance {
+    override type PropertiesType = Store.Properties
+
+    /**
+     * Returns the category of the resource
+     *
+     * @return
+     */
+    final override def category: Category = Category.PROJECT_STORE
+
     /**
      * Loads a project via its name (not its filename or directory)
      * @param name
@@ -40,4 +70,9 @@ abstract class Store {
      * @return
      */
     def listProjects() : Seq[Project]
+}
+
+
+abstract class AbstractStore extends AbstractInstance with Store {
+    override protected def instanceProperties: Store.Properties = Store.Properties(kind)
 }

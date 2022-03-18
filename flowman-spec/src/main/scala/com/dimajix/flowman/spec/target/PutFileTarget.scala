@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,9 +147,9 @@ class PutFileTargetSpec extends TargetSpec {
     @JsonProperty(value = "tarPut", required = true) private var tarPut: String = ""
     @JsonProperty(value = "overwrite", required = false) private var overwrite: String = "true"
 
-    override def instantiate(context: Context): PutFileTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): PutFileTarget = {
         PutFileTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             new Path(context.evaluate(source)),
             new Path(context.evaluate(tarPut)),
             context.evaluate(overwrite).toBoolean

@@ -21,9 +21,11 @@ import org.apache.spark
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Linker
+import com.dimajix.flowman.graph.MappingRef
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -122,7 +124,11 @@ case class ReadRelationMapping(
      * Params: linker - The linker object to use for creating new edges
      */
     override def link(linker: Linker): Unit = {
-        linker.read(relation, partitions)
+        val relRef = linker.read(relation, partitions)
+        val mapRef = linker.node.asInstanceOf[MappingRef]
+        val mapOut = mapRef.outputs.head
+
+        linker.read(relRef, mapOut)
     }
 }
 
@@ -139,14 +145,14 @@ class ReadRelationMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): ReadRelationMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): ReadRelationMapping = {
         val partitions= this.partitions.mapValues {
                 case v: SingleValue => SingleValue(context.evaluate(v.value))
                 case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
                 case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), v.step.map(context.evaluate))
             }
         ReadRelationMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             relation.instantiate(context),
             context.evaluate(columns).map { case(name,typ) => Field(name, FieldType.of(typ))}.toSeq,
             partitions,

@@ -31,7 +31,7 @@ case class FileDataset (
     options:Map[String,String] = Map(),
     schema:Option[SchemaGen] = None
 ) extends DatasetGen {
-    override def instantiate(context: Context): dataset.FileDataset = {
+    override def instantiate(context: Context, properties:Option[Dataset.Properties]): dataset.FileDataset = {
         dataset.FileDataset(
             Dataset.Properties(context),
             location,

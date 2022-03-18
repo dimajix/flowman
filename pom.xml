@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.22.0</version>
+    <version>0.23.0</version>
     <packaging>pom</packaging>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
@@ -490,6 +490,7 @@
         <module>flowman-plugins/kafka</module>
         <!--<module>flowman-plugins/hbase</module>-->
         <module>flowman-plugins/impala</module>
+        <module>flowman-plugins/postgresql</module>
         <module>flowman-plugins/mariadb</module>
         <module>flowman-plugins/mysql</module>
         <module>flowman-plugins/mssqlserver</module>

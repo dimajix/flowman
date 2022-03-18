@@ -38,240 +38,240 @@ import com.dimajix.flowman.types.VarcharType
 class TableChangeTest extends AnyFlatSpec with Matchers {
     "TableChange.requiresMigration" should "accept same schemas in strict mode" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType))),
             MigrationPolicy.STRICT
         ) should be (false)
     }
 
     it should "not accept dropped columns in strict mode" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType))),
             MigrationPolicy.STRICT
         ) should be (true)
     }
 
     it should "not accept added columns in strict mode" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType))),
             MigrationPolicy.STRICT
         ) should be (true)
     }
 
     it should "not accept changed data types in strict mode" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", IntegerType), Field("f2", StringType))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", IntegerType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType))),
             MigrationPolicy.STRICT
         ) should be (true)
 
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", IntegerType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", IntegerType), Field("f2", StringType))),
             MigrationPolicy.STRICT
         ) should be (true)
 
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", LongType), Field("f2", StringType))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", IntegerType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", LongType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", IntegerType), Field("f2", StringType))),
             MigrationPolicy.STRICT
         ) should be (true)
 
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", VarcharType(10)), Field("f2", StringType))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", VarcharType(10)), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType))),
             MigrationPolicy.STRICT
         ) should be (true)
     }
 
     it should "not accept changed nullability in strict mode" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, true))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, false))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, true))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, false))),
             MigrationPolicy.STRICT
         ) should be (true)
 
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, false))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, true))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, false))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, true))),
             MigrationPolicy.STRICT
         ) should be (true)
     }
 
     it should "accept changed comments in strict mode" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, description = Some("lala")))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, description = Some("lala")))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, description = Some("lala")))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, description = Some("lala")))),
             MigrationPolicy.RELAXED
         ) should be (false)
 
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, description = Some("lala")))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, description = Some("lolo")))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, description = Some("lala")))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, description = Some("lolo")))),
             MigrationPolicy.RELAXED
         ) should be (false)
 
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, description = None))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, description = Some("lolo")))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, description = None))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, description = Some("lolo")))),
             MigrationPolicy.RELAXED
         ) should be (false)
 
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, description = Some("lala")))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, description = None))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, description = Some("lala")))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, description = None))),
             MigrationPolicy.RELAXED
         ) should be (false)
     }
 
     it should "accept same schemas in relaxed mode" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType))),
             MigrationPolicy.RELAXED
         ) should be (false)
     }
 
     it should "handle data type in relaxed mode" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", LongType), Field("f2", StringType))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", IntegerType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", LongType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", IntegerType), Field("f2", StringType))),
             MigrationPolicy.RELAXED
         ) should be (false)
 
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", IntegerType), Field("f2", StringType))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", LongType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", IntegerType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", LongType), Field("f2", StringType))),
             MigrationPolicy.RELAXED
         ) should be (true)
     }
 
     it should "accept removed columns in relaxed mode" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", LongType), Field("f2", StringType))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", LongType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", LongType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", LongType))),
             MigrationPolicy.RELAXED
         ) should be (false)
     }
 
     it should "not accept added columns in relaxed mode" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", LongType))),
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", LongType), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", LongType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", LongType), Field("f2", StringType))),
             MigrationPolicy.RELAXED
         ) should be (true)
     }
 
     it should "accept changed comments in relaxed mode" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, description = Some("lala")))),
-            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType, description = Some("lolo")))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, description = Some("lala")))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, description = Some("lolo")))),
             MigrationPolicy.RELAXED
         ) should be (false)
 
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, description = None))),
-            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType, description = Some("lolo")))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, description = None))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, description = Some("lolo")))),
             MigrationPolicy.RELAXED
         ) should be (false)
 
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, description = Some("lala")))),
-            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType, description = None))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, description = Some("lala")))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, description = None))),
             MigrationPolicy.RELAXED
         ) should be (false)
     }
 
     it should "handle changed nullability" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, true), Field("f2", StringType))),
-            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType, false), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, true), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, false), Field("f2", StringType))),
             MigrationPolicy.RELAXED
         ) should be (false)
 
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType, false), Field("f2", StringType))),
-            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType, true), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, false), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, true), Field("f2", StringType))),
             MigrationPolicy.RELAXED
         ) should be (true)
     }
 
     it should "handle changed primary key" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
-            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
             MigrationPolicy.RELAXED
         ) should be (false)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
-            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f2", "f1")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f2", "f1")),
             MigrationPolicy.RELAXED
         ) should be (false)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1")),
-            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
             MigrationPolicy.RELAXED
         ) should be (true)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
-            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq()),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq()),
             MigrationPolicy.RELAXED
         ) should be (true)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq()),
-            TableDefinition(TableIdentifier(""), Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq()),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
             MigrationPolicy.RELAXED
         ) should be (true)
     }
 
     it should "handle changed index" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c1")))),
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c1")))),
+            TableDefinition(TableIdentifier(""), indexes=Seq(TableIndex("name", Seq("c1")))),
+            TableDefinition(TableIdentifier(""), indexes=Seq(TableIndex("name", Seq("c1")))),
             MigrationPolicy.RELAXED
         ) should be (false)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c1")))),
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("C1")))),
+            TableDefinition(TableIdentifier(""), indexes=Seq(TableIndex("name", Seq("c1")))),
+            TableDefinition(TableIdentifier(""), indexes=Seq(TableIndex("name", Seq("C1")))),
             MigrationPolicy.RELAXED
         ) should be (false)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c1")))),
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("NAME", Seq("C1")))),
+            TableDefinition(TableIdentifier(""), indexes=Seq(TableIndex("name", Seq("c1")))),
+            TableDefinition(TableIdentifier(""), indexes=Seq(TableIndex("NAME", Seq("C1")))),
             MigrationPolicy.RELAXED
         ) should be (false)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq()),
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("NAME", Seq("C1")))),
+            TableDefinition(TableIdentifier(""), indexes=Seq()),
+            TableDefinition(TableIdentifier(""), indexes=Seq(TableIndex("NAME", Seq("C1")))),
             MigrationPolicy.RELAXED
         ) should be (true)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c1")))),
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq()),
+            TableDefinition(TableIdentifier(""), indexes=Seq(TableIndex("name", Seq("c1")))),
+            TableDefinition(TableIdentifier(""), indexes=Seq()),
             MigrationPolicy.RELAXED
         ) should be (true)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c1")))),
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("other", Seq("C1")))),
+            TableDefinition(TableIdentifier(""), indexes=Seq(TableIndex("name", Seq("c1")))),
+            TableDefinition(TableIdentifier(""), indexes=Seq(TableIndex("other", Seq("C1")))),
             MigrationPolicy.RELAXED
         ) should be (true)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c1")))),
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("C1","c2")))),
+            TableDefinition(TableIdentifier(""), indexes=Seq(TableIndex("name", Seq("c1")))),
+            TableDefinition(TableIdentifier(""), indexes=Seq(TableIndex("name", Seq("C1","c2")))),
             MigrationPolicy.RELAXED
         ) should be (true)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("c2","c1")))),
-            TableDefinition(TableIdentifier(""), Seq(), indexes=Seq(TableIndex("name", Seq("C1","c2")))),
+            TableDefinition(TableIdentifier(""), indexes=Seq(TableIndex("name", Seq("c2","c1")))),
+            TableDefinition(TableIdentifier(""), indexes=Seq(TableIndex("name", Seq("C1","c2")))),
             MigrationPolicy.RELAXED
         ) should be (false)
     }
 
     "TableChange.migrate" should "work in strict mode" in {
         val oldTable = TableDefinition(TableIdentifier(""),
-            Seq(
+            columns=Seq(
                 Field("f1", StringType, true),
                 Field("f2", LongType),
                 Field("f3", StringType),
@@ -280,7 +280,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             )
         )
         val newTable = TableDefinition(TableIdentifier(""),
-            Seq(
+            columns=Seq(
                 Field("F1", StringType, false),
                 Field("F2", StringType),
                 Field("F3", LongType),
@@ -302,7 +302,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
 
     it should "work in relaxed mode" in {
         val oldTable = TableDefinition(TableIdentifier(""),
-            Seq(
+            columns=Seq(
                 Field("f1", StringType, true),
                 Field("f2", LongType),
                 Field("f3", StringType),
@@ -311,7 +311,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             )
         )
         val newTable = TableDefinition(TableIdentifier(""),
-            Seq(
+            columns=Seq(
                 Field("F1", StringType, false),
                 Field("F2", StringType),
                 Field("F3", LongType),
@@ -330,7 +330,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
 
     it should "do nothing on unchanged PK" in {
         val oldTable = TableDefinition(TableIdentifier(""),
-            Seq(
+            columns=Seq(
                 Field("f1", StringType),
                 Field("f2", LongType),
                 Field("f3", StringType)
@@ -338,7 +338,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             primaryKey = Seq("f1", "f2")
         )
         val newTable = TableDefinition(TableIdentifier(""),
-            Seq(
+            columns=Seq(
                 Field("F1", StringType),
                 Field("F2", LongType),
                 Field("F3", StringType)
@@ -352,7 +352,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
 
     it should "add PK" in {
         val oldTable = TableDefinition(TableIdentifier(""),
-            Seq(
+            columns=Seq(
                 Field("f1", StringType),
                 Field("f2", LongType),
                 Field("f3", StringType)
@@ -360,7 +360,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             primaryKey = Seq()
         )
         val newTable = TableDefinition(TableIdentifier(""),
-            Seq(
+            columns=Seq(
                 Field("F1", StringType),
                 Field("F2", LongType),
                 Field("F3", StringType)
@@ -376,7 +376,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
 
     it should "drop PK" in {
         val oldTable = TableDefinition(TableIdentifier(""),
-            Seq(
+            columns=Seq(
                 Field("f1", StringType),
                 Field("f2", LongType),
                 Field("f3", StringType)
@@ -384,7 +384,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             primaryKey = Seq("f1", "f2")
         )
         val newTable = TableDefinition(TableIdentifier(""),
-            Seq(
+            columns=Seq(
                 Field("f1", StringType),
                 Field("f2", LongType),
                 Field("f3", StringType)
@@ -400,7 +400,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
 
     it should "drop/add PK" in {
         val oldTable = TableDefinition(TableIdentifier(""),
-            Seq(
+            columns=Seq(
                 Field("f1", StringType),
                 Field("f2", LongType),
                 Field("f3", StringType)
@@ -408,7 +408,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             primaryKey = Seq("f1", "f2")
         )
         val newTable = TableDefinition(TableIdentifier(""),
-            Seq(
+            columns=Seq(
                 Field("f1", StringType),
                 Field("f2", LongType),
                 Field("f3", StringType)

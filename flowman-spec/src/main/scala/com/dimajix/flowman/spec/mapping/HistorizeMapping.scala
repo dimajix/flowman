@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,9 +147,9 @@ class HistorizeMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): HistorizeMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): HistorizeMapping = {
         HistorizeMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             keyColumns.map(context.evaluate),
             context.evaluate(timeColumn),

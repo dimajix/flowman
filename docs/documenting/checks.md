@@ -28,6 +28,7 @@ relations:
         - name: year
           description: "The year of the measurement, used for partitioning the data"
           checks:
+            # Check that the column does not contain NULL values
             - kind: notNull
         - name: usaf
           checks:
@@ -38,24 +39,27 @@ relations:
         - name: air_temperature_qual
           checks:
             - kind: notNull
+            # Check that the column only contains the specified values
             - kind: values
               values: [0,1,2,3,4,5,6,7,8,9]
         - name: air_temperature
           checks:
+            # Perform an arbitrary check on the column, you can also access other columns
             - kind: expression
               expression: "air_temperature >= -100 OR air_temperature_qual <> 1"
             - kind: expression
               expression: "air_temperature <= 100  OR air_temperature_qual <> 1"
       # Schema tests, which might involve multiple columns
       checks:
-          kind: foreignKey
-          relation: stations
-          columns:
-              - usaf
-              - wban
-          references:
-              - usaf
-              - wban
+        # Check that each usaf/wban combination is a foreign key refering to the "stations" relation          
+        kind: foreignKey
+        relation: stations
+        columns:
+          - usaf
+          - wban
+        references:
+          - usaf
+          - wban
 ```
 
 ## Available Column Checks

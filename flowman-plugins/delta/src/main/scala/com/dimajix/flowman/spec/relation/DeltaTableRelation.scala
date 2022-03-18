@@ -32,10 +32,12 @@ import com.dimajix.common.No
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
+import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -223,8 +225,8 @@ case class DeltaTableRelation(
                 val table = deltaCatalogTable(execution)
                 val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
                 val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
-                val sourceTable = TableDefinition(this.table, sourceSchema.fields)
-                val targetTable = TableDefinition(this.table, targetSchema.fields)
+                val sourceTable = TableDefinition(this.table, TableType.TABLE, sourceSchema.fields)
+                val targetTable = TableDefinition(this.table, TableType.TABLE, targetSchema.fields)
                 !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
             }
             else {
@@ -274,7 +276,7 @@ case class DeltaTableRelation(
     override def create(execution: Execution, ifNotExists: Boolean): Unit = {
         val tableExists = exists(execution) == Yes
         if (!ifNotExists || !tableExists) {
-            val sparkSchema = HiveTableRelation.cleanupSchema(StructType(fields.map(_.catalogField)))
+            val sparkSchema = HiveCatalog.cleanupSchema(StructType(fields.map(_.catalogField)))
             logger.info(s"Creating Delta table relation '$identifier' with table $table and schema\n${sparkSchema.treeString}")
             if (schema.isEmpty) {
                 throw new UnspecifiedSchemaException(identifier)
@@ -395,9 +397,9 @@ class DeltaTableRelationSpec extends RelationSpec with SchemaRelationSpec with P
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
     @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq()
 
-    override def instantiate(context: Context): DeltaTableRelation = {
+    override def instantiate(context: Context, props:Option[Relation.Properties] = None): DeltaTableRelation = {
         DeltaTableRelation(
-            instanceProperties(context),
+            instanceProperties(context, props),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             TableIdentifier(context.evaluate(table), context.evaluate(database)),

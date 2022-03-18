@@ -34,8 +34,8 @@ import com.dimajix.flowman.model.Project
 class VersionCommand extends Command {
     override def execute(session: Session, project: Project, context: Context): Status = {
         println(s"Flowman version $FLOWMAN_VERSION")
-        println(s"Flowman home directory ${ToolConfig.homeDirectory.getOrElse("")}")
-        println(s"Flowman config directory ${ToolConfig.confDirectory.getOrElse("")}")
+        println(s"Flowman home directory ${ToolConfig.homeDirectory.getOrElse("<unknown>")}")
+        println(s"Flowman config directory ${ToolConfig.confDirectory.getOrElse("<unknown>")}")
         println(s"Spark version $SPARK_VERSION (build for $SPARK_BUILD_VERSION)")
         println(s"Hadoop version $HADOOP_VERSION (build for $HADOOP_BUILD_VERSION)")
         println(s"Scala version $SCALA_VERSION (build for $SCALA_BUILD_VERSION)")

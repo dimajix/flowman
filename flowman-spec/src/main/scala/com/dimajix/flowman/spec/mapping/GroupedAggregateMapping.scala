@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,9 +273,9 @@ class GroupedAggregateMappingSpec extends MappingSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): GroupedAggregateMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): GroupedAggregateMapping = {
         GroupedAggregateMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             groups.map(kv => kv._1 -> kv._2.instantiate(context)),
             aggregations.map(kv => kv._1 -> context.evaluate(kv._2)),

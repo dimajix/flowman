@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package com.dimajix.spark.sql.sources.fixedwidth
+
+import scala.util.control.NonFatal
 
 import org.apache.spark.sql.types.BooleanType
 import org.apache.spark.sql.types.ByteType
@@ -55,7 +57,7 @@ object FixedWidthUtils {
                 field.metadata.getLong("size")
             }
             catch {
-                case ex:Exception => throw new IllegalArgumentException(
+                case NonFatal(ex) => throw new IllegalArgumentException(
                     s"Invalid metadata 'size' metadata in field ${field.name}.", ex)
             }
         }

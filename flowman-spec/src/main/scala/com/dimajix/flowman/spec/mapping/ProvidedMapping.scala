@@ -64,9 +64,9 @@ class ProvidedMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): ProvidedMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): ProvidedMapping = {
         ProvidedMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             context.evaluate(table)
         )
     }

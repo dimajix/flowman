@@ -88,9 +88,9 @@ class JoinMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): JoinMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): JoinMapping = {
         JoinMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             inputs.map(id => MappingOutputIdentifier(context.evaluate(id))),
             columns.map(context.evaluate),
             context.evaluate(expression),

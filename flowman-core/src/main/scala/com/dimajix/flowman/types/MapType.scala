@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import org.apache.spark.sql.types.DataType
 
 
 @JsonDeserialize(using=classOf[MapTypeDeserializer])
-case class MapType(
+final case class MapType(
       @JsonProperty(value="keyType") keyType:FieldType,
       @JsonProperty(value="valueType") valueType:FieldType,
       @JsonProperty(value="containsNull") containsNull:Boolean = true

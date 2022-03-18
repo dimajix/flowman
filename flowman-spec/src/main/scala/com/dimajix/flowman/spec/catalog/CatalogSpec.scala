@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,11 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.common.TypeRegistry
-import com.dimajix.flowman.annotation.TemplateObject
 import com.dimajix.flowman.catalog.ExternalCatalog
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.annotation.CatalogType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
-import com.dimajix.flowman.templating.Velocity
 
 
 object CatalogSpec extends TypeRegistry[CatalogSpec] {
@@ -36,7 +34,7 @@ object CatalogSpec extends TypeRegistry[CatalogSpec] {
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array())
 abstract class CatalogSpec extends Spec[ExternalCatalog] {
-    def instantiate(context:Context) : ExternalCatalog
+    def instantiate(context:Context, properties:Option[ExternalCatalog.Properties] = None) : ExternalCatalog
 }
 
 

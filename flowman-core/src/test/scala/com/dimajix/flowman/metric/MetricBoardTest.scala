@@ -46,7 +46,7 @@ class MetricBoardTest extends AnyFlatSpec with Matchers {
                 Map("rl" -> "$raw_label", "sl" -> "$sublabel", "ev" -> "$env_var")
             )
         )
-        val board = MetricBoard(context, Map("board_label" -> "board1", "status" -> "$status"), selections)
+        val board = MetricBoard(MetricBoard.Properties(context), Map("board_label" -> "board1", "status" -> "$status"), selections)
 
         board.metrics(registry, Status.RUNNING) should be (
             Seq(FixedGaugeMetric("m1", Map("board_label" -> "board1", "rl" -> "raw_value", "sl" -> "a", "ev" -> "env_value", "status" -> "RUNNING"), 1l))

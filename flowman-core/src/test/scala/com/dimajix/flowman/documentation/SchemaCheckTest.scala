@@ -98,10 +98,12 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         ))
         val otherDf = spark.createDataFrame(Seq(
             (1,1),
+            (1,1),
+            (2,2),
             (2,2)
         ))
 
-        (mappingSpec.instantiate _).expects(*).returns(mapping)
+        (mappingSpec.instantiate _).expects(*,None).returns(mapping)
         (mapping.context _).expects().returns(context)
         (mapping.inputs _).expects().returns(Set())
         (mapping.outputs _).expects().atLeastOnce().returns(Set("main"))
@@ -113,7 +115,7 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
 
         val test1 = ForeignKeySchemaCheck(None, mapping=Some(MappingOutputIdentifier("mapping")), columns=Seq("_1"))
         val result1 = testExecutor.execute(execution, context, df, test1)
-        result1 should be (Some(CheckResult(Some(test1.reference), CheckStatus.FAILED, description=Some("1 records passed, 1 records failed"))))
+        result1 should be (Some(CheckResult(Some(test1.reference), CheckStatus.SUCCESS, description=Some("1 records passed, 0 records failed"))))
 
         val test2 = ForeignKeySchemaCheck(None, mapping=Some(MappingOutputIdentifier("mapping")), columns=Seq("_3"), references=Seq("_2"))
         val result2 = testExecutor.execute(execution, context, df, test2)

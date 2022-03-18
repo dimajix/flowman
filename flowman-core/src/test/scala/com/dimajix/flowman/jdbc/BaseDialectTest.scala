@@ -28,6 +28,7 @@ import com.dimajix.flowman.catalog
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.UpdateClause
@@ -61,6 +62,7 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
         val table = TableIdentifier("table_1", Some("my_db"))
         val tableDefinition = TableDefinition(
             table,
+            TableType.TABLE,
             Seq(
                 Field("id", com.dimajix.flowman.types.IntegerType, nullable = false),
                 Field("name", com.dimajix.flowman.types.StringType),
@@ -83,6 +85,7 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
         val table = TableIdentifier("table_1", Some("my_db"))
         val tableDefinition = catalog.TableDefinition(
             table,
+            TableType.TABLE,
             Seq(
                 Field("id", com.dimajix.flowman.types.IntegerType, nullable = false),
                 Field("name", com.dimajix.flowman.types.StringType),
@@ -142,7 +145,7 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
               |WHEN NOT MATCHED AND (source."op" = 'INSERT') THEN INSERT("id","name") VALUES(source."id",source."name")
               |WHEN MATCHED AND (source."op" = 'DELETE') THEN DELETE
               |WHEN MATCHED THEN UPDATE SET "name" = source."name", "sex" = source."sex"
-              |;""".stripMargin)
+              |""".stripMargin)
     }
 
     it should "provide MERGE statements with trivial clauses" in {
@@ -170,6 +173,6 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
               |ON (source."id" = target."id")
               |WHEN NOT MATCHED THEN INSERT("id","name","sex") VALUES(source."id",source."name",source."sex")
               |WHEN MATCHED THEN UPDATE SET "id" = source."id", "name" = source."name", "sex" = source."sex"
-              |;""".stripMargin)
+              |""".stripMargin)
     }
 }

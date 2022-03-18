@@ -18,8 +18,6 @@ package com.dimajix.flowman.execution
 
 import java.time.Instant
 
-import scala.util.Random
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -36,6 +34,7 @@ import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetDigest
@@ -46,8 +45,10 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 object RunnerHistoryTest {
     object NullTarget {
-        def apply(name:String, partition: Map[String,String] = Map()) : Context => NullTarget = {
-            ctx:Context => NullTarget(Target.Properties(ctx, name, "null"), ctx.evaluate(partition))
+        def apply(name:String, partition: Map[String,String] = Map()) : Prototype[Target] = {
+            Prototype.of(
+                (ctx:Context) => NullTarget(Target.Properties(ctx, name, "null"), ctx.evaluate(partition))
+            )
         }
     }
     case class NullTarget(
@@ -143,7 +144,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
     }
 
     it should "correctly handle non-dirty targets" in {
-        def genTarget(name:String, dirty:Trilean) : Context => Target = (ctx:Context) => {
+        def genTarget(name:String, dirty:Trilean) : Prototype[Target] = Prototype.of((ctx:Context) => {
             val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = stub[Target]
             (target.name _).when().returns(name)
@@ -161,7 +162,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
             (target.dirty _).when(*, Phase.CREATE).returns(dirty)
             (target.execute _).when(*, Phase.CREATE).returns(TargetResult(target, Phase.CREATE, Status.SUCCESS, Instant.now()))
             target
-        }
+        })
         def genJob(session:Session, target:String) : Job = {
             Job.builder(session.getContext(session.project.get))
                 .setName("default")

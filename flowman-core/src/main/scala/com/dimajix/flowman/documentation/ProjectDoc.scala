@@ -36,7 +36,7 @@ final case class ProjectDoc(
 ) extends EntityDoc {
     override def reference: Reference = ProjectReference(name)
     override def parent: Option[Reference] = None
-    override def fragments: Seq[Fragment] = (targets ++ relations ++ mappings).toSeq
+    override def fragments: Seq[Fragment] = targets ++ relations ++ mappings
 
     override def resolve(path:Seq[Reference]) : Option[Fragment] = {
         if (path.isEmpty)

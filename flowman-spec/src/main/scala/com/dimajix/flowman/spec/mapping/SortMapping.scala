@@ -97,9 +97,9 @@ class SortMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): SortMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): SortMapping = {
         SortMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             columns.flatMap(context.evaluate).map { case(col,order) => col -> SortOrder.of(order) },
             context.evaluate(filter)

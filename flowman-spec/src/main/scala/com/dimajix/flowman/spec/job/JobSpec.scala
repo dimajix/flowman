@@ -37,14 +37,14 @@ import com.dimajix.flowman.types.StringType
 object JobSpec extends TypeRegistry[JobSpec] {
     final class NameResolver extends NamedSpec.NameResolver[JobSpec]
 
-    final class Parameter extends Spec[Job.Parameter] {
+    final class Parameter {
         @JsonProperty(value = "name") private var name: String = ""
         @JsonProperty(value = "description") private var description: Option[String] = None
         @JsonProperty(value = "type", required = false) private var ftype: FieldType = StringType
         @JsonProperty(value = "granularity", required = false) private var granularity: Option[String] = None
         @JsonProperty(value = "default", required = false) private var default: Option[String] = None
 
-        override def instantiate(context: Context): Job.Parameter = {
+        def instantiate(context: Context): Job.Parameter = {
             require(context != null)
 
             Job.Parameter(
@@ -67,12 +67,12 @@ final class JobSpec extends NamedSpec[Job] {
     @JsonProperty(value="metrics") private var metrics:Option[MetricBoardSpec] = None
     @JsonProperty(value="hooks") private var hooks: Seq[HookSpec] = Seq()
 
-    override def instantiate(context: Context): Job = {
+    override def instantiate(context: Context, properties:Option[Job.Properties] = None): Job = {
         require(context != null)
 
         val parents = this.parents.map(job => context.getJob(JobIdentifier(job)))
         val job = Job(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             parameters.map(_.instantiate(context)),
             splitSettings(environment).toMap,
             targets.map(context.evaluate).map(TargetIdentifier.parse),
@@ -89,13 +89,14 @@ final class JobSpec extends NamedSpec[Job] {
       * @param context
       * @return
       */
-    override protected def instanceProperties(context: Context): Job.Properties = {
+    override protected def instanceProperties(context: Context, properties:Option[Job.Properties]): Job.Properties = {
         require(context != null)
         val name = context.evaluate(this.name)
-        Job.Properties(
+        val props = Job.Properties(
             context,
             metadata.map(_.instantiate(context, name, Category.JOB, "job")).getOrElse(Metadata(context, name, Category.JOB, "job")),
             description.map(context.evaluate)
         )
+        properties.map(p => props.merge(p)).getOrElse(props)
     }
 }

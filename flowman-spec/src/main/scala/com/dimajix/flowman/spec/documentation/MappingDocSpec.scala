@@ -69,7 +69,7 @@ class MappingOutputDocSpec {
 }
 
 
-class MappingDocSpec extends Spec[MappingDoc] {
+class MappingDocSpec {
     @JsonProperty(value="description", required=false) private var description:Option[String] = None
     @JsonProperty(value="outputs", required=false) private var outputs:Map[String,MappingOutputDocSpec] = Map()
     @JsonProperty(value="columns", required=false) private var columns:Seq[ColumnDocSpec] = Seq()
@@ -78,8 +78,8 @@ class MappingDocSpec extends Spec[MappingDoc] {
     def instantiate(context: Context): MappingDoc = {
         val doc = MappingDoc(
             None,
-            MappingIdentifier.empty,
-            description = context.evaluate(description)
+            None,
+            context.evaluate(description)
         )
         val ref = doc.reference
 

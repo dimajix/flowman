@@ -94,9 +94,9 @@ class ExpressionAssertionSpec extends AssertionSpec {
     @JsonProperty(value="mapping", required=true) private var mapping:String = ""
     @JsonProperty(value="expected", required=false) private var expected:Seq[String] = Seq()
 
-    override def instantiate(context: Context): ExpressionAssertion = {
+    override def instantiate(context: Context, properties:Option[Assertion.Properties] = None): ExpressionAssertion = {
         ExpressionAssertion(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(mapping)),
             expected.map(context.evaluate)
         )

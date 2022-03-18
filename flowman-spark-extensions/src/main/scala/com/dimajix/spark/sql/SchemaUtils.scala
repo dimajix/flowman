@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,48 +26,20 @@ import org.apache.spark.sql.functions.substring
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.CharType
 import org.apache.spark.sql.types.DataType
-import org.apache.spark.sql.types.DateType
-import org.apache.spark.sql.types.DoubleType
-import org.apache.spark.sql.types.FloatType
-import org.apache.spark.sql.types.IntegerType
-import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.types.MapType
 import org.apache.spark.sql.types.Metadata
 import org.apache.spark.sql.types.MetadataBuilder
-import org.apache.spark.sql.types.ShortType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.types.TimestampType
 import org.apache.spark.sql.types.VarcharType
 
-import com.dimajix.spark.features.hiveVarcharSupported
+import com.dimajix.spark.sql.catalyst.parser.CustomSqlParser
 
 
 object SchemaUtils {
-    def mapType(typeName:String) : DataType  = {
-        typeName.toLowerCase() match {
-            case "string" => StringType
-            case "float" => FloatType
-            case "double" => DoubleType
-            case "short" => ShortType
-            case "int" => IntegerType
-            case "integer" => IntegerType
-            case "long" => LongType
-            case "date" => DateType
-            case "timestamp" => TimestampType
-            case _ => throw new RuntimeException(s"Unknown type $typeName")
-        }
-    }
-    def createSchema(fields:Seq[(String,String)]) : StructType = {
-        // When reading data from MCSV files, we need to specify our desired schema. Here
-        // we create a Spark SQL schema definition from the fields list in the specification
-        def mapField(fieldName:String, typeName:String) : StructField = {
-            StructField(fieldName, mapType(typeName), true)
-        }
-
-        StructType(fields.map { case (name:String,typ:String) => mapField(name, typ) } )
-    }
+    // This key is compatible with Spark 3.x
+    private val CHAR_VARCHAR_TYPE_STRING_METADATA_KEY = "__CHAR_VARCHAR_TYPE_STRING"
 
     /**
       * Helper method for applying an optional schema to a given DataFrame. This will apply the types and order
@@ -168,10 +140,31 @@ object SchemaUtils {
         StructType(fields)
     }
 
+
+    def existsRecursively(dt:DataType, f: (DataType) => Boolean): Boolean = {
+        dt match {
+            case struct: StructType => f(dt) || struct.fields.exists(field => existsRecursively(field.dataType, f))
+            case array: ArrayType => f(dt) || existsRecursively(array.elementType, f)
+            case map: MapType => f(dt) || existsRecursively(map.keyType, f) || existsRecursively(map.valueType, f)
+            case _ => f(dt)
+        }
+    }
+
+    /**
+     * Returns true if the given data type is CharType/VarcharType or has nested CharType/VarcharType.
+     */
+    def hasCharVarchar(dt: DataType): Boolean = {
+        existsRecursively(dt, f => f.isInstanceOf[CharType] || f.isInstanceOf[VarcharType])
+    }
+
     /**
      * This will normalize a given schema in the sense that all field names are converted to lowercase and all
      * metadata is stripped except the comments. The function will also replace all CHAR and VARCHAR columns to
-     * STRING columns.
+     * STRING columns, but without providing meta data for reconstructing the original schema.
+     *
+     * This function can be used to compare schemas with regards to required migrations, when the storage system
+     * does not support VARCHAR/CHAR types
+     *
      * @param schema
      * @return
      */
@@ -179,13 +172,15 @@ object SchemaUtils {
         StructType(schema.fields.map(normalize))
     }
     def normalize(field:StructField) : StructField = {
-        val f = StructField(field.name.toLowerCase(Locale.ROOT), normalize(field.dataType), field.nullable)
-        field.getComment().map(c => f.withComment(c)).getOrElse(f)
+        val metadata = field.getComment()
+            .map(c =>  new MetadataBuilder().putString("comment", c).build())
+            .getOrElse(Metadata.empty)
+        StructField(field.name.toLowerCase(Locale.ROOT), normalize(field.dataType), field.nullable, metadata=metadata)
     }
     private def normalize(dtype:DataType) : DataType = {
         dtype match {
             case struct:StructType => normalize(struct)
-            case array:ArrayType => ArrayType(normalize(array.elementType),array.containsNull)
+            case array:ArrayType => ArrayType(normalize(array.elementType), array.containsNull)
             case map:MapType => MapType(normalize(map.keyType), normalize(map.valueType), map.valueContainsNull)
             case _:CharType => StringType
             case _:VarcharType => StringType
@@ -202,7 +197,14 @@ object SchemaUtils {
         StructType(schema.fields.map(replaceCharVarchar))
     }
     def replaceCharVarchar(field:StructField) : StructField = {
-        field.copy(dataType = replaceCharVarchar(field.dataType))
+        val metadata = if (hasCharVarchar(field.dataType)) {
+            val builder = new MetadataBuilder().withMetadata(field.metadata)
+                .putString(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY, field.dataType.catalogString)
+            builder.build()
+        } else {
+            field.metadata
+        }
+        StructField(field.name, replaceCharVarchar(field.dataType), field.nullable, metadata=metadata)
     }
     private def replaceCharVarchar(dtype:DataType) : DataType = {
         dtype match {
@@ -212,6 +214,34 @@ object SchemaUtils {
             case _:CharType => StringType
             case _:VarcharType => StringType
             case dt:DataType => dt
+        }
+    }
+
+    def hasExtendedTypeinfo(field:StructField) : Boolean = {
+        field.metadata.contains(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
+    }
+    def hasExtendedTypeinfo(metadata:Metadata) : Boolean = {
+        metadata.contains(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
+    }
+
+    /**
+     * Recovers the original CHAR/VARCHAR types from a struct, which was previously cleaned via replaceCharVarchar
+     * @param schema
+     * @return
+     */
+    def recoverCharVarchar(schema:StructType) : StructType = {
+        StructType(schema.map(recoverCharVarchar))
+    }
+    def recoverCharVarchar(field:StructField) : StructField = {
+        if (field.metadata.contains(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)) {
+            val typeString = field.metadata.getString(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
+            val dt = CustomSqlParser.parseDataType(typeString)
+            val meta = new MetadataBuilder().withMetadata(field.metadata)
+                .remove(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
+                .build()
+            field.copy(dataType = dt, metadata = meta)
+        } else {
+            field
         }
     }
 

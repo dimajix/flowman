@@ -47,7 +47,7 @@ object MappingUtilsTest {
         inputs: Seq[MappingOutputIdentifier],
         requires: Set[ResourceIdentifier]
     ) extends Prototype[Mapping] {
-        override def instantiate(context: Context): Mapping = DummyMapping(context, name, inputs.toSet, requires)
+        override def instantiate(context: Context, properties:Option[Mapping.Properties]): Mapping = DummyMapping(context, name, inputs.toSet, requires)
     }
 }
 

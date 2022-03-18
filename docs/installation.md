@@ -80,7 +80,7 @@ As an alternative to downloading a pre-built distribution of Flowman, you might 
 
 Flowman is distributed as a `tar.gz` file, which simply needs to be extracted at some location on your computer or 
 server. This can be done via
-```shell script
+```shell
 tar xvzf flowman-dist-X.Y.Z-bin.tar.gz
 ```
 
@@ -134,7 +134,7 @@ and Hadoop properties can be configured, like for example
 * Generic Java options like http proxy and more
 
 #### Example
-```shell script
+```shell
 #!/usr/bin/env bash
 
 # Specify Java home (just in case)
@@ -281,6 +281,6 @@ Please have a look at [Running Flowman on Windows](cookbook/windows.md) for deta
 Please have a look at [Kerberos](cookbook/kerberos.md) for detailed information.
 
 
-### Running in Docker
-It is also possible to run Flowman inside Docker. We now also provide some images at
+## 7. Running in Docker
+It is also possible to [run Flowman inside Docker](cookbook/docker.md). We now also provide some images at
 [Docker Hub](https://hub.docker.com/repository/docker/dimajix/flowman)

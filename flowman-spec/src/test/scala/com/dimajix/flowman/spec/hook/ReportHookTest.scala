@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
+import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.ObjectMapper
@@ -64,7 +65,8 @@ class ReportHookTest extends AnyFlatSpec with Matchers with MockFactory with Loc
         val session = Session.builder()
             .disableSpark()
             .build()
-        val context = session.context
+        val project = Project(name="project")
+        val context = session.getContext(project)
         val execution = session.execution
 
         val hook = ReportHook(

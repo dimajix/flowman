@@ -1,8 +1,10 @@
 # Project Mapping
 The `project` mapping performs a *projection* of an input mapping onto a specific set of columns.
-This corresponds to a simple SQL `SELECT` with a series of simple column names.
+This corresponds to a trivial SQL `SELECT` with a series of simple column names, with optional `CAST` operations.
+
 
 ## Example
+The `project`mapping supports two different syntax. The first concise version only selects specific columns:
 ```yaml
 mappings:
   partial_facts:
@@ -13,6 +15,22 @@ mappings:
       - temperature
       - wind_speed
 ```
+The second version also supports changing the column name and data type and optional description:
+```yaml
+mappings:
+  partial_facts:
+    kind: project
+    input: facts
+    columns:
+      - column: id
+      - column: air_temperature
+        name: temperature
+        type: FLOAT
+        description: "The air temperature"
+      - column: wind_speed
+        type: FLOAT
+```
+
 
 ## Fields
 * `kind` **(mandatory)** *(type: string)*: `project`
@@ -40,6 +58,7 @@ columns:
  - name: name_of_output_column
    column: name_of_incoming_column
    type: string
+   description: "This is the (optional) description of the column"
 ```
 You can also mix both column types in a single `project` mapping.
 

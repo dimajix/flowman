@@ -21,12 +21,12 @@ mappings:
             - kind: notNull
             - kind: unique
         - name: min_wind_speed
-          description: Minimum wind speed
+          description: "Minimum wind speed"
           checks:
             - kind: expression
               expression: "min_wind_speed >= 0"
         - name: max_wind_speed
-          description: Maximum wind speed
+          description: "Maximum wind speed"
           checks:
             - kind: expression
               expression: "max_wind_speed <= 60"

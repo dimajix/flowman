@@ -183,9 +183,17 @@ class DefaultColumnCheckExecutor extends ColumnCheckExecutor {
                         val mapping = context.getMapping(map.mapping)
                         execution.instantiate(mapping, map.output)
                     }).getOrElse(throw new IllegalArgumentException(s"Need either mapping or relation in foreignKey test of column '$column' in check ${check.reference.toString}"))
-                val otherColumn = f.column.getOrElse(column)
-                val joined = df.join(otherDf, df(column) === otherDf(otherColumn), "left")
-                executePredicateTest(joined.filter(df(column).isNotNull), check,otherDf(otherColumn).isNotNull)
+                val thisCol = df(column)
+                val otherCol = otherDf(f.column.getOrElse(column))
+                // Remove NULL entries and make data distinct to avoid explosion of join in case of duplicates
+                val otherDistinctDf = otherDf
+                    .filter(otherCol.isNotNull)
+                    .select(otherCol)
+                    .distinct()
+                val joined = df
+                    .filter(thisCol.isNotNull)
+                    .join(otherDistinctDf, thisCol === otherCol, "left")
+                executePredicateTest(joined, check, otherCol.isNotNull)
 
             case _ => None
         }

@@ -40,10 +40,12 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
+import com.dimajix.flowman.catalog
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.Execution
@@ -56,7 +58,6 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.jdbc.JdbcUtils
-import com.dimajix.flowman.jdbc.SqlDialect
 import com.dimajix.flowman.jdbc.SqlDialects
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Connection
@@ -89,6 +90,7 @@ class JdbcRelationBase(
 ) extends BaseRelation with PartitionedRelation with SchemaRelation {
     protected val logger: Logger = LoggerFactory.getLogger(getClass)
     protected val tableIdentifier: TableIdentifier = table.getOrElse(TableIdentifier.empty)
+    protected val stagingIdentifier: Option[TableIdentifier] = None
     protected lazy val tableDefinition: Option[TableDefinition] = {
         schema.map { schema =>
             val pk = if (primaryKey.nonEmpty) primaryKey else schema.primaryKey
@@ -104,10 +106,11 @@ class JdbcRelationBase(
 
             TableDefinition(
                 tableIdentifier,
-                columns,
-                schema.description,
-                pk,
-                indexes
+                TableType.TABLE,
+                columns=columns,
+                comment=schema.description,
+                primaryKey=pk,
+                indexes=indexes
             )
         }
     }
@@ -264,35 +267,120 @@ class JdbcRelationBase(
         }
     }
     protected def doOverwriteAll(execution: Execution, df:DataFrame) : Unit = {
-        withConnection { (con, options) =>
-            JdbcUtils.truncateTable(con, tableIdentifier, options)
+        stagingIdentifier match {
+            case None =>
+                withConnection { (con, options) =>
+                    JdbcUtils.truncateTable(con, tableIdentifier, options)
+                }
+                doAppend(execution, df)
+            case Some(stagingTable) =>
+                withConnection { (con, options) =>
+                    val stagingSchema = JdbcUtils.getSchema(con, tableIdentifier, options)
+                    createStagingTable(execution, con, options, df, Some(stagingSchema))
+
+                    withTransaction(con) {
+                        withStatement(con, options) { case (statement, options) =>
+                            logger.debug(s"Truncating table ${tableIdentifier}")
+                            JdbcUtils.truncateTable(statement, tableIdentifier, options)
+                            logger.info(s"Copying data from staging table ${stagingTable} into table ${tableIdentifier}")
+                            JdbcUtils.appendTable(statement, tableIdentifier, stagingTable, options)
+                            logger.debug(s"Dropping temporary staging table ${stagingTable}")
+                            JdbcUtils.dropTable(statement, stagingTable, options)
+                        }
+                    }
+                }
+
         }
-        doAppend(execution, df)
+
     }
     protected def doOverwritePartition(execution: Execution, df:DataFrame, partition:Map[String,SingleValue]) : Unit = {
-        withStatement { (statement, options) =>
-            val dialect = SqlDialects.get(options.url)
-            val condition = partitionCondition(dialect, partition)
-            val query = "DELETE FROM " + dialect.quote(tableIdentifier) + " WHERE " + condition
-            statement.executeUpdate(query)
+        stagingIdentifier match {
+            case None =>
+                withStatement { (statement, options) =>
+                    logger.debug(s"Truncating table ${tableIdentifier} partition ${partition}")
+                    val condition = partitionCondition(partition, options)
+                    JdbcUtils.truncatePartition(statement, tableIdentifier, condition, options)
+                }
+                doAppend(execution, df)
+            case Some(stagingTable) =>
+                withConnection { (con, options) =>
+                    val stagingSchema = JdbcUtils.getSchema(con, tableIdentifier, options)
+                    createStagingTable(execution, con, options, df, Some(stagingSchema))
+
+                    withTransaction(con) {
+                        withStatement(con, options) { case (statement, options) =>
+                            val condition = partitionCondition(partition, options)
+                            logger.debug(s"Truncating table ${tableIdentifier} partition ${partition}")
+                            JdbcUtils.truncatePartition(statement, tableIdentifier, condition, options)
+                            logger.info(s"Copying data from temporary staging table ${stagingTable} into table ${tableIdentifier}")
+                            JdbcUtils.appendTable(statement, tableIdentifier, stagingTable, options)
+                            logger.debug(s"Dropping temporary staging table ${stagingTable}")
+                            JdbcUtils.dropTable(statement, stagingTable, options)
+                        }
+                    }
+                }
         }
-        doAppend(execution, df)
     }
     protected def doAppend(execution: Execution, df:DataFrame): Unit = {
-        val (_,props) = createConnectionProperties()
-        this.writer(execution, df, "jdbc", Map(), SaveMode.Append)
-            .options(props)
-            .option(JDBCOptions.JDBC_TABLE_NAME, tableIdentifier.unquotedString)
-            .save()
+        stagingIdentifier match {
+            case None =>
+                appendTable(execution, df, tableIdentifier)
+            case Some(stagingTable) =>
+                withConnection { (con, options) =>
+                    val stagingSchema = JdbcUtils.getSchema(con, tableIdentifier, options)
+                    createStagingTable(execution, con, options, df, Some(stagingSchema))
+
+                    withTransaction(con) {
+                        withStatement(con, options) { case (statement, options) =>
+                            logger.info(s"Copying data from temporary staging table ${stagingTable} into table ${tableIdentifier}")
+                            JdbcUtils.appendTable(statement, tableIdentifier, stagingTable, options)
+                            logger.debug(s"Dropping temporary staging table ${stagingTable}")
+                            JdbcUtils.dropTable(statement, stagingTable, options)
+                        }
+                    }
+                }
+        }
     }
     protected def doUpdate(execution: Execution, df:DataFrame): Unit = {
-        val mergeCondition = this.mergeCondition
         val clauses = Seq(
             InsertClause(),
             UpdateClause()
         )
 
-        doMerge(execution, df, mergeCondition, clauses)
+        val stagingSchema = withConnection { (con, options) =>
+            JdbcUtils.getSchema(con, tableIdentifier, options)
+        }
+        doMerge(execution, df, Some(stagingSchema), mergeCondition, clauses)
+    }
+
+    private def createStagingTable(execution:Execution, con:java.sql.Connection, options: JDBCOptions, df:DataFrame, schema:Option[FlowmanStructType]) : Unit = {
+        val stagingTable = this.stagingIdentifier.get
+        val stagingSchema = schema.map(schema => JdbcUtils.createSchema(df.schema, schema)).getOrElse(FlowmanStructType.of(df.schema))
+        logger.info(s"Creating staging table ${stagingTable} with schema\n${stagingSchema.treeString}")
+
+        // First drop temp table if it already exists
+        JdbcUtils.dropTable(con, stagingTable, options, ifExists=true)
+
+        // Create temp table with specified schema, but without any primary key or indices
+        val table = catalog.TableDefinition(
+            stagingTable,
+            TableType.TABLE,
+            stagingSchema.fields
+        )
+        JdbcUtils.createTable(con, table, options)
+
+        logger.info(s"Writing new data into temporary staging table ${stagingTable}")
+        appendTable(execution, df, stagingTable)
+    }
+
+    protected def appendTable(execution: Execution, df:DataFrame, table:TableIdentifier) : Unit = {
+        // Save table
+        val (_,props) = createConnectionProperties()
+        df.write.format("jdbc")
+            .mode(SaveMode.Append)
+            .options(props)
+            .option(JDBCOptions.JDBC_TABLE_NAME, table.unquotedString)
+            .save()
     }
 
     /**
@@ -310,16 +398,32 @@ class JdbcRelationBase(
             throw new UnsupportedOperationException(s"Cannot write into JDBC relation '$identifier' which is defined by an SQL query")
 
         val mergeCondition = condition.getOrElse(this.mergeCondition)
-        doMerge(execution, df, mergeCondition, clauses)
-    }
-    protected def doMerge(execution: Execution, df: DataFrame, condition:Column, clauses: Seq[MergeClause]) : Unit = {
-        val sourceColumns = collectColumns(condition.expr, "source") ++ clauses.flatMap(c => collectColumns(df.schema, c, "source"))
+        val sourceColumns = collectColumns(mergeCondition.expr, "source") ++ clauses.flatMap(c => collectColumns(df.schema, c, "source"))
         val sourceDf = df.select(sourceColumns.toSeq.map(col):_*)
 
-        val (url, props) = createConnectionProperties()
-        val options = new JDBCOptions(url, tableIdentifier.unquotedString, props)
+        doMerge(execution, sourceDf, None, mergeCondition, clauses)
+    }
+    protected def doMerge(execution: Execution, df: DataFrame, stagingSchema:Option[FlowmanStructType], condition:Column, clauses: Seq[MergeClause]) : Unit = {
         val targetSchema = outputSchema(execution)
-        JdbcUtils.mergeTable(tableIdentifier, "target", targetSchema, sourceDf, "source", condition, clauses, options)
+        stagingIdentifier match {
+            case None =>
+                val (url, props) = createConnectionProperties()
+                val options = new JDBCOptions(url, tableIdentifier.unquotedString, props)
+                JdbcUtils.mergeTable(tableIdentifier, "target", targetSchema, df, "source", condition, clauses, options)
+            case Some(stagingTable) =>
+                withConnection { (con, options) =>
+                    createStagingTable(execution, con, options, df, stagingSchema)
+
+                    withTransaction(con) {
+                        withStatement(con, options) { case (statement, options) =>
+                            logger.info(s"Merging data from temporary staging table ${stagingTable} into table ${tableIdentifier}")
+                            JdbcUtils.mergeTable(statement, tableIdentifier, "target", targetSchema, stagingTable, "source", df.schema, condition, clauses, options)
+                            logger.debug(s"Dropping temporary staging table ${stagingTable}")
+                            JdbcUtils.dropTable(statement, stagingTable, options)
+                        }
+                    }
+                }
+        }
     }
 
     protected def mergeCondition : Column = {
@@ -360,10 +464,8 @@ class JdbcRelationBase(
         else {
             logger.info(s"Cleaning partitions of JDBC relation '$identifier', this will partially truncate JDBC table $tableIdentifier")
             withStatement { (statement, options) =>
-                val dialect = SqlDialects.get(options.url)
-                val condition = partitionCondition(dialect, partitions)
-                val query = "DELETE FROM " + dialect.quote(tableIdentifier) + " WHERE " + condition
-                statement.executeUpdate(query)
+                val condition = partitionCondition(partitions, options)
+                JdbcUtils.truncatePartition(statement, tableIdentifier, condition, options)
             }
         }
     }
@@ -429,8 +531,7 @@ class JdbcRelationBase(
         require(partition != null)
 
         withConnection{ (con,options) =>
-            val dialect = SqlDialects.get(options.url)
-            val condition = partitionCondition(dialect, partition)
+            val condition = partitionCondition(partition, options)
 
             JdbcUtils.tableExists(con, tableIdentifier, options) &&
                 !JdbcUtils.emptyResult(con, tableIdentifier, condition, options)
@@ -590,7 +691,7 @@ class JdbcRelationBase(
     override protected def outputSchema(execution:Execution) : Option[StructType] = {
         // Always use the current schema
         withConnection { (con, options) =>
-            Some(JdbcUtils.getSchema(con, tableIdentifier, options).sparkType)
+            Some(JdbcUtils.getSchema(con, tableIdentifier, options).catalogType)
         }
     }
 
@@ -657,15 +758,15 @@ class JdbcRelationBase(
                     "1=1"
                 }
                 else {
-                    val dialect = SqlDialects.get(options.url)
-                    partitionCondition(dialect, partition)
+                    partitionCondition(partition, options)
                 }
             }
             !JdbcUtils.emptyResult(connection, tableIdentifier, condition, options)
         }
     }
 
-    private def partitionCondition(dialect:SqlDialect, partitions: Map[String, FieldValue]) : String = {
+    private def partitionCondition(partitions: Map[String, FieldValue], options: JDBCOptions) : String = {
+        val dialect = SqlDialects.get(options.url)
         val partitionSchema = PartitionSchema(this.partitions)
         partitions.map { case (name, value) =>
             val field = partitionSchema.get(name)
@@ -705,6 +806,7 @@ case class JdbcRelation(
     connection: Reference[Connection],
     properties: Map[String,String] = Map.empty,
     table: Option[TableIdentifier] = None,
+    stagingTable: Option[TableIdentifier] = None,
     query: Option[String] = None,
     mergeKey: Seq[String] = Seq.empty,
     primaryKey: Seq[String] = Seq.empty,
@@ -721,6 +823,7 @@ case class JdbcRelation(
     primaryKey,
     indexes
 ) {
+    override protected val stagingIdentifier: Option[TableIdentifier] = stagingTable
 }
 
 
@@ -729,6 +832,7 @@ class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with Sc
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map.empty
     @JsonProperty(value = "database", required = false) private var database: Option[String] = None
     @JsonProperty(value = "table", required = false) private var table: Option[String] = None
+    @JsonProperty(value = "stagingTable", required = false) private var stagingTable: Option[String] = None
     @JsonProperty(value = "query", required = false) private var query: Option[String] = None
     @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq.empty
     @JsonProperty(value = "primaryKey", required = false) private var primaryKey: Seq[String] = Seq.empty
@@ -738,14 +842,15 @@ class JdbcRelationSpec extends RelationSpec with PartitionedRelationSpec with Sc
       * @param context
       * @return
       */
-    override def instantiate(context: Context): JdbcRelation = {
+    override def instantiate(context: Context, props:Option[Relation.Properties] = None): JdbcRelation = {
         JdbcRelation(
-            instanceProperties(context),
+            instanceProperties(context, props),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             connection.instantiate(context),
             context.evaluate(properties),
             context.evaluate(table).map(t => TableIdentifier(t, context.evaluate(database))),
+            context.evaluate(stagingTable).map(t => TableIdentifier(t, context.evaluate(database))),
             context.evaluate(query),
             mergeKey.map(context.evaluate),
             primaryKey.map(context.evaluate),

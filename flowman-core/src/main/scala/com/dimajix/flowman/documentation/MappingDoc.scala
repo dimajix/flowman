@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.documentation
 
+import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 
@@ -133,15 +134,15 @@ final case class MappingReference(
 
 final case class MappingDoc(
     parent:Option[Reference] = None,
-    identifier:MappingIdentifier,
+    mapping:Option[Mapping] = None,
     description:Option[String] = None,
     inputs:Seq[Reference] = Seq.empty,
     outputs:Seq[MappingOutputDoc] = Seq.empty
 ) extends EntityDoc {
-    override def reference: MappingReference = MappingReference(parent, identifier.name)
+    override def reference: MappingReference = MappingReference(parent, name)
     override def fragments: Seq[Fragment] = outputs
     override def reparent(parent: Reference): MappingDoc = {
-        val ref = MappingReference(Some(parent), identifier.name)
+        val ref = MappingReference(Some(parent), name)
         copy(
             parent=Some(parent),
             outputs=outputs.map(_.reparent(ref))
@@ -152,13 +153,15 @@ final case class MappingDoc(
      * Returns the name of the project of this mapping
      * @return
      */
-    def project : Option[String] = identifier.project
+    def project : Option[String] = mapping.flatMap(_.project.map(_.name))
 
     /**
      * Returns the name of this mapping
      * @return
      */
-    def name : String = identifier.name
+    def name : String = mapping.map(_.name).getOrElse("")
+
+    def identifier : MappingIdentifier = mapping.map(_.identifier).getOrElse(MappingIdentifier.empty)
 
     /**
      * Merge this schema documentation with another mapping documentation. Note that while documentation attributes
@@ -175,14 +178,14 @@ final case class MappingDoc(
      * @param other
      */
     def merge(other:MappingDoc) : MappingDoc = {
-        val id = if (identifier.isEmpty) other.identifier else identifier
+        val map = mapping.orElse(other.mapping)
         val desc = other.description.orElse(this.description)
         val in = inputs.toSet ++ other.inputs.toSet
         val out = outputs.map { out =>
                 out.merge(other.outputs.find(_.identifier.output == out.identifier.output))
             } ++
             other.outputs.filter(out => !outputs.exists(_.identifier.output == out.identifier.output))
-        val result = copy(identifier=id, description=desc, inputs=in.toSeq, outputs=out)
+        val result = copy(mapping=map, description=desc, inputs=in.toSeq, outputs=out)
         parent.orElse(other.parent)
             .map(result.reparent)
             .getOrElse(result)

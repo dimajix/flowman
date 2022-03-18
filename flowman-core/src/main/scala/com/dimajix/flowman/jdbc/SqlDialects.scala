@@ -43,7 +43,8 @@ object SqlDialects {
     registerDialect(DerbyDialect)
     registerDialect(H2Dialect)
     registerDialect(MySQLDialect)
-    registerDialect(MsSqlServerDialect)
+    registerDialect(SqlServerDialect)
+    registerDialect(SqlServerDialect)
 
     /**
       * Fetch the JdbcDialect class corresponding to a given database url.

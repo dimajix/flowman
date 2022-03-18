@@ -28,7 +28,7 @@ case class EmbeddedSchema(
     fields : Seq[Field] = Seq(),
     primaryKey : Seq[String] = Seq()
 ) extends SchemaGen {
-    override def instantiate(context:Context) : schema.EmbeddedSchema = {
+    override def instantiate(context:Context, properties:Option[Schema.Properties] = None) : schema.EmbeddedSchema = {
         schema.EmbeddedSchema(
             Schema.Properties(context),
             description,

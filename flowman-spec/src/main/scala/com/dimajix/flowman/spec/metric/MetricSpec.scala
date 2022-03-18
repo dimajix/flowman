@@ -25,7 +25,7 @@ import com.dimajix.flowman.metric.Selector
 import com.dimajix.flowman.spec.Spec
 
 
-class MetricSpec extends Spec[MetricSelection] {
+class MetricSpec {
     @JsonProperty(value = "name", required = true) var name:Option[String] = None
     @JsonProperty(value = "labels", required = false) var labels:Map[String,String] = Map()
     @JsonProperty(value = "selector", required = true) var selector:SelectorSpec = _
@@ -40,7 +40,7 @@ class MetricSpec extends Spec[MetricSelection] {
 }
 
 
-class SelectorSpec extends Spec[Selector] {
+class SelectorSpec {
     @JsonProperty(value = "name", required = false) var name: Option[String] = None
     @JsonProperty(value = "labels", required = false) var labels: Map[String, String] = Map()
 
@@ -57,9 +57,9 @@ class MetricBoardSpec extends Spec[MetricBoard] {
     @JsonProperty(value = "labels", required = false) private var labels: Map[String, String] = Map()
     @JsonProperty(value = "metrics", required = false) private var metrics: Seq[MetricSpec] = Seq()
 
-    def instantiate(context: Context): MetricBoard = {
+    def instantiate(context: Context, properties:Option[MetricBoard.Properties]): MetricBoard = {
         MetricBoard(
-            context,
+            MetricBoard.Properties(context),
             labels,
             metrics.map(_.instantiate(context))
         )

@@ -60,7 +60,7 @@ case class GrabEnvironmentTarget(instanceProperties:Target.Properties) extends B
 
 @TargetType(kind = "grabenv")
 class GrabEnvironmentTargetSpec extends TargetSpec {
-    override def instantiate(context: Context): GrabEnvironmentTarget = GrabEnvironmentTarget(instanceProperties(context))
+    override def instantiate(context: Context, properties:Option[Target.Properties]): GrabEnvironmentTarget = GrabEnvironmentTarget(instanceProperties(context, None))
 }
 
 

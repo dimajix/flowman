@@ -16,7 +16,9 @@
 
 package com.dimajix.flowman.graph
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.IdentifierRelationReference
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
@@ -29,46 +31,134 @@ import com.dimajix.flowman.types.SingleValue
 
 
 final case class Linker private[graph](builder:GraphBuilder, context:Context, node:Node) {
-    def input(mapping: Mapping, output:String) : Linker = {
+    /**
+     * Returns an execution suitable for analysis (i.e. schema inference)
+     * @return
+     */
+    def execution: Execution = builder.execution
+
+    def connect(in:Column, out:Column) : Unit = {
+        val edge = InputColumn(in, out)
+        link(edge)
+    }
+
+    def write(src:MappingOutput, dst:RelationRef) : Unit = {
+        val mapFields = MapIgnoreCase(src.fields.map(f => f.name -> f))
+        dst.fields.foreach { tgt =>
+            // TODO: Support nested fields
+            mapFields.get(tgt.name).foreach { src =>
+                connect(src, tgt)
+            }
+        }
+    }
+
+    def read(src:RelationRef, dst:MappingOutput) : Unit = {
+        val relFields = MapIgnoreCase(src.fields.map(f => f.name -> f))
+        dst.fields.foreach { f =>
+            // TODO: Support nested fields
+            relFields.get(f.name).foreach { in =>
+                connect(in, f)
+            }
+        }
+    }
+
+    /**
+     * Read-accesses a mapping output
+     * @param mapping
+     * @param output
+     * @return
+     */
+    def input(mapping: Mapping, output:String) : MappingOutput = {
         val in = builder.refMapping(mapping)
         val out = in.outputs.find(_.output == output)
             .getOrElse(throw new IllegalArgumentException(s"Mapping '${mapping.identifier}' doesn't provide output '$output'"))
         val edge = InputMapping(out, node)
         link(edge)
+        out
     }
-    def input(mapping: MappingIdentifier, output:String) : Linker = {
+    /**
+     * Read-accesses a mapping output
+     * @param mapping
+     * @param output
+     * @return
+     */
+    def input(mapping: MappingIdentifier, output:String) : MappingOutput = {
         val instance = context.getMapping(mapping)
         input(instance, output)
     }
 
-    def read(relation: Reference[Relation], partitions:Map[String,FieldValue]) : Linker = {
+    /**
+     * Read from a relation
+     * @param relation
+     * @param partitions
+     * @return
+     */
+    def read(relation: Reference[Relation], partitions:Map[String,FieldValue]) : RelationRef = {
         relation match {
+            // TODO: If it is a ValueRelation, then we can assume it is a child of the current node
             case ref:ValueRelationReference => read(ref.value, partitions)
             case ref:IdentifierRelationReference => read(ref.identifier, partitions)
         }
     }
-    def read(relation: Relation, partitions:Map[String,FieldValue]) : Linker = {
-        val in = builder.refRelation(relation)
+
+    /**
+     * Read from a relation
+     * @param relation
+     * @param partitions
+     * @return
+     */
+    def read(relation: Relation, partitions:Map[String,FieldValue]) : RelationRef = {
+        val in = builder.refRelation(relation, partitions)
         val edge = ReadRelation(in, node, partitions)
         link(edge)
+        in
     }
-    def read(relation: RelationIdentifier, partitions:Map[String,FieldValue]) : Linker = {
+
+    /**
+     * Read from a relation
+     * @param relation
+     * @param partitions
+     * @return
+     */
+    def read(relation: RelationIdentifier, partitions:Map[String,FieldValue]) : RelationRef = {
         val instance = context.getRelation(relation)
         read(instance, partitions)
     }
 
-    def write(relation: Reference[Relation], partitions:Map[String,SingleValue]) : Linker = {
+    /**
+     * Write to a relation
+     * @param relation
+     * @param partitions
+     * @return
+     */
+    def write(relation: Reference[Relation], partitions:Map[String,SingleValue]) : RelationRef = {
         relation match {
+            // TODO: If it is a ValueRelation, then we can assume it is a child of the current node
             case ref:ValueRelationReference => write(ref.value, partitions)
             case ref:IdentifierRelationReference => write(ref.identifier, partitions)
         }
     }
-    def write(relation: Relation, partition:Map[String,SingleValue]) : Linker = {
-        val out = builder.refRelation(relation)
+
+    /**
+     * Write to a relation
+     * @param relation
+     * @param partition
+     * @return
+     */
+    def write(relation: Relation, partition:Map[String,SingleValue]) : RelationRef = {
+        val out = builder.refRelation(relation, partition)
         val edge = WriteRelation(node, out, partition)
         link(edge)
+        out
     }
-    def write(relation: RelationIdentifier, partition:Map[String,SingleValue]) : Linker = {
+
+    /**
+     * Write to a relation
+     * @param relation
+     * @param partition
+     * @return
+     */
+    def write(relation: RelationIdentifier, partition:Map[String,SingleValue]) : RelationRef = {
         val instance = context.getRelation(relation)
         write(instance, partition)
     }

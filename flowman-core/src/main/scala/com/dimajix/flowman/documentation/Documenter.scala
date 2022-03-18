@@ -29,7 +29,11 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.graph.Graph
 import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.model
+import com.dimajix.flowman.model.AbstractInstance
 import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.Metadata
+import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spi.DocumenterReader
@@ -42,11 +46,23 @@ object Documenter {
             new RelationCollector(),
             new MappingCollector(),
             new TargetCollector(),
+            new LineageCollector(),
             new CheckCollector()
         )
         Documenter(
             collectors=collectors
         )
+    }
+
+    final case class Properties() extends model.Properties[Properties] {
+        override val context : Context = null
+        override val namespace : Option[Namespace] = None
+        override val project : Option[Project] = None
+        override val name : String = ""
+        override val kind : String = "documenter"
+        override val metadata : Metadata = Metadata(name="", category=model.Category.DOCUMENTER.lower, kind=kind)
+
+        override def withName(name: String): Properties = ???
     }
 
     class Reader {
@@ -93,7 +109,18 @@ object Documenter {
 final case class Documenter(
     collectors:Seq[Collector] = Seq(),
     generators:Seq[Generator] = Seq()
-) {
+) extends AbstractInstance {
+    override type PropertiesType = Documenter.Properties
+
+    override protected def instanceProperties: Documenter.Properties = Documenter.Properties()
+
+    /**
+     * Returns the category of the resource
+     *
+     * @return
+     */
+    override def category: model.Category = model.Category.DOCUMENTER
+
     def execute(session:Session, job:Job, args:Map[String,Any]) : Unit = {
         val runner = session.runner
         runner.withExecution(isolated=true) { execution =>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import scala.util.control.NonFatal
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.ScopeContext
+import com.dimajix.flowman.model
 import com.dimajix.flowman.types.FieldType
 
 
@@ -35,13 +36,20 @@ object Template {
     final case class Properties(
         context:Context,
         metadata:Metadata
-    ) extends Instance.Properties[Properties] {
+    ) extends model.Properties[Properties] {
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
         override val kind : String = metadata.kind
         override val name : String = metadata.name
 
         override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
+
+        def merge(other: Properties): Properties = {
+            Properties(
+                context,
+                metadata.merge(other.metadata)
+            )
+        }
         def identifier : TemplateIdentifier = TemplateIdentifier(name, project.map(_.name))
     }
 
@@ -64,7 +72,9 @@ object Template {
 }
 
 
-trait Template[T] extends Instance {
+trait Template[T <: Instance] extends Instance {
+    override type PropertiesType = Template.Properties
+
     /**
      * Returns the category of this resource
      * @return
@@ -85,11 +95,11 @@ trait Template[T] extends Instance {
     /**
      * Instantiate this template with the given parameters
      * @param context
-     * @param name
+     * @param properties
      * @param args
      * @return
      */
-    def instantiate(context: Context, name:String, args:Map[String,Any]): T
+    def instantiate(context: Context, properties:T#PropertiesType, args:Map[String,Any]): T
 
     /**
      * Determine final arguments of this job, by performing granularity adjustments etc. Missing arguments will
@@ -119,7 +129,7 @@ trait Template[T] extends Instance {
 }
 
 
-abstract class BaseTemplate[T] extends AbstractInstance with Template[T] {
+abstract class BaseTemplate[T <: Instance] extends AbstractInstance with Template[T] {
     protected override def instanceProperties : Template.Properties
 
     /**
@@ -135,16 +145,16 @@ abstract class BaseTemplate[T] extends AbstractInstance with Template[T] {
      * @param args
      * @return
      */
-    def instantiate(context: Context, name:String, args:Map[String,Any]): T = {
+    def instantiate(context: Context, properties:T#PropertiesType, args:Map[String,Any]): T = {
         // Validate args!
         val ctxt = ScopeContext.builder(context)
             .withEnvironment(args)
             .build()
 
-        instantiateInternal(ctxt, name)
+        instantiateInternal(ctxt, properties)
     }
 
-    protected def instantiateInternal(context: Context, name:String) : T
+    protected def instantiateInternal(context: Context, properties:T#PropertiesType) : T
 }
 
 

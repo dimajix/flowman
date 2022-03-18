@@ -158,9 +158,9 @@ case class DropTarget(
 class DropTargetSpec extends TargetSpec {
     @JsonProperty(value="relation", required=true) private var relation:RelationReferenceSpec = _
 
-    override def instantiate(context: Context): DropTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): DropTarget = {
         DropTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             relation.instantiate(context)
         )
     }

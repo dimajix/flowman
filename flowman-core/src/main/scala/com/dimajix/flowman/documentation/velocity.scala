@@ -68,12 +68,15 @@ final case class ColumnDocWrapper(column:ColumnDoc) extends FragmentWrapper(colu
     override def toString: String = column.name
 
     def getName() : String = column.name
+    def getFqName() : String = column.fqName
     def getNullable() : Boolean = column.nullable
     def getType() : String = column.typeName
     def getSqlType() : String = column.sqlType
     def getSparkType() : String = column.sparkType
     def getCatalogType() : String = column.catalogType
+    def getIndex() : Int = column.index
     def getColumns() : java.util.List[ColumnDocWrapper] = column.children.map(ColumnDocWrapper).asJava
+    def getInputs() : java.util.List[ReferenceWrapper] = column.inputs.map(ReferenceWrapper).asJava
     def getChecks() : java.util.List[ColumnCheckWrapper] = column.checks.map(ColumnCheckWrapper).asJava
 }
 
@@ -159,7 +162,7 @@ final case class ProjectDocWrapper(project:ProjectDoc) extends FragmentWrapper(p
     def getVersion() : String = project.version.getOrElse("")
 
     def resolve(reference:ReferenceWrapper) : FragmentWrapper = {
-        project.resolve(reference.reference).map {
+        val wrapper = project.resolve(reference.reference).map {
             case m:MappingDoc => MappingDocWrapper(m)
             case o:MappingOutputDoc => MappingOutputDocWrapper(o)
             case r:RelationDoc => RelationDocWrapper(r)
@@ -171,7 +174,8 @@ final case class ProjectDocWrapper(project:ProjectDoc) extends FragmentWrapper(p
             case c:ColumnDoc => ColumnDocWrapper(c)
             case t:ColumnCheck => ColumnCheckWrapper(t)
             case f:Fragment => new FragmentWrapper(f)
-        }.orNull
+        }
+        wrapper.orNull
     }
 
     def getMappings() : java.util.List[MappingDocWrapper] =

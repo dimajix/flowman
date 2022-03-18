@@ -58,7 +58,7 @@ schema definition. Since the validation is performed in the `VALIDATE` phase, ev
 the job will fail if the schema doesn't match and the export as defined in the target `perform_export` won't be 
 performed.
 
-Of course, you can also use the `schema` assertion within the [Flowman testing framework](../../cookbook/testing.md),
+Of course, you can also use the `schema` assertion within the [Flowman testing framework](../../testing/index.md),
 such that the test will not be performed during the real execution of an export job, but as part of an integration
 test, which is typically conducted only as part of a continuous integration (CI) process.
 

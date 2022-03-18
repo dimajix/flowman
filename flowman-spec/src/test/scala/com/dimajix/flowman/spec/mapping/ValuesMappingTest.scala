@@ -156,7 +156,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
             )
         )
 
-        (mappingTemplate.instantiate _).expects(context).returns(mockMapping)
+        (mappingTemplate.instantiate _).expects(context, None).returns(mockMapping)
         val mapping = context.getMapping(MappingIdentifier("const"))
 
         mapping.inputs should be (Set())
@@ -201,7 +201,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
             )
         )
 
-        (mappingTemplate.instantiate _).expects(context).returns(mockMapping)
+        (mappingTemplate.instantiate _).expects(context, None).returns(mockMapping)
         val mapping = context.getMapping(MappingIdentifier("const"))
 
         mapping.inputs should be (Set())

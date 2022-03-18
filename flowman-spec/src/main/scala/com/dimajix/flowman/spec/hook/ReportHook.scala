@@ -327,9 +327,9 @@ class ReportHookSpec extends HookSpec {
     @JsonProperty(value="template", required=false) private var template:String = defaultTemplate.toString
     @JsonProperty(value="metrics", required=false) private var metrics:Option[MetricBoardSpec] = None
 
-    override def instantiate(context: Context): ReportHook = {
+    override def instantiate(context: Context, properties:Option[Hook.Properties] = None): ReportHook = {
         ReportHook(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             new Path(context.evaluate(location)),
             OutputMode.ofString(context.evaluate(mode).getOrElse("overwrite")),
             new URL(context.evaluate(template)),

@@ -1,4 +1,3 @@
-
 # JSON Extract Mapping
 In order to work with JSON data, the `json-extract` mapping extracts structured and possibly
 nested records from a JSON document. The mapping will only extract the data from a single

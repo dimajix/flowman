@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,9 +84,9 @@ case class BlackholeTarget(
 class BlackholeTargetSpec extends TargetSpec {
     @JsonProperty(value = "mapping", required=true) private var mapping:String = _
 
-    override def instantiate(context: Context): BlackholeTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): BlackholeTarget = {
         BlackholeTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier.parse(context.evaluate(mapping))
         )
     }

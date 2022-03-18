@@ -68,9 +68,9 @@ class OpenApiSchemaSpec extends ExternalSchemaSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): OpenApiSchema = {
+    override def instantiate(context: Context, properties:Option[Schema.Properties]): OpenApiSchema = {
         OpenApiSchema(
-            Schema.Properties(context),
+            instanceProperties(context, file.getOrElse("")),
             file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
             url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)),
             context.evaluate(spec),

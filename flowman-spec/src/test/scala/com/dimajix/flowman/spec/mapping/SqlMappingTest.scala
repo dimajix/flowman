@@ -24,15 +24,17 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
 
 class SqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
-    "An multi line SQL Script" should "be readable from YML" in {
+    "The SQL Mapping" should "be readable from YML" in {
         val spec =
             """
               |mappings:
@@ -55,7 +57,7 @@ class SqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         project.mappings.contains("t1") should be (true)
     }
 
-    "Another YAML multi line variant" should "be readable from YML" in {
+    it should "be readable from another YML spec variant" in {
         val spec =
             """
               |mappings:
@@ -77,6 +79,67 @@ class SqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         project.mappings.size should be (2)
         project.mappings.contains("t0") should be (true)
         project.mappings.contains("t1") should be (true)
+    }
+
+    it should "execute the SQL query" in {
+        val spec =
+            """
+              |mappings:
+              |  t1:
+              |    kind: sql
+              |    sql: "
+              |      SELECT _1,_2
+              |      FROM t0
+              |      "
+            """.stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.execution
+        val context = session.getContext(project)
+
+        val df = executor.spark.createDataFrame(Seq(
+            ("col1", 12),
+            ("col2", 23)
+        ))
+
+        val mapping = context.getMapping(MappingIdentifier("t1"))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main")
+            .orderBy("_1", "_2")
+        result.schema should be (StructType(StructField("_1", StringType, true) :: StructField("_2", IntegerType, false) :: Nil))
+        result.collect().size should be (2)
+
+        mapping.describe(executor, Map(
+            MappingOutputIdentifier("t0") -> com.dimajix.flowman.types.StructType.of(df.schema)
+        )).map {case(k,v) => k -> v.sparkType } should be (Map(
+            "main" -> result.schema
+        ))
+    }
+
+    it should "pass through descriptions" in {
+        val sql =
+            """
+              |SELECT
+              |     LOWER(CAST(x AS STRING)) AS y,
+              |     TRUNC('HOUR', CAST(x AS DATE)) AS y2
+              |FROM source
+              |""".stripMargin
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val mapping = SqlMapping(
+            Mapping.Properties(session.context),
+            sql = Some(sql)
+        )
+
+        val inputSchema = ftypes.StructType(Seq(
+            ftypes.Field("x", ftypes.StringType, description=Some("This is x"))
+        ))
+        val result = mapping.describe(execution, Map(MappingOutputIdentifier("source") -> inputSchema))
+        result("main") should be (ftypes.StructType(Seq(
+            ftypes.Field("y", ftypes.StringType, description=Some("This is x")),
+            ftypes.Field("y2", ftypes.DateType, description=Some("This is x"))
+        )))
     }
 
     "Dependencies" should "be correct" in {
@@ -145,40 +208,4 @@ class SqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val mapping = context.getMapping(MappingIdentifier("t1"))
         mapping.inputs.map(_.name) should be (Set("other_table", "some_table", "some_table_archive"))
     }
-
-    it should "execute the SQL query" in {
-        val spec =
-            """
-              |mappings:
-              |  t1:
-              |    kind: sql
-              |    sql: "
-              |      SELECT _1,_2
-              |      FROM t0
-              |      "
-            """.stripMargin
-
-        val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
-        val context = session.getContext(project)
-
-        val df = executor.spark.createDataFrame(Seq(
-            ("col1", 12),
-            ("col2", 23)
-        ))
-
-        val mapping = context.getMapping(MappingIdentifier("t1"))
-        val result = mapping.execute(executor, Map(MappingOutputIdentifier("t0") -> df))("main")
-            .orderBy("_1", "_2")
-        result.schema should be (StructType(StructField("_1", StringType, true) :: StructField("_2", IntegerType, false) :: Nil))
-        result.collect().size should be (2)
-
-        mapping.describe(executor, Map(
-            MappingOutputIdentifier("t0") -> com.dimajix.flowman.types.StructType.of(df.schema)
-        )).map {case(k,v) => k -> v.sparkType } should be (Map(
-            "main" -> result.schema
-        ))
-    }
-
 }

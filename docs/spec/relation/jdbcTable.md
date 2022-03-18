@@ -23,6 +23,8 @@ relations:
     connection: frontend
     # Specify the table
     table: "users"
+    # Specify name of temporary staging table (optional)
+    stagingTable: "users_staging"
     schema:
       kind: avro
       file: "${project.basedir}/schema/users.avsc"
@@ -46,6 +48,8 @@ relations:
       password: "$frontend_db_password"
     # Specify the table
     table: "users"
+    # Specify name of temporary staging table (optional)
+    stagingTable: "users_staging"
 ```
 For most cases, it is recommended not to embed the connection, since this prevents reusing the same connection in
 multiple places.
@@ -111,6 +115,12 @@ as the fallback for merge/upsert operations, when no `mergeKey` and no explicit 
  Specifies the name of the table in the relational database. You either need to specify this `table` property
 or the `query` property.
 
+ * `stagingTable` **(optional)** *(type: string)*:
+   Specifies the name of an optional staging table in the relational database. This table will be used as an 
+temporary, intermediate target for write/update/merge operations. During output operations this table will be
+created first, then populated with new records and then within a database transaction all records will be pushed into
+the real JDBC table and the temporary table will be dropped.
+
  * `query` **(optional)** *(type: string)*:
 As an alternative to directly accessing a table, you can also specify an SQL query which will be executed by the
 database for retrieving data. Of course, then only read operations are possible. You either need to specify this 
@@ -168,8 +178,18 @@ In addition, the `jdbcTable` relation also supports complex merge operations in 
 
 ## Remarks
 
+### Mocking JDBC relations
 Note that Flowman will rely on schema inference in some important situations, like [mocking](mock.md) and generally
 for describing the schema of a relation. This might create unwanted connections to the physical data source,
 particular in case of self-contained tests. To prevent Flowman from creating a connection to the physical data 
 source, you simply need to explicitly specify a schema, which will then be used instead of the physical schema 
 in all situations where only schema information is required.
+
+### Using staging tables
+Since version 0.23.0 Flowman supports *staging* tables as an intermediate write target. Staging tables help to
+ensure continuous availability of the real tables during write operations, since all output data is first buffered
+in the staging table and then transactionally committed into the real table. 
+
+While this two-step approach might slow down write processes, it is often required when performing update/merge
+operations since these could result in database deadlocks otherwise when Spark performs these operations in parallel
+from multiple processes into a single database.

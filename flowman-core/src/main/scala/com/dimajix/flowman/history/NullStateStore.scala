@@ -30,7 +30,7 @@ object NullStateStore {
 }
 
 
-class NullStateStore extends StateStore {
+class NullStateStore extends AbstractStateStore {
     import NullStateStore._
 
     /**

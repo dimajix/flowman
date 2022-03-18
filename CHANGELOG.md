@@ -1,3 +1,13 @@
+# Version 0.23.0 - 2022-03-18
+
+* github-148: Support staging table for all JDBC relations
+* github-120: Use staging tables for UPSERT and MERGE operations in JDBC relations
+* github-147: Add support for PostgreSQL
+* github-151: Implement column level lineage in documentation
+* github-121: Correctly apply documentation, before/after and other common attributes to templates
+* github-152: Implement new 'cast' mapping
+
+
 # Version 0.22.0 - 2022-03-01
 
 * Add new `sqlserver` relation

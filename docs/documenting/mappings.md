@@ -24,8 +24,10 @@ mappings:
       air_temperature: "CAST(SUBSTR(raw_data,88,5) AS FLOAT)/10"
       air_temperature_qual: "SUBSTR(raw_data,93,1)"
 
+    # Explicit documentation section for annotating columns from above
     documentation:
       columns:
+        # You can document any column you like, you don't have to provide a description for all of them
         - name: usaf
           description: "The USAF (US Air Force) id of the weather station"
         - name: wban

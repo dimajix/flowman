@@ -148,9 +148,9 @@ class UnpackJsonMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): UnpackJsonMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): UnpackJsonMapping = {
         UnpackJsonMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             columns.map(_.instantiate(context)),
             context.evaluate(corruptedColumn),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.fasterxml.jackson.annotation.JsonProperty
 
+import com.dimajix.flowman.model.Mapping
+
 
 object CaseMappingSpec {
     class Case {
@@ -36,11 +38,11 @@ class CaseMappingSpec extends MappingSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): AliasMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): AliasMapping = {
         def eval(cond:String) : Boolean = {
             context.evaluate(s"#if (${cond}) true #else false #end").trim.toBoolean
         }
-        val props = instanceProperties(context)
+        val props = instanceProperties(context, properties)
         val input = cases.find(c => eval(c.condition))
         if (input.isEmpty)
             throw new IllegalArgumentException(s"No valid case found in case mapping '${props.identifier}'")

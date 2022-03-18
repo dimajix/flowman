@@ -16,11 +16,13 @@
 
 package com.dimajix.flowman.transforms
 
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.transforms.schema.ColumnTree
 import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.transforms.schema.SchemaTree
+import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
 
@@ -29,7 +31,8 @@ object ProjectTransformer {
     case class Column(
         column:Path,
         name:Option[String]=None,
-        dtype:Option[FieldType]=None
+        dtype:Option[FieldType]=None,
+        description:Option[String]=None
     )
 }
 final case class ProjectTransformer(
@@ -45,7 +48,7 @@ final case class ProjectTransformer(
 
         val tree = ColumnTree.ofSchema(df.schema)
 
-        def col(spec:ProjectTransformer.Column) = {
+        def col(spec:ProjectTransformer.Column): Column = {
             val input = tree.find(spec.column)
                 .getOrElse(throw new NoSuchColumnException(spec.column.toString))
                 .mkValue()
@@ -72,18 +75,14 @@ final case class ProjectTransformer(
 
         val tree = SchemaTree.ofSchema(schema)
 
-        def col(spec:ProjectTransformer.Column) = {
+        def col(spec:ProjectTransformer.Column): Field = {
             val input = tree.find(spec.column)
                 .getOrElse(throw new NoSuchColumnException(spec.column.toString))
                 .mkValue()
-            val typed = spec.dtype match {
-                case None => input
-                case Some(ft) => input.copy(ftype = ft)
-            }
-            spec.name match {
-                case None => typed
-                case Some(name) => typed.copy(name=name)
-            }
+            val name = spec.name.getOrElse(input.name)
+            val dtype = spec.dtype.getOrElse(input.ftype)
+            val desc = spec.description.orElse(input.description)
+            input.copy(name=name, ftype=dtype, description=desc)
         }
 
         StructType(columns.map(col))

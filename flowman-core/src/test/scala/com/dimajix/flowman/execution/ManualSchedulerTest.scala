@@ -63,7 +63,7 @@ class ManualSchedulerTest extends AnyFlatSpec with Matchers with MockFactory wit
         def genTarget(name:String) : (Target,Prototype[Target]) = {
             val t = mock[Target]
             val p = mock[Prototype[Target]]
-            (p.instantiate _).expects(*).returns(t)
+            (p.instantiate _).expects(*,None).returns(t)
             (t.identifier _).expects().atLeastOnce().returns(TargetIdentifier("prj/" + name))
             (t.name _).expects().atLeastOnce().returns(name)
             (t.phases _).expects().atLeastOnce().returns(Set(Phase.BUILD))

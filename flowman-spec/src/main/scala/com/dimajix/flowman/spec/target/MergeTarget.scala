@@ -160,6 +160,7 @@ case class MergeTarget(
             case Phase.BUILD =>
                 linker.input(mapping.mapping, mapping.output)
                 linker.write(relation, Map.empty[String,SingleValue])
+                // TODO: Link columns
             case Phase.TRUNCATE =>
                 linker.write(relation, Map.empty[String,SingleValue])
             case _ =>
@@ -321,10 +322,10 @@ class MergeTargetSpec extends TargetSpec {
     @JsonProperty(value="condition", required=false) private var mergeCondition:Option[String] = None
     @JsonProperty(value="clauses", required=false) private var clauses:Seq[MergeClauseSpec] = Seq()
 
-    override def instantiate(context: Context): MergeTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): MergeTarget = {
         val conf = context.flowmanConf
         MergeTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             relation.instantiate(context),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
             mergeKey.map(context.evaluate),

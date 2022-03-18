@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 package com.dimajix.flowman.model
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.model.Job.Parameter
-import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.model
+
 
 final case class TestInstance(
     namespace:String,
@@ -53,13 +53,21 @@ object Test {
         context: Context,
         metadata:Metadata,
         description:Option[String]
-    ) extends Instance.Properties[Properties] {
+    ) extends model.Properties[Properties] {
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
         override val kind : String = metadata.kind
         override val name : String = metadata.name
 
         override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
+
+        def merge(other: Properties): Properties = {
+            Properties(
+                context,
+                metadata.merge(other.metadata),
+                description.orElse(other.description)
+            )
+        }
     }
 
     class Builder(context:Context) {
@@ -67,8 +75,8 @@ object Test {
         private var name:String = ""
         private var metadata:Metadata = Metadata(context, "", Category.TEST, "test")
         private var description:Option[String] = None
-        private var targets:Seq[TargetIdentifier] = Seq()
-        private var environment:Map[String,String] = Map()
+        private var targets:Seq[TargetIdentifier] = Seq.empty
+        private var environment:Map[String,String] = Map.empty
 
         def build() : Test = Test(
             Test.Properties(context, metadata.copy(name=name), description),
@@ -129,11 +137,11 @@ object Test {
         val parentEnvironment = parents
             .map(test => test.environment)
             .reduceOption((envs, elems) => envs ++ elems)
-            .getOrElse(Map())
+            .getOrElse(Map.empty)
         val parentTargets = parents
             .map(test => test.targets)
             .reduceOption((targets, elems) => targets ++ elems)
-            .getOrElse(Seq())
+            .getOrElse(Seq.empty)
 
         val allEnvironment = parentEnvironment ++ test.environment
 
@@ -158,14 +166,16 @@ object Test {
 
 final case class Test(
     instanceProperties:Test.Properties,
-    environment:Map[String,String] = Map(),
-    targets:Seq[TargetIdentifier] = Seq(),
+    environment:Map[String,String] = Map.empty,
+    targets:Seq[TargetIdentifier] = Seq.empty,
 
-    overrideRelations:Map[String,Prototype[Relation]] = Map(),
-    overrideMappings:Map[String,Prototype[Mapping]] = Map(),
-    fixtures:Map[String,Prototype[Target]] = Map(),
-    assertions:Map[String,Prototype[Assertion]] = Map()
+    overrideRelations:Map[String,Prototype[Relation]] = Map.empty,
+    overrideMappings:Map[String,Prototype[Mapping]] = Map.empty,
+    fixtures:Map[String,Prototype[Target]] = Map.empty,
+    assertions:Map[String,Prototype[Assertion]] = Map.empty
 ) extends AbstractInstance {
+    override type PropertiesType = Test.Properties
+
     override def category: Category = Category.TEST
     override def kind : String = "test"
 

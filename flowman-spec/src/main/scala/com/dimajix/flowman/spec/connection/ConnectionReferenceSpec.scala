@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,20 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.ConnectionIdentifier
 import com.dimajix.flowman.model.ConnectionReference
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Reference
+import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.spec.Spec
 
 
 @JsonDeserialize(using=classOf[ConnectionReferenceDeserializer])
-abstract class ConnectionReferenceSpec extends Spec[Reference[Connection]]
+abstract class ConnectionReferenceSpec {
+    def instantiate(context: Context): Reference[Connection]
+}
 final case class IdentifierConnectionReferenceSpec(connection:String) extends ConnectionReferenceSpec {
     override def instantiate(context: Context): Reference[Connection] = {
         val id = ConnectionIdentifier.parse(context.evaluate(connection))

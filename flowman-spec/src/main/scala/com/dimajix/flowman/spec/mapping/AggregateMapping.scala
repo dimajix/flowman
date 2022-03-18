@@ -87,9 +87,9 @@ class AggregateMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context:Context) : AggregateMapping = {
+    override def instantiate(context:Context, properties:Option[Mapping.Properties] = None) : AggregateMapping = {
         AggregateMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier.parse(context.evaluate(input)),
             dimensions.map(context.evaluate),
             ListMap(aggregations.toSeq.map { case(k,v) => k -> context.evaluate(v) }:_*),

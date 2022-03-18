@@ -19,20 +19,35 @@ package com.dimajix.flowman.catalog
 import java.util.Locale
 
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
+import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StructType
+
+
+sealed abstract class TableType extends Product with Serializable
+object TableType {
+    case object VIEW extends TableType
+    case object TABLE extends TableType
+    case object UNKNOWN extends TableType
+}
 
 
 object TableDefinition {
     def ofTable(table:CatalogTable) : TableDefinition = {
         val id = table.identifier
         val schema = com.dimajix.flowman.types.StructType.of(table.dataSchema)
-        TableDefinition(TableIdentifier(id.table, id.database.toSeq), schema.fields)
+        val typ = table.tableType match {
+            case CatalogTableType.EXTERNAL => TableType.TABLE
+            case CatalogTableType.MANAGED => TableType.TABLE
+            case CatalogTableType.VIEW => TableType.VIEW
+        }
+        TableDefinition(TableIdentifier(id.table, id.database.toSeq), typ, columns=schema.fields)
     }
 }
 final case class TableDefinition(
     identifier: TableIdentifier,
+    tableType: TableType = TableType.UNKNOWN,
     columns: Seq[Field] = Seq.empty,
     comment: Option[String] = None,
     primaryKey: Seq[String] = Seq.empty,

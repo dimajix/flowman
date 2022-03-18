@@ -23,15 +23,19 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.graph.Column
 import com.dimajix.flowman.graph.Graph
+import com.dimajix.flowman.graph.InputColumn
+import com.dimajix.flowman.graph.MappingOutput
 import com.dimajix.flowman.graph.MappingRef
 import com.dimajix.flowman.graph.ReadRelation
+import com.dimajix.flowman.graph.RelationRef
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-class MappingCollector extends Collector {
+class MappingCollector extends AbstractCollector {
     private val logger = LoggerFactory.getLogger(getClass)
 
     override def collect(execution: Execution, graph: Graph, documentation: ProjectDoc): ProjectDoc = {
@@ -55,13 +59,14 @@ class MappingCollector extends Collector {
                 val inmap = mapping.context.getMapping(in.mapping)
                 getOutputDoc(inmap, in.output).map(in -> _)
             }.toMap
-            val doc = document(execution, parent, mapping, inputs)
+            val doc = document(execution, parent, node, inputs)
 
             // Add additional inputs from non-mapping entities
             val incoming = node.incoming.collect {
                 // TODO: The following logic is not correct in case of embedded relations. We would need an IdentityHashMap instead
                 case ReadRelation(input, _, _) => documentation.relations.find(_.identifier == input.relation.identifier).map(_.reference)
             }.flatten
+
             doc.copy(inputs=doc.inputs ++ incoming)
         }
 
@@ -77,17 +82,19 @@ class MappingCollector extends Collector {
      * @param inputs
      * @return
      */
-    private def document(execution: Execution, parent:Reference, mapping:Mapping, inputs:Map[MappingOutputIdentifier,MappingOutputDoc]) : MappingDoc = {
+    private def document(execution: Execution, parent:Reference, node:MappingRef, inputs:Map[MappingOutputIdentifier,MappingOutputDoc]) : MappingDoc = {
+        val mapping = node.mapping
         val inputSchemas = inputs.map(kv => kv._1 -> kv._2.schema.map(_.toStruct).getOrElse(StructType(Seq())))
         val doc = MappingDoc(
             Some(parent),
-            mapping.identifier,
+            Some(mapping),
             None,
             inputs.map(_._2.reference).toSeq
         )
         val ref = doc.reference
 
         val outputs = try {
+            // TODO: Check if we can use Execution.describe (with caching), since the documentation is now included
             // Do not use Execution.describe because that wouldn't use our hand-crafted input documentation
             val schemas = mapping.describe(execution, inputSchemas)
             schemas.map { case(output,schema) =>

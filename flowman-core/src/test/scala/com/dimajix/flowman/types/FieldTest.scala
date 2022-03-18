@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,21 @@ import com.dimajix.flowman.util.ObjectMapper
 
 
 class FieldTest extends AnyFlatSpec with Matchers {
-    "A Field" should "be nullable per default" in {
+    "A Field" should "be support VARCHAR back and forth" in {
+        val field = Field("varchar_field", VarcharType(10))
+        field.catalogField.dataType should be (org.apache.spark.sql.types.VarcharType(10))
+        field.sparkField.dataType should be (org.apache.spark.sql.types.StringType)
+        Field.of(field.sparkField) should be (field)
+    }
+
+    it should "be support CHAR back and forth" in {
+        val field = Field("char_field", CharType(10))
+        field.catalogField.dataType should be (org.apache.spark.sql.types.CharType(10))
+        field.sparkField.dataType should be (org.apache.spark.sql.types.StringType)
+        Field.of(field.sparkField) should be (field)
+    }
+
+    it should "be nullable per default" in {
         val spec =
             """
               |name: lala

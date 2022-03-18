@@ -75,9 +75,9 @@ object NullTargetSpec {
 class NullTargetSpec extends TargetSpec {
     @JsonProperty(value="partition", required=false) private var partition:Map[String,String] = Map()
 
-    override def instantiate(context: Context): NullTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): NullTarget = {
         NullTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             context.evaluate(partition)
         )
     }

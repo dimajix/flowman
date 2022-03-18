@@ -34,18 +34,24 @@ import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.types.VarcharType
+import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.testing.LocalSparkSession
 
 
 object MappingTest {
-    class DummyMapping(props:Mapping.Properties, ins:Set[MappingOutputIdentifier]) extends BaseMapping {
+    class DummyMapping(props:Mapping.Properties, ins:Set[MappingOutputIdentifier])(fn:(DataFrame) => DataFrame) extends BaseMapping {
         protected override def instanceProperties: Mapping.Properties = props
 
         override def inputs: Set[MappingOutputIdentifier] = ins
 
         override def execute(execution: Execution, input: Map[MappingOutputIdentifier, DataFrame]): Map[String, DataFrame] = {
-            val df = input.head._2.groupBy("id").agg(f.sum("val"))
-            Map("main" -> df)
+            if (input.nonEmpty) {
+                Map("main" -> fn(input.head._2))
+            }
+            else {
+                Map("main" -> DataFrameBuilder.ofSchema(execution.spark, StructType(Seq(Field("id", StringType), Field("val", LongType))).sparkType))
+            }
         }
     }
 }
@@ -61,7 +67,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
         val mapping = new DummyMapping(
             Mapping.Properties(context, "m1"),
             Set()
-        )
+        )(_ => ???)
 
         mapping.metadata should be (Metadata(
             None,
@@ -84,7 +90,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
         val mapping = new DummyMapping(
             Mapping.Properties(context, "m1"),
             Set()
-        )
+        )(_ => ???)
         mapping.output("main") should be (MappingOutputIdentifier("project/m1:main"))
         an[NoSuchMappingOutputException] should be thrownBy(mapping.output("no_such_output"))
     }
@@ -96,7 +102,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
         val mapping = new DummyMapping(
             Mapping.Properties(context, "m1"),
             Set()
-        )
+        )(_ => ???)
         mapping.output("main") should be (MappingOutputIdentifier("m1:main"))
         an[NoSuchMappingOutputException] should be thrownBy(mapping.output("no_such_output"))
     }
@@ -109,18 +115,79 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
         val mapping = new DummyMapping(
             Mapping.Properties(context, "m1"),
             Set(MappingOutputIdentifier("input:main"))
-        )
+        )(df => df.groupBy("id").agg(f.sum("val")))
 
         val inputSchema = StructType(Seq(
-            Field("id", StringType),
+            Field("id", VarcharType(20), description=Some("some id")),
             Field("val", IntegerType),
             Field("comment", StringType)
         ))
         val result = mapping.describe(execution, Map(MappingOutputIdentifier("input:main") -> inputSchema))
 
         result("main") should be (StructType(Seq(
-            Field("id", StringType),
+            Field("id", VarcharType(20), description=Some("some id")),
             Field("sum(val)", LongType)
+        )))
+    }
+
+    it should "keep Char(n)/Varchar(n) in case of transformations" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val execution = session.execution
+
+        val mapping = new DummyMapping(
+            Mapping.Properties(context, "m1"),
+            Set(MappingOutputIdentifier("input:main"))
+        )(df => df.select(
+            f.lower(df("id")).as("lower_id"),
+            f.concat(df("id"), f.lit("_suffix")).as("concat"),
+            df("id").cast("string").as("cast"),
+            f.substring(df("id"), 1, 7).as("substr"),
+            f.substring(df("id"), 18, 7).as("substr2"),
+            f.substring(df("id"), 21, 7).as("substr3")
+        ))
+
+        val inputSchema = StructType(Seq(
+            Field("id", VarcharType(20), description=Some("some id")),
+            Field("val", IntegerType),
+            Field("comment", StringType)
+        ))
+        val result = mapping.describe(execution, Map(MappingOutputIdentifier("input:main") -> inputSchema))
+
+        result("main") should be (StructType(Seq(
+            Field("lower_id", VarcharType(20), description=Some("some id")),
+            Field("concat", VarcharType(27)),
+            Field("cast", StringType, description=Some("some id")),
+            Field("substr", VarcharType(7)),
+            Field("substr2", VarcharType(3)),
+            Field("substr3", VarcharType(1))
+        )))
+    }
+
+    it should "support various functions" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val execution = session.execution
+
+        val mapping = new DummyMapping(
+            Mapping.Properties(context, "m1"),
+            Set(MappingOutputIdentifier("input:main"))
+        )(df => df.select(
+            f.lower(df("commented")).as("lower_id"),
+            f.coalesce(df("uncommented"), df("commented")).as("coalesce1"),
+            f.coalesce(df("commented"), df("uncommented")).as("coalesce2")
+        ))
+
+        val inputSchema = StructType(Seq(
+            Field("commented", VarcharType(20), description=Some("some id")),
+            Field("uncommented", IntegerType)
+        ))
+        val result = mapping.describe(execution, Map(MappingOutputIdentifier("input:main") -> inputSchema))
+
+        result("main") should be (StructType(Seq(
+            Field("lower_id", VarcharType(20), description=Some("some id")),
+            Field("coalesce1", StringType, description=Some("some id")),
+            Field("coalesce2", StringType, description=Some("some id"))
         )))
     }
 
@@ -135,19 +202,19 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
                 "m2" -> mappingTemplate2
             )
         )
-        val session = Session.builder().disableSpark().build()
+        val session = Session.builder().withSparkSession(spark).build()
         val context = session.getContext(project)
 
         val mapping1 = new DummyMapping(
             Mapping.Properties(context, "m1"),
             Set(MappingOutputIdentifier("m2"))
-        )
+        )(df => df.groupBy("id").agg(f.sum("val")))
         val mapping2 = new DummyMapping(
             Mapping.Properties(context, "m2"),
             Set()
-        )
-        //(mappingTemplate1.instantiate _).expects(context).returns(mapping1)
-        (mappingTemplate2.instantiate _).expects(context).returns(mapping2)
+        )(_ => ???)
+        //(mappingTemplate1.instantiate _).expects(context,None).returns(mapping1)
+        (mappingTemplate2.instantiate _).expects(context,None).returns(mapping2)
 
         val graphBuilder = new GraphBuilder(context, Phase.BUILD)
         val ref1 = graphBuilder.refMapping(mapping1)

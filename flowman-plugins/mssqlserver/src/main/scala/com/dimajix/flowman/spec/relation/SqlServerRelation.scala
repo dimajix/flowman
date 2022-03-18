@@ -54,66 +54,14 @@ case class SqlServerRelation(
     indexes: Seq[TableIndex] = Seq.empty
 ) extends JdbcRelationBase(instanceProperties, schema, partitions, connection, properties, table, query, mergeKey, primaryKey, indexes) {
     private val tempTableIdentifier = TableIdentifier(s"##${tableIdentifier.table}_temp_staging")
+    override protected val stagingIdentifier: Option[TableIdentifier] = Some(tempTableIdentifier)
 
-    override protected def doOverwriteAll(execution: Execution, df:DataFrame) : Unit = {
-        withConnection { (con, options) =>
-            createTempTable(con, options, StructType.of(df.schema))
-            logger.info(s"Writing new data into temporary staging table '${tempTableIdentifier}'")
-            appendTable(execution, df, tempTableIdentifier)
-
-            withTransaction(con) {
-                withStatement(con, options) { case (statement, options) =>
-                    val dialect = SqlDialects.get(options.url)
-                    logger.info(s"Truncating table '${tableIdentifier}'")
-                    statement.executeUpdate(s"TRUNCATE TABLE ${dialect.quote(tableIdentifier)}")
-                    logger.info(s"Copying data from temporary staging table '${tempTableIdentifier}' into table '${tableIdentifier}'")
-                    statement.executeUpdate(s"INSERT  INTO ${dialect.quote(tableIdentifier)}  SELECT * FROM ${dialect.quote(tempTableIdentifier)}")
-                    logger.info(s"Dropping temporary staging table '${tempTableIdentifier}'")
-                    statement.executeUpdate(s"DROP TABLE ${dialect.quote(tempTableIdentifier)}")
-                }
-            }
-        }
-    }
-    override protected def doAppend(execution: Execution, df:DataFrame): Unit = {
-        withConnection { (con, options) =>
-            createTempTable(con, options, StructType.of(df.schema))
-            logger.info(s"Writing new data into temporary staging table '${tempTableIdentifier}'")
-            appendTable(execution, df, tempTableIdentifier)
-
-            withTransaction(con) {
-                withStatement(con, options) { case (statement, options) =>
-                    val dialect = SqlDialects.get(options.url)
-                    logger.info(s"Copying data from temporary staging table '${tempTableIdentifier}' into table '${tableIdentifier}'")
-                    statement.executeUpdate(s"INSERT  INTO ${dialect.quote(tableIdentifier)}  SELECT * FROM ${dialect.quote(tempTableIdentifier)}")
-                    logger.info(s"Dropping temporary staging table '${tempTableIdentifier}'")
-                    statement.executeUpdate(s"DROP TABLE ${dialect.quote(tempTableIdentifier)}")
-                }
-            }
-        }
-    }
-
-    private def appendTable(execution: Execution, df:DataFrame, table:TableIdentifier): Unit = {
+    override protected def appendTable(execution: Execution, df:DataFrame, table:TableIdentifier): Unit = {
         val (_,props) = createConnectionProperties()
         this.writer(execution, df, "com.microsoft.sqlserver.jdbc.spark", Map(), SaveMode.Append)
             .options(props ++ Map("tableLock" -> "true", "mssqlIsolationLevel" -> "READ_UNCOMMITTED"))
             .option(JDBCOptions.JDBC_TABLE_NAME, table.unquotedString)
             .save()
-    }
-    private def createTempTable(con:java.sql.Connection,options: JDBCOptions, schema:StructType) : Unit = {
-        logger.info(s"Creating temporary staging table '${tempTableIdentifier}' with schema\n${schema.treeString}")
-
-        // First drop temp table if it already exists
-        withStatement(con, options) { case (statement, options) =>
-            val dialect = SqlDialects.get(options.url)
-            statement.executeUpdate(s"DROP TABLE IF EXISTS ${dialect.quote(tempTableIdentifier)}")
-        }
-
-        // Create temp table with specified schema, but without any primary key or indices
-        val table = catalog.TableDefinition(
-            tempTableIdentifier,
-            schema.fields
-        )
-        JdbcUtils.createTable(con, table, options)
     }
 
     override protected def createConnectionProperties() : (String,Map[String,String]) = {
@@ -143,9 +91,9 @@ class SqlServerRelationSpec extends RelationSpec with PartitionedRelationSpec wi
     @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq.empty
     @JsonProperty(value = "primaryKey", required = false) private var primaryKey: Seq[String] = Seq.empty
 
-    override def instantiate(context: Context): SqlServerRelation = {
+    override def instantiate(context: Context, props:Option[Relation.Properties] = None): SqlServerRelation = {
         new SqlServerRelation(
-            instanceProperties(context),
+            instanceProperties(context, props),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             connection.instantiate(context),

@@ -18,8 +18,6 @@ package com.dimajix.flowman.spec.storage
 
 import java.io.BufferedInputStream
 import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Path
 
 import scala.util.control.NonFatal
 
@@ -33,10 +31,10 @@ import com.dimajix.common.tryWith
 import com.dimajix.flowman.hadoop.File
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.ToSpec
-import com.dimajix.flowman.storage.Parcel
+import com.dimajix.flowman.storage.AbstractParcel
 
 
-case class LocalParcel(override val name:String, override val root:File) extends Parcel with ToSpec[ParcelSpec] {
+case class LocalParcel(override val name:String, override val root:File) extends AbstractParcel with ToSpec[ParcelSpec] {
     root.mkdirs()
     private val fileStore = FileStore(root)
 

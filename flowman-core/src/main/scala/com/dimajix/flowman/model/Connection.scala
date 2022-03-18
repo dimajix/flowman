@@ -17,6 +17,7 @@
 package com.dimajix.flowman.model
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model
 
 
 object Connection {
@@ -31,13 +32,17 @@ object Connection {
     final case class Properties(
         context: Context,
         metadata:Metadata
-    ) extends Instance.Properties[Properties] {
+    ) extends model.Properties[Properties] {
         override val namespace:Option[Namespace] = context.namespace
         override val project:Option[Project] = context.project
         override val kind : String = metadata.kind
         override val name : String = metadata.name
 
         override def withName(name: String): Properties = copy(metadata=metadata.copy(name = name))
+
+        def merge(other: Properties): Properties = {
+            Properties(context, metadata.merge(other.metadata))
+        }
     }
 }
 
@@ -45,6 +50,8 @@ object Connection {
  * Base class to be used for all Connection instances
  */
 trait Connection extends Instance {
+    override type PropertiesType = Connection.Properties
+
     /**
      * Returns the category of this resource
      *

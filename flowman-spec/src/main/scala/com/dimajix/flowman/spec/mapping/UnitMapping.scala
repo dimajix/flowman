@@ -162,9 +162,9 @@ class UnitMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): UnitMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): UnitMapping = {
         UnitMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             mappings,
             splitSettings(environment).toMap
         )

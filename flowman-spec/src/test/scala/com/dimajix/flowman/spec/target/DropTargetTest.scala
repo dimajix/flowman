@@ -68,7 +68,7 @@ class DropTargetTest extends AnyFlatSpec with Matchers with MockFactory with Loc
             RelationIdentifier("some_relation")
         )
 
-        (relationTemplate.instantiate _).expects(*).returns(relation)
+        (relationTemplate.instantiate _).expects(*, None).returns(relation)
 
         target.phases should be (Set(Phase.CREATE, Phase.VERIFY, Phase.DESTROY))
 

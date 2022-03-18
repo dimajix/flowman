@@ -31,7 +31,7 @@ case class SparkSchema(
     url: Option[URL] = None,
     spec: Option[String] = None
 ) extends SchemaGen {
-    override def instantiate(context:Context) : schema.SparkSchema = {
+    override def instantiate(context:Context, properties:Option[Schema.Properties] = None) : schema.SparkSchema = {
         schema.SparkSchema(
             Schema.Properties(context),
             file,

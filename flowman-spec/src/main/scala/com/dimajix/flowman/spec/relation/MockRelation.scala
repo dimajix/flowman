@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -260,10 +260,10 @@ class MockRelationSpec extends RelationSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): MockRelation = {
+    override def instantiate(context: Context, properties:Option[Relation.Properties] = None): MockRelation = {
 
         MockRelation(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             RelationIdentifier(context.evaluate(relation).getOrElse(name)),
             records.map(_.map(context.evaluate))
         )

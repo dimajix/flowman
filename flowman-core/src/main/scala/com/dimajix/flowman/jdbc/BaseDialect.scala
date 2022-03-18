@@ -288,22 +288,46 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} SET $nullable"
     }
 
-    override def merge(table: TableIdentifier, targetAlias:String, targetSchema:Option[StructType], sourceAlias:String, sourceSchema:StructType, condition:Column, clauses:Seq[MergeClause]) : String = {
+    override def merge(targetTable: TableIdentifier, targetAlias:String, targetSchema:Option[StructType], sourceAlias:String, sourceSchema:StructType, condition:Column, clauses:Seq[MergeClause]) : String = {
         val sourceColumns = sourceSchema.names
-        val sourceColumnNames = SetIgnoreCase(sourceColumns)
+        val targetColumns = targetSchema.toSeq.flatMap(_.names)
         val sqlPlaceholders = sourceColumns.map(_ => "?").mkString(",")
+
+        val sqlMergeCondition = toSql(condition.expr, sourceAlias)
+        val sqlClauses = toSql(sourceColumns, targetColumns, clauses, sourceAlias)
+        s"""MERGE INTO ${dialect.quote(targetTable)} $targetAlias
+           |USING (VALUES($sqlPlaceholders)) $sourceAlias(${sourceColumns.mkString(",")})
+           |ON $sqlMergeCondition
+           |${sqlClauses.mkString("\n")}
+           |""".stripMargin
+    }
+
+    override def merge(targetTable: TableIdentifier, targetAlias:String, targetSchema:Option[StructType], sourceTable: TableIdentifier, sourceAlias:String, sourceSchema:StructType,  condition:Column, clauses:Seq[MergeClause]) : String = {
+        val sourceColumns = sourceSchema.names
+        val targetColumns = targetSchema.toSeq.flatMap(_.names)
+
+        val sqlMergeCondition = toSql(condition.expr, sourceAlias)
+        val sqlClauses = toSql(sourceColumns, targetColumns, clauses, sourceAlias)
+        s"""MERGE INTO ${dialect.quote(targetTable)} $targetAlias
+           |USING ${dialect.quote(sourceTable)} $sourceAlias
+           |ON $sqlMergeCondition
+           |${sqlClauses.mkString("\n")}
+           |""".stripMargin
+    }
+
+    protected def toSql(sourceColumns:Seq[String], targetColumns:Seq[String], clauses:Seq[MergeClause], sourceAlias:String) : Seq[String] = {
+        val sourceColumnNames = SetIgnoreCase(sourceColumns)
 
         def getColumnExpressions(cols:Map[String,Column]) : Seq[(String,String)] = {
             if (cols.nonEmpty) {
                 cols.toSeq.map { case(n,c) => n -> toSql(c.expr, sourceAlias) }
             }
             else {
-                targetSchema.get.names.flatMap(n => sourceColumnNames.get(n).map(c => n -> (sourceAlias + "." + dialect.quoteIdentifier(c))))
+                targetColumns.flatMap(n => sourceColumnNames.get(n).map(c => n -> (sourceAlias + "." + dialect.quoteIdentifier(c))))
             }
         }
 
-        val sqlMergeCondition = toSql(condition.expr, sourceAlias)
-        val sqlClauses = clauses.map {
+        clauses.map {
             case i:InsertClause =>
                 val cond = i.condition.map(c => " AND " + toSql(c.expr, sourceAlias)).getOrElse("")
                 val expressions = getColumnExpressions(i.columns)
@@ -319,11 +343,6 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
                 val cond = d.condition.map(c => " AND " + toSql(c.expr, sourceAlias)).getOrElse("")
                 s"WHEN MATCHED$cond THEN DELETE"
         }
-        s"""MERGE INTO ${dialect.quote(table)} $targetAlias
-           |USING (VALUES($sqlPlaceholders)) $sourceAlias(${sourceColumns.mkString(",")})
-           |ON $sqlMergeCondition
-           |${sqlClauses.mkString("\n")}
-           |;""".stripMargin
     }
 
     protected def toSql(expr:Expression, sourceAlias:String) : String = {

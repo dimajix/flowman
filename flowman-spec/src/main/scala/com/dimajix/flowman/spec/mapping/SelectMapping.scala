@@ -83,9 +83,9 @@ class SelectMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): SelectMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): SelectMapping = {
         SelectMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             columns.toSeq.map { case(k,v) => k -> context.evaluate(v) },
             context.evaluate(filter)

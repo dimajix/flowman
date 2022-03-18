@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ object DecimalType {
         DecimalType(min(precision, MAX_PRECISION), min(scale, MAX_SCALE))
     }
 }
-case class DecimalType(precision: Int, scale: Int) extends NumericType[java.math.BigDecimal] {
+final case class DecimalType(precision: Int, scale: Int) extends NumericType[java.math.BigDecimal] {
     protected override def parseRaw(value:String) : java.math.BigDecimal = new java.math.BigDecimal(value)
 
     override def typeName : String = s"decimal($precision,$scale)"

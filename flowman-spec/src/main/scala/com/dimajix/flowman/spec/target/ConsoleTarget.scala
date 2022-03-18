@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,9 +135,9 @@ class ConsoleTargetSpec extends TargetSpec {
     @JsonProperty(value="csv", required=false) private var csv:String = "true"
     @JsonProperty(value="columns", required=false) private var columns:Seq[String] = Seq()
 
-    override def instantiate(context: Context): Target = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): Target = {
         ConsoleTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             input.instantiate(context),
             context.evaluate(limit).toInt,
             context.evaluate(header).toBoolean,

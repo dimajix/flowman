@@ -120,9 +120,9 @@ class SchemaMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): SchemaMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): SchemaMapping = {
         SchemaMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(this.input)),
             columns.toSeq.map(kv => Field(kv._1, FieldType.of(context.evaluate(kv._2)))),
             schema.map(_.instantiate(context)),

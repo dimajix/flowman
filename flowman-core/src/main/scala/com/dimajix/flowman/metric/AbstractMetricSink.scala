@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,13 @@ package com.dimajix.flowman.metric
 import scala.collection.mutable
 
 import com.dimajix.common.IdentityHashMap
+import com.dimajix.flowman.model.AbstractInstance
 
 
-abstract class AbstractMetricSink extends MetricSink {
+abstract class AbstractMetricSink extends AbstractInstance with MetricSink {
     private val metricBoards : mutable.Map[MetricBoard,MetricCatalog] = IdentityHashMap()
+
+    override protected def instanceProperties: MetricSink.Properties = MetricSink.Properties(kind)
 
     /**
       * Adds a MetricBundle to be published by this sink. Publishing could happen on a periodic base in the background

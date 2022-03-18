@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,9 +145,9 @@ class SchemaTargetSpec extends TargetSpec {
     @JsonProperty(value="file", required=true) private var file:String = _
     @JsonProperty(value="format", required=false) private var format:String = "avro"
 
-    override def instantiate(context: Context): SchemaTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): SchemaTarget = {
         SchemaTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             schema.instantiate(context),
             new Path(context.evaluate(file)),
             context.evaluate(format)

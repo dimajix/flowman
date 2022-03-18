@@ -37,7 +37,7 @@ final case class ColumnReference(
 
     def sql : String = {
         parent match {
-            case Some(schema:SchemaReference) => schema.sql + "." + name
+            case Some(schema:SchemaReference) => s"${schema.sql}.$name"
             case Some(col:ColumnReference) => col.sql + "." + name
             case _ => name
         }
@@ -58,8 +58,10 @@ object ColumnDoc {
 final case class ColumnDoc(
     parent:Option[Reference],
     field:Field,
-    children:Seq[ColumnDoc] = Seq(),
-    checks:Seq[ColumnCheck] = Seq()
+    children:Seq[ColumnDoc] = Seq.empty,
+    inputs:Seq[ColumnReference] = Seq.empty,
+    checks:Seq[ColumnCheck] = Seq.empty,
+    index:Int = -1
 ) extends EntityDoc {
     override def reference: ColumnReference = ColumnReference(parent, name)
     override def fragments: Seq[Fragment] = children
@@ -73,6 +75,7 @@ final case class ColumnDoc(
     }
 
     def name : String = field.name
+    def fqName : String = reference.sql
     def description : Option[String] = field.description
     def nullable : Boolean = field.nullable
     def typeName : String = field.typeName

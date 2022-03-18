@@ -16,22 +16,26 @@
 
 package com.dimajix.flowman.documentation
 
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 
 
-class ProjectDocTest extends AnyFlatSpec with Matchers {
+class ProjectDocTest extends AnyFlatSpec with MockFactory with Matchers {
     "A ProjectDoc" should "support resolving" in {
         val project = ProjectDoc(
             name = "project"
         )
         val projectRef = project.reference
+        val map0 = mock[Mapping]
+        (map0.name _).expects().atLeastOnce().returns("m1")
         val mapping = MappingDoc(
             parent = Some(projectRef),
-            identifier = MappingIdentifier("project/m1")
+            mapping = Some(map0)
         )
         val mappingRef = mapping.reference
         val output = MappingOutputDoc(

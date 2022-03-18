@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,13 @@ package com.dimajix.spark.sql
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.ArrayType
-import org.apache.spark.sql.types.BooleanType
 import org.apache.spark.sql.types.CharType
-import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.FloatType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.LongType
+import org.apache.spark.sql.types.MapType
 import org.apache.spark.sql.types.MetadataBuilder
-import org.apache.spark.sql.types.NullType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
@@ -135,6 +133,48 @@ class SchemaUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSession w
         checkAnswer(result, expectedRows)
     }
 
+    "SchemaUtils.replaceCharVarchar" should "work with simple types" in {
+        val originalSchema = StructType(Seq(
+            StructField("char_col", CharType(4)),
+            StructField("varchar_col", VarcharType(4), nullable=false)
+        ))
+
+        val replacedSchema = SchemaUtils.replaceCharVarchar(originalSchema)
+        SchemaUtils.dropMetadata(replacedSchema) should be (StructType(Seq(
+            StructField("char_col", StringType),
+            StructField("varchar_col", StringType, nullable=false)
+        )))
+
+        val recoveredSchema = SchemaUtils.recoverCharVarchar(replacedSchema)
+        recoveredSchema should be (originalSchema)
+    }
+
+    it should "work with nested types" in {
+        val originalSchema = StructType(Seq(
+            StructField("array_col", ArrayType(CharType(10))),
+            StructField("map_col", MapType(CharType(15), VarcharType(20))),
+            StructField("struct_col", StructType(Seq(
+                StructField("char_field", CharType(10)),
+                StructField("int_field", IntegerType)
+            ))),
+            StructField("varchar_col", VarcharType(4), nullable=false)
+        ))
+
+        val replacedSchema = SchemaUtils.replaceCharVarchar(originalSchema)
+        SchemaUtils.dropMetadata(replacedSchema) should be (StructType(Seq(
+            StructField("array_col", ArrayType(StringType)),
+            StructField("map_col", MapType(StringType, StringType)),
+            StructField("struct_col", StructType(Seq(
+                StructField("char_field", StringType),
+                StructField("int_field", IntegerType)
+            ))),
+            StructField("varchar_col", StringType, nullable=false)
+        )))
+
+        val recoveredSchema = SchemaUtils.recoverCharVarchar(replacedSchema)
+        recoveredSchema should be (originalSchema)
+    }
+
     "SchemaUtils.dropMetadata" should "remove all meta data" in {
         val comment = "123456789"
         val schema = StructType(Seq(
@@ -187,7 +227,7 @@ class SchemaUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSession w
             ),
             StructField("StructArray", ArrayType(
                 StructType(Seq(
-                    StructField("Name", StringType, metadata=metadata)
+                    StructField("Name", VarcharType(10), metadata=metadata)
                 ))
             ), metadata=metadata)
         ))

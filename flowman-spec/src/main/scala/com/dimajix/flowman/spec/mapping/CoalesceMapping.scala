@@ -85,9 +85,9 @@ class CoalesceMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): CoalesceMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): CoalesceMapping = {
         CoalesceMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             Option(context.evaluate(partitions)).filter(_.nonEmpty).map(_.toInt).getOrElse(0)
         )

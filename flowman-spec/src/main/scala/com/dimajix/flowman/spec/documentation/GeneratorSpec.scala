@@ -36,7 +36,7 @@ object GeneratorSpec extends TypeRegistry[GeneratorSpec] {
     new JsonSubTypes.Type(name = "file", value = classOf[FileGeneratorSpec])
 ))
 abstract class GeneratorSpec extends Spec[Generator] {
-    def instantiate(context:Context): Generator
+    def instantiate(context:Context, properties:Option[Generator.Properties]): Generator
 }
 
 

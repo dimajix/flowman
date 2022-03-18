@@ -141,13 +141,13 @@ class SqlAssertionSpec extends AssertionSpec {
     @JsonProperty(value="query", required=false) private var query:String = ""
     @JsonProperty(value="expected", required=false) private var expected:Seq[Array[String]] = Seq()
 
-    override def instantiate(context: Context): SqlAssertion = {
+    override def instantiate(context: Context, properties:Option[Assertion.Properties] = None): SqlAssertion = {
         val embeddedQuery = context.evaluate(query)
         val embeddedExpectation = expected.map(_.map(context.evaluate))
         val embeddedCase = if (embeddedQuery.nonEmpty) Some(SqlAssertion.Case(embeddedQuery, embeddedExpectation)) else None
 
         SqlAssertion(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             embeddedCase.toSeq ++ tests.map(_.instantiate(context))
         )
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.BaseTemplate
 import com.dimajix.flowman.model.Measure
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.TemplateIdentifier
 import com.dimajix.flowman.spec.measure.MeasureSpec
@@ -31,22 +32,19 @@ import com.dimajix.flowman.spec.measure.MeasureSpec
 case class MeasureTemplate(
     instanceProperties: Template.Properties,
     parameters: Seq[Template.Parameter],
-    spec:MeasureSpec
+    spec: Prototype[Measure]
 ) extends BaseTemplate[Measure] with com.dimajix.flowman.model.MeasureTemplate {
-    override protected def instantiateInternal(context: Context, name: String): Measure = {
-        synchronized {
-            spec.name = name
-            spec.instantiate(context)
-        }
+    override protected def instantiateInternal(context: Context, props: Measure.Properties): Measure = {
+        spec.instantiate(context, Some(props))
     }
 }
 
 class MeasureTemplateSpec extends TemplateSpec {
     @JsonProperty(value="template", required=true) private var spec:MeasureSpec = _
 
-    override def instantiate(context: Context): MeasureTemplate = {
+    override def instantiate(context: Context, properties:Option[Template.Properties] = None): MeasureTemplate = {
         MeasureTemplate(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             parameters.map(_.instantiate(context)),
             spec
         )
@@ -63,14 +61,15 @@ class MeasureTemplateInstanceSpec extends MeasureSpec {
         args = args.updated(name, value)
     }
 
-    override def instantiate(context: Context): Measure = {
+    override def instantiate(context: Context, properties:Option[Measure.Properties] = None): Measure = {
         // get template name from member "kind"
         // Lookup template in context
         val identifier = TemplateIdentifier(kind.stripPrefix("template/"))
         val template = context.getTemplate(identifier).asInstanceOf[MeasureTemplate]
+        val props = instanceProperties(context, properties)
 
         // parse args
         val parsedArgs = template.arguments(context.evaluate(args))
-        template.instantiate(context, name, parsedArgs)
+        template.instantiate(context, props, parsedArgs)
     }
 }

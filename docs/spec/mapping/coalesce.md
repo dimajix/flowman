@@ -1,11 +1,10 @@
-
 # Coalesce Mapping
 
 Reduces the number of Spark partitions by logically merging partitions together.  
 This will not perform any shuffle operation.
 
 ## Example
-```
+```yaml
 mappings:
   facts_bidding:
     kind: coalesce

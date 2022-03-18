@@ -124,9 +124,9 @@ abstract class RankMappingSpec extends MappingSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): RankMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): RankMapping = {
         RankMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             keyColumns.map(context.evaluate),
             versionColumns.map(context.evaluate),

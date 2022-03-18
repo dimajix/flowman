@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.ConnectionIdentifier
 import com.dimajix.flowman.model.Identifier
+import com.dimajix.flowman.model.Instance
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Mapping
@@ -329,7 +330,7 @@ final class ProjectContext private[execution](
         }
     }
 
-    private def findOrInstantiate[T](identifier:Identifier[T], prototypes:Map[String,Prototype[T]], cache:TrieMap[String,T]) = {
+    private def findOrInstantiate[T <: Instance](identifier:Identifier[T], prototypes:Map[String,Prototype[T]], cache:TrieMap[String,T]) = {
         val name = identifier.name
         cache.get(name)
             .orElse {

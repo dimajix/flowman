@@ -174,9 +174,9 @@ class SchemaAssertionSpec extends AssertionSpec {
     @JsonProperty(value = "ignoreCase", required = false) private var ignoreCase: String = "false"
     @JsonProperty(value = "ignoreOrder", required = false) private var ignoreOrder: String = "false"
 
-    override def instantiate(context: Context): SchemaAssertion = {
+    override def instantiate(context: Context, properties:Option[Assertion.Properties] = None): SchemaAssertion = {
         SchemaAssertion(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
             columns.toSeq.map(kv => Field(kv._1, ftypes.FieldType.of(context.evaluate(kv._2)))),
             schema.map(_.instantiate(context)),

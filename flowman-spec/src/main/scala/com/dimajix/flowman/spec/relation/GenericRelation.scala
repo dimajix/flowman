@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Kaya Kupferschmidt
+ * Copyright 2020-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,9 +181,9 @@ class GenericRelationSpec extends RelationSpec with SchemaRelationSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context): GenericRelation = {
+    override def instantiate(context: Context, properties:Option[Relation.Properties] = None): GenericRelation = {
         GenericRelation(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             schema.map(_.instantiate(context)),
             context.evaluate(format),
             context.evaluate(options)

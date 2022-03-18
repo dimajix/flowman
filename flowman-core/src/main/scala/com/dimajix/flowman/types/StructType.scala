@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,13 @@ object StructType {
     def of(schema:org.apache.spark.sql.types.StructType) : StructType = {
         StructType(Field.of(schema.fields))
     }
+    def of(fields:Seq[org.apache.spark.sql.types.StructField]) : StructType = {
+        StructType(fields.map(Field.of))
+    }
 }
 
 
-case class StructType(@JsonProperty(value = "fields") fields:Seq[Field]) extends ContainerType {
+final case class StructType(@JsonProperty(value = "fields") fields:Seq[Field]) extends ContainerType {
     def this() = { this(Seq()) }
 
     /**

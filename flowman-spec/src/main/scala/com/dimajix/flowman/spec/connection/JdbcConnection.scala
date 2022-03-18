@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,9 +68,9 @@ class JdbcConnectionSpec extends ConnectionSpec  {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): JdbcConnection = {
+    override def instantiate(context: Context, props:Option[Connection.Properties] = None): JdbcConnection = {
         JdbcConnection(
-            instanceProperties(context),
+            instanceProperties(context, props),
             context.evaluate(url),
             context.evaluate(driver),
             username.map(context.evaluate),

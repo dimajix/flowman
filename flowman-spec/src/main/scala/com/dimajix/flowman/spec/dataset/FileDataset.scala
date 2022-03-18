@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,10 +165,10 @@ class FileDatasetSpec extends DatasetSpec {
     @JsonProperty(value="options", required=false) private var options:Map[String,String] = Map()
     @JsonProperty(value="schema", required = false) protected var schema: Option[SchemaSpec] = None
 
-    override def instantiate(context: Context): FileDataset = {
+    override def instantiate(context: Context, properties:Option[Dataset.Properties] = None): FileDataset = {
         val location = new Path(context.evaluate(this.location))
         FileDataset(
-            instanceProperties(context, location.toString),
+            instanceProperties(context, location.toString, properties),
             location,
             context.evaluate(format),
             context.evaluate(options),

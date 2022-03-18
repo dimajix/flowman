@@ -2,6 +2,8 @@ package com.dimajix.spark.testing
 
 import java.util.TimeZone
 
+import scala.util.control.NonFatal
+
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Row
 import org.scalatest.Assertions
@@ -35,7 +37,7 @@ trait QueryTest { this:Assertions =>
        """.stripMargin
             }
         } catch {
-            case e: Exception =>
+            case NonFatal(e) =>
                 val errorMessage =
                     s"""
                        |Exception thrown while executing query:
@@ -84,7 +86,7 @@ trait QueryTest { this:Assertions =>
     }
 
     def sideBySide(left: Seq[String], right: Seq[String]): Seq[String] = {
-        val maxLeftSize = left.map(_.length).max
+        val maxLeftSize = left.map(_.length).foldLeft(0)((x, y) => if (x > y) x else y)
         val leftPadded = left ++ Seq.fill(math.max(right.size - left.size, 0))("")
         val rightPadded = right ++ Seq.fill(math.max(left.size - right.size, 0))("")
 

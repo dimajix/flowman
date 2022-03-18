@@ -32,6 +32,7 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseRelation
+import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
@@ -40,6 +41,7 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.types.StructType
 
 
 case class TemplateRelation(
@@ -50,18 +52,11 @@ case class TemplateRelation(
     private val templateContext = ScopeContext.builder(context)
         .withEnvironment(environment)
         .build()
-    private val relationInstance = {
-        project.get.relations(relation.name) match {
-            case spec:RelationSpec => spec.synchronized {
-                // Temporarily rename template, such that its instance will get the current name
-                val oldName = name
-                spec.name = name
-                val instance = spec.instantiate(templateContext)
-                spec.name = oldName
-                instance
-            }
-            case spec => spec.instantiate(templateContext)
-        }
+    lazy val relationInstance : Relation = {
+        val meta = Metadata(templateContext, name, category, "")
+        val props = Relation.Properties(templateContext, meta, super.description, super.documentation)
+        val spec = project.get.relations(relation.name)
+        spec.instantiate(templateContext, Some(props))
     }
 
     /**
@@ -98,7 +93,10 @@ case class TemplateRelation(
      * Returns a (static) documentation of this relation
      * @return
      */
-    override def documentation : Option[RelationDoc] = relationInstance.documentation.map(_.merge(instanceProperties.documentation))
+    override def documentation : Option[RelationDoc] = {
+        relationInstance.documentation
+            .map(_.copy(relation=Some(this)))
+    }
 
     /**
       * Returns the schema of the relation
@@ -241,6 +239,16 @@ case class TemplateRelation(
     }
 
     /**
+     * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
+     * the physical source
+     * @param execution
+     * @return
+     */
+    override def describe(execution:Execution, partitions:Map[String,FieldValue] = Map()) : StructType = {
+        relationInstance.describe(execution, partitions)
+    }
+
+        /**
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
@@ -262,9 +270,9 @@ class TemplateRelationSpec extends RelationSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): TemplateRelation = {
+    override def instantiate(context: Context, properties:Option[Relation.Properties] = None): TemplateRelation = {
         TemplateRelation(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             RelationIdentifier(context.evaluate(relation)),
             splitSettings(environment).toMap
         )

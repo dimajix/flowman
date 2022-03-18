@@ -86,9 +86,9 @@ class RebalanceMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): RebalanceMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): RebalanceMapping = {
         RebalanceMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             MappingOutputIdentifier.parse(context.evaluate(input)),
             context.evaluate(partitions).toInt
         )

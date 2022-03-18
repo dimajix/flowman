@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,7 +157,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
     it should "work inside a namespace and job" in {
         val namespaceHook = new Prototype[Hook] {
-            override def instantiate(context: Context): Hook = WebHook(
+            override def instantiate(context: Context, properties:Option[Hook.Properties]): Hook = WebHook(
                 Hook.Properties(context),
                 jobStart = Some("http://0.0.0.0/$env/$job"),
                 jobFinish = Some("http://0.0.0.0/$env/$job"),
@@ -166,7 +166,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             )
         }
         val jobHook = new Prototype[Hook] {
-            override def instantiate(context: Context): Hook = WebHook(
+            override def instantiate(context: Context, properties:Option[Hook.Properties]): Hook = WebHook(
                 Hook.Properties(context),
                 jobStart = Some("http://0.0.0.0/$env/$name/$arg1"),
                 jobFinish = Some("http://0.0.0.0/$env/$name/$arg1"),

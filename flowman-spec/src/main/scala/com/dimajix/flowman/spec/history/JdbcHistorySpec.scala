@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ class JdbcHistorySpec extends HistorySpec {
     @JsonProperty(value="retries", required=false) private var retries:String = "3"
     @JsonProperty(value="timeout", required=false) private var timeout:String = "1000"
 
-    override def instantiate(context: Context): StateStore = {
+    override def instantiate(context: Context, properties:Option[StateStore.Properties] = None): StateStore = {
         val retries = context.evaluate(this.retries).toInt
         val timeout = context.evaluate(this.timeout).toInt
 

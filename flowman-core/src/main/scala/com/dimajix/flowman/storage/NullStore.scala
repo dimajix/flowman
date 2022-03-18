@@ -20,7 +20,7 @@ import com.dimajix.flowman.execution.NoSuchProjectException
 import com.dimajix.flowman.model.Project
 
 
-case class NullStore() extends Store {
+case class NullStore() extends AbstractStore {
     override def loadProject(name: String): Project = throw new NoSuchProjectException(name)
 
     override def listProjects(): Seq[Project] = Seq()

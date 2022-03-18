@@ -63,7 +63,7 @@ object JdbcStateStore {
 }
 
 
-case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeout:Int=1000) extends StateStore {
+case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeout:Int=1000) extends AbstractStateStore {
     import JdbcStateRepository._
 
     private val logger = LoggerFactory.getLogger(classOf[JdbcStateStore])

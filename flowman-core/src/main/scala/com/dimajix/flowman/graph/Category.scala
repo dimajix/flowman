@@ -27,18 +27,16 @@ sealed abstract class Category extends Product with Serializable {
 object Category {
     case object MAPPING extends Category
     case object MAPPING_OUTPUT extends Category
-    case object MAPPING_COLUMN extends Category
+    case object COLUMN extends Category
     case object RELATION extends Category
-    case object RELATION_COLUMN extends Category
     case object TARGET extends Category
 
     def ofString(category:String) : Category = {
         category.toLowerCase(Locale.ROOT) match {
             case "mapping" => MAPPING
             case "mapping_output" => MAPPING_OUTPUT
-            case "mapping_column" => MAPPING_COLUMN
+            case "column" => COLUMN
             case "relation" => RELATION
-            case "relation_column" => RELATION_COLUMN
             case "target" => TARGET
             case _ => throw new IllegalArgumentException(s"No such category $category")
         }

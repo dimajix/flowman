@@ -166,7 +166,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
             )
         )
 
-        (relationTemplate.instantiate _).expects(context).returns(valuesRelation)
+        (relationTemplate.instantiate _).expects(context, None).returns(valuesRelation)
         val relation = context.getRelation(RelationIdentifier("const"))
 
         relation.provides should be (Set())
@@ -216,7 +216,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
             )
         )
 
-        (relationTemplate.instantiate _).expects(context).returns(mockRelation)
+        (relationTemplate.instantiate _).expects(context, None).returns(mockRelation)
         val relation = context.getRelation(RelationIdentifier("const"))
 
         relation.provides should be (Set())
@@ -261,7 +261,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
             columns = schema.fields
         )
 
-        (relationTemplate.instantiate _).expects(context).returns(mockRelation)
+        (relationTemplate.instantiate _).expects(context, None).returns(mockRelation)
         val relation = context.getRelation(RelationIdentifier("const"))
 
         relation.describe(executor) should be (StructType(schema.fields))

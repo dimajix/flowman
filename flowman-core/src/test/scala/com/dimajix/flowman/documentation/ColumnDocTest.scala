@@ -16,11 +16,14 @@
 
 package com.dimajix.flowman.documentation
 
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.types.DoubleType
 import com.dimajix.flowman.types.Field
@@ -28,7 +31,7 @@ import com.dimajix.flowman.types.NullType
 import com.dimajix.flowman.types.StringType
 
 
-class ColumnDocTest extends AnyFlatSpec with Matchers {
+class ColumnDocTest extends AnyFlatSpec with MockFactory with Matchers {
     "A ColumnDoc" should "support merge" in {
         val doc1 = ColumnDoc(
             None,
@@ -99,9 +102,11 @@ class ColumnDocTest extends AnyFlatSpec with Matchers {
     }
 
     it should "support sql with a relation parent" in {
+        val rel = mock[Relation]
+        (rel.name _).expects().returns("rel1")
         val doc0 = RelationDoc(
             None,
-            RelationIdentifier("project/rel1")
+            Some(rel)
         )
         val doc1 = SchemaDoc(
             Some(doc0.reference)
@@ -121,16 +126,18 @@ class ColumnDocTest extends AnyFlatSpec with Matchers {
             schema = Some(doc1p)
         )
 
-        doc0p.schema.get.columns(0).reference.sql should be ("rel1.col1")
-        doc0p.schema.get.columns(0).children(0).reference.sql should be ("rel1.col1.child1")
-        doc0p.schema.get.columns(0).children(1).reference.sql should be ("rel1.col1.child2")
+        doc0p.schema.get.columns(0).reference.sql should be ("[rel1].col1")
+        doc0p.schema.get.columns(0).children(0).reference.sql should be ("[rel1].col1.child1")
+        doc0p.schema.get.columns(0).children(1).reference.sql should be ("[rel1].col1.child2")
     }
 
     it should "support sql with a relation parent and a project" in {
+        val rel = mock[Relation]
+        (rel.name _).expects().returns("rel1")
         val doc0 = ProjectDoc("project")
         val doc1 = RelationDoc(
             Some(doc0.reference),
-            RelationIdentifier("project/rel1")
+            Some(rel)
         )
         val doc2 = SchemaDoc(
             Some(doc1.reference)
@@ -153,15 +160,17 @@ class ColumnDocTest extends AnyFlatSpec with Matchers {
             relations = Seq(doc1p)
         )
 
-        doc0p.relations(0).schema.get.columns(0).reference.sql should be ("project/rel1.col1")
-        doc0p.relations(0).schema.get.columns(0).children(0).reference.sql should be ("project/rel1.col1.child1")
-        doc0p.relations(0).schema.get.columns(0).children(1).reference.sql should be ("project/rel1.col1.child2")
+        doc0p.relations(0).schema.get.columns(0).reference.sql should be ("[project/rel1].col1")
+        doc0p.relations(0).schema.get.columns(0).children(0).reference.sql should be ("[project/rel1].col1.child1")
+        doc0p.relations(0).schema.get.columns(0).children(1).reference.sql should be ("[project/rel1].col1.child2")
     }
 
     it should "support sql with a mapping parent and a no project" in {
+        val map = mock[Mapping]
+        (map.name _).expects().returns("map1")
         val doc1 = MappingDoc(
             None,
-            MappingIdentifier("project/map1")
+            Some(map)
         )
         val doc2 = MappingOutputDoc(
             Some(doc1.reference),
@@ -194,10 +203,12 @@ class ColumnDocTest extends AnyFlatSpec with Matchers {
     }
 
     it should "support sql with a mapping parent and a project" in {
+        val map = mock[Mapping]
+        (map.name _).expects().returns("map1")
         val doc0 = ProjectDoc("project")
         val doc1 = MappingDoc(
             Some(doc0.reference),
-            MappingIdentifier("project/map1")
+            Some(map)
         )
         val doc2 = MappingOutputDoc(
             Some(doc1.reference),

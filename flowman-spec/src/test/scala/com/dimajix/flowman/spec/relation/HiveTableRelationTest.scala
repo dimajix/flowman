@@ -1531,6 +1531,11 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
+        relation.describe(execution) should be (ftypes.StructType(Seq(
+            Field("f1", ftypes.VarcharType(4)),
+            Field("f2", ftypes.CharType(4)),
+            Field("f3", ftypes.StringType)
+        )))
 
         // Inspect Hive table
         val table_1 = session.catalog.getTable(TableIdentifier("some_table", Some("default")))
@@ -1549,17 +1554,27 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             )))
         }
         else {
-            table_1.schema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table_1.schema) should be(StructType(Seq(
                 StructField("f1", StringType),
                 StructField("f2", StringType),
                 StructField("f3", StringType)
             )))
-            table_1.dataSchema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table_1.dataSchema) should be(StructType(Seq(
                 StructField("f1", StringType),
                 StructField("f2", StringType),
                 StructField("f3", StringType)
             )))
         }
+        SchemaUtils.recoverCharVarchar(table_1.schema) should be (StructType(Seq(
+            StructField("f1", VarcharType(4)),
+            StructField("f2", CharType(4)),
+            StructField("f3", StringType)
+        )))
+        SchemaUtils.recoverCharVarchar(table_1.dataSchema) should be (StructType(Seq(
+            StructField("f1", VarcharType(4)),
+            StructField("f2", CharType(4)),
+            StructField("f3", StringType)
+        )))
         table_1.partitionColumnNames should be (Seq())
         table_1.partitionSchema should be (StructType(Seq()))
 
@@ -1642,6 +1657,11 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation_1.create(execution)
         relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation_1.describe(execution) should be (ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("partition_col", ftypes.StringType, false)
+        )))
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
 
         // Inspect Hive table
@@ -1679,6 +1699,18 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
+        relation_1.describe(execution) should be (ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("partition_col", ftypes.StringType, false)
+        )))
+        relation_2.describe(execution) should be (ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("char_col", ftypes.VarcharType(10)),
+            Field("int_col", ftypes.IntegerType),
+            Field("partition_col", ftypes.StringType, false)
+        )))
+
         // Inspect Hive table
         val table_2 = session.catalog.getTable(TableIdentifier("lala", Some("default")))
         table_2.identifier should be (TableIdentifier("lala", Some("default")).toSpark)
@@ -1697,18 +1729,30 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             )))
         }
         else {
-            table_2.schema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table_2.schema) should be(StructType(Seq(
                 StructField("str_col", StringType),
                 StructField("int_col", IntegerType),
                 StructField("char_col", StringType),
                 StructField("partition_col", StringType, nullable = false)
             )))
-            table_2.dataSchema should be(StructType(Seq(
+            SchemaUtils.dropMetadata(table_2.dataSchema) should be(StructType(Seq(
                 StructField("str_col", StringType),
                 StructField("int_col", IntegerType),
                 StructField("char_col", StringType)
             )))
         }
+        SchemaUtils.recoverCharVarchar(table_2.schema) should be(StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("char_col", VarcharType(10)),
+            StructField("partition_col", StringType, nullable = false)
+        )))
+        SchemaUtils.recoverCharVarchar(table_2.dataSchema) should be(StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("char_col", VarcharType(10))
+        )))
+
         table_2.partitionColumnNames should be (Seq("partition_col"))
         table_2.partitionSchema should be (StructType(Seq(
             StructField("partition_col", StringType, nullable = false)

@@ -32,6 +32,7 @@ import com.dimajix.flowman.catalog
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.UpdateClause
@@ -59,7 +60,8 @@ class H2JdbcTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val conn = JdbcUtils.createConnection(options)
         val table = TableDefinition(
             TableIdentifier("table_001"),
-            Seq(
+            TableType.TABLE,
+            columns = Seq(
                 Field("Id", IntegerType, nullable=false),
                 Field("str_field", VarcharType(32)),
                 Field("int_field", IntegerType)
@@ -98,6 +100,7 @@ class H2JdbcTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val conn = JdbcUtils.createConnection(options)
         val table = catalog.TableDefinition(
             TableIdentifier("table_001"),
+            TableType.TABLE,
             Seq(
                 Field("id", IntegerType),
                 Field("Name", StringType),
@@ -195,6 +198,7 @@ class H2JdbcTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val conn = JdbcUtils.createConnection(options)
         val table = catalog.TableDefinition(
             TableIdentifier("table_001"),
+            TableType.TABLE,
             Seq(
                 Field("id", IntegerType),
                 Field("Name", StringType),

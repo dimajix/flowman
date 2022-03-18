@@ -25,6 +25,7 @@ import scala.util.Try
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
@@ -213,8 +214,9 @@ case class RelationTarget(
                 linker.write(relation, Map.empty[String,SingleValue])
             case Phase.BUILD if (mapping.nonEmpty) =>
                 val partition = this.partition.mapValues(v => SingleValue(v))
-                linker.input(mapping.mapping, mapping.output)
-                linker.write(relation, partition)
+                val mapOut = linker.input(mapping.mapping, mapping.output)
+                val relRef = linker.write(relation, partition)
+                linker.write(mapOut, relRef)
             case Phase.TRUNCATE =>
                 val partition = this.partition.mapValues(v => SingleValue(v))
                 linker.write(relation, partition)
@@ -256,9 +258,9 @@ case class RelationTarget(
         if (mapping.nonEmpty) {
             val partition = this.partition.mapValues(v => SingleValue(v))
 
-            logger.info(s"Writing mapping '${this.mapping}' to relation '${relation.identifier}' into partition (${partition.map(p => p._1 + "=" + p._2.value).mkString(",")}) with mode '$mode'")
-            val mapping = context.getMapping(this.mapping.mapping)
-            val dfIn = executor.instantiate(mapping, this.mapping.output)
+            logger.info(s"Writing mapping output '${mapping}' to relation '${relation.identifier}' into partition (${partition.map(p => p._1 + "=" + p._2.value).mkString(",")}) with mode '$mode'")
+            val map = context.getMapping(mapping.mapping)
+            val dfIn = executor.instantiate(map, mapping.output)
             val dfOut =
                 if (parallelism <= 0)
                     dfIn
@@ -361,10 +363,10 @@ class RelationTargetSpec extends TargetSpec {
     @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
     @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
 
-    override def instantiate(context: Context): RelationTarget = {
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): RelationTarget = {
         val conf = context.flowmanConf
         RelationTarget(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             relation.instantiate(context),
             MappingOutputIdentifier.parse(context.evaluate(mapping)),
             OutputMode.ofString(context.evaluate(mode).getOrElse(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE))),

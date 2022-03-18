@@ -147,6 +147,9 @@ case class HiveUnionTableRelation(
 
     private def viewRelationFromTables(executor: Execution) : HiveViewRelation = {
         val tables = listTables(executor)
+        viewRelationFromTables(executor, tables)
+    }
+    private def viewRelationFromTables(executor: Execution, tables:Seq[TableIdentifier]) : HiveViewRelation = {
         val spark = executor.spark
         val df = tables.map(t => spark.read.table(t.unquotedString))
         val finalSchema = schema.get.sparkSchema.fields ++ partitions.map(_.sparkField)
@@ -417,10 +420,7 @@ case class HiveUnionTableRelation(
             hiveTableRelation.create(execution, ifNotExists)
 
             // Create initial view
-            val spark = execution.spark
-            val df = spark.read.table(hiveTableRelation.table.unquotedString)
-            val sql = new SqlBuilder(df).toSQL
-            val hiveViewRelation = viewRelationFromSql(sql)
+            val hiveViewRelation = viewRelationFromTables(execution, Seq(hiveTableRelation.table))
             hiveViewRelation.create(execution, ifNotExists)
         }
     }
@@ -515,12 +515,11 @@ case class HiveUnionTableRelation(
         }
     }
 
-    private def doMigrateAlterTable(execution:Execution, table:CatalogTable, rawMissingFields:Seq[StructField], migrationStrategy:MigrationStrategy) : Unit = {
+    private def doMigrateAlterTable(execution:Execution, table:CatalogTable, missingFields:Seq[StructField], migrationStrategy:MigrationStrategy) : Unit = {
         doMigrate(migrationStrategy) {
             val catalog = execution.catalog
             val id = TableIdentifier.of(table.identifier)
             val targetSchema = table.dataSchema
-            val missingFields = HiveTableRelation.cleanupFields(rawMissingFields)
             val newSchema = StructType(targetSchema.fields ++ missingFields)
             logger.info(s"Migrating Hive Union Table relation '$identifier' by adding new columns ${missingFields.map(_.name).mkString(",")} to Hive table $id. New schema is\n ${newSchema.treeString}")
             catalog.addTableColumns(id, missingFields)
@@ -561,9 +560,9 @@ class HiveUnionTableRelationSpec extends RelationSpec with SchemaRelationSpec wi
       * @param context
       * @return
       */
-    override def instantiate(context: Context): HiveUnionTableRelation = {
+    override def instantiate(context: Context, props:Option[Relation.Properties] = None): HiveUnionTableRelation = {
         HiveUnionTableRelation(
-            instanceProperties(context),
+            instanceProperties(context, props),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             TableIdentifier(context.evaluate(tablePrefix), context.evaluate(tableDatabase)),

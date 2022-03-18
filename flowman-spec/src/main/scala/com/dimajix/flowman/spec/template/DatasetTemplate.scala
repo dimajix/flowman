@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.BaseTemplate
 import com.dimajix.flowman.model.Dataset
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.TemplateIdentifier
 import com.dimajix.flowman.spec.dataset.DatasetSpec
@@ -31,19 +33,19 @@ import com.dimajix.flowman.spec.dataset.DatasetSpec
 case class DatasetTemplate(
     instanceProperties: Template.Properties,
     parameters: Seq[Template.Parameter],
-    spec:DatasetSpec
+    spec:Prototype[Dataset]
 ) extends BaseTemplate[Dataset] with com.dimajix.flowman.model.DatasetTemplate {
-    override protected def instantiateInternal(context: Context, name: String): Dataset = {
-        spec.instantiate(context)
+    override protected def instantiateInternal(context: Context, props: Dataset.Properties): Dataset = {
+        spec.instantiate(context, Some(props))
     }
 }
 
 class DatasetTemplateSpec extends TemplateSpec {
     @JsonProperty(value="template", required=true) private var spec:DatasetSpec = _
 
-    override def instantiate(context: Context): DatasetTemplate = {
+    override def instantiate(context: Context, properties:Option[Template.Properties] = None): DatasetTemplate = {
         DatasetTemplate(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             parameters.map(_.instantiate(context)),
             spec
         )
@@ -60,14 +62,15 @@ class DatasetTemplateInstanceSpec extends DatasetSpec {
         args = args.updated(name, value)
     }
 
-    override def instantiate(context: Context): Dataset = {
+    override def instantiate(context: Context, properties:Option[Dataset.Properties] = None): Dataset = {
         // get template name from member "kind"
         // Lookup template in context
         val identifier = TemplateIdentifier(kind.stripPrefix("template/"))
         val template = context.getTemplate(identifier).asInstanceOf[DatasetTemplate]
+        val props = instanceProperties(context, "", properties)
 
         // parse args
         val parsedArgs = template.arguments(context.evaluate(args))
-        template.instantiate(context, "", parsedArgs)
+        template.instantiate(context, props, parsedArgs)
     }
 }

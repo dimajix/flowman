@@ -48,6 +48,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "alias", value = classOf[AliasMappingSpec]),
     new JsonSubTypes.Type(name = "assemble", value = classOf[AssembleMappingSpec]),
     new JsonSubTypes.Type(name = "case", value = classOf[CaseMappingSpec]),
+    new JsonSubTypes.Type(name = "cast", value = classOf[CastMappingSpec]),
     new JsonSubTypes.Type(name = "coalesce", value = classOf[CoalesceMappingSpec]),
     new JsonSubTypes.Type(name = "conform", value = classOf[ConformMappingSpec]),
     new JsonSubTypes.Type(name = "const", value = classOf[ValuesMappingSpec]),
@@ -101,17 +102,17 @@ abstract class MappingSpec extends NamedSpec[Mapping] {
       * @param context
       * @return
       */
-    override def instantiate(context:Context) : Mapping
+    override def instantiate(context:Context, properties:Option[Mapping.Properties] = None) : Mapping
 
     /**
       * Returns a set of common properties
       * @param context
       * @return
       */
-    override protected def instanceProperties(context:Context) : Mapping.Properties = {
+    override protected def instanceProperties(context:Context, properties:Option[Mapping.Properties]) : Mapping.Properties = {
         require(context != null)
         val name = context.evaluate(this.name)
-        Mapping.Properties(
+        val props = Mapping.Properties(
             context,
             metadata.map(_.instantiate(context, name, Category.MAPPING, kind)).getOrElse(Metadata(context, name, Category.MAPPING, kind)),
             context.evaluate(broadcast).toBoolean,
@@ -119,6 +120,7 @@ abstract class MappingSpec extends NamedSpec[Mapping] {
             StorageLevel.fromString(context.evaluate(cache)),
             documentation.map(_.instantiate(context))
         )
+        properties.map(p => props.merge(p)).getOrElse(props)
     }
 }
 

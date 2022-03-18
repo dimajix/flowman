@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ class CounterAccumulator() extends AccumulatorV2[String, Map[String, Long]] {
      *
      * @return
      */
-    override def copy: CounterAccumulator = {
+    override def copy(): CounterAccumulator = {
         val newAccumulator = new CounterAccumulator()
         counters.synchronized {
             for ((key, value) <- counters) {
@@ -54,7 +54,7 @@ class CounterAccumulator() extends AccumulatorV2[String, Map[String, Long]] {
     /**
      * Resets this accumulator to its zero value
      */
-    override def reset: Unit = {
+    override def reset(): Unit = {
         counters.synchronized {
             counters.clear()
         }

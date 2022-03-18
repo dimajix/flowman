@@ -279,18 +279,18 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         val data = Seq(("v1", 12), ("v2", 23)).toDF()
         data.createOrReplaceTempView("some_table")
 
-        val relationGen = (context:Context) => NullRelation(
+        val relationGen = Prototype.of((context:Context) => NullRelation(
             Relation.Properties(context)
-        )
-        val mappingGen = (context:Context) => ProvidedMapping(
+        ).asInstanceOf[Relation])
+        val mappingGen = Prototype.of((context:Context) => ProvidedMapping(
             Mapping.Properties(context),
             "some_table"
-        )
-        val targetGen = (context:Context) => RelationTarget(
+        ).asInstanceOf[Mapping])
+        val targetGen = Prototype.of((context:Context) => RelationTarget(
             context,
             RelationIdentifier("relation"),
             MappingOutputIdentifier("mapping")
-        )
+        ).asInstanceOf[Target])
         val project = Project(
             name = "test",
             targets = Map("target" -> targetGen),
@@ -341,7 +341,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
             RelationIdentifier("relation"),
             MappingOutputIdentifier("mapping")
         )
-        (relationGen.instantiate _).expects(context).returns(relation)
+        (relationGen.instantiate _).expects(context, None).returns(relation)
 
         (relation.loaded _).expects(*,*).returns(Yes)
         target.execute(executor, Phase.VERIFY).withoutTime should be(TargetResult(target, Phase.VERIFY, Status.SUCCESS).withoutTime)
@@ -374,7 +374,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
             RelationIdentifier("relation"),
             MappingOutputIdentifier("mapping")
         )
-        (relationGen.instantiate _).expects(context).returns(relation)
+        (relationGen.instantiate _).expects(context, None).returns(relation)
 
         (relation.loaded _).expects(*,*).returns(Yes)
         target.execute(executor, Phase.VERIFY).withoutTime should be(TargetResult(target, Phase.VERIFY, Status.SUCCESS).withoutTime)
@@ -416,7 +416,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
             RelationIdentifier("relation"),
             MappingOutputIdentifier("mapping")
         )
-        (relationGen.instantiate _).expects(context).returns(relation)
+        (relationGen.instantiate _).expects(context, None).returns(relation)
 
         (relation.loaded _).expects(*,*).returns(Yes)
         target.execute(executor, Phase.VERIFY).withoutTime should be(TargetResult(target, Phase.VERIFY, Status.SUCCESS).withoutTime)

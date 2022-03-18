@@ -65,7 +65,7 @@ class AvroSchemaSpec extends ExternalSchemaSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): AvroSchema = {
+    override def instantiate(context: Context, properties:Option[Schema.Properties] = None): AvroSchema = {
         AvroSchema(
             instanceProperties(context, ""),
             file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),

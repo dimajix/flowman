@@ -103,7 +103,7 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
             RelationIdentifier("base")
         )
 
-        (mockRelationTemplate.instantiate _).expects(context).returns(mockRelation)
+        (mockRelationTemplate.instantiate _).expects(context, None).returns(mockRelation)
         val relation = context.getRelation(RelationIdentifier("mock"))
         relation shouldBe a[MockRelation]
         relation.category should be (Category.RELATION)
@@ -166,10 +166,10 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
             )
         )
 
-        (mockRelationTemplate.instantiate _).expects(context).returns(mockRelation)
+        (mockRelationTemplate.instantiate _).expects(context, None).returns(mockRelation)
         val relation = context.getRelation(RelationIdentifier("mock"))
 
-        (baseRelationTemplate.instantiate _).expects(context).returns(baseRelation)
+        (baseRelationTemplate.instantiate _).expects(context, None).returns(baseRelation)
         (baseRelation.schema _).expects().atLeastOnce().returns(Some(schema))
         relation.schema should be (Some(schema))
 
@@ -218,10 +218,10 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
             )
         )
 
-        (mockRelationTemplate.instantiate _).expects(context).returns(mockRelation)
+        (mockRelationTemplate.instantiate _).expects(context, None).returns(mockRelation)
         val relation = context.getRelation(RelationIdentifier("base"))
 
-        (baseRelationTemplate.instantiate _).expects(context).returns(baseRelation)
+        (baseRelationTemplate.instantiate _).expects(context, None).returns(baseRelation)
         (baseRelation.schema _).expects().atLeastOnce().returns(Some(schema))
         relation.schema should be (Some(schema))
 
@@ -267,10 +267,10 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
             )
         )
 
-        (mockRelationTemplate.instantiate _).expects(context).returns(mockRelation)
+        (mockRelationTemplate.instantiate _).expects(context, None).returns(mockRelation)
         val relation = context.getRelation(RelationIdentifier("mock"))
 
-        (baseRelationTemplate.instantiate _).expects(context).returns(baseRelation)
+        (baseRelationTemplate.instantiate _).expects(context, None).returns(baseRelation)
         (baseRelation.schema _).expects().anyNumberOfTimes().returns(Some(schema))
         (baseRelation.partitions _).expects().anyNumberOfTimes().returns(Seq())
         val df = relation.read(executor, Map())

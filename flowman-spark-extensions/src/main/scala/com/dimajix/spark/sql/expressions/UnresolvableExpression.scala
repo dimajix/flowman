@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.apache.spark.sql.catalyst.expressions.Unevaluable
 import org.apache.spark.sql.types.DataType
 
 
-case class UnresolvableExpression(expr:String) extends Unevaluable {
+final case class UnresolvableExpression(expr:String) extends Unevaluable {
     def name: String = expr
 
     override def dataType: DataType = ???

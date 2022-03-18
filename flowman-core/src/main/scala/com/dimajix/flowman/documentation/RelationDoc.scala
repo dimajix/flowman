@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.documentation
 
+import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.FieldValue
@@ -43,8 +44,8 @@ final case class RelationReference(
 
     def sql : String = {
         parent match {
-            case Some(ProjectReference(project)) => project + "/" + name
-            case _ => name
+            case Some(ProjectReference(project)) => s"[$project/$name]"
+            case _ => s"[$name]"
         }
     }
 }
@@ -52,24 +53,37 @@ final case class RelationReference(
 
 final case class RelationDoc(
     parent:Option[Reference],
-    identifier:RelationIdentifier,
+    relation:Option[Relation] = None,
     description:Option[String] = None,
     schema:Option[SchemaDoc] = None,
-    inputs:Seq[Reference] = Seq(),
-    provides:Seq[ResourceIdentifier] = Seq(),
-    requires:Seq[ResourceIdentifier] = Seq(),
-    sources:Seq[ResourceIdentifier] = Seq(),
-    partitions:Map[String,FieldValue] = Map()
+    inputs:Seq[Reference] = Seq.empty,
+    provides:Seq[ResourceIdentifier] = Seq.empty,
+    requires:Seq[ResourceIdentifier] = Seq.empty,
+    sources:Seq[ResourceIdentifier] = Seq.empty,
+    partitions:Map[String,FieldValue] = Map.empty
 ) extends EntityDoc {
-    override def reference: RelationReference = RelationReference(parent, identifier.name)
+    override def reference: RelationReference = RelationReference(parent, name)
     override def fragments: Seq[Fragment] = schema.toSeq
     override def reparent(parent: Reference): RelationDoc = {
-        val ref = RelationReference(Some(parent), identifier.name)
+        val ref = RelationReference(Some(parent), name)
         copy(
             parent = Some(parent),
             schema = schema.map(_.reparent(ref))
         )
     }
+    /**
+     * Returns the name of the project of this mapping
+     * @return
+     */
+    def project : Option[String] = relation.flatMap(_.project.map(_.name))
+
+    /**
+     * Returns the name of this mapping
+     * @return
+     */
+    def name : String = relation.map(_.name).getOrElse("")
+
+    def identifier:RelationIdentifier = relation.map(_.identifier).getOrElse(RelationIdentifier.empty)
 
     /**
      * Merge this schema documentation with another relation documentation. Note that while documentation attributes
@@ -86,13 +100,13 @@ final case class RelationDoc(
      * @param other
      */
     def merge(other:RelationDoc) : RelationDoc = {
-        val id = if (identifier.isEmpty) other.identifier else identifier
+        val rel = relation.orElse(other.relation)
         val desc = other.description.orElse(this.description)
         val schm = schema.map(_.merge(other.schema)).orElse(other.schema)
         val prov = provides.toSet ++ other.provides.toSet
         val reqs = requires.toSet ++ other.requires.toSet
         val srcs = sources.toSet ++ other.sources.toSet
-        val result = copy(identifier=id, description=desc, schema=schm, provides=prov.toSeq, requires=reqs.toSeq, sources=srcs.toSeq)
+        val result = copy(relation=rel, description=desc, schema=schm, provides=prov.toSeq, requires=reqs.toSeq, sources=srcs.toSeq)
         parent.orElse(other.parent)
             .map(result.reparent)
             .getOrElse(result)

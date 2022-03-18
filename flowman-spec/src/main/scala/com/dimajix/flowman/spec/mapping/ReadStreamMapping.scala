@@ -21,9 +21,11 @@ import org.apache.spark
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.graph.Linker
+import com.dimajix.flowman.graph.MappingRef
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -115,7 +117,17 @@ case class ReadStreamMapping (
      * Params: linker - The linker object to use for creating new edges
      */
     override def link(linker: Linker): Unit = {
-        linker.read(relation, Map.empty[String,FieldValue])
+        val relref = linker.read(relation, Map.empty[String,FieldValue])
+        val relFields = MapIgnoreCase(relref.fields.map(f => f.name -> f))
+
+        val mapref = linker.node.asInstanceOf[MappingRef]
+        val outref = mapref.outputs.head
+
+        outref.fields.foreach { f =>
+            relFields.get(f.name).foreach { in =>
+                linker.connect(in, f)
+            }
+        }
     }
 }
 
@@ -131,9 +143,9 @@ class ReadStreamMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context): ReadStreamMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): ReadStreamMapping = {
         ReadStreamMapping(
-            instanceProperties(context),
+            instanceProperties(context, properties),
             relation.instantiate(context),
             context.evaluate(columns).map { case(name,typ) => Field(name, FieldType.of(typ))}.toSeq,
             context.evaluate(filter)

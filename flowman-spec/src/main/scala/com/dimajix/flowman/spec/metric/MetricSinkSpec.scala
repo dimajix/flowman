@@ -38,7 +38,7 @@ object MetricSinkSpec extends TypeRegistry[MetricSinkSpec] {
     new JsonSubTypes.Type(name = "prometheus", value = classOf[PrometheusMetricSinkSpec])
 ))
 abstract class MetricSinkSpec extends Spec[MetricSink] {
-    def instantiate(context:Context) : MetricSink
+    def instantiate(context:Context, properties:Option[MetricSink.Properties] = None) : MetricSink
 }
 
 

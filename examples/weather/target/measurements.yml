@@ -1,8 +1,13 @@
 targets:
+  # Define build target for measurements
   measurements:
+    # Again, the target is of type "relation"
     kind: relation
     description: "Write extracted measurements per year"
+    # Read records from mapping
     mapping: measurements_extracted
+    # ... and write them into the relation "measurements"
     relation: measurements
+    # Specify the data partition to be written
     partition:
       year: $year

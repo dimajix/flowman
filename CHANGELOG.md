@@ -1,3 +1,7 @@
+# Version 0.23.1
+* github-154: Fix failing migration when PK requires change due to data type
+
+
 # Version 0.23.0 - 2022-03-18
 
 * github-148: Support staging table for all JDBC relations

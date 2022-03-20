@@ -18,6 +18,7 @@ package com.dimajix.flowman.catalog
 
 import java.util.Locale
 
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
@@ -68,15 +69,9 @@ object TableChange {
             }
         }
 
-        // Check if primary key needs to be dropped
-        val dropPk = if(normalizedSource.primaryKey.nonEmpty && normalizedSource.primaryKey != normalizedTarget.primaryKey)
-                Some(DropPrimaryKey())
-            else
-                None
-
-        val targetFields = targetTable.columns.map(f => (f.name.toLowerCase(Locale.ROOT), f))
-        val targetFieldsByName = targetFields.toMap
-        val sourceFieldsByName = sourceTable.columns.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+        val targetFields = targetTable.columns.map(f => f.name -> f)
+        val targetFieldsByName = MapIgnoreCase(targetFields)
+        val sourceFieldsByName = MapIgnoreCase(sourceTable.columns.map(f => f.name -> f))
 
         // Check which fields need to be dropped
         val dropFields = (sourceFieldsByName.keySet -- targetFieldsByName.keySet).toSeq.flatMap { fieldName =>
@@ -85,6 +80,9 @@ object TableChange {
             else
                 None
         }
+
+        // TODO: PK also needs to be recreated if data type changes (github-154)
+        var changePk = normalizedSource.primaryKey != normalizedTarget.primaryKey
 
         // Infer column changes
         val changeFields = targetFields.flatMap { case(tgtName,tgtField) =>
@@ -111,12 +109,22 @@ object TableChange {
                         else
                             Seq()
 
+                    // If the data type of a PK element changes, then the PK needs to recreated
+                    if (modType.nonEmpty && normalizedTarget.primaryKey.contains(srcField.name.toLowerCase(Locale.ROOT)))
+                        changePk = true
+
                     modType ++ modNullability ++ modComment
             }
         }
 
+        // Check if primary key needs to be dropped
+        val dropPk = if(normalizedSource.primaryKey.nonEmpty && changePk)
+            Some(DropPrimaryKey())
+        else
+            None
+
         // Create new PK
-        val createPk = if (normalizedTarget.primaryKey.nonEmpty && normalizedTarget.primaryKey != normalizedSource.primaryKey)
+        val createPk = if (normalizedTarget.primaryKey.nonEmpty && changePk)
             Some(CreatePrimaryKey(targetTable.primaryKey))
                 else
             None

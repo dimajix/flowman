@@ -5,12 +5,12 @@
   "fields": [
     {
       "name": "usaf",
-      "type": "int",
+      "type": "string",
       "doc": "USAF station id"
     },
     {
       "name": "wban",
-      "type": "int",
+      "type": "string",
       "doc": "WBAN station id"
     },
     {

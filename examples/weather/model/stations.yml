@@ -4,6 +4,7 @@ relations:
     description: "The 'stations' table contains meta data on all weather stations"
     format: parquet
     location: "$basedir/stations/"
+    # Use an explicit schema stored in an external file
     schema:
       kind: avro
       file: "${project.basedir}/schema/stations.avsc"

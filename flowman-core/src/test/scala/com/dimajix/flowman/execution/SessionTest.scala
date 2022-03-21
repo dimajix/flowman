@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,13 @@ class SessionTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             .withConfig(Map("spark.lala" -> "lala_cmdline", "spark.lolo" -> "lolo_cmdline"))
             .withProject(project)
             .build()
+
+        session.context.sparkConf.get("spark.lala") should be ("lala_cmdline")
+        session.context.sparkConf.get("spark.lolo") should be ("lolo_cmdline")
+        session.context.sparkConf.get("spark.lili") should be ("lili.project")
+        session.sparkConf.get("spark.lala") should be ("lala_cmdline")
+        session.sparkConf.get("spark.lolo") should be ("lolo_cmdline")
+        session.sparkConf.get("spark.lili") should be ("lili.project")
         session.spark.conf.get("spark.lala") should be ("lala_cmdline")
         session.spark.conf.get("spark.lolo") should be ("lolo_cmdline")
         session.spark.conf.get("spark.lili") should be ("lili.project")
@@ -91,13 +98,25 @@ class SessionTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     }
 
     it should "correctly propagate configurations" in {
+        val module = Module(
+            environment = Map("x" -> "y"),
+            config = Map("spark.lala" -> "lala.project", "spark.lili" -> "lili.project")
+        )
+        val project = module.toProject("project")
         val session = Session.builder()
             .disableSpark()
+            .withProject(project)
             .withConfig("spark.lala", "spark_lala")
             .withConfig("flowman.lolo", "flowman_lolo")
             .withConfig("other.abc", "other_abc")
             .build()
 
+        session.context.sparkConf.get("spark.lili") should be ("lili.project")
+        session.context.sparkConf.get("spark.lala") should be ("spark_lala")
+        session.context.sparkConf.contains("flowman.lolo") should be (false)
+        session.context.sparkConf.get("other.abc") should be ("other_abc")
+
+        session.sparkConf.get("spark.lili") should be ("lili.project")
         session.sparkConf.get("spark.lala") should be ("spark_lala")
         session.sparkConf.contains("flowman.lolo") should be (false)
         session.sparkConf.get("other.abc") should be ("other_abc")

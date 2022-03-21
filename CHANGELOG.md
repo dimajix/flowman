@@ -1,6 +1,7 @@
 # Version 0.23.1
 * github-154: Fix failing migration when PK requires change due to data type
 * github-156: Recreate indexes when data type of column changes
+* github-155: Project level configs are used outside job
 
 
 # Version 0.23.0 - 2022-03-18

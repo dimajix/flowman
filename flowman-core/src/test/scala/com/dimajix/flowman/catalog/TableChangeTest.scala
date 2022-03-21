@@ -369,11 +369,12 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             ),
             primaryKey = Seq("f1", "f2")
         )
-        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
 
-        changes should be (Seq(
-            CreatePrimaryKey(Seq("f1", "f2"))
-        ))
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
+        changes should be (Seq(CreatePrimaryKey(Seq("f1", "f2"))))
+
+        val changes2 = TableChange.migrate(oldTable, newTable, MigrationPolicy.STRICT)
+        changes2 should be (Seq(CreatePrimaryKey(Seq("f1", "f2"))))
     }
 
     it should "drop PK" in {
@@ -393,11 +394,12 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             ),
             primaryKey = Seq()
         )
-        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
 
-        changes should be (Seq(
-            DropPrimaryKey()
-        ))
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
+        changes should be (Seq(DropPrimaryKey()))
+
+        val changes2 = TableChange.migrate(oldTable, newTable, MigrationPolicy.STRICT)
+        changes2 should be (Seq(DropPrimaryKey()))
     }
 
     it should "drop/add PK" in {
@@ -417,9 +419,15 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             ),
             primaryKey = Seq("f2")
         )
-        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
 
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
         changes should be (Seq(
+            DropPrimaryKey(),
+            CreatePrimaryKey(Seq("f2"))
+        ))
+
+        val changes2 = TableChange.migrate(oldTable, newTable, MigrationPolicy.STRICT)
+        changes2 should be (Seq(
             DropPrimaryKey(),
             CreatePrimaryKey(Seq("f2"))
         ))
@@ -456,9 +464,19 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
 
     it should "do nothing on an unchanged index" in {
         val oldTable = TableDefinition(TableIdentifier(""),
+            columns = Seq(
+                Field("col1", StringType),
+                Field("col2", LongType),
+                Field("col3", StringType)
+            ),
             indexes = Seq(TableIndex("name", Seq("col1", "col2")))
         )
         val newTable = TableDefinition(TableIdentifier(""),
+            columns = Seq(
+                Field("COL1", StringType),
+                Field("cOl2", LongType),
+                Field("col3", StringType)
+            ),
             indexes = Seq(TableIndex("NAME", Seq("col2", "COL1")))
         )
 
@@ -478,8 +496,10 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
         )
 
         val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
-
         changes should be (Seq(CreateIndex("NAME", Seq("col2", "COL1"), false)))
+
+        val changes2 = TableChange.migrate(oldTable, newTable, MigrationPolicy.STRICT)
+        changes2 should be (Seq(CreateIndex("NAME", Seq("col2", "COL1"), false)))
     }
 
     it should "drop an index" in {
@@ -491,8 +511,10 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
         )
 
         val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
-
         changes should be (Seq(DropIndex("name")))
+
+        val changes2 = TableChange.migrate(oldTable, newTable, MigrationPolicy.STRICT)
+        changes2 should be (Seq(DropIndex("name")))
     }
 
     it should "drop/add an index" in {
@@ -504,7 +526,34 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
         )
 
         val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
-
         changes should be (Seq(DropIndex("name"), CreateIndex("NAME", Seq("col2", "COL1"), false)))
+
+        val changes2 = TableChange.migrate(oldTable, newTable, MigrationPolicy.STRICT)
+        changes2 should be (Seq(DropIndex("name"), CreateIndex("NAME", Seq("col2", "COL1"), false)))
+    }
+
+    it should "drop/add an index if data type changes" in {
+        val oldTable = TableDefinition(TableIdentifier(""),
+            columns = Seq(
+                Field("cOl1", StringType),
+                Field("CoL2", LongType),
+                Field("coL3", StringType)
+            ),
+            indexes = Seq(TableIndex("name", Seq("col1", "col3")))
+        )
+        val newTable = TableDefinition(TableIdentifier(""),
+            columns = Seq(
+                Field("CoL1", IntegerType),
+                Field("COl2", LongType),
+                Field("COL3", StringType)
+            ),
+            indexes = Seq(TableIndex("NAME", Seq("col1", "COL3")))
+        )
+
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
+        changes should be (Seq.empty)
+
+        val changes2 = TableChange.migrate(oldTable, newTable, MigrationPolicy.STRICT)
+        changes2 should be (Seq(DropIndex("name"), UpdateColumnType("cOl1",IntegerType), CreateIndex("NAME", Seq("col1", "COL3"), false)))
     }
 }

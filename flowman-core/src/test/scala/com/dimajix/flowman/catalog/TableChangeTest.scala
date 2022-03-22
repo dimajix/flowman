@@ -283,7 +283,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             columns=Seq(
                 Field("F1", StringType, false),
                 Field("F2", StringType),
-                Field("F3", LongType),
+                Field("F3", LongType, false),
                 Field("F5", StringType),
                 Field("F6", StringType, true)
             )
@@ -295,6 +295,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             UpdateColumnNullability("f1", false),
             UpdateColumnType("f2", StringType),
             UpdateColumnType("f3", LongType),
+            UpdateColumnNullability("f3", false),
             AddColumn(Field("F5", StringType)),
             UpdateColumnNullability("f6", true)
         ))
@@ -355,26 +356,26 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
     it should "add PK" in {
         val oldTable = TableDefinition(TableIdentifier(""),
             columns=Seq(
-                Field("f1", StringType),
-                Field("f2", LongType),
+                Field("f1", StringType, nullable=true),
+                Field("f2", LongType, nullable=false),
                 Field("f3", StringType)
             ),
             primaryKey = Seq()
         )
         val newTable = TableDefinition(TableIdentifier(""),
             columns=Seq(
-                Field("F1", StringType),
-                Field("F2", LongType),
+                Field("F1", StringType, nullable=false),
+                Field("F2", LongType, nullable=false),
                 Field("F3", StringType)
             ),
             primaryKey = Seq("f1", "f2")
         )
 
         val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
-        changes should be (Seq(CreatePrimaryKey(Seq("f1", "f2"))))
+        changes should be (Seq(UpdateColumnNullability("f1",false), CreatePrimaryKey(Seq("f1", "f2"))))
 
         val changes2 = TableChange.migrate(oldTable, newTable, MigrationPolicy.STRICT)
-        changes2 should be (Seq(CreatePrimaryKey(Seq("f1", "f2"))))
+        changes2 should be (Seq(UpdateColumnNullability("f1",false), CreatePrimaryKey(Seq("f1", "f2"))))
     }
 
     it should "drop PK" in {
@@ -459,7 +460,11 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
         ))
 
         val changes2 = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
-        changes2 should be (Seq.empty)
+        changes2 should be (Seq(
+            DropPrimaryKey(),
+            UpdateColumnType("f1", IntegerType),
+            CreatePrimaryKey(Seq("f1", "f2"))
+        ))
     }
 
     it should "do nothing on an unchanged index" in {

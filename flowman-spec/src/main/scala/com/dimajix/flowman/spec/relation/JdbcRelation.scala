@@ -261,7 +261,7 @@ class JdbcRelationBase(
                     throw new PartitionAlreadyExistsException(tableIdentifier.database.getOrElse(""), tableIdentifier.table, partition.mapValues(_.value))
                 }
             case OutputMode.UPDATE =>
-                doUpdate(execution, df)
+                doUpdate(execution, dfExt)
             case _ => throw new IllegalArgumentException(s"Unsupported save mode: '$mode'. " +
                 "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'update', 'errorifexists'.")
         }

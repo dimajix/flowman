@@ -90,7 +90,7 @@ class PostgresStatements(dialect: BaseDialect) extends BaseStatements(dialect)  
     override def tableExists(table: TableIdentifier): String =
         s"SELECT 1 FROM ${dialect.quote(table)} LIMIT 1"
 
-    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String): String =
+    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean): String =
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} TYPE $newDataType"
 
     override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean): String = {

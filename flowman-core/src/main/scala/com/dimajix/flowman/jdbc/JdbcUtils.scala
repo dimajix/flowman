@@ -365,8 +365,18 @@ object JdbcUtils {
                             rsmd.getClass.getName == "org.apache.hive.jdbc.HiveResultSetMetaData" => true
                 }
             }
+
+            // SQL typeNames only contain the base type but not the size
+            val effectiveTypeName = dataType match {
+                case java.sql.Types.CHAR if fieldSize > 1 => s"$typeName($fieldSize)"
+                case java.sql.Types.VARCHAR => s"$typeName($fieldSize)"
+                case java.sql.Types.NCHAR if fieldSize > 1 => s"$typeName($fieldSize)"
+                case java.sql.Types.NVARCHAR => s"$typeName($fieldSize)"
+                case _ => typeName
+            }
+
             val nullable = rsmd.isNullable(i + 1) != ResultSetMetaData.columnNoNulls
-            fields(i) = JdbcField(columnName, typeName, dataType, fieldSize, fieldScale, isSigned, nullable)
+            fields(i) = JdbcField(columnName, effectiveTypeName, dataType, fieldSize, fieldScale, isSigned, nullable)
             i = i + 1
         }
         fields
@@ -576,7 +586,7 @@ object JdbcUtils {
                 val dataType = dialect.getJdbcType(u.dataType)
                 logger.info(s"Changing column ${u.column} type from ${current.typeName} to ${dataType.databaseTypeDefinition} (${u.dataType.sqlType}) in JDBC table $table")
                 currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(typeName=dataType.databaseTypeDefinition))
-                Some(statements.updateColumnType(table, u.column, dataType.databaseTypeDefinition))
+                Some(statements.updateColumnType(table, u.column, dataType.databaseTypeDefinition, current.nullable))
             case u:UpdateColumnNullability =>
                 logger.info(s"Updating nullability of column ${u.column} to ${u.nullable} in JDBC table $table")
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))

@@ -86,24 +86,34 @@ object TableChange {
                             Seq(UpdateColumnType(srcField.name, tgtField.ftype))
                         else if (migrationPolicy == MigrationPolicy.RELAXED && coerce(srcField.ftype, tgtField.ftype) != srcField.ftype)
                             Seq(UpdateColumnType(srcField.name, tgtField.ftype))
+                        // If new PK contains this field, we better always update data type
+                        else if (migrationPolicy == MigrationPolicy.RELAXED && normalizedTarget.primaryKey.contains(srcField.name.toLowerCase(Locale.ROOT))
+                            && srcField.ftype != tgtField.ftype)
+                            Seq(UpdateColumnType(srcField.name, tgtField.ftype))
                         else
-                            Seq()
+                            Seq.empty
+
+                    // If the data type of a PK element changes, then the PK needs to recreated
+                    if (modType.nonEmpty && normalizedTarget.primaryKey.contains(srcField.name.toLowerCase(Locale.ROOT)))
+                        changePk = true
+
                     val modNullability =
                         if (migrationPolicy == MigrationPolicy.STRICT && srcField.nullable != tgtField.nullable)
                             Seq(UpdateColumnNullability(srcField.name, tgtField.nullable))
                         else if (migrationPolicy == MigrationPolicy.RELAXED && !srcField.nullable && tgtField.nullable)
                             Seq(UpdateColumnNullability(srcField.name, tgtField.nullable))
+                        // If new PK contains this field, we also might be required to update nullability
+                        else if (migrationPolicy == MigrationPolicy.RELAXED && normalizedTarget.primaryKey.contains(srcField.name.toLowerCase(Locale.ROOT))
+                            && changePk && srcField.nullable && !tgtField.nullable)
+                            Seq(UpdateColumnNullability(srcField.name, tgtField.nullable))
                         else
-                            Seq()
+                            Seq.empty
                     val modComment =
                         if (migrationPolicy == MigrationPolicy.STRICT && srcField.description != tgtField.description)
                             Seq(UpdateColumnComment(srcField.name, tgtField.description))
                         else
-                            Seq()
+                            Seq.empty
 
-                    // If the data type of a PK element changes, then the PK needs to recreated
-                    if (modType.nonEmpty && normalizedTarget.primaryKey.contains(srcField.name.toLowerCase(Locale.ROOT)))
-                        changePk = true
                     // If the data type of an index changes, then the Index needs to be recreated
                     if (modType.nonEmpty) {
                         normalizedTarget.indexes.foreach { idx =>

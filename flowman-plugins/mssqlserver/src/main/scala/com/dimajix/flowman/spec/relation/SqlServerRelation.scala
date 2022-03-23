@@ -50,7 +50,7 @@ case class SqlServerRelation(
     table: Option[TableIdentifier] = None,
     query: Option[String] = None,
     mergeKey: Seq[String] = Seq.empty,
-    primaryKey: Seq[String] = Seq.empty,
+    override val primaryKey: Seq[String] = Seq.empty,
     indexes: Seq[TableIndex] = Seq.empty
 ) extends JdbcRelationBase(instanceProperties, schema, partitions, connection, properties, table, query, mergeKey, primaryKey, indexes) {
     private val tempTableIdentifier = TableIdentifier(s"##${tableIdentifier.table}_temp_staging")

@@ -5,6 +5,7 @@
 * github-157: Fix UPSERT operations for SQL Server
 * github-158: Improve non-nullability of primary key column
 * github-160: Use sensible defaults for default documenter
+* github-161: Improve schema caching during execution
 
 
 # Version 0.23.0 - 2022-03-18

@@ -63,11 +63,12 @@ object Graph {
         project.mappings.keys.foreach { name =>
             builder.addMapping(MappingIdentifier(name))
         }
-        project.relations.keys.foreach { name =>
-            builder.addRelation(RelationIdentifier(name))
-        }
         project.targets.keys.foreach { name =>
             builder.addTarget(TargetIdentifier(name))
+        }
+        // Collect relations last, such that mappings or targets could have already provided partitions
+        project.relations.keys.foreach { name =>
+            builder.addRelation(RelationIdentifier(name))
         }
 
         builder.build()

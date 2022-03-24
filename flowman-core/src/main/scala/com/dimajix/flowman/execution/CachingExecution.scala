@@ -68,7 +68,6 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
                 SynchronizedMap(IdentityHashMap[Mapping,Map[String,DataFrame]]())
         }
     }
-
     private val frameCacheFutures:SynchronizedMap[Mapping,Future[Map[String,DataFrame]]] = {
         parent match {
             case Some(ce:CachingExecution) if !isolated =>
@@ -101,6 +100,14 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
                 ce.relationSchemaCache
             case _ =>
                 SynchronizedMap(IdentityHashMap[Relation,StructType]())
+        }
+    }
+    private val relationSchemaCacheFutures:SynchronizedMap[Relation,Future[StructType]] = {
+        parent match {
+            case Some(ce:CachingExecution) if !isolated =>
+                ce.relationSchemaCacheFutures
+            case _ =>
+                SynchronizedMap(IdentityHashMap[Relation,Future[StructType]]())
         }
     }
 
@@ -212,8 +219,32 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      * @return
      */
     override def describe(relation:Relation, partitions:Map[String,FieldValue] = Map()) : StructType = {
+        // We do not simply call getOrElseUpdate, since the creation of the Schema might be slow
+        def createOrWait() : StructType = {
+            val p = Promise[StructType]()
+            val f = relationSchemaCacheFutures.getOrElseUpdate(relation, p.future)
+            // Check if the returned future is the one we passed in. If that is the case, the current thread
+            // is responsible for fulfilling the promise
+            if (f eq p.future) {
+                val schema = Try(describeRelation(relation, partitions))
+                p.complete(schema)
+                schema.get
+            }
+            else {
+                // Other threads simply wait for the promise to be fulfilled.
+                Await.result(f, Duration.Inf)
+            }
+        }
+
         if (useRelationSchemaCache) {
-            relationSchemaCache.getOrElseUpdate(relation, describeRelation(relation, partitions))
+            try {
+                relationSchemaCache.getOrElseUpdate(relation, createOrWait())
+            }
+            finally {
+                // Remove relation from Futures, so we have another chance when the relation is described again
+                // with a possibly different partition information
+                relationSchemaCacheFutures.remove(relation)
+            }
         }
         else {
             describeRelation(relation, partitions)

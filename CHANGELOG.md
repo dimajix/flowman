@@ -4,6 +4,7 @@
 * github-155: Project level configs are used outside job
 * github-157: Fix UPSERT operations for SQL Server
 * github-158: Improve non-nullability of primary key column
+* github-160: Use sensible defaults for default documenter
 
 
 # Version 0.23.0 - 2022-03-18

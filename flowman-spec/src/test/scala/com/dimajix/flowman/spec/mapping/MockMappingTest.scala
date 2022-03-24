@@ -122,16 +122,14 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         (baseMapping.context _).expects().anyNumberOfTimes().returns(context)
         (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Set())
         (baseMapping.identifier _).expects().anyNumberOfTimes().returns(MappingIdentifier("my_project/base"))
-        (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"other")
-            .anyNumberOfTimes().returns(otherSchema)
-        (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"error")
-            .anyNumberOfTimes().returns(errorSchema)
+        (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType]) => Map[String,StructType]).expects(executor,*)
+            .anyNumberOfTimes().returns(Map("other" -> otherSchema, "error" -> errorSchema))
         mapping.describe(executor, Map()) should be (Map(
             "other" -> otherSchema,
             "error" -> errorSchema
         ))
 
-        mapping.describe(executor, Map(), "other") should be (otherSchema)
+        mapping.describe(executor, Map())("other") should be (otherSchema)
 
         val dfOther = executor.instantiate(mapping, "other")
         dfOther.columns should contain("str_col")
@@ -186,10 +184,9 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         (baseMapping.context _).expects().anyNumberOfTimes().returns(context)
         (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Set())
         (baseMapping.identifier _).expects().anyNumberOfTimes().returns(MappingIdentifier("my_project/base"))
-        (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"main")
-            .anyNumberOfTimes().returns(schema)
+        (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType]) => Map[String,StructType]).expects(executor,*)
+            .anyNumberOfTimes().returns(Map("main" -> schema))
         mapping.describe(executor, Map()) should be (Map("main" -> schema))
-        mapping.describe(executor, Map(), "main") should be (schema)
 
         val dfOther = executor.instantiate(mapping, "main")
         dfOther.columns should contain("str_col")
@@ -236,8 +233,8 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         (baseMapping.outputs _).expects().anyNumberOfTimes().returns(Set("main"))
         (baseMapping.inputs _).expects().anyNumberOfTimes().returns(Set())
         (baseMapping.identifier _).expects().anyNumberOfTimes().returns(MappingIdentifier("my_project/base"))
-        (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType],String) => StructType).expects(executor,*,"main")
-            .anyNumberOfTimes().returns(schema)
+        (baseMapping.describe:(Execution,Map[MappingOutputIdentifier,StructType]) => Map[String,StructType]).expects(executor,*)
+            .anyNumberOfTimes().returns(Map("main" -> schema))
 
         val df = executor.instantiate(mapping, "main")
         df.schema should be (schema.sparkType)

@@ -98,6 +98,14 @@ final class MonitorExecution(parent:Execution, override val listeners:Seq[(Execu
     override def instantiate(mapping: Mapping, output: String): DataFrame = parent.instantiate(mapping, output)
 
     /**
+     * Returns the schema for a specific output created by a specific mapping.
+     *
+     * @param mapping
+     * @return
+     */
+    override def describe(mapping: Mapping): Map[String, StructType] = parent.describe(mapping)
+
+    /**
      * Returns the schema for a specific output created by a specific mapping. Note that not all mappings support
      * schema analysis beforehand. In such cases, None will be returned.
      *

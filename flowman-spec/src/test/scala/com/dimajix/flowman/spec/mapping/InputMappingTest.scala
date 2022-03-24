@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val schema = mapping.describe(executor, Map(), "main")
+        val schema = mapping.describe(executor, Map())("main")
         schema should be (StructType(Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType)
@@ -105,7 +105,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val schema = mapping.describe(executor, Map(), "main")
+        val schema = mapping.describe(executor, Map())("main")
         schema should be (StructType(Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType)
@@ -150,7 +150,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         df.columns should contain("str_col")
         df.columns should contain("int_col")
 
-        val schema = mapping.describe(executor, Map(), "main")
+        val schema = mapping.describe(executor, Map())("main")
         schema should be (StructType(Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType)
@@ -193,7 +193,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         df.columns should contain("int_col")
         df.columns should contain("spart")
 
-        val schema = mapping.describe(executor, Map(), "main")
+        val schema = mapping.describe(executor, Map())("main")
         schema should be (StructType(Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType),

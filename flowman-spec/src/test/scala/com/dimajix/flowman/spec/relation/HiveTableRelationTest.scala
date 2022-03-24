@@ -1945,7 +1945,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val mapping = context.getMapping(MappingIdentifier("input"))
 
-        val schema = mapping.describe(execution, Map(), "main")
+        val schema = mapping.describe(execution, Map())("main")
         schema should be (ftypes.StructType(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType),
@@ -1994,7 +1994,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("input"))
-        val schema = mapping.describe(execution, Map(), "main")
+        val schema = mapping.describe(execution, Map())("main")
         schema should be (ftypes.StructType(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType),

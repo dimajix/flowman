@@ -78,12 +78,20 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         }
     }
 
-    private val mappingSchemaCache:SynchronizedMap[Mapping,TrieMap[String,StructType]] = {
+    private val mappingSchemaCache:SynchronizedMap[Mapping,Map[String,StructType]] = {
         parent match {
             case Some(ce:CachingExecution) if !isolated =>
                 ce.mappingSchemaCache
             case _ =>
-                SynchronizedMap(IdentityHashMap[Mapping,TrieMap[String,StructType]]())
+                SynchronizedMap(IdentityHashMap[Mapping,Map[String,StructType]]())
+        }
+    }
+    private val mappingSchemaCacheFutures:SynchronizedMap[Mapping,Future[Map[String,StructType]]] = {
+        parent match {
+            case Some(ce:CachingExecution) if !isolated =>
+                ce.mappingSchemaCacheFutures
+            case _ =>
+                SynchronizedMap(IdentityHashMap[Mapping,Future[Map[String,StructType]]]())
         }
     }
 
@@ -113,20 +121,19 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
     override def instantiate(mapping:Mapping) : Map[String,DataFrame] = {
         require(mapping != null)
 
-        // We do not simply call getOrElseUpdate, since the creation of the DataFrame might be slow and
-        // concurrent trials
+        // We do not simply call getOrElseUpdate, since the creation of the DataFrame might be slow
         def createOrWait() : Map[String,DataFrame] = {
             val p = Promise[Map[String,DataFrame]]()
             val f = frameCacheFutures.getOrElseUpdate(mapping, p.future)
             // Check if the returned future is the one we passed in. If that is the case, the current thread
-            // is responsible for fullfilling the promise
+            // is responsible for fulfilling the promise
             if (f eq p.future) {
                 val tables = Try(createTables(mapping))
                 p.complete(tables)
                 tables.get
             }
             else {
-                // Other threads simply wait for the promise to be fullfilled.
+                // Other threads simply wait for the promise to be fulfilled.
                 Await.result(f, Duration.Inf)
             }
         }
@@ -141,19 +148,33 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      * @param output
      * @return
      */
-    override def describe(mapping:Mapping, output:String) : StructType = {
+    override def describe(mapping:Mapping) : Map[String,StructType] = {
+        // We do not simply call getOrElseUpdate, since the creation of the Schema might be slow
+        def createOrWait() : Map[String,StructType] = {
+            val p = Promise[Map[String,StructType]]()
+            val f = mappingSchemaCacheFutures.getOrElseUpdate(mapping, p.future)
+            // Check if the returned future is the one we passed in. If that is the case, the current thread
+            // is responsible for fulfilling the promise
+            if (f eq p.future) {
+                val tables = Try(describeMapping(mapping))
+                p.complete(tables)
+                tables.get
+            }
+            else {
+                // Other threads simply wait for the promise to be fulfilled.
+                Await.result(f, Duration.Inf)
+            }
+        }
+
         if (useMappingSchemaCache) {
-            mappingSchemaCache.getOrElseUpdate(mapping, TrieMap())
-                .getOrElseUpdate(output, describeMapping(mapping, output))
+            mappingSchemaCache.getOrElseUpdate(mapping, createOrWait())
         }
         else {
-            describeMapping(mapping, output)
+            describeMapping(mapping)
         }
     }
 
-    private def describeMapping(mapping:Mapping, output:String) : StructType = {
-        if (!mapping.outputs.contains(output))
-            throw new NoSuchMappingOutputException(mapping.identifier, output)
+    private def describeMapping(mapping:Mapping) : Map[String,StructType] = {
         val context = mapping.context
 
         val deps = if (parallelism > 1 ) {
@@ -171,13 +192,13 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
 
         // Transform any non-fatal exception in a DescribeMappingFailedException
         try {
-            logger.info(s"Describing mapping '${mapping.identifier}' for output '${output}'")
+            logger.info(s"Describing mapping '${mapping.identifier}'")
             listeners.foreach { l =>
                 Try {
                     l._1.describeMapping(this, mapping, l._2)
                 }
             }
-            mapping.describe(this, deps, output)
+            mapping.describe(this, deps)
         }
         catch {
             case NonFatal(e) => throw new DescribeMappingFailedException(mapping.identifier, e)

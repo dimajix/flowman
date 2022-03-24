@@ -212,13 +212,6 @@ trait Mapping extends Instance {
     def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType]) : Map[String,StructType]
 
     /**
-      * Returns the schema as produced by this mapping, relative to the given input schema
-      * @param input
-      * @return
-      */
-    def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType], output:String) : StructType
-
-    /**
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
@@ -394,20 +387,6 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
     }
 
     /**
-     * Returns the schema as produced by this mapping, relative to the given input schema. If the schema cannot
-     * be inferred, None will be returned
-     * @param input
-     * @return
-     */
-    override def describe(execution:Execution, input:Map[MappingOutputIdentifier,StructType], output:String) : StructType = {
-        require(execution != null)
-        require(input != null)
-        require(output != null && output.nonEmpty)
-
-        describe(execution, input)(output)
-    }
-
-    /**
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */
@@ -417,7 +396,11 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
         }
 
         try {
-            linkColumns(linker, ins)
+            // Only perform column linking if we really have an input. This will save us from performing a call
+            // to execute on sources, which might already be expensive
+            if (ins.nonEmpty) {
+                linkColumns(linker, ins)
+            }
         }
         catch {
             case NonFatal(ex) =>

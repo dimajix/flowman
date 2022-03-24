@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1540,7 +1540,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val context = session.getContext(project)
 
         val mapping = context.getMapping(MappingIdentifier("input"))
-        val schema = mapping.describe(execution, Map(), "main")
+        val schema = mapping.describe(execution, Map())("main")
         schema should be (ftypes.StructType(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType),

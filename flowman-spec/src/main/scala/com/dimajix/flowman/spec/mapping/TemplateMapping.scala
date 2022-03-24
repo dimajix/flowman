@@ -112,20 +112,6 @@ case class TemplateMapping(
     }
 
     /**
-      * Returns the schema as produced by this mapping, relative to the given input schema
-      *
-      * @param input
-      * @return
-      */
-    override def describe(execution:Execution, input: Map[MappingOutputIdentifier, StructType], output: String): StructType = {
-        require(execution != null)
-        require(input != null)
-        require(output != null && output.nonEmpty)
-
-        mappingInstance.describe(execution, input, output)
-    }
-
-    /**
      * Creates all known links for building a descriptive graph of the whole data flow
      * Params: linker - The linker object to use for creating new edges
      */

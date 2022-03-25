@@ -7,6 +7,7 @@
 * github-160: Use sensible defaults for default documenter
 * github-161: Improve schema caching during execution
 * github-162: ExpressionColumnCheck does not work when results contain NULL values
+* github-163: Implement new column length quality check
 
 
 # Version 0.23.0 - 2022-03-18

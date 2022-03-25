@@ -164,6 +164,85 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         result3 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
     }
 
+    "A LengthColumnCheck" should "work with upper and lower bound" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+        val testExecutor = new DefaultColumnCheckExecutor
+
+        val df = spark.createDataFrame(Seq(
+            (Some("123"),"123456","12","123","1234567"),
+            (None,"123456","12","123456","1234567")
+        ))
+
+        val test = LengthColumnCheck(None, minimumLength=Some(3),maximumLength=Some(6))
+        val result1 = testExecutor.execute(execution, context, df, "_1", test)
+        result1 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("1 records passed, 0 records failed"))))
+        val result2 = testExecutor.execute(execution, context, df, "_2", test)
+        result2 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
+        val result3 = testExecutor.execute(execution, context, df, "_3", test)
+        result3 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
+        val result4 = testExecutor.execute(execution, context, df, "_4", test)
+        result4 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
+        val result5 = testExecutor.execute(execution, context, df, "_5", test)
+        result5 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
+    }
+
+    it should "work with lower bound" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+        val testExecutor = new DefaultColumnCheckExecutor
+
+        val df = spark.createDataFrame(Seq(
+            (Some("123"),"123456","12","123","1234567"),
+            (None,"123456","12","123456","1234567")
+        ))
+
+        val test = LengthColumnCheck(None, minimumLength=Some(3))
+        val result1 = testExecutor.execute(execution, context, df, "_1", test)
+        result1 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("1 records passed, 0 records failed"))))
+        val result2 = testExecutor.execute(execution, context, df, "_2", test)
+        result2 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
+        val result3 = testExecutor.execute(execution, context, df, "_3", test)
+        result3 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
+        val result4 = testExecutor.execute(execution, context, df, "_4", test)
+        result4 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
+        val result5 = testExecutor.execute(execution, context, df, "_5", test)
+        result5 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
+    }
+
+    it should "work with upper bound" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+        val testExecutor = new DefaultColumnCheckExecutor
+
+        val df = spark.createDataFrame(Seq(
+            (Some("123"),"123456","12","123","1234567"),
+            (None,"123456","12","123456","1234567")
+        ))
+
+        val test = LengthColumnCheck(None, maximumLength=Some(6))
+        val result1 = testExecutor.execute(execution, context, df, "_1", test)
+        result1 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("1 records passed, 0 records failed"))))
+        val result2 = testExecutor.execute(execution, context, df, "_2", test)
+        result2 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
+        val result3 = testExecutor.execute(execution, context, df, "_3", test)
+        result3 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
+        val result4 = testExecutor.execute(execution, context, df, "_4", test)
+        result4 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
+        val result5 = testExecutor.execute(execution, context, df, "_5", test)
+        result5 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
+    }
+
+
     "An ExpressionColumnCheck" should "succeed" in {
         val session = Session.builder()
             .withSparkSession(spark)

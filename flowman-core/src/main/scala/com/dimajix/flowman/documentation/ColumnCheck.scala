@@ -19,6 +19,7 @@ package com.dimajix.flowman.documentation
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.expr
+import org.apache.spark.sql.functions.coalesce
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.BooleanType
 
@@ -172,7 +173,7 @@ class DefaultColumnCheckExecutor extends ColumnCheckExecutor {
                 executePredicateTest(df.filter(df(column).isNotNull), check, df(column).between(lower, upper))
 
             case v: ExpressionColumnCheck =>
-                executePredicateTest(df, check, expr(v.expression).cast(BooleanType))
+                executePredicateTest(df, check, coalesce(expr(v.expression).cast(BooleanType), lit(false)))
 
             case f:ForeignKeyColumnCheck =>
                 val otherDf =

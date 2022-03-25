@@ -208,6 +208,30 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         result4 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
     }
 
+    it should "work with NULLs" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+        val testExecutor = new DefaultColumnCheckExecutor
+
+        val df = spark.createDataFrame(Seq(
+            (Some(1),Some(2),1),
+            (Some(1),None,1),
+            (None,Some(3),2),
+            (None,None,2)
+        ))
+
+        val test = ExpressionColumnCheck(None, expression="_1 <> _2")
+        val result1 = testExecutor.execute(execution, context, df, "_1", test)
+        result1 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("1 records passed, 3 records failed"))))
+        val result2 = testExecutor.execute(execution, context, df, "_2", test)
+        result2 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("1 records passed, 3 records failed"))))
+        val result4 = testExecutor.execute(execution, context, df, "_4", test)
+        result4 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("1 records passed, 3 records failed"))))
+    }
+
     "A ForeignKeyColumnCheck" should "work" in {
         val mappingSpec = mock[Prototype[Mapping]]
         val mapping = mock[Mapping]

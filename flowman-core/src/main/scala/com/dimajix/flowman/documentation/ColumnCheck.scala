@@ -155,7 +155,8 @@ final case class LengthColumnCheck(
 ) extends ColumnCheck {
     override def name: String = {
         (minimumLength, maximumLength) match {
-            case (Some(min),Some(max)) => s"LENGTH BETWEEN $min AND $max"
+            case (Some(min),Some(max)) if min != max => s"LENGTH BETWEEN $min AND $max"
+            case (Some(min),Some(max)) => s"LENGTH = $min"
             case (None,Some(max)) => s"LENGTH <= $max"
             case (Some(min),None) => s"LENGTH >= $min"
             case _ => s"LENGTH"
@@ -200,7 +201,8 @@ class DefaultColumnCheckExecutor extends ColumnCheckExecutor {
 
             case l: LengthColumnCheck =>
                 val condition =  (l.minimumLength, l.maximumLength) match {
-                    case (Some(min),Some(max)) => length(df(column)).between(min,max)
+                    case (Some(min),Some(max)) if min != max => length(df(column)).between(min,max)
+                    case (Some(min),Some(max)) => length(df(column)) === min
                     case (None,Some(max)) => length(df(column)) <= max
                     case (Some(min),None) => length(df(column)) >= min
                     case _ => lit(true)

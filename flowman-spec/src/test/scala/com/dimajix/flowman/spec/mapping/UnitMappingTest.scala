@@ -24,6 +24,10 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.IntegerType
+import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -78,16 +82,20 @@ class UnitMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val executor = session.execution
 
         val instance0 = context.getMapping(MappingIdentifier("instance_0"))
-        instance0.inputs should be (Set())
+        instance0.inputs should be (Set.empty)
         instance0.outputs should be (Set("input"))
         val df0 = executor.instantiate(instance0, "input")
         df0.collect() should be (inputDf0.collect())
+        val schema0 = executor.describe(instance0, "input")
+        schema0 should be (StructType(Seq(Field("_1", IntegerType, false), Field("_2", StringType, true))))
 
         val instance1 = context.getMapping(MappingIdentifier("instance_1"))
-        instance1.inputs should be (Set())
+        instance1.inputs should be (Set.empty)
         instance1.outputs should be (Set("input"))
         val df1 = executor.instantiate(instance1, "input")
         df1.collect() should be (inputDf1.collect())
+        val schema1 = executor.describe(instance1, "input")
+        schema1 should be (StructType(Seq(Field("_1", IntegerType, false), Field("_2", StringType, true))))
     }
 
     it should "work with internal and external references" in {
@@ -123,9 +131,13 @@ class UnitMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val df_inside = executor.instantiate(unit, "inside")
         df_inside.collect() should be (inputDf0.collect())
+        val schema_inside = executor.describe(unit, "inside")
+        schema_inside should be (StructType(Seq(Field("_1", IntegerType, false), Field("_2", StringType, true))))
 
         val df_outside = executor.instantiate(unit, "output")
         df_outside.collect() should be (inputDf0.union(inputDf0).collect())
+        val schema_outside = executor.describe(unit, "output")
+        schema_outside should be (StructType(Seq(Field("_1", IntegerType, false), Field("_2", StringType, true))))
     }
 
     it should "work nicely with alias" in {
@@ -155,5 +167,59 @@ class UnitMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         instance0.outputs should be (Set("main"))
         val df0 = executor.instantiate(instance0, "main")
         df0.collect() should be (inputDf0.collect())
+    }
+
+    it should "work with complex schema inference" in {
+        val spec = """
+                     |mappings:
+                     |  outside:
+                     |    kind: provided
+                     |    table: t0
+                     |
+                     |  macro:
+                     |    kind: unit
+                     |    mappings:
+                     |      inside:
+                     |        kind: provided
+                     |        table: t0
+                     |
+                     |      conformed:
+                     |        kind: schema
+                     |        input: inside
+                     |        schema:
+                     |          kind: mapping
+                     |          mapping: output
+                     |
+                     |      output:
+                     |        kind: union
+                     |        inputs:
+                     |         - inside
+                     |         - outside
+                     |""".stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.getContext(project)
+        val executor = session.execution
+
+        val unit = context.getMapping(MappingIdentifier("macro"))
+        unit.inputs should be (Set(MappingOutputIdentifier("outside")))
+        unit.outputs should be (Set("inside", "conformed", "output"))
+
+        val df_inside = executor.instantiate(unit, "inside")
+        df_inside.collect() should be (inputDf0.collect())
+        val schema_inside = executor.describe(unit, "inside")
+        schema_inside should be (StructType(Seq(Field("_1", IntegerType, false), Field("_2", StringType, true))))
+
+        val df_outside = executor.instantiate(unit, "output")
+        df_outside.collect() should be (inputDf0.union(inputDf0).collect())
+        val schema_outside = executor.describe(unit, "output")
+        schema_outside should be (StructType(Seq(Field("_1", IntegerType, false), Field("_2", StringType, true))))
+
+        val df_conformed = executor.instantiate(unit, "conformed")
+        df_conformed.collect() should be (inputDf0.collect())
+        val schema_conformed = executor.describe(unit, "conformed")
+        schema_conformed should be (StructType(Seq(Field("_1", IntegerType, false), Field("_2", StringType, true))))
     }
 }

@@ -1,3 +1,15 @@
+# Version 0.23.1 - 2022-03-28
+* github-154: Fix failing migration when PK requires change due to data type
+* github-156: Recreate indexes when data type of column changes
+* github-155: Project level configs are used outside job
+* github-157: Fix UPSERT operations for SQL Server
+* github-158: Improve non-nullability of primary key column
+* github-160: Use sensible defaults for default documenter
+* github-161: Improve schema caching during execution
+* github-162: ExpressionColumnCheck does not work when results contain NULL values
+* github-163: Implement new column length quality check
+
+
 # Version 0.23.0 - 2022-03-18
 
 * github-148: Support staging table for all JDBC relations

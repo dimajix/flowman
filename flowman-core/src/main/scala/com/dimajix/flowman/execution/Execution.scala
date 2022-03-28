@@ -172,7 +172,12 @@ abstract class Execution {
      * @param output
      * @return
      */
-    def describe(mapping:Mapping, output:String) : StructType
+    def describe(mapping:Mapping, output:String) : StructType = {
+        if (!mapping.outputs.contains(output))
+            throw new NoSuchMappingOutputException(mapping.identifier, output)
+
+        describe(mapping)(output)
+    }
 
     /**
      * Returns the schema for a specific output created by a specific mapping.

@@ -101,6 +101,18 @@ want to specify both `notNUll` and `range`.
 * `upper` **(mandatory)** *(string)*: Upper value (inclusive)
 
 
+### Length
+
+When working with string data, you might also want to check their length. This can be implemented by using
+the `length` test. Note that this test will exclude records with `NULL` values in the column, so in many cases you might
+want to specify both `notNUll` and `range`.
+
+* `kind` **(mandatory)** *(string)*: `lrngth`
+* `minimum` **(optional)** *(int)*: Minimum length (inclusive)
+* `maximum` **(optional)** *(int)*: Maximum length (inclusive)
+* `length` **(optional)** *(int)*: Exact length (will set minimum and maximum)
+
+
 ### SQL Expression
 
 A very flexible test is provided with the SQL expression test. This test allows you to specify any simple SQL expression

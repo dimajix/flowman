@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,7 +241,7 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             StructField("field", LongType)
         ))
 
-        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")
+        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
     }
 
@@ -266,7 +266,7 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ), true)
         ))
 
-        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")
+        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
 
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
@@ -293,7 +293,7 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         )
 
         an[AnalysisException] shouldBe thrownBy(mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf)))
-        an[AnalysisException] shouldBe thrownBy(mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main"))
+        an[AnalysisException] shouldBe thrownBy(mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main"))
     }
 
     it should "support explodes of complex types without rename" in {
@@ -317,7 +317,7 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 ), true)
         ))
 
-        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")
+        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
 
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
@@ -341,7 +341,7 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             StructField("value", LongType)
         ))
 
-        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")
+        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
 
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
@@ -382,7 +382,7 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             )))
        ))
 
-        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")
+        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
 
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
@@ -407,7 +407,7 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             StructField("public", StringType)
         ))
 
-        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)), "main")
+        val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
 
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")

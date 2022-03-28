@@ -46,11 +46,11 @@ object FileGenerator {
 case class FileGenerator(
     location:Path,
     template:URL = FileGenerator.defaultTemplate,
-    includeRelations:Seq[Regex] = Seq.empty,
+    includeRelations:Seq[Regex] = Seq(".*".r),
     excludeRelations:Seq[Regex] = Seq.empty,
-    includeMappings:Seq[Regex] = Seq.empty,
+    includeMappings:Seq[Regex] = Seq(".*".r),
     excludeMappings:Seq[Regex] = Seq.empty,
-    includeTargets:Seq[Regex] = Seq.empty,
+    includeTargets:Seq[Regex] = Seq(".*".r),
     excludeTargets:Seq[Regex] = Seq.empty
 ) extends TemplateGenerator(template, includeRelations, excludeRelations, includeMappings, excludeMappings, includeTargets, excludeTargets) {
     private val logger = LoggerFactory.getLogger(classOf[FileGenerator])

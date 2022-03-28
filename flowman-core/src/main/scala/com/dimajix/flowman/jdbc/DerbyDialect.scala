@@ -89,6 +89,11 @@ class DerbyStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
             s"SELECT * FROM ${dialect.quote(table)} WHERE $condition FETCH FIRST ROW ONLY"
     }
 
-    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String): String =
+    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean): String = {
+        val nullable = if (isNullable) "NULL" else "NOT NULL"
+        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $nullable"
+    }
+
+    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable:Boolean): String =
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} SET DATA TYPE $newDataType"
 }

@@ -3,6 +3,11 @@ relations:
     kind: file
     format: parquet
     location: "$basedir/measurements/"
+    # Do NOT define the pattern to be used for partitions. Then Flowman will use a standard pattern, which is
+    # well understood by Spark, Hive and many other tools
+    # pattern: "${year}"
+    #
+    # Define data partitions. Each year is stored in a separate sub directory
     partitions:
       - name: year
         type: integer
@@ -11,7 +16,7 @@ relations:
     #schema:
     #  kind: avro
     #  file: "${project.basedir}/schema/measurements.avsc"
-
+    #
     # We prefer to use the inferred schema of the mapping that is written into the relation
     schema:
       kind: mapping

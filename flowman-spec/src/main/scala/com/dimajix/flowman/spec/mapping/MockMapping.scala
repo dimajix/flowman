@@ -98,26 +98,10 @@ case class MockMapping(
      * @return
      */
     override def describe(execution: Execution, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
-        val schemas = mocked.outputs.map(out => out -> describe(execution, Map(), out)).toMap
+        val schemas = execution.describe(mocked)
 
         // Apply documentation
         applyDocumentation(schemas)
-    }
-
-    /**
-     * Returns the schema as produced by this mapping, relative to the given input schema. If the schema cannot
-     * be inferred, None will be returned
-     *
-     * @param input
-     * @return
-     */
-    override def describe(execution: Execution, input: Map[MappingOutputIdentifier, StructType], output: String): StructType = {
-        require(execution != null)
-        require(input != null)
-        require(output != null && output.nonEmpty)
-
-        val schema = execution.describe(mocked, output)
-        applyDocumentation(output, schema)
     }
 }
 

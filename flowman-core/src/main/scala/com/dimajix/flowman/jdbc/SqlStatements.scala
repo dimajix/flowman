@@ -56,7 +56,7 @@ abstract class SqlStatements {
     def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean): String
     def renameColumn(table: TableIdentifier, columnName: String, newName: String) : String
     def deleteColumn(table: TableIdentifier, columnName: String): String
-    def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String): String
+    def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean): String
     def updateColumnNullability(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean): String
 
     def dropPrimaryKey(table: TableIdentifier) : String

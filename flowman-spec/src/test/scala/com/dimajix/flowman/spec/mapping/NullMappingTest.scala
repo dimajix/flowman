@@ -100,12 +100,6 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
                 Field("int_col", IntegerType)
             ))
         ))
-        mapping.describe(executor, Map(), "main") should be (
-            new StructType(Seq(
-                Field("str_col", StringType),
-                Field("int_col", IntegerType)
-            ))
-        )
 
         val df = executor.instantiate(mapping, "main")
         df.columns should contain("str_col")
@@ -141,12 +135,6 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
                 Field("int_col", IntegerType)
             ))
         ))
-        mapping.describe(executor, Map(), "main") should be (
-            new StructType(Seq(
-                Field("str_col", StringType),
-                Field("int_col", IntegerType)
-            ))
-        )
 
         val df = executor.instantiate(mapping, "main")
         df.columns should contain("str_col")

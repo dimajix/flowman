@@ -66,6 +66,8 @@ class MapIgnoreCase[B] private(impl:Map[String,(String,B)] = Map()) extends Map[
 
     override def keys : Iterable[String] = impl.keys
 
+    override def keysIterator : Iterator[String] = impl.keysIterator
+
     /** Adds a key/value pair to this map, returning a new map.
       *  @param    kv the key/value pair
       *  @tparam   B1 the type of the value in the key/value pair.

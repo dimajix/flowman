@@ -1,9 +1,13 @@
 targets:
+  # Define a build target "stations"...
   stations:
+    # ... which builds a relation
     kind: relation
-    description: "Write stations"
+    # ... by reading the result from the mapping "stations_raw"
     mapping: stations_raw
+    # ... and by writing the records to the relation "stations"
     relation: stations
 
+    # Add some documentation to the build target
     documentation:
       description: "This build target is used to write the weather stations"

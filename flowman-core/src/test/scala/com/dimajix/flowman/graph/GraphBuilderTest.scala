@@ -24,8 +24,10 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Prototype
+import com.dimajix.flowman.types.StructType
 
 
 class GraphBuilderTest extends AnyFlatSpec with Matchers with MockFactory {
@@ -49,17 +51,21 @@ class GraphBuilderTest extends AnyFlatSpec with Matchers with MockFactory {
 
         (mappingTemplate1.instantiate _).expects(context,None).returns(mapping1)
         (mapping1.identifier _).expects().returns(MappingIdentifier("project/m1"))
-        (mapping1.context _).expects().returns(context)
-        (mapping1.outputs _).expects().returns(Set("main"))
+        (mapping1.context _).expects().atLeastOnce().returns(context)
+        (mapping1.outputs _).expects().atLeastOnce().returns(Set("main"))
+        (mapping1.inputs _).expects().returns(Set(MappingOutputIdentifier("m2")))
         (mapping1.kind _).expects().returns("m1_kind")
         (mapping1.name _).expects().atLeastOnce().returns("m1")
+        (mapping1.describe _).expects(*,*).returns(Map("main" -> StructType(Seq.empty)))
         (mapping1.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.input(MappingIdentifier("m2"), "main")))
         (mappingTemplate2.instantiate _).expects(context,None).returns(mapping2)
-        (mapping2.identifier _).expects().returns(MappingIdentifier("project/m2"))
-        (mapping2.context _).expects().returns(context)
-        (mapping2.outputs _).expects().returns(Set("main"))
+        (mapping2.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m2"))
+        (mapping2.context _).expects().atLeastOnce().returns(context)
+        (mapping2.outputs _).expects().atLeastOnce().returns(Set("main"))
+        (mapping2.inputs _).expects().atLeastOnce().returns(Set())
         (mapping2.kind _).expects().returns("m2_kind")
         (mapping2.name _).expects().atLeastOnce().returns("m2")
+        (mapping2.describe _).expects(*,*).returns(Map("main" -> StructType(Seq.empty)))
         (mapping2.link _).expects(*).returns(Unit)
 
         val graph = new GraphBuilder(context, Phase.BUILD)

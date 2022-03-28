@@ -21,6 +21,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.documentation.ColumnReference
 import com.dimajix.flowman.documentation.ExpressionColumnCheck
+import com.dimajix.flowman.documentation.LengthColumnCheck
 import com.dimajix.flowman.documentation.RangeColumnCheck
 import com.dimajix.flowman.documentation.UniqueColumnCheck
 import com.dimajix.flowman.documentation.ValuesColumnCheck
@@ -98,6 +99,63 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers {
         test should be (ExpressionColumnCheck(
             Some(ColumnReference(None, "col0")),
             expression = "col1 < col2"
+        ))
+    }
+
+    "A LengthColumnCheck" should "be deserializable with only minimumLength" in {
+        val yaml =
+            """
+              |kind: length
+              |minimum: 3
+            """.stripMargin
+
+        val spec = ObjectMapper.parse[ColumnCheckSpec](yaml)
+        spec shouldBe a[LengthColumnCheckSpec]
+
+        val context = RootContext.builder().build()
+        val test = spec.instantiate(context, ColumnReference(None, "col0"))
+        test should be (LengthColumnCheck(
+            Some(ColumnReference(None, "col0")),
+            minimumLength = Some(3)
+        ))
+    }
+
+    it should "be deserializable with minimumLength and maximumLength" in {
+        val yaml =
+            """
+              |kind: length
+              |minimum: 3
+              |maximum: 6
+              |""".stripMargin
+
+        val spec = ObjectMapper.parse[ColumnCheckSpec](yaml)
+        spec shouldBe a[LengthColumnCheckSpec]
+
+        val context = RootContext.builder().build()
+        val test = spec.instantiate(context, ColumnReference(None, "col0"))
+        test should be (LengthColumnCheck(
+            Some(ColumnReference(None, "col0")),
+            minimumLength = Some(3),
+            maximumLength = Some(6)
+        ))
+    }
+
+    it should "be deserializable with length" in {
+        val yaml =
+            """
+              |kind: length
+              |length: 8
+              |""".stripMargin
+
+        val spec = ObjectMapper.parse[ColumnCheckSpec](yaml)
+        spec shouldBe a[LengthColumnCheckSpec]
+
+        val context = RootContext.builder().build()
+        val test = spec.instantiate(context, ColumnReference(None, "col0"))
+        test should be (LengthColumnCheck(
+            Some(ColumnReference(None, "col0")),
+            minimumLength = Some(8),
+            maximumLength = Some(8)
         ))
     }
 }

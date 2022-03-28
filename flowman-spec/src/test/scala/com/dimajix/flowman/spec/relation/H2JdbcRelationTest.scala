@@ -150,6 +150,12 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                 ),
                 primaryKey = Seq("int_col")
             )))
+        relation.fields should be (Seq(
+            Field("str_col", StringType, nullable=false),
+            Field("int_col", IntegerType),
+            Field("float_col", FloatType),
+            Field("varchar_col", VarcharType(10))
+        ))
         relation.connection shouldBe a[ValueConnectionReference]
         relation.connection.identifier should be (ConnectionIdentifier("some_connection"))
         relation.connection.name should be ("some_connection")

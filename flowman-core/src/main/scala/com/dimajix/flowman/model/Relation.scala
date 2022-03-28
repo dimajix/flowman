@@ -165,6 +165,12 @@ trait Relation extends Instance {
     def fields : Seq[Field]
 
     /**
+     * Returns an (optional) primary key
+     * @return
+     */
+    def primaryKey : Seq[String]
+
+    /**
      * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
      * the physical source
      * @param execution
@@ -324,8 +330,15 @@ abstract class BaseRelation extends AbstractInstance with Relation {
     override def fields : Seq[Field] = {
         val partitions = this.partitions
         val partitionFields = SetIgnoreCase(partitions.map(_.name))
-        schema.toSeq.flatMap(_.fields).filter(f => !partitionFields.contains(f.name)) ++ partitions.map(_.field)
+        val fields = schema.toSeq.flatMap(_.fields).filter(f => !partitionFields.contains(f.name)) ++ partitions.map(_.field)
+        applyRequiredFields(fields)
     }
+
+    /**
+     * Returns an (optional) primary key
+     * @return
+     */
+    override def primaryKey : Seq[String] = Seq.empty
 
     /**
      * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from
@@ -442,13 +455,28 @@ abstract class BaseRelation extends AbstractInstance with Relation {
      */
     protected def fullSchema : Option[StructType] = {
         schema.map { schema =>
-            val schemaFieldNames = SetIgnoreCase(schema.fields.map(_.name))
-            val partitionFieldNames = SetIgnoreCase(partitions.map(_.name))
-            val schemaFields = schema.fields.map {
-                case f:Field if partitionFieldNames.contains(f.name) => f.copy(nullable = false)
-                case f => f
+            val schemaFields = schema.fields
+            val schemaFieldNames = SetIgnoreCase(schemaFields.map(_.name))
+            val fields = applyRequiredFields(schemaFields ++ partitions.filter(p => !schemaFieldNames.contains(p.name)).map(_.field))
+            StructType(fields)
+        }
+    }
+
+    protected def applyRequiredFields(fields:Seq[Field]) : Seq[Field] = {
+        val pkFields = if (primaryKey.nonEmpty) primaryKey else schema.toSeq.flatMap(_.primaryKey)
+        val partitionFields = partitions.map(_.name)
+        val nonNullableFields = pkFields ++ partitionFields
+        if (nonNullableFields.nonEmpty) {
+            val pkSet = SetIgnoreCase(nonNullableFields)
+            fields.map { f =>
+                if (pkSet.contains(f.name))
+                    f.copy(nullable = false)
+                else
+                    f
             }
-            StructType(schemaFields ++ partitions.filter(p => !schemaFieldNames.contains(p.name)).map(_.field))
+        }
+        else {
+            fields
         }
     }
 

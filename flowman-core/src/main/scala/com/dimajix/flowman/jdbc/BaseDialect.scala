@@ -280,8 +280,10 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
     override def deleteColumn(table: TableIdentifier, columnName: String): String =
         s"ALTER TABLE ${dialect.quote(table)} DROP COLUMN ${dialect.quoteIdentifier(columnName)}"
 
-    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String): String =
-        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType"
+    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean): String = {
+        val nullable = if (isNullable) "NULL" else "NOT NULL"
+        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType $nullable"
+    }
 
     override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
@@ -367,7 +369,9 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
 
     override def dropPrimaryKey(table: TableIdentifier): String = ???
 
-    override def addPrimaryKey(table: TableIdentifier, columns: Seq[String]): String = ???
+    override def addPrimaryKey(table: TableIdentifier, columns: Seq[String]): String = {
+        s"ALTER TABLE ${dialect.quote(table)} ADD PRIMARY KEY (${columns.map(dialect.quoteIdentifier).mkString(",")})"
+    }
 
     override def dropIndex(table: TableIdentifier, indexName: String): String = {
         s"DROP INDEX ${dialect.quoteIdentifier(indexName)}"

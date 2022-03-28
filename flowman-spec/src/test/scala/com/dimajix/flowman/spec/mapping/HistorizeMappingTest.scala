@@ -83,7 +83,7 @@ class HistorizeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
             StructField("valid_to", LongType)
         ))
 
-        val resultSchema = mapping.describe(executor, Map(MappingOutputIdentifier("df1") -> com.dimajix.flowman.types.StructType.of(df.schema)), "main")
+        val resultSchema = mapping.describe(executor, Map(MappingOutputIdentifier("df1") -> com.dimajix.flowman.types.StructType.of(df.schema)))("main")
         resultSchema should be (com.dimajix.flowman.types.StructType.of(expectedSchema))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
@@ -137,7 +137,7 @@ class HistorizeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
             StructField("ts", LongType)
         ))
 
-        val resultSchema = mapping.describe(executor, Map(MappingOutputIdentifier("df1") -> com.dimajix.flowman.types.StructType.of(df.schema)), "main")
+        val resultSchema = mapping.describe(executor, Map(MappingOutputIdentifier("df1") -> com.dimajix.flowman.types.StructType.of(df.schema)))("main")
         resultSchema should be (com.dimajix.flowman.types.StructType.of(expectedSchema))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")
@@ -185,7 +185,7 @@ class HistorizeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
             StructField("valid_to", LongType)
         ))
 
-        val resultSchema = mapping.describe(executor, Map(MappingOutputIdentifier("df1") -> com.dimajix.flowman.types.StructType.of(df.schema)), "main")
+        val resultSchema = mapping.describe(executor, Map(MappingOutputIdentifier("df1") -> com.dimajix.flowman.types.StructType.of(df.schema)))("main")
         resultSchema should be (com.dimajix.flowman.types.StructType.of(expectedSchema))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("df1") -> df))("main")

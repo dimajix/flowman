@@ -4,12 +4,6 @@ mappings:
     kind: readRelation
     relation: stations_raw
 
-  stations_conformed:
-    kind: cast
-    input: stations_raw
-    columns:
-      - name:
-
   # This mapping refers to the Parquet relation and reads in data from the local file system
   stations:
     kind: readRelation

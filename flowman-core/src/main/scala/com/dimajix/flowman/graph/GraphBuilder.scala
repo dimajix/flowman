@@ -127,8 +127,8 @@ final class GraphBuilder(context:Context, phase:Phase) {
                 val schema = try {
                     context.execution.describe(mapping, o)
                 } catch {
-                    case NonFatal(_) =>
-                        logger.warn(s"Error describing mapping '${mapping.identifier}', using empty schema instead")
+                    case NonFatal(ex) =>
+                        logger.warn(s"Error describing mapping '${mapping.identifier}', using empty schema instead: ${ex.getMessage}")
                         StructType(Seq.empty)
                 }
                 val fields = createFields(schema)
@@ -161,8 +161,8 @@ final class GraphBuilder(context:Context, phase:Phase) {
             val schema = try {
                 context.execution.describe(relation, partitions)
             } catch {
-                case NonFatal(_) =>
-                    logger.warn(s"Error describing relation '${relation.identifier}', using empty schema instead")
+                case NonFatal(ex) =>
+                    logger.warn(s"Error describing relation '${relation.identifier}', using empty schema instead: ${ex.getMessage}")
                     StructType(Seq.empty)
             }
             val fields = createFields(schema)

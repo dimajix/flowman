@@ -425,6 +425,14 @@ class Session private[execution](
             builder.withEnvironment(ns.environment)
             builder.withConfig(ns.config)
         }
+        _project.foreach { prj =>
+            // github-155: Apply project configuration to session
+            _profiles.foreach(p => prj.profiles.get(p).foreach { profile =>
+                logger.info(s"Applying project profile $p")
+                builder.withConfig(profile.config, SettingLevel.PROJECT_PROFILE)
+            })
+            builder.withConfig(prj.config, SettingLevel.PROJECT_SETTING)
+        }
         builder.build()
     }
 

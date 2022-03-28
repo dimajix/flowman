@@ -3,13 +3,16 @@ relations:
     kind: file
     format: text
     location: "s3a://dimajix-training/data/weather/"
+    # Define the pattern to be used for partitions
     pattern: "${year}"
+    # Define data partitions. Each year is stored in a separate sub directory
     partitions:
       - name: year
         type: integer
         granularity: 1
         description: "The year when the measurement was made"
     schema:
+      # Specify the (single) column via an embedded schema.
       kind: embedded
       fields:
         - name: raw_data

@@ -85,7 +85,7 @@ class JdbcRelationBase(
     table: Option[TableIdentifier] = None,
     query: Option[String] = None,
     mergeKey: Seq[String] = Seq.empty,
-    primaryKey: Seq[String] = Seq.empty,
+    override val primaryKey: Seq[String] = Seq.empty,
     indexes: Seq[TableIndex] = Seq.empty
 ) extends BaseRelation with PartitionedRelation with SchemaRelation {
     protected val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -94,16 +94,7 @@ class JdbcRelationBase(
     protected lazy val tableDefinition: Option[TableDefinition] = {
         schema.map { schema =>
             val pk = if (primaryKey.nonEmpty) primaryKey else schema.primaryKey
-
-            // Make Primary key columns not-nullable
-            val pkSet = SetIgnoreCase(pk)
-            val columns = fullSchema.get.fields.map { f =>
-                if (pkSet.contains(f.name))
-                    f.copy(nullable=false)
-                else
-                    f
-            }
-
+            val columns = fullSchema.get.fields
             TableDefinition(
                 tableIdentifier,
                 TableType.TABLE,
@@ -261,7 +252,7 @@ class JdbcRelationBase(
                     throw new PartitionAlreadyExistsException(tableIdentifier.database.getOrElse(""), tableIdentifier.table, partition.mapValues(_.value))
                 }
             case OutputMode.UPDATE =>
-                doUpdate(execution, df)
+                doUpdate(execution, dfExt)
             case _ => throw new IllegalArgumentException(s"Unsupported save mode: '$mode'. " +
                 "Accepted save modes are 'overwrite', 'append', 'ignore', 'error', 'update', 'errorifexists'.")
         }
@@ -809,7 +800,7 @@ case class JdbcRelation(
     stagingTable: Option[TableIdentifier] = None,
     query: Option[String] = None,
     mergeKey: Seq[String] = Seq.empty,
-    primaryKey: Seq[String] = Seq.empty,
+    override val primaryKey: Seq[String] = Seq.empty,
     indexes: Seq[TableIndex] = Seq.empty
 ) extends JdbcRelationBase(
     instanceProperties,

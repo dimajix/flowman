@@ -19,7 +19,9 @@ package com.dimajix.flowman.documentation
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.expr
+import org.apache.spark.sql.functions.coalesce
 import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.functions.length
 import org.apache.spark.sql.types.BooleanType
 
 import com.dimajix.flowman.execution.Context
@@ -144,6 +146,29 @@ final case class ExpressionColumnCheck(
     }
 }
 
+final case class LengthColumnCheck(
+    parent:Option[Reference],
+    description: Option[String] = None,
+    minimumLength: Option[Int] = None,
+    maximumLength: Option[Int] = None,
+    result:Option[CheckResult] = None
+) extends ColumnCheck {
+    override def name: String = {
+        (minimumLength, maximumLength) match {
+            case (Some(min),Some(max)) if min != max => s"LENGTH BETWEEN $min AND $max"
+            case (Some(min),Some(max)) => s"LENGTH = $min"
+            case (None,Some(max)) => s"LENGTH <= $max"
+            case (Some(min),None) => s"LENGTH >= $min"
+            case _ => s"LENGTH"
+        }
+    }
+    override def withResult(result: CheckResult): ColumnCheck = copy(result=Some(result))
+    override def reparent(parent: Reference): LengthColumnCheck = {
+        val ref = ColumnCheckReference(Some(parent))
+        copy(parent=Some(parent), result=result.map(_.reparent(ref)))
+    }
+}
+
 
 class DefaultColumnCheckExecutor extends ColumnCheckExecutor {
     override def execute(execution: Execution, context:Context, df: DataFrame, column:String, check: ColumnCheck): Option[CheckResult] = {
@@ -172,7 +197,17 @@ class DefaultColumnCheckExecutor extends ColumnCheckExecutor {
                 executePredicateTest(df.filter(df(column).isNotNull), check, df(column).between(lower, upper))
 
             case v: ExpressionColumnCheck =>
-                executePredicateTest(df, check, expr(v.expression).cast(BooleanType))
+                executePredicateTest(df, check, coalesce(expr(v.expression).cast(BooleanType), lit(false)))
+
+            case l: LengthColumnCheck =>
+                val condition =  (l.minimumLength, l.maximumLength) match {
+                    case (Some(min),Some(max)) if min != max => length(df(column)).between(min,max)
+                    case (Some(min),Some(max)) => length(df(column)) === min
+                    case (None,Some(max)) => length(df(column)) <= max
+                    case (Some(min),None) => length(df(column)) >= min
+                    case _ => lit(true)
+                }
+                executePredicateTest(df.filter(df(column).isNotNull), check, condition)
 
             case f:ForeignKeyColumnCheck =>
                 val otherDf =

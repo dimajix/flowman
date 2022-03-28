@@ -25,6 +25,7 @@ import com.dimajix.flowman.documentation.ColumnReference
 import com.dimajix.flowman.documentation.ColumnCheck
 import com.dimajix.flowman.documentation.ExpressionColumnCheck
 import com.dimajix.flowman.documentation.ForeignKeyColumnCheck
+import com.dimajix.flowman.documentation.LengthColumnCheck
 import com.dimajix.flowman.documentation.NotNullColumnCheck
 import com.dimajix.flowman.documentation.RangeColumnCheck
 import com.dimajix.flowman.documentation.UniqueColumnCheck
@@ -44,6 +45,7 @@ object ColumnCheckSpec extends TypeRegistry[ColumnCheckSpec] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "expression", value = classOf[ExpressionColumnCheckSpec]),
     new JsonSubTypes.Type(name = "foreignKey", value = classOf[ForeignKeyColumnCheckSpec]),
+    new JsonSubTypes.Type(name = "length", value = classOf[LengthColumnCheckSpec]),
     new JsonSubTypes.Type(name = "notNull", value = classOf[NotNullColumnCheckSpec]),
     new JsonSubTypes.Type(name = "unique", value = classOf[UniqueColumnCheckSpec]),
     new JsonSubTypes.Type(name = "range", value = classOf[RangeColumnCheckSpec]),
@@ -93,6 +95,17 @@ class ExpressionColumnCheckSpec extends ColumnCheckSpec {
     override def instantiate(context: Context, parent:ColumnReference): ExpressionColumnCheck = ExpressionColumnCheck(
         Some(parent),
         expression=context.evaluate(expression)
+    )
+}
+class LengthColumnCheckSpec extends ColumnCheckSpec {
+    @JsonProperty(value="minimum", required=true) private var minimumLength:Option[String] = None
+    @JsonProperty(value="maximum", required=true) private var maximumLength:Option[String] = None
+    @JsonProperty(value="length", required=true) private var length:Option[String] = None
+
+    override def instantiate(context: Context, parent:ColumnReference): LengthColumnCheck = LengthColumnCheck(
+        Some(parent),
+        minimumLength = context.evaluate(length).orElse(context.evaluate(minimumLength)).map(_.toInt),
+        maximumLength = context.evaluate(length).orElse(context.evaluate(maximumLength)).map(_.toInt)
     )
 }
 class ForeignKeyColumnCheckSpec extends ColumnCheckSpec {

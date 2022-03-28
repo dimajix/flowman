@@ -1,14 +1,19 @@
 relations:
   stations_raw:
+    # The relation is of type "file"
     kind: file
+    # ... and it uses CSV as file format
     format: csv
+    # data itself is stored at the following location
     location: "s3a://dimajix-training/data/weather/isd-history/"
+    # Specify some CSV-specific options
     options:
       sep: ","
       encoding: "UTF-8"
       quote: "\""
       header: "true"
       dateFormat: "yyyyMMdd"
+    # Specify the schema (which is stored in an external file)
     schema:
       kind: avro
       file: "${project.basedir}/schema/stations.avsc"

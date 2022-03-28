@@ -97,9 +97,6 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         mapping.describe(executor, Map(MappingOutputIdentifier("myview") -> inputSchema)) should be (Map(
             "main" -> com.dimajix.flowman.types.StructType(Seq(Field("_2", FieldType.of("int"))))
         ))
-        mapping.describe(executor, Map(MappingOutputIdentifier("myview") -> inputSchema), "main") should be (
-            com.dimajix.flowman.types.StructType(Seq(Field("_2", FieldType.of("int"))))
-        )
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> inputDf))("main")
             .orderBy("_2")

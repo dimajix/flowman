@@ -18,9 +18,12 @@ package com.dimajix.flowman.jdbc
 
 import java.util.Locale
 
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.jdbc.JdbcType
+import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.CharType
@@ -95,12 +98,6 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
         s"EXEC sp_rename '${dialect.quote(table)}.${dialect.quoteIdentifier(columnName)}', ${dialect.quoteIdentifier(newName)}, 'COLUMN'"
     }
 
-    // see https://docs.microsoft.com/en-us/sql/t-sql/statements/alter-table-transact-sql?view=sql-server-ver15
-    // require to have column data type to change the column nullability
-    // ALTER TABLE tbl_name ALTER COLUMN col_name datatype [NULL | NOT NULL]
-    // column_definition:
-    //    data_type [NOT NULL | NULL]
-    // We don't have column data type here, so we throw Exception for now
     override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $dataType $nullable"
@@ -108,5 +105,15 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
 
     override def dropIndex(table: TableIdentifier, indexName: String): String = {
         s"DROP INDEX ${dialect.quote(table)}.${dialect.quoteIdentifier(indexName)}"
+    }
+
+    override def merge(targetTable: TableIdentifier, targetAlias:String, targetSchema:Option[StructType], sourceAlias:String, sourceSchema:StructType, condition:Column, clauses:Seq[MergeClause]) : String = {
+        val sql = super.merge(targetTable, targetAlias, targetSchema, sourceAlias, sourceSchema, condition, clauses)
+        sql + ";\n" // Add semicolon for MS SQL Server
+    }
+
+    override def merge(targetTable: TableIdentifier, targetAlias:String, targetSchema:Option[StructType], sourceTable: TableIdentifier, sourceAlias:String, sourceSchema:StructType,  condition:Column, clauses:Seq[MergeClause]) : String = {
+        val sql = super.merge(targetTable, targetAlias, targetSchema, sourceTable, sourceAlias, sourceSchema, condition, clauses)
+        sql + ";\n" // Add semicolon for MS SQL Server
     }
 }

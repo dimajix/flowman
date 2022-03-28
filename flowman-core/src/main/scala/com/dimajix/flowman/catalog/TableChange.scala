@@ -18,6 +18,9 @@ package com.dimajix.flowman.catalog
 
 import java.util.Locale
 
+import scala.collection.mutable
+
+import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
@@ -56,27 +59,9 @@ object TableChange {
         val normalizedSource = sourceTable.normalize()
         val normalizedTarget = targetTable.normalize()
 
-        // Check which Indexes need to be dropped
-        val dropIndexes = sourceTable.indexes.flatMap { src =>
-            targetTable.indexes.find(_.name.toLowerCase(Locale.ROOT) == src.name.toLowerCase(Locale.ROOT)) match {
-                case None =>
-                    Some(DropIndex(src.name))
-                case Some(tgt) =>
-                    if (src.normalize() != tgt.normalize())
-                        Some(DropIndex(src.name))
-                    else None
-            }
-        }
-
-        // Check if primary key needs to be dropped
-        val dropPk = if(normalizedSource.primaryKey.nonEmpty && normalizedSource.primaryKey != normalizedTarget.primaryKey)
-                Some(DropPrimaryKey())
-            else
-                None
-
-        val targetFields = targetTable.columns.map(f => (f.name.toLowerCase(Locale.ROOT), f))
-        val targetFieldsByName = targetFields.toMap
-        val sourceFieldsByName = sourceTable.columns.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+        val targetFields = targetTable.columns.map(f => f.name -> f)
+        val targetFieldsByName = MapIgnoreCase(targetFields)
+        val sourceFieldsByName = MapIgnoreCase(sourceTable.columns.map(f => f.name -> f))
 
         // Check which fields need to be dropped
         val dropFields = (sourceFieldsByName.keySet -- targetFieldsByName.keySet).toSeq.flatMap { fieldName =>
@@ -85,6 +70,11 @@ object TableChange {
             else
                 None
         }
+
+        // PK also needs to be recreated if data type changes (github-154)
+        var changePk = normalizedSource.primaryKey != normalizedTarget.primaryKey
+        // Indexes need to be recreated if the data type changes (github-156)
+        val changeIndexes = mutable.Set[String]()
 
         // Infer column changes
         val changeFields = targetFields.flatMap { case(tgtName,tgtField) =>
@@ -96,38 +86,73 @@ object TableChange {
                             Seq(UpdateColumnType(srcField.name, tgtField.ftype))
                         else if (migrationPolicy == MigrationPolicy.RELAXED && coerce(srcField.ftype, tgtField.ftype) != srcField.ftype)
                             Seq(UpdateColumnType(srcField.name, tgtField.ftype))
+                        // If new PK contains this field, we better always update data type
+                        else if (migrationPolicy == MigrationPolicy.RELAXED && normalizedTarget.primaryKey.contains(srcField.name.toLowerCase(Locale.ROOT))
+                            && srcField.ftype != tgtField.ftype)
+                            Seq(UpdateColumnType(srcField.name, tgtField.ftype))
                         else
-                            Seq()
+                            Seq.empty
+
+                    // If the data type of a PK element changes, then the PK needs to recreated
+                    if (modType.nonEmpty && normalizedTarget.primaryKey.contains(srcField.name.toLowerCase(Locale.ROOT)))
+                        changePk = true
+
                     val modNullability =
                         if (migrationPolicy == MigrationPolicy.STRICT && srcField.nullable != tgtField.nullable)
                             Seq(UpdateColumnNullability(srcField.name, tgtField.nullable))
                         else if (migrationPolicy == MigrationPolicy.RELAXED && !srcField.nullable && tgtField.nullable)
                             Seq(UpdateColumnNullability(srcField.name, tgtField.nullable))
+                        // If new PK contains this field, we also might be required to update nullability
+                        else if (migrationPolicy == MigrationPolicy.RELAXED && normalizedTarget.primaryKey.contains(srcField.name.toLowerCase(Locale.ROOT))
+                            && changePk && srcField.nullable && !tgtField.nullable)
+                            Seq(UpdateColumnNullability(srcField.name, tgtField.nullable))
                         else
-                            Seq()
+                            Seq.empty
                     val modComment =
                         if (migrationPolicy == MigrationPolicy.STRICT && srcField.description != tgtField.description)
                             Seq(UpdateColumnComment(srcField.name, tgtField.description))
                         else
-                            Seq()
+                            Seq.empty
+
+                    // If the data type of an index changes, then the Index needs to be recreated
+                    if (modType.nonEmpty) {
+                        normalizedTarget.indexes.foreach { idx =>
+                            if (idx.columns.contains(srcField.name.toLowerCase(Locale.ROOT)))
+                                changeIndexes.add(idx.name)
+                        }
+                    }
 
                     modType ++ modNullability ++ modComment
             }
         }
 
-        // Create new PK
-        val createPk = if (normalizedTarget.primaryKey.nonEmpty && normalizedTarget.primaryKey != normalizedSource.primaryKey)
+        // Check if primary key needs to be dropped
+        val dropPk = if(normalizedSource.primaryKey.nonEmpty && changePk)
+            Some(DropPrimaryKey())
+        else
+            None
+        val createPk = if (normalizedTarget.primaryKey.nonEmpty && changePk)
             Some(CreatePrimaryKey(targetTable.primaryKey))
                 else
             None
 
-        // Create new indexes
+        // Check which Indexes need to be dropped
+        val dropIndexes = sourceTable.indexes.flatMap { src =>
+            targetTable.indexes.find(_.name.toLowerCase(Locale.ROOT) == src.name.toLowerCase(Locale.ROOT)) match {
+                case None =>
+                    Some(DropIndex(src.name))
+                case Some(tgt) =>
+                    if (src.normalize() != tgt.normalize() || changeIndexes.contains(src.name.toLowerCase(Locale.ROOT)))
+                        Some(DropIndex(src.name))
+                    else None
+            }
+        }
         val addIndexes = targetTable.indexes.flatMap { tgt =>
             sourceTable.indexes.find(_.name.toLowerCase(Locale.ROOT) == tgt.name.toLowerCase(Locale.ROOT)) match {
                 case None =>
                     Some(CreateIndex(tgt.name, tgt.columns, tgt.unique))
                 case Some(src) =>
-                    if (src.normalize() != tgt.normalize())
+                    if (src.normalize() != tgt.normalize() || changeIndexes.contains(src.name.toLowerCase(Locale.ROOT)))
                         Some(CreateIndex(tgt.name, tgt.columns, tgt.unique))
                     else
                         None

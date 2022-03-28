@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,6 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
         mapping.inputs should be (Set())
         mapping.outputs should be (Set("main"))
         mapping.describe(executor, Map()) should be (Map("main" -> schema))
-        mapping.describe(executor, Map(), "main") should be (schema)
 
         val df = executor.instantiate(mapping, "main")
         df.schema should be (schema.sparkType)
@@ -207,7 +206,6 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
         mapping.inputs should be (Set())
         mapping.outputs should be (Set("main"))
         mapping.describe(executor, Map()) should be (Map("main" -> schema))
-        mapping.describe(executor, Map(), "main") should be (schema)
 
         val df = executor.instantiate(mapping, "main")
         df.schema should be (schema.sparkType)

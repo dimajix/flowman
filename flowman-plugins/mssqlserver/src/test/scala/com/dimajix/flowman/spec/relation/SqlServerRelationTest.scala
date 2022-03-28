@@ -28,6 +28,7 @@ import com.dimajix.flowman.spec.schema.EmbeddedSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.VarcharType
 
 
 class SqlServerRelationTest extends AnyFlatSpec with Matchers {
@@ -49,7 +50,11 @@ class SqlServerRelationTest extends AnyFlatSpec with Matchers {
                |      type: string
                |    - name: int_col
                |      type: integer
-            """.stripMargin
+               |    - name: varchar_col
+               |      type: varchar(10)
+               |primaryKey:
+               |  - str_col
+               |""".stripMargin
 
         val relationSpec = ObjectMapper.parse[RelationSpec](spec).asInstanceOf[SqlServerRelationSpec]
 
@@ -63,11 +68,18 @@ class SqlServerRelationTest extends AnyFlatSpec with Matchers {
             Schema.Properties(context, name="embedded", kind="inline"),
             fields = Seq(
                 Field("str_col", StringType),
-                Field("int_col", IntegerType)
+                Field("int_col", IntegerType),
+                Field("varchar_col", VarcharType(10))
             )
         )))
+        relation.fields should be (Seq(
+            Field("str_col", StringType, nullable=false),
+            Field("int_col", IntegerType),
+            Field("varchar_col", VarcharType(10))
+        ))
         relation.connection shouldBe a[ValueConnectionReference]
         relation.connection.identifier should be (ConnectionIdentifier("some_connection"))
         relation.connection.name should be ("some_connection")
+        relation.primaryKey should be (Seq("str_col"))
     }
 }

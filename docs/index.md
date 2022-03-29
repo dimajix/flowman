@@ -93,13 +93,13 @@ Flowman also provides optional plugins which extend functionality. You can find 
 
    quickstart
    concepts/index
-   connectors/index
    tutorial/index
    spec/index
    testing/index
    documenting/index
    cli/index
    setup/index
+   connectors/index
    plugins/index
    cookbook/index
 ```

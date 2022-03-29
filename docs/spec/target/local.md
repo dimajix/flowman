@@ -38,7 +38,7 @@ targets:
 * `TRUNCATE` - removes the target file
 * `DESTROY` - removes the target file, equivalent to `TRUNCATE`
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).
 
 
 ## Provided Metrics

@@ -27,4 +27,4 @@ Specified the number of records to be displayed
 ## Supported Execution Phases
 * `BUILD` - The target will only be executed in the *build* phase
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).

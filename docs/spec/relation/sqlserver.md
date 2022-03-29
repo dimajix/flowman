@@ -8,7 +8,7 @@ table with the contents of the temp table within a single transaction.
 
 ## Plugin
 
-This relation type is provided as part of the [`flowman-mssql` plugin](../../plugins/mssql.md), which needs to be enabled 
+This relation type is provided as part of the [`flowman-mssql` plugin](../../plugins/mssqlserver.md), which needs to be enabled 
 in your `namespace.yml` file. See [namespace documentation](../namespace.md) for more information for configuring plugins.
 
 
@@ -100,7 +100,7 @@ specific qualification, meaning that the default database will be used or the on
 ## Automatic Migrations
 Flowman supports some automatic migrations, specifically with the migration strategies `ALTER`, `ALTER_REPLACE`
 and `REPLACE` (those can be set via the global config variable `flowman.default.relation.migrationStrategy`,
-see [configuration](../../config.md) for more details).
+see [configuration](../../setup/config.md) for more details).
 
 The migration strategy `ALTER` supports the following alterations for JDBC relations:
 * Changing nullability

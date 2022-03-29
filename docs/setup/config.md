@@ -1,9 +1,9 @@
 # Configuration Properties
 
 Flowman supports some configuration properties, which influence the behaviour. These properties either can be set
-on the command line via `--conf` (See [flowexec documentation](cli/flowexec.md)), or in the `config` section of the flow 
-specification (see [module documentation](spec/module.md)) or in the namespace configuration (see
-[namespace documentation](spec/namespace.md))
+on the command line via `--conf` (See [flowexec documentation](../cli/flowexec.md)), or in the `config` section of the flow 
+specification (see [module documentation](../spec/module.md)) or in the namespace configuration (see
+[namespace documentation](../spec/namespace.md))
 
 
 ## List of Configuration Properties
@@ -28,7 +28,7 @@ variable `FLOWMAN_PLUGIN_DIR` or `FLOWMAN_HOME`.
 
 - `flowman.impala.computeStats` *(type: boolean)* *(default:true)*
   If enabled (i.e. set to `true`), then Flowman will perform a `COMPUTE STATS` within the 
-  [Impala Catalog plugin](plugins/impala.md) whenever a Hive table is updated. The `REFRESH` statements will always
+  [Impala Catalog plugin](../plugins/impala.md) whenever a Hive table is updated. The `REFRESH` statements will always
   be executed by the plugin.
 
 - `flowman.execution.target.forceDirty` *(type: boolean)* *(default:false)* (since Flowman 0.14.0)
@@ -95,19 +95,19 @@ Sets the strategy to use how tables should be migrated. Possible values are:
 - `flowman.default.relation.input.columnMismatchPolicy` *(type: string)* *(default:`IGNORE`)* (since Flowman 0.20.0)
   Defines how Flowman should handle a mismatch between the actual columns of a relation when reading from it and the
   columns as defined in the relation. Per default, Flowman ignores any mismatch and simply passes through the schema
-  of the actual relation. See [relations](spec/relation/index.md) for possible options and more details.
+  of the actual relation. See [relations](../spec/relation/index.md) for possible options and more details.
 - `flowman.default.relation.input.typeMismatchPolicy` *(type: string)* *(default:`IGNORE`)* (since Flowman 0.20.0)
   Defines how Flowman should handle a mismatch between the types of the actual schema of a relation when reading from 
   it and the types of the schema as defined in the relation. Per default, Flowman ignores any mismatch and simply passes 
-  through the types of the actual relation. See [relations](spec/relation/index.md) for possible options and more details.
+  through the types of the actual relation. See [relations](../spec/relation/index.md) for possible options and more details.
 - `flowman.default.relation.output.columnMismatchPolicy` *(type: string)* *(default:`ADD_REMOVE_COLUMNS`)* (since Flowman 0.20.0)
   Defines how Flowman should handle a mismatch of columns of records being written to a relation and the relations
   actual defined columns. Per default Flowman will add/remove columns to/from records such that they match the current
-  physical layout. See [relations](spec/relation/index.md) for possible options and more details.
+  physical layout. See [relations](../spec/relation/index.md) for possible options and more details.
 - `flowman.default.relation.output.typeMismatchPolicy` *(type: string)* *(default:`CAST_ALWAYS`)* (since Flowman 0.20.0)
   Defines how Flowman should handle a mismatch of columns of records being written to a relation and the relations
   actual defined columns. Per default Flowman will add/remove columns to/from records such that they match the current
-  physical layout. See [relations](spec/relation/index.md) for possible options and more details.
+  physical layout. See [relations](../spec/relation/index.md) for possible options and more details.
 
 - `flowman.default.target.verifyPolicy` *(type: string)* *(default:`EMPTY_AS_FAILURE`)* (since Flowman 0.22.0)
 Defines the default target policy that is used during the `VERIFY` execution phase. The setting controls how Flowman

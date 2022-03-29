@@ -43,7 +43,7 @@ targets:
 ## Supported Execution Phases
 * `VALIDATE` - The specified assertions will be run in the `VALIDATE` phase before the `CREATE` and `BUILD` phases.
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).
 
 
 ## Remarks

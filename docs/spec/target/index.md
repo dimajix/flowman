@@ -4,7 +4,7 @@ From a top level perspective, Flowman works like a build tool like make or maven
 build tools, the project specification in Flowman also contains the logic to be build (normally that is separated
 in source code files which get compiles or otherwise processed with additional tools).
 
-Each target supports at least some [build phases](../../lifecycle.md)
+Each target supports at least some [build phases](../../concepts/lifecycle.md)
 
 ## Common Fields
 

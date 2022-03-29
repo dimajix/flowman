@@ -3,6 +3,7 @@
 In order to run the example, you need to have valid access credentials to AWS, since we will be using some data
 stored in S3.
 
+
 ## 1. Install Spark
 
 Although Flowman directly builds upon the power of Apache Spark, it does not provide a working Hadoop or Spark 
@@ -14,7 +15,7 @@ Fortunately, Spark is rather simple to install locally on your machine:
 
 ### Download & Install Spark
 
-As of this writing, the latest release of Flowman is 0.22.0 and is available prebuilt for Spark 3.2.1 on the Spark 
+As of this writing, the latest release of Flowman is 0.23.1 and is available prebuilt for Spark 3.2.1 on the Spark 
 homepage. So we download the appropriate Spark distribution from the Apache archive and unpack it.
 
 ```shell
@@ -28,6 +29,7 @@ ln -snf spark-3.2.1-bin-hadoop3.2 spark
 
 The Spark package already contains Hadoop, so with this single download you already have both installed and integrated with each other.
 
+
 ## 2. Install Flowman
 
 You find prebuilt Flowman packages on the corresponding release page on GitHub. For this quickstart, we chose 
@@ -35,8 +37,8 @@ You find prebuilt Flowman packages on the corresponding release page on GitHub. 
 
 ```shell
 # Download and unpack Flowman
-curl -L https://github.com/dimajix/flowman/releases/download/0.22.0/flowman-dist-0.22.0-oss-spark3.2-hadoop3.3-bin.tar.gz | tar xvzf -# Create a nice link
-ln -snf flowman-0.22.0 flowman
+curl -L https://github.com/dimajix/flowman/releases/download/0.22.0/flowman-dist-0.23.1-oss-spark3.2-hadoop3.3-bin.tar.gz | tar xvzf -# Create a nice link
+ln -snf flowman-0.23.1 flowman
 ```
 
 ### Flowman Configuration
@@ -151,6 +153,7 @@ Finally we quit the Flowman shell via the `quit` command.
 flowman:weather> quit
 ```
 
+
 ## 4. Flowman Batch Execution
 
 So far we have only used the Flowman shell for interactive work with projects. Actually, the shell was developed as a
@@ -164,6 +167,7 @@ For example for running the “build” lifecycle of the weather project for the
 ```shell
 bin/flowexec -f examples/weather job build main year=2014
 ```
+
 
 ## 5. Congratulations!
 

@@ -36,4 +36,4 @@ All metrics defined as named columns are exported with the following labels:
 ## Supported Execution Phases
 * `VERIFY` - The evaluation of all measures will only be performed in the `VERIFY` phase
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).

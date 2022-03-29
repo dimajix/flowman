@@ -32,7 +32,7 @@ application.
 * Automatic dependency analysis to build targets in the correct order
 * Powerful yet simple [command line tool for batch execution](cli/flowexec.md)
 * Powerful [Command line tool for interactive data flow analysis](cli/flowshell.md)
-* [History server](history-server/index.md) that provides an overview of past jobs and targets including lineage
+* [History server](cli/history-server.md) that provides an overview of past jobs and targets including lineage
 * [Metric system](cookbook/metrics.md) with the ability to publish these to servers like Prometheus
 * Extendable via Plugins
 
@@ -44,8 +44,8 @@ A small [quickstart guide](quickstart.md) will lead you through a simple example
 
 
 ### Installation
-* [Flowman Installation](installation.md): Installation Guide
-* [Configuration](config.md): Configuration settings
+* [Flowman Installation](setup/installation.md): Installation Guide
+* [Configuration](setup/config.md): Configuration settings
 
 
 ### CLI Documentation
@@ -55,7 +55,7 @@ following sections:
 
 * [Flowman Executor](cli/flowexec.md): Documentation of the Flowman Executor CLI
 * [Flowman Shell](cli/flowshell.md): Documentation of the Flowman Shell CLI
-* [Flowman Server](history-server/index.md): Documentation of the Flowman Server CLI
+* [Flowman Server](cli/history-server.md): Documentation of the Flowman Server CLI
 
 
 ### Specification Documentation
@@ -92,17 +92,14 @@ Flowman also provides optional plugins which extend functionality. You can find 
    :glob:
 
    quickstart
-   concepts
-   installation
-   lifecycle
+   concepts/index
    connectors/index
+   tutorial/index
    spec/index
    testing/index
    documenting/index
    cli/index
-   history-server/index
-   cookbook/index
+   setup/index
    plugins/index
-   config
-   building
+   cookbook/index
 ```

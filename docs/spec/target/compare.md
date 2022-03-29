@@ -40,4 +40,4 @@ some predefined results
 * `VERIFY` - Comparison will be performed in the *verify* build phase. If the comparison fails, the build will stop
 with an error
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).

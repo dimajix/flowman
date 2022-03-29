@@ -122,7 +122,7 @@ target.
 if the relation refers to a Hive table)
 * `DESTROY` - This drops the relation itself and all its content.
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).
 
 
 ## Provided Metrics

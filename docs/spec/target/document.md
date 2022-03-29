@@ -58,4 +58,4 @@ subdirectory `generated-documentation` within the projects base directory.
 ## Supported Execution Phases
 * `VERIFY` - This will generate the documentation
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).

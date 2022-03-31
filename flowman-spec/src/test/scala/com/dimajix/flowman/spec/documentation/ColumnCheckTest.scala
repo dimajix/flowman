@@ -30,7 +30,7 @@ import com.dimajix.flowman.spec.ObjectMapper
 
 
 class ColumnCheckTest extends AnyFlatSpec with Matchers {
-    "A ColumnCheck" should "be deserializable" in {
+    "A UniqueColumnCheck" should "be deserializable" in {
         val yaml =
             """
               |kind: unique
@@ -52,6 +52,7 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers {
               |kind: range
               |lower: 7
               |upper: 23
+              |filter: x <> y
             """.stripMargin
 
         val spec = ObjectMapper.parse[ColumnCheckSpec](yaml)
@@ -62,7 +63,8 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers {
         test should be (RangeColumnCheck(
             Some(ColumnReference(None, "col0")),
             lower="7",
-            upper="23"
+            upper="23",
+            filter=Some("x <> y")
         ))
     }
 

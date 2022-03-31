@@ -1,4 +1,5 @@
 # Version 0.23.2
+* github-168: Support optional filters in data quality checks
 * github-169: Support sub-queries in filter conditions
 
 

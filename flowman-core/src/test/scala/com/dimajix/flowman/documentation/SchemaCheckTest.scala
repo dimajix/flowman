@@ -76,6 +76,45 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         result2 should be (Some(CheckResult(Some(test1.reference), CheckStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
     }
 
+    it should "support filter conditions" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+
+        val excludes = spark.createDataFrame(Seq(
+            (3,3)
+        ))
+        val df = spark.createDataFrame(Seq(
+            (Some(1),2,1),
+            (None,3,2)
+        ))
+
+        val valuesGen = mock[Prototype[Mapping]]
+        val valuesMapping = mock[Mapping]
+        val project = Project("project",
+            mappings = Map("excludes" -> valuesGen)
+        )
+
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        (valuesGen.instantiate _).expects(*,*).returns(valuesMapping)
+        (valuesMapping.identifier _).expects().atLeastOnce().returns(MappingIdentifier("excludes"))
+        (valuesMapping.output _).expects().atLeastOnce().returns(MappingOutputIdentifier("excludes"))
+        (valuesMapping.outputs _).expects().atLeastOnce().returns(Set("main"))
+        (valuesMapping.inputs _).expects().returns(Set.empty)
+        (valuesMapping.context _).expects().returns(context)
+        (valuesMapping.broadcast _).expects().returns(false)
+        (valuesMapping.cache _).expects().returns(StorageLevel.NONE)
+        (valuesMapping.checkpoint _).expects().returns(false)
+        (valuesMapping.execute _).expects(*,*).returns(Map("main" -> excludes))
+
+        val testExecutor = new DefaultSchemaCheckExecutor
+        val test1 = ExpressionSchemaCheck(None, expression="_2 > _3", filter=Some("_2 NOT IN (SELECT _1 FROM excludes)"))
+        val result1 = testExecutor.execute(execution, context, df, test1)
+        result1 should be (Some(CheckResult(Some(test1.reference), CheckStatus.SUCCESS, description=Some("1 records passed, 0 records failed"))))
+    }
+
     "A ForeignKeySchemaCheck" should "work" in {
         val mappingSpec = mock[Prototype[Mapping]]
         val mapping = mock[Mapping]

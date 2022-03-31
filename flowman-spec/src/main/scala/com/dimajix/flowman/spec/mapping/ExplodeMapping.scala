@@ -46,7 +46,7 @@ object ExplodeMapping {
 
 case class ExplodeMapping(
     instanceProperties : Mapping.Properties,
-    input : MappingOutputIdentifier,
+    input: MappingOutputIdentifier,
     array: Path,
     outerColumns: ExplodeMapping.Columns = ExplodeMapping.Columns(),
     innerColumns: ExplodeMapping.Columns = ExplodeMapping.Columns(),

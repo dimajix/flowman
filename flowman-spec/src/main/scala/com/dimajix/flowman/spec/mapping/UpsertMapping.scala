@@ -41,7 +41,7 @@ case class UpsertMapping(
      * @return
      */
     override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input, updates)
+        Set(input, updates) ++ expressionDependencies(filter)
     }
 
     /**
@@ -63,7 +63,7 @@ case class UpsertMapping(
         val updatesDf = tables(updates)
 
         // Apply optional filter to updates (for example for removing DELETEs)
-        val filteredUpdates = filter.map(f => updatesDf.where(f)).getOrElse(updatesDf)
+        val filteredUpdates = applyFilter(updatesDf, filter, tables)
 
         // Project updates DataFrame to schema of input DataFrame
         val conformer = SchemaEnforcer(inputDf.schema)

@@ -39,7 +39,7 @@ case class SortMapping(
      * @return
      */
     override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 
     /**
@@ -63,7 +63,7 @@ case class SortMapping(
             }
         )
         val result = df.sort(cols:_*)
-        val filteredResult = filter.map(result.filter).getOrElse(result)
+        val filteredResult = applyFilter(result, filter, tables)
 
         Map("main" -> filteredResult)
     }

@@ -64,7 +64,7 @@ case class ReadStreamMapping (
      *
      * @return
      */
-    override def inputs : Set[MappingOutputIdentifier] = Set.empty
+    override def inputs : Set[MappingOutputIdentifier] = expressionDependencies(filter)
 
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
@@ -84,7 +84,7 @@ case class ReadStreamMapping (
         val df = rel.readStream(execution)
 
         // Apply optional filter
-        val result = filter.map(df.filter).getOrElse(df)
+        val result = applyFilter(df, filter, input)
 
         Map("main" -> result)
     }

@@ -48,7 +48,7 @@ case class HistorizeMapping(
      * @return
      */
     override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 
     /**
@@ -91,7 +91,7 @@ case class HistorizeMapping(
         }
 
         // Apply optional filter to updates (for example for removing DELETEs)
-        val result = filter.map(f => history.where(f)).getOrElse(history)
+        val result = applyFilter(history, filter, tables)
 
         Map("main" -> result)
     }

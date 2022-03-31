@@ -30,7 +30,8 @@ import com.dimajix.flowman.types.StructType
 case class CoalesceMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
-    partitions:Int
+    partitions:Int,
+    filter:Option[String] = None
 ) extends BaseMapping {
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -46,7 +47,10 @@ case class CoalesceMapping(
         val df = input(this.input)
         val result = df.coalesce(partitions)
 
-        Map("main" -> result)
+        // Apply optional filter
+        val filteredResult = applyFilter(result, filter, input)
+
+        Map("main" -> filteredResult)
     }
 
     /**
@@ -55,7 +59,7 @@ case class CoalesceMapping(
       * @return
       */
     override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 
     /**
@@ -79,6 +83,7 @@ case class CoalesceMapping(
 class CoalesceMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "partitions", required = false) private[spec] var partitions: String = _
+    @JsonProperty(value = "filter", required=false) private var filter: Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -89,7 +94,8 @@ class CoalesceMappingSpec extends MappingSpec {
         CoalesceMapping(
             instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
-            Option(context.evaluate(partitions)).filter(_.nonEmpty).map(_.toInt).getOrElse(0)
+            Option(context.evaluate(partitions)).filter(_.nonEmpty).map(_.toInt).getOrElse(0),
+            context.evaluate(filter)
         )
     }
 }

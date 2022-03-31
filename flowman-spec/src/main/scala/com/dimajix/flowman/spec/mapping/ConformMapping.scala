@@ -34,12 +34,12 @@ import com.dimajix.flowman.types.StructType
 
 
 case class ConformMapping(
-    instanceProperties:Mapping.Properties,
-    input : MappingOutputIdentifier,
-    types : Map[String,FieldType] = Map(),
-    naming : Option[CaseFormat] = None,
-    flatten : Boolean = false,
-    filter : Option[String] = None
+    instanceProperties: Mapping.Properties,
+    input: MappingOutputIdentifier,
+    types: Map[String,FieldType] = Map(),
+    naming: Option[CaseFormat] = None,
+    flatten: Boolean = false,
+    filter: Option[String] = None
 )
 extends BaseMapping {
     /**
@@ -48,7 +48,7 @@ extends BaseMapping {
       * @return
       */
     override def inputs: Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 
     /**
@@ -69,7 +69,7 @@ extends BaseMapping {
         val result = transforms.foldLeft(df)((df,xfs) => xfs.transform(df))
 
         // Apply optional filter
-        val filteredResult = filter.map(result.filter).getOrElse(result)
+        val filteredResult = applyFilter(result, filter, input)
 
         Map("main" -> filteredResult)
     }

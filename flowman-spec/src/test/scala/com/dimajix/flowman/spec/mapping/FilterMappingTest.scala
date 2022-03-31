@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.mapping
 
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -24,11 +25,16 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Prototype
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.types.ValueRecord
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class FilterMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+class FilterMappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalSparkSession {
     "An FilterMapping" should "be parseable" in {
         val spec =
             """
@@ -70,8 +76,32 @@ class FilterMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         )
 
         mapping.describe(executor, Map(MappingOutputIdentifier("input") -> inputSchema)) should be (Map("main" -> inputSchema))
+        mapping.inputs should be (Set(MappingOutputIdentifier("input")))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("input") -> input))("main")
         result.count() should be (50)
+    }
+
+    it should "work with nested queries" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.execution
+        val context = session.context
+
+        val input = spark.range(10).toDF()
+        val inputSchema = StructType.of(input.schema)
+
+        val values = spark.range(2).toDF()
+
+        val mapping = FilterMapping(
+            Mapping.Properties(context),
+            MappingOutputIdentifier("input"),
+            "id NOT IN (SELECT id FROM filter_values)"
+        )
+
+        mapping.describe(executor, Map(MappingOutputIdentifier("input") -> inputSchema)) should be (Map("main" -> inputSchema))
+        mapping.inputs should be (Set(MappingOutputIdentifier("input"), MappingOutputIdentifier("filter_values")))
+
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("input") -> input, MappingOutputIdentifier("filter_values") -> values))("main")
+        result.count() should be (8)
     }
 }

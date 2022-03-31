@@ -40,6 +40,9 @@ the record with the highest value will be kept.
 Specifies one or more columns forming a primary key or ID. Different versions of the
 same entity are then distinguished by the `versionColumns` 
 
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+  An optional SQL filter expression that is applied *after* the transformation itself.
+
 
 ## Outputs
 * `main` - the only output of the mapping

@@ -37,6 +37,9 @@ Specifies the name of the input mapping.
 * `columns` **(optional)** *(type: map:string)*:
 Specifies a map of new column names with an expression for calculating them.
 
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+  An optional SQL filter expression that is applied *after* the transformation itself.
+
 
 ## Outputs
 * `main` - the only output of the mapping

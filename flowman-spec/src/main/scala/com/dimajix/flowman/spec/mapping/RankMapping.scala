@@ -62,7 +62,7 @@ case class RankMapping(
      * @return
      */
     override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 
     /**
@@ -88,7 +88,7 @@ case class RankMapping(
             .drop(col("flowman_gen_rank"))
 
         // Apply optional filter to updates (for example for removing DELETEs)
-        val result = filter.map(f => latest.where(f)).getOrElse(latest)
+        val result = applyFilter(latest, filter, tables)
 
         Map("main" -> result)
     }

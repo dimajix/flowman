@@ -1,3 +1,7 @@
+# Version 0.23.2
+* github-169: Support sub-queries in filter conditions
+
+
 # Version 0.23.1 - 2022-03-28
 * github-154: Fix failing migration when PK requires change due to data type
 * github-156: Recreate indexes when data type of column changes

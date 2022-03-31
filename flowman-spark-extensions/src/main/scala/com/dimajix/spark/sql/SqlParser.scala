@@ -47,7 +47,7 @@ object SqlParser {
         // Do not use LogicalPlan.collectWithSubqueries to provide compatibility with Spark 2.4
         def collectAllSubqueries(plan:LogicalPlan) : Seq[LogicalPlan] = {
             val subqueries = plan.flatMap(_.subqueries)
-            subqueries ++ subqueries.flatMap(collectAllSubqueries(_))
+            subqueries ++ subqueries.flatMap(collectAllSubqueries)
         }
         val allQueries = plan +: collectAllSubqueries(plan)
 

@@ -36,6 +36,9 @@ columns:
 * `columns` **(mandatory)** *(map:type)*:
 Map of column names to desired data types
 
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+  An optional SQL filter expression that is applied *after* the transformation itself.
+
 
 ## Remarks
 

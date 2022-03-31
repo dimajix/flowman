@@ -30,6 +30,7 @@ import com.dimajix.flowman.transforms.Assembler
 import com.dimajix.flowman.transforms.CaseFormat
 import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.ExpressionParser
 
 
 object AssembleMapping {
@@ -127,7 +128,7 @@ case class AssembleMapping(
       * @return
       */
     override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 
     /**
@@ -146,7 +147,7 @@ case class AssembleMapping(
         val result = asm.reassemble(df)
 
         // Apply optional filter
-        val filteredResult = filter.map(result.filter).getOrElse(result)
+        val filteredResult = applyFilter(result, filter, deps)
 
         Map("main" -> filteredResult)
     }

@@ -16,7 +16,7 @@ Fortunately, Apache Spark is rather simple to install locally on your machine:
 
 ### Download & Install Spark
 
-As of this writing, the latest release of Flowman is 0.22.0 and is available prebuilt for Spark 3.2.1 on the Spark
+As of this writing, the latest release of Flowman is 0.23.1 and is available prebuilt for Spark 3.2.1 on the Spark
 homepage. So we download the appropriate Spark distribution from the Apache archive and unpack it.
 
 ```shell
@@ -25,14 +25,15 @@ mkdir playground
 cd playground
 
 # Download and unpack Spark & Hadoop
-curl -L https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.2.1-bin-hadoop3.2.tgz | tar xvzf -# Create a nice link
+curl -L https://archive.apache.org/dist/spark/spark-3.2.1/spark-3.2.1-bin-hadoop3.2.tgz | tar xvzf -
+# Create a nice link
 ln -snf spark-3.2.1-bin-hadoop3.2 spark
 ```
 The Spark package already contains Hadoop, so with this single download you already have both installed and integrated with each other.
 
 ### Download & Install Hadoop Utils for Windows
 
-If you are trying to run the application on Windows, you also need the *Hadoop Winutils*, which is a set of
+If you are trying to run Flowman on Windows, you also need the *Hadoop Winutils*, which is a set of
 DLLs required for the Hadoop libraries to be working. You can get a copy at https://github.com/kontext-tech/winutils .
 Once you downloaded the appropriate version, you need to place the DLLs into a directory `$HADOOP_HOME/bin`, where
 `HADOOP_HOME` refers to some arbitrary location of your choice on your Windows PC. You also need to set the following 
@@ -44,14 +45,14 @@ environment variables:
 ## 1.2 Install Flowman
 
 You find prebuilt Flowman packages on the corresponding release page on GitHub. For this quickstart, we chose
-`flowman-dist-0.22.0-oss-spark3.2-hadoop3.3-bin.tar.gz` which nicely fits to the Spark package we just downloaded before.
+`flowman-dist-0.23.1-oss-spark3.2-hadoop3.3-bin.tar.gz` which nicely fits to the Spark package we just downloaded before.
 
 ```shell
 # Download and unpack Flowman
-curl -L https://github.com/dimajix/flowman/releases/download/0.22.0/flowman-dist-0.22.0-oss-spark3.2-hadoop3.3-bin.tar.gz | tar xvzf -
+curl -L https://github.com/dimajix/flowman/releases/download/0.23.1/flowman-dist-0.23.1-oss-spark3.2-hadoop3.3-bin.tar.gz | tar xvzf -
 
 # Create a nice link
-ln -snf flowman-0.20.0 flowman
+ln -snf flowman-0.23.1 flowman
 ```
 
 ### Flowman Configuration

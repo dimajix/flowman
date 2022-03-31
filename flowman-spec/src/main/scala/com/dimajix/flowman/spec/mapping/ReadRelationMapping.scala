@@ -68,7 +68,7 @@ case class ReadRelationMapping(
      *
      * @return
      */
-    override def inputs : Set[MappingOutputIdentifier] = Set.empty
+    override def inputs : Set[MappingOutputIdentifier] = expressionDependencies(filter)
 
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
@@ -89,7 +89,7 @@ case class ReadRelationMapping(
         val df = rel.read(execution, partitions)
 
         // Apply optional filter
-        val filtered = filter.map(df.filter).getOrElse(df)
+        val filtered = applyFilter(df, filter, input)
 
         val result = SchemaUtils.applySchema(filtered, schema)
 

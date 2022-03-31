@@ -63,7 +63,7 @@ extends BaseMapping {
      *
      * @return
      */
-    override def inputs : Set[MappingOutputIdentifier] = Set.empty
+    override def inputs : Set[MappingOutputIdentifier] = expressionDependencies(filter)
 
     /**
      * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
@@ -84,7 +84,7 @@ extends BaseMapping {
         val df = SchemaUtils.applySchema(tableDf, schema)
 
         // Apply optional filter
-        val result = filter.map(df.filter).getOrElse(df)
+        val result = applyFilter(df, filter, input)
 
         Map("main" -> result)
     }

@@ -1,8 +1,7 @@
-
 # Rebalance Mapping
 
-Shuffles data to produce a specified amount of Spark partitions with an approximately equal number
-of records.
+Shuffles data to produce a specified amount of Spark partitions with an approximately equal number of records. This
+is useful for balancing the processing load in clusters when the data is highly skewed.
 
 ## Example
 ```
@@ -33,6 +32,9 @@ The name of the input mapping
 
 * `partitions` **(mandatory)** *(integer)*:
 The number of output partitions
+
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+  An optional SQL filter expression that is applied *before* the rebalance operation itself.
 
 
 ## Outputs

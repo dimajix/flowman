@@ -33,7 +33,8 @@ case class RepartitionMapping(
     input:MappingOutputIdentifier,
     columns:Seq[String],
     partitions:Int,
-    sort:Boolean=false
+    sort:Boolean = false,
+    filter:Option[String] = None
 ) extends BaseMapping {
     /**
      * Returns the dependencies of this mapping, which is exactly one input table
@@ -41,7 +42,7 @@ case class RepartitionMapping(
      * @return
      */
     override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 
     /**
@@ -56,13 +57,17 @@ case class RepartitionMapping(
         require(input != null)
 
         val df = input(this.input)
+
+        // Apply optional filter
+        val filtered = applyFilter(df, filter, input)
+
         val result =
             if (columns.isEmpty) {
-                df.repartition(partitions)
+                filtered.repartition(partitions)
             }
             else {
                 val cols = columns.map(col)
-                val repartitioned = if (partitions > 0) df.repartition(partitions, cols:_*) else df.repartition(cols:_*)
+                val repartitioned = if (partitions > 0) filtered.repartition(partitions, cols:_*) else filtered.repartition(cols:_*)
                 if (sort)
                     repartitioned.sortWithinPartitions(cols:_*)
                 else
@@ -96,6 +101,7 @@ class RepartitionMappingSpec extends MappingSpec {
     @JsonProperty(value = "columns", required = false) private[spec] var columns:Seq[String] = Seq()
     @JsonProperty(value = "partitions", required = true) private[spec] var partitions:Option[String] = None
     @JsonProperty(value = "sort", required = false) private[spec] var sort:String = "false"
+    @JsonProperty(value = "filter", required=false) private var filter: Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -108,7 +114,8 @@ class RepartitionMappingSpec extends MappingSpec {
             MappingOutputIdentifier(context.evaluate(input)),
             columns.map(context.evaluate),
             partitions.map(context.evaluate).map(_.toInt).getOrElse(0),
-            context.evaluate(sort).toBoolean
+            context.evaluate(sort).toBoolean,
+            context.evaluate(filter)
         )
     }
 }

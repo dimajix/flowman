@@ -30,6 +30,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.spark.sql.ExpressionParser
 
 
 case class AggregateMapping(
@@ -58,7 +59,7 @@ case class AggregateMapping(
             df.groupBy(dims:_*).agg(expressions.head, expressions.tail.toSeq:_*)
 
         // Apply optional 'HAVING' filter
-        val result = filter.map(f => aggs.where(f)).getOrElse(aggs)
+        val result = applyFilter(aggs, filter, tables)
 
         Map("main" -> result)
     }
@@ -69,7 +70,7 @@ case class AggregateMapping(
       * @return
       */
     override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 }
 

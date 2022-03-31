@@ -1,8 +1,8 @@
 
 # Repartition Mapping
 
-Shuffles data to produce a specified amount of Spark partitions by using the
-specified columns to determine the partitioning.
+Shuffles data to produce a specified amount of Spark partitions by using the specified columns to determine the 
+partitioning. This operation is useful for caching carefully repartitioned data before multiple join operations.
 
 ## Example
 ```
@@ -43,6 +43,9 @@ The number of output partitions
 
 * `sort` **(optional)** *(boolean)*:
 Specifies if the records within each partition should also be sorted
+
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+  An optional SQL filter expression that is applied *before* the repartition operation itself.
 
 
 ## Outputs

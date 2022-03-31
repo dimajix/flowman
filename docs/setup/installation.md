@@ -16,7 +16,7 @@ needs to match the ones of your platform
 
 ### Download & Install Spark
 
-As of this writing, the latest release of Flowman is 0.22.0 and is available prebuilt for Spark 3.2.1 on the Spark
+As of this writing, the latest release of Flowman is 0.23.1 and is available prebuilt for Spark 3.2.1 on the Spark
 homepage. So we download the appropriate Spark distribution from the Apache archive and unpack it.
 
 ```shell
@@ -38,7 +38,7 @@ It might be a good idea to add a corresponding line to your `.bashrc` or `.profi
 
 ### Download & Install Hadoop Utils for Windows
 
-If you are trying to run the application on Windows, you also need the *Hadoop Winutils*, which is a set of
+If you are trying to run Flowman on Windows, you also need the *Hadoop Winutils*, which is a set of
 DLLs required for the Hadoop libraries to be working. You can get a copy at https://github.com/kontext-tech/winutils .
 Once you downloaded the appropriate version, you need to place the DLLs into a directory `$HADOOP_HOME/bin`, where
 `HADOOP_HOME` refers to some arbitrary location of your choice on your Windows PC. You also need to set the following
@@ -59,13 +59,13 @@ versions. The naming is very simple:
 flowman-dist-<version>-oss-spark<spark-version>-hadoop<hadoop-version>-bin.tar.gz
 ```
 You simply have to use the package which fits to the Spark and Hadoop versions of your environment. For example the
-package of Flowman 0.20.1 and for Spark 3.1 and Hadoop 3.2 would be
+package of Flowman 0.23.1 and for Spark 3.2 and Hadoop 3.3 would be
 ```
-flowman-dist-0.20.1-oss-spark31-hadoop32-bin.tar.gz
+flowman-dist-0.23.1-oss-spark32-hadoop33-bin.tar.gz
 ```
 and the full URL then would be
 ```
-https://github.com/dimajix/flowman/releases/download/0.20.1/flowman-dist-0.20.1-oss-spark3.1-hadoop3.2-bin.tar.gz
+https://github.com/dimajix/flowman/releases/download/0.23.1/flowman-dist-0.23.1-oss-spark3.2-hadoop3.3-bin.tar.gz
 ```
 
 
@@ -85,7 +85,7 @@ tar xvzf flowman-dist-X.Y.Z-bin.tar.gz
 ```
 
 ### Directory Layout
-
+Once you downloaded and unpacked Flowman, you will get a new directory which looks as follows:
 ```bash
 ├── bin
 ├── conf

@@ -84,6 +84,7 @@ object Project {
 
         private def loadModules(project: Project, directory: File): Project = {
             val module = project.modules
+                .par
                 .map(f => Module.read.file(directory / f))
                 .foldLeft(Module())((l, r) => l.merge(r))
 

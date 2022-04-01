@@ -32,10 +32,14 @@ relations:
             - kind: notNull
         - name: usaf
           checks:
+            # Check for NOT NULL values, but exclude known defects
             - kind: notNull
+              filter: "year >= 2000"
         - name: wban
           checks:
+            # Check for NOT NULL values, but exclude known defects
             - kind: notNull
+              filter: "usaf NOT IN (SELECT usaf FROM known_defective_usaf)"
         - name: air_temperature_qual
           checks:
             - kind: notNull
@@ -60,6 +64,16 @@ relations:
         references:
           - usaf
           - wban
+
+mappings:
+  # Provide list of known defects to be excluded from some checks
+  known_defective_usaf:
+    kind: values
+    columns:
+      usaf: string
+      records:
+        - ["12345"]
+        - ["87600"]
 ```
 
 ## Available Column Checks
@@ -71,6 +85,9 @@ Flowman implements a couple of different check types on a per column basis.
 One simple but yet important test is to check if a column does not contain any `NULL` values
 
 * `kind` **(mandatory)** *(string)*: `notNull`
+* `filter` **(optional)** *(string)*:
+Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
+to exclude records with known quality issues.
 
 
 ### Unique Values
@@ -79,6 +96,9 @@ Another important test is to check for unique values in a column. Note that this
 so in many cases you might want to specify both `notNUll` and `unique`.
 
 * `kind` **(mandatory)** *(string)*: `unique`
+* `filter` **(optional)** *(string)*:
+  Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
+  to exclude records with known quality issues.
 
 
 ### Specific Values
@@ -88,6 +108,9 @@ exclude records with `NULL` values in the column, so in many cases you might wan
 
 * `kind` **(mandatory)** *(string)*: `values`
 * `values` **(mandatory)** *(list:string)*: List of admissible values
+* `filter` **(optional)** *(string)*:
+  Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
+  to exclude records with known quality issues.
 
 
 ### Range of  Values
@@ -99,6 +122,9 @@ want to specify both `notNUll` and `range`.
 * `kind` **(mandatory)** *(string)*: `range`
 * `lower` **(mandatory)** *(string)*: Lower value (inclusive)
 * `upper` **(mandatory)** *(string)*: Upper value (inclusive)
+* `filter` **(optional)** *(string)*:
+  Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
+  to exclude records with known quality issues.
 
 
 ### Length
@@ -107,10 +133,13 @@ When working with string data, you might also want to check their length. This c
 the `length` test. Note that this test will exclude records with `NULL` values in the column, so in many cases you might
 want to specify both `notNUll` and `range`.
 
-* `kind` **(mandatory)** *(string)*: `lrngth`
+* `kind` **(mandatory)** *(string)*: `length`
 * `minimum` **(optional)** *(int)*: Minimum length (inclusive)
 * `maximum` **(optional)** *(int)*: Maximum length (inclusive)
 * `length` **(optional)** *(int)*: Exact length (will set minimum and maximum)
+* `filter` **(optional)** *(string)*:
+  Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
+  to exclude records with known quality issues.
 
 
 ### SQL Expression
@@ -120,3 +149,6 @@ A very flexible test is provided with the SQL expression test. This test allows 
 
 * `kind` **(mandatory)** *(string)*: `expression`
 * `expression` **(mandatory)** *(string)*: Boolean SQL Expression
+* `filter` **(optional)** *(string)*:
+  Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
+  to exclude records with known quality issues.

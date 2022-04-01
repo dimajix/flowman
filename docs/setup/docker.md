@@ -17,7 +17,6 @@ docker run --rm -ti dimajix/flowman:0.23.1-oss-spark3.2-hadoop3.3 bash
 Then once the Docker image has started you will be presented with a bash prompt. Then you can easily build the
 weather example of Flowman via
 ```shell
-cd /opt/flowman
 flowexec -f examples/weather job build main
 ```
 

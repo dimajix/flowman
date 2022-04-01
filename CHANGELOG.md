@@ -4,6 +4,7 @@
 * github-169: Support sub-queries in filter conditions
 * github-171: Parallelize loading of project files
 * github-172: Update CDP7 profile to the latest patch level
+* github-153: Use non-privileged user in Docker image
 
 
 # Version 0.23.1 - 2022-03-28

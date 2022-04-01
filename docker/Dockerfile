@@ -25,13 +25,26 @@ COPY libexec/ /opt/docker/libexec/
 # Copy and install Repository
 COPY $DIST_FILE /tmp/repo/flowman-dist.tar.gz
 COPY conf/ /tmp/repo/conf
-RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/flowman-dist.tar.gz && \
-    ln -s /opt/flowman* ${FLOWMAN_HOME} && \
-    cp -a /tmp/repo/conf/* ${FLOWMAN_HOME}/conf && \
-    chown -R root:root /opt/flowman* && \
-    rm -rf /tmp/repo && \
-    chmod a+x /opt/docker/bin/*
+RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/flowman-dist.tar.gz \
+    && chown -R root:root /opt/flowman* \
+    && ln -s /opt/flowman* ${FLOWMAN_HOME} \
+    # Copy configuration
+    && cp -a /tmp/repo/conf/* ${FLOWMAN_HOME}/conf \
+    && rm -rf /tmp/repo \
+    # Fix permissions for copied resources
+    && chmod a+r ${FLOWMAN_HOME}/conf/* \
+    && chmod a+rx /opt/docker/bin/* /opt/docker/libexec/* \
+    # Create new "flowman" user and group
+    && groupadd -g 1000 flowman \
+    && useradd -m -u 1000 -g 1000 -s /bin/bash flowman \
+    # Copy examples to flowmans home
+    && cp -a /opt/flowman/examples ~flowman \
+    && chown -R flowman:flowman ~flowman/examples \
+    # Create new var directory with write permissions for "flowman" user
+    && mkdir ${FLOWMAN_HOME}/var \
+    && chown flowman:flowman ${FLOWMAN_HOME}/var
 
-
+USER flowman
+WORKDIR /home/flowman
 ENTRYPOINT ["/opt/docker/bin/entrypoint.sh"]
 CMD bash

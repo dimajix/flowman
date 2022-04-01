@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.schema
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonProperty.Access
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
@@ -51,7 +52,7 @@ object SchemaSpec extends TypeRegistry[SchemaSpec] {
     new JsonSubTypes.Type(name = "union", value = classOf[UnionSchemaSpec])
 ))
 abstract class SchemaSpec extends Spec[Schema] {
-    @JsonProperty(value="kind", required = true) protected var kind: String = "inline"
+    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required = true) protected var kind: String = "inline"
 
     override def instantiate(context:Context, properties:Option[Schema.Properties] = None) : Schema
 

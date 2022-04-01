@@ -1,3 +1,6 @@
+* github-174: Provide application for generating YAML schema
+
+
 # Version 0.23.2
 
 * github-168: Support optional filters in data quality checks

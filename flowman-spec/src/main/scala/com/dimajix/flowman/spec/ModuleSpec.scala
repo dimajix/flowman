@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.spec.connection.ConnectionSpec
-import com.dimajix.flowman.spec.mapping.MappingSpec
 import com.dimajix.flowman.spec.job.JobSpec
+import com.dimajix.flowman.spec.mapping.MappingSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spec.template.TemplateSpec

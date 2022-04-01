@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.mapping
 import scala.collection.immutable.ListMap
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonPropertyDescription
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.expr
@@ -76,6 +77,7 @@ case class AggregateMapping(
 
 
 class AggregateMappingSpec extends MappingSpec {
+    @JsonPropertyDescription("Reference to input mapping")
     @JsonProperty(value = "input", required = true) private[spec] var input: String = _
     @JsonProperty(value = "dimensions", required = true) private[spec] var dimensions: Array[String] = _
     @JsonDeserialize(using = classOf[ListMapDeserializer]) // Old Jackson in old Spark doesn't support ListMap

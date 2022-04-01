@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.mapping
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonProperty.Access
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
@@ -51,12 +52,12 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "cast", value = classOf[CastMappingSpec]),
     new JsonSubTypes.Type(name = "coalesce", value = classOf[CoalesceMappingSpec]),
     new JsonSubTypes.Type(name = "conform", value = classOf[ConformMappingSpec]),
-    new JsonSubTypes.Type(name = "const", value = classOf[ValuesMappingSpec]),
+    //new JsonSubTypes.Type(name = "const", value = classOf[ValuesMappingSpec]),
     new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMappingSpec]),
     new JsonSubTypes.Type(name = "distinct", value = classOf[DistinctMappingSpec]),
     new JsonSubTypes.Type(name = "drop", value = classOf[DropMappingSpec]),
     new JsonSubTypes.Type(name = "earliest", value = classOf[EarliestMappingSpec]),
-    new JsonSubTypes.Type(name = "empty", value = classOf[NullMappingSpec]),
+    //new JsonSubTypes.Type(name = "empty", value = classOf[NullMappingSpec]),
     new JsonSubTypes.Type(name = "explode", value = classOf[ExplodeMappingSpec]),
     new JsonSubTypes.Type(name = "extend", value = classOf[ExtendMappingSpec]),
     new JsonSubTypes.Type(name = "extractJson", value = classOf[ExtractJsonMappingSpec]),
@@ -70,7 +71,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "null", value = classOf[NullMappingSpec]),
     new JsonSubTypes.Type(name = "project", value = classOf[ProjectMappingSpec]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedMappingSpec]),
-    new JsonSubTypes.Type(name = "read", value = classOf[ReadRelationMappingSpec]),
+    //new JsonSubTypes.Type(name = "read", value = classOf[ReadRelationMappingSpec]),
     new JsonSubTypes.Type(name = "readHive", value = classOf[ReadHiveMappingSpec]),
     new JsonSubTypes.Type(name = "readRelation", value = classOf[ReadRelationMappingSpec]),
     new JsonSubTypes.Type(name = "readStream", value = classOf[ReadStreamMappingSpec]),
@@ -91,7 +92,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "values", value = classOf[ValuesMappingSpec])
 ))
 abstract class MappingSpec extends NamedSpec[Mapping] {
-    @JsonProperty(value="kind", required = true) protected var kind: String = _
+    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required = true) protected var kind: String = _
     @JsonProperty(value="broadcast", required = false) protected var broadcast:String = "false"
     @JsonProperty(value="checkpoint", required = false) protected var checkpoint:String = "false"
     @JsonProperty(value="cache", required = false) protected var cache:String = "NONE"

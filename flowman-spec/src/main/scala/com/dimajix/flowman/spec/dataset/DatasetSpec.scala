@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.dataset
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonProperty.Access
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
@@ -44,7 +45,7 @@ object DatasetSpec extends TypeRegistry[DatasetSpec] {
     new JsonSubTypes.Type(name = "values", value = classOf[ValuesDatasetSpec])
 ))
 abstract class DatasetSpec extends Spec[Dataset] {
-    @JsonProperty(value="kind", required = true) protected var kind: String = _
+    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required = true) protected var kind: String = _
 
     override def instantiate(context:Context, properties:Option[Dataset.Properties] = None) : Dataset
 

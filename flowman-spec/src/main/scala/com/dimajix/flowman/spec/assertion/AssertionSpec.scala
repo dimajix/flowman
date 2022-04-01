@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.assertion
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonProperty.Access
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
@@ -47,7 +48,7 @@ object AssertionSpec extends TypeRegistry[AssertionSpec] {
     new JsonSubTypes.Type(name = "uniqueKey", value = classOf[UniqueKeyAssertionSpec])
 ))
 abstract class AssertionSpec  extends NamedSpec[Assertion] {
-    @JsonProperty(value="kind", required = true) protected var kind: String = _
+    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required = true) protected var kind: String = _
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
 
     override def instantiate(context: Context, properties:Option[Assertion.Properties] = None): Assertion

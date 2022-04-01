@@ -218,7 +218,7 @@
             </repositories>
             <properties>
                 <hadoop.dist>cdp7</hadoop.dist>
-                <cdp.version>7.1.7.0-551</cdp.version>
+                <cdp.version>7.1.7.1000-141</cdp.version>
                 <java.version>1.8</java.version>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>

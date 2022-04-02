@@ -185,7 +185,7 @@ is defined in the `mapping/stations.yml` file in the `mappings` section:
 mappings:
   # This mapping refers to the "raw" relation and reads in data from the source in S3
   stations_raw:
-    kind: read
+    kind: relation
     relation: stations_raw
 ```
 

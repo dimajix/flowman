@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class ProvidedRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
               |    table: my_table
               |mappings:
               |  dummy:
-              |    kind: read
+              |    kind: relation
               |    relation: dummy
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")

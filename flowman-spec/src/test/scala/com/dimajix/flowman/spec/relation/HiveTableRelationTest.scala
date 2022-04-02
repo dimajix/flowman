@@ -1934,7 +1934,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                |        type: int
                |mappings:
                |  input:
-               |    kind: read
+               |    kind: relation
                |    relation: t0
                |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
@@ -1984,7 +1984,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                |
                |mappings:
                |  input:
-               |    kind: read
+               |    kind: relation
                |    relation: t0
                |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
@@ -2056,7 +2056,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
               |
               |mappings:
               |  t0:
-              |    kind: readRelation
+              |    kind: relation
               |    relation: t0
               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")

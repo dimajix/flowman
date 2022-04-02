@@ -46,7 +46,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |      int_col: integer
               |
               |  empty2:
-              |    kind: empty
+              |    kind: null
               |    schema:
               |      kind: embedded
               |      fields:

@@ -32,6 +32,7 @@ import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.TargetType
 import com.dimajix.flowman.spec.documentation.TargetDocSpec
 import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
+import com.dimajix.flowman.spec.template.TargetTemplateInstanceSpec
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
@@ -69,7 +70,8 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateTargetSpec]),
     new JsonSubTypes.Type(name = "truncate", value = classOf[TruncateTargetSpec]),
     new JsonSubTypes.Type(name = "validate", value = classOf[ValidateTargetSpec]),
-    new JsonSubTypes.Type(name = "verify", value = classOf[VerifyTargetSpec])
+    new JsonSubTypes.Type(name = "verify", value = classOf[VerifyTargetSpec]),
+    new JsonSubTypes.Type(name = "template/*", value = classOf[TargetTemplateInstanceSpec])
 ))
 abstract class TargetSpec extends NamedSpec[Target] {
     @JsonProperty(value="kind", access=Access.WRITE_ONLY, required=true) protected var kind: String = _

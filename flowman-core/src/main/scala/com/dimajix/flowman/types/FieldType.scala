@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 import org.apache.spark.sql.types.DataType
 
 
@@ -52,6 +53,7 @@ object FieldType {
         ).map(t => t.sqlType -> t).toMap ++
             Map(
                 "void" -> NullType,
+                "bool" -> BooleanType,
                 "byte" -> ByteType,
                 "short" -> ShortType,
                 "long" -> LongType,
@@ -114,6 +116,86 @@ object FieldType {
 
 
 @JsonDeserialize(using=classOf[FieldTypeDeserializer])
+@JsonSchemaInject(
+    merge = false,
+    json = """
+          {
+            "type": [ "object", "string" ],
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "struct"
+                    ]
+                  },
+                  "fields": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/Field"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "array"
+                    ]
+                  },
+                  "elementType": {
+                    "$ref": "#/definitions/FieldType"
+                  },
+                  "containsNull": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "binary",
+                  "bool",
+                  "boolean",
+                  "byte",
+                  "date",
+                  "double",
+                  "duration",
+                  "float",
+                  "int",
+                  "integer",
+                  "long",
+                  "null",
+                  "short",
+                  "string",
+                  "text",
+                  "timestamp",
+                  "void"
+                ]
+              },
+              {
+                "type": "string",
+                "pattern": "decimal\\((\\d+),(\\-?\\d+)\\)"
+              },
+              {
+                "type": "string",
+                "pattern": "varchar\\((\\d+)\\)"
+              },
+              {
+                "type": "string",
+                "pattern": "char\\((\\d+)\\)"
+              }
+            ]
+          }
+          """
+)
 abstract class FieldType extends Product with Serializable {
     /**
       * The Spark type to use

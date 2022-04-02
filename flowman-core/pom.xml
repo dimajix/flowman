@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.23.2-SNAPSHOT</version>
+        <version>0.24.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -143,6 +143,10 @@
                 <exclusion>
                     <groupId>io.github.classgraph</groupId>
                     <artifactId>classgraph</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-scripting-compiler-embeddable</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

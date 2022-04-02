@@ -1527,7 +1527,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                |          type: integer
                |mappings:
                |  input:
-               |    kind: read
+               |    kind: relation
                |    relation: local
                |    partitions:
                |      spart: abc

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,27 +40,6 @@ class EmbeddedSchemaTest extends AnyFlatSpec with Matchers {
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         schemaSpec shouldBe a[EmbeddedSchemaSpec]
 
-        val result = schemaSpec.instantiate(session.context)
-        result shouldBe a[EmbeddedSchema]
-        result.fields.size should be (2)
-        result.fields(0).name should be ("str_col")
-        result.fields(1).name should be ("int_col")
-    }
-
-    it should "be parseable with inline type" in {
-        val spec =
-            """
-              |kind: inline
-              |fields:
-              |  - name: str_col
-              |    type: string
-              |  - name: int_col
-              |    type: integer
-            """.stripMargin
-
-        val session = Session.builder().disableSpark().build()
-
-        val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
         val result = schemaSpec.instantiate(session.context)
         result shouldBe a[EmbeddedSchema]
         result.fields.size should be (2)

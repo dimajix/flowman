@@ -1,7 +1,7 @@
 mappings:
   # This mapping refers to the "raw" relation and reads in data from the source in S3
   measurements_raw:
-    kind: read
+    kind: relation
     relation: measurements_raw
     partitions:
       year: $year
@@ -54,7 +54,7 @@ mappings:
 
   # This mapping refers to the processed data stored as Parquet on the local filesystem
   measurements:
-    kind: read
+    kind: relation
     relation: measurements
     partitions:
       year: $year

@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.schema
 import java.net.URL
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
@@ -58,6 +59,7 @@ case class AvroSchema(
 
 
 class AvroSchemaSpec extends ExternalSchemaSpec {
+    @JsonSchemaInject(json="""{"type": [ "boolean", "string" ]}""")
     @JsonProperty(value="nullable", required=false) private var nullable: String = "false"
 
     /**

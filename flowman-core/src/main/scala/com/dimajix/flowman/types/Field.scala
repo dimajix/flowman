@@ -17,6 +17,7 @@
 package com.dimajix.flowman.types
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.MetadataBuilder
 import org.apache.spark.sql.types.StructField
@@ -60,9 +61,11 @@ object Field {
 final class Field {
     @JsonProperty(value="name", required = true) private var _name: String = _
     @JsonProperty(value="type", required = false) private var _type: FieldType = StringType
+    @JsonSchemaInject(json="""{"type": [ "boolean", "string" ]}""")
     @JsonProperty(value="nullable", required = false) private var _nullable: Boolean = true
     @JsonProperty(value="description", required = false) private var _description: Option[String] = None
     @JsonProperty(value="default", required = false) private var _default: Option[String] = None
+    @JsonSchemaInject(json="""{"type": [ "integer", "string" ]}""")
     @JsonProperty(value="size", required = false) private var _size: Option[Int] = None
     @JsonProperty(value="format", required = false) private var _format: Option[String] = None
 

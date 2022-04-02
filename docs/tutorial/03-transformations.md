@@ -144,7 +144,7 @@ corresponds to one year of measurement data.
 mappings:
   # This mapping refers to the "raw" relation and reads in data from the source in S3
   measurements_raw:
-    kind: read
+    kind: relation
     relation: measurements_raw
     # Set the data partition to be read
     partitions:

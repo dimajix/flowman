@@ -30,7 +30,7 @@ class Arguments(args:Array[String]) {
     @Option(name = "-v", aliases=Array("--version"), usage = "show version", help=true)
     var version: Boolean = false
     @Option(name = "-o", aliases=Array("--output"), usage = "otuput file", help=true)
-    var output: String = ""
+    var output: String = "flowman-schema"
 
     /**
       * Returns true if a help message is requested

@@ -31,13 +31,13 @@ import com.dimajix.flowman.spec.relation.ValuesRelation
 import com.dimajix.flowman.types.SingleValue
 
 
-class ReadRelationTest extends AnyFlatSpec with Matchers {
-    "A ReadRelationMapping" should "be parseable" in {
+class RelationMappingTest extends AnyFlatSpec with Matchers {
+    "A RelationMapping" should "be parseable" in {
         val spec =
             """
               |mappings:
               |  t0:
-              |    kind: readRelation
+              |    kind: relation
               |    relation: some_relation
               |    filter: "landing_date > 123"
               |    partitions:
@@ -49,8 +49,8 @@ class ReadRelationTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t0"))
 
-        mapping shouldBe a[ReadRelationMapping]
-        val rrm = mapping.asInstanceOf[ReadRelationMapping]
+        mapping shouldBe a[RelationMapping]
+        val rrm = mapping.asInstanceOf[RelationMapping]
         rrm.relation should be (IdentifierRelationReference(context, RelationIdentifier("some_relation")))
         rrm.filter should be (Some("landing_date > 123"))
         rrm.partitions should be (Map("p0" -> SingleValue("12")))
@@ -61,7 +61,7 @@ class ReadRelationTest extends AnyFlatSpec with Matchers {
             """
               |mappings:
               |  t0:
-              |    kind: readRelation
+              |    kind: relation
               |    relation:
               |      name: embedded
               |      kind: values
@@ -81,8 +81,8 @@ class ReadRelationTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t0"))
 
-        mapping shouldBe a[ReadRelationMapping]
-        val rrm = mapping.asInstanceOf[ReadRelationMapping]
+        mapping shouldBe a[RelationMapping]
+        val rrm = mapping.asInstanceOf[RelationMapping]
         rrm.relation shouldBe a[ValueRelationReference]
         rrm.relation.identifier should be (RelationIdentifier("embedded", "project"))
         rrm.relation.name should be ("embedded")
@@ -106,7 +106,7 @@ class ReadRelationTest extends AnyFlatSpec with Matchers {
             """
               |mappings:
               |  t0:
-              |    kind: readRelation
+              |    kind: relation
               |    relation:
               |      name: embedded
               |      kind: values
@@ -126,8 +126,8 @@ class ReadRelationTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t0"))
 
-        mapping shouldBe a[ReadRelationMapping]
-        val relation = mapping.asInstanceOf[ReadRelationMapping].relation.value
+        mapping shouldBe a[RelationMapping]
+        val relation = mapping.asInstanceOf[RelationMapping].relation.value
         relation shouldBe a[ValuesRelation]
 
         // Check execution graph

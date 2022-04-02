@@ -11,7 +11,7 @@ We publish Flowman Docker images on [Docker Hub](https://hub.docker.com/reposito
 which are good enough for local work. You can easily start a Flowman session in Docker as follows:
 
 ```shell
-docker run --rm -ti dimajix/flowman:0.23.1-oss-spark3.2-hadoop3.3 bash
+docker run --rm -ti dimajix/flowman:0.24.0-oss-spark3.2-hadoop3.3 bash
 ```
 
 Then once the Docker image has started you will be presented with a bash prompt. Then you can easily build the
@@ -26,7 +26,7 @@ flowexec -f examples/weather job build main
 By using Docker volumes, you can easily mount a Flowman project into the Docker container, for example
 
 ```shell
-docker run --rm -ti --mount type=bind,source=$(pwd)/lessons,target=/opt/flowman/project dimajix/flowman:0.23.1-oss-spark3.2-hadoop3.3 bash
+docker run --rm -ti --mount type=bind,source=$(pwd)/lessons,target=/opt/flowman/project dimajix/flowman:0.24.0-oss-spark3.2-hadoop3.3 bash
 ```
 
 

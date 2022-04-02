@@ -49,7 +49,7 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |        type: string
               |mappings:
               |  read:
-              |    kind: read
+              |    kind: relation
               |    relation: empty
               |    partitions:
               |      spart: abc
@@ -123,7 +123,7 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |      mapping: alias
               |mappings:
               |  read:
-              |    kind: read
+              |    kind: relation
               |    relation: some_hive_table
               |    partitions:
               |      spart: abc

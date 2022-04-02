@@ -1,15 +1,31 @@
-* github-174: Provide application for generating YAML schema
-
-
-# Version 0.23.2
+# Version 0.24.0
 
 * github-168: Support optional filters in data quality checks
 * github-169: Support sub-queries in filter conditions
 * github-171: Parallelize loading of project files
 * github-172: Update CDP7 profile to the latest patch level
 * github-153: Use non-privileged user in Docker image
+* github-174: Provide application for generating YAML schema
 
+## Breaking changes
 
+In order to avoid YAML schema inconsistencies, there have been some renaming of some entities
+
+| category | old kind     | new kind             |
+|----------|--------------|----------------------|
+| mapping  | const        | values               |
+| mapping  | empty        | null                 |
+| mapping  | read         | relation             |
+| mapping  | readRelation | relation             |
+| mapping  | readStream   | stream               |
+| relation | const        | values               |
+| relation | const        | null                 |
+| relation | jdbc         | jdbcTable, jdbcQuery |
+| relation | table        | hiveTable            |
+| relation | view         | hiveView             |
+| schema   | inline       | embedded             |
+
+ 
 # Version 0.23.1 - 2022-03-28
 
 * github-154: Fix failing migration when PK requires change due to data type

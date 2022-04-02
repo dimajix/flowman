@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.mapping
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.col
 
@@ -97,11 +98,13 @@ case class RepartitionMapping(
 
 
 class RepartitionMappingSpec extends MappingSpec {
-    @JsonProperty(value = "input", required = true) private var input: String = _
-    @JsonProperty(value = "columns", required = false) private[spec] var columns:Seq[String] = Seq()
-    @JsonProperty(value = "partitions", required = true) private[spec] var partitions:Option[String] = None
-    @JsonProperty(value = "sort", required = false) private[spec] var sort:String = "false"
-    @JsonProperty(value = "filter", required=false) private var filter: Option[String] = None
+    @JsonProperty(value="input", required=true) private var input: String = _
+    @JsonProperty(value="columns", required=false) private[spec] var columns:Seq[String] = Seq()
+    @JsonSchemaInject(json="""{"type": [ "integer", "string" ]}""")
+    @JsonProperty(value="partitions", required=false) private[spec] var partitions:Option[String] = None
+    @JsonSchemaInject(json="""{"type": [ "boolean", "string" ]}""")
+    @JsonProperty(value="sort", required=false) private[spec] var sort:String = "false"
+    @JsonProperty(value="filter", required=false) private var filter: Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed

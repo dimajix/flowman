@@ -21,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonProperty.Access
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
-import com.fasterxml.jackson.databind.util.StdConverter
 
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.execution.Context
@@ -32,6 +31,7 @@ import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.RelationType
 import com.dimajix.flowman.spec.documentation.RelationDocSpec
 import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
+import com.dimajix.flowman.spec.template.RelationTemplateInstanceSpec
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
@@ -45,23 +45,20 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
 @JsonTypeResolver(classOf[CustomTypeResolverBuilder])
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible=true)
 @JsonSubTypes(value = Array(
-    //new JsonSubTypes.Type(name = "const", value = classOf[ValuesRelationSpec]),
-    //new JsonSubTypes.Type(name = "empty", value = classOf[NullRelationSpec]),
     new JsonSubTypes.Type(name = "file", value = classOf[FileRelationSpec]),
     new JsonSubTypes.Type(name = "generic", value = classOf[GenericRelationSpec]),
     new JsonSubTypes.Type(name = "hiveTable", value = classOf[HiveTableRelationSpec]),
     new JsonSubTypes.Type(name = "hiveUnionTable", value = classOf[HiveUnionTableRelationSpec]),
     new JsonSubTypes.Type(name = "hiveView", value = classOf[HiveViewRelationSpec]),
-    //new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcRelationSpec]),
-    new JsonSubTypes.Type(name = "jdbcTable", value = classOf[JdbcRelationSpec]),
+    new JsonSubTypes.Type(name = "jdbcQuery", value = classOf[JdbcQueryRelationSpec]),
+    new JsonSubTypes.Type(name = "jdbcTable", value = classOf[JdbcTableRelationSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalRelationSpec]),
     new JsonSubTypes.Type(name = "mock", value = classOf[MockRelationSpec]),
     new JsonSubTypes.Type(name = "null", value = classOf[NullRelationSpec]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelationSpec]),
-    //new JsonSubTypes.Type(name = "table", value = classOf[HiveTableRelationSpec]),
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateRelationSpec]),
     new JsonSubTypes.Type(name = "values", value = classOf[ValuesRelationSpec]),
-    //new JsonSubTypes.Type(name = "view", value = classOf[HiveViewRelationSpec])
+    new JsonSubTypes.Type(name = "template/*", value = classOf[RelationTemplateInstanceSpec])
 ))
 abstract class RelationSpec extends NamedSpec[Relation] {
     @JsonProperty(value="kind", access=Access.WRITE_ONLY, required = true) protected var kind: String = _

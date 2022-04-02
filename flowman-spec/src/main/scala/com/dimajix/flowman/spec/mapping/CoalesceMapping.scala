@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.mapping
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
@@ -82,7 +83,8 @@ case class CoalesceMapping(
 
 class CoalesceMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
-    @JsonProperty(value = "partitions", required = false) private[spec] var partitions: String = _
+    @JsonSchemaInject(json="""{"type": [ "integer", "string" ]}""")
+    @JsonProperty(value = "partitions", required = false) private[spec] var partitions: Option[String] = None
     @JsonProperty(value = "filter", required=false) private var filter: Option[String] = None
 
     /**
@@ -94,7 +96,7 @@ class CoalesceMappingSpec extends MappingSpec {
         CoalesceMapping(
             instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
-            Option(context.evaluate(partitions)).filter(_.nonEmpty).map(_.toInt).getOrElse(0),
+            context.evaluate(partitions).filter(_.nonEmpty).map(_.toInt).getOrElse(0),
             context.evaluate(filter)
         )
     }

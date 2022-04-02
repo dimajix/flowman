@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.template
 import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.common.Trilean
@@ -69,6 +70,29 @@ class RelationTemplateSpec extends TemplateSpec {
 }
 
 
+@JsonSchemaInject(
+  merge = false,
+  json = """
+      {
+         "additionalProperties" : { "type": "string" },
+         "properties" : {
+            "kind" : {
+               "type" : "string",
+               "pattern": "template/.+"
+            },
+            "metadata" : {
+              "$ref" : "#/definitions/MetadataSpec"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "documentation" : {
+              "$ref" : "#/definitions/RelationDocSpec"
+            }
+         }
+      }
+    """
+)
 class RelationTemplateInstanceSpec extends RelationSpec {
     @JsonIgnore
     private[spec] var args:Map[String,String] = Map()

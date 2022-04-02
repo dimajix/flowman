@@ -19,6 +19,9 @@ package com.dimajix.flowman.tools.schema
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.charset.Charset
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 import scala.util.Failure
 import scala.util.Success
@@ -34,8 +37,11 @@ import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.spec.ModuleSpec
+import com.dimajix.flowman.spec.NamespaceSpec
 import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.spec.ProjectSpec
 import com.dimajix.flowman.tools.Tool
+import com.dimajix.flowman.tools.schema.impl.MyJsonSchemaGenerator
 
 
 object Driver {
@@ -80,20 +86,27 @@ object Driver {
 
 class Driver(args:Arguments) extends Tool {
     def run() : Unit = {
-        val objectMapper = ObjectMapper.mapper
-        val jsonSchemaGenerator = new JsonSchemaGenerator(objectMapper)
-        val jsonSchema:JsonNode = jsonSchemaGenerator.generateJsonSchema(classOf[ModuleSpec])
+        val baseDir = Paths.get(args.output)
+        Files.createDirectories(baseDir)
 
+        val objectMapper = ObjectMapper.mapper
+        val jsonSchemaGenerator = new MyJsonSchemaGenerator(objectMapper)
+
+        val moduleSchema = jsonSchemaGenerator.generateJsonSchema(classOf[ModuleSpec])
+        saveSchema(baseDir, "module.json", moduleSchema)
+        val namespaceSchema = jsonSchemaGenerator.generateJsonSchema(classOf[NamespaceSpec])
+        saveSchema(baseDir, "namespace.json", namespaceSchema)
+        val projectSchema = jsonSchemaGenerator.generateJsonSchema(classOf[ProjectSpec])
+        saveSchema(baseDir, "project.json", projectSchema)
+    }
+
+    private def saveSchema(basedir:Path, name:String, jsonSchema:JsonNode) : Unit = {
         val schema = jsonSchema.toPrettyString
-        if (args.output.nonEmpty) {
-            val file = new File(args.output)
-            val output = new FileOutputStream(file)
-            val bytes = Charset.forName("UTF-8").encode(schema)
-            output.write(bytes.array(), bytes.arrayOffset(), bytes.limit())
-            output.close()
-        }
-        else {
-            println(schema)
-        }
+        val file = new File(basedir.toFile, name)
+        println(s"Generating Flowman YAML schema '${file.toString}'...'")
+        val output = new FileOutputStream(file)
+        val bytes = Charset.forName("UTF-8").encode(schema)
+        output.write(bytes.array(), bytes.arrayOffset(), bytes.limit())
+        output.close()
     }
 }

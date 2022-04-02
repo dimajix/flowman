@@ -34,20 +34,24 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.spec.relation.RelationReferenceSpec
+import com.dimajix.flowman.types.ArrayValue
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.RangeValue
+import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.SchemaUtils
 
 
-case class ReadStreamMapping (
+case class RelationMapping(
     instanceProperties:Mapping.Properties,
     relation:Reference[Relation],
-    columns:Seq[Field],
+    columns:Seq[Field] = Seq(),
+    partitions:Map[String,FieldValue] = Map(),
     filter:Option[String] = None
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[ReadStreamMapping])
+    private val logger = LoggerFactory.getLogger(classOf[RelationMapping])
 
     /**
      * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings
@@ -56,11 +60,11 @@ case class ReadStreamMapping (
      */
     override def requires : Set[ResourceIdentifier] = {
         val rel = relation.value
-        rel.resources() ++ rel.requires ++ rel.provides
+        rel.resources(partitions) // ++ rel.requires ++ rel.provides
     }
 
     /**
-     * Returns the dependencies of this mapping, which are empty for an InputMapping
+     * Returns the dependencies of this mapping, which are empty for an RelationMapping
      *
      * @return
      */
@@ -78,13 +82,16 @@ case class ReadStreamMapping (
         require(input != null)
 
         val schema = if (columns.nonEmpty) Some(spark.sql.types.StructType(columns.map(_.sparkField))) else None
-        logger.info(s"Reading from streaming relation '${relation.identifier}' with filter '${filter.getOrElse("")}'")
+        logger.info(s"Reading from relation '${relation.identifier}' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")} and filter '${filter.getOrElse("")}'")
 
+        // Read relation
         val rel = relation.value
-        val df = rel.readStream(execution)
+        val df = rel.read(execution, partitions)
 
         // Apply optional filter
-        val result = applyFilter(df, filter, input)
+        val filtered = applyFilter(df, filter, input)
+
+        val result = SchemaUtils.applySchema(filtered, schema)
 
         Map("main" -> result)
     }
@@ -104,7 +111,7 @@ case class ReadStreamMapping (
         }
         else {
             val relation = this.relation.value
-            execution.describe(relation)
+            execution.describe(relation, partitions)
         }
 
         // Apply documentation
@@ -117,25 +124,20 @@ case class ReadStreamMapping (
      * Params: linker - The linker object to use for creating new edges
      */
     override def link(linker: Linker): Unit = {
-        val relref = linker.read(relation, Map.empty[String,FieldValue])
-        val relFields = MapIgnoreCase(relref.fields.map(f => f.name -> f))
+        val relRef = linker.read(relation, partitions)
+        val mapRef = linker.node.asInstanceOf[MappingRef]
+        val mapOut = mapRef.outputs.head
 
-        val mapref = linker.node.asInstanceOf[MappingRef]
-        val outref = mapref.outputs.head
-
-        outref.fields.foreach { f =>
-            relFields.get(f.name).foreach { in =>
-                linker.connect(in, f)
-            }
-        }
+        linker.read(relRef, mapOut)
     }
 }
 
 
 
-class ReadStreamMappingSpec extends MappingSpec {
+class RelationMappingSpec extends MappingSpec {
     @JsonProperty(value = "relation", required = true) private var relation:RelationReferenceSpec = _
     @JsonProperty(value = "columns", required=false) private var columns:Map[String,String] = Map()
+    @JsonProperty(value = "partitions", required=false) private var partitions:Map[String,FieldValue] = Map()
     @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
@@ -143,11 +145,17 @@ class ReadStreamMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): ReadStreamMapping = {
-        ReadStreamMapping(
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): RelationMapping = {
+        val partitions= this.partitions.mapValues {
+                case v: SingleValue => SingleValue(context.evaluate(v.value))
+                case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
+                case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), v.step.map(context.evaluate))
+            }
+        RelationMapping(
             instanceProperties(context, properties),
             relation.instantiate(context),
             context.evaluate(columns).map { case(name,typ) => Field(name, FieldType.of(typ))}.toSeq,
+            partitions,
             context.evaluate(filter)
         )
     }

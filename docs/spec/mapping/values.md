@@ -49,7 +49,7 @@ mappings:
 
 
 ## Fields
-* `kind` **(mandatory)** *(type: string)*: `values` or `const`
+* `kind` **(mandatory)** *(type: string)*: `values`
 
 * `broadcast` **(optional)** *(type: boolean)* *(default: false)*:
   Hint for broadcasting the result of this mapping for map-side joins.

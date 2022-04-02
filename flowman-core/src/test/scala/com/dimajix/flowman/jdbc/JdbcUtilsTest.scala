@@ -52,7 +52,7 @@ class JdbcUtilsTest extends AnyFlatSpec with Matchers with LocalTempDir {
         url = "jdbc:derby:" + db + ";create=true"
     }
 
-    "JdbcUtils.getSchema()" should "work" in {
+    "JdbcUtils.getTableSchema()" should "work" in {
         val options = new JDBCOptions(url, "table_001", Map(JDBCOptions.JDBC_DRIVER_CLASS -> driver))
         val conn = JdbcUtils.createConnection(options)
         val table = TableDefinition(
@@ -67,7 +67,7 @@ class JdbcUtilsTest extends AnyFlatSpec with Matchers with LocalTempDir {
         )
         JdbcUtils.createTable(conn, table, options)
 
-        JdbcUtils.getSchema(conn, table.identifier, options) should be (
+        JdbcUtils.getTableSchema(conn, table.identifier, options) should be (
             StructType(Seq(
                 Field("str_field", StringType),
                 Field("int_field", IntegerType)
@@ -93,7 +93,7 @@ class JdbcUtilsTest extends AnyFlatSpec with Matchers with LocalTempDir {
         )
         JdbcUtils.createTable(conn, table, options)
 
-        val curSchema = JdbcUtils.getSchema(conn, table.identifier, options)
+        val curSchema = JdbcUtils.getTableSchema(conn, table.identifier, options)
         val newSchema = StructType(Seq(
             Field("str_field", VarcharType(30)),
             Field("int_field", IntegerType),
@@ -104,7 +104,7 @@ class JdbcUtilsTest extends AnyFlatSpec with Matchers with LocalTempDir {
         val newTable = TableDefinition(TableIdentifier(""), TableType.TABLE, newSchema.fields)
         val migrations = TableChange.migrate(curTable, newTable, MigrationPolicy.STRICT)
         JdbcUtils.alterTable(conn, table.identifier, migrations, options)
-        JdbcUtils.getSchema(conn, table.identifier, options) should be (newSchema)
+        JdbcUtils.getTableSchema(conn, table.identifier, options) should be (newSchema)
 
         JdbcUtils.dropTable(conn, table.identifier, options)
         conn.close()

@@ -59,7 +59,7 @@ extends BaseMapping {
     }
 
     /**
-     * Returns the dependencies of this mapping, which are empty for an ReadRelationMapping
+     * Returns the dependencies of this mapping, which are empty for an RelationMapping
      *
      * @return
      */

@@ -32,7 +32,7 @@ import com.dimajix.flowman.types.VarcharType
 
 
 class SqlServerRelationTest extends AnyFlatSpec with Matchers {
-    "The JdbcRelation" should "support embedding the connection" in {
+    "The JdbcTableRelation" should "support embedding the connection" in {
         val spec =
             s"""
                |kind: sqlserver

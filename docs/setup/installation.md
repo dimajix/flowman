@@ -16,7 +16,7 @@ needs to match the ones of your platform
 
 ### Download & Install Spark
 
-As of this writing, the latest release of Flowman is 0.23.1 and is available prebuilt for Spark 3.2.1 on the Spark
+As of this writing, the latest release of Flowman is 0.24.0 and is available prebuilt for Spark 3.2.1 on the Spark
 homepage. So we download the appropriate Spark distribution from the Apache archive and unpack it.
 
 ```shell
@@ -59,13 +59,13 @@ versions. The naming is very simple:
 flowman-dist-<version>-oss-spark<spark-version>-hadoop<hadoop-version>-bin.tar.gz
 ```
 You simply have to use the package which fits to the Spark and Hadoop versions of your environment. For example the
-package of Flowman 0.23.1 and for Spark 3.2 and Hadoop 3.3 would be
+package of Flowman 0.24.0 and for Spark 3.2 and Hadoop 3.3 would be
 ```
-flowman-dist-0.23.1-oss-spark32-hadoop33-bin.tar.gz
+flowman-dist-0.24.0-oss-spark32-hadoop33-bin.tar.gz
 ```
 and the full URL then would be
 ```
-https://github.com/dimajix/flowman/releases/download/0.23.1/flowman-dist-0.23.1-oss-spark3.2-hadoop3.3-bin.tar.gz
+https://github.com/dimajix/flowman/releases/download/0.24.0/flowman-dist-0.24.0-oss-spark3.2-hadoop3.3-bin.tar.gz
 ```
 
 

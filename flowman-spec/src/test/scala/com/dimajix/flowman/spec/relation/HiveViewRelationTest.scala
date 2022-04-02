@@ -59,7 +59,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         |
         |mappings:
         |  t0:
-        |    kind: readRelation
+        |    kind: relation
         |    relation: t0
         |""".stripMargin
     val project = Module.read.string(spec).toProject("project")
@@ -135,10 +135,10 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         |          type: string
         |mappings:
         | t0:
-        |    kind: readRelation
+        |    kind: relation
         |    relation: t0
         | t1:
-        |    kind: readRelation
+        |    kind: relation
         |    relation: t1
         | union:
         |    kind: union
@@ -216,7 +216,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
               |
               |mappings:
               |  t0:
-              |    kind: readRelation
+              |    kind: relation
               |    relation: t0
               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")

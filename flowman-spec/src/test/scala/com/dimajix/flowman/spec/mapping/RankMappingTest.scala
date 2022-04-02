@@ -247,7 +247,7 @@ class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |
               |mappings:
               |  some_table:
-              |    kind: readRelation
+              |    kind: relation
               |    relation: some_table
               |
               |  latest:

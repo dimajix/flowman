@@ -15,7 +15,7 @@ Fortunately, Spark is rather simple to install locally on your machine:
 
 ### Download & Install Spark
 
-As of this writing, the latest release of Flowman is 0.23.1 and is available prebuilt for Spark 3.2.1 on the Spark 
+As of this writing, the latest release of Flowman is 0.24.0 and is available prebuilt for Spark 3.2.1 on the Spark 
 homepage. So we download the appropriate Spark distribution from the Apache archive and unpack it.
 
 ```shell
@@ -37,8 +37,8 @@ You find prebuilt Flowman packages on the corresponding release page on GitHub. 
 
 ```shell
 # Download and unpack Flowman
-curl -L https://github.com/dimajix/flowman/releases/download/0.22.0/flowman-dist-0.23.1-oss-spark3.2-hadoop3.3-bin.tar.gz | tar xvzf -# Create a nice link
-ln -snf flowman-0.23.1 flowman
+curl -L https://github.com/dimajix/flowman/releases/download/0.22.0/flowman-dist-0.24.0-oss-spark3.2-hadoop3.3-bin.tar.gz | tar xvzf -# Create a nice link
+ln -snf flowman-0.24.0 flowman
 ```
 
 ### Flowman Configuration

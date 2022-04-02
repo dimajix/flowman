@@ -30,7 +30,7 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "The ReadRelationMapping" should "be able to read from a NullRelation" in {
+    "The RelationMapping" should "be able to read from a NullRelation" in {
         val spec =
             """
               |relations:
@@ -45,7 +45,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |          type: Integer
               |mappings:
               |  empty:
-              |    kind: read
+              |    kind: relation
               |    relation: empty
               |    columns:
               |      str_col: string
@@ -88,7 +88,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |          type: integer
               |mappings:
               |  empty:
-              |    kind: read
+              |    kind: relation
               |    relation: empty
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
@@ -130,7 +130,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |        type: string
               |mappings:
               |  empty:
-              |    kind: read
+              |    kind: relation
               |    relation: empty
               |    columns:
               |      str_col: string
@@ -175,7 +175,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |        type: string
               |mappings:
               |  empty:
-              |    kind: read
+              |    kind: relation
               |    relation: empty
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
@@ -219,7 +219,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |        type: string
               |mappings:
               |  empty:
-              |    kind: read
+              |    kind: relation
               |    relation: empty
               |    partitions:
               |      spart: abc

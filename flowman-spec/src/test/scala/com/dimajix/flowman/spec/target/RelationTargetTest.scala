@@ -162,7 +162,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
             s"""
                |mappings:
                |  input:
-               |    kind: read
+               |    kind: relation
                |    relation: input
                |
                |relations:

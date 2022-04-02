@@ -23,6 +23,7 @@ import scala.util.Success
 import scala.util.Try
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.MapIgnoreCase
@@ -360,7 +361,9 @@ class RelationTargetSpec extends TargetSpec {
     @JsonProperty(value="relation", required=true) private var relation:RelationReferenceSpec = _
     @JsonProperty(value="mode", required=false) private var mode:Option[String] = None
     @JsonProperty(value="partition", required=false) private var partition:Map[String,String] = Map()
+    @JsonSchemaInject(json="""{"type": [ "integer", "string" ]}""")
     @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
+    @JsonSchemaInject(json="""{"type": [ "boolean", "string" ]}""")
     @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
 
     override def instantiate(context: Context, properties:Option[Target.Properties] = None): RelationTarget = {

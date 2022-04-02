@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty.Access
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.common.TypeRegistry
@@ -32,6 +33,7 @@ import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.MappingType
 import com.dimajix.flowman.spec.documentation.MappingDocSpec
 import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
+import com.dimajix.flowman.spec.template.MappingTemplateInstanceSpec
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
@@ -52,12 +54,10 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "cast", value = classOf[CastMappingSpec]),
     new JsonSubTypes.Type(name = "coalesce", value = classOf[CoalesceMappingSpec]),
     new JsonSubTypes.Type(name = "conform", value = classOf[ConformMappingSpec]),
-    //new JsonSubTypes.Type(name = "const", value = classOf[ValuesMappingSpec]),
     new JsonSubTypes.Type(name = "deduplicate", value = classOf[DeduplicateMappingSpec]),
     new JsonSubTypes.Type(name = "distinct", value = classOf[DistinctMappingSpec]),
     new JsonSubTypes.Type(name = "drop", value = classOf[DropMappingSpec]),
     new JsonSubTypes.Type(name = "earliest", value = classOf[EarliestMappingSpec]),
-    //new JsonSubTypes.Type(name = "empty", value = classOf[NullMappingSpec]),
     new JsonSubTypes.Type(name = "explode", value = classOf[ExplodeMappingSpec]),
     new JsonSubTypes.Type(name = "extend", value = classOf[ExtendMappingSpec]),
     new JsonSubTypes.Type(name = "extractJson", value = classOf[ExtractJsonMappingSpec]),
@@ -71,10 +71,9 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "null", value = classOf[NullMappingSpec]),
     new JsonSubTypes.Type(name = "project", value = classOf[ProjectMappingSpec]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedMappingSpec]),
-    //new JsonSubTypes.Type(name = "read", value = classOf[ReadRelationMappingSpec]),
+    new JsonSubTypes.Type(name = "relation", value = classOf[RelationMappingSpec]),
     new JsonSubTypes.Type(name = "readHive", value = classOf[ReadHiveMappingSpec]),
-    new JsonSubTypes.Type(name = "readRelation", value = classOf[ReadRelationMappingSpec]),
-    new JsonSubTypes.Type(name = "readStream", value = classOf[ReadStreamMappingSpec]),
+    new JsonSubTypes.Type(name = "stream", value = classOf[StreamMappingSpec]),
     new JsonSubTypes.Type(name = "rebalance", value = classOf[RebalanceMappingSpec]),
     new JsonSubTypes.Type(name = "recursiveSql", value = classOf[RecursiveSqlMappingSpec]),
     new JsonSubTypes.Type(name = "repartition", value = classOf[RepartitionMappingSpec]),
@@ -89,11 +88,14 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "unit", value = classOf[UnitMappingSpec]),
     new JsonSubTypes.Type(name = "unpackJson", value = classOf[UnpackJsonMappingSpec]),
     new JsonSubTypes.Type(name = "upsert", value = classOf[UpsertMappingSpec]),
-    new JsonSubTypes.Type(name = "values", value = classOf[ValuesMappingSpec])
+    new JsonSubTypes.Type(name = "values", value = classOf[ValuesMappingSpec]),
+    new JsonSubTypes.Type(name = "template/*", value = classOf[MappingTemplateInstanceSpec])
 ))
 abstract class MappingSpec extends NamedSpec[Mapping] {
     @JsonProperty(value="kind", access=Access.WRITE_ONLY, required = true) protected var kind: String = _
+    @JsonSchemaInject(json="""{"type": [ "boolean", "string" ]}""")
     @JsonProperty(value="broadcast", required = false) protected var broadcast:String = "false"
+    @JsonSchemaInject(json="""{"type": [ "boolean", "string" ]}""")
     @JsonProperty(value="checkpoint", required = false) protected var checkpoint:String = "false"
     @JsonProperty(value="cache", required = false) protected var cache:String = "NONE"
     @JsonProperty(value="documentation", required = false) private var documentation: Option[MappingDocSpec] = None

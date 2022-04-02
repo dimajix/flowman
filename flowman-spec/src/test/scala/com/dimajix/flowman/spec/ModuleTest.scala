@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ class ModuleTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |    kind: null
               |mappings:
               |  input:
-              |    kind: read
+              |    kind: relation
               |    relation: empty
               |environment:
               |  - x=y
@@ -75,7 +75,7 @@ class ModuleTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |
               |mappings:
               |  input:
-              |    kind: read
+              |    kind: relation
               |    relation: empty
               |
               |jobs:

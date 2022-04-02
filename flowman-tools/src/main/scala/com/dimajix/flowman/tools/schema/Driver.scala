@@ -29,8 +29,6 @@ import scala.util.Try
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.databind.{ObjectMapper => JacksonMapper}
 import org.kohsuke.args4j.CmdLineException
 

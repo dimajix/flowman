@@ -39,12 +39,15 @@ application.
 
 ## Where to go from here
 
-## Quickstart
-A small [quickstart guide](quickstart.md) will lead you through a simple example.
+## Quickstart & Tutorial
+A small [quickstart guide](quickstart.md) will lead you through a simple example. After you have finished the
+introduction, you may want to proceed with the [Flowman tutorial](tutorial/index.md) to get more in-depth knowledge
+step by step.
 
 
 ### Installation
-* [Flowman Installation](setup/installation.md): Installation Guide
+* [Flowman Installation](setup/installation.md): Installation guide for local installation
+* [Running in Docker](setup/docker.md): How to run Flowman in Docker
 * [Configuration](setup/config.md): Configuration settings
 
 
@@ -75,7 +78,7 @@ More detail on all these items is described in the following sections:
 ### Cookbooks
 
 * [Testing](testing/index.md) How to implement tests in Flowman
-* [Kerberos](cookbook/kerberos.md) How to use Flowman in Kerberized environments
+* [Documenting](documenting/index.md) How to create detailed documentation of your Flowman project
 
 
 ### Plugins
@@ -102,4 +105,5 @@ Flowman also provides optional plugins which extend functionality. You can find 
    connectors/index
    plugins/index
    cookbook/index
+   releases
 ```

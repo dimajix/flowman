@@ -1,7 +1,8 @@
 # Flowman Quickstart Guide
 
-In order to run the example, you need to have valid access credentials to AWS, since we will be using some data
-stored in S3.
+This quickstart guide will walk you to a installation of Apache Spark and Flowman on your local Linux box. If you
+are using Windows, you will find some hints for setting up the required "Hadoop WinUtils", but we generally recommend
+to use Linux. You can also run a [Flowman Docker image](setup/docker.md), which is the simplest way to get up to speed.
 
 
 ## 1. Install Spark
@@ -28,6 +29,16 @@ ln -snf spark-3.2.1-bin-hadoop3.2 spark
 ```
 
 The Spark package already contains Hadoop, so with this single download you already have both installed and integrated with each other.
+
+### Download & Install Hadoop Utils for Windows
+
+If you are trying to run Flowman on Windows, you also need the *Hadoop Winutils*, which is a set of
+DLLs required for the Hadoop libraries to be working. You can get a copy at https://github.com/kontext-tech/winutils .
+Once you downloaded the appropriate version, you need to place the DLLs into a directory `$HADOOP_HOME/bin`, where
+`HADOOP_HOME` refers to some arbitrary location of your choice on your Windows PC. You also need to set the following
+environment variables:
+* `HADOOP_HOME` should point to the parent directory of the `bin` directory
+* `PATH` should also contain `$HADOOP_HOME/bin`
 
 
 ## 2. Install Flowman
@@ -70,14 +81,14 @@ That’s all we need to run the Flowman example.
 
 ## 3. Flowman Shell
 
-The example data is stored in a S3 bucket provided by myself. Since the data is publicly available and the project is 
+The example data is stored in a publicly accessible S3 bucket. Since the data is publicly available and the project is
 configured to use anonymous AWS authentication, you do not need to provide your AWS credentials (you even do not
 even need to have an account on AWS)
 
 ### Start interactive Flowman shell
 
 We start Flowman by running the interactive Flowman shell. While this is not the tool that would be used in automatic
-batch processing ( flowexec is the right tool for that scenario), it gives us a good idea how ETL projects in Flowman
+batch processing (`flowexec` is the right tool for that scenario), it gives us a good idea how ETL projects in Flowman
 are organized.
 
 ```shell

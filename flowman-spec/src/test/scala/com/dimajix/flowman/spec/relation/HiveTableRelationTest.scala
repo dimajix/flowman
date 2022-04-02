@@ -53,7 +53,7 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.{types => ftypes}
@@ -411,7 +411,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Relation.Properties(context, "t0"),
             table = TableIdentifier("lala_0006", Some("default")),
             format = Some("parquet"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", ftypes.StringType),
@@ -454,7 +454,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Relation.Properties(context, "t0"),
             table = TableIdentifier("lala_0007", Some("default")),
             format = Some("avro"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", ftypes.StringType),
@@ -501,7 +501,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                 "respectSparkSchema" -> "true", // If not set, Spark will return StringType
                 "separatorChar" -> "\t"
             ),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", ftypes.StringType),
@@ -544,7 +544,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Relation.Properties(context, "t0"),
             table = TableIdentifier("lala_0008", Some("default")),
             rowFormat = Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", ftypes.StringType),
@@ -588,7 +588,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             rowFormat = Some("org.apache.hadoop.hive.serde2.avro.AvroSerDe"),
             inputFormat = Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat"),
             outputFormat = Some("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", ftypes.StringType),
@@ -1011,7 +1011,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = HiveTableRelation(
             Relation.Properties(context, "rel_1"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.IntegerType),
@@ -1094,7 +1094,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = HiveTableRelation(
             Relation.Properties(context, "rel_1"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.IntegerType),
@@ -1217,7 +1217,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = HiveTableRelation(
             Relation.Properties(context, "rel_1"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.IntegerType),
@@ -1321,7 +1321,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = HiveTableRelation(
             Relation.Properties(context, "rel_1"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.IntegerType),
@@ -1514,7 +1514,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = HiveTableRelation(
             Relation.Properties(context, "rel_1"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.VarcharType(4)),
@@ -1807,7 +1807,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation_1 = HiveTableRelation(
             Relation.Properties(context, "rel_1"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.StringType),
@@ -1819,7 +1819,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         )
         val relation_2 = HiveTableRelation(
             Relation.Properties(context, "rel_2"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.StringType),
@@ -2074,7 +2074,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         )
         val table = HiveTableRelation(
             Relation.Properties(context, "rel_1"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.StringType),

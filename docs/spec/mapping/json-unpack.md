@@ -9,7 +9,7 @@ mappings:
     columns:
       - name: json_column
         schema:
-          kind: embedded
+          kind: inline
           fields:
             - name: name
               type: String

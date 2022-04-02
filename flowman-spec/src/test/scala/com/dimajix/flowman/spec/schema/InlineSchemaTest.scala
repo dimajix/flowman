@@ -23,11 +23,11 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
 
 
-class EmbeddedSchemaTest extends AnyFlatSpec with Matchers {
-    "An EmbeddedSchema" should "be parseable with explicit type" in {
+class InlineSchemaTest extends AnyFlatSpec with Matchers {
+    "An InlineSchema" should "be parseable with explicit type" in {
         val spec =
             """
-              |kind: embedded
+              |kind: inline
               |fields:
               |  - name: str_col
               |    type: string
@@ -38,10 +38,10 @@ class EmbeddedSchemaTest extends AnyFlatSpec with Matchers {
         val session = Session.builder().disableSpark().build()
 
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
-        schemaSpec shouldBe a[EmbeddedSchemaSpec]
+        schemaSpec shouldBe a[InlineSchemaSpec]
 
         val result = schemaSpec.instantiate(session.context)
-        result shouldBe a[EmbeddedSchema]
+        result shouldBe a[InlineSchema]
         result.fields.size should be (2)
         result.fields(0).name should be ("str_col")
         result.fields(1).name should be ("int_col")

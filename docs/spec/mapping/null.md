@@ -19,7 +19,7 @@ mappings:
   empty_mapping:
     kind: null
     schema:
-      kind: embedded
+      kind: inline
       fields:
         - name: id
           type: string

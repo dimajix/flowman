@@ -27,8 +27,11 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.JsonNode
-import com.kjetland.jackson.jsonSchema.JsonSchemaGenerator
+import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.databind.{ObjectMapper => JacksonMapper}
 import org.kohsuke.args4j.CmdLineException
 
 import com.dimajix.flowman.FLOWMAN_VERSION
@@ -101,7 +104,9 @@ class Driver(args:Arguments) extends Tool {
     }
 
     private def saveSchema(basedir:Path, name:String, jsonSchema:JsonNode) : Unit = {
-        val schema = jsonSchema.toPrettyString
+        val mapper = new JacksonMapper(new JsonFactory())
+        val writer = mapper.writer().withDefaultPrettyPrinter
+        val schema = writer.writeValueAsString(jsonSchema)
         val file = new File(basedir.toFile, name)
         println(s"Generating Flowman YAML schema '${file.toString}'...'")
         val output = new FileOutputStream(file)

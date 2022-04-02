@@ -29,7 +29,7 @@ relations:
         type: integer
         granularity: 1
     schema:
-      kind: embedded
+      kind: inline
       fields:
         - name: raw_data
           type: string
@@ -53,7 +53,7 @@ mappings:
           type: integer
           granularity: 1
       schema:
-        kind: embedded
+        kind: inline
         fields:
           - name: raw_data
             type: string

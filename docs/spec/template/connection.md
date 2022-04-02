@@ -33,7 +33,7 @@ relations:
       dir: /opt/flowman/derby_new
     table: "advertiser_setting"
     schema:
-      kind: embedded
+      kind: inline
       fields:
         - name: id
           type: Integer

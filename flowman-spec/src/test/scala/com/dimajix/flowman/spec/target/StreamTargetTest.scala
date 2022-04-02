@@ -95,7 +95,7 @@ class StreamTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                |    location: ${inputPath.toUri}
                |    format: csv
                |    schema:
-               |      kind: embedded
+               |      kind: inline
                |      fields:
                |        - name: int_col
                |          type: integer
@@ -108,7 +108,7 @@ class StreamTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                |    location: ${outputPath.toUri}
                |    format: csv
                |    schema:
-               |      kind: embedded
+               |      kind: inline
                |      fields:
                |        - name: int_col
                |          type: integer
@@ -211,7 +211,7 @@ class StreamTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                |    location: ${inputPath.toUri}
                |    format: csv
                |    schema:
-               |      kind: embedded
+               |      kind: inline
                |      fields:
                |        - name: int_col
                |          type: integer
@@ -224,7 +224,7 @@ class StreamTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                |    location: ${outputPath.toUri}
                |    format: csv
                |    schema:
-               |      kind: embedded
+               |      kind: inline
                |      fields:
                |        - name: int_col
                |          type: integer

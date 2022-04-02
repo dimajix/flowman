@@ -50,7 +50,7 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.{types => ftypes}
@@ -69,7 +69,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |    location: ${inputPath}
               |    format: csv
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: f1
               |          type: string
@@ -271,7 +271,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val relation = FileRelation(
             Relation.Properties(context, "local"),
             location = new Path(outputPath.toUri),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", com.dimajix.flowman.types.StringType),
@@ -323,7 +323,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Relation.Properties(context, "local"),
             location = new Path(outputPath.toUri),
             pattern = Some("p_col=$p_col"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", com.dimajix.flowman.types.StringType),
@@ -394,7 +394,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val relation = FileRelation(
             Relation.Properties(context, "local"),
             location = new Path(outputPath.toUri),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", com.dimajix.flowman.types.StringType),
@@ -469,7 +469,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Relation.Properties(context, "local"),
             location = new Path(outputPath.toUri),
             pattern = Some("p_col=$p_col"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", com.dimajix.flowman.types.StringType),
@@ -676,7 +676,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val relation = FileRelation(
             Relation.Properties(context, "local"),
             location = new Path(outputPath.toUri),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", com.dimajix.flowman.types.StringType),
@@ -886,7 +886,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             location = new Path(outputPath.toUri),
             format = "text",
             pattern = Some("p1=$p1/p2=$p2"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("value", com.dimajix.flowman.types.StringType)
@@ -1057,7 +1057,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Relation.Properties(context, "local"),
             location = new Path(outputPath.toUri),
             format = "csv",
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("c0", com.dimajix.flowman.types.IntegerType),
@@ -1165,7 +1165,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Relation.Properties(context, "local"),
             location = new Path(outputPath.toUri),
             format = "csv",
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.IntegerType),
@@ -1256,7 +1256,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val relation = FileRelation(
             Relation.Properties(context, "rel_1"),
             location = new Path(location.toUri),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.IntegerType),
@@ -1341,7 +1341,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Relation.Properties(context, "rel_1"),
             location = new Path(location.toUri),
             pattern = Some("part=$part"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.IntegerType),
@@ -1462,7 +1462,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val relation = FileRelation(
             Relation.Properties(context, "rel_1"),
             location = new Path(location.toUri),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.IntegerType),
@@ -1577,7 +1577,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Relation.Properties(context, "local"),
             location = new Path(outputPath.toUri),
             format = "text",
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("value", com.dimajix.flowman.types.StringType)
@@ -1632,7 +1632,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             location = new Path(outputPath.toUri),
             format = "text",
             pattern = Some("magic_p1=$p1/$p2"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("value", com.dimajix.flowman.types.StringType)
@@ -1672,7 +1672,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Relation.Properties(context, "local"),
             location = new Path(outputPath.toUri),
             format = "csv",
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("c0", com.dimajix.flowman.types.IntegerType),
@@ -1734,7 +1734,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Relation.Properties(context, "local"),
             location = new Path(outputPath.toUri),
             format = "csv",
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("c0", com.dimajix.flowman.types.IntegerType),

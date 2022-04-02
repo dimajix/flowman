@@ -32,14 +32,14 @@ class UnionSchemaTest extends AnyFlatSpec with Matchers {
             """
               |kind: union
               |schemas:
-              |  - kind: embedded
+              |  - kind: inline
               |    fields:
               |      - name: str_col
               |        type: string
               |        nullable: false
               |      - name: int_col
               |        type: integer
-              |  - kind: embedded
+              |  - kind: inline
               |    fields:
               |      - name: int_col
               |        type: boolean

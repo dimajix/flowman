@@ -28,7 +28,7 @@ import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -44,7 +44,7 @@ class GenericRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessi
               |    options:
               |      path: test/data/data_1.csv
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: f1
               |          type: string
@@ -71,7 +71,7 @@ class GenericRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
 
-        val schema = EmbeddedSchema(
+        val schema = InlineSchema(
             Schema.Properties(session.context),
             fields = Seq(
                 Field("f1", com.dimajix.flowman.types.StringType),

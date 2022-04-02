@@ -32,7 +32,7 @@ relations:
         ON c.id = li.campaign_id
     "
     schema:
-      kind: embedded
+      kind: inline
       fields:
         - name: lineitem
           type: string

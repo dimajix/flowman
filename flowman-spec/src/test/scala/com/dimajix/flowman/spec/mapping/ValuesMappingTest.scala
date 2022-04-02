@@ -32,7 +32,7 @@ import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.Prototype
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
@@ -53,7 +53,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
               |      - [cat,"",7]
               |      - [dog,null,8]
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: str_col
               |          type: string
@@ -145,7 +145,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
 
         val mockMapping = ValuesMapping(
             Mapping.Properties(context, "const"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = schema.fields
             )),

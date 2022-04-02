@@ -61,7 +61,7 @@ class ModuleTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |  empty:
               |    kind: null
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: col1
               |          type: string

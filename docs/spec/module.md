@@ -104,7 +104,7 @@ relations:
     location: "s3a://dimajix-training/data/weather/"
     pattern: "${year}"
     schema:
-      kind: embedded
+      kind: inline
       fields:
         - name: raw_data
           type: string

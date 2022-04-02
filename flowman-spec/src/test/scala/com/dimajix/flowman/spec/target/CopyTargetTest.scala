@@ -76,7 +76,7 @@ class CopyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |    format: csv
               |    location: $srcFile
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: f1
               |          type: string
@@ -89,7 +89,7 @@ class CopyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |    format: csv
               |    location: $tempDir/copy-relation-output.csv
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: f1
               |          type: string

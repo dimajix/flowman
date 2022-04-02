@@ -24,7 +24,7 @@ import com.dimajix.flowman.model.ConnectionIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.ValueConnectionReference
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
@@ -64,7 +64,7 @@ class SqlServerRelationTest extends AnyFlatSpec with Matchers {
         val relation = relationSpec.instantiate(context)
         relation shouldBe a[SqlServerRelation]
         relation.name should be ("some_relation")
-        relation.schema should be (Some(EmbeddedSchema(
+        relation.schema should be (Some(InlineSchema(
             Schema.Properties(context, name="embedded", kind="inline"),
             fields = Seq(
                 Field("str_col", StringType),

@@ -1,6 +1,6 @@
-# Embedded Schema
+# Inline Schema
 
-The embedded schema is (as the name already suggests) directly embedded into the corresponding yml file.
+The `inline` schema is (as the name already suggests) directly embedded into the corresponding yml file.
 
 ## Example
 
@@ -14,7 +14,7 @@ relations:
       quote: "\""
       escape: "\\"
     schema:
-      kind: embedded
+      kind: inline
       fields:
         - name: UnixDateTime
           type: Long
@@ -27,7 +27,7 @@ relations:
 ```
 
 ## Fields
-* `kind` **(mandatory)** *(type: string)*: `embedded`
+* `kind` **(mandatory)** *(type: string)*: `inline`
 
 * `fields` **(mandatory)** *(type: list:field)*: Contains all fields
 

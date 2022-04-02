@@ -35,7 +35,7 @@ class RelationSchemaTest extends AnyFlatSpec with Matchers {
               |  empty:
               |    kind: null
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: str_col
               |          type: string
@@ -65,7 +65,7 @@ class RelationSchemaTest extends AnyFlatSpec with Matchers {
               |  empty:
               |    kind: null
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: str_col
               |          type: string

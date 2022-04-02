@@ -23,7 +23,7 @@ In order to avoid YAML schema inconsistencies, there have been some renaming of 
 | relation | jdbc         | jdbcTable, jdbcQuery |
 | relation | table        | hiveTable            |
 | relation | view         | hiveView             |
-| schema   | inline       | embedded             |
+| schema   | embedded     | inline               |
 
  
 # Version 0.23.1 - 2022-03-28

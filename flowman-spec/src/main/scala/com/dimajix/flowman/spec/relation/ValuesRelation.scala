@@ -40,7 +40,7 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.types
 import com.dimajix.flowman.types.Field
@@ -63,7 +63,7 @@ case class ValuesRelation(
         throw new IllegalArgumentException(s"Require either schema or columns in mapping $name")
 
     private val effectiveSchema = _schema.getOrElse(
-        EmbeddedSchema(Schema.Properties(context), fields = columns)
+        InlineSchema(Schema.Properties(context), fields = columns)
     )
 
     /**

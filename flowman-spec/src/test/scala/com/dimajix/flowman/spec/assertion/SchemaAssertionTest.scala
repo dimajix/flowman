@@ -29,7 +29,7 @@ import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.ArrayType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.DoubleType
@@ -88,7 +88,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         assertion.name should be ("")
         assertion.mapping should be (MappingOutputIdentifier("some_mapping"))
         assertion.columns should be (Seq())
-        assertion.schema should be (Some(EmbeddedSchema(
+        assertion.schema should be (Some(InlineSchema(
             Schema.Properties(context, name="embedded", kind="inline"),
             fields = Seq(Field("col_1", StringType), Field("col_2", IntegerType))
         )))

@@ -11,7 +11,7 @@ mappings:
   fake_input:
     kind: values  
     schema:
-      kind: embedded
+      kind: inline
       fields:
         - name: int_col
           type: integer

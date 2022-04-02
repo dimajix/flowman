@@ -68,7 +68,7 @@ class RelationMappingTest extends AnyFlatSpec with Matchers {
               |      records:
               |        - ["key",12]
               |      schema:
-              |        kind: embedded
+              |        kind: inline
               |        fields:
               |          - name: key_column
               |            type: string
@@ -113,7 +113,7 @@ class RelationMappingTest extends AnyFlatSpec with Matchers {
               |      records:
               |        - ["key",12]
               |      schema:
-              |        kind: embedded
+              |        kind: inline
               |        fields:
               |          - name: key_column
               |            type: string

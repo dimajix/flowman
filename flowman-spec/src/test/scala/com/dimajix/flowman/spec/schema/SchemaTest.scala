@@ -37,7 +37,7 @@ class SchemaTest extends AnyFlatSpec with Matchers {
             """.stripMargin
 
         val result = mapper.readValue(spec, classOf[SchemaSpec])
-        result shouldBe a[EmbeddedSchemaSpec]
+        result shouldBe a[InlineSchemaSpec]
     }
 
     it should "provide a nice string representation (1)" in {

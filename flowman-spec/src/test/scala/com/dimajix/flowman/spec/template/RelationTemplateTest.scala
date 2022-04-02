@@ -62,7 +62,7 @@ class RelationTemplateTest extends AnyFlatSpec with Matchers {
               |      records:
               |        - ["$p0",$p1]
               |      schema:
-              |        kind: embedded
+              |        kind: inline
               |        fields:
               |          - name: str_col
               |            type: string

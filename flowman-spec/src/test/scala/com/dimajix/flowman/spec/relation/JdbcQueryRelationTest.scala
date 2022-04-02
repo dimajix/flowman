@@ -62,7 +62,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.ValueConnectionReference
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.DateType
 import com.dimajix.flowman.types.DoubleType
 import com.dimajix.flowman.types.Field
@@ -133,7 +133,7 @@ class JdbcQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = relationSpec.instantiate(context)
         relation.name should be ("some_relation")
-        relation.schema should be (Some(EmbeddedSchema(
+        relation.schema should be (Some(InlineSchema(
                 Schema.Properties(context, name="embedded", kind="inline"),
                 fields = Seq(
                     Field("str_col", StringType),
@@ -175,7 +175,7 @@ class JdbcQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation_t0 = JdbcTableRelation(
             Relation.Properties(context, "t0"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", StringType),

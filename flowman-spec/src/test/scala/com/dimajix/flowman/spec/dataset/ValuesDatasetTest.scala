@@ -26,7 +26,7 @@ import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
@@ -72,7 +72,7 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |  - [cat,"",7]
               |  - [dog,null,8]
               |schema:
-              |  kind: embedded
+              |  kind: inline
               |  fields:
               |    - name: str_col
               |      type: string
@@ -109,7 +109,7 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
         val dataset = ValuesDataset(
             Dataset.Properties(context, "const"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = schema.fields
             )),

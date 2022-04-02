@@ -80,7 +80,7 @@ relations:
     # Specify an optional schema here. It is always recommended to explicitly specify a schema for every relation
     # and not just let data flow from a mapping into a target.
     schema:
-      kind: embedded
+      kind: inline
       fields:
         - name: country
           type: STRING

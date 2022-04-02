@@ -77,7 +77,7 @@ relations:
     format: parquet
     location: "$basedir/stations/"
     schema:
-      kind: embedded
+      kind: inline
       fields:
         - name: "usaf"
           type: string

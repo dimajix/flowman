@@ -11,7 +11,7 @@ relations:
     kind: generic
     format: "csv"
     schema:
-      kind: embedded
+      kind: inline
       fields:
         - name: id
           type: Integer

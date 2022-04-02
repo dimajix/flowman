@@ -32,7 +32,7 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.Prototype
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.ArrayRecord
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
@@ -49,7 +49,7 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
               |  empty:
               |    kind: null
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: str_col
               |          type: string
@@ -158,7 +158,7 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
             Relation.Properties(context, "mock"),
             RelationIdentifier("base")
         )
-        val schema = EmbeddedSchema(
+        val schema = InlineSchema(
             Schema.Properties(context),
             fields = Seq(
                 Field("str_col", StringType),
@@ -210,7 +210,7 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
             Relation.Properties(context, "base"),
             RelationIdentifier("base")
         )
-        val schema = EmbeddedSchema(
+        val schema = InlineSchema(
             Schema.Properties(context),
             fields = Seq(
                 Field("str_col", StringType),
@@ -259,7 +259,7 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
                 ArrayRecord("",null)
             )
         )
-        val schema = EmbeddedSchema(
+        val schema = InlineSchema(
             Schema.Properties(context),
             fields = Seq(
                 Field("str_col", StringType),

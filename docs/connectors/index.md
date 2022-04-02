@@ -21,11 +21,11 @@ The following table gives an overview of all currently supported data sources an
 | JSON files     | yes            | yes            | N/A                                          | [`file`](../spec/relation/file.html)                                                             |
 | Kafka          | yes            | yes            | [Kafka](../plugins/kafka.html)               | [`kafka`](../spec/relation/kafka.html)                                                           |
 | Local files    | yes            | yes            | N/A                                          | [`local`](../spec/relation/local.html)                                                           |
-| MariaDB        | yes            | yes            | [MariaDB](../plugins/mariadb.html)           | [`jdbc`](../spec/relation/jdbcTable.html)                                                        |
-| MySQL          | yes            | yes            | [MySQL](../plugins/mysql.html)               | [`jdbc`](../spec/relation/jdbcTable.html)                                                        |
+| MariaDB        | yes            | yes            | [MariaDB](../plugins/mariadb.html)           | [`jdbcTable`](../spec/relation/jdbcTable.html)                                                   |
+| MySQL          | yes            | yes            | [MySQL](../plugins/mysql.html)               | [`jdbcTable`](../spec/relation/jdbcTable.html)                                                   |
 | ORC files      | yes            | yes            | N/A                                          | [`file`](../spec/relation/file.html)                                                             |
 | Parquet files  | yes            | yes            | N/A                                          | [`file`](../spec/relation/file.html)                                                             |
-| PostgreSQL     | yes            | yes            | N/A                                          | [`jdbc`](../spec/relation/jdbcTable.html)                                                        |
+| PostgreSQL     | yes            | yes            | N/A                                          | [`jdbcTable`](../spec/relation/jdbcTable.html)                                                   |
 | SQL Server     | yes            | yes            | [MS SQL Server](../plugins/mssqlserver.html) | [`sqlserver`](../spec/relation/sqlserver.html)                                                   |
 | Sequence files | yes            | yes            | N/A                                          | [`file`](../spec/relation/file.html)                                                             |
 | Text files     | yes            | yes            | N/A                                          | [`file`](../spec/relation/file.html)                                                             |

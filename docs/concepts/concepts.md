@@ -50,7 +50,7 @@ And a table in a MySQL database can be specified as:
 ```yaml
 relations:
   frontend_users:
-    kind: jdbc
+    kind: jdbcTable
     # Specify the name of the connection to use
     connection:
       kind: jdbc
@@ -109,7 +109,7 @@ single *partition* of data, which is commonly done for incremental processing on
 ```yaml
 mappings:
   facts_all:
-    kind: readRelation
+    kind: relation
     relation: facts_table
     partitions:
       year:

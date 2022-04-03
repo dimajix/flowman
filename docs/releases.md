@@ -38,7 +38,7 @@ table:
 | mapping  | readRelation | relation             |
 | mapping  | readStream   | stream               |
 | relation | const        | values               |
-| relation | const        | null                 |
+| relation | empty        | null                 |
 | relation | jdbc         | jdbcTable, jdbcQuery |
 | relation | table        | hiveTable            |
 | relation | view         | hiveView             |

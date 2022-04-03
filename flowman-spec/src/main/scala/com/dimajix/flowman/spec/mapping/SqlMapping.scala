@@ -65,11 +65,10 @@ extends BaseMapping {
       *
       * @return
       */
-    override def inputs : Set[MappingOutputIdentifier] = {
-        SqlParser.resolveDependencies(statement).map(MappingOutputIdentifier.parse)
-    }
+    override def inputs : Set[MappingOutputIdentifier] = dependencies
 
-    private def statement : String = {
+    private lazy val dependencies = SqlParser.resolveDependencies(statement).map(MappingOutputIdentifier.parse)
+    private lazy val statement : String = {
         if (sql.exists(_.nonEmpty)) {
             sql.get
         }

@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaTitle
 
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.ProjectSpec.ImportSpec
@@ -37,6 +38,8 @@ object ProjectSpec {
     }
 }
 
+
+@JsonSchemaTitle("Flowman Project Schema")
 final class ProjectSpec {
     @JsonProperty(value="name", required=true) private var name: String = ""
     @JsonProperty(value="description", required=false) private var description: Option[String] = None
@@ -54,4 +57,3 @@ final class ProjectSpec {
         )
     }
 }
-

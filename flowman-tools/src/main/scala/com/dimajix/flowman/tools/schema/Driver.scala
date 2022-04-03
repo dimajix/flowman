@@ -29,6 +29,8 @@ import scala.util.Try
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.{ObjectMapper => JacksonMapper}
 import org.kohsuke.args4j.CmdLineException
 
@@ -94,9 +96,15 @@ class Driver(args:Arguments) extends Tool {
         val jsonSchemaGenerator = new MyJsonSchemaGenerator(objectMapper)
 
         val moduleSchema = jsonSchemaGenerator.generateJsonSchema(classOf[ModuleSpec])
+        // Fix required properties for "Field"
+        moduleSchema.get("definitions")
+          .get("Field").asInstanceOf[ObjectNode]
+          .replace("required", JsonNodeFactory.instance.arrayNode().add("name"))
         saveSchema(baseDir, "module.json", moduleSchema)
+
         val namespaceSchema = jsonSchemaGenerator.generateJsonSchema(classOf[NamespaceSpec])
         saveSchema(baseDir, "namespace.json", namespaceSchema)
+
         val projectSchema = jsonSchemaGenerator.generateJsonSchema(classOf[ProjectSpec])
         saveSchema(baseDir, "project.json", projectSchema)
     }

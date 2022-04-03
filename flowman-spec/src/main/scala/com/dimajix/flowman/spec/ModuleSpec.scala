@@ -18,6 +18,7 @@ package com.dimajix.flowman.spec
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaTitle
 
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.model.Module
@@ -30,6 +31,7 @@ import com.dimajix.flowman.spec.template.TemplateSpec
 import com.dimajix.flowman.spec.test.TestSpec
 
 
+@JsonSchemaTitle("Flowman Module Schema")
 final class ModuleSpec {
     @JsonProperty(value="environment", required=false) private var environment: Seq[String] = Seq()
     @JsonProperty(value="config", required=false) private var config: Seq[String] = Seq()

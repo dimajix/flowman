@@ -161,6 +161,7 @@ object FieldType {
               {
                 "type": "string",
                 "enum": [
+                  "bigint",
                   "binary",
                   "bool",
                   "boolean",
@@ -174,11 +175,14 @@ object FieldType {
                   "long",
                   "null",
                   "short",
+                  "smallint",
                   "string",
                   "text",
+                  "tinyint",
                   "timestamp",
                   "void"
-                ]
+                ],
+                "x-intellij-case-insensitive":true
               },
               {
                 "type": "string",

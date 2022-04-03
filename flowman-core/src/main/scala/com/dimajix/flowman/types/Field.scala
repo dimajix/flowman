@@ -59,15 +59,15 @@ object Field {
   * A Field represents a single entry in a Schema or a Struct.
   */
 final class Field {
-    @JsonProperty(value="name", required = true) private var _name: String = _
-    @JsonProperty(value="type", required = false) private var _type: FieldType = StringType
-    @JsonSchemaInject(json="""{"type": [ "boolean", "string" ]}""")
-    @JsonProperty(value="nullable", required = false) private var _nullable: Boolean = true
-    @JsonProperty(value="description", required = false) private var _description: Option[String] = None
-    @JsonProperty(value="default", required = false) private var _default: Option[String] = None
+    @JsonProperty(value="name", required=true) private var _name: String = _
+    @JsonProperty(value="type", required=false, defaultValue="string") private var _type: FieldType = StringType
+    @JsonSchemaInject(json="""{"type": [ "boolean", "string" ] }""")
+    @JsonProperty(value="nullable", required=false, defaultValue="true") private var _nullable: Boolean = true
+    @JsonProperty(value="description", required=false) private var _description: Option[String] = None
+    @JsonProperty(value="default", required=false) private var _default: Option[String] = None
     @JsonSchemaInject(json="""{"type": [ "integer", "string" ]}""")
-    @JsonProperty(value="size", required = false) private var _size: Option[Int] = None
-    @JsonProperty(value="format", required = false) private var _format: Option[String] = None
+    @JsonProperty(value="size", required=false) private var _size: Option[Int] = None
+    @JsonProperty(value="format", required=false) private var _format: Option[String] = None
 
     /**
       * The name of the field

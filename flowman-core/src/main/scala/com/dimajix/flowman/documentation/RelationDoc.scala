@@ -106,7 +106,8 @@ final case class RelationDoc(
         val prov = provides.toSet ++ other.provides.toSet
         val reqs = requires.toSet ++ other.requires.toSet
         val srcs = sources.toSet ++ other.sources.toSet
-        val result = copy(relation=rel, description=desc, schema=schm, provides=prov.toSeq, requires=reqs.toSeq, sources=srcs.toSeq)
+        val parts = other.partitions ++ partitions
+        val result = copy(relation=rel, description=desc, schema=schm, provides=prov.toSeq, requires=reqs.toSeq, sources=srcs.toSeq, partitions=parts)
         parent.orElse(other.parent)
             .map(result.reparent)
             .getOrElse(result)

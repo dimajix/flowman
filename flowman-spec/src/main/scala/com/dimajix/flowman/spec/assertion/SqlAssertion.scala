@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.assertion
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
@@ -126,6 +127,25 @@ case class SqlAssertion(
 object SqlAssertionSpec {
     class Case {
         @JsonProperty(value="query", required=true) private var query:String = ""
+        @JsonSchemaInject(merge=false, json= """ {
+             "oneOf" : [ {
+               "type" : "array",
+               "items" : {
+                 "oneOf" : [ {
+                   "type" : "array",
+                   "items" : {
+                     "type" : [ "string", "boolean", "number", "null" ]
+                    }
+                  }, {
+                   "type" : [ "string", "boolean", "number", "null" ]
+                  }
+                 ]
+               }
+             }, {
+               "type" : [ "string", "boolean", "number", "null" ]
+             }]
+           }
+        """)
         @JsonProperty(value="expected", required=true) private var expected:Seq[Array[String]] = Seq()
 
         def instantiate(context:Context) : SqlAssertion.Case = {
@@ -139,6 +159,25 @@ object SqlAssertionSpec {
 class SqlAssertionSpec extends AssertionSpec {
     @JsonProperty(value="tests", required=false) private var tests:Seq[SqlAssertionSpec.Case] = Seq()
     @JsonProperty(value="query", required=false) private var query:String = ""
+    @JsonSchemaInject(merge=false, json= """ {
+         "oneOf" : [ {
+           "type" : "array",
+           "items" : {
+             "oneOf" : [ {
+               "type" : "array",
+               "items" : {
+                 "type" : [ "string", "boolean", "number", "null" ]
+                }
+              }, {
+               "type" : [ "string", "boolean", "number", "null" ]
+              }
+             ]
+           }
+         }, {
+           "type" : [ "string", "boolean", "number", "null" ]
+         }]
+       }
+    """)
     @JsonProperty(value="expected", required=false) private var expected:Seq[Array[String]] = Seq()
 
     override def instantiate(context: Context, properties:Option[Assertion.Properties] = None): SqlAssertion = {

@@ -41,7 +41,7 @@ case class DropMapping(
       * @return
       */
     override def inputs: Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 
     /**
@@ -58,7 +58,7 @@ case class DropMapping(
         val df = deps(input)
 
         // Apply optional filter, before dropping columns!
-        val filtered = filter.map(df.filter).getOrElse(df)
+        val filtered = applyFilter(df, filter, deps)
 
         val asm = assembler
         val result = asm.reassemble(filtered)

@@ -42,7 +42,7 @@ import com.dimajix.flowman.model.ValueRelationReference
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.relation.DeltaFileRelation
 import com.dimajix.flowman.spec.relation.DeltaTableRelation
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
@@ -101,7 +101,7 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val location = new File(tempDir, "delta/default/lala")
         val relation = DeltaFileRelation(
             Relation.Properties(context, "delta_relation"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
                     Field("str_col", StringType),
@@ -142,7 +142,7 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val location = new File(tempDir, "delta/default/lala2")
         val relation = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
                     Field("str_col", StringType),
@@ -185,7 +185,7 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val location = new File(tempDir, "delta/default/lala2")
         val relation = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
                     Field("str_col", StringType),
@@ -240,7 +240,7 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val location = new File(tempDir, "delta/default/lala2")
         val relation = DeltaTableRelation(
             Relation.Properties(context, "delta_relation"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context, "delta_schema"),
                 fields = Seq(
                     Field("str_col", StringType),

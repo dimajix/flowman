@@ -62,7 +62,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.ValueConnectionReference
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.DateType
 import com.dimajix.flowman.types.DoubleType
 import com.dimajix.flowman.types.Field
@@ -101,10 +101,10 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         }
     }
 
-    "The (H2) JdbcRelation" should "support embedding the connection" in {
+    "The (H2) JdbcTableRelation" should "support embedding the connection" in {
         val spec =
             s"""
-               |kind: jdbc
+               |kind: jdbcTable
                |name: some_relation
                |description: "This is a test table"
                |connection:
@@ -133,14 +133,14 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                |primaryKey:
                |  - str_col
             """.stripMargin
-        val relationSpec = ObjectMapper.parse[RelationSpec](spec).asInstanceOf[JdbcRelationSpec]
+        val relationSpec = ObjectMapper.parse[RelationSpec](spec).asInstanceOf[JdbcTableRelationSpec]
 
         val session = Session.builder().withSparkSession(spark).build()
         val context = session.context
 
         val relation = relationSpec.instantiate(context)
         relation.name should be ("some_relation")
-        relation.schema should be (Some(EmbeddedSchema(
+        relation.schema should be (Some(InlineSchema(
                 Schema.Properties(context, name="embedded", kind="inline"),
                 fields = Seq(
                     Field("str_col", StringType),
@@ -182,9 +182,9 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation = JdbcRelation(
+        val relation = JdbcTableRelation(
             Relation.Properties(context, "t0"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", StringType),
@@ -193,7 +193,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                 )
             )),
             connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            table = Some(TableIdentifier("lala_001"))
+            table = TableIdentifier("lala_001")
         )
 
         val df = spark.createDataFrame(Seq(
@@ -314,9 +314,9 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation = JdbcRelation(
+        val relation = JdbcTableRelation(
             Relation.Properties(context, "t0"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", StringType),
@@ -326,7 +326,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             )),
             partitions = Seq(PartitionField("part", IntegerType)),
             connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            table = Some(TableIdentifier("lala_001")),
+            table = TableIdentifier("lala_001"),
             stagingTable = Some(TableIdentifier("lala_001_staging"))
         )
 
@@ -439,9 +439,9 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             .build()
         val execution = session.execution
         val context = session.getContext(project)
-        val relation = JdbcRelation(
+        val relation = JdbcTableRelation(
             Relation.Properties(context, "t0"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", StringType),
@@ -450,7 +450,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             )),
             partitions = Seq(PartitionField("p_col", IntegerType)),
             connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            table = Some(TableIdentifier("lala_002"))
+            table = TableIdentifier("lala_002")
         )
 
         val df = spark.createDataFrame(Seq(
@@ -637,9 +637,9 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             .build()
         val execution = session.execution
         val context = session.getContext(project)
-        val relation = JdbcRelation(
+        val relation = JdbcTableRelation(
             Relation.Properties(context, "t0"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", StringType),
@@ -648,7 +648,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             )),
             partitions = Seq(PartitionField("p_col", IntegerType)),
             connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            table = Some(TableIdentifier("lala_003"))
+            table = TableIdentifier("lala_003")
         )
 
         val df = spark.createDataFrame(Seq(
@@ -792,9 +792,9 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation = JdbcRelation(
+        val relation = JdbcTableRelation(
             Relation.Properties(context, "t0"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("id", IntegerType),
@@ -804,7 +804,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                 )
             )),
             connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            table = Some(TableIdentifier("lala_001"))
+            table = TableIdentifier("lala_001")
         )
 
         // == Create ==================================================================================================
@@ -911,9 +911,9 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation = JdbcRelation(
+        val relation = JdbcTableRelation(
             Relation.Properties(context, "t0"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("id", IntegerType),
@@ -923,7 +923,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                 )
             )),
             connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            table = Some(TableIdentifier("lala_001")),
+            table = TableIdentifier("lala_001"),
             stagingTable = Some(TableIdentifier("lala_001_staging"))
         )
 
@@ -1026,7 +1026,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                |    url: $url
                |relations:
                |  t0:
-               |    kind: jdbc
+               |    kind: jdbcTable
                |    description: "This is a test table"
                |    connection: c0
                |    table: lala_001
@@ -1129,7 +1129,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                |    url: $url
                |relations:
                |  t0:
-               |    kind: jdbc
+               |    kind: jdbcTable
                |    description: "This is a test table"
                |    connection: c0
                |    table: lala_001
@@ -1214,74 +1214,6 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         relation.loaded(execution, Map()) should be (No)
     }
 
-    it should "support SQL queries" in {
-        val db = tempDir.toPath.resolve("mydb")
-        val url = "jdbc:h2:" + db
-        val driver = "org.h2.Driver"
-
-        val spec =
-            s"""
-               |connections:
-               |  c0:
-               |    kind: jdbc
-               |    driver: $driver
-               |    url: $url
-               |""".stripMargin
-        val project = Module.read.string(spec).toProject("project")
-
-        val session = Session.builder().withSparkSession(spark).build()
-        val execution = session.execution
-        val context = session.getContext(project)
-
-        val relation_t0 = JdbcRelation(
-            Relation.Properties(context, "t0"),
-            schema = Some(EmbeddedSchema(
-                Schema.Properties(context),
-                fields = Seq(
-                    Field("str_col", StringType),
-                    Field("int_col", IntegerType)
-                )
-            )),
-            connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            table = Some(TableIdentifier("lala_004"))
-        )
-        val relation_t1 = JdbcRelation(
-            Relation.Properties(context, "t1"),
-            connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            query = Some("SELECT * FROM lala_004")
-        )
-
-        val df = spark.createDataFrame(Seq(
-                ("lala", 1),
-                ("lolo", 2)
-            ))
-            .withColumnRenamed("_1", "str_col")
-            .withColumnRenamed("_2", "int_col")
-
-        relation_t1.provides should be (Set())
-        relation_t1.requires should be (Set())
-        relation_t1.resources() should be (Set(ResourceIdentifier.ofJdbcQuery("SELECT * FROM lala_004")))
-
-        // == Create =================================================================================================
-        relation_t0.create(execution)
-        relation_t0.exists(execution) should be (Yes)
-        relation_t0.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation_t0.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
-        relation_t1.exists(execution) should be (Yes)
-        relation_t1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation_t1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
-
-        // == Write ==================================================================================================
-        relation_t0.write(execution, df, mode=OutputMode.OVERWRITE)
-
-        // == Read ===================================================================================================
-        relation_t0.read(execution).count() should be(2)
-        relation_t1.read(execution).count() should be(2)
-
-        // == Destroy ================================================================================================
-        relation_t0.destroy(execution)
-    }
-
     it should "support migrations" in {
         val db = tempDir.toPath.resolve("mydb")
         val url = "jdbc:h2:" + db
@@ -1301,9 +1233,9 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val execution = session.execution
         val context = session.getContext(project)
 
-        val rel0 = JdbcRelation(
+        val rel0 = JdbcTableRelation(
             Relation.Properties(context, "t0"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", StringType),
@@ -1311,11 +1243,11 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                 )
             )),
             connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            table = Some(TableIdentifier("lala_005"))
+            table = TableIdentifier("lala_005")
         )
-        val rel1 = JdbcRelation(
+        val rel1 = JdbcTableRelation(
             Relation.Properties(context, "t1"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("int_col", DoubleType),
@@ -1323,7 +1255,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                 )
             )),
             connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            table = Some(TableIdentifier("lala_005"))
+            table = TableIdentifier("lala_005")
         )
 
         // == Create =================================================================================================
@@ -1337,7 +1269,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         // == Read ===================================================================================================
         withConnection(url, "lala_005") { (con, options) =>
-            JdbcUtils.getSchema(con, TableIdentifier("lala_005"), options)
+            JdbcUtils.getTableSchema(con, TableIdentifier("lala_005"), options)
         } should be (StructType(Seq(
             Field("STR_COL", StringType),
             Field("INT_COL", IntegerType)
@@ -1372,7 +1304,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         // == Read ===================================================================================================
         withConnection(url, "lala_005") { (con, options) =>
-            JdbcUtils.getSchema(con, TableIdentifier("lala_005"), options)
+            JdbcUtils.getTableSchema(con, TableIdentifier("lala_005"), options)
         } should be (StructType(Seq(
             Field("INT_COL", DoubleType),
             Field("NEW_COL", DateType)
@@ -1405,9 +1337,9 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val execution = session.execution
         val context = session.getContext(project)
 
-        val rel0 = JdbcRelation(
+        val rel0 = JdbcTableRelation(
             Relation.Properties(context, "t0"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", StringType),
@@ -1416,7 +1348,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                 )
             )),
             connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            table = Some(TableIdentifier("lala_006")),
+            table = TableIdentifier("lala_006"),
             primaryKey = Seq("int_col", "varchar_col")
         )
 
@@ -1469,9 +1401,9 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val execution = session.execution
         val context = session.getContext(project)
 
-        val rel0 = JdbcRelation(
+        val rel0 = JdbcTableRelation(
             Relation.Properties(context, "t0"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", StringType),
@@ -1480,7 +1412,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                 )
             )),
             connection = ConnectionReference(context, ConnectionIdentifier("c0")),
-            table = Some(TableIdentifier("lala_007")),
+            table = TableIdentifier("lala_007"),
             indexes = Seq(TableIndex("idx0",Seq("int_col", "varchar_col")))
         )
 

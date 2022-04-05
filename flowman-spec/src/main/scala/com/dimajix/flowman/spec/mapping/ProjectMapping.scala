@@ -51,7 +51,7 @@ extends BaseMapping {
      * @return
      */
     override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 
     /**
@@ -69,7 +69,7 @@ extends BaseMapping {
         val result = xfs.transform(df)
 
         // Apply optional filter
-        val filteredResult = filter.map(result.filter).getOrElse(result)
+        val filteredResult = applyFilter(result, filter, tables)
 
         Map("main" -> filteredResult)
     }

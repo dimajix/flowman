@@ -5,7 +5,7 @@ import org.apache.hadoop.fs.Path
 import com.dimajix.flowman.dsl.Module
 import com.dimajix.flowman.dsl.mapping.Union
 import com.dimajix.flowman.dsl.relation.HiveTable
-import com.dimajix.flowman.dsl.schema.EmbeddedSchema
+import com.dimajix.flowman.dsl.schema.InlineSchema
 import com.dimajix.flowman.dsl.target.DatabaseTarget
 import com.dimajix.flowman.dsl.target.RelationTarget
 import com.dimajix.flowman.execution.OutputMode
@@ -29,7 +29,7 @@ object ErrorModule extends Module {
                     name = "run_id",
                     ftype = StringType
                 ),
-                schema = EmbeddedSchema(
+                schema = InlineSchema(
                     fields = Seq(
                         Field(
                             name = "record",

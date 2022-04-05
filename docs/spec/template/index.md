@@ -33,7 +33,7 @@ templates:
       records:
         - ["$key",$value]
       schema:
-        kind: embedded
+        kind: inline
         fields:
           - name: key_column
             type: string

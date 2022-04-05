@@ -73,4 +73,4 @@ targets:
 * `VERIFY` - This will verify that the relation (and any specified partition) actually contains no data.
 * `TRUNCATE` - This will truncate the specified relation.
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).

@@ -45,7 +45,7 @@ targets:
 ## Supported Execution Phases
 * `VERIDY` - The specified assertions will be run in the `VERIFY` phase after the `CREATE` and `BUILD` phases.
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).
 
 
 ## Remarks

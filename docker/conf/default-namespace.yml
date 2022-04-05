@@ -9,7 +9,7 @@ history:
 connections:
   flowman_state:
     driver: $System.getenv('FLOWMAN_LOGDB_DRIVER', 'org.apache.derby.jdbc.EmbeddedDriver')
-    url: $System.getenv('FLOWMAN_LOGDB_URL', $String.concat('jdbc:derby:', $System.getenv('FLOWMAN_HOME'), '/logdb;create=true'))
+    url: $System.getenv('FLOWMAN_LOGDB_URL', $String.concat('jdbc:derby:', $System.getenv('FLOWMAN_HOME'), '/var/history;create=true'))
     username: $System.getenv('FLOWMAN_LOGDB_USER', '')
     password: $System.getenv('FLOWMAN_LOGDB_PASSWORD', '')
 
@@ -36,9 +36,9 @@ metrics:
   - kind: console
 
 config:
-  - spark.sql.warehouse.dir=/opt/flowman/hive/warehouse
+  - spark.sql.warehouse.dir=/opt/flowman/var/hive/warehouse
   - spark.hadoop.hive.metastore.uris=
-  - spark.hadoop.javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=/opt/flowman/hive/db;create=true
+  - spark.hadoop.javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=/opt/flowman/var/hive/db;create=true
   - spark.hadoop.datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
 
 store:

@@ -54,38 +54,11 @@ relations:
 For most cases, it is recommended not to embed the connection, since this prevents reusing the same connection in
 multiple places.
 
-It is also possible to access the results of an arbitrary SQL query, which is executed inside the target database:
-```yaml
-relations:
-  lineitem:
-    kind: jdbc
-    connection: frontend
-    query: "
-      SELECT
-        CONCAT('DIR_', li.id) AS lineitem,
-        li.campaign_id AS campaign,
-        IF(c.demand_type_system = 1, 'S', IF(li.demand_type_system = 1, 'S', 'D')) AS demand_type
-      FROM
-        line_item AS li
-      INNER JOIN
-        campaign c
-        ON c.id = li.campaign_id
-    "
-    schema:
-      kind: embedded
-      fields:
-        - name: lineitem
-          type: string
-        - name: campaign
-          type: long
-        - name: demand_type
-          type: string
-```
 The schema is still optional in this case, but it will help [mocking](mock.md) the relation for unittests.
 
 
 ## Fields
- * `kind` **(mandatory)** *(type: string)*: `jdbcTable` or `jdbc`
+ * `kind` **(mandatory)** *(type: string)*: `jdbcTable`
    
  * `schema` **(optional)** *(type: schema)* *(default: empty)*: 
  Explicitly specifies the schema of the JDBC source. Alternatively Flowman will automatically
@@ -112,8 +85,7 @@ as the fallback for merge/upsert operations, when no `mergeKey` and no explicit 
  will be used or the one specified in the connection.
 
  * `table` **(optional)** *(type: string)*:
- Specifies the name of the table in the relational database. You either need to specify this `table` property
-or the `query` property.
+ Specifies the name of the table in the relational database.
 
  * `stagingTable` **(optional)** *(type: string)*:
    Specifies the name of an optional staging table in the relational database. This table will be used as an 
@@ -121,11 +93,6 @@ temporary, intermediate target for write/update/merge operations. During output 
 created first, then populated with new records and then within a database transaction all records will be pushed into
 the real JDBC table and the temporary table will be dropped.
 
- * `query` **(optional)** *(type: string)*:
-As an alternative to directly accessing a table, you can also specify an SQL query which will be executed by the
-database for retrieving data. Of course, then only read operations are possible. You either need to specify this 
-`query` property or the `table` property.
-  
  * `properties` **(optional)** *(type: map:string)* *(default: empty)*:
  Specifies any additional properties passed to the JDBC connection.  Note that both the JDBC
  relation and the JDBC connection can define properties. So it is advisable to define all
@@ -140,7 +107,7 @@ database for retrieving data. Of course, then only read operations are possible.
 ## Automatic Migrations
 Flowman supports some automatic migrations, specifically with the migration strategies `ALTER`, `ALTER_REPLACE`
 and `REPLACE` (those can be set via the global config variable `flowman.default.relation.migrationStrategy`,
-see [configuration](../../config.md) for more details).
+see [configuration](../../setup/config.md) for more details).
 
 The migration strategy `ALTER` supports the following alterations for JDBC relations:
 * Changing nullability

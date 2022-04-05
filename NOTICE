@@ -119,3 +119,9 @@ Vuetify
     * license/LICENSE-vuetify.txt (MIT License)
   * HOMEPAGE
     * https://vuetifyjs.com
+
+Jackson jsonSchema Generator
+  * LICENSE
+    * license/LICENSE-schema-generator.txt (MIT License)
+  * HOMEPAGE
+    * https://github.com/mbknor/mbknor-jackson-jsonSchema

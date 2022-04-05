@@ -73,6 +73,51 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         an[Exception] should be thrownBy(testExecutor.execute(execution, context, df, "_4", test))
     }
 
+    it should "support filter conditions" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+
+        val excludes = spark.createDataFrame(Seq(
+            (3,3)
+        ))
+        val df = spark.createDataFrame(Seq(
+            (Some(1),2,3),
+            (None,3,4),
+            (None,3,5)
+        ))
+
+        val valuesGen = mock[Prototype[Mapping]]
+        val valuesMapping = mock[Mapping]
+        val project = Project("project",
+            mappings = Map("excludes" -> valuesGen)
+        )
+
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        (valuesGen.instantiate _).expects(*,*).returns(valuesMapping)
+        (valuesMapping.identifier _).expects().atLeastOnce().returns(MappingIdentifier("excludes"))
+        (valuesMapping.output _).expects().atLeastOnce().returns(MappingOutputIdentifier("excludes"))
+        (valuesMapping.outputs _).expects().atLeastOnce().returns(Set("main"))
+        (valuesMapping.inputs _).expects().returns(Set.empty)
+        (valuesMapping.context _).expects().returns(context)
+        (valuesMapping.broadcast _).expects().returns(false)
+        (valuesMapping.cache _).expects().returns(StorageLevel.NONE)
+        (valuesMapping.checkpoint _).expects().returns(false)
+        (valuesMapping.execute _).expects(*,*).returns(Map("main" -> excludes))
+
+        val testExecutor = new DefaultColumnCheckExecutor
+        val test = UniqueColumnCheck(None, filter = Some("_1 NOT IN (SELECT _1 FROM excludes)"))
+        val result1 = testExecutor.execute(execution, context, df, "_1", test)
+        result1 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("1 values are unique, 0 values are non-unique"))))
+        val result2 = testExecutor.execute(execution, context, df, "_2", test)
+        result2 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("1 values are unique, 0 values are non-unique"))))
+        val result3 = testExecutor.execute(execution, context, df, "_3", test)
+        result3 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("1 values are unique, 0 values are non-unique"))))
+        an[Exception] should be thrownBy(testExecutor.execute(execution, context, df, "_4", test))
+    }
+
     "A ValuesColumnCheck" should "be executable" in {
         val session = Session.builder()
             .withSparkSession(spark)

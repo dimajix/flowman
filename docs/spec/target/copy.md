@@ -59,4 +59,4 @@ Flowman config variable `floman.default.target.rebalance`.
 * `TRUNCATE` - The *truncate* phase will remove the target
 * `DESTROY` - The *destroy* phase will remove the target
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).

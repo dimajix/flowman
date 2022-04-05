@@ -33,7 +33,7 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -59,7 +59,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         |
         |mappings:
         |  t0:
-        |    kind: readRelation
+        |    kind: relation
         |    relation: t0
         |""".stripMargin
     val project = Module.read.string(spec).toProject("project")
@@ -135,10 +135,10 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         |          type: string
         |mappings:
         | t0:
-        |    kind: readRelation
+        |    kind: relation
         |    relation: t0
         | t1:
-        |    kind: readRelation
+        |    kind: relation
         |    relation: t1
         | union:
         |    kind: union
@@ -216,7 +216,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
               |
               |mappings:
               |  t0:
-              |    kind: readRelation
+              |    kind: relation
               |    relation: t0
               |""".stripMargin
         val project = Module.read.string(spec).toProject("project")
@@ -234,7 +234,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         )
         val table = HiveTableRelation(
             Relation.Properties(context, "rel_1"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.StringType),
@@ -323,7 +323,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         )
         val table = HiveTableRelation(
             Relation.Properties(context, "rel_1"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.StringType),
@@ -335,7 +335,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         )
         val table2 = HiveTableRelation(
             Relation.Properties(context, "rel_1"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("f1", com.dimajix.flowman.types.StringType),

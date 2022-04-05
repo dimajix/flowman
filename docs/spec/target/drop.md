@@ -61,4 +61,4 @@ during the `DESTROY` phase.
 * `VERIFY` - This will verify that the target relation does not exist any more
 * `DESTROY` - This will also drop the relation itself and all its content.
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).

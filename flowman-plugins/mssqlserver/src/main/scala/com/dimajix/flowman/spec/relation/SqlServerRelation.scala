@@ -46,13 +46,12 @@ case class SqlServerRelation(
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq.empty,
     connection: Reference[Connection],
+    table: TableIdentifier,
     properties: Map[String,String] = Map.empty,
-    table: Option[TableIdentifier] = None,
-    query: Option[String] = None,
     mergeKey: Seq[String] = Seq.empty,
     override val primaryKey: Seq[String] = Seq.empty,
     indexes: Seq[TableIndex] = Seq.empty
-) extends JdbcRelationBase(instanceProperties, schema, partitions, connection, properties, table, query, mergeKey, primaryKey, indexes) {
+) extends JdbcTableRelationBase(instanceProperties, schema, partitions, connection, table, properties, mergeKey, primaryKey, indexes) {
     private val tempTableIdentifier = TableIdentifier(s"##${tableIdentifier.table}_temp_staging")
     override protected val stagingIdentifier: Option[TableIdentifier] = Some(tempTableIdentifier)
 
@@ -86,20 +85,18 @@ class SqlServerRelationSpec extends RelationSpec with PartitionedRelationSpec wi
     @JsonProperty(value = "connection", required = true) private var connection: ConnectionReferenceSpec = _
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map.empty
     @JsonProperty(value = "database", required = false) private var database: Option[String] = None
-    @JsonProperty(value = "table", required = false) private var table: Option[String] = None
-    @JsonProperty(value = "query", required = false) private var query: Option[String] = None
+    @JsonProperty(value = "table", required = false) private var table: String = ""
     @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq.empty
     @JsonProperty(value = "primaryKey", required = false) private var primaryKey: Seq[String] = Seq.empty
 
     override def instantiate(context: Context, props:Option[Relation.Properties] = None): SqlServerRelation = {
-        new SqlServerRelation(
+        SqlServerRelation(
             instanceProperties(context, props),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             connection.instantiate(context),
+            TableIdentifier(context.evaluate(table), context.evaluate(database)),
             context.evaluate(properties),
-            context.evaluate(table).map(t => TableIdentifier(t, context.evaluate(database))),
-            context.evaluate(query),
             mergeKey.map(context.evaluate),
             primaryKey.map(context.evaluate),
             indexes.map(_.instantiate(context))

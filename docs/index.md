@@ -32,20 +32,23 @@ application.
 * Automatic dependency analysis to build targets in the correct order
 * Powerful yet simple [command line tool for batch execution](cli/flowexec.md)
 * Powerful [Command line tool for interactive data flow analysis](cli/flowshell.md)
-* [History server](history-server/index.md) that provides an overview of past jobs and targets including lineage
+* [History server](cli/history-server.md) that provides an overview of past jobs and targets including lineage
 * [Metric system](cookbook/metrics.md) with the ability to publish these to servers like Prometheus
 * Extendable via Plugins
 
 
 ## Where to go from here
 
-## Quickstart
-A small [quickstart guide](quickstart.md) will lead you through a simple example.
+## Quickstart & Tutorial
+A small [quickstart guide](quickstart.md) will lead you through a simple example. After you have finished the
+introduction, you may want to proceed with the [Flowman tutorial](tutorial/index.md) to get more in-depth knowledge
+step by step.
 
 
 ### Installation
-* [Flowman Installation](installation.md): Installation Guide
-* [Configuration](config.md): Configuration settings
+* [Flowman Installation](setup/installation.md): Installation guide for local installation
+* [Running in Docker](setup/docker.md): How to run Flowman in Docker
+* [Configuration](setup/config.md): Configuration settings
 
 
 ### CLI Documentation
@@ -55,7 +58,7 @@ following sections:
 
 * [Flowman Executor](cli/flowexec.md): Documentation of the Flowman Executor CLI
 * [Flowman Shell](cli/flowshell.md): Documentation of the Flowman Shell CLI
-* [Flowman Server](history-server/index.md): Documentation of the Flowman Server CLI
+* [Flowman Server](cli/history-server.md): Documentation of the Flowman Server CLI
 
 
 ### Specification Documentation
@@ -75,7 +78,7 @@ More detail on all these items is described in the following sections:
 ### Cookbooks
 
 * [Testing](testing/index.md) How to implement tests in Flowman
-* [Kerberos](cookbook/kerberos.md) How to use Flowman in Kerberized environments
+* [Documenting](documenting/index.md) How to create detailed documentation of your Flowman project
 
 
 ### Plugins
@@ -92,17 +95,15 @@ Flowman also provides optional plugins which extend functionality. You can find 
    :glob:
 
    quickstart
-   concepts
-   installation
-   lifecycle
-   connectors/index
+   concepts/index
+   tutorial/index
    spec/index
    testing/index
    documenting/index
    cli/index
-   history-server/index
-   cookbook/index
+   setup/index
+   connectors/index
    plugins/index
-   config
-   building
+   cookbook/index
+   releases
 ```

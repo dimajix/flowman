@@ -75,7 +75,7 @@ The name of the new column to be appended which contains the mapped name of the 
  The list of columns to be stacked together with the value to be written to the `nameColumn`
 
 * `filter` **(optional)** *(type: string)* *(default: empty)*:
-  An optional SQL filter expression that is applied *after* the sort operation.
+  An optional SQL filter expression that is applied *after* the stacking operation.
 
 
 ## Outputs

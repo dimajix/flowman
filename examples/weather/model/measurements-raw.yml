@@ -13,7 +13,7 @@ relations:
         description: "The year when the measurement was made"
     schema:
       # Specify the (single) column via an embedded schema.
-      kind: embedded
+      kind: inline
       fields:
         - name: raw_data
           type: string

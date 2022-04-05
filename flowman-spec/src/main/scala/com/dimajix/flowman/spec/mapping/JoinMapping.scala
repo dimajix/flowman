@@ -41,7 +41,7 @@ case class JoinMapping(
       * @return
       */
     override def inputs : Set[MappingOutputIdentifier] = {
-        input.toSet
+        input.toSet  ++ expressionDependencies(filter)
     }
 
     /**
@@ -69,7 +69,7 @@ case class JoinMapping(
         }
 
         // Apply optional filter
-        val filteredResult = filter.map(result.filter).getOrElse(result)
+        val filteredResult = applyFilter(result, filter, tables)
 
         Map("main" -> filteredResult)
     }

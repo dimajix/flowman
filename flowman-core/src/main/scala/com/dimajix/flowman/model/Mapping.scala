@@ -46,6 +46,7 @@ import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateExpression
 import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateFunction
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.Union
+import org.apache.spark.sql.functions.expr
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.{types => st}
 import org.apache.spark.sql.types.StructField
@@ -71,6 +72,8 @@ import com.dimajix.flowman.types.SchemaUtils
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.types.VarcharType
 import com.dimajix.spark.sql.DataFrameBuilder
+import com.dimajix.spark.sql.DataFrameUtils
+import com.dimajix.spark.sql.ExpressionParser
 import com.dimajix.spark.sql.SchemaUtils.CHAR_VARCHAR_TYPE_STRING_METADATA_KEY
 import com.dimajix.spark.sql.SchemaUtils.hasExtendedTypeinfo
 
@@ -502,5 +505,27 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
         documentation.flatMap(_.outputs.find(_.identifier.output == output))
             .flatMap(_.schema.map(_.enrich(schema)))
             .getOrElse(schema)
+    }
+
+    protected def applyFilter(df:DataFrame, filter:Option[String], inputs:Map[MappingOutputIdentifier, DataFrame]) : DataFrame = {
+        filter match {
+            case Some(filter) =>
+                val deps = ExpressionParser.resolveDependencies(filter)
+                    .map(d => d -> inputs(MappingOutputIdentifier(d)))
+                DataFrameUtils.withTempViews(deps) {
+                    df.where(expr(filter))
+                }
+            case None => df
+        }
+    }
+
+    protected def expressionDependencies(expression:Option[String]) : Set[MappingOutputIdentifier] = {
+        expression match {
+            case None => Set.empty
+            case Some(e) => expressionDependencies(e)
+        }
+    }
+    protected def expressionDependencies(expression:String) : Set[MappingOutputIdentifier] = {
+        ExpressionParser.resolveDependencies(expression).map(MappingOutputIdentifier.apply)
     }
 }

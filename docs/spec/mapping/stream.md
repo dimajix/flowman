@@ -1,13 +1,13 @@
-# Read Stream Mapping
+# Stream Mapping
 
-The `readStream` mapping is very similar to the [`read`](read-relation.md) mapping, except that it will create a streaming
+The `stream` mapping is very similar to the [`read`](relation.md) mapping, except that it will create a streaming
 result used for creating continuous event processing applications
 
 ## Example
 ```yaml
 mappings:
   measurements-raw:
-    kind: readStream
+    kind: stream
     relation: measurements-raw
     columns:
       raw_data: String
@@ -28,7 +28,7 @@ do not access the target relation otherwise, such that a shared definition would
 ```yaml
 mappings:
   measurements-raw:
-    kind: readStream
+    kind: stream
     relation:
       kind: kafka
       hosts:
@@ -43,7 +43,7 @@ mappings:
 
 ## Fields
 
-* `kind` **(mandatory)** *(type: string)*: `read` or `readRelation`
+* `kind` **(mandatory)** *(type: string)*: `stream`
 
 * `broadcast` **(optional)** *(type: boolean)* *(default: false)*:
   Hint for broadcasting the result of this mapping for map-side joins.

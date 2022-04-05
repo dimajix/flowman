@@ -1,6 +1,6 @@
 # Null Mapping
 
-The `null` (or `empty`) mapping is a dummy mapping which produces and empty output but with a specified schema. This
+The `null` mapping is a dummy mapping which produces and empty output but with a specified schema. This
 is mainly useful for mocking other mappings in tests.
 
 ## Example
@@ -17,9 +17,9 @@ mappings:
 ```yaml
 mappings:
   empty_mapping:
-    kind: empty
+    kind: null
     schema:
-      kind: embedded
+      kind: inline
       fields:
         - name: id
           type: string
@@ -28,7 +28,7 @@ mappings:
 ```
 
 ## Fields
-* `kind` **(mandatory)** *(type: string)*: `null` or `empty`
+* `kind` **(mandatory)** *(type: string)*: `null`
 
 * `broadcast` **(optional)** *(type: boolean)* *(default: false)*:
   Hint for broadcasting the result of this mapping for map-side joins.

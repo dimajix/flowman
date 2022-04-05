@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.schema
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonProperty.Access
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
@@ -40,18 +41,17 @@ object SchemaSpec extends TypeRegistry[SchemaSpec] {
   * Interface class for declaring relations (for sources and sinks) as part of a model
   */
 @JsonTypeResolver(classOf[CustomTypeResolverBuilder])
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", defaultImpl = classOf[EmbeddedSchemaSpec], visible=true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property="kind", defaultImpl=classOf[InlineSchemaSpec], visible=true)
 @JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "inline", value = classOf[EmbeddedSchemaSpec]),
-    new JsonSubTypes.Type(name = "embedded", value = classOf[EmbeddedSchemaSpec]),
     new JsonSubTypes.Type(name = "avro", value = classOf[AvroSchemaSpec]),
+    new JsonSubTypes.Type(name = "inline", value = classOf[InlineSchemaSpec]),
     new JsonSubTypes.Type(name = "mapping", value = classOf[MappingSchemaSpec]),
     new JsonSubTypes.Type(name = "relation", value = classOf[RelationSchemaSpec]),
     new JsonSubTypes.Type(name = "spark", value = classOf[SparkSchemaSpec]),
     new JsonSubTypes.Type(name = "union", value = classOf[UnionSchemaSpec])
 ))
 abstract class SchemaSpec extends Spec[Schema] {
-    @JsonProperty(value="kind", required = true) protected var kind: String = "inline"
+    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required=false, defaultValue="inline") protected var kind: String = "inline"
 
     override def instantiate(context:Context, properties:Option[Schema.Properties] = None) : Schema
 

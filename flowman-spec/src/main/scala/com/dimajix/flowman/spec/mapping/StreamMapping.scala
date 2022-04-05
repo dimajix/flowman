@@ -41,13 +41,13 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.SchemaUtils
 
 
-case class ReadStreamMapping (
+case class StreamMapping (
     instanceProperties:Mapping.Properties,
     relation:Reference[Relation],
     columns:Seq[Field],
     filter:Option[String] = None
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[ReadStreamMapping])
+    private val logger = LoggerFactory.getLogger(classOf[StreamMapping])
 
     /**
      * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings
@@ -64,7 +64,7 @@ case class ReadStreamMapping (
      *
      * @return
      */
-    override def inputs : Set[MappingOutputIdentifier] = Set.empty
+    override def inputs : Set[MappingOutputIdentifier] = expressionDependencies(filter)
 
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
@@ -84,7 +84,7 @@ case class ReadStreamMapping (
         val df = rel.readStream(execution)
 
         // Apply optional filter
-        val result = filter.map(df.filter).getOrElse(df)
+        val result = applyFilter(df, filter, input)
 
         Map("main" -> result)
     }
@@ -133,7 +133,7 @@ case class ReadStreamMapping (
 
 
 
-class ReadStreamMappingSpec extends MappingSpec {
+class StreamMappingSpec extends MappingSpec {
     @JsonProperty(value = "relation", required = true) private var relation:RelationReferenceSpec = _
     @JsonProperty(value = "columns", required=false) private var columns:Map[String,String] = Map()
     @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
@@ -143,8 +143,8 @@ class ReadStreamMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): ReadStreamMapping = {
-        ReadStreamMapping(
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): StreamMapping = {
+        StreamMapping(
             instanceProperties(context, properties),
             relation.instantiate(context),
             context.evaluate(columns).map { case(name,typ) => Field(name, FieldType.of(typ))}.toSeq,

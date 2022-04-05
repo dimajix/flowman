@@ -24,7 +24,7 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.types.Field
 
 
-case class EmbeddedSchema(
+case class InlineSchema(
     instanceProperties : Schema.Properties,
     description : Option[String] = None,
     fields : Seq[Field] = Seq(),
@@ -35,18 +35,18 @@ extends BaseSchema {
 
 
 
-class EmbeddedSchemaSpec extends SchemaSpec {
+class InlineSchemaSpec extends SchemaSpec {
     @JsonProperty(value="fields", required=false) private var fields: Seq[Field] = Seq()
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
-    @JsonProperty(value="primaryKey", required = false) private var primaryKey: Seq[String] = Seq()
+    @JsonProperty(value="primaryKey", required = false) private var primaryKey: Seq[String] = Seq.empty
 
     /**
       * Creates the instance of the specified Schema with all variable interpolation being performed
       * @param context
       * @return
       */
-    override def instantiate(context: Context, properties:Option[Schema.Properties] = None): EmbeddedSchema = {
-        EmbeddedSchema(
+    override def instantiate(context: Context, properties:Option[Schema.Properties] = None): InlineSchema = {
+        InlineSchema(
             instanceProperties(context, "embedded"),
             description.map(context.evaluate),
             fields,

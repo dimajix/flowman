@@ -37,6 +37,7 @@ import com.dimajix.flowman.transforms.ProjectTransformer
 import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.ExpressionParser
 
 
 case class CastMapping(
@@ -52,7 +53,7 @@ extends BaseMapping {
      * @return
      */
     override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 
     /**
@@ -74,7 +75,7 @@ extends BaseMapping {
         val result = df.select(cols:_*)
 
         // Apply optional filter
-        val filteredResult = filter.map(result.filter).getOrElse(result)
+        val filteredResult = applyFilter(result, filter, tables)
 
         Map("main" -> filteredResult)
     }

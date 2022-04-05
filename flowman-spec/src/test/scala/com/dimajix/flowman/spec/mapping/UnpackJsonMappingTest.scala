@@ -43,7 +43,7 @@ class UnpackJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSes
               |    columns:
               |      - name: _1
               |        schema:
-              |          kind: embedded
+              |          kind: inline
               |          fields:
               |            - name: s
               |              type: String
@@ -68,7 +68,7 @@ class UnpackJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSes
               |    columns:
               |      - name: _1
               |        schema:
-              |          kind: embedded
+              |          kind: inline
               |          fields:
               |            - name: s
               |              type: String
@@ -129,7 +129,7 @@ class UnpackJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSes
               |      - name: _1
               |        alias: json
               |        schema:
-              |          kind: embedded
+              |          kind: inline
               |          fields:
               |            - name: s
               |              type: String
@@ -173,7 +173,7 @@ class UnpackJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSes
               |      - name: _1
               |        alias: json
               |        schema:
-              |          kind: embedded
+              |          kind: inline
               |          fields:
               |            - name: s
               |              type: String

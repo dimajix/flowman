@@ -26,7 +26,7 @@ import com.dimajix.flowman.spec.ObjectMapper
 class SchemaTest extends AnyFlatSpec with Matchers {
     lazy val mapper = ObjectMapper.mapper
 
-    "A Schema" should "default to the embedded schema" in {
+    "A Schema" should "default to the inline schema" in {
         val spec =
             """
               |fields:
@@ -37,12 +37,13 @@ class SchemaTest extends AnyFlatSpec with Matchers {
             """.stripMargin
 
         val result = mapper.readValue(spec, classOf[SchemaSpec])
-        result shouldBe a[EmbeddedSchemaSpec]
+        result shouldBe a[InlineSchemaSpec]
     }
 
     it should "provide a nice string representation (1)" in {
         val spec =
             """
+              |kind: inline
               |fields:
               |  - name: str_col
               |    type: string
@@ -65,6 +66,7 @@ class SchemaTest extends AnyFlatSpec with Matchers {
     it should "provide a nice string representation (2)" in {
         val spec =
             """
+              |kind: inline
               |fields:
               |  - name: str_col
               |    type: string
@@ -90,6 +92,7 @@ class SchemaTest extends AnyFlatSpec with Matchers {
     it should "provide a nice string representation (3)" in {
         val spec =
             """
+              |kind: inline
               |fields:
               |  - name: str_col
               |    type: string
@@ -121,6 +124,7 @@ class SchemaTest extends AnyFlatSpec with Matchers {
     it should "provide a nice string representation (4)" in {
         val spec =
             """
+              |kind: inline
               |fields:
               |  - name: str_col
               |    type: string

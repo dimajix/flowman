@@ -30,4 +30,4 @@ A simpler way to run Flowman on Windows is to use a Docker image available on
 
 ## Using WSL
 And of course you can also simply install a Linux distro of your choice via WSL and then normally 
-[install Flowman](../installation.md) within WSL.
+[install Flowman](../setup/installation.md) within WSL.

@@ -11,7 +11,7 @@ files are the following entity types
 
 ## Relations
 
-[*Relations*](spec/relation/index.md) specify *physical manifestations of data* in external systems. A relation may
+[*Relations*](../spec/relation/index.md) specify *physical manifestations of data* in external systems. A relation may
 refer to any data source (or sink) like a table or view in a MySQL database, a table in Hive or files on some
 distributed filesystem like HDFS or files stored in object store like S3. 
 
@@ -50,7 +50,7 @@ And a table in a MySQL database can be specified as:
 ```yaml
 relations:
   frontend_users:
-    kind: jdbc
+    kind: jdbcTable
     # Specify the name of the connection to use
     connection:
       kind: jdbc
@@ -80,7 +80,7 @@ relations:
     # Specify an optional schema here. It is always recommended to explicitly specify a schema for every relation
     # and not just let data flow from a mapping into a target.
     schema:
-      kind: embedded
+      kind: inline
       fields:
         - name: country
           type: STRING
@@ -93,13 +93,13 @@ relations:
 
 ## Mappings
 
-The next very important entity of Flowman is the [*mapping*](spec/mapping/index.md) category which describes *data 
+The next very important entity of Flowman is the [*mapping*](../spec/mapping/index.md) category which describes *data 
 transformation* (and in addition as a special but very important kind, *reading data*). Mappings can use the result of 
 other mappings as their input and thereby build a complex flow of data transformations. Internally all these 
 transformations are executed using Apache Spark.
 
-There are all kinds of mappings available, like simple [filter](spec/mapping/filter.md) mappings, 
-[aggregate](spec/mapping/aggregate.md) mappings and very powerful generic [sql](spec/mapping/sql.md) mappings.
+There are all kinds of mappings available, like simple [filter](../spec/mapping/filter.md) mappings, 
+[aggregate](../spec/mapping/aggregate.md) mappings and very powerful generic [sql](../spec/mapping/sql.md) mappings.
 Again, each mapping is described using a specific set of properties depending on the selected kind.
 
 ### Examples
@@ -109,7 +109,7 @@ single *partition* of data, which is commonly done for incremental processing on
 ```yaml
 mappings:
   facts_all:
-    kind: readRelation
+    kind: relation
     relation: facts_table
     partitions:
       year:
@@ -183,7 +183,7 @@ which simply bundles multiple targets, such that they are built together. The id
 contain many targets, you might want to group them together, such that only specific targets are built together. 
 
 And this is done via a job in Flowman, which mainly contains a list of targets to be built. Additionally, a job
-allows to specify build parameters, which need to be provided on the command line. A typical example would be a
+allows specifying build parameters, which need to be provided on the command line. A typical example would be a
 date which selects only a subset of the available data for processing.
 
 ### Examples
@@ -208,8 +208,8 @@ jobs:
 
 ## Additional entities
 While these for types (relations, mappings, targets and jobs) form the basis of every Flowman project, there are some
-additional entities like [tests](spec/test/index.md), [connections](spec/connection/index.md) and more. You find an
-overview of all entity types in the [project specification documentation](spec/index.md)
+additional entities like [tests](../spec/test/index.md), [connections](../spec/connection/index.md) and more. You find an
+overview of all entity types in the [project specification documentation](../spec/index.md)
 
 
 ## Lifecycle

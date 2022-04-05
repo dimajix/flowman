@@ -56,22 +56,6 @@ case class ValuesMapping(
     override def inputs: Set[MappingOutputIdentifier] = Set.empty
 
     /**
-     * Creates an output identifier for the primary output
-     *
-     * @return
-     */
-    override def output: MappingOutputIdentifier = {
-        MappingOutputIdentifier(identifier, "main")
-    }
-
-    /**
-     * Lists all outputs of this mapping. Every mapping should have one "main" output
-     *
-     * @return
-     */
-    override def outputs: Set[String] = Set("main")
-
-    /**
      * Executes this Mapping and returns a corresponding map of DataFrames per output
      *
      * @param execution

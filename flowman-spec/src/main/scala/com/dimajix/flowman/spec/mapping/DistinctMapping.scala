@@ -38,7 +38,7 @@ case class DistinctMapping(
       * @return
       */
     override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 
     /**
@@ -56,7 +56,7 @@ case class DistinctMapping(
         val result = df.distinct()
 
         // Apply optional filter
-        val filteredResult = filter.map(result.filter).getOrElse(result)
+        val filteredResult = applyFilter(result, filter, tables)
 
         Map("main" -> filteredResult)
     }

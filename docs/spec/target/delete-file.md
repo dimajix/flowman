@@ -22,4 +22,4 @@ targets:
 ## Supported Execution Phases
 * `BUILD` - This will remove the specified location
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).

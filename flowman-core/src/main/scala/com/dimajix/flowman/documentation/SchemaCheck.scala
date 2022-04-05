@@ -23,9 +23,12 @@ import org.apache.spark.sql.types.BooleanType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.spi.SchemaCheckExecutor
+import com.dimajix.spark.sql.DataFrameUtils
+import com.dimajix.spark.sql.ExpressionParser
 
 
 final case class SchemaCheckReference(
@@ -43,6 +46,7 @@ final case class SchemaCheckReference(
 
 abstract class SchemaCheck extends Fragment with Product with Serializable {
     def name : String
+    def filter : Option[String]
     def result : Option[CheckResult]
     def withResult(result:CheckResult) : SchemaCheck
 
@@ -54,9 +58,10 @@ abstract class SchemaCheck extends Fragment with Product with Serializable {
 
 final case class PrimaryKeySchemaCheck(
     parent:Option[Reference],
-    description: Option[String] = None,
+    description:Option[String] = None,
     columns:Seq[String] = Seq.empty,
-    result:Option[CheckResult] = None
+    result:Option[CheckResult] = None,
+    filter:Option[String] = None
 ) extends SchemaCheck {
     override def name : String = s"PRIMARY KEY (${columns.mkString(",")})"
     override def withResult(result: CheckResult): SchemaCheck = copy(result=Some(result))
@@ -73,7 +78,8 @@ final case class ForeignKeySchemaCheck(
     relation: Option[RelationIdentifier] = None,
     mapping: Option[MappingOutputIdentifier] = None,
     references: Seq[String] = Seq.empty,
-    result:Option[CheckResult] = None
+    result:Option[CheckResult] = None,
+    filter:Option[String] = None
 ) extends SchemaCheck {
     override def name : String = {
         val otherEntity = relation.map(_.toString).orElse(mapping.map(_.toString)).getOrElse("")
@@ -91,7 +97,8 @@ final case class ExpressionSchemaCheck(
     parent:Option[Reference],
     description: Option[String] = None,
     expression: String,
-    result:Option[CheckResult] = None
+    result:Option[CheckResult] = None,
+    filter:Option[String] = None
 ) extends SchemaCheck {
     override def name: String = expression
     override def withResult(result: CheckResult): SchemaCheck = copy(result=Some(result))
@@ -103,7 +110,8 @@ final case class ExpressionSchemaCheck(
 
 
 class DefaultSchemaCheckExecutor extends SchemaCheckExecutor {
-    override def execute(execution: Execution, context:Context, df: DataFrame, check: SchemaCheck): Option[CheckResult] = {
+    override def execute(execution: Execution, context:Context, df0: DataFrame, check: SchemaCheck): Option[CheckResult] = {
+        val df = applyFilter(execution, context, df0, check.filter)
         check match {
             case p:PrimaryKeySchemaCheck =>
                 val cols = p.columns.map(df(_))
@@ -153,5 +161,21 @@ class DefaultSchemaCheckExecutor extends SchemaCheckExecutor {
         val status = if (numFailed > 0) CheckStatus.FAILED else CheckStatus.SUCCESS
         val description = s"$numSuccess records passed, $numFailed records failed"
         Some(CheckResult(Some(test.reference), status, Some(description)))
+    }
+
+    private def applyFilter(execution: Execution, context:Context, df:DataFrame, filter:Option[String]) : DataFrame = {
+        def instantiate(dep:String) : DataFrame = {
+            val mapping = context.getMapping(MappingIdentifier(dep))
+            execution.instantiate(mapping, mapping.output.output)
+        }
+        filter match {
+            case Some(filter) =>
+                val deps = ExpressionParser.resolveDependencies(filter)
+                    .map(d => d ->instantiate(d))
+                DataFrameUtils.withTempViews(deps) {
+                    df.filter(expr(filter))
+                }
+            case None => df
+        }
     }
 }

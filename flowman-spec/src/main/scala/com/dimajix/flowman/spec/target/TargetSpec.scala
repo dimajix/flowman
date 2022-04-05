@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonProperty.Access
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
@@ -31,6 +32,7 @@ import com.dimajix.flowman.spec.NamedSpec
 import com.dimajix.flowman.spec.annotation.TargetType
 import com.dimajix.flowman.spec.documentation.TargetDocSpec
 import com.dimajix.flowman.spec.template.CustomTypeResolverBuilder
+import com.dimajix.flowman.spec.template.TargetTemplateInstanceSpec
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 
 
@@ -68,14 +70,15 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateTargetSpec]),
     new JsonSubTypes.Type(name = "truncate", value = classOf[TruncateTargetSpec]),
     new JsonSubTypes.Type(name = "validate", value = classOf[ValidateTargetSpec]),
-    new JsonSubTypes.Type(name = "verify", value = classOf[VerifyTargetSpec])
+    new JsonSubTypes.Type(name = "verify", value = classOf[VerifyTargetSpec]),
+    new JsonSubTypes.Type(name = "template/*", value = classOf[TargetTemplateInstanceSpec])
 ))
 abstract class TargetSpec extends NamedSpec[Target] {
-    @JsonProperty(value = "kind", required=true) protected var kind: String = _
-    @JsonProperty(value = "before", required=false) protected[spec] var before:Seq[String] = Seq()
-    @JsonProperty(value = "after", required=false) protected[spec] var after:Seq[String] = Seq()
+    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required=true) protected var kind: String = _
+    @JsonProperty(value="before", required=false) protected[spec] var before:Seq[String] = Seq.empty
+    @JsonProperty(value="after", required=false) protected[spec] var after:Seq[String] = Seq.empty
     @JsonProperty(value="description", required = false) private var description: Option[String] = None
-    @JsonProperty(value = "documentation", required=false) private var documentation: Option[TargetDocSpec] = None
+    @JsonProperty(value="documentation", required=false) private var documentation: Option[TargetDocSpec] = None
 
     override def instantiate(context: Context, properties:Option[Target.Properties] = None): Target
 

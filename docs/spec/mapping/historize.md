@@ -46,6 +46,9 @@ Name of the output column where the start date should be recorded to.
 * `validToColumn` **(mandatory)** *(type: string)* *(default: `valid_to`):
 Name of the output column where the end date should be recorded to.
 
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+  An optional SQL filter expression that is applied *after* the transformation itself.
+
 
 ## Outputs
 * `main` - the only output of the mapping

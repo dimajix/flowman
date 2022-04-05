@@ -10,7 +10,7 @@ import com.dimajix.flowman.dsl.mapping.ExtractJson
 import com.dimajix.flowman.dsl.mapping.Flow
 import com.dimajix.flowman.dsl.mapping.Read
 import com.dimajix.flowman.dsl.relation.FileRelation
-import com.dimajix.flowman.dsl.schema.EmbeddedSchema
+import com.dimajix.flowman.dsl.schema.InlineSchema
 import com.dimajix.flowman.dsl.schema.SparkSchema
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.types.BinaryType
@@ -65,7 +65,7 @@ case class LandingModule(kafkaTopic:String, entity:String, schema:String) extend
                 location = new Path(env.evaluate(s"$$hdfs_landing_dir/kafka/topic=${kafkaTopic}.*.*")),
                 pattern = "processing_date=${processing_date}",
                 partitions = PartitionField("processing_date", StringType),
-                schema = EmbeddedSchema(
+                schema = InlineSchema(
                     fields = Seq(
                         Field("key", BinaryType),
                         Field("value", BinaryType)

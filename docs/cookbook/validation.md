@@ -45,7 +45,7 @@ The example above will validate assumptions on `some_table` mapping, which reads
 `campaign` only contains unique values while the second assertion validates that the column doesn't contain any
 `NULL` values.
 
-All `validate` targets are executed during the [VALIDATE](../lifecycle.md) phase, which is executed before any other
+All `validate` targets are executed during the [VALIDATE](../concepts/lifecycle.md) phase, which is executed before any other
 build phase. If one of these targets fail, Flowman will stop execution on return an error. This helps to prevent
 building invalid data.
 

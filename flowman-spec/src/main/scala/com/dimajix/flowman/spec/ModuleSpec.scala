@@ -18,37 +18,39 @@ package com.dimajix.flowman.spec
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaTitle
 
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.spec.connection.ConnectionSpec
-import com.dimajix.flowman.spec.mapping.MappingSpec
 import com.dimajix.flowman.spec.job.JobSpec
+import com.dimajix.flowman.spec.mapping.MappingSpec
 import com.dimajix.flowman.spec.relation.RelationSpec
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.spec.template.TemplateSpec
 import com.dimajix.flowman.spec.test.TestSpec
 
 
+@JsonSchemaTitle("Flowman Module Schema")
 final class ModuleSpec {
-    @JsonProperty(value="environment") private var environment: Seq[String] = Seq()
-    @JsonProperty(value="config") private var config: Seq[String] = Seq()
+    @JsonProperty(value="environment", required=false) private var environment: Seq[String] = Seq()
+    @JsonProperty(value="config", required=false) private var config: Seq[String] = Seq()
     @JsonDeserialize(converter=classOf[ProfileSpec.NameResolver])
-    @JsonProperty(value="profiles") private var profiles: Map[String,ProfileSpec] = Map()
+    @JsonProperty(value="profiles", required=false) private var profiles: Map[String,ProfileSpec] = Map()
     @JsonDeserialize(converter=classOf[ConnectionSpec.NameResolver])
-    @JsonProperty(value="connections") private var connections: Map[String,ConnectionSpec] = Map()
+    @JsonProperty(value="connections", required=false) private var connections: Map[String,ConnectionSpec] = Map()
     @JsonDeserialize(converter=classOf[RelationSpec.NameResolver])
-    @JsonProperty(value="relations") private var relations: Map[String,RelationSpec] = Map()
+    @JsonProperty(value="relations", required=false) private var relations: Map[String,RelationSpec] = Map()
     @JsonDeserialize(converter=classOf[MappingSpec.NameResolver])
-    @JsonProperty(value="mappings") private var mappings: Map[String,MappingSpec] = Map()
+    @JsonProperty(value="mappings", required=false) private var mappings: Map[String,MappingSpec] = Map()
     @JsonDeserialize(converter=classOf[TargetSpec.NameResolver])
-    @JsonProperty(value="targets") private var targets: Map[String,TargetSpec] = Map()
+    @JsonProperty(value="targets", required=false) private var targets: Map[String,TargetSpec] = Map()
     @JsonDeserialize(converter=classOf[JobSpec.NameResolver])
-    @JsonProperty(value="jobs") private var jobs: Map[String,JobSpec] = Map()
+    @JsonProperty(value="jobs", required=false) private var jobs: Map[String,JobSpec] = Map()
     @JsonDeserialize(converter=classOf[TestSpec.NameResolver])
-    @JsonProperty(value="tests") private var tests: Map[String,TestSpec] = Map()
+    @JsonProperty(value="tests", required=false) private var tests: Map[String,TestSpec] = Map()
     @JsonDeserialize(converter=classOf[TemplateSpec.NameResolver])
-    @JsonProperty(value="templates") private var templates: Map[String,TemplateSpec] = Map()
+    @JsonProperty(value="templates", required=false) private var templates: Map[String,TemplateSpec] = Map()
 
     def instantiate() : Module = {
         Module(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,31 +23,8 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.spec.ObjectMapper
 
 
-class EmbeddedSchemaTest extends AnyFlatSpec with Matchers {
-    "An EmbeddedSchema" should "be parseable with explicit type" in {
-        val spec =
-            """
-              |kind: embedded
-              |fields:
-              |  - name: str_col
-              |    type: string
-              |  - name: int_col
-              |    type: integer
-            """.stripMargin
-
-        val session = Session.builder().disableSpark().build()
-
-        val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
-        schemaSpec shouldBe a[EmbeddedSchemaSpec]
-
-        val result = schemaSpec.instantiate(session.context)
-        result shouldBe a[EmbeddedSchema]
-        result.fields.size should be (2)
-        result.fields(0).name should be ("str_col")
-        result.fields(1).name should be ("int_col")
-    }
-
-    it should "be parseable with inline type" in {
+class InlineSchemaTest extends AnyFlatSpec with Matchers {
+    "An InlineSchema" should "be parseable with explicit type" in {
         val spec =
             """
               |kind: inline
@@ -61,8 +38,10 @@ class EmbeddedSchemaTest extends AnyFlatSpec with Matchers {
         val session = Session.builder().disableSpark().build()
 
         val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
+        schemaSpec shouldBe a[InlineSchemaSpec]
+
         val result = schemaSpec.instantiate(session.context)
-        result shouldBe a[EmbeddedSchema]
+        result shouldBe a[InlineSchema]
         result.fields.size should be (2)
         result.fields(0).name should be ("str_col")
         result.fields(1).name should be ("int_col")

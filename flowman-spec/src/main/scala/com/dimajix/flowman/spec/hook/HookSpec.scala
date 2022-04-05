@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.hook
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonProperty.Access
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
@@ -41,7 +42,7 @@ object HookSpec extends TypeRegistry[HookSpec] {
     new JsonSubTypes.Type(name = "web", value = classOf[WebHookSpec])
 ))
 abstract class HookSpec extends Spec[Hook] {
-    @JsonProperty(value="kind", required = true) protected var kind: String = _
+    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required = true) protected var kind: String = _
 
     def instantiate(context:Context, properties:Option[Hook.Properties] = None): Hook
 

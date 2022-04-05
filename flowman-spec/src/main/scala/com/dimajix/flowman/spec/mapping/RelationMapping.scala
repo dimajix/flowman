@@ -44,14 +44,14 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.SchemaUtils
 
 
-case class ReadRelationMapping(
+case class RelationMapping(
     instanceProperties:Mapping.Properties,
     relation:Reference[Relation],
     columns:Seq[Field] = Seq(),
     partitions:Map[String,FieldValue] = Map(),
     filter:Option[String] = None
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[ReadRelationMapping])
+    private val logger = LoggerFactory.getLogger(classOf[RelationMapping])
 
     /**
      * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings
@@ -64,11 +64,11 @@ case class ReadRelationMapping(
     }
 
     /**
-     * Returns the dependencies of this mapping, which are empty for an ReadRelationMapping
+     * Returns the dependencies of this mapping, which are empty for an RelationMapping
      *
      * @return
      */
-    override def inputs : Set[MappingOutputIdentifier] = Set.empty
+    override def inputs : Set[MappingOutputIdentifier] = expressionDependencies(filter)
 
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
@@ -89,7 +89,7 @@ case class ReadRelationMapping(
         val df = rel.read(execution, partitions)
 
         // Apply optional filter
-        val filtered = filter.map(df.filter).getOrElse(df)
+        val filtered = applyFilter(df, filter, input)
 
         val result = SchemaUtils.applySchema(filtered, schema)
 
@@ -134,7 +134,7 @@ case class ReadRelationMapping(
 
 
 
-class ReadRelationMappingSpec extends MappingSpec {
+class RelationMappingSpec extends MappingSpec {
     @JsonProperty(value = "relation", required = true) private var relation:RelationReferenceSpec = _
     @JsonProperty(value = "columns", required=false) private var columns:Map[String,String] = Map()
     @JsonProperty(value = "partitions", required=false) private var partitions:Map[String,FieldValue] = Map()
@@ -145,13 +145,13 @@ class ReadRelationMappingSpec extends MappingSpec {
       * @param context
       * @return
       */
-    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): ReadRelationMapping = {
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): RelationMapping = {
         val partitions= this.partitions.mapValues {
                 case v: SingleValue => SingleValue(context.evaluate(v.value))
                 case v: ArrayValue => ArrayValue(v.values.map(context.evaluate))
                 case v: RangeValue => RangeValue(context.evaluate(v.start), context.evaluate(v.end), v.step.map(context.evaluate))
             }
-        ReadRelationMapping(
+        RelationMapping(
             instanceProperties(context, properties),
             relation.instantiate(context),
             context.evaluate(columns).map { case(name,typ) => Field(name, FieldType.of(typ))}.toSeq,

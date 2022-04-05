@@ -19,4 +19,4 @@ targets:
 ## Supported Execution Phases
 * `BUILD` - Counting records of a mapping will be executed as part of the `BUILD` phase
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).

@@ -221,7 +221,7 @@ class HistorizeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
               |
               |mappings:
               |  some_table:
-              |    kind: readRelation
+              |    kind: relation
               |    relation: some_table
               |
               |  history:

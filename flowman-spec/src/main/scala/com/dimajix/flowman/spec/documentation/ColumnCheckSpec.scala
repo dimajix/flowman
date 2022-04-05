@@ -65,58 +65,80 @@ class ColumnCheckSpecAnnotationHandler extends ClassAnnotationHandler {
 
 
 class NotNullColumnCheckSpec extends ColumnCheckSpec {
-    override def instantiate(context: Context, parent:ColumnReference): NotNullColumnCheck = NotNullColumnCheck(Some(parent))
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
+
+    override def instantiate(context: Context, parent:ColumnReference): NotNullColumnCheck =
+        NotNullColumnCheck(
+            Some(parent),
+            filter = context.evaluate(filter)
+        )
 }
 class UniqueColumnCheckSpec extends ColumnCheckSpec {
-    override def instantiate(context: Context, parent:ColumnReference): UniqueColumnCheck = UniqueColumnCheck(Some(parent))
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
+
+    override def instantiate(context: Context, parent:ColumnReference): UniqueColumnCheck =
+        UniqueColumnCheck(
+            Some(parent),
+            filter = context.evaluate(filter)
+        )
 }
 class RangeColumnCheckSpec extends ColumnCheckSpec {
     @JsonProperty(value="lower", required=true) private var lower:String = ""
     @JsonProperty(value="upper", required=true) private var upper:String = ""
+    @JsonProperty(value="filter", required=false) private var filter:Option[String] = None
 
     override def instantiate(context: Context, parent:ColumnReference): RangeColumnCheck = RangeColumnCheck(
         Some(parent),
         None,
         context.evaluate(lower),
-        context.evaluate(upper)
+        context.evaluate(upper),
+        filter = context.evaluate(filter)
     )
 }
 class ValuesColumnCheckSpec extends ColumnCheckSpec {
     @JsonProperty(value="values", required=false) private var values:Seq[String] = Seq()
+    @JsonProperty(value="filter", required=false) private var filter:Option[String] = None
 
     override def instantiate(context: Context, parent:ColumnReference): ValuesColumnCheck = ValuesColumnCheck(
         Some(parent),
-        values=values.map(context.evaluate)
+        values = values.map(context.evaluate),
+        filter = context.evaluate(filter)
     )
 }
 class ExpressionColumnCheckSpec extends ColumnCheckSpec {
     @JsonProperty(value="expression", required=true) private var expression:String = _
+    @JsonProperty(value="filter", required=false) private var filter:Option[String] = None
 
     override def instantiate(context: Context, parent:ColumnReference): ExpressionColumnCheck = ExpressionColumnCheck(
         Some(parent),
-        expression=context.evaluate(expression)
+        expression = context.evaluate(expression),
+        filter = context.evaluate(filter)
     )
 }
 class LengthColumnCheckSpec extends ColumnCheckSpec {
     @JsonProperty(value="minimum", required=true) private var minimumLength:Option[String] = None
     @JsonProperty(value="maximum", required=true) private var maximumLength:Option[String] = None
     @JsonProperty(value="length", required=true) private var length:Option[String] = None
+    @JsonProperty(value="filter", required=false) private var filter:Option[String] = None
 
     override def instantiate(context: Context, parent:ColumnReference): LengthColumnCheck = LengthColumnCheck(
         Some(parent),
         minimumLength = context.evaluate(length).orElse(context.evaluate(minimumLength)).map(_.toInt),
-        maximumLength = context.evaluate(length).orElse(context.evaluate(maximumLength)).map(_.toInt)
+        maximumLength = context.evaluate(length).orElse(context.evaluate(maximumLength)).map(_.toInt),
+        filter = context.evaluate(filter)
     )
 }
 class ForeignKeyColumnCheckSpec extends ColumnCheckSpec {
     @JsonProperty(value="mapping", required=false) private var mapping:Option[String] = None
     @JsonProperty(value="relation", required=false) private var relation:Option[String] = None
     @JsonProperty(value="column", required=false) private var column:Option[String] = None
+    @JsonProperty(value="filter", required=false) private var filter:Option[String] = None
 
     override def instantiate(context: Context, parent:ColumnReference): ForeignKeyColumnCheck = ForeignKeyColumnCheck(
         Some(parent),
-        relation=context.evaluate(relation).map(RelationIdentifier(_)),
-        mapping=context.evaluate(mapping).map(MappingOutputIdentifier(_)),
-        column=context.evaluate(column)
+        relation = context.evaluate(relation).map(RelationIdentifier(_)),
+        mapping = context.evaluate(mapping).map(MappingOutputIdentifier(_)),
+        column = context.evaluate(column),
+        filter = context.evaluate(filter)
     )
 }

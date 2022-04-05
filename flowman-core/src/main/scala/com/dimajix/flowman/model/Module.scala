@@ -73,6 +73,7 @@ object Module {
             if (file.isDirectory()) {
                 logger.info(s"Reading all module files in directory ${file.toString}")
                 file.list()
+                    .par
                     .filter(_.isFile())
                     .map(f => loadFile(f))
                     .foldLeft(Module())((l,r) => l.merge(r))

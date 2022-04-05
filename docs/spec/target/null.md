@@ -28,4 +28,4 @@ targets:
 * `TRUNCATE`
 * `DESTROY`
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).

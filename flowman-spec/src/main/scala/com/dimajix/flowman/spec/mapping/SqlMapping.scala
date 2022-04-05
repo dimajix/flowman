@@ -21,6 +21,7 @@ import java.net.URL
 import java.nio.charset.Charset
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonPropertyDescription
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
@@ -64,11 +65,10 @@ extends BaseMapping {
       *
       * @return
       */
-    override def inputs : Set[MappingOutputIdentifier] = {
-        SqlParser.resolveDependencies(statement).map(MappingOutputIdentifier.parse)
-    }
+    override def inputs : Set[MappingOutputIdentifier] = dependencies
 
-    private def statement : String = {
+    private lazy val dependencies = SqlParser.resolveDependencies(statement).map(MappingOutputIdentifier.parse)
+    private lazy val statement : String = {
         if (sql.exists(_.nonEmpty)) {
             sql.get
         }
@@ -96,8 +96,11 @@ extends BaseMapping {
 
 
 class SqlMappingSpec extends MappingSpec {
+    @JsonPropertyDescription("SQL query to execute. This has to be specified in Spark SQL syntax.")
     @JsonProperty(value="sql", required=false) private var sql:Option[String] = None
+    @JsonPropertyDescription("Name of a file containing the SQL query to execute. This has to be specified in Spark SQL syntax.")
     @JsonProperty(value="file", required=false) private var file:Option[String] = None
+    @JsonPropertyDescription("URL of a file containing the SQL query to execute. This has to be specified in Spark SQL syntax.")
     @JsonProperty(value="url", required=false) private var url: Option[String] = None
 
     /**

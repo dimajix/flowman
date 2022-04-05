@@ -70,7 +70,7 @@ relations:
 ## Automatic Migrations
 Flowman supports some automatic migrations, specifically with the migration strategies `ALTER`, `ALTER_REPLACE`
 and `REPLACE` (those can be set via the global config variable `flowman.default.relation.migrationStrategy`,
-see [configuration](../../config.md) for more details).
+see [configuration](../../setup/config.md) for more details).
 
 The migration strategy `ALTER` supports the following alterations:
 * Changing nullability

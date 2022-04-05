@@ -24,6 +24,7 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Relation
@@ -32,6 +33,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.types.StructType
 
 
 class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
@@ -66,28 +68,34 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
 
         (mappingTemplate1.instantiate _).expects(context,None).returns(mapping1)
         (mapping1.identifier _).expects().returns(MappingIdentifier("project/m1"))
-        (mapping1.context _).expects().returns(context)
-        (mapping1.outputs _).expects().returns(Set("main"))
+        (mapping1.context _).expects().atLeastOnce().returns(context)
+        (mapping1.outputs _).expects().atLeastOnce().returns(Set("main"))
+        (mapping1.inputs _).expects().returns(Set(MappingOutputIdentifier("m2")))
         (mapping1.name _).expects().atLeastOnce().returns("m1")
+        (mapping1.describe _).expects(*,*).atLeastOnce().returns(Map("main" -> StructType(Seq.empty)))
         (mapping1.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.input(MappingIdentifier("m2"), "main")))
 
         (mappingTemplate2.instantiate _).expects(context,None).returns(mapping2)
-        (mapping2.identifier _).expects().returns(MappingIdentifier("project/m2"))
-        (mapping2.context _).expects().returns(context)
-        (mapping2.outputs _).expects().returns(Set("main"))
+        (mapping2.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m2"))
+        (mapping2.context _).expects().atLeastOnce().returns(context)
+        (mapping2.outputs _).expects().atLeastOnce().returns(Set("main"))
+        (mapping2.inputs _).expects().returns(Set())
         (mapping2.name _).expects().atLeastOnce().returns("m2")
+        (mapping2.describe _).expects(*,*).atLeastOnce().returns(Map("main" -> StructType(Seq.empty)))
         (mapping2.link _).expects(*).onCall((l:Linker) => Some(1).foreach(_ => l.read(RelationIdentifier("src"), Map.empty[String,FieldValue])))
 
         (sourceRelationTemplate.instantiate _).expects(context,None).returns(sourceRelation)
         (sourceRelation.identifier _).expects().atLeastOnce().returns(RelationIdentifier("project/src"))
         (sourceRelation.context _).expects().returns(context)
         (sourceRelation.name _).expects().atLeastOnce().returns("src")
+        (sourceRelation.describe _).expects(*,*).atLeastOnce().returns(StructType(Seq.empty))
         (sourceRelation.link _).expects(*).returns(Unit)
 
         (targetRelationTemplate.instantiate _).expects(context,None).returns(targetRelation)
         (targetRelation.identifier _).expects().atLeastOnce().returns(RelationIdentifier("project/tgt"))
         (targetRelation.context _).expects().returns(context)
         (targetRelation.name _).expects().atLeastOnce().returns("tgt")
+        (targetRelation.describe _).expects(*,*).atLeastOnce().returns(StructType(Seq.empty))
         (targetRelation.link _).expects(*).returns(Unit)
 
         (targetTemplate.instantiate _).expects(context,None).returns(target)

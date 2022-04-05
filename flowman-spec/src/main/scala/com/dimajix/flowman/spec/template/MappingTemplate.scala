@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.template
 import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.BaseTemplate
@@ -52,6 +53,35 @@ class MappingTemplateSpec extends TemplateSpec {
 }
 
 
+@JsonSchemaInject(
+  merge = false,
+  json = """
+      {
+         "additionalProperties" : { "type": "string" },
+         "properties" : {
+            "kind" : {
+               "type" : "string",
+               "pattern": "template/.+"
+            },
+            "metadata" : {
+              "$ref" : "#/definitions/MetadataSpec"
+            },
+            "broadcast" : {
+              "type" : [ "boolean", "string" ]
+            },
+            "checkpoint" : {
+              "type" : [ "boolean", "string" ]
+            },
+            "cache" : {
+              "type" : "string"
+            },
+            "documentation" : {
+              "$ref" : "#/definitions/MappingDocSpec"
+            }
+         }
+      }
+    """
+)
 class MappingTemplateInstanceSpec extends MappingSpec {
     @JsonIgnore
     private[spec] var args: Map[String, String] = Map()

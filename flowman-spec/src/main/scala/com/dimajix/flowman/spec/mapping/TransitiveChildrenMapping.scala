@@ -35,14 +35,15 @@ case class TransitiveChildrenMapping(
     input:MappingOutputIdentifier,
     parentColumns:Seq[String],
     childColumns:Seq[String],
-    includeSelf:Boolean
+    includeSelf:Boolean = true,
+    filter:Option[String] = None
 ) extends BaseMapping {
     /**
       * Returns the dependencies (i.e. names of tables in the Dataflow model)
       *
       * @return
       */
-    override def inputs: Set[MappingOutputIdentifier] = Set(input)
+    override def inputs: Set[MappingOutputIdentifier] = Set(input) ++ expressionDependencies(filter)
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -111,7 +112,10 @@ case class TransitiveChildrenMapping(
                 nextDf
             }
 
-        Map("main" -> result)
+        // Apply optional filter
+        val filteredResult = applyFilter(result, filter, input)
+
+        Map("main" -> filteredResult)
     }
 
     /**
@@ -142,8 +146,9 @@ case class TransitiveChildrenMapping(
 class TransitiveChildrenMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "includeSelf", required = true) private var includeSelf: String = "true"
-    @JsonProperty(value = "parentColumns", required = true) private var parentColumns: Seq[String] = Seq()
-    @JsonProperty(value = "childColumns", required = true) private var childColumns: Seq[String] = Seq()
+    @JsonProperty(value = "parentColumns", required = true) private var parentColumns: Seq[String] = Seq.empty
+    @JsonProperty(value = "childColumns", required = true) private var childColumns: Seq[String] = Seq.empty
+    @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**
       * Creates an instance of this specification and performs the interpolation of all variables
@@ -157,7 +162,8 @@ class TransitiveChildrenMappingSpec extends MappingSpec {
             MappingOutputIdentifier(context.evaluate(input)),
             parentColumns.map(context.evaluate),
             childColumns.map(context.evaluate),
-            context.evaluate(includeSelf).toBoolean
+            context.evaluate(includeSelf).toBoolean,
+            context.evaluate(filter)
         )
     }
 }

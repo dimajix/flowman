@@ -17,7 +17,7 @@ trim_trailing_whitespace = true
 insert_final_newline = true
 
 [*.scala]
-indent_size = 4
+indent_size = 2
 
 [*.yml]
 indent_size = 2
@@ -25,8 +25,12 @@ indent_size = 2
 [*.js]
 indent_size = 2
 
+[*.json]
+indent_size = 2
+
 [*.vue]
 indent_size = 2
 
 [*.md]
 trim_trailing_whitespace = false
+indent_size = 2

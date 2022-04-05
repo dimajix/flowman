@@ -80,7 +80,7 @@ case class TemplateMapping(
       *
       * @return
       */
-    override def inputs: Set[MappingOutputIdentifier] = mappingInstance.inputs
+    override def inputs: Set[MappingOutputIdentifier] = mappingInstance.inputs ++ expressionDependencies(filter)
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -96,7 +96,7 @@ case class TemplateMapping(
         val result = mappingInstance.execute(execution, input)
 
         // Apply optional filter
-        result.map { case(name,df) => name -> filter.map(df.filter).getOrElse(df) }
+        result.map { case(name,df) => name -> applyFilter(df, filter, input) }
     }
 
     /**

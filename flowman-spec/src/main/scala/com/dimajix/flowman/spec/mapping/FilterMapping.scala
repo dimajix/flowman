@@ -37,9 +37,7 @@ case class FilterMapping(
       *
       * @return
       */
-    override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input)
-    }
+    override def inputs : Set[MappingOutputIdentifier] = Set(input) ++ expressionDependencies(condition)
 
     /**
       * Executes this Transform by reading from the specified source and returns a corresponding DataFrame
@@ -53,7 +51,7 @@ case class FilterMapping(
         require(tables != null)
 
         val df = tables(input)
-        val result = df.filter(condition)
+        val result = applyFilter(df, Some(condition), tables)
 
         Map("main" -> result)
     }

@@ -62,7 +62,7 @@ Flowman config variable `floman.default.target.rebalance`.
 * `TRUNCATE` - removes the target file, but keeps the directory
 * `DESTROY` - recursively removes the target directory and all files inside
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).
 
 
 ## Provided Metrics

@@ -27,4 +27,4 @@ Specifies the name of the mapping output to be materialized
 ## Supported Execution Phases
 * `BUILD` - In the build phase, all records of the specified mapping will be materialized
 
-Read more about [execution phases](../../lifecycle.md).
+Read more about [execution phases](../../concepts/lifecycle.md).

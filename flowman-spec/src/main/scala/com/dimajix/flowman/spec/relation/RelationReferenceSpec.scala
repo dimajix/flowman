@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Prototype
@@ -34,6 +35,18 @@ import com.dimajix.flowman.spec.Spec
 
 
 @JsonDeserialize(using=classOf[RelationReferenceDeserializer])
+@JsonSchemaInject(
+  merge = false,
+  json = """
+      {
+        "type": [ "object", "string" ],
+        "oneOf": [
+          { "type": "string" },
+          { "$ref": "#/definitions/RelationSpec" }
+        ]
+      }
+      """
+)
 abstract class RelationReferenceSpec {
     def instantiate(context: Context): Reference[Relation]
 }

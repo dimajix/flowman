@@ -162,7 +162,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
             s"""
                |mappings:
                |  input:
-               |    kind: read
+               |    kind: relation
                |    relation: input
                |
                |relations:
@@ -171,7 +171,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
                |    location: ${inputPath.toUri}
                |    format: csv
                |    schema:
-               |      kind: embedded
+               |      kind: inline
                |      fields:
                |        - name: int_col
                |          type: integer
@@ -184,7 +184,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
                |    location: ${outputPath.toUri}
                |    format: csv
                |    schema:
-               |      kind: embedded
+               |      kind: inline
                |      fields:
                |        - name: int_col
                |          type: integer

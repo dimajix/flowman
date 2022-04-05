@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.connection
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonProperty.Access
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.annotation.JsonTypeResolver
@@ -47,7 +48,7 @@ object ConnectionSpec extends TypeRegistry[ConnectionSpec] {
     new JsonSubTypes.Type(name = "sftp", value = classOf[SshConnectionSpec])
 ))
 abstract class ConnectionSpec extends NamedSpec[Connection] {
-    @JsonProperty(value="kind", required = true) protected var kind: String = "jdbc"
+    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required = true) protected var kind: String = "jdbc"
 
     /**
      * Creates an instance of this specification and performs the interpolation of all variables

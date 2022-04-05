@@ -24,7 +24,7 @@ mappings:
     kind: schema
     input: facts
     schema:
-      kind: embedded
+      kind: inline
       fields:
         - name: id
           type: string

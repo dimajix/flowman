@@ -213,7 +213,7 @@ object JdbcUtils {
         val meta = conn.getMetaData
         val (realTable,realType) = resolveTable(meta, table)
 
-        val currentSchema = getSchema(conn, table, options)
+        val currentSchema = getTableSchema(conn, table, options)
         val pk = getPrimaryKey(meta, realTable)
         val idxs = getIndexes(meta, realTable)
             // Remove primary key
@@ -290,8 +290,30 @@ object JdbcUtils {
     /**
      * Returns the schema if the table already exists in the JDBC database.
      */
-    def getSchema(conn: Connection, table:TableIdentifier, options: JDBCOptions): StructType = {
+    def getTableSchema(conn: Connection, table:TableIdentifier, options: JDBCOptions): StructType = {
         val jdbcFields = getJdbcSchema(conn, table, options)
+
+        val dialect = SqlDialects.get(options.url)
+        getSchema(jdbcFields, dialect)
+    }
+
+    /**
+     * Returns the list of [[JdbcField]] definitions containing the deatiled JDBC schema of the specified table.
+     * @param conn
+     * @param table
+     * @param options
+     * @return
+     */
+    def getQuerySchema(conn: Connection, query:String, options: JDBCOptions) : StructType = {
+        val jdbcFields = withStatement(conn, s"SELECT * FROM ($query) x WHERE 1=0", options) { statement =>
+            val rs = statement.executeQuery()
+            try {
+                getJdbcSchema(rs)
+            }
+            finally {
+                rs.close()
+            }
+        }
 
         val dialect = SqlDialects.get(options.url)
         getSchema(jdbcFields, dialect)

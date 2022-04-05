@@ -30,14 +30,14 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "The ReadRelationMapping" should "be able to read from a NullRelation" in {
+    "The RelationMapping" should "be able to read from a NullRelation" in {
         val spec =
             """
               |relations:
               |  empty:
               |    kind: null
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: col1
               |          type: string
@@ -45,7 +45,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |          type: Integer
               |mappings:
               |  empty:
-              |    kind: read
+              |    kind: relation
               |    relation: empty
               |    columns:
               |      str_col: string
@@ -80,7 +80,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |  empty:
               |    kind: null
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: str_col
               |          type: string
@@ -88,7 +88,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |          type: integer
               |mappings:
               |  empty:
-              |    kind: read
+              |    kind: relation
               |    relation: empty
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
@@ -119,7 +119,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |  empty:
               |    kind: null
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: str_col
               |          type: string
@@ -130,7 +130,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |        type: string
               |mappings:
               |  empty:
-              |    kind: read
+              |    kind: relation
               |    relation: empty
               |    columns:
               |      str_col: string
@@ -164,7 +164,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |  empty:
               |    kind: null
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: str_col
               |          type: string
@@ -175,7 +175,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |        type: string
               |mappings:
               |  empty:
-              |    kind: read
+              |    kind: relation
               |    relation: empty
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
@@ -208,7 +208,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |  empty:
               |    kind: null
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: str_col
               |          type: string
@@ -219,7 +219,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               |        type: string
               |mappings:
               |  empty:
-              |    kind: read
+              |    kind: relation
               |    relation: empty
               |    partitions:
               |      spart: abc

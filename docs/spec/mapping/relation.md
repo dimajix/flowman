@@ -1,6 +1,6 @@
 # Read Mapping
 
-The `read` (or `readRelation`, which is simply an alias) mapping is found in almost all Flowman projects, as it will
+The `read` mapping is found in almost all Flowman projects, as it will
 read data from relations. It doesn't have any other mappings as inputs, and therefore usually is the first mapping
 in a data flow.
 
@@ -8,7 +8,7 @@ in a data flow.
 ```yaml
 mappings:
   measurements-raw:
-    kind: readRelation
+    kind: read
     relation: measurements_raw
     partitions:
       year:
@@ -29,7 +29,7 @@ relations:
         type: integer
         granularity: 1
     schema:
-      kind: embedded
+      kind: inline
       fields:
         - name: raw_data
           type: string
@@ -42,7 +42,7 @@ do not access the target relation otherwise, such that a shared definition would
 ```yaml
 mappings:
   measurements-raw:
-    kind: readRelation
+    kind: read
     relation:
       kind: file
       format: text
@@ -53,7 +53,7 @@ mappings:
           type: integer
           granularity: 1
       schema:
-        kind: embedded
+        kind: inline
         fields:
           - name: raw_data
             type: string
@@ -69,7 +69,7 @@ mappings:
 
 ## Fields
 
-* `kind` **(mandatory)** *(type: string)*: `read` or `readRelation`
+* `kind` **(mandatory)** *(type: string)*: `read`
 
 * `broadcast` **(optional)** *(type: boolean)* *(default: false)*: 
 Hint for broadcasting the result of this mapping for map-side joins.

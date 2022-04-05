@@ -26,7 +26,7 @@ import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.Schema
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
@@ -46,9 +46,9 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |      int_col: integer
               |
               |  empty2:
-              |    kind: empty
+              |    kind: null
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |         - name: str_col
               |           type: string
@@ -115,7 +115,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val mapping = NullMapping(
             Mapping.Properties(context, "empty"),
             Seq(),
-            Some(EmbeddedSchema(
+            Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", StringType),
@@ -158,7 +158,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
                 Field("str_col", StringType),
                 Field("int_col", IntegerType)
             ),
-            Some(EmbeddedSchema(
+            Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", StringType),

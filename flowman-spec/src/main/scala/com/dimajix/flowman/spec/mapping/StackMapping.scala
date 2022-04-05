@@ -51,7 +51,7 @@ case class StackMapping(
      * @return
      */
     override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 
     /**
@@ -67,7 +67,7 @@ case class StackMapping(
 
         val df = tables(input)
         val result = xfs.transform(df)
-        val filteredResult = filter.map(result.filter).getOrElse(result)
+        val filteredResult = applyFilter(result, filter, tables)
         val assembledResult = asm.map(_.reassemble(filteredResult)).getOrElse(filteredResult)
 
         Map("main" -> assembledResult)

@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaTitle
 
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.ProjectSpec.ImportSpec
@@ -24,9 +25,9 @@ import com.dimajix.flowman.spec.ProjectSpec.ImportSpec
 
 object ProjectSpec {
     final class ImportSpec {
-        @JsonProperty(value = "project", required = true) private var project: String = ""
-        @JsonProperty(value = "job", required = false) private var job: Option[String] = None
-        @JsonProperty(value = "arguments", required = false) private var arguments: Map[String,String] = Map()
+        @JsonProperty(value = "project", required=true) private var project: String = ""
+        @JsonProperty(value = "job", required=false) private var job: Option[String] = None
+        @JsonProperty(value = "arguments", required=false) private var arguments: Map[String,String] = Map()
         def instantiate(): Project.Import = {
             Project.Import(
                 project,
@@ -37,12 +38,14 @@ object ProjectSpec {
     }
 }
 
+
+@JsonSchemaTitle("Flowman Project Schema")
 final class ProjectSpec {
-    @JsonProperty(value="name", required = true) private var name: String = ""
-    @JsonProperty(value="description", required = false) private var description: Option[String] = None
-    @JsonProperty(value="version", required = false) private var version: Option[String] = None
-    @JsonProperty(value="modules", required = true) private var modules: Seq[String] = Seq()
-    @JsonProperty(value="imports", required = true) private var imports: Seq[ImportSpec] = Seq()
+    @JsonProperty(value="name", required=true) private var name: String = ""
+    @JsonProperty(value="description", required=false) private var description: Option[String] = None
+    @JsonProperty(value="version", required=false) private var version: Option[String] = None
+    @JsonProperty(value="modules", required=true) private var modules: Seq[String] = Seq()
+    @JsonProperty(value="imports", required=false) private var imports: Seq[ImportSpec] = Seq()
 
     def instantiate(): Project = {
         Project(
@@ -54,4 +57,3 @@ final class ProjectSpec {
         )
     }
 }
-

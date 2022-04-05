@@ -26,7 +26,7 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
@@ -58,7 +58,7 @@ class NullRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         val relation = NullRelation(
             Relation.Properties(session.context),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(session.context),
                 fields = Seq(
                     Field("lala", StringType)

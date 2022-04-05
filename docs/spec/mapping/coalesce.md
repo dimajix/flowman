@@ -33,6 +33,9 @@ The name of the input mapping
 * `partitions` **(mandatory)** *(integer)*:
 The number of output partitions
 
+* `filter` **(optional)** *(type: string)* *(default: empty)*:
+  An optional SQL filter expression that is applied *after* the transformation itself.
+
 
 ## Outputs
 * `main` - the only output of the mapping

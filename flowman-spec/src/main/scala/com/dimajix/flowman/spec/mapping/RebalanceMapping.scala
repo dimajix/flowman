@@ -30,7 +30,8 @@ import com.dimajix.flowman.types.StructType
 case class RebalanceMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
-    partitions:Int
+    partitions:Int,
+    filter:Option[String] = None
 ) extends BaseMapping {
     /**
      * Returns the dependencies of this mapping, which is exactly one input table
@@ -38,22 +39,27 @@ case class RebalanceMapping(
      * @return
      */
     override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
       *
       * @param execution
-      * @param input
+      * @param tables
       * @return
       */
-    override def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
+    override def execute(execution:Execution, tables:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
         require(execution != null)
-        require(input != null)
+        require(tables != null)
 
-        val df = input(this.input)
-        val result = df.repartition(partitions)
+        val df = tables(this.input)
+
+        // Apply optional filter
+        val filtered = applyFilter(df, filter, tables)
+
+        // Repartition data
+        val result = filtered.repartition(partitions)
 
         Map("main" -> result)
     }
@@ -80,6 +86,7 @@ case class RebalanceMapping(
 class RebalanceMappingSpec extends MappingSpec {
     @JsonProperty(value = "input", required = true) private var input: String = _
     @JsonProperty(value = "partitions", required = true) private[spec] var partitions: String = _
+    @JsonProperty(value = "filter", required=false) private var filter: Option[String] = None
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -90,7 +97,8 @@ class RebalanceMappingSpec extends MappingSpec {
         RebalanceMapping(
             instanceProperties(context, properties),
             MappingOutputIdentifier.parse(context.evaluate(input)),
-            context.evaluate(partitions).toInt
+            context.evaluate(partitions).toInt,
+            context.evaluate(filter)
         )
     }
 }

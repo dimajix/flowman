@@ -76,4 +76,4 @@ Mocking for testing only works well if Flowman doesn't need to read real data. A
 Flowman doesn't have all schema information in the specification and therefore falls back to Spark doing schema
 inference. This is something you always should avoid. The best way to avoid automatic schema inference with Spark
 is to explicitly specify schema definitions in all relations and/or to explicitly specify all columns with data types
-in the [`readRelation`](read-relation.md) mapping.
+in the [`readRelation`](relation.md) mapping.

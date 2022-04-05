@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.node.JsonNodeType
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 
 
 private class FieldValueDeserializer(vc:Class[_]) extends StdDeserializer[FieldValue](vc) {
@@ -56,7 +57,35 @@ private class FieldValueDeserializer(vc:Class[_]) extends StdDeserializer[FieldV
     }
 }
 
+
 @JsonDeserialize(using=classOf[FieldValueDeserializer])
+@JsonSchemaInject(
+  merge = false,
+  json = """
+      {
+        "type": [ "object", "array", "string", "integer", "boolean" ],
+        "anyOf" : [
+          {
+             "type" : ["string", "integer", "boolean"]
+          },
+          {
+             "type" : "array",
+             "items" : {
+               "type" : ["string", "integer", "boolean"]
+             }
+          },
+          {
+             "type" : "object",
+             "properties" : {
+                "start" : { "type" : ["string", "integer", "boolean"] },
+                "end" : { "type" : ["string", "integer", "boolean"] },
+                "step" : { "type" : ["string", "integer"] }
+             }
+          }
+        ]
+      }
+    """
+)
 sealed abstract class FieldValue
 case class SingleValue(value:String) extends FieldValue {
     require(value != null)

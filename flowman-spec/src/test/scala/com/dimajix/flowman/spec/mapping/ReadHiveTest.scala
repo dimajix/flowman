@@ -33,7 +33,7 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.relation.HiveTableRelation
-import com.dimajix.flowman.spec.schema.EmbeddedSchema
+import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.flowman.{types => ftypes}
@@ -71,7 +71,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             Relation.Properties(context, "t0"),
             table = TableIdentifier("lala_0007", Some("default")),
             format = Some("parquet"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", ftypes.StringType),
@@ -116,7 +116,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             Relation.Properties(context, "t0"),
             table = TableIdentifier("lala_0007", Some("default")),
             format = Some("parquet"),
-            schema = Some(EmbeddedSchema(
+            schema = Some(InlineSchema(
                 Schema.Properties(context),
                 fields = Seq(
                     Field("str_col", ftypes.StringType),

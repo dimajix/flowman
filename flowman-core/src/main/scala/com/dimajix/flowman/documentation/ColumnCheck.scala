@@ -26,9 +26,12 @@ import org.apache.spark.sql.types.BooleanType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.spi.ColumnCheckExecutor
+import com.dimajix.spark.sql.DataFrameUtils
+import com.dimajix.spark.sql.ExpressionParser
 
 
 final case class ColumnCheckReference(
@@ -46,6 +49,7 @@ final case class ColumnCheckReference(
 
 abstract class ColumnCheck extends Fragment with Product with Serializable {
     def name : String
+    def filter : Option[String]
     def result : Option[CheckResult]
     def withResult(result:CheckResult) : ColumnCheck
 
@@ -60,7 +64,8 @@ abstract class ColumnCheck extends Fragment with Product with Serializable {
 final case class NotNullColumnCheck(
     parent:Option[Reference],
     description: Option[String] = None,
-    result:Option[CheckResult] = None
+    result:Option[CheckResult] = None,
+    filter:Option[String] = None
 ) extends ColumnCheck {
     override def name : String = "IS NOT NULL"
     override def withResult(result: CheckResult): ColumnCheck = copy(result=Some(result))
@@ -73,7 +78,8 @@ final case class NotNullColumnCheck(
 final case class UniqueColumnCheck(
     parent:Option[Reference],
     description: Option[String] = None,
-    result:Option[CheckResult] = None
+    result:Option[CheckResult] = None,
+    filter:Option[String] = None
 ) extends ColumnCheck  {
     override def name : String = "HAS UNIQUE VALUES"
     override def withResult(result: CheckResult): ColumnCheck = copy(result=Some(result))
@@ -88,7 +94,8 @@ final case class RangeColumnCheck(
     description: Option[String] = None,
     lower:Any,
     upper:Any,
-    result:Option[CheckResult] = None
+    result:Option[CheckResult] = None,
+    filter:Option[String] = None
 ) extends ColumnCheck  {
     override def name : String = s"IS BETWEEN $lower AND $upper"
     override def withResult(result: CheckResult): ColumnCheck = copy(result=Some(result))
@@ -102,7 +109,8 @@ final case class ValuesColumnCheck(
     parent:Option[Reference],
     description: Option[String] = None,
     values: Seq[Any] = Seq(),
-    result:Option[CheckResult] = None
+    result:Option[CheckResult] = None,
+    filter:Option[String] = None
 ) extends ColumnCheck  {
     override def name : String = s"IS IN (${values.mkString(",")})"
     override def withResult(result: CheckResult): ColumnCheck = copy(result=Some(result))
@@ -118,7 +126,8 @@ final case class ForeignKeyColumnCheck(
     relation: Option[RelationIdentifier] = None,
     mapping: Option[MappingOutputIdentifier] = None,
     column: Option[String] = None,
-    result:Option[CheckResult] = None
+    result:Option[CheckResult] = None,
+    filter:Option[String] = None
 ) extends ColumnCheck {
     override def name : String = {
         val otherEntity = relation.map(_.toString).orElse(mapping.map(_.toString)).getOrElse("")
@@ -136,7 +145,8 @@ final case class ExpressionColumnCheck(
     parent:Option[Reference],
     description: Option[String] = None,
     expression: String,
-    result:Option[CheckResult] = None
+    result:Option[CheckResult] = None,
+    filter:Option[String] = None
 ) extends ColumnCheck {
     override def name: String = expression
     override def withResult(result: CheckResult): ColumnCheck = copy(result=Some(result))
@@ -151,7 +161,8 @@ final case class LengthColumnCheck(
     description: Option[String] = None,
     minimumLength: Option[Int] = None,
     maximumLength: Option[Int] = None,
-    result:Option[CheckResult] = None
+    result:Option[CheckResult] = None,
+    filter:Option[String] = None
 ) extends ColumnCheck {
     override def name: String = {
         (minimumLength, maximumLength) match {
@@ -171,7 +182,8 @@ final case class LengthColumnCheck(
 
 
 class DefaultColumnCheckExecutor extends ColumnCheckExecutor {
-    override def execute(execution: Execution, context:Context, df: DataFrame, column:String, check: ColumnCheck): Option[CheckResult] = {
+    override def execute(execution: Execution, context:Context, df0: DataFrame, column:String, check: ColumnCheck): Option[CheckResult] = {
+        val df = applyFilter(execution, context, df0, check.filter)
         check match {
             case _: NotNullColumnCheck =>
                 executePredicateTest(df, check, df(column).isNotNull)
@@ -241,5 +253,21 @@ class DefaultColumnCheckExecutor extends ColumnCheckExecutor {
         val status = if (numFailed > 0) CheckStatus.FAILED else CheckStatus.SUCCESS
         val description = s"$numSuccess records passed, $numFailed records failed"
         Some(CheckResult(Some(test.reference), status, Some(description)))
+    }
+
+    private def applyFilter(execution: Execution, context:Context, df:DataFrame, filter:Option[String]) : DataFrame = {
+        def instantiate(dep:String) : DataFrame = {
+            val mapping = context.getMapping(MappingIdentifier(dep))
+            execution.instantiate(mapping, mapping.output.output)
+        }
+        filter match {
+            case Some(filter) =>
+                val deps = ExpressionParser.resolveDependencies(filter)
+                    .map(d => d ->instantiate(d))
+                DataFrameUtils.withTempViews(deps) {
+                    df.filter(expr(filter))
+                }
+            case None => df
+        }
     }
 }

@@ -20,6 +20,7 @@ import java.io.IOException
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonProperty.Access
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.DatabindContext
@@ -83,7 +84,7 @@ object TemplateSpec {
     new JsonSubTypes.Type(name = "target", value = classOf[TargetTemplateSpec])
 ))
 abstract class TemplateSpec extends NamedSpec[Template[_]] {
-    @JsonProperty(value="kind", required = true) protected var kind: String = _
+    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required = true) protected var kind: String = _
     @JsonProperty(value="parameters", required=false) protected var parameters : Seq[TemplateSpec.Parameter] = Seq()
 
     def instantiate(context:Context, properties:Option[Template.Properties] = None) : Template[_]

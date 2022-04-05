@@ -38,7 +38,7 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |  empty:
               |    kind: null
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: str_col
               |          type: string
@@ -49,7 +49,7 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |        type: string
               |mappings:
               |  read:
-              |    kind: read
+              |    kind: relation
               |    relation: empty
               |    partitions:
               |      spart: abc
@@ -107,7 +107,7 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |    table: lala
               |    database: some_db
               |    schema:
-              |      kind: embedded
+              |      kind: inline
               |      fields:
               |        - name: str_col
               |          type: string
@@ -123,7 +123,7 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |      mapping: alias
               |mappings:
               |  read:
-              |    kind: read
+              |    kind: relation
               |    relation: some_hive_table
               |    partitions:
               |      spart: abc

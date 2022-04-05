@@ -40,7 +40,7 @@ case class ExtendMapping(
      * @return
      */
     override def inputs : Set[MappingOutputIdentifier] = {
-        Set(input)
+        Set(input) ++ expressionDependencies(filter)
     }
 
     /**
@@ -92,7 +92,7 @@ case class ExtendMapping(
         val result = orderedFields._1.foldLeft(table)((df,field) => df.withColumn(field, expr(allColumns(field))))
 
         // Apply optional filter
-        val filteredResult = filter.map(result.filter).getOrElse(result)
+        val filteredResult = applyFilter(result, filter, deps)
 
         Map("main" -> filteredResult)
     }

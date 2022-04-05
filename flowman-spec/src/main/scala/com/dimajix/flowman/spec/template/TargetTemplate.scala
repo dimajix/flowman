@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.template
 import com.fasterxml.jackson.annotation.JsonAnySetter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.documentation.TargetDoc
@@ -62,6 +63,41 @@ class TargetTemplateSpec extends TemplateSpec {
 }
 
 
+@JsonSchemaInject(
+  merge = false,
+  json = """
+      {
+         "additionalProperties" : { "type": "string" },
+         "properties" : {
+            "kind" : {
+               "type" : "string",
+               "pattern": "template/.+"
+            },
+            "metadata" : {
+              "$ref" : "#/definitions/MetadataSpec"
+            },
+            "before" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "after" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "documentation" : {
+              "$ref" : "#/definitions/TargetDocSpec"
+            }
+         }
+      }
+    """
+)
 class TargetTemplateInstanceSpec extends TargetSpec {
     @JsonIgnore
     private[spec] var args:Map[String,String] = Map()

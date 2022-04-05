@@ -58,18 +58,22 @@ class SchemaCheckSpecAnnotationHandler extends ClassAnnotationHandler {
 
 class PrimaryKeySchemaCheckSpec extends SchemaCheckSpec {
     @JsonProperty(value="columns", required=false) private var columns:Seq[String] = Seq.empty
+    @JsonProperty(value="filter", required=false) private var filter:Option[String] = None
 
     override def instantiate(context: Context, parent:SchemaReference): PrimaryKeySchemaCheck = PrimaryKeySchemaCheck(
         Some(parent),
-        columns = columns.map(context.evaluate)
+        columns = columns.map(context.evaluate),
+        filter = context.evaluate(filter)
     )
 }
 class ExpressionSchemaCheckSpec extends SchemaCheckSpec {
     @JsonProperty(value="expression", required=true) private var expression:String = _
+    @JsonProperty(value="filter", required=false) private var filter:Option[String] = None
 
     override def instantiate(context: Context, parent:SchemaReference): ExpressionSchemaCheck = ExpressionSchemaCheck(
         Some(parent),
-        expression = context.evaluate(expression)
+        expression = context.evaluate(expression),
+        filter = context.evaluate(filter)
     )
 }
 class ForeignKeySchemaCheckSpec extends SchemaCheckSpec {
@@ -77,12 +81,14 @@ class ForeignKeySchemaCheckSpec extends SchemaCheckSpec {
     @JsonProperty(value="relation", required=false) private var relation:Option[String] = None
     @JsonProperty(value="columns", required=false) private var columns:Seq[String] = Seq.empty
     @JsonProperty(value="references", required=false) private var references:Seq[String] = Seq.empty
+    @JsonProperty(value="filter", required=false) private var filter:Option[String] = None
 
     override def instantiate(context: Context, parent:SchemaReference): ForeignKeySchemaCheck = ForeignKeySchemaCheck(
         Some(parent),
-        columns=columns.map(context.evaluate),
-        relation=context.evaluate(relation).map(RelationIdentifier(_)),
-        mapping=context.evaluate(mapping).map(MappingOutputIdentifier(_)),
-        references=references.map(context.evaluate)
+        columns = columns.map(context.evaluate),
+        relation = context.evaluate(relation).map(RelationIdentifier(_)),
+        mapping = context.evaluate(mapping).map(MappingOutputIdentifier(_)),
+        references = references.map(context.evaluate),
+        filter = context.evaluate(filter)
     )
 }

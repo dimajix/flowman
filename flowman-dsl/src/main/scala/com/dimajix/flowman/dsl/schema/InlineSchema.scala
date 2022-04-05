@@ -23,13 +23,13 @@ import com.dimajix.flowman.spec.schema
 import com.dimajix.flowman.types.Field
 
 
-case class EmbeddedSchema(
+case class InlineSchema(
     description : Option[String] = None,
     fields : Seq[Field] = Seq(),
     primaryKey : Seq[String] = Seq()
 ) extends SchemaGen {
-    override def instantiate(context:Context, properties:Option[Schema.Properties] = None) : schema.EmbeddedSchema = {
-        schema.EmbeddedSchema(
+    override def instantiate(context:Context, properties:Option[Schema.Properties] = None) : schema.InlineSchema = {
+        schema.InlineSchema(
             Schema.Properties(context),
             description,
             fields,

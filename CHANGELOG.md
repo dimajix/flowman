@@ -1,4 +1,36 @@
+# Version 0.24.0 - 2022-04-05
+
+* github-168: Support optional filters in data quality checks
+* github-169: Support sub-queries in filter conditions
+* github-171: Parallelize loading of project files
+* github-172: Update CDP7 profile to the latest patch level
+* github-153: Use non-privileged user in Docker image
+* github-174: Provide application for generating YAML schema
+
+## Breaking changes
+
+We take backward compatibility very seriously. But sometimes a breaking change is needed to clean up code and to
+enable new features. This release contains some breaking changes, which are annoying but simple to fix.
+In order to avoid YAML schema inconsistencies, some entities needed to be renamed, as described in the following
+table:
+
+| category | old kind     | new kind             |
+|----------|--------------|----------------------|
+| mapping  | const        | values               |
+| mapping  | empty        | null                 |
+| mapping  | read         | relation             |
+| mapping  | readRelation | relation             |
+| mapping  | readStream   | stream               |
+| relation | const        | values               |
+| relation | empty        | null                 |
+| relation | jdbc         | jdbcTable, jdbcQuery |
+| relation | table        | hiveTable            |
+| relation | view         | hiveView             |
+| schema   | embedded     | inline               |
+
+ 
 # Version 0.23.1 - 2022-03-28
+
 * github-154: Fix failing migration when PK requires change due to data type
 * github-156: Recreate indexes when data type of column changes
 * github-155: Project level configs are used outside job

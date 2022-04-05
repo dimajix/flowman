@@ -43,6 +43,7 @@ import com.dimajix.flowman.spec.ModuleSpec
 import com.dimajix.flowman.spec.NamespaceSpec
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.ProjectSpec
+import com.dimajix.flowman.spec.documentation.DocumenterSpec
 import com.dimajix.flowman.tools.Tool
 import com.dimajix.flowman.tools.schema.impl.MyJsonSchemaGenerator
 
@@ -107,6 +108,9 @@ class Driver(args:Arguments) extends Tool {
 
         val projectSchema = jsonSchemaGenerator.generateJsonSchema(classOf[ProjectSpec])
         saveSchema(baseDir, "project.json", projectSchema)
+
+      val documenterSchema = jsonSchemaGenerator.generateJsonSchema(classOf[DocumenterSpec])
+      saveSchema(baseDir, "documentation.json", documenterSchema)
     }
 
     private def saveSchema(basedir:Path, name:String, jsonSchema:JsonNode) : Unit = {

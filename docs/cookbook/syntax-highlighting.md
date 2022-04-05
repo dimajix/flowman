@@ -1,8 +1,12 @@
-# Flowman Schema Generator
-The Flowman schema generator is a small utility application which generates a YAML schema file from the current
-configuration including all plugins. This YAML schema file then can be used to in appropriate code editors which
-support schema validation of YAML files. This will support developers in creating Flowman projects by enabling better
-syntax highlighting and code auto-completion.
+# Syntax Highlighting
+
+In order to support the development of Flowman projects, Flowman provides the capability to generate YAML schema files
+which can be used by editors to perform syntax validation and auto complete. The required YAML schema files can
+be created with the [`flowman-schema`](../cli/schema.md) command, such that the schema files will include all entities
+from any plugin loaded via the [`default-namespace`](../spec/namespace.md).
+
+
+## Creating YAML schemas
 
 ```shell
 flowman-schema -o my-schema-directory
@@ -13,14 +17,6 @@ This command will create multiple different YAML schema files:
 * `project.json` - This YAML schema file contains all entities of the [`project.yml`](../spec/project.md) file.
 * `namespace.sjon` - This YAML schema file contains all entities of [namespace definitions](../spec/namespace.md).
 * `documentation.sjon` - This YAML schema file contains all entities of [`documentation.yml`](../documenting/config.md).
-
-
-## Provided Schemas
-
-Currently, there is no readily provided schema for Flowman available. This means that you really have to run the
-command above to generate a YAML schema file for your environment. The reasoning behind not providing schema files is
-simple: Since the available entities and YAML tags depend on the presence of plugins, the best solution is provide
-some means to generate a YAML schema file precisely for your configuration. 
 
 
 ## Supported Editors

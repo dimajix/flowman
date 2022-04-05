@@ -14,7 +14,7 @@ The following gives an (incomplete) list of past releases of the last 12 months.
 changes over time.
 
 
-### Version 0.24.0 (upcoming)
+### Version 0.24.0 - 2022-04-05
 
 * github-168: Support optional filters in data quality checks
 * github-169: Support sub-queries in filter conditions

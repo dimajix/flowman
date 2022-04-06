@@ -17,6 +17,10 @@
 package com.dimajix.flowman.common
 
 import java.lang.Thread.UncaughtExceptionHandler
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
@@ -36,6 +40,10 @@ object ThreadUtils {
         setContextClassLoader(Thread.currentThread.getContextClassLoader)
         setName(prefix + "-" + super.getName)
     }
+    private class MyWorkerThread(prefix:String, runnable:Runnable) extends Thread(runnable) {
+        setContextClassLoader(Thread.currentThread.getContextClassLoader)
+        setName(prefix + "-" + super.getName)
+    }
     private val exceptionHandler = new UncaughtExceptionHandler {
         override def uncaughtException(thread: Thread, throwable: Throwable): Unit = {
             logger.error("Uncaught exception: ", throwable)
@@ -47,7 +55,7 @@ object ThreadUtils {
      * @param maxThreadNumber
      * @return
      */
-    def newThreadPool(prefix:String, maxThreadNumber:Int): ForkJoinPool = {
+    def newForkJoinPool(prefix:String, maxThreadNumber:Int): ForkJoinPool = {
         val factory = new ForkJoinPool.ForkJoinWorkerThreadFactory {
             override final def newThread(pool: ForkJoinPool) = {
                 new MyForkJoinWorkerThread(prefix, pool)
@@ -57,8 +65,24 @@ object ThreadUtils {
             maxThreadNumber,
             factory,
             exceptionHandler,
-            true
+          true
         )
+    }
+
+    def newExecutor(prefix:String, maxThreadNumber:Int) : ThreadPoolExecutor = {
+      val factory = new ThreadFactory {
+        override def newThread(runnable: Runnable): Thread = {
+          new MyWorkerThread(prefix, runnable)
+        }
+      }
+      new ThreadPoolExecutor(
+        maxThreadNumber,
+        maxThreadNumber,
+        3,
+        TimeUnit.SECONDS,
+        new LinkedBlockingQueue[Runnable](),
+        factory
+      )
     }
 
     /**
@@ -74,7 +98,7 @@ object ThreadUtils {
      *         applying the lambda function `f`.
      */
     def parmap[I, O](in: Seq[I], prefix: String, maxThreads: Int)(f: I => O): Seq[O] = {
-        val pool = newThreadPool(prefix, maxThreads)
+        val pool = newExecutor(prefix, maxThreads)
         try {
             implicit val ec = ExecutionContext.fromExecutor(pool)
 

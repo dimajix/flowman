@@ -1,3 +1,8 @@
+# Version 0.24.1
+
+* github-175: '--jobs' parameter starts way to many parallel jobs
+
+
 # Version 0.24.0 - 2022-04-05
 
 * github-168: Support optional filters in data quality checks

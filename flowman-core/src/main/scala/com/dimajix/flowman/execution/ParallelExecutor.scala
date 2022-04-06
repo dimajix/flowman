@@ -55,7 +55,7 @@ class ParallelExecutor extends Executor {
         scheduler.initialize(targets, phase, filter)
 
         val parallelism = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_EXECUTOR_PARALLELISM)
-        val threadPool = ThreadUtils.newThreadPool("ParallelExecutor", parallelism)
+        val threadPool = ThreadUtils.newForkJoinPool("ParallelExecutor", parallelism)
         implicit val ec:ExecutionContext = ExecutionContext.fromExecutorService(threadPool)
 
         // Allocate state variables for tracking overall Status

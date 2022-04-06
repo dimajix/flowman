@@ -52,7 +52,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
             case Some(ce:CachingExecution) if !isolated =>
                 ce.taskSupport
             case _ =>
-                val tp = ThreadUtils.newThreadPool("execution", parallelism)
+                val tp = ThreadUtils.newForkJoinPool("execution", parallelism)
                 new ForkJoinTaskSupport(tp)
         }
     }

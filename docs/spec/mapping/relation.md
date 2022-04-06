@@ -1,6 +1,6 @@
-# Read Mapping
+# Relation Mapping
 
-The `read` mapping is found in almost all Flowman projects, as it will
+The `relation` mapping is found in almost all Flowman projects, as it will
 read data from relations. It doesn't have any other mappings as inputs, and therefore usually is the first mapping
 in a data flow.
 
@@ -8,7 +8,7 @@ in a data flow.
 ```yaml
 mappings:
   measurements-raw:
-    kind: read
+    kind: relation
     relation: measurements_raw
     partitions:
       year:
@@ -42,7 +42,7 @@ do not access the target relation otherwise, such that a shared definition would
 ```yaml
 mappings:
   measurements-raw:
-    kind: read
+    kind: relation
     relation:
       kind: file
       format: text
@@ -69,7 +69,7 @@ mappings:
 
 ## Fields
 
-* `kind` **(mandatory)** *(type: string)*: `read`
+* `kind` **(mandatory)** *(type: string)*: `relation`
 
 * `broadcast` **(optional)** *(type: boolean)* *(default: false)*: 
 Hint for broadcasting the result of this mapping for map-side joins.

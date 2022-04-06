@@ -1,6 +1,7 @@
 # Version 0.24.1
 
 * github-175: '--jobs' parameter starts way to many parallel jobs
+* github-176: start-/end-date in report should not be the same
 
 
 # Version 0.24.0 - 2022-04-05

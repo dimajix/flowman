@@ -31,67 +31,104 @@ import com.dimajix.flowman.types.StringType
 
 
 class TemplatingTest extends AnyFlatSpec with Matchers with MockFactory {
-    "The JobWrapper" should "work" in {
-        val session = Session.builder().disableSpark().build()
-        val context = session.context
-        val job = Job.builder(context)
-            .setProperties(Job.Properties(context, "some_job"))
-            .setDescription("Some job")
-            .setParameters(Seq(Job.Parameter("p1", IntegerType)))
-            .addParameter(Job.Parameter("p2", IntegerType))
-            .addParameter("p3", StringType)
-            .setEnvironment(Map("env1" -> "eval_1"))
-            .addEnvironment("env2", "eval_2")
-            .build()
+  "The JobWrapper" should "work" in {
+    val session = Session.builder().disableSpark().build()
+    val context = session.context
+    val job = Job.builder(context)
+      .setProperties(Job.Properties(context, "some_job"))
+      .setDescription("Some job")
+      .setParameters(Seq(Job.Parameter("p1", IntegerType)))
+      .addParameter(Job.Parameter("p2", IntegerType))
+      .addParameter("p3", StringType)
+      .setEnvironment(Map("env1" -> "eval_1"))
+      .addEnvironment("env2", "eval_2")
+      .build()
 
-        val wrapper = JobWrapper(job)
-        context.evaluate("${job.name}", Map("job" -> wrapper)) should be ("some_job")
-        context.evaluate("${job.description}", Map("job" -> wrapper)) should be ("Some job")
-        context.evaluate("${job.identifier}", Map("job" -> wrapper)) should be ("some_job")
-        context.evaluate("${job.project}", Map("job" -> wrapper)) should be ("")
-        context.evaluate("${job.namespace}", Map("job" -> wrapper)) should be ("")
-        context.evaluate("${job.parameters}", Map("job" -> wrapper)) should be ("[p1, p2, p3]")
-        context.evaluate("${job.targets}", Map("job" -> wrapper)) should be ("[]")
-        context.evaluate("${job.environment}", Map("job" -> wrapper)) should be ("{env1=eval_1, env2=eval_2}")
-    }
+    val wrapper = JobWrapper(job)
+    context.evaluate("${job.name}", Map("job" -> wrapper)) should be("some_job")
+    context.evaluate("${job.description}", Map("job" -> wrapper)) should be("Some job")
+    context.evaluate("${job.identifier}", Map("job" -> wrapper)) should be("some_job")
+    context.evaluate("${job.project}", Map("job" -> wrapper)) should be("")
+    context.evaluate("${job.namespace}", Map("job" -> wrapper)) should be("")
+    context.evaluate("${job.parameters}", Map("job" -> wrapper)) should be("[p1, p2, p3]")
+    context.evaluate("${job.targets}", Map("job" -> wrapper)) should be("[]")
+    context.evaluate("${job.environment}", Map("job" -> wrapper)) should be("{env1=eval_1, env2=eval_2}")
+  }
 
-    "The LifecycleResultWrapper" should "work" in {
-        val session = Session.builder().disableSpark().build()
-        val context = session.context
-        val job = Job.builder(context)
-            .setProperties(Job.Properties(context, "some_job"))
-            .setDescription("Some job")
-            .setParameters(Seq(Job.Parameter("p1", IntegerType)))
-            .addParameter(Job.Parameter("p2", IntegerType))
-            .addParameter("p3", StringType)
-            .setEnvironment(Map("env1" -> "eval_1"))
-            .addEnvironment("env2", "eval_2")
-            .build()
+  "The JobResultWrapper" should "work" in {
+    val session = Session.builder().disableSpark().build()
+    val context = session.context
+    val job = Job.builder(context)
+      .setProperties(Job.Properties(context, "some_job"))
+      .setDescription("Some job")
+      .setParameters(Seq(Job.Parameter("p1", IntegerType)))
+      .addParameter(Job.Parameter("p2", IntegerType))
+      .addParameter("p3", StringType)
+      .setEnvironment(Map("env1" -> "eval_1"))
+      .addEnvironment("env2", "eval_2")
+      .build()
 
-        val instant = Instant.now()
-        val result = LifecycleResult(
-            job,
-            job.lifecycle(Lifecycle.BUILD, Map("p1" -> "1", "p2" -> "2", "p3" -> "str")),
-            Seq(
-                JobResult(job, job.digest(Phase.VALIDATE, Map("p1" -> "1", "p2" -> "2", "p3" -> "str")), Status.SUCCESS, instant),
-                JobResult(job, job.digest(Phase.CREATE, Map("p1" -> "1", "p2" -> "2", "p3" -> "str")), Status.SUCCESS, instant),
-                JobResult(job, job.digest(Phase.BUILD, Map("p1" -> "1", "p2" -> "2", "p3" -> "str")), Status.SUCCESS, instant)
-            ),
-            instant)
+    val instant = Instant.now()
+    val result = JobResult(
+      job,
+      job.digest(Phase.VALIDATE, Map("p1" -> "1", "p2" -> "2", "p3" -> "str")),
+      Status.SUCCESS,
+      instant
+    )
 
-        val wrapper = LifecycleResultWrapper(result)
-        context.evaluate("${result.job.name}", Map("result" -> wrapper)) should be ("some_job")
-        context.evaluate("${result.job.description}", Map("result" -> wrapper)) should be ("Some job")
-        context.evaluate("${result.status}", Map("result" -> wrapper)) should be ("SUCCESS")
-        context.evaluate("${result.children}", Map("result" -> wrapper)) should be ("[SUCCESS, SUCCESS, SUCCESS]")
-        context.evaluate("${result.success}", Map("result" -> wrapper)) should be ("true")
-        context.evaluate("${result.failure}", Map("result" -> wrapper)) should be ("false")
-        context.evaluate("${result.skipped}", Map("result" -> wrapper)) should be ("false")
-        context.evaluate("${result.numFailures}", Map("result" -> wrapper)) should be ("0")
-        context.evaluate("${result.numSuccesses}", Map("result" -> wrapper)) should be ("3")
-        context.evaluate("${result.numExceptions}", Map("result" -> wrapper)) should be ("0")
-        context.evaluate("${result.startTime}", Map("result" -> wrapper)) should be (instant.toString)
-        context.evaluate("${result.endTime}", Map("result" -> wrapper)) should be (instant.toString)
-        context.evaluate("#foreach ($child in $result.children)${child.phase}:${child.status} #end", Map("result" -> wrapper)) should be ("VALIDATE:SUCCESS CREATE:SUCCESS BUILD:SUCCESS ")
-    }
+    val wrapper = JobResultWrapper(result)
+    context.evaluate("${result.job.name}", Map("result" -> wrapper)) should be("some_job")
+    context.evaluate("${result.job.description}", Map("result" -> wrapper)) should be("Some job")
+    context.evaluate("${result.status}", Map("result" -> wrapper)) should be("SUCCESS")
+    context.evaluate("${result.children}", Map("result" -> wrapper)) should be("[]")
+    context.evaluate("${result.success}", Map("result" -> wrapper)) should be("true")
+    context.evaluate("${result.failure}", Map("result" -> wrapper)) should be("false")
+    context.evaluate("${result.skipped}", Map("result" -> wrapper)) should be("false")
+    context.evaluate("${result.numFailures}", Map("result" -> wrapper)) should be("0")
+    context.evaluate("${result.numSuccesses}", Map("result" -> wrapper)) should be("0")
+    context.evaluate("${result.numExceptions}", Map("result" -> wrapper)) should be("0")
+    context.evaluate("${result.startTime}", Map("result" -> wrapper)) should be(result.startTime.toString)
+    context.evaluate("${result.endTime}", Map("result" -> wrapper)) should be(result.endTime.toString)
+    context.evaluate("#foreach ($child in $result.children)${child.phase}:${child.status} #end", Map("result" -> wrapper)) should be("")
+  }
+
+  "The LifecycleResultWrapper" should "work" in {
+    val session = Session.builder().disableSpark().build()
+    val context = session.context
+    val job = Job.builder(context)
+      .setProperties(Job.Properties(context, "some_job"))
+      .setDescription("Some job")
+      .setParameters(Seq(Job.Parameter("p1", IntegerType)))
+      .addParameter(Job.Parameter("p2", IntegerType))
+      .addParameter("p3", StringType)
+      .setEnvironment(Map("env1" -> "eval_1"))
+      .addEnvironment("env2", "eval_2")
+      .build()
+
+    val instant = Instant.now()
+    val result = LifecycleResult(
+      job,
+      job.lifecycle(Lifecycle.BUILD, Map("p1" -> "1", "p2" -> "2", "p3" -> "str")),
+      Seq(
+        JobResult(job, job.digest(Phase.VALIDATE, Map("p1" -> "1", "p2" -> "2", "p3" -> "str")), Status.SUCCESS, instant),
+        JobResult(job, job.digest(Phase.CREATE, Map("p1" -> "1", "p2" -> "2", "p3" -> "str")), Status.SUCCESS, instant),
+        JobResult(job, job.digest(Phase.BUILD, Map("p1" -> "1", "p2" -> "2", "p3" -> "str")), Status.SUCCESS, instant)
+      ),
+      instant)
+
+    val wrapper = LifecycleResultWrapper(result)
+    context.evaluate("${result.job.name}", Map("result" -> wrapper)) should be("some_job")
+    context.evaluate("${result.job.description}", Map("result" -> wrapper)) should be("Some job")
+    context.evaluate("${result.status}", Map("result" -> wrapper)) should be("SUCCESS")
+    context.evaluate("${result.children}", Map("result" -> wrapper)) should be("[SUCCESS, SUCCESS, SUCCESS]")
+    context.evaluate("${result.success}", Map("result" -> wrapper)) should be("true")
+    context.evaluate("${result.failure}", Map("result" -> wrapper)) should be("false")
+    context.evaluate("${result.skipped}", Map("result" -> wrapper)) should be("false")
+    context.evaluate("${result.numFailures}", Map("result" -> wrapper)) should be("0")
+    context.evaluate("${result.numSuccesses}", Map("result" -> wrapper)) should be("3")
+    context.evaluate("${result.numExceptions}", Map("result" -> wrapper)) should be("0")
+    context.evaluate("${result.startTime}", Map("result" -> wrapper)) should be(result.startTime.toString)
+    context.evaluate("${result.endTime}", Map("result" -> wrapper)) should be(result.endTime.toString)
+    context.evaluate("#foreach ($child in $result.children)${child.phase}:${child.status} #end", Map("result" -> wrapper)) should be("VALIDATE:SUCCESS CREATE:SUCCESS BUILD:SUCCESS ")
+  }
 }

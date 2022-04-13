@@ -15,7 +15,7 @@ flowman-dist-<version>-oss-spark<spark-version>-hadoop<hadoop-version>-bin.tar.g
 You simply have to use the package which fits to the Spark and Hadoop versions of your environment. For example the
 package of Flowman 0.20.1 and for Spark 3.1 and Hadoop 3.2 would be
 ```
-flowman-dist-0.20.1-oss-spark31-hadoop32-bin.tar.gz
+flowman-dist-0.20.1-oss-spark3.1-hadoop3.2-bin.tar.gz
 ```
 and the full URL then would be
 ```
@@ -98,13 +98,16 @@ using the correct version. The following profiles are available:
 * spark-2.4
 * spark-3.0
 * spark-3.1
+* spark-3.2
 * hadoop-2.6
 * hadoop-2.7
 * hadoop-2.8
 * hadoop-2.9
 * hadoop-3.1
 * hadoop-3.2
+* hadoop-3.3
 * CDH-6.3
+* CDP-7.1
 
 With these profiles it is easy to build Flowman to match your environment. 
 

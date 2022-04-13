@@ -3,7 +3,7 @@
 Flowman sees data as artifacts with a common lifecycle, from creation until deletion. The lifecycle itself consists of 
 multiple different phases, each of them representing one stage of the whole lifecycle. 
 
-## Lifecycle Phases
+## Execution Phases
 
 The full lifecycle consists out of specific execution phases, as follows:
 
@@ -35,7 +35,7 @@ definitions, views and directories. It performs the opposite operation than the 
 
 ## Built In Lifecycles
 
-Some of the execution phases can be performed in a meaningful way one after the other. Such a sequence of phases is
+Some execution phases can be performed in a meaningful way one after the other. Such a sequence of phases is
 called *lifecycle*. Flowman has the following lifecycles built in:
 
 ### Build
@@ -49,3 +49,16 @@ The second lifecycle contains only the single phase *TRUNCATE*
 ### Destroy
 
 The last lifecycle contains only the single phase *DESTROY*
+
+
+## Targets & Lifecycles
+
+Each [target](../spec/target/index.md) supports a certain subset of execution phases. Not all targets support all 
+phases. For example the widely used [`relation` target](../spec/target/relation.md) which is used for creating data 
+sinks and for writing new data into them supports the phases `CREATE`, `BUILD`, `VERIFY`, `TRUNCATE` and `DESTROY`. On 
+the other hand the [`measure` target](../spec/target/measure.md) which collects some data dependent metrics is only
+executed during the `VERIFY` phase.
+
+Of course when a specific target participates in multiple execution phases, it will perform different actions in each
+of the phases. The documentation of each target will contain the details of the supported phases and what action is
+performed in each of them.

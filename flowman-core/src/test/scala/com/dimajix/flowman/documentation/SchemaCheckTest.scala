@@ -167,4 +167,58 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val test4 = ForeignKeySchemaCheck(None, mapping=Some(MappingOutputIdentifier("mapping")), columns=Seq("_2"), references=Seq("_3"))
         an[Exception] should be thrownBy(testExecutor.execute(execution, context, df, test4))
     }
+
+    "An SqlSchemaCheck" should "work with grouped counts" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+        val testExecutor = new DefaultSchemaCheckExecutor
+
+        val df = spark.createDataFrame(Seq(
+            (Some(1),2,1),
+            (None,3,2)
+        ))
+
+        val test1 = SqlSchemaCheck(None, query="SELECT _2 > _3, 1 FROM __this__")
+        val result1 = testExecutor.execute(execution, context, df, test1)
+        result1 should be (Some(CheckResult(Some(test1.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
+
+        val test2 = SqlSchemaCheck(None, query="SELECT _2 < _3, 1 FROM __THIS__")
+        val result2 = testExecutor.execute(execution, context, df, test2)
+        result2 should be (Some(CheckResult(Some(test1.reference), CheckStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
+    }
+
+    it should "work with one-line results" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+        val testExecutor = new DefaultSchemaCheckExecutor
+
+        val df = spark.createDataFrame(Seq(
+            (Some(3),2,1),
+            (None,3,2)
+        ))
+
+        val test1 = SqlSchemaCheck(None, query=
+            """
+              |SELECT
+              | (SELECT SUM(_2) FROM __this__) AS sum_2,
+              | (SELECT SUM(_3) FROM __this__) AS sum_3,
+              | (SELECT SUM(_2) FROM __this__) = (SELECT SUM(_3) FROM __this__) AS success""".stripMargin)
+        val result1 = testExecutor.execute(execution, context, df, test1)
+        result1 should be (Some(CheckResult(Some(test1.reference), CheckStatus.FAILED, description=Some("sum_2=5, sum_3=3"))))
+
+        val test2 = SqlSchemaCheck(None, query=
+            """
+              |SELECT
+              | (SELECT SUM(_1) FROM __this__) AS sum_1,
+              | (SELECT SUM(_3) FROM __this__) AS sum_3,
+              | (SELECT SUM(_1) FROM __this__) = (SELECT SUM(_3) FROM __this__) AS success""".stripMargin)
+        val result2 = testExecutor.execute(execution, context, df, test2)
+        result2 should be (Some(CheckResult(Some(test1.reference), CheckStatus.SUCCESS, description=Some("sum_1=3, sum_3=3"))))
+    }
 }

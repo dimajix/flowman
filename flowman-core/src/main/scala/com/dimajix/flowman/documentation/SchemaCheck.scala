@@ -16,10 +16,13 @@
 
 package com.dimajix.flowman.documentation
 
+import java.util.Locale
+
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.expr
 import org.apache.spark.sql.types.BooleanType
+import org.apache.spark.sql.types.LongType
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -29,6 +32,7 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.spi.SchemaCheckExecutor
 import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.sql.ExpressionParser
+import com.dimajix.spark.sql.SqlParser
 
 
 final case class SchemaCheckReference(
@@ -108,6 +112,22 @@ final case class ExpressionSchemaCheck(
     }
 }
 
+final case class SqlSchemaCheck(
+    parent: Option[Reference],
+    description: Option[String] = None,
+    query: String,
+    result: Option[CheckResult] = None,
+    filter: Option[String] = None
+) extends SchemaCheck {
+    override def name: String = query
+    override def withResult(result: CheckResult): SchemaCheck = copy(result = Some(result))
+    override def reparent(parent: Reference): SqlSchemaCheck = {
+        val ref = SchemaCheckReference(Some(parent))
+        copy(parent = Some(parent), result = result.map(_.reparent(ref)))
+    }
+}
+
+
 
 class DefaultSchemaCheckExecutor extends SchemaCheckExecutor {
     override def execute(execution: Execution, context:Context, df0: DataFrame, check: SchemaCheck): Option[CheckResult] = {
@@ -150,12 +170,51 @@ class DefaultSchemaCheckExecutor extends SchemaCheckExecutor {
             case e:ExpressionSchemaCheck =>
                 executePredicateTest(df, check, expr(e.expression).cast(BooleanType))
 
+            case s:SqlSchemaCheck =>
+                val deps = SqlParser.resolveDependencies(s.query)
+                    .filter(_.toLowerCase(Locale.ROOT) != "__this__")
+                    .toSeq
+                    .map { dep =>
+                        val mapping = context.getMapping(MappingIdentifier(dep))
+                        dep -> execution.instantiate(mapping, mapping.output.output)
+                    } :+ ("__this__" -> df)
+
+                val df1 = DataFrameUtils.withTempViews(deps) {
+                    execution.spark.sql(s.query)
+                }
+
+                val plan = df1.queryExecution.analyzed
+                plan.maxRows match {
+                    case Some(1) if df1.columns.contains("success") =>
+                        val cols = df1.columns
+                        val result = df1.withColumn("success", df1("success").cast(BooleanType)).first()
+                        val success = result.getBoolean(cols.indexOf("success"))
+                        val values = cols.zipWithIndex
+                            .filter(_._1 != "success")
+                            .map { case(col,idx) => col + "=" + result.get(idx).toString }
+                        val status = if (success) CheckStatus.SUCCESS else CheckStatus.FAILED
+                        val description = values.mkString(", ")
+                        Some(CheckResult(Some(s.reference), status, Some(description)))
+                    case _ =>
+                        val cols = plan.output
+                        val boolCol = new Column(cols(0)).cast(BooleanType).as("bool_col")
+                        val countCol = new Column(cols(1)).cast(LongType).as("count_col")
+                        val df2 = df1.select(boolCol, countCol)
+                        val result = df2.groupBy(df2("bool_col")).sum("count_col")
+                        evaluateResult(result, s)
+                }
+
             case _ => None
         }
     }
 
     private def executePredicateTest(df: DataFrame, test:SchemaCheck, predicate:Column) : Option[CheckResult] = {
-        val result = df.groupBy(predicate).count().collect()
+        val result = df.groupBy(predicate).count()
+        evaluateResult(result, test)
+    }
+
+    private def evaluateResult(df:DataFrame, test:SchemaCheck) : Option[CheckResult] = {
+        val result = df.collect()
         val numSuccess = result.find(_.getBoolean(0) == true).map(_.getLong(1)).getOrElse(0L)
         val numFailed = result.find(_.getBoolean(0) == false).map(_.getLong(1)).getOrElse(0L)
         val status = if (numFailed > 0) CheckStatus.FAILED else CheckStatus.SUCCESS
@@ -171,6 +230,7 @@ class DefaultSchemaCheckExecutor extends SchemaCheckExecutor {
         filter match {
             case Some(filter) =>
                 val deps = ExpressionParser.resolveDependencies(filter)
+                    .toSeq
                     .map(d => d ->instantiate(d))
                 DataFrameUtils.withTempViews(deps) {
                     df.filter(expr(filter))

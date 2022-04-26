@@ -76,7 +76,8 @@ mappings:
         - ["87600"]
 ```
 
-## Available Column Checks
+
+## Column Checks
 
 Flowman implements a couple of different check types on a per column basis. 
 
@@ -99,6 +100,23 @@ so in many cases you might want to specify both `notNUll` and `unique`.
 * `filter` **(optional)** *(string)*:
   Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
   to exclude records with known quality issues.
+
+
+### Foreign Key
+
+A `foreignKey` column check is used to ensure that all not-`NULL` values refer to existing entries in a different
+mapping or relation
+
+* `kind` **(mandatory)** *(string)*: `foreignKey`
+* `filter` **(optional)** *(string)*:
+  Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
+  to exclude records with known quality issues.
+* `mapping` **(optional)** *(string)*: Name of mapping the foreign key refers to. You need to specify either the
+  `mapping` or the `relation` property.
+* `relation` **(optional)** *(string)*: Name of relation the foreign key refers to. You need to specify either the
+  `mapping` or the `relation` property.
+* `column`  **(optional)** *(string)*: Name of the column in the referenced entity (either mapping or relation). If
+  this property is not set, then the same column name will be assumed
 
 
 ### Specific Values
@@ -149,6 +167,109 @@ A very flexible test is provided with the SQL expression test. This test allows 
 
 * `kind` **(mandatory)** *(string)*: `expression`
 * `expression` **(mandatory)** *(string)*: Boolean SQL Expression
+* `filter` **(optional)** *(string)*:
+  Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
+  to exclude records with known quality issues.
+
+
+## Schema Checks
+
+In addition to checks for individual columns, Flowman also supports schema checks which may refer to multiple columns
+
+### Primary Key
+A `primaryKey` column check is used to ensure that all not-`NULL` values refer to existing entries in a different
+mapping or relation
+
+* `kind` **(mandatory)** *(string)*: `primaryKey`
+* `filter` **(optional)** *(string)*:
+  Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
+  to exclude records with known quality issues.
+* `columns`  **(optional)** *(list:string)*: Name of assumed primary key columns in the model
+
+
+### Foreign Key
+A `foreignKey` column check is used to ensure that all not-`NULL` values refer to existing entries in a different
+mapping or relation
+
+* `kind` **(mandatory)** *(string)*: `foreignKey`
+* `filter` **(optional)** *(string)*:
+  Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
+  to exclude records with known quality issues.
+* `mapping` **(optional)** *(string)*: Name of mapping the foreign key refers to. You need to specify either the
+  `mapping` or the `relation` property.
+* `relation` **(optional)** *(string)*: Name of relation the foreign key refers to. You need to specify either the
+  `mapping` or the `relation` property.
+* `columns`  **(optional)** *(list:string)*: Name of columns in the model
+* `references`  **(optional)** *(list:string)*: Name of columns in the referenced entity
+
+
+### SQL Expression
+A very flexible test is provided with the SQL expression test. This test allows you to specify any simple SQL expression
+(which may also use different columns), which should evaluate to `TRUE` for all records passing the test.
+
+* `kind` **(mandatory)** *(string)*: `expression`
+* `expression` **(mandatory)** *(string)*: Boolean SQL Expression
+* `filter` **(optional)** *(string)*:
+  Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
+  to exclude records with known quality issues.
+
+
+### SQL Query
+A very flexible test is provided with the SQL query test. This test allows you to specify an arbitrary SQL `SELECT`
+statement (which may also refer different mappings). The current entity is provided as `__THIS__`. The check actually
+supports two different variants of queries, which differ in the interpretation of the result
+
+#### Grouped Query
+The first type of supported SQL queries returns multiple records, each having two columns (with arbitrary name). The 
+first column should be a boolean indicating if the test succeeded, while the second column should be an integer 
+containing the number of records. The names of the columns are irrelevant.
+
+| Column | Data Type | Remark                                                |
+|--------|-----------|-------------------------------------------------------|
+| 1.     | `BOOL`    | Either`TRUE` or `FALSE` indicating success or failure |
+| 2.     | `LONG`    | Number of records with `TRUE` or `FALSE` test result  |
+
+Typically, a result set would contain two records, one with the first column `TRUE` and the second column holding the
+number of records which passed the test and the second record having `FALSE` in the first column and the number of 
+failed records in the second column.
+
+The following example will check for the number of duplicates of the column `transaction_id`  
+```yaml
+kind: sql
+query: |
+  WITH dups AS (
+    SELECT
+      tx.transaction_id,
+      COUNT(*) AS cnt
+    FROM __this__ tx
+    GROUP BY transaction_id
+  )
+  SELECT
+    cnt = 1,
+    COUNT(*)
+  FROM dups
+  GROUP BY 1
+```
+
+#### One-Record Query
+The second type of supported SQL queries is required to return a single row that has to include one boolean column 
+called `success`. The other columns are not interpreted by Flowman and only serve as informational columns.
+
+The following query will compare the number of records in two mappings `raw_transactions` and `processed_transactions`.
+The check succeeds if the numbers match, otherwise it fails. The number of records of each mapping is provided as 
+additional values which will be shown in the documentation.
+```yaml
+kind: sql
+query: |
+  SELECT
+    (SELECT COUNT(*) FROM raw_transactions) AS original_tx_count,
+    (SELECT COUNT(*) FROM processed_transactions) AS final_tx_count,
+    (SELECT COUNT(*) FROM raw_transactions) = (SELECT COUNT(*) FROM processed_transactions) AS success
+```
+
+
+* `kind` **(mandatory)** *(string)*: `sql`
+* `query` **(mandatory)** *(string)*: Boolean SQL Expression
 * `filter` **(optional)** *(string)*:
   Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
   to exclude records with known quality issues.

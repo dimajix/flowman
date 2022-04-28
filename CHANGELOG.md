@@ -1,8 +1,9 @@
-# Version 0.24.1
+# Version 0.24.1 - 2022-04-28
 
 * github-175: '--jobs' parameter starts way to many parallel jobs
 * github-176: start-/end-date in report should not be the same
 * github-177: Implement generic SQL schema check
+* github-179: Update DeltaLake dependency to 1.2.0
 
 
 # Version 0.24.0 - 2022-04-05

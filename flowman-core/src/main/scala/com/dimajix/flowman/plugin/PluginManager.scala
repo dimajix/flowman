@@ -20,6 +20,7 @@ import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
+import java.nio.file.Path
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -78,14 +79,7 @@ class PluginManager {
         _plugins.update(plugin.name, plugin)
 
         // Resolve all JAR files from the plugin
-        val jarFiles = plugin.jars.flatMap { file =>
-            val dir = file.getAbsoluteFile.toPath.getParent
-            val matcher = dir.getFileSystem.getPathMatcher("glob:" + file.getName)
-            Files.list(dir)
-                .iterator().asScala
-                .filter(path => matcher.matches(path.getFileName))
-                .map(_.toUri.toURL)
-        }.distinct
+        val jarFiles = pluginJars(plugin).map(_.toUri.toURL)
 
         // Extend classpath
         //val classLoader =  Thread.currentThread().getContextClassLoader().asInstanceOf[URLClassLoader]
@@ -119,6 +113,18 @@ class PluginManager {
       * @return
       */
     def jars : Seq[File] = {
-        _plugins.toSeq.flatMap(_._2.jars)
+        _plugins.toSeq
+            .flatMap { case (_,p) => pluginJars(p) }
+            .map(_.toFile)
+    }
+
+    private def pluginJars(plugin:Plugin) : Seq[Path] = {
+        plugin.jars.flatMap { file =>
+            val dir = file.getAbsoluteFile.toPath.getParent
+            val matcher = dir.getFileSystem.getPathMatcher("glob:" + file.getName)
+            Files.list(dir)
+                .iterator().asScala
+                .filter(path => matcher.matches(path.getFileName))
+        }.distinct
     }
 }

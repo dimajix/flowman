@@ -97,10 +97,10 @@ Flowman also provides optional plugins which extend functionality. You can find 
    quickstart
    concepts/index
    tutorial/index
+   cli/index
    spec/index
    testing/index
    documenting/index
-   cli/index
    setup/index
    connectors/index
    plugins/index

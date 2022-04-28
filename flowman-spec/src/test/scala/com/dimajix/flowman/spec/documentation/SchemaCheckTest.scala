@@ -22,6 +22,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.documentation.ForeignKeySchemaCheck
 import com.dimajix.flowman.documentation.PrimaryKeySchemaCheck
 import com.dimajix.flowman.documentation.SchemaReference
+import com.dimajix.flowman.documentation.SqlSchemaCheck
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
@@ -68,6 +69,51 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers {
             columns = Seq("a","b"),
             mapping = Some(MappingOutputIdentifier("reference")),
             references = Seq("c","d"),
+            filter = Some("x IS NOT NULL")
+        ))
+    }
+
+    "A SqlSchemaCheckSpec" should "be deserializable" in {
+        val yaml =
+            """
+              |kind: sql
+              |query: |
+              |  WITH dups AS (
+              |    SELECT
+              |      tx.transaction_id,
+              |      COUNT(*) AS cnt
+              |    FROM __this__ tx
+              |    GROUP BY transaction_id
+              |  )
+              |  SELECT
+              |    cnt = 1,
+              |    COUNT(*)
+              |  FROM dups
+              |  GROUP BY 1
+              |filter: "x IS NOT NULL"
+            """.stripMargin
+
+        val spec = ObjectMapper.parse[SchemaCheckSpec](yaml)
+        spec shouldBe a[SqlSchemaCheckSpec]
+
+        val context = RootContext.builder().build()
+        val test = spec.instantiate(context, SchemaReference(None))
+        test should be (SqlSchemaCheck(
+            Some(SchemaReference(None)),
+            query =
+                """WITH dups AS (
+                  |  SELECT
+                  |    tx.transaction_id,
+                  |    COUNT(*) AS cnt
+                  |  FROM __this__ tx
+                  |  GROUP BY transaction_id
+                  |)
+                  |SELECT
+                  |  cnt = 1,
+                  |  COUNT(*)
+                  |FROM dups
+                  |GROUP BY 1
+                  |""".stripMargin,
             filter = Some("x IS NOT NULL")
         ))
     }

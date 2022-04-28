@@ -24,7 +24,6 @@ import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.delta.catalog.DeltaTableV2
 import org.apache.spark.sql.delta.commands.AlterTableAddColumnsDeltaCommand
-import org.apache.spark.sql.delta.commands.AlterTableChangeColumnDeltaCommand
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
@@ -41,7 +40,6 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
-import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -50,8 +48,8 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionedRelation
+import com.dimajix.flowman.spark.sql.delta.AlterTableChangeColumnDeltaCommand
 import com.dimajix.flowman.spark.sql.delta.QualifiedColumn
-import com.dimajix.spark.sql.SchemaUtils
 
 
 abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String]) extends BaseRelation with PartitionedRelation {

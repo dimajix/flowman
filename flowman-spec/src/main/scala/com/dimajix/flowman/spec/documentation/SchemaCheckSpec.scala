@@ -26,6 +26,7 @@ import com.dimajix.flowman.documentation.ForeignKeySchemaCheck
 import com.dimajix.flowman.documentation.PrimaryKeySchemaCheck
 import com.dimajix.flowman.documentation.SchemaReference
 import com.dimajix.flowman.documentation.SchemaCheck
+import com.dimajix.flowman.documentation.SqlSchemaCheck
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.RelationIdentifier
@@ -41,7 +42,8 @@ object SchemaCheckSpec extends TypeRegistry[SchemaCheckSpec] {
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "expression", value = classOf[ExpressionSchemaCheckSpec]),
     new JsonSubTypes.Type(name = "foreignKey", value = classOf[ForeignKeySchemaCheckSpec]),
-    new JsonSubTypes.Type(name = "primaryKey", value = classOf[PrimaryKeySchemaCheckSpec])
+    new JsonSubTypes.Type(name = "primaryKey", value = classOf[PrimaryKeySchemaCheckSpec]),
+    new JsonSubTypes.Type(name = "sql", value = classOf[SqlSchemaCheckSpec])
 ))
 abstract class SchemaCheckSpec {
     def instantiate(context: Context, parent:SchemaReference): SchemaCheck
@@ -89,6 +91,16 @@ class ForeignKeySchemaCheckSpec extends SchemaCheckSpec {
         relation = context.evaluate(relation).map(RelationIdentifier(_)),
         mapping = context.evaluate(mapping).map(MappingOutputIdentifier(_)),
         references = references.map(context.evaluate),
+        filter = context.evaluate(filter)
+    )
+}
+class SqlSchemaCheckSpec extends SchemaCheckSpec {
+    @JsonProperty(value="query", required=true) private var query:String = _
+    @JsonProperty(value="filter", required=false) private var filter:Option[String] = None
+
+    override def instantiate(context: Context, parent:SchemaReference): SqlSchemaCheck = SqlSchemaCheck(
+        Some(parent),
+        query = context.evaluate(query),
         filter = context.evaluate(filter)
     )
 }

@@ -119,7 +119,7 @@ sealed abstract class ResultWrapper(result:Result[_]) {
     def getChildren() : java.util.List[AnyRef] = result.children.map(ResultWrapper.of).asJava
     def getStatus() : String = result.status.toString
     def getStartTime() : String = result.startTime.toString
-    def getEndTime() : String = result.startTime.toString
+    def getEndTime() : String = result.endTime.toString
     def getDuration() : String = result.duration.toString
 
     def getSuccess() : Boolean = result.success

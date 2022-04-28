@@ -24,7 +24,9 @@ homepage. So we download the appropriate Spark distribution from the Apache arch
 mkdir playground
 cd playground# Download and unpack Spark & Hadoop
 
-curl -L https://archive.apache.org/dist/spark/spark-3.2.1/spark-3.2.1-bin-hadoop3.2.tgz | tar xvzf -# Create a nice link
+curl -L https://archive.apache.org/dist/spark/spark-3.2.1/spark-3.2.1-bin-hadoop3.2.tgz | tar xvzf -
+
+# Create a nice link
 ln -snf spark-3.2.1-bin-hadoop3.2 spark
 ```
 
@@ -103,11 +105,11 @@ Now we can inspect some of the relations defined in the project. First we list a
 flowman:weather> relation list
 ```
 
-Now we can peek inside the relations `stations-raw` and `measurements-raw`. Since the second relation is partitioned
+Now we can peek inside the relations `stations_raw` and `measurements_raw`. Since the second relation is partitioned
 by years, we explicitly specify the year via the option `-p year=2011`
 ```
-flowman:weather> relation show stations-raw
-flowman:weather> relation show measurements-raw -p year=2011
+flowman:weather> relation show stations_raw
+flowman:weather> relation show measurements_raw -p year=2011
 ```
 
 ### Running a Job
@@ -129,9 +131,9 @@ flowman:weather> job enter main year=2011
 Note how the prompt has changed and will now include the job name. Now we can inspect some mappings:
 ```
 flowman:weather/main> mapping list
-flowman:weather/main> mapping show measurements-raw
+flowman:weather/main> mapping show measurements_raw
 flowman:weather/main> mapping show measurements-extracted
-flowman:weather/main> mapping show stations-raw
+flowman:weather/main> mapping show stations_raw
 ```
 Finally we'd like to leave the job context again.
 ```
@@ -157,9 +159,21 @@ flowman:weather> history job search
 flowman:weather> history target search -J 1
 ```
 
+
+### Generating Documentation
+
+Flowman cannot only execute all the data transformations specified in the example project, it can also generate
+a documentation, which will be stored as an html file
+```
+flowman:weather> documentation generate
+```
+This will create a file in the directory `examples/weather/generated-documentation/project.html` which can be viewed
+by any web browser of your choice.
+
+
 ### Quitting
 
-Finally we quit the Flowman shell via the `quit` command.
+Finally, we quit the Flowman shell via the `quit` command.
 ```
 flowman:weather> quit
 ```
@@ -168,7 +182,7 @@ flowman:weather> quit
 ## 4. Flowman Batch Execution
 
 So far we have only used the Flowman shell for interactive work with projects. Actually, the shell was developed as a
-second step to help analyzing problems and debugging data flows. The primary command for working with Flowman projects 
+second step to help to analyze problems and debugging data flows. The primary command for working with Flowman projects 
 is `flowexec` which is used for non-interactive batch execution, for example within cron-jobs.
 
 It shares a lot of code with the Flowman shell, so the commands are often exactly the same. The main difference is 

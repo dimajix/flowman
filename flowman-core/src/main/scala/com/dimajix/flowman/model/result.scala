@@ -153,6 +153,7 @@ final case class LifecycleResult(
     override val startTime : Instant,
     override val endTime : Instant
 ) extends Result[LifecycleResult] {
+    def arguments:Map[String,Any] = lifecycle.args
     override def identifier : JobIdentifier = job.identifier
     override def name : String = job.name
     override def category : Category = job.category
@@ -210,6 +211,7 @@ final case class JobResult(
     override val endTime : Instant
 ) extends Result[JobResult] {
     def phase : Phase = instance.phase
+    def arguments:Map[String,Any] = instance.args
     override def identifier : JobIdentifier = job.identifier
     override def name : String = job.name
     override def category : Category = job.category

@@ -158,8 +158,9 @@ private[execution] sealed class RunnerImpl {
 
     def logJobResult(title:String, result:JobResult) : Unit = {
         if (result.children.length > 1) {
+            val args = result.arguments
             logger.info(separator)
-            logger.info(boldWhite(s"Execution summary for ${result.category.lower} '${result.identifier}'"))
+            logger.info(boldWhite(s"Execution summary for ${result.category.lower} '${result.identifier}' ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"))
             logger.info("")
             for (child <- result.children) {
                 val name = child.identifier.toString
@@ -174,8 +175,9 @@ private[execution] sealed class RunnerImpl {
     def logLifecycleResult(title:String, result:LifecycleResult) : Unit = {
         logger.info("")
         if (result.children.length > 1) {
+            val args = result.arguments
             logger.info(doubleSeparator)
-            logger.info(boldWhite(s"Overall lifecycle summary for ${result.category.lower} '${result.identifier}'"))
+            logger.info(boldWhite(s"Overall lifecycle summary for ${result.category.lower} '${result.identifier}' ${args.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"))
             logger.info("")
             for (child <- result.children) {
                 val name = s"Phase ${child.phase.upper}"

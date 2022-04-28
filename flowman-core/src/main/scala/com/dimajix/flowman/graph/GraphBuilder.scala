@@ -20,6 +20,7 @@ import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.IdentityHashMap
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -128,7 +129,7 @@ final class GraphBuilder(context:Context, phase:Phase) {
                     context.execution.describe(mapping, o)
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Error describing mapping '${mapping.identifier}', using empty schema instead: ${ex.getMessage}")
+                        logger.warn(s"Error describing mapping '${mapping.identifier}', using empty schema instead: ${reasons(ex)}")
                         StructType(Seq.empty)
                 }
                 val fields = createFields(schema)
@@ -162,7 +163,7 @@ final class GraphBuilder(context:Context, phase:Phase) {
                 context.execution.describe(relation, partitions)
             } catch {
                 case NonFatal(ex) =>
-                    logger.warn(s"Error describing relation '${relation.identifier}', using empty schema instead: ${ex.getMessage}")
+                    logger.warn(s"Error describing relation '${relation.identifier}', using empty schema instead: ${reasons(ex)}")
                     StructType(Seq.empty)
             }
             val fields = createFields(schema)

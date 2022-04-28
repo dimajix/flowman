@@ -1,6 +1,6 @@
 # Mappings
 
-Flowman uses the notion of `mappings` in order to specify the data flow and all data 
+Flowman uses the notion of *mappings* in order to specify the data flow and all data 
 transformations. A mapping somewhat corresponds to a temporary view in the SQL world: You 
 give a name to a mapping and specify its logic. Afterwards it is available for subsequent
 operations like `SELECT`. Like a temporary view, a mapping itself does not persist any data
@@ -24,7 +24,7 @@ Mappings are specified in the `mappings` section of a file. For example
 ```yaml
 mappings:
   measurements-raw:
-    kind: readRelation
+    kind: relation
     relation: measurements-raw
     partitions:
       year:
@@ -48,7 +48,7 @@ mappings:
 ```
 This specification defines two mappings: `measurements-raw` and `measurements`. Every mapping
 needs to specify its `kind` which provides the desired type of operation. In this example
-the first mapping `measurements-raw` of kind `readRelation` reads in input data from a 
+the first mapping `measurements-raw` of kind `relation` reads in input data from a 
 relation called `measurements-raw`. The second mapping called `measurements` is of kind
 `select` and will perform an operation comparable to an SQL `SELECT` to extract new columns
 from its input mapping `measurements-raw` (which is just the first mapping).

@@ -69,27 +69,25 @@ extends BaseMapping {
 
     private lazy val dependencies = SqlParser.resolveDependencies(statement).map(MappingOutputIdentifier.parse)
     private lazy val statement : String = {
-        if (sql.exists(_.nonEmpty)) {
-            sql.get
-        }
-        else if (file.nonEmpty) {
-            val fs = context.fs
-            val input = fs.file(file.get).open()
-            try {
-                val writer = new StringWriter()
-                IOUtils.copy(input, writer, Charset.forName("UTF-8"))
-                writer.toString
-            }
-            finally {
-                input.close()
-            }
-        }
-        else if (url.nonEmpty) {
-            IOUtils.toString(url.get, "UTF-8")
-        }
-        else {
-            throw new IllegalArgumentException("SQL mapping needs either 'sql', 'file' or 'url'")
-        }
+        sql
+            .orElse(file.map { f =>
+                val fs = context.fs
+                val input = fs.file(f).open()
+                try {
+                    val writer = new StringWriter()
+                    IOUtils.copy(input, writer, Charset.forName("UTF-8"))
+                    writer.toString
+                }
+                finally {
+                    input.close()
+                }
+            })
+            .orElse(url.map { url =>
+                IOUtils.toString(url, "UTF-8")
+            })
+            .getOrElse(
+                throw new IllegalArgumentException("SQL mapping needs either 'sql', 'file' or 'url'")
+            )
     }
 }
 
@@ -112,8 +110,8 @@ class SqlMappingSpec extends MappingSpec {
         SqlMapping(
             instanceProperties(context, properties),
             context.evaluate(sql),
-            file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
-            url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u))
+            context.evaluate(file).map(p => new Path(p)),
+            context.evaluate(url).map(u => new URL(u))
         )
     }
 }

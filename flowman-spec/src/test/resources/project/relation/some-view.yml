@@ -1,0 +1,5 @@
+relations:
+  some_view:
+    kind: hiveView
+    view: some_view
+    file: ${project.basedir}/relation/some-view.sql

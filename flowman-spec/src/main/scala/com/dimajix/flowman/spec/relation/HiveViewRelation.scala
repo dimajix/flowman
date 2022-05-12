@@ -301,7 +301,7 @@ class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
             partitions.map(_.instantiate(context)),
             context.evaluate(sql),
             context.evaluate(mapping).map(MappingOutputIdentifier.parse),
-            context.evaluate(file).map(p => new Path(p)),
+            context.evaluate(file).map(p => new Path(p))
         )
     }
 }

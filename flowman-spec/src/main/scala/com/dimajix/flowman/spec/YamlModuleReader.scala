@@ -33,7 +33,19 @@ class YamlModuleReader extends ModuleReader {
 
     override def format: String = "yaml"
 
+    /**
+     * Returns true if a given format is supported by this reader
+     * @param format
+     * @return
+     */
     override def supports(format: String): Boolean = format == "yaml" || format == "yml"
+
+    /**
+     * Returns a list of glob patterns to be used for finding files.
+     *
+     * @return
+     */
+    override def globPatterns: Seq[String] = Seq("*.yml", "*.yaml")
 
     /**
      * Loads a single file or a whole directory (non recursibely)

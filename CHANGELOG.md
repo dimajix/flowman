@@ -1,3 +1,9 @@
+# Version 0.24.2
+
+* github-184: Only read in *.yml / *.yaml files in module loader
+* github-183: Support storing SQL in external file in hiveView
+
+
 # Version 0.24.1 - 2022-04-28
 
 * github-175: '--jobs' parameter starts way to many parallel jobs

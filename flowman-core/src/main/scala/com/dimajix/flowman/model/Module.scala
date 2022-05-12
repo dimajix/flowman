@@ -24,6 +24,7 @@ import scala.collection.JavaConverters._
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.hadoop.GlobPattern
 import com.dimajix.flowman.spi.ModuleReader
 
 
@@ -72,9 +73,10 @@ object Module {
         private def readFile(file:File) : Module = {
             if (file.isDirectory()) {
                 logger.info(s"Reading all module files in directory ${file.toString}")
+                val patterns = reader.globPatterns.map(GlobPattern(_))
                 file.list()
                     .par
-                    .filter(_.isFile())
+                    .filter(f => f.isFile() && patterns.exists(_.matches(f.filename)))
                     .map(f => loadFile(f))
                     .foldLeft(Module())((l,r) => l.merge(r))
             }
@@ -88,7 +90,7 @@ object Module {
             reader.file(file)
         }
 
-        private def reader : ModuleReader = {
+        private lazy val reader : ModuleReader = {
             loader.find(_.supports(format))
                 .getOrElse(throw new IllegalArgumentException(s"Module format '$format' not supported'"))
         }

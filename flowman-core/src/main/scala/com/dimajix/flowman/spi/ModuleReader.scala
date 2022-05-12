@@ -44,6 +44,12 @@ abstract class ModuleReader {
     def supports(format: String): Boolean = this.format == format
 
     /**
+     * Returns a list of glob patterns to be used for finding files.
+     * @return
+     */
+    def globPatterns : Seq[String]
+
+    /**
      * Loads a Module from the given file
      * @param file
      * @return

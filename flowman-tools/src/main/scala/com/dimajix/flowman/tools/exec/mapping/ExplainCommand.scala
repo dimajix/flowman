@@ -34,7 +34,7 @@ import com.dimajix.flowman.tools.exec.Command
 class ExplainCommand extends Command {
     private val logger = LoggerFactory.getLogger(classOf[ExplainCommand])
 
-    @Option(name="-e", aliases=Array("--extended"), required = false)
+    @Option(name="-e", aliases=Array("--extended"), usage = "show extended execution plan")
     var extended: Boolean = false
     @Argument(usage = "specifies the mapping to explain", metaVar = "<mapping>", required = true)
     var mapping: String = ""

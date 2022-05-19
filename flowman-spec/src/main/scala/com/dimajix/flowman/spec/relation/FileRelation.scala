@@ -228,8 +228,7 @@ case class FileRelation(
         provides.foreach(execution.refreshResource)
     }
     private def doWriteDynamicPartitions(execution:Execution, df:DataFrame,  mode:OutputMode) : Unit = {
-        val outputPath = qualifiedLocation
-        logger.info(s"Writing file relation '$identifier' to output location '$outputPath' as '$format' with mode '$mode' with dynamic partitions")
+        logger.info(s"Writing file relation '$identifier' to output location '$qualifiedLocation' as '$format' with mode '$mode' with dynamic partitions")
 
         if (pattern.nonEmpty)
             throw new IllegalArgumentException(s"Pattern not supported for 'file' relation '$identifier' with dynamic partitions")
@@ -239,19 +238,19 @@ case class FileRelation(
             // cases explicitly
             case OutputMode.IGNORE_IF_EXISTS =>
                 if (loaded(execution) == No) {
-                    doWriteDynamic(execution, df, outputPath, OutputMode.OVERWRITE)
+                    doWriteDynamic(execution, df, OutputMode.OVERWRITE)
                 }
             case OutputMode.ERROR_IF_EXISTS =>
                 if (loaded(execution) == Yes) {
-                    throw new FileAlreadyExistsException(outputPath.toString)
+                    throw new FileAlreadyExistsException(qualifiedLocation.toString)
                 }
-                doWriteDynamic(execution, df, outputPath, OutputMode.OVERWRITE)
-            case m => m.batchMode
-                doWriteDynamic(execution, df, outputPath, mode)
+                doWriteDynamic(execution, df, OutputMode.OVERWRITE)
+            case m =>
+                doWriteDynamic(execution, df, mode)
         }
 
     }
-    private def doWriteDynamic(execution:Execution, df:DataFrame, outputPath:Path, mode:OutputMode) : Unit = {
+    private def doWriteDynamic(execution:Execution, df:DataFrame, mode:OutputMode) : Unit = {
         val overwriteMode = mode match {
             case OutputMode.OVERWRITE_DYNAMIC => "dynamic"
             case _ => "static"
@@ -259,7 +258,18 @@ case class FileRelation(
         this.writer(execution, df, format, options, mode.batchMode, dynamicPartitions=true)
             .option("partitionOverwriteMode", overwriteMode)
             .partitionBy(partitions.map(_.name):_*)
-            .save(outputPath.toString)
+            .save(qualifiedLocation.toString)
+
+        // Manually add _SUCCESS file in case of OVERWRITE_DYNAMIC
+        mode match {
+            case OutputMode.OVERWRITE_DYNAMIC =>
+                val success = new Path(qualifiedLocation, "_SUCCESS")
+                val fs = collector.fs
+                if (!fs.exists(success)) {
+                    fs.create(success).close()
+                }
+            case _ =>
+        }
     }
     private def doWriteStaticPartitions(execution:Execution, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
         val partitionMap = PartitionSchema(partitions).spec(partition).toMap
@@ -273,18 +283,18 @@ case class FileRelation(
             // cases explicitly
             case OutputMode.IGNORE_IF_EXISTS =>
                 if (loaded(execution, partition) == No) {
-                    doWrite(execution, df, outputPath, OutputMode.OVERWRITE)
+                    doWriteSinglePartition(execution, df, outputPath, OutputMode.OVERWRITE)
                 }
             case OutputMode.ERROR_IF_EXISTS =>
                 if (loaded(execution, partition) == Yes) {
                     throw new FileAlreadyExistsException(outputPath.toString)
                 }
-                doWrite(execution, df, outputPath, OutputMode.OVERWRITE)
+                doWriteSinglePartition(execution, df, outputPath, OutputMode.OVERWRITE)
             case m => m.batchMode
-                doWrite(execution, df, outputPath, mode)
+                doWriteSinglePartition(execution, df, outputPath, mode)
         }
     }
-    private def doWrite(execution:Execution, df:DataFrame, outputPath:Path, mode:OutputMode) : Unit = {
+    private def doWriteSinglePartition(execution:Execution, df:DataFrame, outputPath:Path, mode:OutputMode) : Unit = {
         this.writer(execution, df, format, options, mode.batchMode)
             .save(outputPath.toString)
     }

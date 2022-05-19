@@ -37,6 +37,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MigrationPolicy
@@ -442,7 +443,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
     }
 
-    it should "support more than one partition columns" in {
+    it should "support more than one partition columns" in { if (SPARK_VERSION >= "3.1.0") {
         val session = Session.builder()
             .withSparkSession(spark)
             .build()
@@ -522,7 +523,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part2" -> SingleValue("a"))) should be(No)
         relation.loaded(execution, Map("part2" -> SingleValue("b"))) should be(No)
         relation.loaded(execution, Map("part2" -> SingleValue("c"))) should be(No)
-    }
+    }}
 
     it should "support partition columns already present in the schema" in {
         val session = Session.builder().withSparkSession(spark).build()

@@ -91,16 +91,21 @@ corresponding section of [relations](index.md).
 ### Batch Writing
 The `deltaFile` relation supports the following output modes in a [`relation` target](../target/relation.md):
 
-| Output Mode         | Supported | Comments                                                                                       |
-|---------------------|-----------|------------------------------------------------------------------------------------------------|
-| `errorIfExists`     | yes       | Throw an error if the Delta table already exists                                               |
-| `ignoreIfExists`    | yes       | Do nothing if the Delta table already exists                                                   |
-| `overwrite`         | yes       | Overwrite the whole table or the specified partitions                                          |
-| `overwrite_dynamic` | no        | -                                                                                              |
-| `append`            | yes       | Append new records to the existing table                                                       |
-| `update`            | yes       | Updates existing records, either using `mergeKey` or the primary key of the specified `schema` |
+| Output Mode         | Supported | Comments                                                                                                  |
+|---------------------|-----------|-----------------------------------------------------------------------------------------------------------|
+| `errorIfExists`     | yes       | Throw an error if the Delta table already exists                                                          |
+| `ignoreIfExists`    | yes       | Do nothing if the Delta table already exists                                                              |
+| `overwrite`         | yes       | Overwrite the whole table or the specified partitions                                                     |
+| `overwrite_dynamic` | yes       | Overwrites all partitions where records are provided in the input data. Other partitions remain untouched |
+| `append`            | yes       | Append new records to the existing table                                                                  |
+| `update`            | yes       | Updates existing records, either using `mergeKey` or the primary key of the specified `schema`            |
 
 In addition, the `deltaFile` relation also supports complex merge operations in a [`merge` target](../target/merge.md).
+
+Note that support `overwrite_dynamic` is not perfect and is implemented in a two phase approach: First all partition 
+values are calculated, then the data is inserted. This implies that the input data is scanned twice, which might be an
+expensive operation depending on the computational complexity and the amount of data.
+
 
 ### Stream Writing
 In addition to batch writing, the Delta file relation also supports stream writing via the

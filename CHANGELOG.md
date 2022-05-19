@@ -3,6 +3,7 @@
 * github-184: Only read in *.yml / *.yaml files in module loader
 * github-183: Support storing SQL in external file in hiveView
 * github-185: Missing _SUCCESS file when writing to dynamic partitions
+* github-186: Support output mode OVERWRITE_DYNAMIC for Delta relation
 
 
 # Version 0.24.1 - 2022-04-28

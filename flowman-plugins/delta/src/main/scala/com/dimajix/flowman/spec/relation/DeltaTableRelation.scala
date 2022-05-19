@@ -138,7 +138,6 @@ case class DeltaTableRelation(
 
         val extDf = applyOutputSchema(execution, addPartition(df, partition))
         mode match {
-            case OutputMode.OVERWRITE_DYNAMIC => throw new IllegalArgumentException(s"Output mode 'overwrite_dynamic' not supported by Delta table relation '$identifier'")
             case OutputMode.UPDATE => doUpdate(extDf, partitionSpec)
             case _ => doWrite(extDf, partitionSpec, mode)
         }
@@ -147,9 +146,9 @@ case class DeltaTableRelation(
     }
     private def doWrite(df: DataFrame, partitionSpec: PartitionSpec, mode: OutputMode) : Unit = {
         val writer =
-            if (partitionSpec.nonEmpty) {
+            if (partitionSpec.nonEmpty || mode == OutputMode.OVERWRITE_DYNAMIC) {
                 df.write
-                    .option("replaceWhere", partitionSpec.predicate)
+                    .option("replaceWhere", replaceWhere(df, partitionSpec, mode))
             }
             else {
                 df.write

@@ -402,19 +402,19 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Row(23456, 12345.0, "3")
         ))
         val df2 = spark.createDataFrame(rdd2, StructType(relation.fields.map(_.catalogField)))
-        an[IllegalArgumentException] should be thrownBy(relation.write(execution, df2, Map(), OutputMode.OVERWRITE_DYNAMIC))
+        relation.write(execution, df2, Map(), OutputMode.OVERWRITE_DYNAMIC)
 
         // == Read ==================================================================================================
-//        relation.loaded(execution) should be (Yes)
-//        relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
-//        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
-//        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (Yes)
-//        relation.loaded(execution, Map("part" -> SingleValue("4"))) should be (No)
-//        relation.read(execution, Map()).count() should be (6)
-//        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (3)
-//        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (2)
-//        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (1)
-//        relation.read(execution, Map("part" -> SingleValue("4"))).count() should be (0)
+        relation.loaded(execution) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("4"))) should be (No)
+        relation.read(execution, Map()).count() should be (6)
+        relation.read(execution, Map("part" -> SingleValue("1"))).count() should be (3)
+        relation.read(execution, Map("part" -> SingleValue("2"))).count() should be (2)
+        relation.read(execution, Map("part" -> SingleValue("3"))).count() should be (1)
+        relation.read(execution, Map("part" -> SingleValue("4"))).count() should be (0)
 
         // == Overwrite ==============================================================================================
         relation.write(execution, df, Map(), OutputMode.OVERWRITE)
@@ -440,6 +440,88 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+    }
+
+    it should "support more than one partition columns" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+
+        val location = new File(tempDir, "delta/default/lala1001")
+        val relation = DeltaFileRelation(
+            Relation.Properties(context, "delta_relation"),
+            schema = Some(InlineSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("f1", ftypes.IntegerType),
+                    Field("f2", ftypes.DoubleType)
+                )
+            )),
+            location = new Path(location.toURI),
+            partitions = Seq(
+                PartitionField("part1", com.dimajix.flowman.types.StringType),
+                PartitionField("part2", com.dimajix.flowman.types.StringType)
+            )
+        )
+
+        // == Create =================================================================================================
+        relation.exists(execution) should be(No)
+        relation.loaded(execution) should be(No)
+        relation.create(execution)
+        relation.exists(execution) should be(Yes)
+        relation.loaded(execution) should be(No)
+
+        // == Write ==================================================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row(null, null, "1","a"),
+            Row(234, 123.0, "1","a"),
+            Row(2345, 1234.0, "1","b"),
+            Row(23456, 12345.0, "2","b")
+        ))
+        val df = spark.createDataFrame(rdd, StructType(relation.fields.map(_.catalogField)))
+        relation.write(execution, df, Map(), OutputMode.OVERWRITE_DYNAMIC)
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be(Yes)
+        relation.loaded(execution, Map("part1" -> SingleValue("1"))) should be(Yes)
+        relation.loaded(execution, Map("part1" -> SingleValue("2"))) should be(Yes)
+        relation.loaded(execution, Map("part1" -> SingleValue("3"))) should be(No)
+        relation.loaded(execution, Map("part2" -> SingleValue("a"))) should be(Yes)
+        relation.loaded(execution, Map("part2" -> SingleValue("b"))) should be(Yes)
+        relation.loaded(execution, Map("part2" -> SingleValue("c"))) should be(No)
+        relation.loaded(execution, Map("part1" -> SingleValue("1"), "part2" -> SingleValue("a"))) should be(Yes)
+        relation.loaded(execution, Map("part1" -> SingleValue("1"), "part2" -> SingleValue("b"))) should be(Yes)
+        relation.loaded(execution, Map("part1" -> SingleValue("2"), "part2" -> SingleValue("a"))) should be(No)
+        relation.loaded(execution, Map("part1" -> SingleValue("2"), "part2" -> SingleValue("b"))) should be(Yes)
+        relation.loaded(execution, Map("part1" -> SingleValue("3"))) should be(No)
+        relation.read(execution, Map()).count() should be(4)
+        relation.read(execution, Map("part1" -> SingleValue("1"))).count() should be(3)
+        relation.read(execution, Map("part1" -> SingleValue("2"))).count() should be(1)
+        relation.read(execution, Map("part1" -> SingleValue("3"))).count() should be(0)
+        relation.read(execution, Map("part2" -> SingleValue("a"))).count() should be(2)
+        relation.read(execution, Map("part2" -> SingleValue("b"))).count() should be(2)
+        relation.read(execution, Map("part2" -> SingleValue("c"))).count() should be(0)
+        relation.read(execution, Map("part1" -> SingleValue("1"), "part2" -> SingleValue("a"))).count() should be(2)
+        relation.read(execution, Map("part1" -> SingleValue("1"), "part2" -> SingleValue("b"))).count() should be(1)
+        relation.read(execution, Map("part1" -> SingleValue("2"), "part2" -> SingleValue("a"))).count() should be(0)
+        relation.read(execution, Map("part1" -> SingleValue("2"), "part2" -> SingleValue("b"))).count() should be(1)
+        relation.read(execution, Map("part1" -> SingleValue("3"), "part2" -> SingleValue("c"))).count() should be(0)
+
+        // == Write ==================================================================================================
+        relation.write(execution, df, Map(), OutputMode.OVERWRITE_DYNAMIC)
+
+        // == Destroy ===============================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution) should be (No)
+        relation.loaded(execution, Map("part1" -> SingleValue("1"))) should be (No)
+        relation.loaded(execution, Map("part1" -> SingleValue("2"))) should be (No)
+        relation.loaded(execution, Map("part1" -> SingleValue("3"))) should be (No)
+        relation.loaded(execution, Map("part2" -> SingleValue("a"))) should be(No)
+        relation.loaded(execution, Map("part2" -> SingleValue("b"))) should be(No)
+        relation.loaded(execution, Map("part2" -> SingleValue("c"))) should be(No)
     }
 
     it should "support partition columns already present in the schema" in {

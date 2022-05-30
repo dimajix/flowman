@@ -75,11 +75,43 @@ object SqlServerDialect extends BaseDialect {
         }
     }
 
+    /**
+     * Returns true if the SQL database supports retrieval of the exact view definition
+     *
+     * @return
+     */
+    override def supportsExactViewRetrieval: Boolean = true
+
+    /**
+     * Returns true if a view definition can be changed
+     * @return
+     */
+    override def supportsAlterView : Boolean = true
+
     override def statement : SqlStatements = Statements
 }
 
 
 class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
+    /**
+     * The SQL query for creating a new table
+     *
+     * @param table
+     * @return
+     */
+    override def alterView(table: TableIdentifier, sql: String): String = {
+        s"ALTER VIEW ${dialect.quote(table)} AS $sql"
+    }
+
+    override def getViewDefinition(table: TableIdentifier): String = {
+        s"""
+           |SELECT
+           |    definition
+           |FROM sys.sql_modules
+           |WHERE object_id = OBJECT_ID(${dialect.literal(dialect.quote(table))})
+           |""".stripMargin
+    }
+
     override def firstRow(table: TableIdentifier, condition:String) : String = {
         if (condition.isEmpty)
             s"SELECT TOP 1 * FROM ${dialect.quote(table)}"

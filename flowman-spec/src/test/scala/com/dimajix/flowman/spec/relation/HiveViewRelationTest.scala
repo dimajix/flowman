@@ -37,6 +37,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -84,7 +85,9 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         ResourceIdentifier.ofHiveTable("t0", Some("default"))
     ))
     relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("t0", Some("default"), Map())))
+    an[Exception] should be thrownBy(relation.describe(execution))
 
+    // == Create =================================================================================================
     relation.exists(execution) should be (No)
     relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
     relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
@@ -96,6 +99,14 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
     relation.loaded(execution, Map()) should be (Yes)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
 
+    // == Read ===================================================================================================
+    relation.describe(execution) should be (ftypes.StructType(Seq(
+        Field("str_col", ftypes.StringType),
+        Field("int_col", ftypes.IntegerType),
+        Field("t0_exclusive_col", ftypes.LongType)
+    )))
+
+    // == Destroy ================================================================================================
     relation.destroy(execution)
     relation.exists(execution) should be (No)
     relation.loaded(execution, Map()) should be (No)

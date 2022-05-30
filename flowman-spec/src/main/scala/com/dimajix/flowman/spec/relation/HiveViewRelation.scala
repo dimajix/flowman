@@ -156,7 +156,7 @@ case class HiveViewRelation(
      * @param partition
      * @return
      */
-    override def loaded(execution: Execution, partition: Map[String, SingleValue]): Trilean =  {
+    override def loaded(execution: Execution, partition: Map[String, SingleValue]): Trilean = {
         exists(execution)
     }
 
@@ -166,10 +166,10 @@ case class HiveViewRelation(
      * @param execution
      */
     override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
-        val select = getSelect(execution)
         val catalog = execution.catalog
         if (!ifNotExists || !catalog.tableExists(table)) {
             logger.info(s"Creating Hive view relation '$identifier' with VIEW $table")
+            val select = getSelect(execution)
             catalog.createView(table, select, ifNotExists)
             provides.foreach(execution.refreshResource)
         }
@@ -281,7 +281,9 @@ case class HiveViewRelation(
 
 
 class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
+    @JsonPropertyDescription("Name of the Hive database")
     @JsonProperty(value="database", required = false) private var database: Option[String] = None
+    @JsonPropertyDescription("Name of the Hive view")
     @JsonProperty(value="view", required = true) private var view: String = _
     @JsonPropertyDescription("SQL query for the view definition. This has to be specified in Spark SQL syntax.")
     @JsonProperty(value="sql", required = false) private var sql: Option[String] = None

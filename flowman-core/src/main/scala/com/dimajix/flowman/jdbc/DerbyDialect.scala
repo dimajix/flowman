@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.jdbc
 
+import java.util.Locale
+
 import org.apache.spark.sql.jdbc.JdbcType
 
 import com.dimajix.flowman.catalog.TableChange
@@ -77,11 +79,34 @@ object DerbyDialect extends BaseDialect {
         }
     }
 
+    /**
+     * Returns true if the SQL database supports retrieval of the exact view definition
+     *
+     * @return
+     */
+    override def supportsExactViewRetrieval: Boolean = true
+
     override def statement : SqlStatements = Statements
 }
 
 
 class DerbyStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
+    override def alterView(table: TableIdentifier, sql: String): String = ???
+
+    override def getViewDefinition(table: TableIdentifier): String = {
+        s"""
+          |SELECT
+          |    v.VIEWDEFINITION
+          |FROM SYS.SYSVIEWS v
+          |INNER JOIN SYS.SYSTABLES t
+          |    ON t.TABLEID = v.TABLEID
+          |INNER JOIN SYS.SYSSCHEMAS s
+          |    ON s.SCHEMAID = t.SCHEMAID
+          |WHERE t.TABLENAME = ${dialect.literal(table.table.toUpperCase(Locale.ROOT))}
+          |    AND s.SCHEMANAME = ${table.space.headOption.map(s => dialect.literal(s.toUpperCase(Locale.ROOT))).getOrElse("current schema")}
+          |""".stripMargin
+    }
+
     override def firstRow(table: TableIdentifier, condition:String) : String = {
         if (condition.isEmpty)
             s"SELECT * FROM ${dialect.quote(table)} FETCH FIRST ROW ONLY"

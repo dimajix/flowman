@@ -72,6 +72,7 @@ import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.SchemaUtils
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.{StructType => FlowmanStructType}
 
@@ -86,8 +87,10 @@ class JdbcTableRelationBase(
     mergeKey: Seq[String] = Seq.empty,
     override val primaryKey: Seq[String] = Seq.empty,
     indexes: Seq[TableIndex] = Seq.empty
-) extends BaseRelation with PartitionedRelation with SchemaRelation {
-    protected val logger: Logger = LoggerFactory.getLogger(getClass)
+) extends JdbcRelation(
+    connection,
+    properties + (JDBCOptions.JDBC_TABLE_NAME -> table.unquotedString)
+) with SchemaRelation {
     protected val tableIdentifier: TableIdentifier = table
     protected val stagingIdentifier: Option[TableIdentifier] = None
     protected lazy val tableDefinition: Option[TableDefinition] = {
@@ -172,6 +175,8 @@ class JdbcTableRelationBase(
         require(execution != null)
         require(partitions != null)
 
+        logger.info(s"Reading JDBC relation '$identifier' from table $tableIdentifier via connection '$connection' partition $partitions")
+
         // Get Connection
         val (_,props) = createConnectionProperties()
 
@@ -180,7 +185,6 @@ class JdbcTableRelationBase(
             .format("jdbc")
             .options(props)
 
-        logger.info(s"Reading JDBC relation '$identifier' from table $tableIdentifier via connection '$connection' partition $partitions")
         val tableDf = reader
             .option(JDBCOptions.JDBC_TABLE_NAME, tableIdentifier.unquotedString)
             .load()
@@ -460,8 +464,10 @@ class JdbcTableRelationBase(
             if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
                 tableDefinition match {
                     case Some(targetTable) =>
-                        val currentTable = JdbcUtils.getTable(con, tableIdentifier, options)
-                        !TableChange.requiresMigration(currentTable, targetTable, migrationPolicy)
+                        val currentTable = JdbcUtils.getTableOrView(con, tableIdentifier, options)
+                        val requiresChange = TableChange.requiresMigration(currentTable, targetTable, migrationPolicy)
+                        val wrongType = currentTable.tableType != TableType.UNKNOWN && currentTable.tableType != targetTable.tableType
+                        !requiresChange && !wrongType
                     case None => true
                 }
             }
@@ -526,15 +532,7 @@ class JdbcTableRelationBase(
       * @param execution
       */
     override def destroy(execution:Execution, ifExists:Boolean=false) : Unit = {
-        require(execution != null)
-
-        logger.info(s"Destroying JDBC relation '$identifier', this will drop JDBC table $tableIdentifier")
-        withConnection{ (con,options) =>
-            if (!ifExists || JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                JdbcUtils.dropTable(con, tableIdentifier, options)
-                provides.foreach(execution.refreshResource)
-            }
-        }
+        dropTableOrView(execution, table, ifExists)
     }
 
     override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
@@ -542,10 +540,15 @@ class JdbcTableRelationBase(
         tableDefinition.foreach { targetTable =>
             withConnection { (con, options) =>
                 if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                    val currentTable = JdbcUtils.getTable(con, tableIdentifier, options)
+                    val currentTable = JdbcUtils.getTableOrView(con, tableIdentifier, options)
 
-                    if (TableChange.requiresMigration(currentTable, targetTable, migrationPolicy)) {
-                        doMigration(currentTable, targetTable, migrationPolicy, migrationStrategy)
+                    // Check if table type changes
+                    if (currentTable.tableType != TableType.UNKNOWN && currentTable.tableType != targetTable.tableType) {
+                        // Drop view, recreate table
+                        migrateFromView(migrationStrategy)
+                    }
+                    else if (TableChange.requiresMigration(currentTable, targetTable, migrationPolicy)) {
+                        migrateFromTable(currentTable, targetTable, migrationPolicy, migrationStrategy)
                         provides.foreach(execution.refreshResource)
                     }
                 }
@@ -553,7 +556,30 @@ class JdbcTableRelationBase(
         }
     }
 
-    private def doMigration(currentTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+    private def migrateFromView(migrationStrategy:MigrationStrategy) : Unit = {
+        migrationStrategy match {
+            case MigrationStrategy.NEVER =>
+                logger.warn(s"Migration required for JdbcTable relation '$identifier' from VIEW to a TABLE $table, but migrations are disabled.")
+            case MigrationStrategy.FAIL =>
+                logger.error(s"Cannot migrate JdbcTable relation '$identifier' from VIEW to a TABLE $table, since migrations are disabled.")
+                throw new MigrationFailedException(identifier)
+            case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
+                logger.info(s"Migrating JdbcTable relation '$identifier' from VIEW to TABLE $table")
+                withConnection { (con, options) =>
+                    try {
+                        withStatement(con, options) { (stmt,options) =>
+                            JdbcUtils.dropView(stmt, tableIdentifier, options)
+                        }
+                        doCreate(con, options)
+                    }
+                    catch {
+                        case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
+                    }
+                }
+        }
+    }
+
+    private def migrateFromTable(currentTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
         withConnection { (con, options) =>
             migrationStrategy match {
                 case MigrationStrategy.NEVER =>
@@ -637,62 +663,6 @@ class JdbcTableRelationBase(
         // Always use the current schema
         withConnection { (con, options) =>
             Some(JdbcUtils.getTableSchema(con, tableIdentifier, options).catalogType)
-        }
-    }
-
-    protected def createConnectionProperties() : (String,Map[String,String]) = {
-        val connection = this.connection.value.asInstanceOf[JdbcConnection]
-        val props = mutable.Map[String,String]()
-        props.put(JDBCOptions.JDBC_URL, connection.url)
-        props.put(JDBCOptions.JDBC_DRIVER_CLASS, connection.driver)
-        connection.username.foreach(props.put("user", _))
-        connection.password.foreach(props.put("password", _))
-
-        connection.properties.foreach(kv => props.put(kv._1, kv._2))
-        properties.foreach(kv => props.put(kv._1, kv._2))
-
-        (connection.url,props.toMap)
-    }
-
-    protected def withConnection[T](fn:(java.sql.Connection,JDBCOptions) => T) : T = {
-        val (url,props) = createConnectionProperties()
-        logger.debug(s"Connecting to jdbc source at $url")
-
-        val options = new JDBCOptions(url, tableIdentifier.unquotedString, props)
-        val conn = try {
-            JdbcUtils.createConnection(options)
-        } catch {
-            case NonFatal(e) =>
-                logger.error(s"Error connecting to jdbc source at $url: ${e.getMessage}")
-                throw e
-        }
-
-        try {
-            fn(conn, options)
-        }
-        finally {
-            conn.close()
-        }
-    }
-
-    protected def withTransaction[T](con:java.sql.Connection)(fn: => T) : T = {
-        JdbcUtils.withTransaction(con)(fn)
-    }
-
-    protected def withStatement[T](fn:(Statement,JDBCOptions) => T) : T = {
-        withConnection { (con, options) =>
-            withStatement(con,options)(fn)
-        }
-    }
-
-    protected def withStatement[T](con:java.sql.Connection,options:JDBCOptions)(fn:(Statement,JDBCOptions) => T) : T = {
-        val statement = con.createStatement()
-        try {
-            statement.setQueryTimeout(JdbcUtils.queryTimeout(options))
-            fn(statement, options)
-        }
-        finally {
-            statement.close()
         }
     }
 

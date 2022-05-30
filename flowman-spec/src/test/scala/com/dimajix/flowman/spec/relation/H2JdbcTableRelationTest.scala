@@ -76,7 +76,7 @@ import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+class H2JdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     def withDatabase[T](driverClass:String, url:String)(fn:(Statement) => T) : T = {
         DriverRegistry.register(driverClass)
         val driver: Driver = DriverManager.getDrivers.asScala.collectFirst {
@@ -1363,7 +1363,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         // == Inspect =================================================================================================
         withConnection(url, "lala_006") { (con, options) =>
-            JdbcUtils.getTable(con, TableIdentifier("lala_006"), options)
+            JdbcUtils.getTableOrView(con, TableIdentifier("lala_006"), options)
         } should be (
             TableDefinition(
                 TableIdentifier("lala_006"),
@@ -1427,7 +1427,7 @@ class H2JdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         // == Inspect =================================================================================================
         withConnection(url, "lala_007") { (con, options) =>
-            JdbcUtils.getTable(con, TableIdentifier("lala_007"), options)
+            JdbcUtils.getTableOrView(con, TableIdentifier("lala_007"), options)
         } should be (
             TableDefinition(
                 TableIdentifier("lala_007"),

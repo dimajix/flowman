@@ -60,7 +60,6 @@ final case class TableDefinition(
         primaryKey = primaryKey.map(_.toLowerCase(Locale.ROOT)).sorted,
         indexes = indexes.map(_.normalize())
     )
-
 }
 
 

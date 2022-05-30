@@ -132,6 +132,10 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         fileRelation.requires should be (Set())
         fileRelation.provides should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
         fileRelation.resources() should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
+        fileRelation.describe(execution) should be (ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType)
+        )))
 
         // == Read ===================================================================================================
         an[AnalysisException] should be thrownBy(fileRelation.read(execution))
@@ -219,8 +223,11 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             )
         )
 
+        relation.fields should be (Seq.empty)
+        relation.schema should be (None)
+
         // == Read ===================================================================================================
-        an[AnalysisException] should be thrownBy(relation.read(execution))
+        an[Exception] should be thrownBy(relation.describe(execution))
 
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
@@ -252,6 +259,10 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         df1.schema should be (StructType(Seq(
             StructField("str_col", StringType),
             StructField("int_col", IntegerType)
+        )))
+        relation.describe(execution) should be (ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType)
         )))
 
         // == Destroy ================================================================================================

@@ -32,4 +32,11 @@ object HiveDialect extends BaseDialect {
     override def quoteIdentifier(colName: String): String = {
         s"""`$colName`"""
     }
+
+    /**
+     * Returns true if the SQL database supports retrieval of the exact view definition
+     *
+     * @return
+     */
+    override def supportsExactViewRetrieval: Boolean = true
 }

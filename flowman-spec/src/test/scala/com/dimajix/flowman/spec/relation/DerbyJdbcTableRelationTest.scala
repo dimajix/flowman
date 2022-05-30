@@ -77,7 +77,7 @@ import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class DerbyJdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     def withDatabase[T](driverClass:String, url:String)(fn:(Statement) => T) : T = {
         DriverRegistry.register(driverClass)
         val driver: Driver = DriverManager.getDrivers.asScala.collectFirst {
@@ -213,6 +213,16 @@ class DerbyJdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.provides should be (Set(ResourceIdentifier.ofJdbcTable("lala_001", None)))
         relation.requires should be (Set())
         relation.resources() should be (Set(ResourceIdentifier.ofJdbcTablePartition("lala_001", None, Map())))
+        relation.fields should be (Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType, nullable=false),
+            Field("varchar_col", VarcharType(10))
+        ))
+        relation.describe(execution) should be (StructType(Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType, nullable=false),
+            Field("varchar_col", VarcharType(10))
+        )))
 
         // == Create ==================================================================================================
         relation.exists(execution) should be (No)
@@ -224,6 +234,12 @@ class DerbyJdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
+
+        relation.describe(execution) should be (StructType(Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType, nullable=false),
+            Field("varchar_col", VarcharType(10))
+        )))
 
         withDatabase(driver, url) { statement =>
             val result = statement.executeQuery("""SELECT * FROM LALA_001""")
@@ -1135,7 +1151,7 @@ class DerbyJdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Inspect =================================================================================================
         withConnection(url, "lala_005") { (con, options) =>
-            JdbcUtils.getTable(con, TableIdentifier("lala_005"), options)
+            JdbcUtils.getTableOrView(con, TableIdentifier("lala_005"), options)
         } should be (
             TableDefinition(
                 TableIdentifier("lala_005"),
@@ -1199,7 +1215,7 @@ class DerbyJdbcRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Inspect =================================================================================================
         withConnection(url, "lala_005") { (con, options) =>
-            JdbcUtils.getTable(con, TableIdentifier("lala_005"), options)
+            JdbcUtils.getTableOrView(con, TableIdentifier("lala_005"), options)
         } should be (
             TableDefinition(
                 TableIdentifier("lala_005"),

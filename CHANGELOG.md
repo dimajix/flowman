@@ -1,9 +1,10 @@
-# Version 0.24.2
+# Version 0.25.0
 
 * github-184: Only read in *.yml / *.yaml files in module loader
 * github-183: Support storing SQL in external file in hiveView
 * github-185: Missing _SUCCESS file when writing to dynamic partitions
 * github-186: Support output mode OVERWRITE_DYNAMIC for Delta relation
+* github-149: Support creating views in JDBC
 
 
 # Version 0.24.1 - 2022-04-28
@@ -11,7 +12,7 @@
 * github-175: '--jobs' parameter starts way to many parallel jobs
 * github-176: start-/end-date in report should not be the same
 * github-177: Implement generic SQL schema check
-* github-179: Update DeltaLake dependency to 1.2.0
+* github-179: Update DeltaLake dependency to 1.2.1
 
 
 # Version 0.24.0 - 2022-04-05

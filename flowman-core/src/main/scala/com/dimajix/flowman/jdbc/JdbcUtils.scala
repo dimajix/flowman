@@ -30,6 +30,7 @@ import scala.util.Try
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.createConnectionFactory
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.savePartition
@@ -46,6 +47,7 @@ import slick.jdbc.SQLServerProfile
 import slick.jdbc.SQLiteProfile
 
 import com.dimajix.common.MapIgnoreCase
+import com.dimajix.common.tryWith
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
 import com.dimajix.flowman.catalog.TableChange.CreateIndex
@@ -203,13 +205,13 @@ object JdbcUtils {
     }
 
     /**
-     * Returns the table definition of a table
+     * Returns the table definition of a table or a view
      * @param conn
      * @param table
      * @param options
      * @return
      */
-    def getTable(conn: Connection, table:TableIdentifier, options: JDBCOptions) : TableDefinition = {
+    def getTableOrView(conn: Connection, table:TableIdentifier, options: JDBCOptions) : TableDefinition = {
         val meta = conn.getMetaData
         val (realTable,realType) = resolveTable(meta, table)
 
@@ -261,7 +263,7 @@ object JdbcUtils {
      * @return
      */
     private def resolveTable(meta: DatabaseMetaData, table:TableIdentifier) : (TableIdentifier,TableType) = {
-        val tblrs = meta.getTables(null, table.database.orNull, null, Array("TABLE"))
+        val tblrs = meta.getTables(null, table.database.orNull, null, Array("TABLE", "VIEW"))
         var tableName = table.table
         var tableType:TableType = TableType.UNKNOWN
         val db = table.database
@@ -285,6 +287,28 @@ object JdbcUtils {
         tblrs.close()
 
         (TableIdentifier(tableName, db), tableType)
+    }
+
+    /**
+     * Returns the definition of a SQL view, only the `SELECT` part.
+     * @param conn
+     * @param table
+     * @param options
+     * @return
+     */
+    def getViewDefinition(conn: Connection, table:TableIdentifier, options: JDBCOptions) : String = {
+        val dialect = SqlDialects.get(options.url)
+        val tableSql = dialect.statement.getViewDefinition(table)
+        withStatement(conn, options) { statement =>
+            tryWith(statement.executeQuery(tableSql)) { rs =>
+                if (rs.next()) {
+                    rs.getString(1)
+                }
+                else {
+                    throw new NoSuchTableException(s"JDBC view '${table.unquotedString}' does not exist or is not a VIEW")
+                }
+            }
+        }
     }
 
     /**
@@ -438,6 +462,63 @@ object JdbcUtils {
         val dialect = SqlDialects.get(options.url)
         statement.executeUpdate(s"DROP TABLE ${dialect.quote(table)}")
     }
+
+    def createView(conn:Connection, table:TableIdentifier, sql:String, options: JDBCOptions) : Unit = {
+        val dialect = SqlDialects.get(options.url)
+        val tableSql = dialect.statement.createView(table, sql)
+        withStatement(conn, options) { statement =>
+            statement.executeUpdate(tableSql)
+        }
+    }
+
+    def alterView(conn:Connection, table:TableIdentifier, sql:String, options: JDBCOptions) : Unit = {
+        val dialect = SqlDialects.get(options.url)
+        withStatement(conn, options) { statement =>
+            if (dialect.supportsAlterView) {
+                val tableSql = dialect.statement.alterView(table, sql)
+                statement.executeUpdate(tableSql)
+            }
+            else {
+                val dropSql = dialect.statement.dropView(table)
+                statement.executeUpdate(dropSql)
+                val createSql = dialect.statement.createView(table, sql)
+                statement.executeUpdate(createSql)
+            }
+        }
+    }
+
+    /**
+     * Drops an existing table using the given connection. Will throw an exception of the table does not exist.
+     * @param conn
+     * @param table
+     * @param options
+     */
+    def dropView(conn:Connection, table:TableIdentifier, options: JDBCOptions, ifExists:Boolean=false) : Unit = {
+        withStatement(conn, options) { statement =>
+            if (!ifExists || tableExists(conn, table, options)) {
+                dropView(statement, table, options)
+            }
+        }
+    }
+    def dropView(statement:Statement, table:TableIdentifier, options: JDBCOptions) : Unit = {
+        val dialect = SqlDialects.get(options.url)
+        val dropSql = dialect.statement.dropView(table)
+        statement.executeUpdate(dropSql)
+    }
+
+    def dropTableOrView(conn:Connection, table:TableIdentifier, options: JDBCOptions, ifExists:Boolean=false) : Unit = {
+        withStatement(conn, options) { statement =>
+            if (!ifExists || tableExists(conn, table, options)) {
+                val meta = conn.getMetaData
+                val (_,realType) = resolveTable(meta, table)
+                if (realType == TableType.VIEW)
+                    dropView(statement, table, options)
+                else
+                    dropTable(statement, table, options)
+            }
+        }
+    }
+
 
     /**
      * Truncates a table (i.e. removes all records, but keeps the table definition alive). Will throw an exception

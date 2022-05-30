@@ -16,21 +16,16 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.sql.Statement
-import java.util.Locale
-
-import scala.collection.mutable
-import scala.util.control.NonFatal
+import scala.collection.JavaConverters._
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonPropertyDescription
+import net.sf.jsqlparser.parser.CCJSqlParserUtil
+import net.sf.jsqlparser.util.TablesNamesFinder
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.types.StructType
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
@@ -43,19 +38,14 @@ import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.JdbcUtils
-import com.dimajix.flowman.jdbc.SqlDialects
-import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.PartitionField
-import com.dimajix.flowman.model.PartitionSchema
-import com.dimajix.flowman.model.PartitionedRelation
 import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
-import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.{StructType => FlowmanStructType}
@@ -68,10 +58,10 @@ case class JdbcQueryRelation(
     connection: Reference[Connection],
     query: String,
     properties: Map[String,String] = Map.empty
-) extends BaseRelation with PartitionedRelation with SchemaRelation {
-    protected val logger: Logger = LoggerFactory.getLogger(getClass)
-
-
+) extends JdbcRelation(
+    connection,
+    properties + (JDBCOptions.JDBC_QUERY_STRING -> query)
+) with SchemaRelation {
     /**
       * Returns the list of all resources which will be created by this relation.
       *
@@ -84,7 +74,12 @@ case class JdbcQueryRelation(
       *
       * @return
       */
-    override def requires: Set[ResourceIdentifier] = Set.empty
+    override def requires: Set[ResourceIdentifier] = {
+        val statement = CCJSqlParserUtil.parse(query)
+        val tablesNamesFinder = new TablesNamesFinder()
+        val tableList = tablesNamesFinder.getTableList(statement).asScala
+        tableList.map(l => ResourceIdentifier.ofJdbcTable(TableIdentifier(l))).toSet
+    }
 
     /**
       * Returns the list of all resources which will are managed by this relation for reading or writing a specific
@@ -130,6 +125,8 @@ case class JdbcQueryRelation(
         require(execution != null)
         require(partitions != null)
 
+        logger.info(s"Reading JDBC relation '$identifier' with a custom query via connection '$connection' partition $partitions")
+
         // Get Connection
         val (_,props) = createConnectionProperties()
 
@@ -138,7 +135,6 @@ case class JdbcQueryRelation(
             .format("jdbc")
             .options(props)
 
-        logger.info(s"Reading JDBC relation '$identifier' with a custom query via connection '$connection' partition $partitions")
         val tableDf = reader
             .option(JDBCOptions.JDBC_QUERY_STRING, query)
             .load()
@@ -160,10 +156,6 @@ case class JdbcQueryRelation(
       * @param mode
       */
     override def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
-        require(execution != null)
-        require(df != null)
-        require(partition != null)
-
         throw new UnsupportedOperationException(s"Cannot write into JDBC query relation '$identifier' which is defined by an SQL query")
     }
 
@@ -187,9 +179,6 @@ case class JdbcQueryRelation(
       * @param partitions
       */
     override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
-        require(execution != null)
-        require(partitions != null)
-
         throw new UnsupportedOperationException(s"Cannot clean JDBC relation '$identifier' which is defined by an SQL query")
     }
 
@@ -236,8 +225,6 @@ case class JdbcQueryRelation(
      * @param execution
       */
     override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
-        require(execution != null)
-
         throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' which is defined by an SQL query")
     }
 
@@ -246,8 +233,6 @@ case class JdbcQueryRelation(
       * @param execution
       */
     override def destroy(execution:Execution, ifExists:Boolean=false) : Unit = {
-        require(execution != null)
-
         throw new UnsupportedOperationException(s"Cannot destroy JDBC relation '$identifier' which is defined by an SQL query")
     }
 
@@ -267,62 +252,6 @@ case class JdbcQueryRelation(
             StructType(s.fields.map(_.sparkField).filter(f => !partitionFields.contains(f.name)) ++ partitions.map(_.sparkField))
         }
     }
-
-    protected def createConnectionProperties() : (String,Map[String,String]) = {
-        val connection = this.connection.value.asInstanceOf[JdbcConnection]
-        val props = mutable.Map[String,String]()
-        props.put(JDBCOptions.JDBC_URL, connection.url)
-        props.put(JDBCOptions.JDBC_DRIVER_CLASS, connection.driver)
-        connection.username.foreach(props.put("user", _))
-        connection.password.foreach(props.put("password", _))
-
-        connection.properties.foreach(kv => props.put(kv._1, kv._2))
-        properties.foreach(kv => props.put(kv._1, kv._2))
-
-        (connection.url,props.toMap)
-    }
-
-    protected def withConnection[T](fn:(java.sql.Connection,JDBCOptions) => T) : T = {
-        val (url,props) = createConnectionProperties()
-        logger.debug(s"Connecting to jdbc source at $url")
-
-        val options = new JDBCOptions(url, "", props)
-        val conn = try {
-            JdbcUtils.createConnection(options)
-        } catch {
-            case NonFatal(e) =>
-                logger.error(s"Error connecting to jdbc source at $url: ${e.getMessage}")
-                throw e
-        }
-
-        try {
-            fn(conn, options)
-        }
-        finally {
-            conn.close()
-        }
-    }
-
-    protected def withTransaction[T](con:java.sql.Connection)(fn: => T) : T = {
-        JdbcUtils.withTransaction(con)(fn)
-    }
-
-    protected def withStatement[T](fn:(Statement,JDBCOptions) => T) : T = {
-        withConnection { (con, options) =>
-            withStatement(con,options)(fn)
-        }
-    }
-
-    protected def withStatement[T](con:java.sql.Connection,options:JDBCOptions)(fn:(Statement,JDBCOptions) => T) : T = {
-        val statement = con.createStatement()
-        try {
-            statement.setQueryTimeout(JdbcUtils.queryTimeout(options))
-            fn(statement, options)
-        }
-        finally {
-            statement.close()
-        }
-    }
 }
 
 
@@ -330,6 +259,7 @@ case class JdbcQueryRelation(
 class JdbcQueryRelationSpec extends RelationSpec with PartitionedRelationSpec with SchemaRelationSpec {
     @JsonProperty(value = "connection", required = true) private var connection: ConnectionReferenceSpec = _
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map.empty
+    @JsonPropertyDescription("SQL query for the view definition. This has to be specified in database specific SQL syntax.")
     @JsonProperty(value = "query", required = true) private var query: String = ""
 
     /**

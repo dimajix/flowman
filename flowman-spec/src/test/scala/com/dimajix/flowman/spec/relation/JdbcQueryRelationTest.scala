@@ -16,64 +16,37 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.sql.Connection
 import java.sql.Driver
 import java.sql.DriverManager
 import java.sql.Statement
 import java.util.Properties
 
 import scala.collection.JavaConverters._
-import scala.util.control.NonFatal
 
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.execution.datasources.jdbc.DriverRegistry
 import org.apache.spark.sql.execution.datasources.jdbc.DriverWrapper
-import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.functions.expr
-import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.types.StructField
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.common.No
 import com.dimajix.common.Yes
-import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
-import com.dimajix.flowman.catalog.TableIndex
-import com.dimajix.flowman.catalog.TableType
-import com.dimajix.flowman.execution.DeleteClause
-import com.dimajix.flowman.execution.InsertClause
-import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
-import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.execution.UpdateClause
-import com.dimajix.flowman.jdbc.JdbcUtils
-import com.dimajix.flowman.jdbc.SqlDialects
 import com.dimajix.flowman.model.ConnectionIdentifier
 import com.dimajix.flowman.model.ConnectionReference
 import com.dimajix.flowman.model.Module
-import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
-import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.ValueConnectionReference
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.schema.InlineSchema
-import com.dimajix.flowman.types.DateType
-import com.dimajix.flowman.types.DoubleType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FloatType
 import com.dimajix.flowman.types.IntegerType
-import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StringType
-import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.types.VarcharType
-import com.dimajix.spark.sql.DataFrameBuilder
-import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -133,6 +106,9 @@ class JdbcQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = relationSpec.instantiate(context)
         relation.name should be ("some_relation")
+        relation.provides should be (Set())
+        relation.requires should be (Set(ResourceIdentifier.ofJdbcTable("some_table", None)))
+        relation.resources() should be (Set(ResourceIdentifier.ofJdbcQuery("SELECT * FROM some_table")))
         relation.schema should be (Some(InlineSchema(
                 Schema.Properties(context, name="embedded", kind="inline"),
                 fields = Seq(
@@ -199,7 +175,7 @@ class JdbcQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             .withColumnRenamed("_2", "int_col")
 
         relation_t1.provides should be (Set())
-        relation_t1.requires should be (Set())
+        relation_t1.requires should be (Set(ResourceIdentifier.ofJdbcTable("lala_004", None)))
         relation_t1.resources() should be (Set(ResourceIdentifier.ofJdbcQuery("SELECT * FROM lala_004")))
 
         // == Create =================================================================================================
@@ -223,27 +199,5 @@ class JdbcQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ================================================================================================
         relation_t0.destroy(execution)
-    }
-
-    private def withConnection[T](url:String, table:String)(fn:(Connection,JDBCOptions) => T) : T = {
-        val props = Map(
-            JDBCOptions.JDBC_URL -> url,
-            JDBCOptions.JDBC_DRIVER_CLASS -> "org.apache.derby.jdbc.EmbeddedDriver"
-        )
-
-        val options = new JDBCOptions(url, table, props)
-        val conn = try {
-            JdbcUtils.createConnection(options)
-        } catch {
-            case NonFatal(e) =>
-                throw e
-        }
-
-        try {
-            fn(conn, options)
-        }
-        finally {
-            conn.close()
-        }
     }
 }

@@ -66,17 +66,17 @@ class DerbyJdbcTest extends AnyFlatSpec with Matchers with LocalTempDir {
         JdbcUtils.createTable(conn, table1, options)
         JdbcUtils.tableExists(conn, table1.identifier, options) should be (true)
 
-        JdbcUtils.getTable(conn, table1.identifier, options) should be (table1)
+        JdbcUtils.getTableOrView(conn, table1.identifier, options) should be (table1)
 
         //==== DROP INDEX ============================================================================================
         val table2 = table1.copy(indexes = Seq.empty)
         JdbcUtils.dropIndex(conn, table1.identifier, "table_001_idx1", options)
-        JdbcUtils.getTable(conn, table1.identifier, options) should be (table2)
+        JdbcUtils.getTableOrView(conn, table1.identifier, options) should be (table2)
 
         //==== CREATE INDEX ============================================================================================
         val table3 = table2.copy(indexes = Seq(TableIndex("table_001_idx1", Seq("str_field", "Id"))))
         JdbcUtils.createIndex(conn, table3.identifier, table3.indexes.head, options)
-        JdbcUtils.getTable(conn, table3.identifier, options) should be (table3)
+        JdbcUtils.getTableOrView(conn, table3.identifier, options) should be (table3)
 
         //==== DROP ==================================================================================================
         JdbcUtils.dropTable(conn, table1.identifier, options)

@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
+import com.dimajix.common.text.TimeFormatter
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.AbstractContext.Builder
 import com.dimajix.flowman.history.StateStore
@@ -81,17 +82,17 @@ private[execution] sealed class RunnerImpl {
         val duration = result.duration
         result.status match {
             case Status.SUCCESS =>
-                logger.info(green(s"Successfully finished phase '$phase' for target '${target.identifier}' in ${fmt(duration)}"))
+                logger.info(green(s"Successfully finished phase '$phase' for target '${target.identifier}' in ${TimeFormatter.toString(duration)}"))
             case Status.SUCCESS_WITH_ERRORS =>
-                logger.warn(yellow(s"Successfully finished phase '$phase' for target '${target.identifier}' with errors  in ${fmt(duration)}"))
+                logger.warn(yellow(s"Successfully finished phase '$phase' for target '${target.identifier}' with errors  in ${TimeFormatter.toString(duration)}"))
             case Status.SKIPPED =>
                 logger.info(green(s"Skipped phase '$phase' for target '${target.identifier}'"))
             case Status.FAILED if result.exception.nonEmpty =>
-                logger.error(red(s"Failed phase '$phase' for target '${target.identifier}'  after ${fmt(duration)} with exception: "), result.exception.get)
+                logger.error(red(s"Failed phase '$phase' for target '${target.identifier}'  after ${TimeFormatter.toString(duration)} with exception: "), result.exception.get)
             case Status.FAILED =>
-                logger.error(red(s"Failed phase '$phase' for target '${target.identifier}' after ${fmt(duration)}"))
+                logger.error(red(s"Failed phase '$phase' for target '${target.identifier}' after ${TimeFormatter.toString(duration)}"))
             case Status.ABORTED =>
-                logger.error(red(s"Aborted phase '$phase' for target '${target.identifier}' after ${fmt(duration)}"))
+                logger.error(red(s"Aborted phase '$phase' for target '${target.identifier}' after ${TimeFormatter.toString(duration)}"))
             case status =>
                 logger.warn(yellow(s"Finished '$phase' for target '${target.identifier}' with unknown status ${status.upper}"))
         }
@@ -151,7 +152,7 @@ private[execution] sealed class RunnerImpl {
         logger.info(sep)
         logger.info(msg)
         logger.info(sep)
-        logger.info(s"Total time: ${fmt(duration)}")
+        logger.info(s"Total time: ${TimeFormatter.toString(duration)}")
         logger.info(s"Finished at: ${endTime.atZone(ZoneId.systemDefault())}")
         logger.info(sep)
     }
@@ -164,7 +165,7 @@ private[execution] sealed class RunnerImpl {
             logger.info("")
             for (child <- result.children) {
                 val name = child.identifier.toString
-                val status = s"${this.status(child.status)} [${StringUtils.leftPad(fmt(child.duration), 10)}]"
+                val status = s"${this.status(child.status)} [${StringUtils.leftPad(TimeFormatter.toString(child.duration), 10)}]"
                 val dots = StringUtils.repeat('.', lineSize - child.status.upper.length - name.length - 15)
                 logger.info(s"$name $dots $status")
             }
@@ -181,7 +182,7 @@ private[execution] sealed class RunnerImpl {
             logger.info("")
             for (child <- result.children) {
                 val name = s"Phase ${child.phase.upper}"
-                val status = s"${this.status(child.status)} [${StringUtils.leftPad(fmt(child.duration), 10)}]"
+                val status = s"${this.status(child.status)} [${StringUtils.leftPad(TimeFormatter.toString(child.duration), 10)}]"
                 val dots = StringUtils.repeat('.', lineSize - child.status.upper.length - name.length - 15)
                 logger.info(s"$name $dots $status")
             }
@@ -195,22 +196,6 @@ private[execution] sealed class RunnerImpl {
             case Status.SUCCESS_WITH_ERRORS|Status.RUNNING => boldYellow(status.upper)
             case Status.FAILED|Status.ABORTED => boldRed(status.upper)
             case _ => boldRed(status.upper)
-        }
-    }
-
-    private def fmt(duration:Duration) : String = {
-        if (duration.getSeconds >= 60*60) {
-            val hours = duration.toHours
-            val minutes = duration.toMinutes % 60L
-            f"$hours:$minutes%02d h"
-        }
-        else if (duration.getSeconds >= 60) {
-            val minutes = duration.toMinutes
-            val seconds = duration.getSeconds % 60L
-            f"$minutes:$seconds%02d min"
-        }
-        else {
-            s"${duration.toMillis / 1000.0} s"
         }
     }
 }

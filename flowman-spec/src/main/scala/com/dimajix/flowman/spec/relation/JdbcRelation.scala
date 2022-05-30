@@ -16,6 +16,8 @@
 package com.dimajix.flowman.spec.relation
 
 import java.sql.Statement
+import java.time.Duration
+import java.time.Instant
 
 import scala.collection.mutable
 import scala.util.control.NonFatal
@@ -24,6 +26,7 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.text.TimeFormatter
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Execution
@@ -87,7 +90,11 @@ abstract class JdbcRelation(
     }
 
     protected def withTransaction[T](con:java.sql.Connection)(fn: => T) : T = {
-        JdbcUtils.withTransaction(con)(fn)
+        val startTime = Instant.now()
+        val result = JdbcUtils.withTransaction(con)(fn)
+        val duration = Duration.between(Instant.now(), startTime)
+        logger.info(s"Overall JDBC transaction took ${TimeFormatter.toString(duration)}")
+        result
     }
 
     protected def withStatement[T](fn:(Statement,JDBCOptions) => T) : T = {

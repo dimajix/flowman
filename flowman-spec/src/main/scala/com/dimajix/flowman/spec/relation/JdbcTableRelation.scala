@@ -19,10 +19,8 @@ package com.dimajix.flowman.spec.relation
 import java.sql.SQLInvalidAuthorizationSpecException
 import java.sql.SQLNonTransientConnectionException
 import java.sql.SQLNonTransientException
-import java.sql.Statement
 import java.util.Locale
 
-import scala.collection.mutable
 import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -35,8 +33,6 @@ import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.StructType
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
@@ -59,20 +55,16 @@ import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialects
-import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
-import com.dimajix.flowman.model.PartitionedRelation
 import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
-import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.types.FieldValue
-import com.dimajix.flowman.types.SchemaUtils
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.{StructType => FlowmanStructType}
 

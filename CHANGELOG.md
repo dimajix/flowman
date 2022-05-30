@@ -6,6 +6,7 @@
 * github-186: Support output mode OVERWRITE_DYNAMIC for Delta relation
 * github-149: Support creating views in JDBC
 * github-190: Replace logo in documentation
+* github-188: Log detailed timing information when writing to JDBC target
 
 
 # Version 0.24.1 - 2022-04-28

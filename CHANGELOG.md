@@ -5,6 +5,7 @@
 * github-185: Missing _SUCCESS file when writing to dynamic partitions
 * github-186: Support output mode OVERWRITE_DYNAMIC for Delta relation
 * github-149: Support creating views in JDBC
+* github-190: Replace logo in documentation
 
 
 # Version 0.24.1 - 2022-04-28

@@ -305,7 +305,7 @@ object JdbcUtils {
                     rs.getString(1)
                 }
                 else {
-                    throw new NoSuchTableException(s"JDBC view '${table.unquotedString}' does not exist or is not a VIEW")
+                    throw new NoSuchTableException(table.database.getOrElse(""), table.table)
                 }
             }
         }

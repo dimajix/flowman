@@ -64,17 +64,8 @@ case class SqlServerRelation(
     }
 
     override protected def createConnectionProperties() : (String,Map[String,String]) = {
-        val connection = this.connection.value.asInstanceOf[JdbcConnection]
-        val props = mutable.Map[String,String]()
-        props.put(JDBCOptions.JDBC_URL, connection.url)
-        props.put(JDBCOptions.JDBC_DRIVER_CLASS, "com.microsoft.sqlserver.jdbc.SQLServerDriver")
-        connection.username.foreach(props.put("user", _))
-        connection.password.foreach(props.put("password", _))
-
-        connection.properties.foreach(kv => props.put(kv._1, kv._2))
-        properties.foreach(kv => props.put(kv._1, kv._2))
-
-        (connection.url,props.toMap)
+        val (url, props) = super.createConnectionProperties()
+        (url, props + (JDBCOptions.JDBC_DRIVER_CLASS -> "com.microsoft.sqlserver.jdbc.SQLServerDriver"))
     }
 }
 

@@ -1,12 +1,12 @@
 # Version 0.25.0
 
 * github-184: Only read in *.yml / *.yaml files in module loader
-* github-183: Support storing SQL in external file in hiveView
+* github-183: Support storing SQL in external file in `hiveView`
 * github-185: Missing _SUCCESS file when writing to dynamic partitions
-* github-186: Support output mode OVERWRITE_DYNAMIC for Delta relation
-* github-149: Support creating views in JDBC
+* github-186: Support output mode `OVERWRITE_DYNAMIC` for Delta relation
+* github-149: Support creating views in JDBC with new `jdbcView` relation
 * github-190: Replace logo in documentation
-* github-188: Log detailed timing information when writing to JDBC target
+* github-188: Log detailed timing information when writing to JDBC relation
 * github-191: Add user provided description to quality checks
 * github-192: Provide example queries for JDBC metric sink
 

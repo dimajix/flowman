@@ -34,7 +34,7 @@ keep all aspects (like transformations and schema information) in a single place
 ## Documentation
 
 You can find the official homepage at [Flowman.io](https://flowman.io)
- and a comprehensive documentation at [Read the Docs](https://flowman.readthedocs.io/en/latest/). 
+ and a comprehensive documentation at [Read the Docs](https://docs.flowman.io). 
 
 
 # Installation

@@ -89,6 +89,18 @@ abstract class SqlDialect {
      */
     def supportsChange(table:TableIdentifier, change:TableChange) : Boolean
 
+    /**
+     * Returns true if the SQL database supports retrieval of the exact view definition
+     * @return
+     */
+    def supportsExactViewRetrieval : Boolean
+
+    /**
+     * Returns true if a view definition can be changed
+     * @return
+     */
+    def supportsAlterView : Boolean
+
     def statement : SqlStatements
 
     def expr : SqlExpressions

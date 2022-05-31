@@ -17,6 +17,7 @@
 package com.dimajix.flowman.jdbc
 
 import java.sql.Types
+import java.util.Locale
 
 import org.apache.spark.sql.jdbc.JdbcType
 
@@ -66,7 +67,6 @@ object PostgresDialect extends BaseDialect {
         case _ => super.getJdbcType(dt)
     }
 
-
     /**
      * Quotes the identifier. This is used to put quotes around the identifier in case the column
      * name is a reserved keyword, or in case it contains characters that require quotes (e.g. space).
@@ -74,6 +74,12 @@ object PostgresDialect extends BaseDialect {
     override def quoteIdentifier(colName: String): String = {
         s"""`$colName`"""
     }
+
+    /**
+     * Returns true if a view definition can be changed
+     * @return
+     */
+    override def supportsAlterView : Boolean = true
 
     override def statement : SqlStatements = Statements
 }
@@ -89,6 +95,18 @@ class PostgresStatements(dialect: BaseDialect) extends BaseStatements(dialect)  
      */
     override def tableExists(table: TableIdentifier): String =
         s"SELECT 1 FROM ${dialect.quote(table)} LIMIT 1"
+
+
+    override def getViewDefinition(table: TableIdentifier): String = {
+        s"""
+           |SELECT
+           |    view_definition
+           |FROM information_schema.views
+           |WHERE table_catalog = current_catalog
+           |  AND table_schema = ${table.space.headOption.map(s => dialect.literal(s.toUpperCase(Locale.ROOT))).getOrElse("current_schema")}
+           |  AND table_name = ${dialect.literal(table.table.toUpperCase(Locale.ROOT))}
+           |""".stripMargin
+    }
 
     override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean): String =
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} TYPE $newDataType"

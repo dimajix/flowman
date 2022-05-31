@@ -57,6 +57,7 @@ relations:
       checks:
         # Check that each usaf/wban combination is a foreign key refering to the "stations" relation          
         kind: foreignKey
+        description: "The measurement has to refer to an existing station"
         relation: stations
         columns:
           - usaf
@@ -86,6 +87,9 @@ Flowman implements a couple of different check types on a per column basis.
 One simple but yet important test is to check if a column does not contain any `NULL` values
 
 * `kind` **(mandatory)** *(string)*: `notNull`
+* `description` **(optional)** *(string)*:
+An optional free text description to be shown in the documentation. This is a good place to provide the business
+meaning of the data quality check.
 * `filter` **(optional)** *(string)*:
 Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
 to exclude records with known quality issues.
@@ -97,6 +101,9 @@ Another important test is to check for unique values in a column. Note that this
 so in many cases you might want to specify both `notNUll` and `unique`.
 
 * `kind` **(mandatory)** *(string)*: `unique`
+* `description` **(optional)** *(string)*:
+  An optional free text description to be shown in the documentation. This is a good place to provide the business
+  meaning of the data quality check.
 * `filter` **(optional)** *(string)*:
   Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
   to exclude records with known quality issues.
@@ -108,6 +115,9 @@ A `foreignKey` column check is used to ensure that all not-`NULL` values refer t
 mapping or relation
 
 * `kind` **(mandatory)** *(string)*: `foreignKey`
+* `description` **(optional)** *(string)*:
+  An optional free text description to be shown in the documentation. This is a good place to provide the business
+  meaning of the data quality check.
 * `filter` **(optional)** *(string)*:
   Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
   to exclude records with known quality issues.
@@ -125,6 +135,9 @@ In order to test if a column only contains specific values, you can use the `val
 exclude records with `NULL` values in the column, so in many cases you might want to specify both `notNUll` and `values`.
 
 * `kind` **(mandatory)** *(string)*: `values`
+* `description` **(optional)** *(string)*:
+  An optional free text description to be shown in the documentation. This is a good place to provide the business
+  meaning of the data quality check.
 * `values` **(mandatory)** *(list:string)*: List of admissible values
 * `filter` **(optional)** *(string)*:
   Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
@@ -138,6 +151,9 @@ the `range` test. Note that this test will exclude records with `NULL` values in
 want to specify both `notNUll` and `range`.
 
 * `kind` **(mandatory)** *(string)*: `range`
+* `description` **(optional)** *(string)*:
+  An optional free text description to be shown in the documentation. This is a good place to provide the business
+  meaning of the data quality check.
 * `lower` **(mandatory)** *(string)*: Lower value (inclusive)
 * `upper` **(mandatory)** *(string)*: Upper value (inclusive)
 * `filter` **(optional)** *(string)*:
@@ -152,6 +168,9 @@ the `length` test. Note that this test will exclude records with `NULL` values i
 want to specify both `notNUll` and `range`.
 
 * `kind` **(mandatory)** *(string)*: `length`
+* `description` **(optional)** *(string)*:
+  An optional free text description to be shown in the documentation. This is a good place to provide the business
+  meaning of the data quality check.
 * `minimum` **(optional)** *(int)*: Minimum length (inclusive)
 * `maximum` **(optional)** *(int)*: Maximum length (inclusive)
 * `length` **(optional)** *(int)*: Exact length (will set minimum and maximum)
@@ -166,6 +185,9 @@ A very flexible test is provided with the SQL expression test. This test allows 
 (which may also use different columns), which should evaluate to `TRUE` for all records passing the test.
 
 * `kind` **(mandatory)** *(string)*: `expression`
+* `description` **(optional)** *(string)*:
+  An optional free text description to be shown in the documentation. This is a good place to provide the business
+  meaning of the data quality check.
 * `expression` **(mandatory)** *(string)*: Boolean SQL Expression
 * `filter` **(optional)** *(string)*:
   Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
@@ -181,6 +203,9 @@ A `primaryKey` column check is used to ensure that all not-`NULL` values refer t
 mapping or relation
 
 * `kind` **(mandatory)** *(string)*: `primaryKey`
+* `description` **(optional)** *(string)*:
+  An optional free text description to be shown in the documentation. This is a good place to provide the business
+  meaning of the data quality check.
 * `filter` **(optional)** *(string)*:
   Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
   to exclude records with known quality issues.
@@ -192,6 +217,9 @@ A `foreignKey` column check is used to ensure that all not-`NULL` values refer t
 mapping or relation
 
 * `kind` **(mandatory)** *(string)*: `foreignKey`
+* `description` **(optional)** *(string)*:
+  An optional free text description to be shown in the documentation. This is a good place to provide the business
+  meaning of the data quality check.
 * `filter` **(optional)** *(string)*:
   Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
   to exclude records with known quality issues.
@@ -208,6 +236,9 @@ A very flexible test is provided with the SQL expression test. This test allows 
 (which may also use different columns), which should evaluate to `TRUE` for all records passing the test.
 
 * `kind` **(mandatory)** *(string)*: `expression`
+* `description` **(optional)** *(string)*:
+  An optional free text description to be shown in the documentation. This is a good place to provide the business
+  meaning of the data quality check.
 * `expression` **(mandatory)** *(string)*: Boolean SQL Expression
 * `filter` **(optional)** *(string)*:
   Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful
@@ -269,6 +300,9 @@ query: |
 
 
 * `kind` **(mandatory)** *(string)*: `sql`
+* `description` **(optional)** *(string)*:
+  An optional free text description to be shown in the documentation. This is a good place to provide the business
+  meaning of the data quality check.
 * `query` **(mandatory)** *(string)*: Boolean SQL Expression
 * `filter` **(optional)** *(string)*:
   Optional SQL expression applied as a filter to select only a subset of all records for quality check. This is useful

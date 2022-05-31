@@ -44,6 +44,19 @@ abstract class SqlStatements {
     def createTable(table: TableDefinition): String
 
     /**
+     * The SQL query for creating a new table
+     * @param table
+     * @return
+     */
+    def createView(table: TableIdentifier, sql:String): String
+
+    def alterView(table: TableIdentifier, sql:String): String
+
+    def dropView(table: TableIdentifier): String
+
+    def getViewDefinition(table: TableIdentifier) : String
+
+    /**
      * Get the SQL query that should be used to find if the given table exists. Dialects can
      * override this method to return a query that works best in a particular database.
      * @param table  The name of the table.

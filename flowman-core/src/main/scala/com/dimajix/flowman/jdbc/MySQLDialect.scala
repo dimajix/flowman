@@ -17,6 +17,7 @@
 package com.dimajix.flowman.jdbc
 
 import java.sql.Types
+import java.util.Locale
 
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.types.FieldType
@@ -43,11 +44,27 @@ object MySQLDialect extends BaseDialect {
         }
     }
 
+    /**
+     * Returns true if a view definition can be changed
+     * @return
+     */
+    override def supportsAlterView : Boolean = true
+
     override def statement : SqlStatements = Statements
 }
 
 
 class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
+    override def getViewDefinition(table: TableIdentifier): String = {
+        s"""
+           |SELECT
+           |    VIEW_DEFINITION
+           |FROM information_schema.VIEWS
+           |WHERE lower(TABLE_SCHEMA) = ${table.space.headOption.map(s => dialect.literal(s.toUpperCase(Locale.ROOT))).getOrElse("lower(database())")}
+           |    AND lower(TABLE_NAME) = ${dialect.literal(table.table.toUpperCase(Locale.ROOT))}
+           |""".stripMargin
+    }
+
     override def firstRow(table: TableIdentifier, condition:String) : String = {
         if (condition.isEmpty)
             s"SELECT * FROM ${dialect.quote(table)} FETCH FIRST ROW ONLY"

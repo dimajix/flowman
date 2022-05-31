@@ -23,6 +23,7 @@ relations:
     mapping: transaction_latest
 ```
 
+### Embedded SQL
 As a possibly convenient alternative to create a Hive view from a mapping, you can of course also directly specify
 an SQL. Note that in contrast to the [SQL mapping](../mapping/sql.md), all table identifiers used in the SQL actually
 refer to Hive tables and not to Flowman mappings. The SQL will be passed as is to Hive.
@@ -46,6 +47,29 @@ relations:
     "
 ```
 
+### External SQL
+You can also specify the name of a external file containing the sql by using the `file` propery instead as follows:
+```yaml
+relations:
+  transaction_latest:
+    kind: hiveView
+    database: banking
+    view: transaction_latest
+    file: "${project.basedir}/sql/transaction_latest.sql"
+```
+And then the file `transaction_latest.sql` has to contain the query:
+```sql
+WITH tx AS (
+  SELECT
+    *,
+    row_number() OVER(PARTITION BY transaction_id ORDER BY event_time) AS rank
+  FROM transaction
+)
+SELECT
+  *
+FROM tx
+WHERE rank = 1
+```
 
 ## Fields
 * `kind` **(mandatory)** *(string)*: `hiveView`
@@ -61,11 +85,14 @@ relations:
  Contains the name of the Hive view.
 
 * `sql` **(optional)** *(string)* *(default: empty)*:
- Contains the SQL code of the Hive view. Cannot be used together with `mapping`.
+ Contains the SQL code of the Hive view. Cannot be used together with `mapping` or `file`.
+
+* `file` **(optional)** *(string)* *(default: empty)*:
+  Contains the name of a file containing SQL code of the Hive view. Cannot be used together with `mapping` or `sql`.
 
 * `mapping` **(optional)** *(string)* *(default: empty)*:
  Specifies the name of a mapping, which should be translated into SQL and stored in the Hive view. Cannot be used
- together with `sql`.
+ together with `sql` or `file`.
 
 
 ## Automatic Migrations

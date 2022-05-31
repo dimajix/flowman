@@ -96,6 +96,10 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType)
         ))
+        relation.describe(execution) should be(ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType)
+        )))
 
         // == Create ===================================================================
         relation.exists(execution) should be (No)

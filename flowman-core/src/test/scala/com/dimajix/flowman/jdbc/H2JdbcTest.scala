@@ -77,17 +77,17 @@ class H2JdbcTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         JdbcUtils.createTable(conn, table, options)
         JdbcUtils.tableExists(conn, table.identifier, options) should be (true)
 
-        JdbcUtils.getTable(conn, table.identifier, options).normalize() should be (table.normalize())
+        JdbcUtils.getTableOrView(conn, table.identifier, options).normalize() should be (table.normalize())
 
         //==== DROP INDEX ============================================================================================
         val table2 = table.copy(indexes = Seq.empty)
         JdbcUtils.dropIndex(conn, table.identifier, "table_001_idx1", options)
-        JdbcUtils.getTable(conn, table.identifier, options).normalize() should be (table2.normalize())
+        JdbcUtils.getTableOrView(conn, table.identifier, options).normalize() should be (table2.normalize())
 
         //==== CREATE INDEX ============================================================================================
         val table3 = table2.copy(indexes = Seq(TableIndex("table_001_idx1", Seq("str_field", "Id"))))
         JdbcUtils.createIndex(conn, table3.identifier, table3.indexes.head, options)
-        JdbcUtils.getTable(conn, table3.identifier, options).normalize() should be (table3.normalize())
+        JdbcUtils.getTableOrView(conn, table3.identifier, options).normalize() should be (table3.normalize())
 
         //==== DROP ==================================================================================================
         JdbcUtils.dropTable(conn, table.identifier, options)

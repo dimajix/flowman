@@ -32,6 +32,7 @@ import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.SetIgnoreCase
+import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
@@ -46,6 +47,7 @@ import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionedRelation
 import com.dimajix.flowman.spark.sql.delta.AlterTableChangeColumnDeltaCommand
@@ -57,6 +59,23 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
 
     protected def deltaCatalogTable(execution: Execution) : DeltaTableV2
     protected def deltaTable(execution: Execution) : DeltaTable
+
+    protected def replaceWhere(df: DataFrame, partitionSpec: PartitionSpec, mode: OutputMode) : String = {
+        if (partitionSpec.nonEmpty) {
+            partitionSpec.predicate
+        }
+        else if (partitions.nonEmpty && mode == OutputMode.OVERWRITE_DYNAMIC) {
+            val pcols = partitions.map(_.name)
+            val parts = df.select(pcols.map(c => df(c)): _*)
+                .distinct()
+                .collect()
+                .map(_.toSeq.map(HiveDialect.literal).mkString("(", ",", ")"))
+            pcols.mkString("(", ",", ")") + s" IN (${parts.mkString(",")})"
+        }
+        else {
+            ""
+        }
+    }
 
     /**
      * Performs a merge operation. Either you need to specify a [[mergeKey]], or the relation needs to provide some

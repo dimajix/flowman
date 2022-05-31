@@ -62,7 +62,7 @@ The schema is still optional in this case, but it will help [mocking](mock.md) t
    
  * `schema` **(optional)** *(type: schema)* *(default: empty)*: 
  Explicitly specifies the schema of the JDBC source. Alternatively Flowman will automatically
- try to infer the schema.
+ try to infer the schema from an existing table.
 
  * `primaryKey`  **(optional)** *(type: list)* *(default: empty)*:
 List of columns which form the primary key. This will be used when Flowman creates the table, and this will also be used
@@ -85,7 +85,7 @@ as the fallback for merge/upsert operations, when no `mergeKey` and no explicit 
  will be used or the one specified in the connection.
 
  * `table` **(optional)** *(type: string)*:
- Specifies the name of the table in the relational database.
+ Specifies the name of the table (or view) in the relational database.
 
  * `stagingTable` **(optional)** *(type: string)*:
    Specifies the name of an optional staging table in the relational database. This table will be used as an 
@@ -110,6 +110,7 @@ and `REPLACE` (those can be set via the global config variable `flowman.default.
 see [configuration](../../setup/config.md) for more details).
 
 The migration strategy `ALTER` supports the following alterations for JDBC relations:
+* Migrating from a VIEW to a TABLE
 * Changing nullability
 * Adding new columns
 * Dropping columns

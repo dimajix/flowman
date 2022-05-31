@@ -216,6 +216,19 @@ abstract class BaseDialect extends SqlDialect {
         }
     }
 
+    /**
+     * Returns true if the SQL database supports retrieval of the exact view definition
+     *
+     * @return
+     */
+    override def supportsExactViewRetrieval: Boolean = false
+
+    /**
+     * Returns true if a view definition can be changed
+     * @return
+     */
+    override def supportsAlterView : Boolean = false
+
     override def statement : SqlStatements = Statements
 
     override def expr : SqlExpressions = Expressions
@@ -255,8 +268,35 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
     }
 
     /**
+     * The SQL query for creating a new table
+     *
+     * @param table
+     * @return
+     */
+    override def createView(table: TableIdentifier, sql: String): String =  {
+        s"CREATE VIEW ${dialect.quote(table)} AS $sql"
+    }
+
+    /**
+     * The SQL query for creating a new table
+     *
+     * @param table
+     * @return
+     */
+    override def alterView(table: TableIdentifier, sql: String): String =  {
+        s"CREATE OR REPLACE VIEW ${dialect.quote(table)} AS $sql"
+    }
+
+    override def dropView(table: TableIdentifier): String = {
+        s"DROP VIEW ${dialect.quote(table)}"
+    }
+
+    override def getViewDefinition(table: TableIdentifier): String = ???
+
+    /**
      * Get the SQL query that should be used to find if the given table exists. Dialects can
      * override this method to return a query that works best in a particular database.
+     *
      * @param table  The name of the table.
      * @return The SQL query to use for checking the table.
      */

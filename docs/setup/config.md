@@ -8,6 +8,8 @@ specification (see [module documentation](../spec/module.md)) or in the namespac
 
 ## List of Configuration Properties
 
+### General Properties
+
 - `flowman.spark.enableHive` *(type: boolean)* *(default:true)*
 If set to `false`, then Hive support will be disabled in Flowman.
 
@@ -30,6 +32,9 @@ variable `FLOWMAN_PLUGIN_DIR` or `FLOWMAN_HOME`.
   If enabled (i.e. set to `true`), then Flowman will perform a `COMPUTE STATS` within the 
   [Impala Catalog plugin](../plugins/impala.md) whenever a Hive table is updated. The `REFRESH` statements will always
   be executed by the plugin.
+
+
+### Execution related Properties
 
 - `flowman.execution.target.forceDirty` *(type: boolean)* *(default:false)* (since Flowman 0.14.0)
 When enabled (i.e. set to `true`), then Flowman will treat all targets as being dirty. Otherwise, Flowman will check
@@ -72,6 +77,9 @@ Turn on/off caching of schema information of relations. Caching this information
 Turns on automatic eager caching of Spark jobs that reference a single cached DataFrame multiple times. This is to
 avoid parallel computation of the same partitions, which can be seen in some scenarios.
 
+
+### Relation related Properties
+
 - `flowman.default.relation.migrationPolicy` *(type: string)* *(default:`RELAXED`)* (since Flowman 0.18.0)
 Sets the default policy when to migrate tables. Possible values are:
   - *`STRICT`*: A migration will be initiated, whenever the physical table definition does not match the required
@@ -108,6 +116,9 @@ Sets the strategy to use how tables should be migrated. Possible values are:
   Defines how Flowman should handle a mismatch of columns of records being written to a relation and the relations
   actual defined columns. Per default Flowman will add/remove columns to/from records such that they match the current
   physical layout. See [relations](../spec/relation/index.md) for possible options and more details.
+
+
+### Target related Properties
 
 - `flowman.default.target.verifyPolicy` *(type: string)* *(default:`EMPTY_AS_FAILURE`)* (since Flowman 0.22.0)
 Defines the default target policy that is used during the `VERIFY` execution phase. The setting controls how Flowman

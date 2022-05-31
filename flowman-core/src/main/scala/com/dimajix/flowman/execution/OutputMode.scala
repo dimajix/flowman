@@ -56,7 +56,7 @@ object OutputMode {
     def ofString(mode:String) : OutputMode = {
         mode.toLowerCase(Locale.ROOT) match {
             case "overwrite" | "complete" => OutputMode.OVERWRITE
-            case "overwrite_dynamic" | "dynamic_overwrite" => OutputMode.OVERWRITE_DYNAMIC
+            case "overwrite_dynamic" | "dynamic_overwrite" | "dynamicoverwrite" | "overwritedynamic" => OutputMode.OVERWRITE_DYNAMIC
             case "append" => OutputMode.APPEND
             case "update"|"upsert" => OutputMode.UPDATE
             case "ignore" | "ignore_if_exists" | "ignoreifexists" => OutputMode.IGNORE_IF_EXISTS

@@ -125,3 +125,9 @@ Jackson jsonSchema Generator
     * license/LICENSE-schema-generator.txt (MIT License)
   * HOMEPAGE
     * https://github.com/mbknor/mbknor-jackson-jsonSchema
+
+JSqlParser
+  * LICENSE
+    * license/LICENSE-jsqlparswer.txt (Apache License)
+  * HOMEPAGE
+    * https://github.com/JSQLParser/JSqlParser

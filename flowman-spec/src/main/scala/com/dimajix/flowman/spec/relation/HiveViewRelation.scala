@@ -16,7 +16,13 @@
 
 package com.dimajix.flowman.spec.relation
 
+import java.io.StringWriter
+import java.nio.charset.Charset
+
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonPropertyDescription
+import org.apache.commons.io.IOUtils
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.slf4j.LoggerFactory
@@ -48,7 +54,8 @@ case class HiveViewRelation(
     override val table: TableIdentifier,
     override val partitions: Seq[PartitionField] = Seq(),
     sql: Option[String] = None,
-    mapping: Option[MappingOutputIdentifier] = None
+    mapping: Option[MappingOutputIdentifier] = None,
+    file: Option[Path] = None
 ) extends HiveRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveViewRelation])
 
@@ -63,7 +70,7 @@ case class HiveViewRelation(
         mapping.map(m => MappingUtils.requires(context, m.mapping))
             .orElse(
                 // Only return Hive Table Partitions!
-                sql.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHivePartition(t, Map.empty[String,Any]).asInstanceOf[ResourceIdentifier]))
+                statement.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHivePartition(t, Map.empty[String,Any]).asInstanceOf[ResourceIdentifier]))
             )
             .getOrElse(Set())
     }
@@ -93,7 +100,7 @@ case class HiveViewRelation(
                     }
             }
             .orElse {
-                sql.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHiveTable(t)))
+                statement.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHiveTable(t)))
             }
             .getOrElse(Set())
         db ++ other
@@ -149,7 +156,7 @@ case class HiveViewRelation(
      * @param partition
      * @return
      */
-    override def loaded(execution: Execution, partition: Map[String, SingleValue]): Trilean =  {
+    override def loaded(execution: Execution, partition: Map[String, SingleValue]): Trilean = {
         exists(execution)
     }
 
@@ -159,10 +166,10 @@ case class HiveViewRelation(
      * @param execution
      */
     override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
-        val select = getSelect(execution)
         val catalog = execution.catalog
         if (!ifNotExists || !catalog.tableExists(table)) {
             logger.info(s"Creating Hive view relation '$identifier' with VIEW $table")
+            val select = getSelect(execution)
             catalog.createView(table, select, ifNotExists)
             provides.foreach(execution.refreshResource)
         }
@@ -235,12 +242,33 @@ case class HiveViewRelation(
     }
 
     private def getSelect(executor: Execution) : String = {
-        val select = sql.orElse(mapping.map(id => buildMappingSql(executor, id)))
-            .getOrElse(throw new IllegalArgumentException("HiveView either requires explicit SQL SELECT statement or mapping"))
+        val select = statement
+            .orElse (
+                mapping.map(id => buildMappingSql(executor, id))
+            )
+            .getOrElse(
+                throw new IllegalArgumentException("HiveView either requires explicit SQL SELECT statement or mapping")
+            )
 
         logger.debug(s"Hive SQL SELECT statement for VIEW $table: $select")
 
         select
+    }
+
+    private lazy val statement : Option[String] = {
+        sql
+            .orElse(file.map { f =>
+                val fs = context.fs
+                val input = fs.file(f).open()
+                try {
+                    val writer = new StringWriter()
+                    IOUtils.copy(input, writer, Charset.forName("UTF-8"))
+                    writer.toString
+                }
+                finally {
+                    input.close()
+                }
+            })
     }
 
     private def buildMappingSql(executor: Execution, output:MappingOutputIdentifier) : String = {
@@ -253,10 +281,15 @@ case class HiveViewRelation(
 
 
 class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
+    @JsonPropertyDescription("Name of the Hive database")
     @JsonProperty(value="database", required = false) private var database: Option[String] = None
+    @JsonPropertyDescription("Name of the Hive view")
     @JsonProperty(value="view", required = true) private var view: String = _
+    @JsonPropertyDescription("SQL query for the view definition. This has to be specified in Spark SQL syntax.")
     @JsonProperty(value="sql", required = false) private var sql: Option[String] = None
     @JsonProperty(value="mapping", required = false) private var mapping: Option[String] = None
+    @JsonPropertyDescription("Name of a file containing the SQL query for the view definition. This has to be specified in Spark SQL syntax.")
+    @JsonProperty(value="file", required=false) private var file:Option[String] = None
 
     /**
       * Creates the instance of the specified Relation with all variable interpolation being performed
@@ -269,7 +302,8 @@ class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
             TableIdentifier(context.evaluate(view), context.evaluate(database)),
             partitions.map(_.instantiate(context)),
             context.evaluate(sql),
-            context.evaluate(mapping).map(MappingOutputIdentifier.parse)
+            context.evaluate(mapping).map(MappingOutputIdentifier.parse),
+            context.evaluate(file).map(p => new Path(p))
         )
     }
 }

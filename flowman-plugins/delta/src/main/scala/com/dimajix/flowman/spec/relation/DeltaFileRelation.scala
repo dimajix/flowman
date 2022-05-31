@@ -54,6 +54,7 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.annotation.RelationType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.spark.sql.DataFrameUtils.withTempView
 
 
 case class DeltaFileRelation(
@@ -144,17 +145,16 @@ case class DeltaFileRelation(
 
         val extDf = applyOutputSchema(execution, addPartition(df, partition))
         mode match {
-            case OutputMode.OVERWRITE_DYNAMIC => throw new IllegalArgumentException(s"Output mode 'overwrite_dynamic' not supported by Delta file relation $identifier")
             case OutputMode.UPDATE => doUpdate(extDf, partitionSpec)
             case _ => doWrite(extDf, partitionSpec, mode)
         }
     }
     private def doWrite(df: DataFrame, partitionSpec: PartitionSpec, mode: OutputMode) : Unit = {
         val writer =
-            if (partitionSpec.nonEmpty) {
+            if (partitionSpec.nonEmpty || mode == OutputMode.OVERWRITE_DYNAMIC) {
                 df.write
                     .partitionBy(this.partitions.map(_.name):_*)
-                    .option("replaceWhere", partitionSpec.predicate)
+                    .option("replaceWhere", replaceWhere(df, partitionSpec, mode))
             }
             else {
                 df.write

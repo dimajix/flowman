@@ -77,6 +77,23 @@
         .dataType {
             font-family: monospace;
         }
+        .checkName {
+            font-family: monospace;
+        }
+        .sourceType {
+            font-family: monospace;
+        }
+        .sourceLocation {
+            font-family: monospace;
+            font-weight: bolder;
+        }
+        .inputKind {
+            font-family: monospace;
+        }
+        .inputReference {
+            font-family: monospace;
+            font-weight: bolder;
+        }
 
         div.indexBox {
             background-color: #D0E4F5;
@@ -131,9 +148,15 @@
 
         span.success {
             color: forestgreen;
+            font-weight: bold;
         }
         span.failure {
             color: orangered;
+            font-weight: bold;
+        }
+        span.description {
+            font-size: larger;
+            font-style: italic;
         }
 
         span.bubble {
@@ -149,8 +172,13 @@
 
 
 #macro(testStatus $check)
-#if(${check.success})<span class="success">#elseif(${check.failure})<span class="failure">#else<span>#end${check.status}</span>
+    #if(${check.success})<span class="success">#elseif(${check.failure})<span class="failure">#else<span>#end${check.status}</span>
 #end
+
+#macro(testTitle $check)
+    #if(${check.description})<span class="description">${check.description}</span><br/>#end<span class="checkName">${check.name}</span>
+#end
+
 
 #macro(schema $schema)
 <table class="blueTable">
@@ -185,7 +213,7 @@
                 <table class="columnChecks">
                 #foreach($check in ${column.checks})
                     <tr>
-                        <td>${check.name}</td>
+                        <td>#testTitle($check)</td>
                         <td>#testStatus($check)</td>
                         <td>#if(${check.result})${check.result.description}#end</td>
                     </tr>
@@ -210,7 +238,7 @@
     <tbody>
     #foreach($check in ${schema.checks})
     <tr>
-        <td>${check.name}</td>
+        <td>#testTitle($check)</td>
         <td>#testStatus($check)</td>
         <td>#if(${check.result})${check.result.description}#end</td>
     </tr>
@@ -226,11 +254,11 @@
     #foreach($input in ${refs})
         <tr>
         #if(${project.resolve($input)})
-            <td>${input.kind}</td>
-            <td><a href="#${input}">${project.resolve($input)}</a></td>
+            <td class="inputKind">[${input.kind}]</td>
+            <td class="inputReference"><a href="#${input}">${project.resolve($input)}</a></td>
         #else
-            <td>${input.kind}</td>
-            <td>${input}</td>
+            <td class="inputKind">[${input.kind}]</td>
+            <td class="inputReference">${input}</td>
         #end
         </tr>
     #end
@@ -241,8 +269,8 @@
     <table>
     #foreach($source in ${res})
         <tr>
-            <td>${source.category}</td>
-            <td>${source.name}</td>
+            <td class="sourceType">[${source.category}]</td>
+            <td class="sourceLocation">${source.name}</td>
         </tr>
     #end
     </table>

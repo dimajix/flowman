@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.relation
 
+import com.google.common.io.Resources
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
@@ -35,6 +37,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -82,7 +85,9 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         ResourceIdentifier.ofHiveTable("t0", Some("default"))
     ))
     relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("t0", Some("default"), Map())))
+    an[Exception] should be thrownBy(relation.describe(execution))
 
+    // == Create =================================================================================================
     relation.exists(execution) should be (No)
     relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
     relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
@@ -94,6 +99,14 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
     relation.loaded(execution, Map()) should be (Yes)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
 
+    // == Read ===================================================================================================
+    relation.describe(execution) should be (ftypes.StructType(Seq(
+        Field("str_col", ftypes.StringType),
+        Field("int_col", ftypes.IntegerType),
+        Field("t0_exclusive_col", ftypes.LongType)
+    )))
+
+    // == Destroy ================================================================================================
     relation.destroy(execution)
     relation.exists(execution) should be (No)
     relation.loaded(execution, Map()) should be (No)
@@ -195,6 +208,69 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
     context.getRelation(RelationIdentifier("t0")).destroy(execution)
     context.getRelation(RelationIdentifier("t1")).destroy(execution)
   }
+
+    it should "work with an external file" in {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: hiveTable
+              |    database: default
+              |    table: t0
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+              |        - name: t0_exclusive_col
+              |          type: long
+              |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+        val basedir = new Path(Resources.getResource(".").toURI)
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        context.getRelation(RelationIdentifier("t0")).create(execution)
+
+        val relation = HiveViewRelation(
+            Relation.Properties(context),
+            table = TableIdentifier("v0", Some("default")),
+            file = Some(new Path(basedir, "project/relation/some-view.sql"))
+        )
+
+        relation.provides should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
+        relation.requires should be (Set(
+            ResourceIdentifier.ofHiveDatabase("default"),
+            ResourceIdentifier.ofHiveTable("t0", Some("default"))
+        ))
+        relation.resources() should be (Set(
+            ResourceIdentifier.ofHivePartition("t0", Some("default"), Map())
+        ))
+
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation.create(execution)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
+        session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
+
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (false)
+
+        context.getRelation(RelationIdentifier("t0")).destroy(execution)
+    }
 
     it should "replace an existing Hive table with a Hive view" in {
         val spec =

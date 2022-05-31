@@ -15,6 +15,9 @@
  */
 
 package com.dimajix.flowman.jdbc
+import java.util.Locale
+
+import com.dimajix.flowman.catalog.TableIdentifier
 
 
 object H2Dialect extends BaseDialect {
@@ -30,9 +33,24 @@ object H2Dialect extends BaseDialect {
         s"""`$colName`"""
     }
 
+    /**
+     * Returns true if a view definition can be changed
+     * @return
+     */
+    override def supportsAlterView : Boolean = true
+
     override def statement : SqlStatements = Statements
 }
 
 
 class H2Statements(dialect: BaseDialect) extends BaseStatements(dialect)  {
+    override def getViewDefinition(table: TableIdentifier): String = {
+        s"""
+          |SELECT
+          |    VIEW_DEFINITION
+          |FROM INFORMATION_SCHEMA.VIEWS
+          |WHERE TABLE_SCHEMA = ${table.space.headOption.map(s => dialect.literal(s.toUpperCase(Locale.ROOT))).getOrElse("current_schema")}
+          |    AND TABLE_NAME = ${dialect.literal(table.table.toUpperCase(Locale.ROOT))}
+          |""".stripMargin
+    }
 }

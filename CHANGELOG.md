@@ -8,6 +8,7 @@
 * github-190: Replace logo in documentation
 * github-188: Log detailed timing information when writing to JDBC target
 * github-191: Add user provided description to quality checks
+* github-192: Provide example queries for JDBC metric sink
 
 
 # Version 0.24.1 - 2022-04-28

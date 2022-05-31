@@ -21,6 +21,7 @@ hooks:
     # Define common labels for all metrics
     labels:
       project: ${project.name}
+      phase: ${phase}
     metrics:
       # Collect everything
       - selector:

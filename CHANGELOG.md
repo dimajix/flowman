@@ -1,4 +1,4 @@
-# Version 0.25.0
+# Version 0.25.0 - 2022-05-31
 
 * github-184: Only read in *.yml / *.yaml files in module loader
 * github-183: Support storing SQL in external file in `hiveView`

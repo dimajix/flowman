@@ -52,6 +52,8 @@ object ColumnCheckSpec extends TypeRegistry[ColumnCheckSpec] {
     new JsonSubTypes.Type(name = "values", value = classOf[ValuesColumnCheckSpec])
 ))
 abstract class ColumnCheckSpec {
+    @JsonProperty(value="description", required=false) protected var description:Option[String] = None
+
     def instantiate(context: Context, parent:ColumnReference): ColumnCheck
 }
 
@@ -70,6 +72,7 @@ class NotNullColumnCheckSpec extends ColumnCheckSpec {
     override def instantiate(context: Context, parent:ColumnReference): NotNullColumnCheck =
         NotNullColumnCheck(
             Some(parent),
+            description = context.evaluate(description),
             filter = context.evaluate(filter)
         )
 }
@@ -79,6 +82,7 @@ class UniqueColumnCheckSpec extends ColumnCheckSpec {
     override def instantiate(context: Context, parent:ColumnReference): UniqueColumnCheck =
         UniqueColumnCheck(
             Some(parent),
+            description = context.evaluate(description),
             filter = context.evaluate(filter)
         )
 }
@@ -89,7 +93,7 @@ class RangeColumnCheckSpec extends ColumnCheckSpec {
 
     override def instantiate(context: Context, parent:ColumnReference): RangeColumnCheck = RangeColumnCheck(
         Some(parent),
-        None,
+        context.evaluate(description),
         context.evaluate(lower),
         context.evaluate(upper),
         filter = context.evaluate(filter)
@@ -101,6 +105,7 @@ class ValuesColumnCheckSpec extends ColumnCheckSpec {
 
     override def instantiate(context: Context, parent:ColumnReference): ValuesColumnCheck = ValuesColumnCheck(
         Some(parent),
+        description = context.evaluate(description),
         values = values.map(context.evaluate),
         filter = context.evaluate(filter)
     )
@@ -111,6 +116,7 @@ class ExpressionColumnCheckSpec extends ColumnCheckSpec {
 
     override def instantiate(context: Context, parent:ColumnReference): ExpressionColumnCheck = ExpressionColumnCheck(
         Some(parent),
+        description = context.evaluate(description),
         expression = context.evaluate(expression),
         filter = context.evaluate(filter)
     )
@@ -123,6 +129,7 @@ class LengthColumnCheckSpec extends ColumnCheckSpec {
 
     override def instantiate(context: Context, parent:ColumnReference): LengthColumnCheck = LengthColumnCheck(
         Some(parent),
+        description = context.evaluate(description),
         minimumLength = context.evaluate(length).orElse(context.evaluate(minimumLength)).map(_.toInt),
         maximumLength = context.evaluate(length).orElse(context.evaluate(maximumLength)).map(_.toInt),
         filter = context.evaluate(filter)
@@ -136,6 +143,7 @@ class ForeignKeyColumnCheckSpec extends ColumnCheckSpec {
 
     override def instantiate(context: Context, parent:ColumnReference): ForeignKeyColumnCheck = ForeignKeyColumnCheck(
         Some(parent),
+        description = context.evaluate(description),
         relation = context.evaluate(relation).map(RelationIdentifier(_)),
         mapping = context.evaluate(mapping).map(MappingOutputIdentifier(_)),
         column = context.evaluate(column),

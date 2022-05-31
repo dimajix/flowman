@@ -46,6 +46,7 @@ relations:
         - name: min_wind_speed
           checks:
             - kind: expression
+              description: "All wind speeds must be positive"
               expression: "min_wind_speed >= 0"
         - name: min_temperature
           checks:
@@ -57,6 +58,7 @@ relations:
               expression: "max_temperature <= 100"
       checks:
         kind: primaryKey
+        description: "There has only to be one entry per country and year"
         columns:
           - country
           - year

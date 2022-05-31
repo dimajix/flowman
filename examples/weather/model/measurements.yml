@@ -61,6 +61,7 @@ relations:
       # Schema tests, which might involve multiple columns
       checks:
         kind: foreignKey
+        description: "The measurement has to refer to an existing station"
         relation: stations
         columns:
           - usaf

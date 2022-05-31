@@ -46,6 +46,8 @@ object SchemaCheckSpec extends TypeRegistry[SchemaCheckSpec] {
     new JsonSubTypes.Type(name = "sql", value = classOf[SqlSchemaCheckSpec])
 ))
 abstract class SchemaCheckSpec {
+    @JsonProperty(value="description", required=false) protected var description:Option[String] = None
+
     def instantiate(context: Context, parent:SchemaReference): SchemaCheck
 }
 
@@ -64,6 +66,7 @@ class PrimaryKeySchemaCheckSpec extends SchemaCheckSpec {
 
     override def instantiate(context: Context, parent:SchemaReference): PrimaryKeySchemaCheck = PrimaryKeySchemaCheck(
         Some(parent),
+        description = context.evaluate(description),
         columns = columns.map(context.evaluate),
         filter = context.evaluate(filter)
     )
@@ -74,6 +77,7 @@ class ExpressionSchemaCheckSpec extends SchemaCheckSpec {
 
     override def instantiate(context: Context, parent:SchemaReference): ExpressionSchemaCheck = ExpressionSchemaCheck(
         Some(parent),
+        description = context.evaluate(description),
         expression = context.evaluate(expression),
         filter = context.evaluate(filter)
     )
@@ -87,6 +91,7 @@ class ForeignKeySchemaCheckSpec extends SchemaCheckSpec {
 
     override def instantiate(context: Context, parent:SchemaReference): ForeignKeySchemaCheck = ForeignKeySchemaCheck(
         Some(parent),
+        description = context.evaluate(description),
         columns = columns.map(context.evaluate),
         relation = context.evaluate(relation).map(RelationIdentifier(_)),
         mapping = context.evaluate(mapping).map(MappingOutputIdentifier(_)),
@@ -100,6 +105,7 @@ class SqlSchemaCheckSpec extends SchemaCheckSpec {
 
     override def instantiate(context: Context, parent:SchemaReference): SqlSchemaCheck = SqlSchemaCheck(
         Some(parent),
+        description = context.evaluate(description),
         query = context.evaluate(query),
         filter = context.evaluate(filter)
     )

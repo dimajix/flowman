@@ -92,7 +92,7 @@ abstract class JdbcRelation(
     protected def withTransaction[T](con:java.sql.Connection)(fn: => T) : T = {
         val startTime = Instant.now()
         val result = JdbcUtils.withTransaction(con)(fn)
-        val duration = Duration.between(Instant.now(), startTime)
+        val duration = Duration.between(startTime, Instant.now())
         logger.info(s"Overall JDBC transaction took ${TimeFormatter.toString(duration)}")
         result
     }

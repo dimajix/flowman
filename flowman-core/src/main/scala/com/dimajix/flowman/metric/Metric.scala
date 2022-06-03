@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 
 package com.dimajix.flowman.metric
 
+
 /**
   * This is the simple base class for all metrics
   */
-abstract class Metric {
+abstract class Metric extends Product with Serializable {
     /**
       * Returns the name of this metric
       * @return
@@ -45,7 +46,7 @@ abstract class Metric {
   * is more or less static (i.e. each MetricBundle has to be registered with the MetricRegistry), the metrics inside
   * each bundle may be dynamic (i.e. change over time)
   */
-abstract class MetricBundle {
+abstract class MetricBundle extends Product with Serializable {
     /**
       * Returns the name of this metric bundle. Multiple individual metrics may be contained within a single bundle,
       * these represent different instances of the same metrics, which can be distinguished by their labels

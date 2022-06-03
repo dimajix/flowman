@@ -1,3 +1,8 @@
+# Version 0.25.1 
+
+* github-195: [BUG] Metric "target_records" is not reset correctly after an execution phase is finished
+
+
 # Version 0.25.0 - 2022-05-31
 
 * github-184: Only read in *.yml / *.yaml files in module loader

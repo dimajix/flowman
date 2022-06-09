@@ -170,7 +170,13 @@ final case class ImpalaExternalCatalog(
         logger.info(s"INVALIDATE Impala metadata for dropped view ${table.identifier}")
         withStatement { stmt =>
             val identifier = HiveDialect.quote(table.identifier)
-            stmt.execute(s"INVALIDATE METADATA $identifier")
+            try {
+                stmt.execute(s"INVALIDATE METADATA $identifier")
+            }
+            catch {
+                // Ignore "TableNotFoundExceptions"
+                case ex:SQLException if ex.getMessage.contains("TableNotFoundException") =>
+            }
         }
     }
 

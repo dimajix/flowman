@@ -1,6 +1,7 @@
 # Version 0.25.1 
 
 * github-195: [BUG] Metric "target_records" is not reset correctly after an execution phase is finished
+* github-197: [BUG] Impala REFRESH METADATA should not fail when dropping views
 
 
 # Version 0.25.0 - 2022-05-31

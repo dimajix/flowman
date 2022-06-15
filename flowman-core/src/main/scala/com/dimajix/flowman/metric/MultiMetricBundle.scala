@@ -18,7 +18,20 @@ package com.dimajix.flowman.metric
 
 import com.dimajix.common.IdentityHashSet
 import com.dimajix.common.SynchronizedSet
+import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.model.Metadata
 
+
+object MultiMetricBundle {
+    def forMetadata(registry: MetricSystem, metricName: String, metadata : Metadata, phase:Phase) : MultiMetricBundle = {
+        val bundleLabels =
+            Map("phase" -> phase.upper) ++
+                metadata.namespace.map("namespace" -> _).toMap ++
+                metadata.project.map("project" -> _).toMap ++
+                metadata.version.map("version" -> _).toMap
+        registry.getOrCreateBundle(metricName, bundleLabels, MultiMetricBundle(metricName, bundleLabels))
+    }
+}
 
 final case class MultiMetricBundle(override val name:String, override val labels:Map[String,String]) extends MetricBundle {
     private val bundleMetrics : SynchronizedSet[Metric] = SynchronizedSet(IdentityHashSet())
@@ -31,7 +44,7 @@ final case class MultiMetricBundle(override val name:String, override val labels
         bundleMetrics.remove(metric)
     }
 
-    def getOrCreateMetric[T <: Metric](name:String, labels:Map[String,String])(creator: => T) : T = {
+    def getOrCreateMetric[T <: Metric](name:String, labels:Map[String,String], creator: => T) : T = {
         bundleMetrics.find(metric => name == metric.name && metric.labels == labels)
             .map(_.asInstanceOf[T])
             .getOrElse{

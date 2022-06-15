@@ -13,7 +13,14 @@ You will find all official Flowman releases on [GitHub](https://github.com/dimaj
 The following gives an (incomplete) list of past releases of the last 12 months. This will help you to spot breaking 
 changes over time.
 
-### Version 0.25.0
+
+### Version 0.25.1 - 2022-06-15
+
+* github-195: [BUG] Metric "target_records" is not reset correctly after an execution phase is finished
+* github-197: [BUG] Impala REFRESH METADATA should not fail when dropping views
+
+
+### Version 0.25.0 - 2022-05-31
 
 * github-184: Only read in *.yml / *.yaml files in module loader
 * github-183: Support storing SQL in external file in `hiveView`

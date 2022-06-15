@@ -28,7 +28,10 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.metric.LongAccumulatorMetric
+import com.dimajix.flowman.metric.MetricBundle
+import com.dimajix.flowman.metric.MultiMetricBundle
 import com.dimajix.flowman.metric.Selector
+import com.dimajix.flowman.metric.WallTimeMetric
 import com.dimajix.flowman.model
 import com.dimajix.spark.sql.functions.count_records
 
@@ -424,17 +427,15 @@ abstract class BaseTarget extends AbstractInstance with Target {
     protected def destroy(execution:Execution) : Unit = {}
 
     protected def countRecords(execution:Execution, df:DataFrame, phase:Phase=Phase.BUILD) : DataFrame = {
-        val labels = metadata.asMap + ("phase" -> phase.upper)
-        val counter = execution.metricSystem.findMetric(Selector("target_records", labels))
-            .headOption
-            .map(_.asInstanceOf[LongAccumulatorMetric].counter)
-            .getOrElse {
-                val counter = execution.spark.sparkContext.longAccumulator
-                val metric = LongAccumulatorMetric("target_records", labels, counter)
-                execution.metricSystem.addMetric(metric)
-                counter
-            }
+        val registry = execution.metricSystem
 
+        val metricName = "target_records"
+        val bundle = MultiMetricBundle.forMetadata(registry, metricName, metadata, phase)
+        lazy val newCounter = execution.spark.sparkContext.longAccumulator
+        val metricLabels = bundle.labels ++ metadata.asMap
+        val metric = bundle.getOrCreateMetric(metricName, metricLabels, LongAccumulatorMetric(metricName, metricLabels, newCounter))
+
+        val counter = metric.counter
         count_records(df, counter)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ final case class CounterAccumulatorMetricBundle(override val name:String, overri
         counters.reset
     }
 
-    private class Gauge(label:String) extends GaugeMetric {
+    private final case class Gauge(label:String) extends GaugeMetric {
         private val metricLabels = CounterAccumulatorMetricBundle.this.labels.updated(metricKey, label)
 
         override def value: Double = counters.get(label).getOrElse(0l).toDouble

@@ -87,7 +87,7 @@ class MetricSystem extends MetricCatalog {
         metricBundles.remove(bundle)
     }
 
-    def getOrCreateBundle[T <: MetricBundle](name:String, labels:Map[String,String])(creator: => T) : T = {
+    def getOrCreateBundle[T <: MetricBundle](name:String, labels:Map[String,String], creator: => T) : T = {
         metricBundles.find(bundle => name == bundle.name && bundle.labels == labels)
             .map(_.asInstanceOf[T])
             .getOrElse{

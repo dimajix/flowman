@@ -60,14 +60,13 @@ package object metric {
     }
 
     def withWallTime[T](registry: MetricSystem, metadata : Metadata, phase:Phase)(fn: => T) : T = {
-        // Create and register bundle
-        val metricName = metadata.category + "_runtime"
-        val bundleLabels = metadata.asMap + ("phase" -> phase.toString)
-        val bundle = registry.getOrCreateBundle(metricName, bundleLabels)(MultiMetricBundle(metricName, bundleLabels))
-
         // Create and register metric
-        val metricLabels = bundleLabels ++ Map("name" -> metadata.name) ++ metadata.labels
-        val metric = bundle.getOrCreateMetric(metricName, metricLabels)(WallTimeMetric(metricName, metricLabels))
+        val metricName = metadata.category + "_runtime"
+        val bundle = MultiMetricBundle.forMetadata(registry, metricName, metadata, phase)
+        val metricLabels = bundle.labels ++ metadata.asMap
+        val metric = bundle.getOrCreateMetric(metricName, metricLabels, WallTimeMetric(metricName, metricLabels))
+
+        // Reset timer metric
         metric.reset()
 
         // Execute function itself, and catch any exception

@@ -17,7 +17,7 @@
         <plugin.name>flowman-mysql</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <mysql-connector-java.version>8.0.25</mysql-connector-java.version>
+        <mysql-connector-java.version>8.0.28</mysql-connector-java.version>
     </properties>
 
     <build>

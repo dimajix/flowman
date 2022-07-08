@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Kaya Kupferschmidt
+ * Copyright 2020-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ extends Attribute with Unevaluable {
     override def withQualifier(newQualifier: Seq[String]): Attribute = NamedAttribute(name, dataType)(exprId, newQualifier, explicitMetadata)
     override def withName(newName: String): Attribute = NamedAttribute(newName, dataType)(exprId, qualifier, explicitMetadata)
     override def withMetadata(newMetadata: Metadata): Attribute = NamedAttribute(name, dataType)(exprId, qualifier, newMetadata)
-    override def withExprId(newExprId: ExprId): Attribute = NamedAttribute(name, dataType)(newExprId, qualifier, metadata)
+    /*override*/ def withExprId(newExprId: ExprId): Attribute = NamedAttribute(name, dataType)(newExprId, qualifier, metadata)
     /*override*/ def withDataType(newType: DataType): Attribute = NamedAttribute(name, newType)(exprId, qualifier, metadata)
 }
 

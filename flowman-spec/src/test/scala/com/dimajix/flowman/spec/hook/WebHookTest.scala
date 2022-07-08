@@ -37,8 +37,8 @@ import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Prototype
-import com.dimajix.flowman.spec.target.NullTarget
-import com.dimajix.flowman.spec.target.NullTargetSpec
+import com.dimajix.flowman.spec.target.EmptyTarget
+import com.dimajix.flowman.spec.target.EmptyTargetSpec
 import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -74,7 +74,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             targetFinish = Some("http://0.0.0.0/$env/$target/$arg1/$status")
         )
 
-        val target = NullTarget(Target.Properties(session.context, "t1"), Map())
+        val target = EmptyTarget(Target.Properties(session.context, "t1"), Map())
         val instance = TargetDigest("default", "p1", "t1", Phase.BUILD, Map("arg1" -> "v1"))
         val execution = session.execution
 
@@ -180,7 +180,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         )
         val project = Project(
             name = "default",
-            targets = Map("t0" -> NullTargetSpec("t0"))
+            targets = Map("t0" -> EmptyTargetSpec("t0"))
         )
         val session = Session.builder()
             .withSparkSession(spark)

@@ -24,7 +24,7 @@ import com.dimajix.flowman.spec.annotation.RelationType
 
 
 @RelationType(kind = "annotatedRelation")
-class AnnotationRelationSpec extends NullRelationSpec { }
+class AnnotationRelationSpec extends EmptyRelationSpec { }
 
 
 class RelationSpecTest extends AnyFlatSpec with Matchers {

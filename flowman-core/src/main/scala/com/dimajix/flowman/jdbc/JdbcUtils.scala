@@ -30,9 +30,9 @@ import scala.util.Try
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.createConnectionFactory
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.savePartition
 import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.sql.types.StringType
@@ -121,9 +121,10 @@ object JdbcUtils {
         options.asProperties.getProperty("queryTimeout", "0").toInt
     }
 
-    def createConnection(options: JDBCOptions) : Connection = {
-        val factory = createConnectionFactory(options)
-        factory()
+    def createConnection(options: JDBCOptions, partition:Int = -1) : Connection = {
+        val dialect = JdbcDialects.get(options.url)
+        val factory = SparkShim.createConnectionFactory(dialect, options)
+        factory(partition)
     }
 
     def withTransaction[T](con:java.sql.Connection)(fn: => T) : T = {
@@ -584,7 +585,6 @@ object JdbcUtils {
         val dialect = SqlDialects.get(url)
         val sparkDialect = JdbcDialects.get(url)
         val quotedTarget = dialect.quote(target)
-        val getConnection: () => Connection = createConnectionFactory(options)
         val sourceSchema = source.schema
         val batchSize = options.batchSize
         val isolationLevel = options.isolationLevel
@@ -594,8 +594,8 @@ object JdbcUtils {
             case Some(n) if n < source.rdd.getNumPartitions => source.coalesce(n)
             case _ => source
         }
-        repartitionedDF.rdd.foreachPartition { iterator => savePartition(
-            getConnection, quotedTarget, iterator, sourceSchema, insertStmt, batchSize, sparkDialect, isolationLevel, options)
+        repartitionedDF.rdd.foreachPartition { iterator => SparkShim.savePartition(
+            quotedTarget, iterator, sourceSchema, insertStmt, batchSize, sparkDialect, isolationLevel, options)
         }
     }
 

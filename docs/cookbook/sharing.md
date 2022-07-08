@@ -16,7 +16,7 @@ Flowman well supports these scenarios by the concept of imports.
 
 First you define a project which exports entities. Actually you might need to do nothing, since importing a project
 will make all entities available to the importing side. But maybe your project also requires some variables to be
-set, like the processing date. Typically you would include such variables as job parameters: 
+set, like the processing date. Typically, you would include such variables as job parameters: 
 ```yaml
 # Project A, which contains shared resources 
 jobs:

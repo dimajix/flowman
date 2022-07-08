@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.transforms
 
-import java.util.Locale
-
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
 

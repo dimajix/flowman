@@ -55,7 +55,7 @@ object RelationSpec extends TypeRegistry[RelationSpec] {
     new JsonSubTypes.Type(name = "jdbcView", value = classOf[JdbcViewRelationSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalRelationSpec]),
     new JsonSubTypes.Type(name = "mock", value = classOf[MockRelationSpec]),
-    new JsonSubTypes.Type(name = "null", value = classOf[NullRelationSpec]),
+    new JsonSubTypes.Type(name = "empty", value = classOf[EmptyRelationSpec]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedRelationSpec]),
     new JsonSubTypes.Type(name = "template", value = classOf[TemplateRelationSpec]),
     new JsonSubTypes.Type(name = "values", value = classOf[ValuesRelationSpec]),

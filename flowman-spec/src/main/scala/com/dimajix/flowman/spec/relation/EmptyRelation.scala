@@ -41,7 +41,7 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-case class NullRelation(
+case class EmptyRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq()
@@ -193,14 +193,14 @@ case class NullRelation(
 
 
 
-class NullRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
+class EmptyRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
     /**
       * Creates the instance of the specified Relation with all variable interpolation being performed
       * @param context
       * @return
       */
-    override def instantiate(context: Context, properties:Option[Relation.Properties] = None): NullRelation = {
-        NullRelation(
+    override def instantiate(context: Context, properties:Option[Relation.Properties] = None): EmptyRelation = {
+        EmptyRelation(
             instanceProperties(context, properties),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context))

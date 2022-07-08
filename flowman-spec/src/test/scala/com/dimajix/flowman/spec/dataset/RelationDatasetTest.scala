@@ -54,7 +54,7 @@ class RelationDatasetTest extends AnyFlatSpec with Matchers with MockFactory wit
             """
               |kind: relation
               |relation:
-              |  kind: null
+              |  kind: empty
               |""".stripMargin
         val ds = ObjectMapper.parse[DatasetSpec](spec)
         ds shouldBe a[RelationDatasetSpec]

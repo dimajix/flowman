@@ -31,9 +31,9 @@ class NamespaceTest extends AnyFlatSpec with Matchers {
               |config:
               | - cfg1=cfg2=lala
               |history:
-              |  kind: null
+              |  kind: none
               |store:
-              |  kind: null
+              |  kind: none
             """.stripMargin
         val ns = Namespace.read.string(spec)
         ns.environment.size should be (1)

@@ -1,7 +1,7 @@
 # Namespace
 
-On top of the very global settings, Flowman also supports so called *namespaces*. Each project is executed within the
-context of one namespace, if nothing else is specified the *defautlt namespace*. Each namespace contains some 
+On top of the very global settings, Flowman also supports so-called *namespaces*. Each project is executed within the
+context of one namespace, if nothing else is specified the *default namespace*. Each namespace contains some 
 configuration, such that different namespaces might represent different tenants or different staging environments.
 
 ## Example
@@ -56,17 +56,21 @@ store:
 ## Fields
 
 * `history` **(optional)** *(type: history)*:
+This tag contains the definition of a history story required for running the [Flowman history server](../cli/history-server.md)
 
 * `store` **(optional)** *(type: store)*:
+The `store` defines a mechanism how to load other projects for sharing entity definitions between projects. See
+[sharing entities](../cookbook/sharing.md) for more information.
 
 * `connections` **(optional)** *(type: list:connection)*:
+This section contains a list of global [connections](connection/index.md) for databases, SSH/SCP etc.
 
 * `metrics` **(optional)** *(type: list:metric-sink)*:
-A list of metric sinks, where job metrics should be published to.
+A list of [metric sinks](metric/index.md), where job metrics should be published to.
 
 * `hooks` **(optional)** *(type: list:hook)*:
-A list of hooks which will be called before and after each job and target is executed. Hooks provide some ways to
-notify external systems (or possibly plugins) about the current execution status of jobs and targets.
+A list of [hooks](hooks/index.md) which will be called before and after each job and target is executed. Hooks provide 
+some ways to notify external systems (or possibly plugins) about the current execution status of jobs and targets. 
 
 * `plugins` **(optional)** *(type: list:string)*:
-List of plugins to be loaded as part of the namespace
+List of [Flowman plugins](../plugins/index.md) to be loaded as part of the namespace.

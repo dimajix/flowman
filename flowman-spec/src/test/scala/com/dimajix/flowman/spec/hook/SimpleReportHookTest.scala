@@ -36,7 +36,7 @@ import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.spec.target.NullTarget
+import com.dimajix.flowman.spec.target.EmptyTarget
 import com.dimajix.spark.testing.LocalTempDir
 
 
@@ -71,7 +71,7 @@ class SimpleReportHookTest extends AnyFlatSpec with Matchers with MockFactory wi
         )
 
         val job = Job.builder(context).setName("some_job").build()
-        val target = NullTarget(Target.Properties(context, "null_target"), Map())
+        val target = EmptyTarget(Target.Properties(context, "null_target"), Map())
         val assertion = mock[Assertion]
         (assertion.name _).expects().anyNumberOfTimes().returns("some_assertion")
         val lifecycle = Seq(Phase.VALIDATE, Phase.CREATE, Phase.BUILD, Phase.VERIFY)

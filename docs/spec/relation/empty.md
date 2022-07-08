@@ -1,6 +1,6 @@
-# Null Relation
+# Empty Relation
 
-A `null` relation is a dummy relation, which can be used either for creating empty
+A `empty` relation is a dummy relation, which can be used either for creating empty
 data (but with a schema) during read operations or for throwing away records in
 write operations. 
 
@@ -8,7 +8,7 @@ write operations.
 ```yaml
 relations:
   empty:
-    kind: null
+    kind: empty
     schema:
       kind: inline
       fields:
@@ -19,7 +19,7 @@ relations:
 ```
 
 ## Fields
-* `kind` **(mandatory)** *(string)*: `null` or `empty`
+* `kind` **(mandatory)** *(string)*: `empty`
 
 * `schema` **(optional)** *(schema)* *(default: empty)*:
   Explicitly specifies the schema of the null relation. 
@@ -28,9 +28,9 @@ relations:
   A description of the relation. This is purely for informational purpose.
 
 * `partitions` **(optional)** *(list:partition)* *(default: empty)*:
-  Even though a `null` relation does not provide any physical storage, it still optionally 
+  Even though a `empty` relation does not provide any physical storage, it still optionally 
   provides virtual partition columns.
 
 
 ## Output Modes
-A `null` relation supports all output modes, each of them simply discarding all records.
+A `empty` relation supports all output modes, each of them simply discarding all records.

@@ -29,7 +29,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
 
 
-case class NullTarget(
+case class EmptyTarget(
     instanceProperties: Target.Properties,
     partition: Map[String,String]
 ) extends BaseTarget {
@@ -63,20 +63,20 @@ case class NullTarget(
 }
 
 
-object NullTargetSpec {
-    def apply(name:String, partition:Map[String,String]=Map())  : NullTargetSpec = {
-        val spec = new NullTargetSpec
+object EmptyTargetSpec {
+    def apply(name:String, partition:Map[String,String]=Map())  : EmptyTargetSpec = {
+        val spec = new EmptyTargetSpec
         spec.name = name
         spec.partition = partition
         spec.kind = "null"
         spec
     }
 }
-class NullTargetSpec extends TargetSpec {
+class EmptyTargetSpec extends TargetSpec {
     @JsonProperty(value="partition", required=false) private var partition:Map[String,String] = Map()
 
-    override def instantiate(context: Context, properties:Option[Target.Properties] = None): NullTarget = {
-        NullTarget(
+    override def instantiate(context: Context, properties:Option[Target.Properties] = None): EmptyTarget = {
+        EmptyTarget(
             instanceProperties(context, properties),
             context.evaluate(partition)
         )

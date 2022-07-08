@@ -47,7 +47,7 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
             """
               |relations:
               |  empty:
-              |    kind: null
+              |    kind: empty
               |    schema:
               |      kind: inline
               |      fields:

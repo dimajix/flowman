@@ -34,19 +34,19 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "The NullMapping" should "be parseable" in {
+class EmptyMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    "The EmptyMapping" should "be parseable" in {
         val spec =
             """
               |mappings:
               |  empty1:
-              |    kind: null
+              |    kind: empty
               |    columns:
               |      str_col: string
               |      int_col: integer
               |
               |  empty2:
-              |    kind: null
+              |    kind: empty
               |    schema:
               |      kind: inline
               |      fields:
@@ -60,11 +60,11 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        val mapping1 = context.getMapping(MappingIdentifier("empty1")).asInstanceOf[NullMapping]
-        mapping1 shouldBe a[NullMapping]
+        val mapping1 = context.getMapping(MappingIdentifier("empty1")).asInstanceOf[EmptyMapping]
+        mapping1 shouldBe a[EmptyMapping]
 
         mapping1.category should be (Category.MAPPING)
-        mapping1.kind should be ("null")
+        mapping1.kind should be ("empty")
         mapping1.columns should be (Seq(
             Field("str_col", StringType),
             Field("int_col", IntegerType)
@@ -80,7 +80,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val context = session.context
         val executor = session.execution
 
-        val mapping = NullMapping(
+        val mapping = EmptyMapping(
             Mapping.Properties(context, "empty"),
             Seq(
                 Field("str_col", StringType),
@@ -90,7 +90,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         )
 
         mapping.category should be (Category.MAPPING)
-        //mapping.kind should be ("null")
+        //mapping.kind should be ("empty")
         mapping.outputs should be (Set("main"))
         mapping.output should be (MappingOutputIdentifier("empty"))
 
@@ -112,7 +112,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val context = session.context
         val executor = session.execution
 
-        val mapping = NullMapping(
+        val mapping = EmptyMapping(
             Mapping.Properties(context, "empty"),
             Seq(),
             Some(InlineSchema(
@@ -125,7 +125,7 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         )
 
         mapping.category should be (Category.MAPPING)
-        //mapping.kind should be ("null")
+        //mapping.kind should be ("empty")
         mapping.outputs should be (Set("main"))
         mapping.output should be (MappingOutputIdentifier("empty"))
 
@@ -146,13 +146,13 @@ class NullMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val session = Session.builder().disableSpark().build()
         val context = session.context
 
-        an[IllegalArgumentException] should be thrownBy (NullMapping(
+        an[IllegalArgumentException] should be thrownBy (EmptyMapping(
             Mapping.Properties(context, "empty"),
             Seq(),
             None
         ))
 
-        an[IllegalArgumentException] should be thrownBy (NullMapping(
+        an[IllegalArgumentException] should be thrownBy (EmptyMapping(
             Mapping.Properties(context, "empty"),
             Seq(
                 Field("str_col", StringType),

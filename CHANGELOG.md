@@ -1,3 +1,23 @@
+# Version 0.26.0
+
+* github-202: Add support for Spark 3.3
+
+## Breaking changes
+
+We take backward compatibility very seriously. But sometimes a breaking change is needed to clean up code and to
+enable new features. This release contains some breaking changes, which are annoying but simple to fix.
+In order to respect `null` as keyword in YAML with a special semantics, some entities needed to be renamed, as 
+described in the following table:
+
+| category | old kind | new kind |
+|----------|----------|----------|
+| mapping  | null     | empty    |
+| relation | null     | empty    |
+| target   | null     | empty    |
+| store    | null     | none     |
+| history  | null     | none     |
+
+
 # Version 0.25.1 - 2022-06-15
 
 * github-195: [BUG] Metric "target_records" is not reset correctly after an execution phase is finished

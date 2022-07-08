@@ -33,7 +33,7 @@ object HistorySpec extends TypeRegistry[HistorySpec] {
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "null", value = classOf[NullHistorySpec]),
+    new JsonSubTypes.Type(name = "none", value = classOf[NullHistorySpec]),
     new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcHistorySpec])
 ))
 abstract class HistorySpec extends Spec[StateStore] {

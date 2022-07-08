@@ -35,15 +35,15 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
 
 
-case class NullMapping(
+case class EmptyMapping(
     instanceProperties:Mapping.Properties,
     columns:Seq[Field] = Seq(),
     schema:Option[Schema]
 ) extends BaseMapping {
     if (columns.nonEmpty && schema.nonEmpty)
-        throw new IllegalArgumentException("Cannot specify both fields and schema in NullMapping")
+        throw new IllegalArgumentException("Cannot specify both fields and schema in EmptyMapping")
     if (columns.isEmpty && schema.isEmpty)
-        throw new IllegalArgumentException("Need either fields or schema in NullMapping")
+        throw new IllegalArgumentException("Need either fields or schema in EmptyMapping")
 
     private lazy val effectiveSchema  = {
         new StructType(schema.map(_.fields).getOrElse(columns))
@@ -87,7 +87,7 @@ case class NullMapping(
 
 
 
-class NullMappingSpec extends MappingSpec {
+class EmptyMappingSpec extends MappingSpec {
     @JsonDeserialize(using = classOf[ListMapDeserializer]) // Old Jackson in old Spark doesn't support ListMap
     @JsonProperty(value = "columns", required=false) private var columns:Map[String,String] = Map()
     @JsonProperty(value = "schema", required = false) protected var schema: Option[SchemaSpec] = None
@@ -97,8 +97,8 @@ class NullMappingSpec extends MappingSpec {
      * @param context
      * @return
      */
-    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): NullMapping = {
-        NullMapping(
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): EmptyMapping = {
+        EmptyMapping(
             instanceProperties(context, properties),
             context.evaluate(columns).map { case(name,typ) => Field(name, FieldType.of(typ))}.toSeq,
             schema.map(_.instantiate(context))

@@ -32,22 +32,22 @@ import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class NullRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "The NullRelation" should "be parsable" in {
+class EmptyRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    "The EmptyRelation" should "be parsable" in {
         val spec =
             """
-              |kind: null
+              |kind: empty
               |name: ${rel_name}
               |""".stripMargin
 
         val relation = ObjectMapper.parse[RelationSpec](spec)
-        relation shouldBe a[NullRelationSpec]
+        relation shouldBe a[EmptyRelationSpec]
 
         val session = Session.builder().withEnvironment("rel_name", "abc").disableSpark().build()
         val context = session.context
 
         val instance = relation.instantiate(context)
-        instance shouldBe a[NullRelation]
+        instance shouldBe a[EmptyRelation]
         instance.name should be ("abc")
         instance.identifier should be (TargetIdentifier("abc"))
     }
@@ -56,7 +56,7 @@ class NullRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
 
-        val relation = NullRelation(
+        val relation = EmptyRelation(
             Relation.Properties(session.context),
             schema = Some(InlineSchema(
                 Schema.Properties(session.context),

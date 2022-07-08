@@ -141,7 +141,6 @@ extends BaseMeasure {
 
 class SqlMeasureSpec extends MeasureSpec {
     @JsonProperty(value="query", required=true) private var query:String = ""
-    @JsonProperty(value="expected", required=false) private var expected:Seq[Array[String]] = Seq()
 
     override def instantiate(context: Context, properties:Option[Measure.Properties] = None): SqlMeasure = {
         SqlMeasure(

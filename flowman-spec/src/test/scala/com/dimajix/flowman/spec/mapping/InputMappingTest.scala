@@ -30,12 +30,12 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "The RelationMapping" should "be able to read from a NullRelation" in {
+    "The RelationMapping" should "be able to read from a EmptyRelation" in {
         val spec =
             """
               |relations:
               |  empty:
-              |    kind: null
+              |    kind: empty
               |    schema:
               |      kind: inline
               |      fields:
@@ -78,7 +78,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             """
               |relations:
               |  empty:
-              |    kind: null
+              |    kind: empty
               |    schema:
               |      kind: inline
               |      fields:
@@ -117,7 +117,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             """
               |relations:
               |  empty:
-              |    kind: null
+              |    kind: empty
               |    schema:
               |      kind: inline
               |      fields:
@@ -162,7 +162,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             """
               |relations:
               |  empty:
-              |    kind: null
+              |    kind: empty
               |    schema:
               |      kind: inline
               |      fields:
@@ -206,7 +206,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             """
               |relations:
               |  empty:
-              |    kind: null
+              |    kind: empty
               |    schema:
               |      kind: inline
               |      fields:

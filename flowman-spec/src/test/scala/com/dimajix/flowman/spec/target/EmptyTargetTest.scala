@@ -28,20 +28,20 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class NullTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "A NullTarget" should "be parseable" in {
+class EmptyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    "A EmptyTarget" should "be parseable" in {
         val spec =
             """
               |targets:
               |  custom:
-              |    kind: null
+              |    kind: empty
               |    partition:
               |      p1: lala
               |""".stripMargin
 
         val module = Module.read.string(spec)
         val target = module.targets("custom")
-        target shouldBe an[NullTargetSpec]
+        target shouldBe an[EmptyTargetSpec]
     }
 
     it should "do nothing" in {
@@ -49,7 +49,7 @@ class NullTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val execution = session.execution
         val context = session.context
 
-        val target = NullTarget(
+        val target = EmptyTarget(
             Target.Properties(context),
             Map("p1" -> "lala")
         )

@@ -95,4 +95,16 @@ object DataFrameBuilder {
         val logicalPlan = PlanUtils.singleRowPlan(schema)
         new Dataset[Row](sparkSession, logicalPlan, RowEncoder(schema))
     }
+
+    /**
+     * Creates a DataFrame containing a single Row for a given Schema, either with NULL values or with default values.
+     *
+     * @param sparkSession
+     * @param schema
+     * @return
+     */
+    def namedAttributes(sparkSession: SparkSession, schema: StructType): DataFrame = {
+        val logicalPlan = PlanUtils.namedAttributePlan(schema)
+        new Dataset[Row](sparkSession, logicalPlan, RowEncoder(schema))
+    }
 }

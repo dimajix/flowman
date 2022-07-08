@@ -45,7 +45,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
             """
               |mappings:
               |  empty:
-              |    kind: null
+              |    kind: empty
               |    columns:
               |      str_col: string
               |      int_col: integer

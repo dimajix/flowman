@@ -39,7 +39,7 @@ class ModuleTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |    mapping: input
               |relations:
               |  empty:
-              |    kind: null
+              |    kind: empty
               |mappings:
               |  input:
               |    kind: relation
@@ -59,7 +59,7 @@ class ModuleTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             """
               |relations:
               |  empty:
-              |    kind: null
+              |    kind: empty
               |    schema:
               |      kind: inline
               |      fields:

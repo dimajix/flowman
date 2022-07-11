@@ -28,6 +28,7 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.spi.ColumnCheckExecutor
 import com.dimajix.flowman.spi.SchemaCheckExecutor
+import com.dimajix.flowman.util.ConsoleColors.yellow
 
 
 class CheckExecutor(execution: Execution) {
@@ -50,7 +51,7 @@ class CheckExecutor(execution: Execution) {
                     runSchemaTests(relation.context, df, schema)
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Error executing checks for relation '${relation.identifier}': ${reasons(ex)}")
+                        logger.warn(yellow(s"Error executing checks for relation '${relation.identifier}':\n${reasons(ex)}"))
                         failSchemaTests(schema)
                 }
             }
@@ -77,7 +78,7 @@ class CheckExecutor(execution: Execution) {
                         runSchemaTests(mapping.context, df, schema)
                     } catch {
                         case NonFatal(ex) =>
-                            logger.warn(s"Error executing checks for mapping '${mapping.identifier}': ${reasons(ex)}")
+                            logger.warn(yellow(s"Error executing checks for mapping '${mapping.identifier}':\n${reasons(ex)}"))
                             failSchemaTests(schema)
                     }
                 }
@@ -126,14 +127,14 @@ class CheckExecutor(execution: Execution) {
                     val result = schemaTestExecutors.flatMap(_.execute(execution, context, df, test)).headOption
                     result match {
                         case None =>
-                            logger.warn(s"Could not find appropriate test executor for testing schema")
+                            logger.warn(yellow(s"Could not find appropriate test executor for testing schema"))
                             CheckResult(Some(test.reference), status = CheckStatus.NOT_RUN)
                         case Some(result) =>
                             result.reparent(test.reference)
                     }
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Error executing column test: ${reasons(ex)}")
+                        logger.warn(yellow(s"Error executing column test:\n${reasons(ex)}"))
                         CheckResult(Some(test.reference), status = CheckStatus.ERROR)
 
                 }
@@ -154,14 +155,14 @@ class CheckExecutor(execution: Execution) {
                     val result = columnTestExecutors.flatMap(_.execute(execution, context, df, columnPath, test)).headOption
                     result match {
                         case None =>
-                            logger.warn(s"Could not find appropriate test executor for testing column $columnPath")
+                            logger.warn(yellow(s"Could not find appropriate test executor for testing column $columnPath"))
                             CheckResult(Some(test.reference), status = CheckStatus.NOT_RUN)
                         case Some(result) =>
                             result.reparent(test.reference)
                     }
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Error executing column test: ${reasons(ex)}")
+                        logger.warn(yellow(s"Error executing column test:\n${reasons(ex)}"))
                         CheckResult(Some(test.reference), status = CheckStatus.ERROR)
 
                 }

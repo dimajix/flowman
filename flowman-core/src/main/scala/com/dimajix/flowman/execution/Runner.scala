@@ -30,7 +30,10 @@ import scala.util.matching.Regex
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils
 import com.dimajix.common.No
+import com.dimajix.common.Trilean
+import com.dimajix.common.Unknown
 import com.dimajix.common.text.TimeFormatter
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.AbstractContext.Builder
@@ -358,6 +361,17 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         // We need to check the target *before* we run code inside the monitor (which will mark the target as RUNNING)
         val isClean = !forceDirty && useHistory && checkTarget(target.digest(phase))
 
+        def isDirty : Trilean = {
+            try {
+                target.dirty(execution, phase)
+            }
+            catch {
+                case NonFatal(ex) =>
+                    logger.warn(yellow(s"Cannot infer dirty status for target '${target.identifier}' because of exception:\n${ExceptionUtils.reasons(ex)}"))
+                    Unknown
+            }
+        }
+
         val startTime = Instant.now()
         execution.monitorTarget(target, phase) { execution =>
             logSubtitle(s"$phase target '${target.identifier}'")
@@ -368,7 +382,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                 logger.info("")
                 TargetResult(target, phase, Status.SKIPPED, startTime)
             }
-            else if (!forceDirty && target.dirty(execution, phase) == No) {
+            else if (!forceDirty && isDirty == No) {
                 logger.info(cyan(s"Target '${target.identifier}' not dirty in phase $phase, skipping execution"))
                 logger.info("")
                 TargetResult(target, phase, Status.SKIPPED, startTime)

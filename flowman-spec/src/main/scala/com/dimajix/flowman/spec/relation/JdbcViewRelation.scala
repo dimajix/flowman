@@ -108,7 +108,8 @@ case class JdbcViewRelation(
                 val tables = dependencies.map(l => ResourceIdentifier.ofJdbcTable(TableIdentifier(l))).toSet
                 db ++ tables
             case Operation.READ =>
-                dependencies.map(l => ResourceIdentifier.ofJdbcTablePartition(TableIdentifier(l), Map.empty)).toSet
+                val other = dependencies.map(l => ResourceIdentifier.ofJdbcTablePartition(TableIdentifier(l), Map.empty)).toSet
+                other ++ Set(resource)
             case Operation.WRITE =>
                 Set(resource)
         }

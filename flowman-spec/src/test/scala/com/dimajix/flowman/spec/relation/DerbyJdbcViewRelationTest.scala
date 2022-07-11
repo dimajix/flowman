@@ -131,7 +131,10 @@ class DerbyJdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSpar
         viewRelation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofJdbcTable("view_001", None)))
         viewRelation.requires(Operation.CREATE) should be (Set(ResourceIdentifier.ofJdbcTable("table_001", None)))
         viewRelation.provides(Operation.READ) should be (Set(ResourceIdentifier.ofJdbcTablePartition("view_001", None, Map())))
-        viewRelation.requires(Operation.READ) should be (Set(ResourceIdentifier.ofJdbcTablePartition("table_001", None, Map())))
+        viewRelation.requires(Operation.READ) should be (Set(
+            ResourceIdentifier.ofJdbcTable("view_001", None),
+            ResourceIdentifier.ofJdbcTablePartition("table_001", None, Map())
+        ))
         viewRelation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofJdbcTablePartition("table_001", None, Map())))
         viewRelation.requires(Operation.WRITE) should be (Set(ResourceIdentifier.ofJdbcTable("view_001", None)))
         an[Exception] should be thrownBy(viewRelation.describe(execution))
@@ -196,7 +199,7 @@ class DerbyJdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSpar
         view1.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofJdbcTable("view_001", None)))
         view1.requires(Operation.CREATE) should be (Set.empty)
         view1.provides(Operation.READ) should be (Set(ResourceIdentifier.ofJdbcTablePartition("view_001", None, Map())))
-        view1.requires(Operation.READ) should be (Set.empty)
+        view1.requires(Operation.READ) should be (Set(ResourceIdentifier.ofJdbcTable("view_001", None)))
         view1.provides(Operation.WRITE) should be (Set.empty)
         view1.requires(Operation.WRITE) should be (Set(ResourceIdentifier.ofJdbcTable("view_001", None)))
 

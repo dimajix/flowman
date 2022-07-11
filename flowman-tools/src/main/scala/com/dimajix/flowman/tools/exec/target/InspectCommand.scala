@@ -23,10 +23,13 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Lifecycle
 import com.dimajix.flowman.execution.NoSuchTargetException
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.tools.exec.Command
 
@@ -46,19 +49,7 @@ class InspectCommand extends Command {
             println(s"    phases: ${target.phases.mkString(",")}")
             println(s"    before: ${target.before.mkString(",")}")
             println(s"    after: ${target.after.mkString(",")}")
-            target.phases.foreach { phase =>
-                println(s"Phase '$phase':")
-                println(s"  Provides:")
-                target.provides(phase)
-                    .map(_.toString)
-                    .toSeq.sorted
-                    .foreach{ p => println(s"    $p") }
-                println(s"  Requires:")
-                target.requires(phase)
-                    .map(_.toString)
-                    .toSeq.sorted
-                    .foreach{ p => println(s"    $p") }
-            }
+            Lifecycle.ALL.foreach(p => printDependencies(target,p))
             Status.SUCCESS
         }
         catch {
@@ -69,6 +60,19 @@ class InspectCommand extends Command {
                 logger.error(s"Error inspecting '$target': ${reasons(e)}")
                 Status.FAILED
         }
+    }
 
+    private def printDependencies(target:Target, phase:Phase) : Unit = {
+        println(s"Phase '$phase' ${if (!target.phases.contains(phase)) " (inactive)" else ""}:")
+        println(s"  Provides:")
+        target.provides(phase)
+            .map(_.toString)
+            .toSeq.sorted
+            .foreach{ p => println(s"    $p") }
+        println(s"  Requires:")
+        target.requires(phase)
+            .map(_.toString)
+            .toSeq.sorted
+            .foreach{ p => println(s"    $p") }
     }
 }

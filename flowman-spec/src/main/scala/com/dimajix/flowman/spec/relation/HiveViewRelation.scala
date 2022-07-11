@@ -103,15 +103,17 @@ case class HiveViewRelation(
                     .getOrElse(Set.empty)
                 db ++ other
             case Operation.READ =>
-                mapping.map(m => MappingUtils.requires(context, m.mapping))
+                val other = mapping.map(m => MappingUtils.requires(context, m.mapping))
                     .orElse {
                         statement.map(s => SqlParser.resolveDependencies(s).flatMap(t => Set(
+                            // Strictly speaking, we do not need to add the Hive table as a dependency, but this is
+                            // more consistent with the result of MappingUtils.requires
                             ResourceIdentifier.ofHiveTable(t).asInstanceOf[ResourceIdentifier],
                             ResourceIdentifier.ofHivePartition(t, Map.empty[String, Any]).asInstanceOf[ResourceIdentifier])
                         ))
                     }
-                    .getOrElse(Set.empty) ++
-                    Set(resource)
+                    .getOrElse(Set.empty)
+                other ++ Set(resource)
             case Operation.WRITE => Set.empty
         }
     }

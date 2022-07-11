@@ -28,13 +28,14 @@ import com.dimajix.flowman.metric.MetricSystem
 
 /**
  * The ScopedExecution is a caching execution with the added ability to isolate resources (i.e. not to reuse
- * existing DataFrames) and with a separate [[OperationManager]] for capturing background operations.
+ * existing DataFrames) and with a separate [[ActivityManager]] for capturing background activities.
+ *
  * @param parent
  * @param isolated
  */
 final class ScopedExecution(parent:Execution, isolated:Boolean=true) extends CachingExecution(Some(parent), isolated) {
     override protected val logger = LoggerFactory.getLogger(classOf[ScopedExecution])
-    private val operationsManager = new OperationManager(parent.operations)
+    private val operationsManager = new ActivityManager(parent.activities)
 
     /**
      * Returns the FlowmanConf object, which contains all Flowman settings.
@@ -79,9 +80,9 @@ final class ScopedExecution(parent:Execution, isolated:Boolean=true) extends Cac
     override def catalog: HiveCatalog = parent.catalog
 
     /**
-     * Returns the [[OperationManager]] of this execution, which should be the instance created by the [[Session]]
+     * Returns the [[ActivityManager]] of this execution, which should be the instance created by the [[Session]]
      *
      * @return
      */
-    override def operations: OperationManager = operationsManager
+    override def activities: ActivityManager = operationsManager
 }

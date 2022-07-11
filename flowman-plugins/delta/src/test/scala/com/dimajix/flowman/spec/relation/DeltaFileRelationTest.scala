@@ -41,11 +41,13 @@ import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.schema.InlineSchema
@@ -101,6 +103,16 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             location = new Path(location.toURI)
         )
 
+        relation.requires(Operation.CREATE) should be (Set.empty)
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path(location.toURI))))
+        relation.requires(Operation.READ) should be (Set(ResourceIdentifier.ofFile(new Path(location.toURI))))
+        relation.provides(Operation.READ) should be (Set.empty)
+        relation.requires(Operation.WRITE) should be (Set.empty)
+        relation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofFile(new Path(location.toURI))))
+        relation.describe(execution) should be (ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType)
+        )))
         relation.fields should be (Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType)
@@ -201,6 +213,11 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Field("int_col", ftypes.IntegerType),
             Field("part", ftypes.StringType, false)
         ))
+        relation.describe(execution) should be (ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("part", ftypes.StringType, false)
+        )))
 
         // == Create ================================================================================================
         location.exists() should be (false)

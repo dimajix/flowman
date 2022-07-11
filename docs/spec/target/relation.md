@@ -119,7 +119,8 @@ target.
  will be done. 
 * `VERIFY` - This will verify that the relation (and any specified partition) actually contains data.
 * `TRUNCATE` - This removes the contents of the specified relation. The relation itself will not be removed (for example
-if the relation refers to a Hive table)
+if the relation refers to a Hive table). Note for consistency reasons, the `TRUNCATE` phase will only be enabled for
+relation targets with a mapping.
 * `DESTROY` - This drops the relation itself and all its content.
 
 Read more about [execution phases](../../concepts/lifecycle.md).

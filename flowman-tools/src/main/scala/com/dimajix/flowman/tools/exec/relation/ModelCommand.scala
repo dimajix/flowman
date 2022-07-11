@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.model
+package com.dimajix.flowman.tools.exec.relation
 
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.spi.SubCommand

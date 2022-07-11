@@ -16,17 +16,17 @@
 
 package com.dimajix.flowman.execution
 
-abstract class OperationListener {
-    import OperationListener._
+abstract class ActivityListener {
+    import ActivityListener._
 
-    def onOperationTerminated(event:OperationTerminatedEvent) : Unit
+    def onActivityTerminated(event:ActivityTerminatedEvent) : Unit
 }
 
 
-object OperationListener {
+object ActivityListener {
     sealed abstract class Event
 
-    case class OperationTerminatedEvent(
-        operation: Operation
+    case class ActivityTerminatedEvent(
+        activity: Activity
     ) extends Event
 }

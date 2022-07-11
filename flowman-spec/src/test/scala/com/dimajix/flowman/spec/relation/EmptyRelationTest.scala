@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.Schema
@@ -65,6 +66,15 @@ class EmptyRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
                 )
             ))
         )
+
+        relation.provides(Operation.CREATE) should be (Set.empty)
+        relation.requires(Operation.CREATE) should be (Set.empty)
+        relation.provides(Operation.DESTROY) should be (Set.empty)
+        relation.requires(Operation.DESTROY) should be (Set.empty)
+        relation.provides(Operation.READ) should be (Set.empty)
+        relation.requires(Operation.READ) should be (Set.empty)
+        relation.provides(Operation.WRITE) should be (Set.empty)
+        relation.requires(Operation.WRITE) should be (Set.empty)
 
         // == Create ===================================================================
         relation.exists(executor) should be (Yes)

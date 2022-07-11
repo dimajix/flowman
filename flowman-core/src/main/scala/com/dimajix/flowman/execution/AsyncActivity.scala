@@ -26,14 +26,14 @@ import scala.concurrent.duration.Duration
 import scala.util.Failure
 import scala.util.Success
 
-import com.dimajix.flowman.execution.OperationListener._
+import com.dimajix.flowman.execution.ActivityListener._
 
 
-case class AsyncOperation(
+case class AsyncActivity(
     override val name: String,
     override val description: Option[String] = None,
     future:Future[Unit]
-) extends AbstractOperation {
+) extends AbstractActivity {
     private val promise = Promise[Unit]()
     private val value = promise.future
 
@@ -48,11 +48,11 @@ case class AsyncOperation(
                 promise.success(s)
         }
         // Then call all listeners
-        listeners.postToAll(OperationTerminatedEvent(this))
+        listeners.postToAll(ActivityTerminatedEvent(this))
     }
 
     /**
-     * Returns `true` if this operation is actively running.
+     * Returns `true` if this activity is actively running.
      *
      */
     override def isActive: Boolean = !value.isCompleted
@@ -68,8 +68,8 @@ case class AsyncOperation(
     }
 
     /**
-     * Waits for the termination of `this` operation, either by `query.operation()` or by an exception.
-     * If the operation has terminated with an exception, then the exception will be thrown.
+     * Waits for the termination of `this` activity, either by `query.activity()` or by an exception.
+     * If the activity has terminated with an exception, then the exception will be thrown.
      *
      * If the query has terminated, then all subsequent calls to this method will either return
      * immediately (if the query was terminated by `stop()`), or throw the exception
@@ -82,14 +82,14 @@ case class AsyncOperation(
     }
 
     /**
-     * Waits for the termination of `this` operation, either by `operation.stop()` or by an exception.
-     * If the operation has terminated with an exception, then the exception will be thrown.
-     * Otherwise, it returns whether the operation has terminated or not within the `timeoutMs`
+     * Waits for the termination of `this` activity, either by `activity.stop()` or by an exception.
+     * If the activity has terminated with an exception, then the exception will be thrown.
+     * Otherwise, it returns whether the activity has terminated or not within the `timeoutMs`
      * milliseconds.
      *
-     * If the operation has terminated, then all subsequent calls to this method will either return
+     * If the activity has terminated, then all subsequent calls to this method will either return
      * `true` immediately (if the query was terminated by `stop()`), or throw the exception
-     * immediately (if the operation has terminated with exception).
+     * immediately (if the activity has terminated with exception).
      *
      * @throws OperationException if the query has terminated with an exception
      */
@@ -111,8 +111,8 @@ case class AsyncOperation(
     override def processAllAvailable(): Unit = {}
 
     /**
-     * Stops the execution of this operation if it is running. This waits until the termination of the
-     * operation execution threads or until a timeout is hit.
+     * Stops the execution of this activity if it is running. This waits until the termination of the
+     * activity execution threads or until a timeout is hit.
      */
     override def stop(): Unit = {
         try {

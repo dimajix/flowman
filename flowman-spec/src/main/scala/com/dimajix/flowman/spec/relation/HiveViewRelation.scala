@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,11 @@ import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.PartitionField
+import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.flowman.model.RegexResourceIdentifier
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
@@ -58,52 +60,60 @@ case class HiveViewRelation(
     file: Option[Path] = None
 ) extends HiveRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveViewRelation])
-
-    /**
-      * Returns the list of all resources which will be created by this relation. The list will be specifically
-      * created for a specific partition, or for the full relation (when the partition is empty)
-      *
-      * @param partition
-      * @return
-      */
-    override def resources(partition: Map[String, FieldValue]): Set[ResourceIdentifier] = {
-        mapping.map(m => MappingUtils.requires(context, m.mapping))
-            .orElse(
-                // Only return Hive Table Partitions!
-                statement.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHivePartition(t, Map.empty[String,Any]).asInstanceOf[ResourceIdentifier]))
-            )
-            .getOrElse(Set())
-    }
+    private val resource = ResourceIdentifier.ofHiveTable(table)
 
     /**
       * Returns the list of all resources which will be created by this relation.
       *
       * @return
       */
-    override def provides : Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofHiveTable(table)
-    )
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                Set(resource)
+            case Operation.READ =>
+                requireValidPartitionKeys(partitions)
+
+                val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                allPartitions.map(p => ResourceIdentifier.ofHivePartition(table, p.toMap)).toSet
+            case Operation.WRITE => Set.empty
+        }
+    }
 
     /**
       * Returns the list of all resources which will be required by this relation for creation.
       *
       * @return
       */
-    override def requires : Set[ResourceIdentifier] = {
-        val db = table.database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
-        val other = mapping.map {m =>
-                MappingUtils.requires(context, m.mapping)
-                    // Replace all Hive partitions with Hive tables
-                    .map {
-                        case RegexResourceIdentifier("hiveTablePartition", table, _) => ResourceIdentifier.ofHiveTable(table)
-                        case id => id
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                val db = table.database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
+                val other = mapping.map { m =>
+                        MappingUtils.requires(context, m.mapping)
+                            // Replace all Hive partitions with Hive tables
+                            .map {
+                                case RegexResourceIdentifier("hiveTablePartition", table, _) => ResourceIdentifier.ofHiveTable(table)
+                                case id => id
+                            }
                     }
-            }
-            .orElse {
-                statement.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHiveTable(t)))
-            }
-            .getOrElse(Set())
-        db ++ other
+                    .orElse {
+                        statement.map(s => SqlParser.resolveDependencies(s).map(t => ResourceIdentifier.ofHiveTable(t)))
+                    }
+                    .getOrElse(Set.empty)
+                db ++ other
+            case Operation.READ =>
+                mapping.map(m => MappingUtils.requires(context, m.mapping))
+                    .orElse {
+                        statement.map(s => SqlParser.resolveDependencies(s).flatMap(t => Set(
+                            ResourceIdentifier.ofHiveTable(t).asInstanceOf[ResourceIdentifier],
+                            ResourceIdentifier.ofHivePartition(t, Map.empty[String, Any]).asInstanceOf[ResourceIdentifier])
+                        ))
+                    }
+                    .getOrElse(Set.empty) ++
+                    Set(resource)
+            case Operation.WRITE => Set.empty
+        }
     }
 
     override def write(execution:Execution, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
@@ -171,7 +181,7 @@ case class HiveViewRelation(
             logger.info(s"Creating Hive view relation '$identifier' with VIEW $table")
             val select = getSelect(execution)
             catalog.createView(table, select, ifNotExists)
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
 
@@ -192,7 +202,7 @@ case class HiveViewRelation(
             else {
                 migrateFromTable(catalog, newSelect, migrationStrategy)
             }
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
 
@@ -237,7 +247,7 @@ case class HiveViewRelation(
         if (!ifExists || catalog.tableExists(table)) {
             logger.info(s"Destroying Hive view relation '$identifier' with VIEW $table")
             catalog.dropView(table)
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
 

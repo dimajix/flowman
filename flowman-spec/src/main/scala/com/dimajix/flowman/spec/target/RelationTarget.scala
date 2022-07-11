@@ -42,6 +42,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
@@ -138,7 +139,7 @@ case class RelationTarget(
         if (mapping.nonEmpty)
             Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
         else
-            Set(Phase.CREATE, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY)
+            Set(Phase.CREATE, Phase.VERIFY, Phase.DESTROY)
     }
 
     /**
@@ -146,13 +147,17 @@ case class RelationTarget(
       * @return
       */
     override def provides(phase: Phase) : Set[ResourceIdentifier] = {
-        val partition = this.partition.mapValues(v => SingleValue(v))
         val rel = relation.value
 
         phase match {
-            case Phase.CREATE|Phase.DESTROY => rel.provides
-            case Phase.BUILD if mapping.nonEmpty => rel.resources(partition) // ++ rel.provides
-            //case Phase.BUILD => rel.provides
+            case Phase.CREATE => rel.provides(Operation.CREATE)
+            case Phase.DESTROY => rel.provides(Operation.DESTROY)
+            case Phase.BUILD|Phase.TRUNCATE if mapping.nonEmpty =>
+                val partition = this.partition.mapValues(v => SingleValue(v))
+                rel.provides(Operation.WRITE, partition)
+            case Phase.BUILD =>
+                // This special case is mainly for implementing correct dependency management with VIEWs
+                rel.provides(Operation.READ)
             case _ => Set()
         }
     }
@@ -165,9 +170,16 @@ case class RelationTarget(
         val rel = relation.value
 
         phase match {
-            case Phase.CREATE|Phase.DESTROY => rel.requires
-            case Phase.BUILD if mapping.nonEmpty => MappingUtils.requires(context, mapping.mapping) // ++ rel.requires
-            //case Phase.BUILD => rel.requires
+            case Phase.CREATE => rel.requires(Operation.CREATE)
+            case Phase.DESTROY => rel.requires(Operation.DESTROY)
+            case Phase.BUILD if mapping.nonEmpty =>
+                val partition = this.partition.mapValues(v => SingleValue(v))
+                MappingUtils.requires(context, mapping.mapping) ++ rel.requires(Operation.WRITE, partition)
+            case Phase.BUILD =>
+                // This special case is mainly for implementing correct dependency management with VIEWs
+                rel.requires(Operation.READ)
+            case Phase.TRUNCATE if mapping.nonEmpty =>
+                rel.requires(Operation.WRITE)
             case _ => Set()
         }
     }
@@ -325,11 +337,13 @@ case class RelationTarget(
     override def truncate(executor: Execution): Unit = {
         require(executor != null)
 
-        val partition = this.partition.mapValues(v => SingleValue(v))
+        if (mapping.nonEmpty) {
+            val partition = this.partition.mapValues(v => SingleValue(v))
 
-        logger.info(s"Truncating partition $partition of relation '${relation.identifier}'")
-        val rel = relation.value
-        rel.truncate(executor, partition)
+            logger.info(s"Truncating partition $partition of relation '${relation.identifier}'")
+            val rel = relation.value
+            rel.truncate(executor, partition)
+        }
     }
 
     /**

@@ -19,16 +19,16 @@ package com.dimajix.flowman.execution
 import com.dimajix.flowman.common.ListenerBus
 
 
-class OperationListenerBus extends ListenerBus[OperationListener, OperationListener.Event] {
-    import OperationListener._
+class ActivityListenerBus extends ListenerBus[ActivityListener, ActivityListener.Event] {
+    import ActivityListener._
     /**
      * Post an event to the specified listener. `onPostEvent` is guaranteed to be called in the same
      * thread for all listeners.
      */
-    override protected def doPostEvent(listener: OperationListener, event: OperationListener.Event): Unit = {
+    override protected def doPostEvent(listener: ActivityListener, event: ActivityListener.Event): Unit = {
         event match {
-            case ev:OperationTerminatedEvent =>
-                listener.onOperationTerminated(ev)
+            case ev:ActivityTerminatedEvent =>
+                listener.onActivityTerminated(ev)
         }
     }
 }

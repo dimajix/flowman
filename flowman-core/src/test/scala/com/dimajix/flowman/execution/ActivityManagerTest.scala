@@ -23,10 +23,10 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 
-class OperationManagerTest extends AnyFlatSpec with Matchers with MockFactory {
-    "The OperationManager" should "work" in {
-        val mgr = new OperationManager
-        val op = Operation.run("op1") {
+class ActivityManagerTest extends AnyFlatSpec with Matchers with MockFactory {
+    "The ActivityManager" should "work" in {
+        val mgr = new ActivityManager
+        val op = Activity.run("op1") {
             Thread.sleep(1000)
         }
         mgr.post(op)
@@ -44,9 +44,9 @@ class OperationManagerTest extends AnyFlatSpec with Matchers with MockFactory {
         mgr.listActive().exists(_ eq op) should be (false)
     }
 
-    it should "support finished operations" in {
-        val mgr = new OperationManager
-        val op = Operation.run("op1") {}
+    it should "support finished activities" in {
+        val mgr = new ActivityManager
+        val op = Activity.run("op1") {}
         op.awaitTermination()
         op.isActive should be (false)
 

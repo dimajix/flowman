@@ -41,6 +41,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingIdentifier
@@ -129,9 +130,12 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val relation = context.getRelation(RelationIdentifier("local"))
         val fileRelation = relation.asInstanceOf[FileRelation]
         fileRelation.location should be (new Path(outputPath.toUri))
-        fileRelation.requires should be (Set())
-        fileRelation.provides should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
-        fileRelation.resources() should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
+        fileRelation.requires(Operation.CREATE) should be (Set.empty)
+        fileRelation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
+        fileRelation.requires(Operation.READ) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
+        fileRelation.provides(Operation.READ) should be (Set.empty)
+        fileRelation.requires(Operation.WRITE) should be (Set.empty)
+        fileRelation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
         fileRelation.describe(execution) should be (ftypes.StructType(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType)
@@ -492,10 +496,16 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             )
         )
 
-        relation.requires should be (Set())
-        relation.provides should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
-        relation.resources() should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=*").toUri))))
-        relation.resources(Map("p_col" -> SingleValue("22"))) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=22").toUri))))
+        relation.requires(Operation.CREATE) should be (Set.empty)
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
+        relation.requires(Operation.READ) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=*").toUri))))
+        relation.provides(Operation.READ) should be (Set.empty)
+        relation.requires(Operation.WRITE) should be (Set.empty)
+        relation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=*").toUri))))
+        relation.requires(Operation.READ,Map("p_col" -> SingleValue("22"))) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=22").toUri))))
+        relation.provides(Operation.READ,Map("p_col" -> SingleValue("22"))) should be (Set.empty)
+        relation.requires(Operation.WRITE,Map("p_col" -> SingleValue("22"))) should be (Set.empty)
+        relation.provides(Operation.WRITE,Map("p_col" -> SingleValue("22"))) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=22").toUri))))
 
         // == Inspect ===============================================================================================
         relation.describe(execution) should be (com.dimajix.flowman.types.StructType(Seq(
@@ -699,10 +709,16 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             )
         )
 
-        relation.requires should be (Set())
-        relation.provides should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
-        relation.resources() should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=*").toUri))))
-        relation.resources(Map("p_col" -> SingleValue("22"))) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=22").toUri))))
+        relation.requires(Operation.CREATE) should be (Set.empty)
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
+        relation.requires(Operation.READ) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=*").toUri))))
+        relation.provides(Operation.READ) should be (Set.empty)
+        relation.requires(Operation.WRITE) should be (Set.empty)
+        relation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=*").toUri))))
+        relation.requires(Operation.READ,Map("p_col" -> SingleValue("22"))) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=22").toUri))))
+        relation.provides(Operation.READ,Map("p_col" -> SingleValue("22"))) should be (Set.empty)
+        relation.requires(Operation.WRITE,Map("p_col" -> SingleValue("22"))) should be (Set.empty)
+        relation.provides(Operation.WRITE,Map("p_col" -> SingleValue("22"))) should be (Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=22").toUri))))
 
         // == Read ===================================================================================================
         a[FileNotFoundException] should be thrownBy(relation.read(execution))
@@ -910,16 +926,28 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         )
 
 
-        relation.resources(Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1"))) should be (Set(
+        relation.provides(Operation.WRITE, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1"))) should be (Set(
             ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "p1=1/p2=1"))
         ))
-        relation.resources(Map("p1" -> SingleValue("1"))) should be (Set(
+        relation.requires(Operation.READ, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1"))) should be (Set(
+            ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "p1=1/p2=1"))
+        ))
+        relation.provides(Operation.WRITE, Map("p1" -> SingleValue("1"))) should be (Set(
             ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "p1=1/p2=*"))
         ))
-        relation.resources(Map("p2" -> SingleValue("1"))) should be (Set(
+        relation.requires(Operation.READ, Map("p1" -> SingleValue("1"))) should be (Set(
+            ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "p1=1/p2=*"))
+        ))
+        relation.provides(Operation.WRITE, Map("p2" -> SingleValue("1"))) should be (Set(
             ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "p1=*/p2=1"))
         ))
-        relation.resources(Map()) should be (Set(
+        relation.requires(Operation.READ, Map("p2" -> SingleValue("1"))) should be (Set(
+            ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "p1=*/p2=1"))
+        ))
+        relation.provides(Operation.WRITE, Map()) should be (Set(
+            ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "p1=*/p2=*"))
+        ))
+        relation.requires(Operation.READ, Map()) should be (Set(
             ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "p1=*/p2=*"))
         ))
 
@@ -1029,10 +1057,16 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("local"))
-        relation.resources(Map("month" -> SingleValue("1"))) should be (Set(
+        relation.provides(Operation.WRITE, Map("month" -> SingleValue("1"))) should be (Set(
             ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "year=2016/month=1"))
         ))
-        relation.resources(Map()) should be (Set(
+        relation.requires(Operation.READ, Map("month" -> SingleValue("1"))) should be (Set(
+            ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "year=2016/month=1"))
+        ))
+        relation.provides(Operation.WRITE, Map()) should be (Set(
+            ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "year=2016/month=*"))
+        ))
+        relation.requires(Operation.READ, Map()) should be (Set(
             ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "year=2016/month=*"))
         ))
 

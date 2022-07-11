@@ -42,6 +42,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.hadoop.FileUtils
@@ -66,15 +67,30 @@ case class DeltaFileRelation(
     properties: Map[String, String] = Map(),
     mergeKey: Seq[String] = Seq()
 ) extends DeltaRelation(options, mergeKey) {
-    protected  val logger = LoggerFactory.getLogger(classOf[DeltaFileRelation])
+    protected val logger = LoggerFactory.getLogger(classOf[DeltaFileRelation])
+    protected val resource = ResourceIdentifier.ofFile(location)
 
     /**
      * Returns the list of all resources which will be created by this relation.
      *
      * @return
      */
-    override def provides: Set[ResourceIdentifier] = {
-        Set(ResourceIdentifier.ofFile(location))
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY => Set(resource)
+            case Operation.READ => Set.empty
+            case Operation.WRITE =>
+                requireValidPartitionKeys(partitions)
+                if (this.partitions.nonEmpty) {
+                    // TODO: Get all partition paths
+                    //val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
+                    //allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p))).toSet
+                    Set(resource)
+                }
+                else {
+                    Set(resource)
+                }
+        }
     }
 
     /**
@@ -82,32 +98,23 @@ case class DeltaFileRelation(
      *
      * @return
      */
-    override def requires: Set[ResourceIdentifier] = {
-        Set()
-    }
-
-    /**
-     * Returns the list of all resources which will are managed by this relation for reading or writing a specific
-     * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
-     * partition is empty)
-     *
-     * @param partitions
-     * @return
-     */
-    override def resources(partition: Map[String, FieldValue]): Set[ResourceIdentifier] = {
-        require(partitions != null)
-
-        requireValidPartitionKeys(partition)
-
-        if (this.partitions.nonEmpty) {
-            // TODO: Get all partition paths
-            //val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
-            //allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p))).toSet
-            Set(ResourceIdentifier.ofFile(location))
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] =  {
+        val deps = op match {
+            case Operation.CREATE | Operation.DESTROY => Set.empty
+            case Operation.READ =>
+                requireValidPartitionKeys(partitions)
+                if (this.partitions.nonEmpty) {
+                    // TODO: Get all partition paths
+                    //val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
+                    //allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p))).toSet
+                    Set(resource)
+                }
+                else {
+                    Set(resource)
+                }
+            case Operation.WRITE => Set.empty
         }
-        else {
-            Set(ResourceIdentifier.ofFile(location))
-        }
+        deps ++ super.requires(op, partitions)
     }
 
     /**
@@ -291,7 +298,7 @@ case class DeltaFileRelation(
                 description
             )
 
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
 
@@ -348,7 +355,7 @@ case class DeltaFileRelation(
         else {
             logger.info(s"Destroying Delta file relation '$identifier' by deleting directory '$location'")
             fs.delete(location, true)
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
 

@@ -22,6 +22,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.ScopeContext
 import com.dimajix.flowman.execution.Session
@@ -93,24 +94,20 @@ class TruncateTargetTest extends AnyFlatSpec with Matchers with MockFactory with
 
         target.provides(Phase.VALIDATE) should be (Set())
         target.provides(Phase.CREATE) should be (Set())
-        (relation.provides _).expects().returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
-        (relation.resources _).expects(Map("p1" -> SingleValue("1234"),"p2" -> RangeValue("1", "3"))).returns(Set(
+        (relation.provides _).expects(Operation.WRITE,Map("p1" -> SingleValue("1234"),"p2" -> RangeValue("1", "3"))).returns(Set(
             ResourceIdentifier.ofHivePartition("some_table", Some("db"), Map("p1" -> "1234", "p2" -> "1")),
             ResourceIdentifier.ofHivePartition("some_table", Some("db"), Map("p1" -> "1234", "p2" -> "2"))
         ))
         target.provides(Phase.BUILD) should be (Set(
-            ResourceIdentifier.ofHiveTable("some_table"),
             ResourceIdentifier.ofHivePartition("some_table", Some("db"), Map("p1" -> "1234", "p2" -> "1")),
             ResourceIdentifier.ofHivePartition("some_table", Some("db"), Map("p1" -> "1234", "p2" -> "2"))
         ))
         target.provides(Phase.VERIFY) should be (Set())
-        (relation.provides _).expects().returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
-        (relation.resources _).expects(Map("p1" -> SingleValue("1234"),"p2" -> RangeValue("1", "3"))).returns(Set(
+        (relation.provides _).expects(Operation.WRITE,Map("p1" -> SingleValue("1234"),"p2" -> RangeValue("1", "3"))).returns(Set(
             ResourceIdentifier.ofHivePartition("some_table", Some("db"), Map("p1" -> "1234", "p2" -> "1")),
             ResourceIdentifier.ofHivePartition("some_table", Some("db"), Map("p1" -> "1234", "p2" -> "2"))
         ))
         target.provides(Phase.TRUNCATE) should be (Set(
-            ResourceIdentifier.ofHiveTable("some_table"),
             ResourceIdentifier.ofHivePartition("some_table", Some("db"), Map("p1" -> "1234", "p2" -> "1")),
             ResourceIdentifier.ofHivePartition("some_table", Some("db"), Map("p1" -> "1234", "p2" -> "2"))
         ))
@@ -118,13 +115,11 @@ class TruncateTargetTest extends AnyFlatSpec with Matchers with MockFactory with
 
         target.requires(Phase.VALIDATE) should be (Set())
         target.requires(Phase.CREATE) should be (Set())
-        (relation.requires _).expects().returns(Set(ResourceIdentifier.ofHiveDatabase("db")))
-        (relation.provides _).expects().returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
-        target.requires(Phase.BUILD) should be (Set(ResourceIdentifier.ofHiveDatabase("db"), ResourceIdentifier.ofHiveTable("some_table")))
+        (relation.requires _).expects(Operation.WRITE,*).returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
+        target.requires(Phase.BUILD) should be (Set(ResourceIdentifier.ofHiveTable("some_table")))
         target.requires(Phase.VERIFY) should be (Set())
-        (relation.requires _).expects().returns(Set(ResourceIdentifier.ofHiveDatabase("db")))
-        (relation.provides _).expects().returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
-        target.requires(Phase.TRUNCATE) should be (Set(ResourceIdentifier.ofHiveDatabase("db"), ResourceIdentifier.ofHiveTable("some_table")))
+        (relation.requires _).expects(Operation.WRITE,*).returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
+        target.requires(Phase.TRUNCATE) should be (Set(ResourceIdentifier.ofHiveTable("some_table")))
         target.requires(Phase.DESTROY) should be (Set())
 
         (relation.partitions _).expects().returns(Seq(PartitionField("p1", StringType), PartitionField("p2", IntegerType)))
@@ -176,24 +171,20 @@ class TruncateTargetTest extends AnyFlatSpec with Matchers with MockFactory with
 
         target.provides(Phase.VALIDATE) should be (Set())
         target.provides(Phase.CREATE) should be (Set())
-        (relation.provides _).expects().returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
-        (relation.resources _).expects(Map.empty[String,FieldValue]).returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
+        (relation.provides _).expects(Operation.WRITE,*).returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
         target.provides(Phase.BUILD) should be (Set(ResourceIdentifier.ofHiveTable("some_table")))
         target.provides(Phase.VERIFY) should be (Set())
-        (relation.provides _).expects().returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
-        (relation.resources _).expects(Map.empty[String,FieldValue]).returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
+        (relation.provides _).expects(Operation.WRITE,*).returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
         target.provides(Phase.TRUNCATE) should be (Set(ResourceIdentifier.ofHiveTable("some_table")))
         target.provides(Phase.DESTROY) should be (Set())
 
         target.requires(Phase.VALIDATE) should be (Set())
         target.requires(Phase.CREATE) should be (Set())
-        (relation.requires _).expects().returns(Set(ResourceIdentifier.ofHiveDatabase("db")))
-        (relation.provides _).expects().returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
-        target.requires(Phase.BUILD) should be (Set(ResourceIdentifier.ofHiveDatabase("db"), ResourceIdentifier.ofHiveTable("some_table")))
+        (relation.requires _).expects(Operation.WRITE,*).returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
+        target.requires(Phase.BUILD) should be (Set(ResourceIdentifier.ofHiveTable("some_table")))
         target.requires(Phase.VERIFY) should be (Set())
-        (relation.requires _).expects().returns(Set(ResourceIdentifier.ofHiveDatabase("db")))
-        (relation.provides _).expects().returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
-        target.requires(Phase.TRUNCATE) should be (Set(ResourceIdentifier.ofHiveDatabase("db"), ResourceIdentifier.ofHiveTable("some_table")))
+        (relation.requires _).expects(Operation.WRITE,*).returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
+        target.requires(Phase.TRUNCATE) should be (Set(ResourceIdentifier.ofHiveTable("some_table")))
         target.requires(Phase.DESTROY) should be (Set())
 
         (relation.loaded _).expects(execution, Map.empty[String,SingleValue]).returns(Yes)

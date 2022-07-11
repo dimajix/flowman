@@ -21,14 +21,14 @@ import scala.collection.mutable
 import javax.annotation.concurrent.GuardedBy
 
 
-class OperationManager(parent:Option[OperationManager]=None) {
+class ActivityManager(parent:Option[ActivityManager]=None) {
     @GuardedBy("opsLock")
-    private val ops = new mutable.HashMap[String,Operation]()
+    private val ops = new mutable.HashMap[String,Activity]()
     private val opsLock = new Object
 
-    private val listener = new OperationListener {
-        override def onOperationTerminated(event: OperationListener.OperationTerminatedEvent): Unit = {
-            val op = event.operation
+    private val listener = new ActivityListener {
+        override def onActivityTerminated(event: ActivityListener.ActivityTerminatedEvent): Unit = {
+            val op = event.activity
             op.removeListener(this)
             opsLock.synchronized {
                 ops.remove(op.name)
@@ -36,19 +36,20 @@ class OperationManager(parent:Option[OperationManager]=None) {
         }
     }
 
-    def this(parent:OperationManager) = {
+    def this(parent:ActivityManager) = {
         this(Some(parent))
     }
 
     /**
-     * Posts a new [[Operation]] to the manager. The operation is probably already be running.
+     * Posts a new [[Activity]] to the manager. The activity is probably already be running.
+     *
      * @param op
      */
-    def post(op:Operation) : Unit = opsLock.synchronized {
+    def post(op: Activity) : Unit = opsLock.synchronized {
         parent.foreach(_.post(op))
 
         if (ops.contains(op.name))
-            throw new IllegalArgumentException(s"Cannot post operation with name '${op.name}', as an operation with the same name already exists")
+            throw new IllegalArgumentException(s"Cannot post activity with name '${op.name}', as an activity with the same name already exists")
 
         if (op.isActive) {
             op.addListener(listener)
@@ -60,7 +61,7 @@ class OperationManager(parent:Option[OperationManager]=None) {
      * Returns a list of all Operations.
      * @return
      */
-    def listAll() : Seq[Operation] = opsLock.synchronized {
+    def listAll() : Seq[Activity] = opsLock.synchronized {
         ops.values.toSeq
     }
 
@@ -68,12 +69,12 @@ class OperationManager(parent:Option[OperationManager]=None) {
      * Returns a list only of active Operations.
      * @return
      */
-    def listActive() : Seq[Operation] = opsLock.synchronized {
+    def listActive() : Seq[Activity] = opsLock.synchronized {
         ops.values.filter(_.isActive).toSeq
     }
 
     /**
-     * Returns true if at least one operation is running.
+     * Returns true if at least one activity is running.
      * @return
      */
     def isActive : Boolean = opsLock.synchronized {
@@ -81,7 +82,7 @@ class OperationManager(parent:Option[OperationManager]=None) {
     }
 
     /**
-     * Triggers a stop on all running operations
+     * Triggers a stop on all running activities
      */
     def stop() : Unit = {
         listActive().foreach(_.stop())

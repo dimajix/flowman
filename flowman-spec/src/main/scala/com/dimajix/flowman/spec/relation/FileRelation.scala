@@ -40,6 +40,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.hadoop.FileCollector
 import com.dimajix.flowman.hadoop.FileUtils
@@ -67,6 +68,7 @@ case class FileRelation(
     options:Map[String,String] = Map()
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[FileRelation])
+    private val resource = ResourceIdentifier.ofFile(qualifiedLocation)
 
     private lazy val collector : FileCollector = {
         FileCollector.builder(context.hadoopConf)
@@ -83,37 +85,44 @@ case class FileRelation(
       *
       * @return
       */
-    override def provides : Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofFile(qualifiedLocation)
-    )
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY => Set(resource)
+            case Operation.READ => Set.empty
+            case Operation.WRITE =>
+                requireValidPartitionKeys(partitions)
+
+                if (this.partitions.nonEmpty) {
+                    val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                    allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p))).toSet
+                }
+                else {
+                    Set(resource)
+                }
+        }
+    }
 
     /**
       * Returns the list of all resources which will be required by this relation
       *
       * @return
       */
-    override def requires : Set[ResourceIdentifier] = super.requires
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        val deps = op match {
+            case Operation.CREATE | Operation.DESTROY => Set.empty
+            case Operation.READ =>
+                requireValidPartitionKeys(partitions)
 
-    /**
-      * Returns the list of all resources which will be required by this relation for reading a specific partition.
-      * The list will be specifically  created for a specific partition, or for the full relation (when the partition
-      * is empty)
-      *
-      * @param partitions
-      * @return
-      */
-    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = {
-        require(partitions != null)
-
-        requireValidPartitionKeys(partitions)
-
-        if (this.partitions.nonEmpty) {
-            val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-            allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p))).toSet
+                if (this.partitions.nonEmpty) {
+                    val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                    allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p))).toSet
+                }
+                else {
+                    Set(resource)
+                }
+            case Operation.WRITE => Set.empty
         }
-        else {
-            Set(ResourceIdentifier.ofFile(qualifiedLocation))
-        }
+        deps ++ super.requires(op, partitions)
     }
 
     /**
@@ -153,7 +162,7 @@ case class FileRelation(
                 readCustom(execution, partitions)
 
         // Install callback to refresh DataFrame when data is overwritten
-        execution.addResource(ResourceIdentifier.ofFile(qualifiedLocation)) {
+        execution.addResource(resource) {
             df.queryExecution.logical.refresh()
         }
 
@@ -225,7 +234,7 @@ case class FileRelation(
         else
             doWriteStaticPartitions(execution, df, partition, mode)
 
-        provides.foreach(execution.refreshResource)
+        execution.refreshResource(resource)
     }
     private def doWriteDynamicPartitions(execution:Execution, df:DataFrame,  mode:OutputMode) : Unit = {
         logger.info(s"Writing file relation '$identifier' to output location '$qualifiedLocation' as '$format' with mode '$mode' with dynamic partitions")
@@ -423,7 +432,7 @@ case class FileRelation(
             }
         }
 
-        provides.foreach(execution.refreshResource)
+        execution.refreshResource(resource)
     }
 
     /**
@@ -482,7 +491,7 @@ case class FileRelation(
             fs.delete(qualifiedLocation, true)
         }
 
-        provides.foreach(execution.refreshResource)
+        execution.refreshResource(resource)
     }
 
     /**

@@ -89,11 +89,11 @@ final class RootExecution(session:Session) extends CachingExecution(None, true) 
     override def catalog: HiveCatalog = session.catalog
 
     /**
-     * Returns the [[OperationManager]] of this execution, which is the same instance created by the [[Session]]
+     * Returns the [[ActivityManager]] of this execution, which is the same instance created by the [[Session]]
      *
      * @return
      */
-    override def operations: OperationManager = session.operations
+    override def activities: ActivityManager = session.activities
 
     /**
      * Releases any temporary tables

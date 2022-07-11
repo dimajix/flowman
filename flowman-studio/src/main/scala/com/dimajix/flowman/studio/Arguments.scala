@@ -31,7 +31,7 @@ import org.kohsuke.args4j.spi.SubCommands
 import com.dimajix.flowman.tools.exec.info.InfoCommand
 import com.dimajix.flowman.tools.exec.job.JobCommand
 import com.dimajix.flowman.tools.exec.mapping.MappingCommand
-import com.dimajix.flowman.tools.exec.model.ModelCommand
+import com.dimajix.flowman.tools.exec.relation.ModelCommand
 import com.dimajix.flowman.tools.exec.namespace.NamespaceCommand
 import com.dimajix.flowman.tools.exec.project.ProjectCommand
 import com.dimajix.flowman.tools.exec.target.TargetCommand

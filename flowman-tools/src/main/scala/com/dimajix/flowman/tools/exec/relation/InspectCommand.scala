@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.model
+package com.dimajix.flowman.tools.exec.relation
 
 import scala.util.control.NonFatal
 
@@ -28,7 +28,9 @@ import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.model.Relation
 
 
 class InspectCommand extends Command {
@@ -43,16 +45,9 @@ class InspectCommand extends Command {
             println("Relation:")
             println(s"    name: ${relation.name}")
             println(s"    kind: ${relation.kind}")
-            println(s"  Requires:")
-                relation.requires
-                    .map(_.toString)
-                    .toSeq.sorted
-                    .foreach{ p => println(s"    $p") }
-            println(s"  Provides:")
-            relation.provides
-                .map(_.toString)
-                .toSeq.sorted
-                .foreach{ p => println(s"    $p") }
+            printDependencies(relation, Operation.CREATE)
+            printDependencies(relation, Operation.READ)
+            printDependencies(relation, Operation.WRITE)
             Status.SUCCESS
         }
         catch {
@@ -63,5 +58,18 @@ class InspectCommand extends Command {
                 logger.error(s"Error inspecting '$relation': ${reasons(e)}")
                 Status.FAILED
         }
+    }
+    private def printDependencies(relation:Relation, op:Operation) : Unit = {
+        println(s"  Requires - $op:")
+        relation.requires(op)
+            .map(_.toString)
+            .toSeq.sorted
+            .foreach{ p => println(s"    $p") }
+        println(s"  Provides - $op:")
+        relation.provides(op)
+            .map(_.toString)
+            .toSeq.sorted
+            .foreach{ p => println(s"    $p") }
+
     }
 }

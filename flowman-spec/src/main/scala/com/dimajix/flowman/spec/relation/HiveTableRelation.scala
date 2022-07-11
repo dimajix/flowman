@@ -55,6 +55,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.hadoop.FileUtils
@@ -94,40 +95,45 @@ case class HiveTableRelation(
     writer: String = "hive"
 ) extends HiveRelation with SchemaRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
-
-    /**
-      * Returns the list of all resources which will be created by this relation. The list will be specifically
-      * created for a specific partition, or for the full relation (when the partition is empty)
-      *
-      * @param partition
-      * @return
-      */
-    override def resources(partition: Map[String, FieldValue]): Set[ResourceIdentifier] = {
-        require(partitions != null)
-
-        requireValidPartitionKeys(partition)
-
-        // Only return Hive table partitions!
-        val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
-        allPartitions.map(p => ResourceIdentifier.ofHivePartition(table, p.toMap)).toSet
-    }
+    private val resource = ResourceIdentifier.ofHiveTable(table)
 
     /**
       * Returns the list of all resources which will be created by this relation.
       *
       * @return
       */
-    override def provides : Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofHiveTable(table)
-    )
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY => Set(resource)
+            case Operation.READ => Set.empty
+            case Operation.WRITE =>
+                requireValidPartitionKeys(partitions)
+
+                // Only return Hive table partitions!
+                val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                allPartitions.map(p => ResourceIdentifier.ofHivePartition(table, p.toMap)).toSet
+        }
+    }
 
     /**
       * Returns the list of all resources which will be required by this relation for creation.
       *
       * @return
       */
-    override def requires : Set[ResourceIdentifier] = {
-        table.database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet ++ super.requires
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        val deps = op match {
+            case Operation.CREATE|Operation.DESTROY =>
+                table.database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
+            case Operation.READ =>
+                requireValidPartitionKeys(partitions)
+
+                // Only return Hive table partitions!
+                val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                allPartitions.map(p => ResourceIdentifier.ofHivePartition(table, p.toMap)).toSet ++ Set(resource)
+            case Operation.WRITE =>
+                Set(resource)
+        }
+        deps ++ super.requires(op, partitions)
     }
 
     /**
@@ -154,7 +160,7 @@ case class HiveTableRelation(
         else
             throw new IllegalArgumentException("Hive relations only support write modes 'hive' and 'spark'")
 
-        provides.foreach(execution.refreshResource)
+        execution.refreshResource(resource)
     }
 
     /**
@@ -468,7 +474,7 @@ case class HiveTableRelation(
             // Create table
             val catalog = execution.catalog
             catalog.createTable(catalogTable, false)
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
 
@@ -484,7 +490,7 @@ case class HiveTableRelation(
         if (!ifExists || catalog.tableExists(table)) {
             logger.info(s"Destroying Hive table relation '$identifier' by dropping table $table")
             catalog.dropTable(table)
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
 
@@ -509,7 +515,7 @@ case class HiveTableRelation(
                         logger.warn(s"TABLE target ${this.table} is currently a VIEW, dropping...")
                         catalog.dropView(this.table, false)
                         create(execution, false)
-                        provides.foreach(execution.refreshResource)
+                        execution.refreshResource(resource)
                 }
             }
             else {
@@ -520,7 +526,7 @@ case class HiveTableRelation(
                 val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
                 if (requiresMigration) {
                     doMigration(execution, sourceTable, targetTable, migrationPolicy, migrationStrategy)
-                    provides.foreach(execution.refreshResource)
+                    execution.refreshResource(resource)
                 }
             }
         }

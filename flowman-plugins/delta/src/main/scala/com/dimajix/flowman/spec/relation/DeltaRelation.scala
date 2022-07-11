@@ -50,12 +50,15 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionedRelation
+import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.spark.sql.delta.AlterTableChangeColumnDeltaCommand
 import com.dimajix.flowman.spark.sql.delta.QualifiedColumn
 
 
-abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String]) extends BaseRelation with PartitionedRelation {
+abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String]) extends BaseRelation with PartitionedRelation with SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[DeltaRelation])
+    protected val resource : ResourceIdentifier
 
     protected def deltaCatalogTable(execution: Execution) : DeltaTableV2
     protected def deltaTable(execution: Execution) : DeltaTable
@@ -151,7 +154,7 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
 
         if (requiresMigration) {
             doMigration(execution, table, sourceTable, targetTable, migrationPolicy, migrationStrategy)
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
     private def doMigration(execution: Execution, table:DeltaTableV2, currentTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {

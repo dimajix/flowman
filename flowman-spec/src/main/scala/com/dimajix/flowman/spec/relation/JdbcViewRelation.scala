@@ -43,6 +43,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialects
@@ -72,15 +73,26 @@ case class JdbcViewRelation(
     connection,
     properties + (JDBCOptions.JDBC_TABLE_NAME -> view.unquotedString)
 ) with PartitionedRelation {
+    protected val resource: ResourceIdentifier = ResourceIdentifier.ofJdbcTable(view)
     /**
      * Returns the list of all resources which will be created by this relation. This method mainly refers to the
      * CREATE and DESTROY execution phase.
      *
      * @return
      */
-    override def provides: Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofJdbcTable(view)
-    )
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                Set(resource)
+            case Operation.READ =>
+                requireValidPartitionKeys(partitions)
+
+                val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(view, p.toMap)).toSet
+            case Operation.WRITE =>
+                dependencies.map(l => ResourceIdentifier.ofJdbcTablePartition(TableIdentifier(l), Map.empty)).toSet
+        }
+    }
 
     /**
      *
@@ -89,30 +101,17 @@ case class JdbcViewRelation(
      *
      * @return
      */
-    override def requires: Set[ResourceIdentifier] = {
-        val db = view.database.map(db => ResourceIdentifier.ofJdbcDatabase(db)).toSet
-        val parsed = CCJSqlParserUtil.parse(statement)
-        val tablesNamesFinder = new TablesNamesFinder()
-        val tableList = tablesNamesFinder.getTableList(parsed).asScala
-        val tables = tableList.map(l => ResourceIdentifier.ofJdbcTable(TableIdentifier(l))).toSet
-        db ++ tables
-    }
-
-    /**
-     * Returns the list of all resources which will are managed by this relation for reading or writing a specific
-     * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
-     * partition is empty). This method mainly refers to the BUILD and TRUNCATE execution phase.
-     *
-     * @param partitions
-     * @return
-     */
-    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] =  {
-        require(partitions != null)
-
-        requireValidPartitionKeys(partitions)
-
-        val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(view, p.toMap)).toSet
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                val db = view.database.map(db => ResourceIdentifier.ofJdbcDatabase(db)).toSet
+                val tables = dependencies.map(l => ResourceIdentifier.ofJdbcTable(TableIdentifier(l))).toSet
+                db ++ tables
+            case Operation.READ =>
+                dependencies.map(l => ResourceIdentifier.ofJdbcTablePartition(TableIdentifier(l), Map.empty)).toSet
+            case Operation.WRITE =>
+                Set(resource)
+        }
     }
 
     /**
@@ -259,7 +258,7 @@ case class JdbcViewRelation(
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, view, options)) {
                 doCreate(con, options)
-                provides.foreach(execution.refreshResource)
+                execution.refreshResource(resource)
             }
         }
     }
@@ -367,6 +366,12 @@ case class JdbcViewRelation(
             .getOrElse(
                 throw new IllegalArgumentException("JdbcView either requires explicit SQL SELECT statement or file")
             )
+    }
+
+    private lazy val dependencies : Seq[String] = {
+        val parsed = CCJSqlParserUtil.parse(statement)
+        val tablesNamesFinder = new TablesNamesFinder()
+        tablesNamesFinder.getTableList(parsed).asScala
     }
 
     private def normalizeViewSql(sql:String) : String = {

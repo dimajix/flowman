@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.graph
 
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -31,7 +32,7 @@ sealed abstract class Edge extends Product with Serializable {
 final case class ReadRelation(override val input:RelationRef, override val output:Node, partitions:Map[String,FieldValue] = Map()) extends Edge {
     override def action: Action = Action.READ
     override def label: String = s"${action.upper} from ${input.label} partitions=(${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")})"
-    def resources : Set[ResourceIdentifier] = input.relation.resources(partitions)
+    def resources : Set[ResourceIdentifier] = input.relation.requires(Operation.READ, partitions)
 }
 
 final case class InputMapping(override val input:MappingOutput,override val output:Node) extends Edge {
@@ -44,7 +45,7 @@ final case class InputMapping(override val input:MappingOutput,override val outp
 final case class WriteRelation(override val input:Node, override val output:RelationRef, partition:Map[String,SingleValue] = Map()) extends Edge {
     override def action: Action = Action.WRITE
     override def label: String = s"${action.upper} from ${input.label} partition=(${partition.map(kv => kv._1 + "=" + kv._2).mkString(",")})"
-    def resources : Set[ResourceIdentifier] = output.relation.resources(partition)
+    def resources : Set[ResourceIdentifier] = output.relation.provides(Operation.WRITE, partition)
 }
 
 final case class InputColumn(override val input:Column,override val output:Column) extends Edge {

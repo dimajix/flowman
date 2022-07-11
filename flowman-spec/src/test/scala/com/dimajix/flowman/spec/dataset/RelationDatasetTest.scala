@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,20 +80,14 @@ class RelationDatasetTest extends AnyFlatSpec with Matchers with MockFactory wit
             Map[String,SingleValue]()
         )
 
-        (relation.provides _).expects().returns(Set(ResourceIdentifier.ofFile(new Path("provided_file"))))
-        (relation.resources _).expects(*).returns(Set(ResourceIdentifier.ofFile(new Path("partition_file"))))
+        (relation.provides _).expects(*,*).returns(Set(ResourceIdentifier.ofFile(new Path("provided_file"))))
         dataset.provides should be (Set(
             ResourceIdentifier.ofFile(new Path("provided_file")),
-            ResourceIdentifier.ofFile(new Path("partition_file"))
         ))
 
-        (relation.requires _).expects().returns(Set(ResourceIdentifier.ofFile(new Path("required_file"))))
-        (relation.provides _).expects().returns(Set(ResourceIdentifier.ofFile(new Path("provided_file"))))
-        (relation.resources _).expects(*).returns(Set(ResourceIdentifier.ofFile(new Path("partition_file"))))
+        (relation.requires _).expects(*,*).returns(Set(ResourceIdentifier.ofFile(new Path("required_file"))))
         dataset.requires should be (Set(
             ResourceIdentifier.ofFile(new Path("required_file")),
-            ResourceIdentifier.ofFile(new Path("provided_file")),
-            ResourceIdentifier.ofFile(new Path("partition_file"))
         ))
 
         (relation.loaded _).expects(executor,*).returns(Yes)

@@ -139,7 +139,7 @@ class MergeTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         target.provides(Phase.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.BUILD) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.VERIFY) should be (Set())
-        target.provides(Phase.TRUNCATE) should be (Set())
+        target.provides(Phase.TRUNCATE) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
     }
 

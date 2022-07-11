@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.model
+package com.dimajix.flowman.tools.exec.relation
 
 import scala.util.control.NonFatal
 

@@ -34,6 +34,7 @@ import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.ConnectionIdentifier
@@ -127,9 +128,12 @@ class H2JdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
             sql = Some("SELECT * FROM table_001")
         )
 
-        viewRelation.provides should be (Set(ResourceIdentifier.ofJdbcTable("view_001", None)))
-        viewRelation.requires should be (Set(ResourceIdentifier.ofJdbcTable("table_001", None)))
-        viewRelation.resources() should be (Set(ResourceIdentifier.ofJdbcTablePartition("view_001", None, Map())))
+        viewRelation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofJdbcTable("view_001", None)))
+        viewRelation.requires(Operation.CREATE) should be (Set(ResourceIdentifier.ofJdbcTable("table_001", None)))
+        viewRelation.provides(Operation.READ) should be (Set(ResourceIdentifier.ofJdbcTablePartition("view_001", None, Map())))
+        viewRelation.requires(Operation.READ) should be (Set(ResourceIdentifier.ofJdbcTablePartition("table_001", None, Map())))
+        viewRelation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofJdbcTablePartition("table_001", None, Map())))
+        viewRelation.requires(Operation.WRITE) should be (Set(ResourceIdentifier.ofJdbcTable("view_001", None)))
         an[Exception] should be thrownBy(viewRelation.describe(execution))
 
         // == Create ==================================================================================================
@@ -189,9 +193,12 @@ class H2JdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
             sql = Some("SELECT 2 AS a")
         )
 
-        view1.provides should be (Set(ResourceIdentifier.ofJdbcTable("view_001", None)))
-        view1.requires should be (Set())
-        view1.resources() should be (Set(ResourceIdentifier.ofJdbcTablePartition("view_001", None, Map())))
+        view1.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofJdbcTable("view_001", None)))
+        view1.requires(Operation.CREATE) should be (Set.empty)
+        view1.provides(Operation.READ) should be (Set(ResourceIdentifier.ofJdbcTablePartition("view_001", None, Map())))
+        view1.requires(Operation.READ) should be (Set.empty)
+        view1.provides(Operation.WRITE) should be (Set.empty)
+        view1.requires(Operation.WRITE) should be (Set(ResourceIdentifier.ofJdbcTable("view_001", None)))
 
         // == Create ==================================================================================================
         view1.exists(execution) should be (No)

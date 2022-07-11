@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.spec.relation
 
-import scala.collection.immutable.Nil
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
@@ -33,8 +31,10 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
+import com.dimajix.flowman.model.RegexResourceIdentifier
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
@@ -66,24 +66,28 @@ case class KafkaRelation(
       *
       * @return
       */
-    override def provides: Set[ResourceIdentifier] = ???
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY => Set.empty
+            case Operation.READ => Set.empty
+            case Operation.WRITE =>
+                topics.map(t => RegexResourceIdentifier("kafkaTopic", t)).toSet
+        }
+    }
 
     /**
       * Returns the list of all resources which will be required by this relation for creation.
       *
       * @return
       */
-    override def requires: Set[ResourceIdentifier] = ???
-
-    /**
-      * Returns the list of all resources which will are managed by this relation for reading or writing a specific
-      * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
-      * partition is empty)
-      *
-      * @param partitions
-      * @return
-      */
-    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = ???
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY => Set.empty
+            case Operation.READ =>
+                topics.map(t => RegexResourceIdentifier("kafkaTopic", t)).toSet
+            case Operation.WRITE => Set.empty
+        }
+    }
 
     /**
       * Returns the schema of the relation

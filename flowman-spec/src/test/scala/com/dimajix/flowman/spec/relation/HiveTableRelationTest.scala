@@ -43,6 +43,7 @@ import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingIdentifier
@@ -89,9 +90,15 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
-        relation.provides should be (Set(ResourceIdentifier.ofHiveTable("lala_0001", Some("default"))))
-        relation.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
-        relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_0001", Some("default"), Map())))
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("lala_0001", Some("default"))))
+        relation.requires(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
+        relation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofHivePartition("lala_0001", Some("default"), Map())))
+        relation.requires(Operation.WRITE) should be (Set(ResourceIdentifier.ofHiveTable("lala_0001", Some("default"))))
+        relation.provides(Operation.READ) should be (Set.empty)
+        relation.requires(Operation.READ) should be (Set(
+            ResourceIdentifier.ofHiveTable("lala_0001", Some("default")),
+            ResourceIdentifier.ofHivePartition("lala_0001", Some("default"), Map())
+        ))
         relation.fields should be(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType)
@@ -247,10 +254,22 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
-        relation.provides should be (Set(ResourceIdentifier.ofHiveTable("lala_0003", Some("default"))))
-        relation.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
-        relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map())))
-        relation.resources(Map("spart" -> SingleValue("x"))) should be (Set(ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map("spart" -> "x"))))
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("lala_0003", Some("default"))))
+        relation.requires(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
+        relation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map())))
+        relation.requires(Operation.WRITE) should be (Set(ResourceIdentifier.ofHiveTable("lala_0003", Some("default"))))
+        relation.provides(Operation.READ) should be (Set.empty)
+        relation.requires(Operation.READ) should be (Set(
+            ResourceIdentifier.ofHiveTable("lala_0003", Some("default")),
+            ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map())
+        ))
+        relation.provides(Operation.WRITE, Map("spart" -> SingleValue("x"))) should be (Set(ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map("spart" -> "x"))))
+        relation.requires(Operation.WRITE, Map("spart" -> SingleValue("x"))) should be (Set(ResourceIdentifier.ofHiveTable("lala_0003", Some("default"))))
+        relation.provides(Operation.READ, Map("spart" -> SingleValue("x"))) should be (Set.empty)
+        relation.requires(Operation.READ, Map("spart" -> SingleValue("x"))) should be (Set(
+            ResourceIdentifier.ofHiveTable("lala_0003", Some("default")),
+            ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map("spart" -> "x"))
+        ))
 
         // == Create ==================================================================================================
         relation.exists(execution) should be (No)
@@ -2017,8 +2036,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType)
         ))
-        t0.provides should be (Set(ResourceIdentifier.ofHiveTable("lala_0004", Some("default"))))
-        t0.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
+        t0.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("lala_0004", Some("default"))))
+        t0.requires(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
 
         val t1 = context.getRelation(RelationIdentifier("t1"))
         t1.fields should be (Seq(
@@ -2033,8 +2052,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Field("spart", ftypes.StringType, false),
             Field("ip", ftypes.IntegerType, false)
         ))
-        t1.provides should be (Set(ResourceIdentifier.ofHiveTable("lala_0005", Some("default"))))
-        t1.requires should be (Set(
+        t1.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("lala_0005", Some("default"))))
+        t1.requires(Operation.CREATE) should be (Set(
             ResourceIdentifier.ofHiveTable("lala_0004", Some("default")),
             ResourceIdentifier.ofHiveDatabase("default")
         ))

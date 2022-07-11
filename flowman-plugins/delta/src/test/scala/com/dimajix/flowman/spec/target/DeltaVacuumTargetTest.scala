@@ -31,6 +31,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.PartitionField
@@ -117,6 +118,20 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
         )
         target.phases should be (Set(Phase.BUILD))
 
+        target.requires(Phase.VALIDATE) should be (Set.empty)
+        target.requires(Phase.CREATE) should be (Set.empty)
+        target.requires(Phase.BUILD) should be (relation.provides(Operation.CREATE) ++ relation.provides(Operation.WRITE))
+        target.requires(Phase.VERIFY) should be (Set.empty)
+        target.requires(Phase.TRUNCATE) should be (Set.empty)
+        target.requires(Phase.DESTROY) should be (Set.empty)
+
+        target.provides(Phase.VALIDATE) should be (Set.empty)
+        target.provides(Phase.CREATE) should be (Set.empty)
+        target.provides(Phase.BUILD) should be (Set.empty)
+        target.provides(Phase.VERIFY) should be (Set.empty)
+        target.provides(Phase.TRUNCATE) should be (Set.empty)
+        target.provides(Phase.DESTROY) should be (Set.empty)
+
         // == Create ==================================================================================================
         location.exists() should be (false)
         relation.exists(execution) should be (No)
@@ -159,6 +174,20 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Some(Duration.parse("P10D"))
         )
         target.phases should be (Set(Phase.BUILD))
+
+        target.requires(Phase.VALIDATE) should be (Set.empty)
+        target.requires(Phase.CREATE) should be (Set.empty)
+        target.requires(Phase.BUILD) should be (relation.provides(Operation.CREATE) ++ relation.provides(Operation.WRITE))
+        target.requires(Phase.VERIFY) should be (Set.empty)
+        target.requires(Phase.TRUNCATE) should be (Set.empty)
+        target.requires(Phase.DESTROY) should be (Set.empty)
+
+        target.provides(Phase.VALIDATE) should be (Set.empty)
+        target.provides(Phase.CREATE) should be (Set.empty)
+        target.provides(Phase.BUILD) should be (Set.empty)
+        target.provides(Phase.VERIFY) should be (Set.empty)
+        target.provides(Phase.TRUNCATE) should be (Set.empty)
+        target.provides(Phase.DESTROY) should be (Set.empty)
 
         // == Create ==================================================================================================
         location.exists() should be (false)

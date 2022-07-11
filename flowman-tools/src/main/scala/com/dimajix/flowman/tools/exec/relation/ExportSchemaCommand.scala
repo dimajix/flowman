@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.exec.model
+package com.dimajix.flowman.tools.exec.relation
 
 import scala.util.Failure
 import scala.util.Success
@@ -45,7 +45,7 @@ class ExportSchemaCommand extends Command {
     var filename: String = ""
 
     override def execute(session: Session, project: Project, context:Context) : Status = {
-        logger.info(s"Exporting the schema of model '$relation' to '$filename'")
+        logger.info(s"Exporting the schema of relation '$relation' to '$filename'")
 
         Try {
             val relation = context.getRelation(RelationIdentifier.parse(this.relation))
@@ -57,7 +57,7 @@ class ExportSchemaCommand extends Command {
                 logger.info("Successfully saved schema")
                 Status.SUCCESS
             case Failure(e) =>
-                logger.error(s"Caught exception while save the schema of model '$relation'", e)
+                logger.error(s"Caught exception while save the schema of relation '$relation'", e)
                 Status.FAILED
         }
     }

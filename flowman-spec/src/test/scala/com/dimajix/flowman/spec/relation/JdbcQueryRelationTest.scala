@@ -31,6 +31,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.ConnectionIdentifier
@@ -106,9 +107,12 @@ class JdbcQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = relationSpec.instantiate(context)
         relation.name should be ("some_relation")
-        relation.provides should be (Set())
-        relation.requires should be (Set(ResourceIdentifier.ofJdbcTable("some_table", None)))
-        relation.resources() should be (Set(ResourceIdentifier.ofJdbcQuery("SELECT * FROM some_table")))
+        relation.provides(Operation.CREATE) should be (Set.empty)
+        relation.requires(Operation.CREATE) should be (Set(ResourceIdentifier.ofJdbcTable("some_table", None)))
+        relation.provides(Operation.WRITE) should be (Set.empty)
+        relation.requires(Operation.WRITE) should be (Set.empty)
+        relation.provides(Operation.READ) should be (Set(ResourceIdentifier.ofJdbcQuery("SELECT * FROM some_table")))
+        relation.requires(Operation.READ) should be (Set(ResourceIdentifier.ofJdbcTablePartition("some_table", None, Map())))
         relation.schema should be (Some(InlineSchema(
                 Schema.Properties(context, name="embedded", kind="inline"),
                 fields = Seq(
@@ -174,9 +178,12 @@ class JdbcQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
 
-        relation_t1.provides should be (Set())
-        relation_t1.requires should be (Set(ResourceIdentifier.ofJdbcTable("lala_004", None)))
-        relation_t1.resources() should be (Set(ResourceIdentifier.ofJdbcQuery("SELECT * FROM lala_004")))
+        relation_t1.provides(Operation.CREATE) should be (Set.empty)
+        relation_t1.requires(Operation.CREATE) should be (Set(ResourceIdentifier.ofJdbcTable("lala_004", None)))
+        relation_t1.provides(Operation.READ) should be (Set(ResourceIdentifier.ofJdbcQuery("SELECT * FROM lala_004")))
+        relation_t1.requires(Operation.READ) should be (Set(ResourceIdentifier.ofJdbcTablePartition("lala_004", None, Map())))
+        relation_t1.provides(Operation.WRITE) should be (Set.empty)
+        relation_t1.requires(Operation.WRITE) should be (Set.empty)
 
         // == Create =================================================================================================
         relation_t0.create(execution)

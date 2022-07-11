@@ -113,14 +113,14 @@ class RelationCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
 
         (sourceRelation.description _).expects().atLeastOnce().returns(Some("source relation"))
         (sourceRelation.documentation _).expects().returns(None)
-        (sourceRelation.provides _).expects().returns(Set())
-        (sourceRelation.requires _).expects().returns(Set())
+        (sourceRelation.provides _).expects(*,*).returns(Set())
+        (sourceRelation.requires _).expects(*,*).returns(Set())
         (sourceRelation.schema _).expects().returns(None)
 
         (targetRelation.description _).expects().atLeastOnce().returns(Some("target relation"))
         (targetRelation.documentation _).expects().returns(None)
-        (targetRelation.provides _).expects().returns(Set())
-        (targetRelation.requires _).expects().returns(Set())
+        (targetRelation.provides _).expects(*,*).returns(Set())
+        (targetRelation.requires _).expects(*,*).returns(Set())
         (targetRelation.schema _).expects().returns(None)
 
         val collector = new RelationCollector()

@@ -28,6 +28,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
@@ -79,12 +80,19 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
       mapping = Some(MappingOutputIdentifier("t0"))
     )
 
-    relation.provides should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
-    relation.requires should be (Set(
+    relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
+    relation.requires(Operation.CREATE) should be (Set(
         ResourceIdentifier.ofHiveDatabase("default"),
         ResourceIdentifier.ofHiveTable("t0", Some("default"))
     ))
-    relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("t0", Some("default"), Map())))
+    relation.provides(Operation.WRITE) should be (Set.empty)
+    relation.requires(Operation.WRITE) should be (Set.empty)
+    relation.provides(Operation.READ) should be (Set(ResourceIdentifier.ofHivePartition("v0", Some("default"), Map())))
+    relation.requires(Operation.READ) should be (Set(
+        ResourceIdentifier.ofHiveTable("v0", Some("default")),
+        ResourceIdentifier.ofHiveTable("t0", Some("default")),
+        ResourceIdentifier.ofHivePartition("t0", Some("default"), Map())
+    ))
     an[Exception] should be thrownBy(relation.describe(execution))
 
     // == Create =================================================================================================
@@ -174,13 +182,19 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
       mapping = Some(MappingOutputIdentifier("union"))
     )
 
-    relation.provides should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
-    relation.requires should be (Set(
+    relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
+    relation.requires(Operation.CREATE) should be (Set(
       ResourceIdentifier.ofHiveDatabase("default"),
       ResourceIdentifier.ofHiveTable("t0", Some("default")),
       ResourceIdentifier.ofHiveTable("t1", Some("default"))
     ))
-    relation.resources() should be (Set(
+    relation.provides(Operation.WRITE) should be (Set.empty)
+    relation.requires(Operation.WRITE) should be (Set.empty)
+    relation.provides(Operation.READ) should be (Set(ResourceIdentifier.ofHivePartition("v0", Some("default"), Map())))
+    relation.requires(Operation.READ) should be (Set(
+        ResourceIdentifier.ofHiveTable("v0", Some("default")),
+        ResourceIdentifier.ofHiveTable("t0", Some("default")),
+        ResourceIdentifier.ofHiveTable("t1", Some("default")),
         ResourceIdentifier.ofHivePartition("t0", Some("default"), Map()),
         ResourceIdentifier.ofHivePartition("t1", Some("default"), Map())
     ))
@@ -242,12 +256,17 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
             file = Some(new Path(basedir, "project/relation/some-view.sql"))
         )
 
-        relation.provides should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
-        relation.requires should be (Set(
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
+        relation.requires(Operation.CREATE) should be (Set(
             ResourceIdentifier.ofHiveDatabase("default"),
             ResourceIdentifier.ofHiveTable("t0", Some("default"))
         ))
-        relation.resources() should be (Set(
+        relation.provides(Operation.WRITE) should be (Set.empty)
+        relation.requires(Operation.WRITE) should be (Set.empty)
+        relation.provides(Operation.READ) should be (Set(ResourceIdentifier.ofHivePartition("v0", Some("default"), Map())))
+        relation.requires(Operation.READ) should be (Set(
+            ResourceIdentifier.ofHiveTable("v0", Some("default")),
+            ResourceIdentifier.ofHiveTable("t0", Some("default")),
             ResourceIdentifier.ofHivePartition("t0", Some("default"), Map())
         ))
 

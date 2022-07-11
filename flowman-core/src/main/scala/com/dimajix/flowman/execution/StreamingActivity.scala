@@ -23,11 +23,11 @@ import org.apache.spark.sql.streaming.StreamingQueryException
 import org.apache.spark.sql.streaming.StreamingQueryListener
 
 
-case class StreamingOperation(
+case class StreamingActivity(
     override val name:String,
     query:StreamingQuery
-) extends AbstractOperation {
-    import OperationListener._
+) extends AbstractActivity {
+    import ActivityListener._
 
     @volatile
     private var streamDeathCause: OperationException = null
@@ -39,21 +39,21 @@ case class StreamingOperation(
         override def onQueryProgress(event: StreamingQueryListener.QueryProgressEvent): Unit = {
         }
         override def onQueryTerminated(event: StreamingQueryListener.QueryTerminatedEvent): Unit = {
-            listeners.postToAll(OperationTerminatedEvent(StreamingOperation.this))
+            listeners.postToAll(ActivityTerminatedEvent(StreamingActivity.this))
             query.sparkSession.streams.removeListener(this)
         }
     }
     query.sparkSession.streams.addListener(listener)
 
     /**
-     * Returns the user-specified description of the operation, or [None] if not specified.
+     * Returns the user-specified description of the activity, or [None] if not specified.
      *
      * @return
      */
     override def description: Option[String] = Option(query.name)
 
     /**
-     * Returns `true` if this operation is actively running.
+     * Returns `true` if this activity is actively running.
      *
      */
     override def isActive: Boolean = query.isActive
@@ -69,8 +69,8 @@ case class StreamingOperation(
     }
 
     /**
-     * Waits for the termination of `this` operation, either by `query.operation()` or by an exception.
-     * If the operation has terminated with an exception, then the exception will be thrown.
+     * Waits for the termination of `this` activity, either by `query.activity()` or by an exception.
+     * If the activity has terminated with an exception, then the exception will be thrown.
      *
      * If the query has terminated, then all subsequent calls to this method will either return
      * immediately (if the query was terminated by `stop()`), or throw the exception
@@ -82,14 +82,14 @@ case class StreamingOperation(
     override def awaitTermination(): Unit = recordException(query.awaitTermination())
 
     /**
-     * Waits for the termination of `this` operation, either by `operation.stop()` or by an exception.
-     * If the operation has terminated with an exception, then the exception will be thrown.
-     * Otherwise, it returns whether the operation has terminated or not within the `timeoutMs`
+     * Waits for the termination of `this` activity, either by `activity.stop()` or by an exception.
+     * If the activity has terminated with an exception, then the exception will be thrown.
+     * Otherwise, it returns whether the activity has terminated or not within the `timeoutMs`
      * milliseconds.
      *
-     * If the operation has terminated, then all subsequent calls to this method will either return
+     * If the activity has terminated, then all subsequent calls to this method will either return
      * `true` immediately (if the query was terminated by `stop()`), or throw the exception
-     * immediately (if the operation has terminated with exception).
+     * immediately (if the activity has terminated with exception).
      *
      * @throws OperationException if the query has terminated with an exception
      */
@@ -104,8 +104,8 @@ case class StreamingOperation(
     override def processAllAvailable(): Unit = query.processAllAvailable()
 
     /**
-     * Stops the execution of this operation if it is running. This waits until the termination of the
-     * operation execution threads or until a timeout is hit.
+     * Stops the execution of this activity if it is running. This waits until the termination of the
+     * activity execution threads or until a timeout is hit.
      */
     @throws[TimeoutException]
     override def stop(): Unit = query.stop()

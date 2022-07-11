@@ -629,11 +629,11 @@ final class Runner(
         val execution : Execution = new ScopedExecution(parentExecution, isolated)
         val result = fn(execution)
 
-        // Wait for any running background operation, and do not perform a cleanup
-        val ops = execution.operations
+        // Wait for any running background activities, and do not perform a cleanup
+        val ops = execution.activities
         val activeOps = ops.listActive()
         if (activeOps.nonEmpty) {
-            logger.info("Some background operations are still active:")
+            logger.info("Some background activities are still active:")
             activeOps.foreach(o => logger.info(s"  - s${o.name}"))
             logger.info("Waiting for termination...")
             ops.awaitTermination()

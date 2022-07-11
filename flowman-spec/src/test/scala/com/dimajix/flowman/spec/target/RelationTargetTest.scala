@@ -116,7 +116,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         target.provides(Phase.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.BUILD) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.VERIFY) should be (Set())
-        target.provides(Phase.TRUNCATE) should be (Set())
+        target.provides(Phase.TRUNCATE) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
     }
 
@@ -140,10 +140,10 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
 
         val target = context.getTarget(TargetIdentifier("out"))
         target.kind should be ("relation")
-        target.phases should be (Set(Phase.CREATE, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
+        target.phases should be (Set(Phase.CREATE, Phase.VERIFY, Phase.DESTROY))
 
         target.requires(Phase.CREATE) should be (Set())
-        target.requires(Phase.BUILD) should be (Set())
+        target.requires(Phase.BUILD) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.requires(Phase.VERIFY) should be (Set())
         target.requires(Phase.TRUNCATE) should be (Set())
         target.requires(Phase.DESTROY) should be (Set())

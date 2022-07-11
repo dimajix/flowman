@@ -36,6 +36,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.model.Connection
@@ -62,39 +63,37 @@ case class JdbcQueryRelation(
     connection,
     properties + (JDBCOptions.JDBC_QUERY_STRING -> query)
 ) with SchemaRelation {
+    protected val resource: ResourceIdentifier = ResourceIdentifier.ofJdbcQuery(query)
+
     /**
       * Returns the list of all resources which will be created by this relation.
       *
       * @return
       */
-    override def provides: Set[ResourceIdentifier] = Set.empty
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty): Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                Set.empty
+            case Operation.READ =>
+                requireValidPartitionKeys(partitions)
+                Set(ResourceIdentifier.ofJdbcQuery(query))
+            case Operation.WRITE => Set.empty
+        }
+    }
 
     /**
       * Returns the list of all resources which will be required by this relation for creation.
       *
       * @return
       */
-    override def requires: Set[ResourceIdentifier] = {
-        val statement = CCJSqlParserUtil.parse(query)
-        val tablesNamesFinder = new TablesNamesFinder()
-        val tableList = tablesNamesFinder.getTableList(statement).asScala
-        tableList.map(l => ResourceIdentifier.ofJdbcTable(TableIdentifier(l))).toSet
-    }
-
-    /**
-      * Returns the list of all resources which will are managed by this relation for reading or writing a specific
-      * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
-      * partition is empty)
-      *
-      * @param partitions
-      * @return
-      */
-    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = {
-        require(partitions != null)
-
-        requireValidPartitionKeys(partitions)
-
-        Set(ResourceIdentifier.ofJdbcQuery(query))
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                dependencies.map(l => ResourceIdentifier.ofJdbcTable(TableIdentifier(l))).toSet
+            case Operation.READ =>
+                dependencies.map(l => ResourceIdentifier.ofJdbcTablePartition(TableIdentifier(l), Map.empty)).toSet
+            case Operation.WRITE => Set.empty
+        }
     }
 
     /**
@@ -251,6 +250,12 @@ case class JdbcQueryRelation(
             val partitionFields = SetIgnoreCase(partitions.map(_.name))
             StructType(s.fields.map(_.sparkField).filter(f => !partitionFields.contains(f.name)) ++ partitions.map(_.sparkField))
         }
+    }
+
+    private lazy val dependencies : Seq[String] = {
+        val statement = CCJSqlParserUtil.parse(query)
+        val tablesNamesFinder = new TablesNamesFinder()
+        tablesNamesFinder.getTableList(statement).asScala
     }
 }
 

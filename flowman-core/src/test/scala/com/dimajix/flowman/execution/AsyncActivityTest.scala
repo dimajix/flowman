@@ -23,12 +23,12 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 
-class AsyncOperationTest extends AnyFlatSpec with Matchers with MockFactory {
-    "The AsyncOperation" should "work" in {
-        val listener = mock[OperationListener]
-        (listener.onOperationTerminated _).expects(*).once()
+class AsyncActivityTest extends AnyFlatSpec with Matchers with MockFactory {
+    "The AsyncActivity" should "work" in {
+        val listener = mock[ActivityListener]
+        (listener.onActivityTerminated _).expects(*).once()
 
-        val op = Operation.run("op1") {
+        val op = Activity.run("op1") {
             Thread.sleep(1000)
         }
         op.isActive should be (true)
@@ -48,12 +48,12 @@ class AsyncOperationTest extends AnyFlatSpec with Matchers with MockFactory {
     }
 
     it should "catch and wrap exceptions" in {
-        val listener = mock[OperationListener]
-        (listener.onOperationTerminated _).expects(*).once()
+        val listener = mock[ActivityListener]
+        (listener.onActivityTerminated _).expects(*).once()
 
         val ex = new RuntimeException("some error")
 
-        val op = Operation.run("op1") {
+        val op = Activity.run("op1") {
             Thread.sleep(1000)
             throw ex
         }
@@ -74,12 +74,12 @@ class AsyncOperationTest extends AnyFlatSpec with Matchers with MockFactory {
     }
 
     it should "catch OperationExceptions" in {
-        val listener = mock[OperationListener]
-        (listener.onOperationTerminated _).expects(*).once()
+        val listener = mock[ActivityListener]
+        (listener.onActivityTerminated _).expects(*).once()
 
         val ex = new OperationException("some error")
 
-        val op = Operation.run("op1") {
+        val op = Activity.run("op1") {
             Thread.sleep(1000)
             throw ex
         }
@@ -100,10 +100,10 @@ class AsyncOperationTest extends AnyFlatSpec with Matchers with MockFactory {
     }
 
     it should "somehow support stop()" in {
-        val listener = mock[OperationListener]
-        (listener.onOperationTerminated _).expects(*).once()
+        val listener = mock[ActivityListener]
+        (listener.onActivityTerminated _).expects(*).once()
 
-        val op = Operation.run("op1") {
+        val op = Activity.run("op1") {
             Thread.sleep(1000)
         }
         op.isActive should be (true)

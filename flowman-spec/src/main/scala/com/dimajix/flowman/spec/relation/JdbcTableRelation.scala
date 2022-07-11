@@ -50,6 +50,7 @@ import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.execution.UpdateClause
@@ -83,6 +84,7 @@ class JdbcTableRelationBase(
     connection,
     properties + (JDBCOptions.JDBC_TABLE_NAME -> table.unquotedString)
 ) with SchemaRelation {
+    protected val resource: ResourceIdentifier = ResourceIdentifier.ofJdbcTable(table)
     protected val tableIdentifier: TableIdentifier = table
     protected val stagingIdentifier: Option[TableIdentifier] = None
     protected lazy val tableDefinition: Option[TableDefinition] = {
@@ -105,10 +107,17 @@ class JdbcTableRelationBase(
       *
       * @return
       */
-    override def provides: Set[ResourceIdentifier] = {
-        // Only return a resource if a table is defined, which implies that this relation can be used for creating
-        // and destroying JDBC tables
-        Set(ResourceIdentifier.ofJdbcTable(table))
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                Set(resource)
+            case Operation.READ => Set.empty
+            case Operation.WRITE =>
+                requireValidPartitionKeys(partitions)
+
+                val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(tableIdentifier, p.toMap)).toSet
+        }
     }
 
     /**
@@ -116,27 +125,19 @@ class JdbcTableRelationBase(
       *
       * @return
       */
-    override def requires: Set[ResourceIdentifier] = {
-        // Only return a resource if a table is defined, which implies that this relation can be used for creating
-        // and destroying JDBC tables
-        table.database.map(db => ResourceIdentifier.ofJdbcDatabase(db)).toSet ++ super.requires
-    }
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        val deps = op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                table.database.map(db => ResourceIdentifier.ofJdbcDatabase(db)).toSet
+            case Operation.READ =>
+                requireValidPartitionKeys(partitions)
 
-    /**
-      * Returns the list of all resources which will are managed by this relation for reading or writing a specific
-      * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
-      * partition is empty)
-      *
-      * @param partitions
-      * @return
-      */
-    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = {
-        require(partitions != null)
-
-        requireValidPartitionKeys(partitions)
-
-        val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(tableIdentifier, p.toMap)).toSet
+                val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(tableIdentifier, p.toMap)).toSet ++ Set(resource)
+            case Operation.WRITE =>
+                Set(resource)
+        }
+        deps ++ super.requires(op, partitions)
     }
 
     /**
@@ -501,7 +502,7 @@ class JdbcTableRelationBase(
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
                 doCreate(con, options)
-                provides.foreach(execution.refreshResource)
+                execution.refreshResource(resource)
             }
         }
     }
@@ -541,7 +542,7 @@ class JdbcTableRelationBase(
                     }
                     else if (TableChange.requiresMigration(currentTable, targetTable, migrationPolicy)) {
                         migrateFromTable(currentTable, targetTable, migrationPolicy, migrationStrategy)
-                        provides.foreach(execution.refreshResource)
+                        execution.refreshResource(resource)
                     }
                 }
             }

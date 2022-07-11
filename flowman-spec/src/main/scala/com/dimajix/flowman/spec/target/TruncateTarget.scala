@@ -27,6 +27,7 @@ import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
@@ -102,7 +103,7 @@ case class TruncateTarget(
         phase match {
             case Phase.BUILD|Phase.TRUNCATE =>
                 val rel = relation.value
-                rel.provides ++ rel.resources(partitions)
+                rel.provides(Operation.WRITE, partitions)
             case _ => Set()
         }
     }
@@ -115,7 +116,7 @@ case class TruncateTarget(
         phase match {
             case Phase.BUILD|Phase.TRUNCATE =>
                 val rel = relation.value
-                rel.provides ++ rel.requires
+                rel.requires(Operation.WRITE, partitions)
             case _ => Set()
         }
     }

@@ -82,12 +82,12 @@ class RelationDatasetTest extends AnyFlatSpec with Matchers with MockFactory wit
 
         (relation.provides _).expects(*,*).returns(Set(ResourceIdentifier.ofFile(new Path("provided_file"))))
         dataset.provides should be (Set(
-            ResourceIdentifier.ofFile(new Path("provided_file")),
+            ResourceIdentifier.ofFile(new Path("provided_file"))
         ))
 
         (relation.requires _).expects(*,*).returns(Set(ResourceIdentifier.ofFile(new Path("required_file"))))
         dataset.requires should be (Set(
-            ResourceIdentifier.ofFile(new Path("required_file")),
+            ResourceIdentifier.ofFile(new Path("required_file"))
         ))
 
         (relation.loaded _).expects(executor,*).returns(Yes)

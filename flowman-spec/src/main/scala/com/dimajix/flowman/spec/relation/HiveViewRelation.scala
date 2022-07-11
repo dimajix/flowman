@@ -93,7 +93,7 @@ case class HiveViewRelation(
                         MappingUtils.requires(context, m.mapping)
                             // Replace all Hive partitions with Hive tables
                             .map {
-                                case RegexResourceIdentifier("hiveTablePartition", table, _) => ResourceIdentifier.ofHiveTable(table)
+                                case RegexResourceIdentifier("hiveTablePartition", table, _, _) => ResourceIdentifier.ofHiveTable(table)
                                 case id => id
                             }
                     }

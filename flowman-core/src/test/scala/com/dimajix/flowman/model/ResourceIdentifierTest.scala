@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ class ResourceIdentifierTest extends AnyFlatSpec with Matchers {
 
     it should "support Hive databases" in {
         val id =  ResourceIdentifier.ofHiveDatabase("db")
-        id should be (RegexResourceIdentifier("hiveDatabase", "db"))
+        id should be (RegexResourceIdentifier("hiveDatabase", "db", caseSensitive=false))
         id.isEmpty should be (false)
         id.nonEmpty should be (true)
         id.category should be ("hiveDatabase")
@@ -94,14 +94,14 @@ class ResourceIdentifierTest extends AnyFlatSpec with Matchers {
     }
 
     it should "support Hive tables" in {
-        ResourceIdentifier.ofHiveTable("table") should be (RegexResourceIdentifier("hiveTable", "table"))
-        ResourceIdentifier.ofHiveTable("table", None) should be (RegexResourceIdentifier("hiveTable", "table"))
-        ResourceIdentifier.ofHiveTable("table", Some("db")) should be (RegexResourceIdentifier("hiveTable", "db.table"))
+        ResourceIdentifier.ofHiveTable("table") should be (RegexResourceIdentifier("hiveTable", "table", caseSensitive=false))
+        ResourceIdentifier.ofHiveTable("table", None) should be (RegexResourceIdentifier("hiveTable", "table", caseSensitive=false))
+        ResourceIdentifier.ofHiveTable("table", Some("db")) should be (RegexResourceIdentifier("hiveTable", "db.table", caseSensitive=false))
     }
 
     it should "support Hive table partitions" in {
-        ResourceIdentifier.ofHivePartition("table", Some("db"), Map("p1" -> "v1", "p2" -> 2)) should be (RegexResourceIdentifier("hiveTablePartition", "db.table", Map("p1" -> "v1", "p2" -> "2")))
-        ResourceIdentifier.ofHivePartition("table", None, Map("p1" -> "v1", "p2" -> 2)) should be (RegexResourceIdentifier("hiveTablePartition", "table", Map("p1" -> "v1", "p2" -> "2")))
+        ResourceIdentifier.ofHivePartition("table", Some("db"), Map("p1" -> "v1", "p2" -> 2)) should be (RegexResourceIdentifier("hiveTablePartition", "db.table", Map("p1" -> "v1", "p2" -> "2"), caseSensitive=false))
+        ResourceIdentifier.ofHivePartition("table", None, Map("p1" -> "v1", "p2" -> 2)) should be (RegexResourceIdentifier("hiveTablePartition", "table", Map("p1" -> "v1", "p2" -> "2"), caseSensitive=false))
     }
 
     it should "support JDBC databases" in {
@@ -198,7 +198,7 @@ class ResourceIdentifierTest extends AnyFlatSpec with Matchers {
         id.contains(ResourceIdentifier.ofFile(new Path("C:/Temp/1572861822921-0/topic=publish.Card.test.dev/processing_date=2019-03-20"))) should be (true)
     }
 
-    it should "support character sets in regex" in {
+    "A RegexResourceIdentifier" should "support character sets in regex" in {
         val id = ResourceIdentifier.ofHiveTable("table_[0-9]+")
         id.contains(ResourceIdentifier.ofHiveTable("table_[0-9]+")) should be (true)
         id.contains(ResourceIdentifier.ofHiveTable("table_+")) should be (false)
@@ -207,5 +207,35 @@ class ResourceIdentifierTest extends AnyFlatSpec with Matchers {
         id.contains(ResourceIdentifier.ofHiveTable("table_01")) should be (true)
         id.contains(ResourceIdentifier.ofHiveTable("table_0x")) should be (false)
         id.contains(ResourceIdentifier.ofHiveTable("table_0+")) should be (false)
+    }
+
+    it should "support case insensitive comparisons" in {
+        val id = ResourceIdentifier.ofHiveTable("table_[0-9]+")
+        id.contains(ResourceIdentifier.ofHiveTable("TABLE_[0-9]+")) should be (true)
+        id.contains(ResourceIdentifier.ofHiveTable("TABLE_+")) should be (false)
+        id.contains(ResourceIdentifier.ofHiveTable("TABLE_")) should be (false)
+        id.contains(ResourceIdentifier.ofHiveTable("TABLE_0")) should be (true)
+        id.contains(ResourceIdentifier.ofHiveTable("TABLE_01")) should be (true)
+        id.contains(ResourceIdentifier.ofHiveTable("TABLE_0x")) should be (false)
+        id.contains(ResourceIdentifier.ofHiveTable("TABLE_0+")) should be (false)
+    }
+
+    it should "support case sensitive comparisons" in {
+        val id = ResourceIdentifier.ofJdbcTable("table_[0-9]+")
+        id.contains(ResourceIdentifier.ofJdbcTable("TABLE_[0-9]+")) should be (false)
+        id.contains(ResourceIdentifier.ofJdbcTable("TABLE_+")) should be (false)
+        id.contains(ResourceIdentifier.ofJdbcTable("TABLE_")) should be (false)
+        id.contains(ResourceIdentifier.ofJdbcTable("TABLE_0")) should be (false)
+        id.contains(ResourceIdentifier.ofJdbcTable("TABLE_01")) should be (false)
+        id.contains(ResourceIdentifier.ofJdbcTable("TABLE_0x")) should be (false)
+        id.contains(ResourceIdentifier.ofJdbcTable("TABLE_0+")) should be (false)
+
+        id.contains(ResourceIdentifier.ofJdbcTable("table_[0-9]+")) should be (true)
+        id.contains(ResourceIdentifier.ofJdbcTable("table_+")) should be (false)
+        id.contains(ResourceIdentifier.ofJdbcTable("table_")) should be (false)
+        id.contains(ResourceIdentifier.ofJdbcTable("table_0")) should be (true)
+        id.contains(ResourceIdentifier.ofJdbcTable("table_01")) should be (true)
+        id.contains(ResourceIdentifier.ofJdbcTable("table_0x")) should be (false)
+        id.contains(ResourceIdentifier.ofJdbcTable("table_0+")) should be (false)
     }
 }

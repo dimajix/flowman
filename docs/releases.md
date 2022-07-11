@@ -17,6 +17,7 @@ changes over time.
 ### Version 0.26.0
 
 * github-202: Add support for Spark 3.3
+* github-203: [BUG] Resource dependencies for Hive should be case-insensitive
 * github-204: [BUG] Detect indirect dependencies in a chain of Hive views
 
 #### Breaking changes

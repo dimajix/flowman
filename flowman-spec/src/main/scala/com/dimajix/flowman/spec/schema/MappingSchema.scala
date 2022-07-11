@@ -46,8 +46,8 @@ case class MappingSchema (
     }
     private lazy val cachedRequires = {
         MappingUtils.requires(context, mapping.mapping).map {
-            case RegexResourceIdentifier("hiveTablePartition", name, _) => RegexResourceIdentifier("hiveTable", name, Map())
-            case RegexResourceIdentifier("jdbcTablePartition", name, _) => RegexResourceIdentifier("jdbcTable", name, Map())
+            case RegexResourceIdentifier("hiveTablePartition", name, _, _) => ResourceIdentifier.ofHiveTable(name)
+            case RegexResourceIdentifier("jdbcTablePartition", name, _, _) => ResourceIdentifier.ofJdbcTable(name)
             case res => res
         }
     }

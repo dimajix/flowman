@@ -526,7 +526,6 @@ case class HiveTableRelation(
                 val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
                 if (requiresMigration) {
                     doMigration(execution, sourceTable, targetTable, migrationPolicy, migrationStrategy)
-                    execution.refreshResource(resource)
                 }
             }
         }
@@ -563,12 +562,14 @@ case class HiveTableRelation(
             if (migrations.isEmpty) {
                 logger.warn("Empty list of migrations - nothing to do")
             }
-
-            try {
-                execution.catalog.alterTable(table, migrations)
-            }
-            catch {
-                case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
+            else {
+                try {
+                    execution.catalog.alterTable(table, migrations)
+                    execution.refreshResource(resource)
+                }
+                catch {
+                    case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
+                }
             }
         }
 

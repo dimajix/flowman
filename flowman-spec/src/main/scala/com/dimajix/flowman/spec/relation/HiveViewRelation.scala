@@ -199,16 +199,16 @@ case class HiveViewRelation(
             val curTable = catalog.getTable(table)
             // Check if current table is a VIEW or a table
             if (curTable.tableType == CatalogTableType.VIEW) {
-                migrateFromView(catalog, newSelect, migrationStrategy)
+                migrateFromView(execution, newSelect, migrationStrategy)
             }
             else {
-                migrateFromTable(catalog, newSelect, migrationStrategy)
+                migrateFromTable(execution, newSelect, migrationStrategy)
             }
-            execution.refreshResource(resource)
         }
     }
 
-    private def migrateFromView(catalog:HiveCatalog, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
+    private def migrateFromView(execution:Execution, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
+        val catalog = execution.catalog
         val curTable = catalog.getTable(table)
         val curSchema = SchemaUtils.normalize(curTable.schema)
         val newSchema = SchemaUtils.normalize(catalog.spark.sql(newSelect).schema)
@@ -222,11 +222,13 @@ case class HiveViewRelation(
                 case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
                     logger.info(s"Migrating HiveView relation '$identifier' with VIEW $table")
                     catalog.alterView(table, newSelect)
+                    execution.refreshResource(resource)
             }
         }
     }
 
-    private def migrateFromTable(catalog:HiveCatalog, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
+    private def migrateFromTable(execution:Execution, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
+        val catalog = execution.catalog
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for HiveView relation '$identifier' from TABLE to a VIEW $table, but migrations are disabled.")
@@ -237,6 +239,7 @@ case class HiveViewRelation(
                 logger.info(s"Migrating HiveView relation '$identifier' from TABLE to a VIEW $table")
                 catalog.dropTable(table, false)
                 catalog.createView(table, newSelect, false)
+                execution.refreshResource(resource)
         }
     }
 

@@ -39,7 +39,7 @@ import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.flowman.{types => ftypes}
 
 
-class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+class ReadHiveMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A ReadHiveMapping" should "be parseable" in {
         val spec =
             """
@@ -87,8 +87,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         )
 
         mapping.requires should be (Set(
-            ResourceIdentifier.ofHiveTable("lala_0007", Some("default")),
-            ResourceIdentifier.ofHiveDatabase("default")
+            ResourceIdentifier.ofHivePartition("default.lala_0007", Map.empty[String,Any])
         ))
         mapping.inputs should be (Set())
         mapping.describe(execution, Map()) should be (Map(
@@ -135,8 +134,7 @@ class ReadHiveTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         )
 
         mapping.requires should be (Set(
-            ResourceIdentifier.ofHiveTable("lala_0007", Some("default")),
-            ResourceIdentifier.ofHiveDatabase("default")
+            ResourceIdentifier.ofHivePartition("default.lala_0007", Map.empty[String,Any])
         ))
         mapping.inputs should be (Set())
         mapping.describe(execution, Map()) should be (Map(

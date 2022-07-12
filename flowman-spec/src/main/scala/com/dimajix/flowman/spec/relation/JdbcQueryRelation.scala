@@ -124,7 +124,7 @@ case class JdbcQueryRelation(
         require(execution != null)
         require(partitions != null)
 
-        logger.info(s"Reading JDBC relation '$identifier' with a custom query via connection '$connection' partition $partitions")
+        logger.info(s"Reading JDBC query relation '$identifier' with a custom query via connection '$connection' partition $partitions")
 
         // Get Connection
         val (_,props) = createConnectionProperties()
@@ -142,8 +142,7 @@ case class JdbcQueryRelation(
 
         // Apply embedded schema, if it is specified. This will remove/cast any columns not present in the
         // explicit schema specification of the relation
-        //SchemaUtils.applySchema(filteredDf, inputSchema, insertNulls=false)
-        applyInputSchema(execution, filteredDf, includePartitions = false)
+        applyInputSchema(execution, filteredDf)
     }
 
     /**
@@ -168,7 +167,7 @@ case class JdbcQueryRelation(
      * @param clauses
      */
     override def merge(execution: Execution, df: DataFrame, condition:Option[Column], clauses: Seq[MergeClause]): Unit = {
-        throw new UnsupportedOperationException(s"Cannot write into JDBC relation '$identifier' which is defined by an SQL query")
+        throw new UnsupportedOperationException(s"Cannot write into JDBC query relation '$identifier' which is defined by an SQL query")
     }
 
     /**
@@ -178,7 +177,7 @@ case class JdbcQueryRelation(
       * @param partitions
       */
     override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
-        throw new UnsupportedOperationException(s"Cannot clean JDBC relation '$identifier' which is defined by an SQL query")
+        throw new UnsupportedOperationException(s"Cannot clean JDBC query relation '$identifier' which is defined by an SQL query")
     }
 
     /**
@@ -224,7 +223,7 @@ case class JdbcQueryRelation(
      * @param execution
       */
     override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
-        throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' which is defined by an SQL query")
+        throw new UnsupportedOperationException(s"Cannot create JDBC query relation '$identifier' which is defined by an SQL query")
     }
 
     /**
@@ -232,24 +231,11 @@ case class JdbcQueryRelation(
       * @param execution
       */
     override def destroy(execution:Execution, ifExists:Boolean=false) : Unit = {
-        throw new UnsupportedOperationException(s"Cannot destroy JDBC relation '$identifier' which is defined by an SQL query")
+        throw new UnsupportedOperationException(s"Cannot destroy JDBC query relation '$identifier' which is defined by an SQL query")
     }
 
     override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
-        throw new UnsupportedOperationException(s"Cannot migrate JDBC relation '$identifier' which is defined by an SQL query")
-    }
-
-    /**
-      * Creates a Spark schema from the list of fields. This JDBC implementation will add partition columns, since
-      * these will be present while reading.
-      * @return
-      */
-    override protected def inputSchema : Option[StructType] = {
-        schema.map { s =>
-            val partitions = this.partitions
-            val partitionFields = SetIgnoreCase(partitions.map(_.name))
-            StructType(s.fields.map(_.sparkField).filter(f => !partitionFields.contains(f.name)) ++ partitions.map(_.sparkField))
-        }
+        throw new UnsupportedOperationException(s"Cannot migrate JDBC query relation '$identifier' which is defined by an SQL query")
     }
 
     private lazy val dependencies : Seq[String] = {

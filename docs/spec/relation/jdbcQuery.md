@@ -85,8 +85,9 @@ The schema is still optional in this case, but it will help [mocking](mock.md) t
 elsewhere.
 
  * `query` **(optional)** *(type: string)*:
-This property specifies the SQL query which will be executed by the
-database for retrieving data. Of course, then only read operations are possible.
+This property specifies the SQL query which will be executed by the database for retrieving data. Of course, then only 
+read operations are possible. Since the SQL is directly forwarded to the database, you also need to use the SQL
+dialect of the corresponding database.
   
  * `properties` **(optional)** *(type: map:string)* *(default: empty)*:
  Specifies any additional properties passed to the JDBC connection.  Note that both the JDBC

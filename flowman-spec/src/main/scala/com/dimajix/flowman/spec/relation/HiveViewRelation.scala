@@ -148,7 +148,7 @@ case class HiveViewRelation(
                 val curTable = catalog.getTable(table)
                 val curSchema = SchemaUtils.normalize(curTable.schema)
                 val newSchema = SchemaUtils.normalize(catalog.spark.sql(newSelect).schema)
-                curTable.viewText.get == newSelect && curSchema == newSchema
+                curTable.viewText.contains(newSelect) && curSchema == newSchema
             }
             else {
                 false
@@ -212,7 +212,7 @@ case class HiveViewRelation(
         val curTable = catalog.getTable(table)
         val curSchema = SchemaUtils.normalize(curTable.schema)
         val newSchema = SchemaUtils.normalize(catalog.spark.sql(newSelect).schema)
-        if (curTable.viewText.get != newSelect || curSchema != newSchema) {
+        if (!curTable.viewText.contains(newSelect) || curSchema != newSchema) {
             migrationStrategy match {
                 case MigrationStrategy.NEVER =>
                     logger.warn(s"Migration required for HiveView relation '$identifier' of Hive view $table, but migrations are disabled.")

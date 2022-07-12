@@ -158,8 +158,7 @@ case class JdbcViewRelation(
 
         // Apply embedded schema, if it is specified. This will remove/cast any columns not present in the
         // explicit schema specification of the relation
-        //SchemaUtils.applySchema(filteredDf, inputSchema, insertNulls=false)
-        applyInputSchema(execution, filteredDf, includePartitions = false)
+        applyInputSchema(execution, filteredDf)
     }
 
     /**

@@ -1,9 +1,22 @@
 # SQL Mapping
-The `sql` mapping allows to execute any SQL transformation which contains Spark SQL code.
+The `sql` mapping allows to execute any SQL transformation which contains Spark SQL code. You can reference other
+mappings in `FROM` clauses by the mappings names. Note that you cannot reference any Hive tables, since Flowman will
+interpret all tables names as references to Flowman mappings.
 
 ## Example
 ```yaml
 mappings:
+  # Mapping to read from 'people_internal' relation (not shown)
+  people_internal:
+    kind: relation
+    relation: people_internal
+
+  # Mapping to read from 'people_external' relation (not shown)
+  people_external:
+    kind: relation
+    relation: people_external
+
+  # SQL mapping which unions some information from both mappings above.
   people_union:
     kind: sql
     sql: "
@@ -39,7 +52,8 @@ Cache mode for the results of this mapping. Supported values are
   * `MEMORY_AND_DISK_SER` - Caches the results first in memory in a serialized format and then spills to disk.
 
 * `sql` **(optional)** *(type: string)* *(default: empty)*: 
-The SQL statement to execute
+The SQL statement to execute. Inside the SQL statement you can reference other Flowman mappings. Note that you 
+cannot reference Hive tables within the SQL statement, as Flowman will interpret all table names as mapping names.
 
 * `file` **(optional)** *(type: string)* *(default: empty)*: 
 The name of a file containing the SQL to execute.
@@ -54,5 +68,5 @@ A url pointing to a resource containing the SQL to execute.
 
 ## Description
 The `sql` mapping is easy to use, you can simply type in the SQL to be executed. Flowman will
-take care of instantiating all upstream mappings, which are refernced as table names in the
+take care of instantiating all upstream mappings, which are referenced as table names in the
 SQL statement.

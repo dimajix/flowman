@@ -26,7 +26,8 @@ relations:
 ### Embedded SQL
 As a possibly convenient alternative to create a Hive view from a mapping, you can of course also directly specify
 an SQL. Note that in contrast to the [SQL mapping](../mapping/sql.md), all table identifiers used in the SQL actually
-refer to Hive tables and not to Flowman mappings. The SQL will be passed as is to Hive.
+refer to Hive tables and not to Flowman mappings. The SQL will be passed as is to Hive, which means that you cannot
+reference any Flowman mappings in the SQL.
 ```yaml
 relations:
   transaction_latest:

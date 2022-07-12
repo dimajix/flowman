@@ -27,6 +27,7 @@ environment:
 
 connections:
   frontend:
+    kind: jdbc
     driver: "$frontend_db_driver"
     url: "$frontend_db_url"
     username: "$frontend_db_username"
@@ -68,6 +69,7 @@ environment:
 
 connections:
   datahub:
+    kind: jdbc
     driver: "com.microsoft.sqlserver.jdbc.SQLServerDriver"
     url: jdbc:sqlserver://$sql_host
     username: $sql_username

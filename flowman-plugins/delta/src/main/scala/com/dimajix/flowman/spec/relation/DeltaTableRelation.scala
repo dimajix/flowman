@@ -397,7 +397,7 @@ case class DeltaTableRelation(
             execution.spark,
             new Path(catalogTable.location),
             catalogTable = Some(catalogTable),
-            tableIdentifier = Some(table.toString())
+            tableIdentifier = Some(table.unquotedString)
         )
     }
 }

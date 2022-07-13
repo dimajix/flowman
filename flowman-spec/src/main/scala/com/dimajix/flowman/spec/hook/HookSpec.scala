@@ -37,6 +37,7 @@ object HookSpec extends TypeRegistry[HookSpec] {
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible=true)
 @JsonSubTypes(value = Array(
+    new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcHookSpec]),
     new JsonSubTypes.Type(name = "simpleReport", value = classOf[SimpleReportHookSpec]),
     new JsonSubTypes.Type(name = "report", value = classOf[ReportHookSpec]),
     new JsonSubTypes.Type(name = "web", value = classOf[WebHookSpec])

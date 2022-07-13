@@ -16,7 +16,10 @@
 
 package com.dimajix.flowman.spec.connection
 
+import scala.collection.mutable
+
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.BaseConnection
@@ -31,6 +34,15 @@ case class JdbcConnection(
     password:Option[String] = None,
     properties:Map[String,String] = Map()
 ) extends BaseConnection {
+    def toConnectionProperties() : Map[String,String] = {
+        val props = mutable.Map[String,String]()
+        props.put(JDBCOptions.JDBC_URL, url)
+        props.put(JDBCOptions.JDBC_DRIVER_CLASS, driver)
+        username.foreach(props.put("user", _))
+        password.foreach(props.put("password", _))
+        properties.foreach(kv => props.put(kv._1, kv._2))
+        props.toMap
+    }
 }
 
 

@@ -173,7 +173,7 @@ class JdbcTableRelationBase(
         logger.info(s"Reading JDBC relation '$identifier' from table $tableIdentifier via connection '$connection' partition $partitions")
 
         // Get Connection
-        val (_,props) = createConnectionProperties()
+        val props = createConnectionProperties()
 
         // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
         val reader = execution.spark.read
@@ -344,7 +344,7 @@ class JdbcTableRelationBase(
 
     protected def appendTable(execution: Execution, df:DataFrame, table:TableIdentifier) : Unit = {
         // Save table
-        val (_,props) = createConnectionProperties()
+        val props = createConnectionProperties()
         df.write.format("jdbc")
             .mode(SaveMode.Append)
             .options(props)
@@ -374,8 +374,8 @@ class JdbcTableRelationBase(
         val targetSchema = outputSchema(execution)
         stagingIdentifier match {
             case None =>
-                val (url, props) = createConnectionProperties()
-                val options = new JDBCOptions(url, tableIdentifier.unquotedString, props)
+                val props = createConnectionProperties()
+                val options = new JDBCOptions(props)
                 JdbcUtils.mergeTable(tableIdentifier, "target", targetSchema, df, "source", condition, clauses, options)
             case Some(stagingTable) =>
                 withConnection { (con, options) =>

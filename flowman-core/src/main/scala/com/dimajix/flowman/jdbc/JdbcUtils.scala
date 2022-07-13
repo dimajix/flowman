@@ -27,24 +27,17 @@ import java.util.Locale
 
 import scala.collection.mutable
 import scala.util.Try
+import scala.util.control.NonFatal
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.savePartition
 import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{types => st}
 import org.slf4j.LoggerFactory
-import slick.jdbc.DerbyProfile
-import slick.jdbc.H2Profile
-import slick.jdbc.JdbcProfile
-import slick.jdbc.MySQLProfile
-import slick.jdbc.PostgresProfile
-import slick.jdbc.SQLServerProfile
-import slick.jdbc.SQLiteProfile
 
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.tryWith
@@ -125,6 +118,24 @@ object JdbcUtils {
         val dialect = JdbcDialects.get(options.url)
         val factory = SparkShim.createConnectionFactory(dialect, options)
         factory(partition)
+    }
+
+    def withConnection[T](options: JDBCOptions)(fn:(java.sql.Connection) => T) : T = {
+        logger.debug(s"Connecting to jdbc source at ${options.url}")
+        val con = try {
+            createConnection(options, -1)
+        } catch {
+            case NonFatal(e) =>
+                logger.error(s"Error connecting to jdbc source at ${options.url}: ${e.getMessage}")
+                throw e
+        }
+
+        try {
+            fn(con)
+        }
+        finally {
+            con.close()
+        }
     }
 
     def withTransaction[T](con:java.sql.Connection)(fn: => T) : T = {
@@ -717,26 +728,6 @@ object JdbcUtils {
             sqls.foreach { sql =>
                 statement.executeUpdate(sql)
             }
-        }
-    }
-
-    def getProfile(driver:String) : JdbcProfile = {
-        val derbyPattern = """.*\.derby\..*""".r
-        val sqlitePattern = """.*\.sqlite\..*""".r
-        val h2Pattern = """.*\.h2\..*""".r
-        val mariadbPattern = """.*\.mariadb\..*""".r
-        val mysqlPattern = """.*\.mysql\..*""".r
-        val postgresqlPattern = """.*\.postgresql\..*""".r
-        val sqlserverPattern = """.*\.sqlserver\..*""".r
-        driver match {
-            case derbyPattern() => DerbyProfile
-            case sqlitePattern() => SQLiteProfile
-            case h2Pattern() => H2Profile
-            case mysqlPattern() => MySQLProfile
-            case mariadbPattern() => MySQLProfile
-            case postgresqlPattern() => PostgresProfile
-            case sqlserverPattern() => SQLServerProfile
-            case _ => throw new UnsupportedOperationException(s"Database with driver ${driver} is not supported")
         }
     }
 }

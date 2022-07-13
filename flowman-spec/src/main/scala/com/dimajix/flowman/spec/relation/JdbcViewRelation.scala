@@ -143,7 +143,7 @@ case class JdbcViewRelation(
         logger.info(s"Reading JDBC view relation '$identifier' from table $view via connection '$connection' partition $partitions")
 
         // Get Connection
-        val (_,props) = createConnectionProperties()
+        val props = createConnectionProperties()
 
         // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
         val reader = execution.spark.read

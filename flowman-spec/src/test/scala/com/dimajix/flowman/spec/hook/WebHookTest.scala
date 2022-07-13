@@ -47,7 +47,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The WebHook" should "provide a working job API" in {
         val session = Session.builder()
             .withEnvironment("env", "some_environment")
-            .withSparkSession(spark)
+            .disableSpark()
             .build()
         val hook = WebHook(
             Hook.Properties(session.context),
@@ -66,7 +66,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     it should "provide a working target API" in {
         val session = Session.builder()
             .withEnvironment("env", "some_environment")
-            .withSparkSession(spark)
+            .disableSpark()
             .build()
         val hook = new WebHook(
             Hook.Properties(session.context),
@@ -101,7 +101,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val ns = Namespace.read.string(spec)
         val session = Session.builder()
                 .withNamespace(ns)
-                .withSparkSession(spark)
+                .disableSpark()
                 .build()
         val hook = session.hooks.head.instantiate(session.context).asInstanceOf[WebHook]
         hook.jobStart should be (Some("job_start/$job/$target"))
@@ -135,7 +135,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |        targetFailure: target_failure/$job/$target
               |""".stripMargin
         val session = Session.builder()
-            .withSparkSession(spark)
+            .disableSpark()
             .build()
         val job = Module.read.string(spec)
             .toProject("project")

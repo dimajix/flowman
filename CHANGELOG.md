@@ -7,6 +7,7 @@
 * github-209: [BUG] HiveViews should not trigger cascaded refresh during CREATE phase even when nothing is changed
 * github-211: Implement new hiveQuery relation
 * github-210: [BUG] HiveTables should be migrated if partition columns change
+* github-208: Implement JDBC hook for database based semaphores
 
 ## Breaking changes
 

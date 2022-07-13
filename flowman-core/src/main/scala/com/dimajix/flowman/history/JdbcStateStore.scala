@@ -31,7 +31,7 @@ import com.dimajix.flowman.history.JdbcStateRepository.JobRun
 import com.dimajix.flowman.history.JdbcStateRepository.TargetRun
 import com.dimajix.flowman.history.JdbcStateStore.JdbcJobToken
 import com.dimajix.flowman.history.JdbcStateStore.JdbcTargetToken
-import com.dimajix.flowman.jdbc.JdbcUtils
+import com.dimajix.flowman.jdbc.SlickUtils
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobResult
@@ -373,7 +373,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
     }
 
     private var tablesCreated:Boolean = false
-    private lazy val repository = new JdbcStateRepository(connection, JdbcUtils.getProfile(connection.driver))
+    private lazy val repository = new JdbcStateRepository(connection, SlickUtils.getProfile(connection.driver))
 
     private def ensureTables() : Unit = {
         // Create Database if not exists

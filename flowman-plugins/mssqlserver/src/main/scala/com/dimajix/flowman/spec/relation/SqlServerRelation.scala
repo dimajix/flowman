@@ -56,16 +56,16 @@ case class SqlServerRelation(
     override protected val stagingIdentifier: Option[TableIdentifier] = Some(tempTableIdentifier)
 
     override protected def appendTable(execution: Execution, df:DataFrame, table:TableIdentifier): Unit = {
-        val (_,props) = createConnectionProperties()
+        val props = createConnectionProperties()
         this.writer(execution, df, "com.microsoft.sqlserver.jdbc.spark", Map(), SaveMode.Append)
             .options(props ++ Map("tableLock" -> "true", "mssqlIsolationLevel" -> "READ_UNCOMMITTED"))
             .option(JDBCOptions.JDBC_TABLE_NAME, table.unquotedString)
             .save()
     }
 
-    override protected def createConnectionProperties() : (String,Map[String,String]) = {
-        val (url, props) = super.createConnectionProperties()
-        (url, props + (JDBCOptions.JDBC_DRIVER_CLASS -> "com.microsoft.sqlserver.jdbc.SQLServerDriver"))
+    override protected def createConnectionProperties() : Map[String,String] = {
+        val props = super.createConnectionProperties()
+        props + (JDBCOptions.JDBC_DRIVER_CLASS -> "com.microsoft.sqlserver.jdbc.SQLServerDriver")
     }
 }
 

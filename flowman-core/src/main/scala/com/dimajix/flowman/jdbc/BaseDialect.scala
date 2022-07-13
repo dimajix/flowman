@@ -29,6 +29,7 @@ import org.apache.spark.sql.jdbc.JdbcType
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.common.SetIgnoreCase
+import com.dimajix.flowman.catalog.PartitionChange
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
@@ -212,6 +213,7 @@ abstract class BaseDialect extends SqlDialect {
             case _:DropIndex => true
             case _:CreatePrimaryKey => true
             case _:DropPrimaryKey => true
+            case _:PartitionChange => false
             case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
         }
     }

@@ -22,6 +22,7 @@ changes over time.
 * github-207: [BUG] Build should not directly fail if infering dirty status fails
 * github-209: [BUG] HiveViews should not trigger cascaded refresh during CREATE phase even when nothing is changed
 * github-211: Implement new `hiveQuery` relation
+* github-210: [BUG] HiveTables should be migrated if partition columns change
 
 #### Breaking changes
 

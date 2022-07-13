@@ -31,6 +31,7 @@ import com.dimajix.flowman.types.StructType
 
 abstract sealed class TableChange extends Product with Serializable
 abstract sealed class ColumnChange extends TableChange
+abstract sealed class PartitionChange extends TableChange
 abstract sealed class IndexChange extends TableChange
 
 object TableChange {
@@ -41,6 +42,8 @@ object TableChange {
     case class UpdateColumnNullability(column:String, nullable:Boolean) extends ColumnChange
     case class UpdateColumnType(column:String, dataType:FieldType) extends ColumnChange
     case class UpdateColumnComment(column:String, comment:Option[String]) extends ColumnChange
+
+    case class UpdatePartitionColumns(columns:Seq[Field]) extends PartitionChange
 
     case class CreatePrimaryKey(columns:Seq[String]) extends IndexChange
     case class DropPrimaryKey() extends IndexChange
@@ -59,9 +62,27 @@ object TableChange {
         val normalizedSource = sourceTable.normalize()
         val normalizedTarget = targetTable.normalize()
 
-        val targetFields = targetTable.columns.map(f => f.name -> f)
+        // Check if partition columns need a change
+        val partitionChange = {
+            val changedColumnNames = normalizedSource.partitionColumnNames.sorted != normalizedTarget.partitionColumnNames.sorted
+
+            // Ensure that current real schema is compatible with specified schema
+            val columnChanges = requiresSchemaMigration(sourceTable.partitionColumns, targetTable.partitionColumns, migrationPolicy)
+
+            if (changedColumnNames || columnChanges)
+                Some(UpdatePartitionColumns(targetTable.partitionColumns))
+            else
+                None
+        }
+
+        val targetFields = targetTable.dataColumns
+            .filterNot(f => normalizedSource.partitionColumnNames.contains(f.name.toLowerCase(Locale.ROOT)))
+            .map(f => f.name -> f)
         val targetFieldsByName = MapIgnoreCase(targetFields)
-        val sourceFieldsByName = MapIgnoreCase(sourceTable.columns.map(f => f.name -> f))
+        val sourceFields = sourceTable.dataColumns
+            .filterNot(f => normalizedTarget.partitionColumnNames.contains(f.name.toLowerCase(Locale.ROOT)))
+            .map(f => f.name -> f)
+        val sourceFieldsByName = MapIgnoreCase(sourceFields)
 
         // Check which fields need to be dropped
         val dropFields = (sourceFieldsByName.keySet -- targetFieldsByName.keySet).toSeq.flatMap { fieldName =>
@@ -159,7 +180,7 @@ object TableChange {
             }
         }
 
-        dropIndexes ++ dropPk ++ dropFields ++ changeFields ++ createPk ++ addIndexes
+        partitionChange.toSeq ++ dropIndexes ++ dropPk ++ dropFields ++ changeFields ++ createPk ++ addIndexes
     }
 
     /**
@@ -185,19 +206,26 @@ object TableChange {
         )
 
         // Ensure that current real schema is compatible with specified schema
-        val columnChanges = migrationPolicy match {
+        val columnChanges = requiresSchemaMigration(sourceTable.columns, targetTable.columns, migrationPolicy)
+
+        // Check if partition columns require a change
+        val partitionChanges = normalizedSource.partitionColumnNames.sorted != normalizedTarget.partitionColumnNames.sorted
+
+        pkChanges || dropIndexes || addIndexes || columnChanges || partitionChanges
+    }
+
+    private def requiresSchemaMigration(sourceColumns:Seq[Field], targetColumns:Seq[Field], migrationPolicy:MigrationPolicy) : Boolean = {
+        migrationPolicy match {
             case MigrationPolicy.RELAXED =>
-                val sourceFields = sourceTable.columns.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
-                targetTable.columns.exists { tgt =>
+                val sourceFields = sourceColumns.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+                targetColumns.exists { tgt =>
                     !sourceFields.get(tgt.name.toLowerCase(Locale.ROOT))
                         .exists(src => SchemaUtils.isCompatible(tgt, src))
                 }
             case MigrationPolicy.STRICT =>
-                val sourceFields = SchemaUtils.normalize(sourceTable.columns).sortBy(_.name)
-                val targetFields = SchemaUtils.normalize(targetTable.columns).sortBy(_.name)
+                val sourceFields = SchemaUtils.normalize(sourceColumns).sortBy(_.name)
+                val targetFields = SchemaUtils.normalize(targetColumns).sortBy(_.name)
                 sourceFields != targetFields
         }
-
-        pkChanges || dropIndexes || addIndexes || columnChanges
     }
 }

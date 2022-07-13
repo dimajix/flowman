@@ -226,16 +226,23 @@ case class DeltaFileRelation(
      */
     override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
         if (exists(execution) == Yes) {
-            if (schema.nonEmpty) {
-                val table = deltaCatalogTable(execution)
-                val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
-                val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
-                val sourceTable = TableDefinition(TableIdentifier.empty, columns=sourceSchema.fields)
-                val targetTable = TableDefinition(TableIdentifier.empty, columns=targetSchema.fields)
-                !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
-            }
-            else {
-                true
+            fullSchema match {
+                case Some(fullSchema) =>
+                    val table = deltaCatalogTable(execution)
+                    val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
+                    val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema)
+                    val sourceTable = TableDefinition(
+                        TableIdentifier.empty,
+                        columns = sourceSchema.fields,
+                        partitionColumnNames = table.snapshot.metadata.partitionColumns
+                    )
+                    val targetTable = TableDefinition(
+                        TableIdentifier.empty,
+                        columns = targetSchema.fields,
+                        partitionColumnNames = partitions.map(_.name)
+                    )
+                    !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
+                case None => true
             }
         }
         else {

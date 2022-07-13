@@ -94,10 +94,12 @@ class JdbcTableRelationBase(
             TableDefinition(
                 tableIdentifier,
                 TableType.TABLE,
-                columns=columns,
-                comment=schema.description,
-                primaryKey=pk,
-                indexes=indexes
+                columns = columns,
+                comment = schema.description,
+                primaryKey = pk,
+                indexes = indexes
+                // Currently partition tables are not supported on a physical level, only on a logical level
+                // partitionColumnNames = partitions.map(_.name)
             )
         }
     }

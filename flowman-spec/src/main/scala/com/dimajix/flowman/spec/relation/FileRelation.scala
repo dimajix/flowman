@@ -442,6 +442,7 @@ case class FileRelation(
       * @param execution
       */
     override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+        // TODO: At least check partition changes
     }
 
     /**

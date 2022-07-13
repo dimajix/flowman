@@ -220,20 +220,32 @@ case class DeltaTableRelation(
     override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
         val catalog = execution.catalog
         if (catalog.tableExists(table)) {
-            val table = catalog.getTable(this.table)
-            if (table.tableType == CatalogTableType.VIEW) {
-                false
-            }
-            else if (schema.nonEmpty) {
-                val table = deltaCatalogTable(execution)
-                val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
-                val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
-                val sourceTable = TableDefinition(this.table, TableType.TABLE, sourceSchema.fields)
-                val targetTable = TableDefinition(this.table, TableType.TABLE, targetSchema.fields)
-                !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
-            }
-            else {
-                true
+            fullSchema match {
+                case Some(fullSchema) =>
+                    val table = catalog.getTable(this.table)
+                    if (table.tableType == CatalogTableType.VIEW) {
+                        false
+                    }
+                    else  {
+                        val table = deltaCatalogTable(execution)
+                        val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
+                        val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema)
+                        val sourceTable = TableDefinition(
+                            this.table,
+                            TableType.TABLE,
+                            columns = sourceSchema.fields,
+                            partitionColumnNames = table.snapshot.metadata.partitionColumns
+                        )
+                        val targetTable = TableDefinition(
+                            this.table,
+                            TableType.TABLE,
+                            columns = targetSchema.fields,
+                            partitionColumnNames = partitions.map(_.name)
+                        )
+                        !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
+                    }
+                case None =>
+                    true
             }
         }
         else {

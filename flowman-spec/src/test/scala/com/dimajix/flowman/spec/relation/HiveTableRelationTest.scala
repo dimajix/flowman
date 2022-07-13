@@ -1935,6 +1935,194 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
     }
 
+    it should "support adding partitions in migrations" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val relation_1 = HiveTableRelation(
+            Relation.Properties(context, "rel_1"),
+            schema = Some(InlineSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.StringType),
+                    Field("f2", com.dimajix.flowman.types.IntegerType),
+                    Field("f3", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("f3", com.dimajix.flowman.types.IntegerType)
+            ),
+            table = TableIdentifier("some_table", Some("default"))
+        )
+        val relation_2 = HiveTableRelation(
+            Relation.Properties(context, "rel_2"),
+            schema = Some(InlineSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.StringType),
+                    Field("f2", com.dimajix.flowman.types.IntegerType),
+                    Field("f3", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            table = TableIdentifier("some_table", Some("default"))
+        )
+
+        // == Create ===================================================================
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
+        relation_1.create(execution)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
+        session.catalog.getTable(relation_1.table).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType, nullable = false)
+        )))
+        session.catalog.getTable(relation_1.table).dataSchema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).partitionSchema should be (StructType(Seq(
+            StructField("f3", IntegerType, nullable = false)
+        )))
+
+        // == Migrate ===================================================================
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL)
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
+        session.catalog.getTable(relation_1.table).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType, nullable = false)
+        )))
+        session.catalog.getTable(relation_1.table).dataSchema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).partitionSchema should be (StructType(Seq(
+            StructField("f3", IntegerType, nullable = false)
+        )))
+
+        // == Migrate =================================================================================================
+        relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
+
+        a[MigrationFailedException] should be thrownBy(relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL))
+        a[MigrationFailedException] should be thrownBy(relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER))
+
+        relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+        relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+        session.catalog.getTable(relation_1.table).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).dataSchema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).partitionSchema should be (StructType(Seq(
+        )))
+
+        // == Migrate =================================================================================================
+        relation_2.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.FAIL)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+        relation_2.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+        relation_2.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER_REPLACE)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        session.catalog.getTable(relation_1.table).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).dataSchema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).partitionSchema should be (StructType(Seq(
+        )))
+
+        // == Back Migrate ===================================================================
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+        a[MigrationFailedException] should be thrownBy(relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL))
+        a[MigrationFailedException] should be thrownBy(relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER))
+
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        session.catalog.getTable(relation_1.table).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType, nullable = false)
+        )))
+        session.catalog.getTable(relation_1.table).dataSchema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).partitionSchema should be (StructType(Seq(
+            StructField("f3", IntegerType, nullable = false)
+        )))
+
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        session.catalog.getTable(relation_1.table).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType, nullable = false)
+        )))
+        session.catalog.getTable(relation_1.table).dataSchema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).partitionSchema should be (StructType(Seq(
+            StructField("f3", IntegerType, nullable = false)
+        )))
+
+        // == Destroy =================================================================================================
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
+        relation_1.destroy(execution)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
+    }
+
     it should "provide its schema to mappings" in {
         val spec =
             s"""

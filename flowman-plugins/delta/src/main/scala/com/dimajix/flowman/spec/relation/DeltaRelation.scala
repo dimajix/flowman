@@ -32,6 +32,7 @@ import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.SetIgnoreCase
+import com.dimajix.flowman.catalog.PartitionChange
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableChange
@@ -147,8 +148,16 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
         val table = deltaCatalogTable(execution)
         val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
         val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
-        val sourceTable = TableDefinition(TableIdentifier.empty, columns=sourceSchema.fields)
-        val targetTable = TableDefinition(TableIdentifier.empty, columns=targetSchema.fields)
+        val sourceTable = TableDefinition(
+            TableIdentifier.empty,
+            columns = sourceSchema.fields,
+            partitionColumnNames = table.snapshot.metadata.partitionColumns
+        )
+        val targetTable = TableDefinition(
+            TableIdentifier.empty,
+            columns = targetSchema.fields,
+            partitionColumnNames = partitions.map(_.name)
+        )
 
         val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
 
@@ -253,6 +262,7 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
                 case _:UpdateColumnNullability => true
                 case _:UpdateColumnType => false
                 case _:UpdateColumnComment => true
+                case _:PartitionChange => false
                 case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
             }
         }

@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
+import com.dimajix.flowman.catalog.PartitionChange
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
@@ -337,21 +338,26 @@ case class HiveTableRelation(
     override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
         val catalog = execution.catalog
         if (catalog.tableExists(table)) {
-            if (schema.nonEmpty) {
-                val table = catalog.getTable(this.table)
-                if (table.tableType == CatalogTableType.VIEW) {
-                    false
-                }
-                else {
-                    val sourceTable = TableDefinition.ofTable(table)
-                    val targetSchema =  com.dimajix.flowman.types.StructType(schema.get.fields)
-                    val targetTable = TableDefinition(this.table, TableType.TABLE, targetSchema.fields)
+            fullSchema match {
+                case Some(fullSchema) =>
+                    val table = catalog.getTable(this.table)
+                    if (table.tableType == CatalogTableType.VIEW) {
+                        false
+                    }
+                    else {
+                        val sourceTable = TableDefinition.ofTable(table)
+                        val targetSchema =  com.dimajix.flowman.types.StructType(fullSchema.fields)
+                        val targetTable = TableDefinition(
+                            this.table,
+                            TableType.TABLE,
+                            columns = targetSchema.fields,
+                            partitionColumnNames = partitions.map(_.name)
+                        )
 
-                    !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
-                }
-            }
-            else {
-                true
+                        !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
+                    }
+                case None =>
+                    true
             }
         }
         else {
@@ -520,8 +526,13 @@ case class HiveTableRelation(
             }
             else {
                 val sourceTable = TableDefinition.ofTable(table)
-                val targetSchema =  com.dimajix.flowman.types.StructType(schema.get.fields)
-                val targetTable = TableDefinition(this.table, TableType.TABLE, targetSchema.fields)
+                val targetSchema =  com.dimajix.flowman.types.StructType(fullSchema.get.fields)
+                val targetTable = TableDefinition(
+                    this.table,
+                    TableType.TABLE,
+                    columns = targetSchema.fields,
+                    partitionColumnNames = partitions.map(_.name)
+                )
 
                 val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
                 if (requiresMigration) {
@@ -591,6 +602,7 @@ case class HiveTableRelation(
                 case _:UpdateColumnNullability => true
                 case _:UpdateColumnType => false
                 case _:UpdateColumnComment => true
+                case _:PartitionChange => false
                 case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
             }
         }

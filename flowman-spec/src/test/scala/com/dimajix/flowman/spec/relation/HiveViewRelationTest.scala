@@ -28,6 +28,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -106,6 +107,24 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
     relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
     relation.loaded(execution, Map()) should be (Yes)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
+
+    // == Migrate =================================================================================================
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.NEVER)
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.FAIL)
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER)
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER_REPLACE)
+    relation.exists(execution) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL)
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+    relation.migrate(execution, MigrationPolicy.RELAXED)
+    relation.exists(execution) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
     // == Read ===================================================================================================
     relation.describe(execution) should be (ftypes.StructType(Seq(
@@ -199,6 +218,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         ResourceIdentifier.ofHivePartition("t1", Some("default"), Map())
     ))
 
+    // == Create =================================================================================================
     relation.exists(execution) should be (No)
     relation.loaded(execution, Map()) should be (No)
     relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
@@ -210,8 +230,25 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
     relation.loaded(execution, Map()) should be (Yes)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
 
-    //session.catalog.getTable(TableIdentifier("v0", Some("default"))).viewText.foreach(println)
+    // == Migrate =================================================================================================
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.NEVER)
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.FAIL)
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER)
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER_REPLACE)
+    relation.exists(execution) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL)
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+    relation.migrate(execution, MigrationPolicy.RELAXED)
+    relation.exists(execution) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+    // == Destroy ================================================================================================
     relation.destroy(execution)
     relation.exists(execution) should be (No)
     relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
@@ -270,6 +307,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
             ResourceIdentifier.ofHivePartition("t0", Some("default"), Map())
         ))
 
+        // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
@@ -281,6 +319,25 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         relation.loaded(execution, Map()) should be (Yes)
         session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
 
+        // == Migrate =================================================================================================
+        relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.NEVER)
+        relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.FAIL)
+        relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER)
+        relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER_REPLACE)
+        relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        relation.migrate(execution, MigrationPolicy.RELAXED)
+        relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+        // == Destroy ================================================================================================
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)

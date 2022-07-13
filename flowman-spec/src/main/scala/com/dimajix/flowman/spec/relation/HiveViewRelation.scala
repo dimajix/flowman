@@ -24,11 +24,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
-import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -145,9 +145,8 @@ case class HiveViewRelation(
             // Check if current table is a VIEW or a table
             if (curTable.tableType == CatalogTableType.VIEW) {
                 // Check that both SQL and schema are correct
-                val curTable = catalog.getTable(table)
                 val curSchema = SchemaUtils.normalize(curTable.schema)
-                val newSchema = SchemaUtils.normalize(catalog.spark.sql(newSelect).schema)
+                val newSchema = SchemaUtils.normalize(execution.spark.sql(newSelect).schema)
                 curTable.viewText.contains(newSelect) && curSchema == newSchema
             }
             else {
@@ -197,9 +196,9 @@ case class HiveViewRelation(
         if (catalog.tableExists(table)) {
             val newSelect = getSelect(execution)
             val curTable = catalog.getTable(table)
-            // Check if current table is a VIEW or a table
+            // Check if current table is a VIEW or a TABLE
             if (curTable.tableType == CatalogTableType.VIEW) {
-                migrateFromView(execution, newSelect, migrationStrategy)
+                migrateFromView(execution, curTable, newSelect, migrationStrategy)
             }
             else {
                 migrateFromTable(execution, newSelect, migrationStrategy)
@@ -207,11 +206,9 @@ case class HiveViewRelation(
         }
     }
 
-    private def migrateFromView(execution:Execution, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
-        val catalog = execution.catalog
-        val curTable = catalog.getTable(table)
+    private def migrateFromView(execution:Execution, curTable:CatalogTable, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
         val curSchema = SchemaUtils.normalize(curTable.schema)
-        val newSchema = SchemaUtils.normalize(catalog.spark.sql(newSelect).schema)
+        val newSchema = SchemaUtils.normalize(execution.spark.sql(newSelect).schema)
         if (!curTable.viewText.contains(newSelect) || curSchema != newSchema) {
             migrationStrategy match {
                 case MigrationStrategy.NEVER =>
@@ -221,6 +218,7 @@ case class HiveViewRelation(
                     throw new MigrationFailedException(identifier)
                 case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
                     logger.info(s"Migrating HiveView relation '$identifier' with VIEW $table")
+                    val catalog = execution.catalog
                     catalog.alterView(table, newSelect)
                     execution.refreshResource(resource)
             }
@@ -228,7 +226,6 @@ case class HiveViewRelation(
     }
 
     private def migrateFromTable(execution:Execution, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
-        val catalog = execution.catalog
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for HiveView relation '$identifier' from TABLE to a VIEW $table, but migrations are disabled.")
@@ -237,6 +234,7 @@ case class HiveViewRelation(
                 throw new MigrationFailedException(identifier)
             case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
                 logger.info(s"Migrating HiveView relation '$identifier' from TABLE to a VIEW $table")
+                val catalog = execution.catalog
                 catalog.dropTable(table, false)
                 catalog.createView(table, newSelect, false)
                 execution.refreshResource(resource)

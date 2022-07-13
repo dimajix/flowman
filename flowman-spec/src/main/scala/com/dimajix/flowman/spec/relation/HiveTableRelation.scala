@@ -509,36 +509,46 @@ case class HiveTableRelation(
 
         val catalog = execution.catalog
         if (schema.nonEmpty && catalog.tableExists(table)) {
-            val table = catalog.getTable(this.table)
-            if (table.tableType == CatalogTableType.VIEW) {
-                migrationStrategy match {
-                    case MigrationStrategy.NEVER =>
-                        logger.warn(s"Migration required for HiveTable relation '$identifier' from VIEW to a TABLE ${this.table}, but migrations are disabled.")
-                    case MigrationStrategy.FAIL =>
-                        logger.error(s"Cannot migrate relation HiveTable '$identifier' from VIEW to a TABLE ${this.table}, since migrations are disabled.")
-                        throw new MigrationFailedException(identifier)
-                    case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
-                        logger.warn(s"TABLE target ${this.table} is currently a VIEW, dropping...")
-                        catalog.dropView(this.table, false)
-                        create(execution, false)
-                        execution.refreshResource(resource)
-                }
+            val curTable = catalog.getTable(table)
+            // Check if current table is a VIEW or a TABLE
+            if (curTable.tableType == CatalogTableType.VIEW) {
+                migrateFromView(execution, migrationStrategy)
             }
             else {
-                val sourceTable = TableDefinition.ofTable(table)
-                val targetSchema =  com.dimajix.flowman.types.StructType(fullSchema.get.fields)
-                val targetTable = TableDefinition(
-                    this.table,
-                    TableType.TABLE,
-                    columns = targetSchema.fields,
-                    partitionColumnNames = partitions.map(_.name)
-                )
-
-                val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
-                if (requiresMigration) {
-                    doMigration(execution, sourceTable, targetTable, migrationPolicy, migrationStrategy)
-                }
+                migrateFromTable(execution, curTable, migrationPolicy, migrationStrategy)
             }
+        }
+    }
+
+    private def migrateFromView(execution:Execution, migrationStrategy:MigrationStrategy) : Unit = {
+        migrationStrategy match {
+            case MigrationStrategy.NEVER =>
+                logger.warn(s"Migration required for HiveTable relation '$identifier' from VIEW to a TABLE ${table}, but migrations are disabled.")
+            case MigrationStrategy.FAIL =>
+                logger.error(s"Cannot migrate relation HiveTable '$identifier' from VIEW to a TABLE ${table}, since migrations are disabled.")
+                throw new MigrationFailedException(identifier)
+            case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
+                logger.warn(s"TABLE target ${table} is currently a VIEW, dropping...")
+                val catalog = execution.catalog
+                catalog.dropView(table, false)
+                create(execution, false)
+                execution.refreshResource(resource)
+        }
+    }
+
+    private def migrateFromTable(execution:Execution, curTable:CatalogTable, migrationPolicy:MigrationPolicy,  migrationStrategy:MigrationStrategy) : Unit = {
+        val sourceTable = TableDefinition.ofTable(curTable)
+        val targetSchema =  com.dimajix.flowman.types.StructType(fullSchema.get.fields)
+        val targetTable = TableDefinition(
+            table,
+            TableType.TABLE,
+            columns = targetSchema.fields,
+            partitionColumnNames = partitions.map(_.name)
+        )
+
+        val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
+        if (requiresMigration) {
+            doMigration(execution, sourceTable, targetTable, migrationPolicy, migrationStrategy)
         }
     }
 

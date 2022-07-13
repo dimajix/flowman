@@ -391,12 +391,12 @@ case class DeltaTableRelation(
 
     override protected def deltaCatalogTable(execution: Execution): DeltaTableV2 = {
         val catalog = execution.catalog
-        val table = catalog.getTable(this.table)
+        val catalogTable = catalog.getTable(table)
 
         DeltaTableV2(
             execution.spark,
-            new Path(table.location),
-            catalogTable = Some(table),
+            new Path(catalogTable.location),
+            catalogTable = Some(catalogTable),
             tableIdentifier = Some(table.toString())
         )
     }

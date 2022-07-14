@@ -44,6 +44,7 @@ import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.hook.JdbcHook.DummyJobToken
 import com.dimajix.flowman.spec.hook.JdbcHook.DummyTargetToken
+import com.dimajix.flowman.util.ConsoleColors.yellow
 
 
 object JdbcHook {
@@ -152,7 +153,7 @@ case class JdbcHook(
             }
             catch {
                 case NonFatal(ex) =>
-                    logger.warn(s"Could not post status to JDBC hook at '${options.url}': ${ex.toString}")
+                    logger.warn(yellow(s"Could not post status to JDBC hook at '${options.url}': ${ex.toString}"))
             }
         }
     }

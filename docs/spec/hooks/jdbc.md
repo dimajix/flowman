@@ -28,6 +28,10 @@ job:
 ## Fields
 * `kind` **(mandatory)** *(type: string)*: `jdbc`
 
+* `connection` **(mandatory)** *(type: string or connection)*:
+Either a reference (via name) or a directly embedded [JDBC connection](../connection/jdbc.md) to be used to talk with
+the target database where the SQL commands are to be executed.
+
 * `jobStart` **(optional)** *(type: string)*:
   SQL statement which should be executed when a job is started.
 

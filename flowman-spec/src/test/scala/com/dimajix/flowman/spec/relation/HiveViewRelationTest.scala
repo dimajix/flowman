@@ -452,13 +452,13 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         table.conforms(execution, MigrationPolicy.STRICT) should be (No)
         session.catalog.tableExists(TableIdentifier("table_or_view", Some("default"))) should be (false)
 
-        // == Destroy TABLE ===========================================================================================
-        table.destroy(execution, ifExists = true)
-        a[NoSuchTableException] should be thrownBy(table.destroy(execution, ifExists = false))
-
         // == Destroy VIEW ==========================================================================================
         view.destroy(execution, ifExists = true)
         a[NoSuchTableException] should be thrownBy(view.destroy(execution, ifExists = false))
+
+        // == Destroy TABLE ===========================================================================================
+        table.destroy(execution, ifExists = true)
+        a[NoSuchTableException] should be thrownBy(table.destroy(execution, ifExists = false))
 
         context.getRelation(RelationIdentifier("t0")).destroy(execution)
     }
@@ -556,8 +556,8 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table2.schema.get.sparkSchema)
 
         // == Destroy TABLE ===========================================================================================
-        table.destroy(execution, ifExists = true)
         view.destroy(execution, ifExists = true)
+        table.destroy(execution, ifExists = true)
         view.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         view.conforms(execution, MigrationPolicy.STRICT) should be (No)
     }
@@ -699,8 +699,8 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table3.schema.get.sparkSchema)
 
         // == Destroy TABLE ===========================================================================================
-        table.destroy(execution, ifExists = true)
         view.destroy(execution, ifExists = true)
+        table.destroy(execution, ifExists = true)
         view.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         view.conforms(execution, MigrationPolicy.STRICT) should be (No)
     }

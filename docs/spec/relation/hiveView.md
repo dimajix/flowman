@@ -99,7 +99,9 @@ WHERE rank = 1
 ## Automatic Migrations
 Flowman supports automatic migration of Hive views once the view definition changes. Then Flowman will simply recreate
 the Hive view with the new definition. Flowman also detects if the schema changes, which also requires a recreation
-of the view to update type information stored in the Hive meta store.
+of the view to update type information stored in the Hive meta store. If the [config](../../setup/config.md)
+variable `flowman.default.relation.migrationPolicy` is set to `STRICT`, then the view will also be recreated when
+the column comments change.
 
 
 ## Schema Conversion

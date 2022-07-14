@@ -649,9 +649,12 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table.schema.get.sparkSchema)
 
         // == Migrate VIEW ===========================================================================================
-        view.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         view.conforms(execution, MigrationPolicy.STRICT) should be (No)
-        view.migrate(execution)
+        view.migrate(execution, MigrationPolicy.RELAXED)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        view.migrate(execution, MigrationPolicy.STRICT)
         view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
@@ -660,7 +663,10 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         // == Migrate VIEW ===========================================================================================
         view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
-        view.migrate(execution)
+        view.migrate(execution, MigrationPolicy.RELAXED)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        view.migrate(execution, MigrationPolicy.STRICT)
         view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
@@ -681,9 +687,12 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table2.schema.get.sparkSchema)
 
         // == Migrate VIEW ===========================================================================================
-        view.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         view.conforms(execution, MigrationPolicy.STRICT) should be (No)
-        view.migrate(execution)
+        view.migrate(execution, MigrationPolicy.RELAXED)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        view.migrate(execution, MigrationPolicy.STRICT)
         view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
@@ -692,7 +701,10 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         // == Migrate VIEW ===========================================================================================
         view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
-        view.migrate(execution)
+        view.migrate(execution, MigrationPolicy.RELAXED)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        view.migrate(execution, MigrationPolicy.STRICT)
         view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)

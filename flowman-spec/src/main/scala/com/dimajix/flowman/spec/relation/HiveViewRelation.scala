@@ -26,6 +26,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
+import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
@@ -145,8 +146,8 @@ case class HiveViewRelation(
             // Check if current table is a VIEW or a table
             if (curTable.tableType == CatalogTableType.VIEW) {
                 // Check that both SQL and schema are correct
-                val curSchema = SchemaUtils.normalize(curTable.schema)
-                val newSchema = SchemaUtils.normalize(execution.spark.sql(newSelect).schema)
+                lazy val curSchema = normalizeSchema(curTable.schema, migrationPolicy)
+                lazy val newSchema = normalizeSchema(execution.spark.sql(newSelect).schema, migrationPolicy)
                 curTable.viewText.contains(newSelect) && curSchema == newSchema
             }
             else {
@@ -198,7 +199,7 @@ case class HiveViewRelation(
             val curTable = catalog.getTable(table)
             // Check if current table is a VIEW or a TABLE
             if (curTable.tableType == CatalogTableType.VIEW) {
-                migrateFromView(execution, curTable, newSelect, migrationStrategy)
+                migrateFromView(execution, curTable, newSelect, migrationPolicy, migrationStrategy)
             }
             else {
                 migrateFromTable(execution, newSelect, migrationStrategy)
@@ -206,9 +207,9 @@ case class HiveViewRelation(
         }
     }
 
-    private def migrateFromView(execution:Execution, curTable:CatalogTable, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
-        val curSchema = SchemaUtils.normalize(curTable.schema)
-        val newSchema = SchemaUtils.normalize(execution.spark.sql(newSelect).schema)
+    private def migrateFromView(execution:Execution, curTable:CatalogTable, newSelect:String, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+        lazy val curSchema = normalizeSchema(curTable.schema, migrationPolicy)
+        lazy val newSchema = normalizeSchema(execution.spark.sql(newSelect).schema, migrationPolicy)
         if (!curTable.viewText.contains(newSelect) || curSchema != newSchema) {
             migrationStrategy match {
                 case MigrationStrategy.NEVER =>
@@ -282,6 +283,14 @@ case class HiveViewRelation(
                     input.close()
                 }
             })
+    }
+
+    private def normalizeSchema(schema:StructType, policy:MigrationPolicy) : StructType = {
+        val normalized = SchemaUtils.normalize(schema)
+        policy match {
+            case MigrationPolicy.STRICT => normalized
+            case MigrationPolicy.RELAXED => SchemaUtils.dropMetadata(normalized)
+        }
     }
 
     private def buildMappingSql(executor: Execution, output:MappingOutputIdentifier) : String = {

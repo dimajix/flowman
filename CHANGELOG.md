@@ -8,6 +8,7 @@
 * github-211: Implement new hiveQuery relation
 * github-210: [BUG] HiveTables should be migrated if partition columns change
 * github-208: Implement JDBC hook for database based semaphores
+* github-212: Hive views should not be migrated in RELAXED mode if only comments have changed
 
 ## Breaking changes
 

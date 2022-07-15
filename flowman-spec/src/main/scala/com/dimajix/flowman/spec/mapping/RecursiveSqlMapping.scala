@@ -59,11 +59,7 @@ extends BaseMapping {
       *
       * @return
       */
-    override def inputs : Set[MappingOutputIdentifier] = {
-        SqlParser.resolveDependencies(statement)
-            .filter(_.toLowerCase(Locale.ROOT) != "__this__")
-            .map(MappingOutputIdentifier.parse)
-    }
+    override def inputs : Set[MappingOutputIdentifier] = dependencies
 
     /**
       * Executes this MappingType and returns a corresponding DataFrame
@@ -130,7 +126,6 @@ extends BaseMapping {
         require(input != null)
 
         val spark = execution.spark
-        val statement = this.statement
 
         // Create dummy data frames
         val replacements = input.map { case (id,schema) =>
@@ -146,7 +141,12 @@ extends BaseMapping {
         applyDocumentation(schemas)
     }
 
-    private def statement : String = {
+    private lazy val dependencies = {
+        SqlParser.resolveDependencies(statement)
+            .filter(_.toLowerCase(Locale.ROOT) != "__this__")
+            .map(MappingOutputIdentifier.parse)
+    }
+    private lazy val statement : String = {
         if (sql.exists(_.nonEmpty)) {
             sql.get
         }

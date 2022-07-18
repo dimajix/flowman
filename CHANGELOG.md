@@ -3,7 +3,7 @@
 * github-202: Add support for Spark 3.3
 * github-203: [BUG] Resource dependencies for Hive should be case-insensitive
 * github-204: [BUG] Detect indirect dependencies in a chain of Hive views
-* github-207: [BUG] Build should not directly fail if infering dirty status fails
+* github-207: [BUG] Build should not directly fail if inferring dirty status fails
 * github-209: [BUG] HiveViews should not trigger cascaded refresh during CREATE phase even when nothing is changed
 * github-211: Implement new hiveQuery relation
 * github-210: [BUG] HiveTables should be migrated if partition columns change

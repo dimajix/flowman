@@ -16,20 +16,15 @@
 
 package com.dimajix.flowman.spec.relation
 
-import scala.collection.mutable
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
-import com.dimajix.flowman.catalog
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.jdbc.JdbcUtils
-import com.dimajix.flowman.jdbc.SqlDialects
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Reference
@@ -37,8 +32,6 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.annotation.RelationType
 import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
-import com.dimajix.flowman.spec.connection.JdbcConnection
-import com.dimajix.flowman.types.StructType
 
 
 case class SqlServerRelation(

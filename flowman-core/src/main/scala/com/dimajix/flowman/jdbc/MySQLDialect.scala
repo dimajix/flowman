@@ -91,6 +91,10 @@ class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
         s"ALTER TABLE ${dialect.quote(table)} MODIFY COLUMN ${dialect.quoteIdentifier(columnName)} $dataType $nullable"
     }
 
+    override def dropPrimaryKey(table: TableIdentifier): String = {
+        s"ALTER TABLE ${dialect.quote(table)} DROP PRIMARY KEY"
+    }
+
     override def dropIndex(table: TableIdentifier, indexName: String): String = {
         s"DROP INDEX ${dialect.quoteIdentifier(indexName)} ON ${dialect.quote(table)}"
     }

@@ -16,15 +16,21 @@
 
 package com.dimajix.flowman.jdbc
 
+import java.sql.Connection
+import java.sql.DatabaseMetaData
 import java.sql.Date
 import java.sql.JDBCType
 import java.sql.SQLException
+import java.sql.Statement
 import java.util.Locale
+
+import scala.collection.mutable
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.jdbc.JdbcType
 import org.apache.spark.sql.types.StructType
 
@@ -48,6 +54,7 @@ import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.UpdateClause
+import com.dimajix.flowman.jdbc.JdbcUtils.withStatement
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.ByteType
@@ -70,6 +77,7 @@ import com.dimajix.spark.sql.expressions.UnresolvableExpression
 abstract class BaseDialect extends SqlDialect {
     private object Statements extends BaseStatements(this) { }
     private object Expressions extends BaseExpressions(this) { }
+    private object Commands extends BaseCommands(this) { }
 
     /**
       * Retrieve the jdbc / sql type for a given datatype.
@@ -232,8 +240,8 @@ abstract class BaseDialect extends SqlDialect {
     override def supportsAlterView : Boolean = false
 
     override def statement : SqlStatements = Statements
-
     override def expr : SqlExpressions = Expressions
+    override def command : SqlCommands = Commands
 }
 
 
@@ -426,6 +434,10 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
 
         s"CREATE $unique INDEX ${dialect.quoteIdentifier(index.name)} ON ${dialect.quote(table)} (${columns.mkString(",")})"
     }
+
+    override def dropConstraint(table: TableIdentifier, constraintName: String): String = {
+        s"ALTER TABLE ${dialect.quote(table)} DROP CONSTRAINT ${dialect.quoteIdentifier(constraintName)}"
+    }
 }
 
 
@@ -448,5 +460,83 @@ class BaseExpressions(dialect: SqlDialect) extends SqlExpressions {
         }        // Do not use column quoting for the PARTITION expression
         val partitionValues = partition.values.map { case (k, v) => k + "=" + literal(v) }
         s"PARTITION(${partitionValues.mkString(",")})"
+    }
+}
+
+
+class BaseCommands(dialect: SqlDialect) extends SqlCommands {
+    override def getPrimaryKey(con: Connection, table:TableIdentifier) : Seq[String] = {
+        val meta = con.getMetaData
+        val pkrs = meta.getPrimaryKeys(null, table.database.orNull, table.table)
+        val pk = mutable.ListBuffer[(Short,String)]()
+        while(pkrs.next()) {
+            val col = pkrs.getString(4)
+            val seq = pkrs.getShort(5)
+            // val name = pkrs.getString(6)
+            pk.append((seq,col))
+        }
+        pkrs.close()
+        pk.sortBy(_._1).map(_._2)
+    }
+
+    override def getIndexes(con: Connection, table:TableIdentifier) : Seq[TableIndex] = {
+        val meta = con.getMetaData
+        val idxrs = meta.getIndexInfo(null, table.database.orNull, table.table, false, true)
+        val idxcols = mutable.ListBuffer[(String, String, Boolean)]()
+        while(idxrs.next()) {
+            val typ = idxrs.getShort(7)
+            if (typ != DatabaseMetaData.tableIndexStatistic) {
+                val name = idxrs.getString(6) // May be null for statistics
+                if (name != null) {
+                    val unique = !idxrs.getBoolean(4)
+                    val col = idxrs.getString(9)
+                    idxcols.append((name, col, unique))
+                }
+            }
+        }
+        idxrs.close()
+
+        idxcols
+            .groupBy(_._1).map { case(name,cols) =>
+            TableIndex(name, cols.map(_._2), cols.foldLeft(false)(_ || _._3))
+        }.toSeq
+    }
+
+    /**
+     * Adds an index to an existing table
+     * @param conn
+     * @param table
+     * @param index
+     * @param options
+     */
+    override def createIndex(statement:Statement, table:TableIdentifier, index:TableIndex) : Unit = {
+        val indexSql = dialect.statement.createIndex(table, index)
+        statement.executeUpdate(indexSql)
+    }
+
+    /**
+     * Drops an index from an existing table
+     * @param conn
+     * @param indexName
+     * @param options
+     */
+    override def dropIndex(statement:Statement, table:TableIdentifier, indexName:String) : Unit = {
+        val indexSql = dialect.statement.dropIndex(table, indexName)
+        statement.executeUpdate(indexSql)
+    }
+
+    override def dropConstraint(statement:Statement, table:TableIdentifier, constraintName:String) : Unit = {
+        val indexSql = dialect.statement.dropConstraint(table, constraintName)
+        statement.executeUpdate(indexSql)
+    }
+
+    override def addPrimaryKey(statement:Statement, table: TableIdentifier, columns:Seq[String]) : Unit = {
+        val sql = dialect.statement.addPrimaryKey(table, columns)
+        statement.executeUpdate(sql)
+    }
+
+    override def dropPrimaryKey(statement: Statement, table: TableIdentifier): Unit = {
+        val sql = dialect.statement.dropPrimaryKey(table)
+        statement.executeUpdate(sql)
     }
 }

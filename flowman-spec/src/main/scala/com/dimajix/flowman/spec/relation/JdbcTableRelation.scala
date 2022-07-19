@@ -626,7 +626,7 @@ class JdbcTableRelationBase(
 
         def recreate(con:java.sql.Connection, options:JDBCOptions) : Unit = {
             try {
-                logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier. New schema:\n${targetTable.schema.treeString}")
+                logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier.")
                 JdbcUtils.dropTable(con, tableIdentifier, options)
                 doCreate(con, options)
             }

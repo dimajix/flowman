@@ -16,7 +16,10 @@
 
 package com.dimajix.flowman.jdbc
 
+import java.sql.Statement
 import java.util.Locale
+
+import scala.collection.mutable
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.jdbc.JdbcType
@@ -44,6 +47,7 @@ object SqlServerDialect extends BaseDialect {
     }
 
     private object Statements extends MsSqlServerStatements(this)
+    private object Commands extends MsSqlServerCommands(this)
 
     override def canHandle(url : String): Boolean = url.toLowerCase(Locale.ROOT).startsWith("jdbc:sqlserver")
 
@@ -89,6 +93,7 @@ object SqlServerDialect extends BaseDialect {
     override def supportsAlterView : Boolean = true
 
     override def statement : SqlStatements = Statements
+    override def command : SqlCommands = Commands
 }
 
 
@@ -147,5 +152,25 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
     override def merge(targetTable: TableIdentifier, targetAlias:String, targetSchema:Option[StructType], sourceTable: TableIdentifier, sourceAlias:String, sourceSchema:StructType,  condition:Column, clauses:Seq[MergeClause]) : String = {
         val sql = super.merge(targetTable, targetAlias, targetSchema, sourceTable, sourceAlias, sourceSchema, condition, clauses)
         sql + ";\n" // Add semicolon for MS SQL Server
+    }
+}
+
+
+class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
+    override def dropPrimaryKey(statement: Statement, table: TableIdentifier): Unit = {
+        val meta = statement.getConnection.getMetaData
+        val pkrs = meta.getPrimaryKeys(null, table.database.orNull, table.table)
+        var name:String = ""
+        while(pkrs.next()) {
+            val pkname = pkrs.getString(6)
+            if (pkname != null)
+                name = pkname
+        }
+        pkrs.close()
+
+        if (name.nonEmpty) {
+            dropConstraint(statement, table, name)
+            //dropIndex(statement, table, name)
+        }
     }
 }

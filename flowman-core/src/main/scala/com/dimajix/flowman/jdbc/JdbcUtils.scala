@@ -224,48 +224,19 @@ object JdbcUtils {
      * @return
      */
     def getTableOrView(conn: Connection, table:TableIdentifier, options: JDBCOptions) : TableDefinition = {
+        val dialect = SqlDialects.get(options.url)
         val meta = conn.getMetaData
         val (realTable,realType) = resolveTable(meta, table)
 
         val currentSchema = getTableSchema(conn, table, options)
-        val pk = getPrimaryKey(meta, realTable)
-        val idxs = getIndexes(meta, realTable)
+        val pk = dialect.command.getPrimaryKey(conn, realTable)
+        val idxs = dialect.command.getIndexes(conn, realTable)
             // Remove primary key
             .filter { idx =>
                 idx.normalize().columns != pk.map(_.toLowerCase(Locale.ROOT)).sorted
             }
 
         TableDefinition(table, realType, currentSchema.fields, primaryKey=pk, indexes=idxs)
-    }
-
-    private def getPrimaryKey(meta: DatabaseMetaData, table:TableIdentifier) : Seq[String] = {
-        val pkrs = meta.getPrimaryKeys(null, table.database.orNull, table.table)
-        val pk = mutable.ListBuffer[(Short,String)]()
-        while(pkrs.next()) {
-            val col = pkrs.getString(4)
-            val seq = pkrs.getShort(5)
-            // val name = pkrs.getString(6)
-            pk.append((seq,col))
-        }
-        pkrs.close()
-        pk.sortBy(_._1).map(_._2)
-    }
-
-    private def getIndexes(meta: DatabaseMetaData, table:TableIdentifier) : Seq[TableIndex] = {
-        val idxrs = meta.getIndexInfo(null, table.database.orNull, table.table, false, true)
-        val idxcols = mutable.ListBuffer[(String, String, Boolean)]()
-        while(idxrs.next()) {
-            val unique = !idxrs.getBoolean(4)
-            val name = idxrs.getString(6) // May be null for statistics
-            val col = idxrs.getString(9)
-            idxcols.append((name, col, unique))
-        }
-        idxrs.close()
-
-        idxcols.filter(_._1 != null)
-            .groupBy(_._1).map { case(name,cols) =>
-                TableIndex(name, cols.map(_._2), cols.foldLeft(false)(_ || _._3))
-            }.toSeq
     }
 
     /**
@@ -649,9 +620,8 @@ object JdbcUtils {
      */
     def createIndex(conn:Connection, table:TableIdentifier, index:TableIndex, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val indexSql = dialect.statement.createIndex(table, index)
         withStatement(conn, options) { statement =>
-            statement.executeUpdate(indexSql)
+            dialect.command.createIndex(statement, table, index)
         }
     }
 
@@ -663,9 +633,8 @@ object JdbcUtils {
      */
     def dropIndex(conn:Connection, table:TableIdentifier, indexName:String, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val indexSql = dialect.statement.dropIndex(table, indexName)
         withStatement(conn, options) { statement =>
-            statement.executeUpdate(indexSql)
+            dialect.command.dropIndex(statement, table, indexName)
         }
     }
 
@@ -685,48 +654,48 @@ object JdbcUtils {
         val currentSchema = getJdbcSchema(conn, table, options)
         val currentFields = mutable.Map(currentSchema.map(f => (f.name.toLowerCase(Locale.ROOT), f)):_*)
 
-        val sqls = changes.flatMap {
+        val commands = changes.flatMap {
             case a:DropColumn =>
-                logger.info(s"Dropping column ${a.column} from JDBC table $table")
+                logger.info(s"Dropping column '${a.column}' from JDBC table $table")
                 currentFields.remove(a.column.toLowerCase(Locale.ROOT))
-                Some(statements.deleteColumn(table, a.column))
+                Some((stmt:Statement) => stmt.executeUpdate(statements.deleteColumn(table, a.column)))
             case a:AddColumn =>
                 val dataType = dialect.getJdbcType(a.column.ftype)
-                logger.info(s"Adding column ${a.column.name} with type ${dataType.databaseTypeDefinition} (${a.column.ftype.sqlType}) to JDBC table $table")
+                logger.info(s"Adding column '${a.column.name}' with type ${dataType.databaseTypeDefinition} (${a.column.ftype.sqlType}) to JDBC table $table")
                 currentFields.put(a.column.name.toLowerCase(Locale.ROOT), JdbcField(a.column.name, dataType.databaseTypeDefinition, 0, 0, 0, false, a.column.nullable))
-                Some(statements.addColumn(table, a.column.name, dataType.databaseTypeDefinition, a.column.nullable))
+                Some((stmt:Statement) => stmt.executeUpdate(statements.addColumn(table, a.column.name, dataType.databaseTypeDefinition, a.column.nullable)))
             case u:UpdateColumnType =>
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))
                 val dataType = dialect.getJdbcType(u.dataType)
-                logger.info(s"Changing column ${u.column} type from ${current.typeName} to ${dataType.databaseTypeDefinition} (${u.dataType.sqlType}) in JDBC table $table")
+                logger.info(s"Changing column '${u.column}' type from ${current.typeName} to ${dataType.databaseTypeDefinition} (${u.dataType.sqlType}) in JDBC table $table")
                 currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(typeName=dataType.databaseTypeDefinition))
-                Some(statements.updateColumnType(table, u.column, dataType.databaseTypeDefinition, current.nullable))
+                Some((stmt:Statement) => stmt.executeUpdate(statements.updateColumnType(table, u.column, dataType.databaseTypeDefinition, current.nullable)))
             case u:UpdateColumnNullability =>
-                logger.info(s"Updating nullability of column ${u.column} to ${u.nullable} in JDBC table $table")
+                logger.info(s"Updating nullability of column '${u.column}' to ${u.nullable} in JDBC table $table")
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))
                 currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(nullable=u.nullable))
-                Some(statements.updateColumnNullability(table, u.column, current.typeName, u.nullable))
+                Some((stmt:Statement) => stmt.executeUpdate(statements.updateColumnNullability(table, u.column, current.typeName, u.nullable)))
             case u:UpdateColumnComment =>
-                logger.info(s"Updating comment of column ${u.column} in JDBC table $table")
+                logger.info(s"Updating comment of column '${u.column}' in JDBC table $table")
                 None
             case idx:CreateIndex =>
-                logger.info(s"Adding index ${idx.name} to JDBC table $table on columns ${idx.columns.mkString(",")}")
-                Some(statements.createIndex(table, TableIndex(idx.name, idx.columns, idx.unique)))
+                logger.info(s"Adding index '${idx.name}' to JDBC table $table on columns ${idx.columns.mkString(",")}")
+                Some((stmt:Statement) => dialect.command.createIndex(stmt, table, TableIndex(idx.name, idx.columns, idx.unique)))
             case idx:DropIndex =>
-                logger.info(s"Dropping index ${idx.name} from JDBC table $table")
-                Some(statements.dropIndex(table, idx.name))
+                logger.info(s"Dropping index '${idx.name}' from JDBC table $table")
+                Some((stmt:Statement) => dialect.command.dropIndex(stmt, table, idx.name))
             case pk:CreatePrimaryKey =>
                 logger.info(s"Creating primary key for JDBC table $table on columns ${pk.columns.mkString(",")}")
-                Some(statements.addPrimaryKey(table, pk.columns))
+                Some((stmt:Statement) => dialect.command.addPrimaryKey(stmt, table, pk.columns))
             case pk:DropPrimaryKey =>
                 logger.info(s"Removing primary key from JDBC table $table}")
-                Some(statements.dropPrimaryKey(table))
+                Some((stmt:Statement) => dialect.command.dropPrimaryKey(stmt, table))
             case chg:TableChange => throw new SQLException(s"Unsupported table change $chg for JDBC table $table")
         }
 
         withStatement(conn, options) { statement =>
-            sqls.foreach { sql =>
-                statement.executeUpdate(sql)
+            commands.foreach { cmd =>
+                cmd(statement)
             }
         }
     }

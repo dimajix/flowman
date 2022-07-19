@@ -26,6 +26,7 @@ changes over time.
 * github-208: Implement JDBC hook for database based semaphores
 * github-212: Hive views should not be migrated in RELAXED mode if only comments have changed
 * github-214: Update ImpalaJDBC driver to 2.6.26.1031
+* github-144: Support changing primary key for JDBC relations
 
 #### Breaking changes
 

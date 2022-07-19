@@ -19,10 +19,17 @@ package com.dimajix.flowman.jdbc
 import java.sql.Types
 import java.util.Locale
 
+import org.apache.spark.sql.jdbc.JdbcType
+
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.types.BooleanType
+import com.dimajix.flowman.types.ByteType
+import com.dimajix.flowman.types.DecimalType
+import com.dimajix.flowman.types.FloatType
+import com.dimajix.flowman.types.ShortType
+import com.dimajix.flowman.types.StringType
 
 
 object MySQLDialect extends BaseDialect {
@@ -34,11 +41,18 @@ object MySQLDialect extends BaseDialect {
         s"`$colName`"
     }
 
+    override def getJdbcType(dt: FieldType): JdbcType = dt match {
+        case FloatType => JdbcType("FLOAT", java.sql.Types.FLOAT)
+        case _ => super.getJdbcType(dt)
+    }
+
     override def getFieldType(sqlType: Int, typeName:String, precision: Int, scale: Int, signed: Boolean): FieldType = {
         if (sqlType == Types.VARBINARY && typeName.equals("BIT") && precision != 1) {
             LongType
         } else if (sqlType == Types.BIT && typeName.equals("TINYINT")) {
             BooleanType
+        } else if (sqlType == Types.REAL && typeName.equals("FLOAT")) {
+            FloatType
         } else {
             super.getFieldType(sqlType, typeName, precision, scale, signed)
         }

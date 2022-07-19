@@ -11,6 +11,7 @@
 * github-212: Hive views should not be migrated in RELAXED mode if only comments have changed
 * github-214: Update ImpalaJDBC driver to 2.6.26.1031
 * github-144: Support changing primary key for JDBC relations
+* github-216: Floats should be represented as FLOAT and not REAL in MySQL/MariaDB
 
 ## Breaking changes
 

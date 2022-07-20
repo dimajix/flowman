@@ -214,7 +214,7 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
                             oldColumn.copy(nullable=nullable),
                             None
                         ).run(spark)
-                    case UpdateColumnType(column, dataType) =>
+                    case UpdateColumnType(column, dataType, _, _) =>
                         val table = deltaCatalogTable(execution)
                         val oldColumn = table.schema()(column)
                         AlterTableChangeColumnDeltaCommand(

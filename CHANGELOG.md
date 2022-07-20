@@ -8,10 +8,11 @@
 * github-211: Implement new hiveQuery relation
 * github-210: [BUG] HiveTables should be migrated if partition columns change
 * github-208: Implement JDBC hook for database based semaphores
-* github-212: Hive views should not be migrated in RELAXED mode if only comments have changed
+* github-212: [BUG] Hive views should not be migrated in RELAXED mode if only comments have changed
 * github-214: Update ImpalaJDBC driver to 2.6.26.1031
 * github-144: Support changing primary key for JDBC relations
-* github-216: Floats should be represented as FLOAT and not REAL in MySQL/MariaDB
+* github-216: [BUG] Floats should be represented as FLOAT and not REAL in MySQL/MariaDB
+* github-217: Support collations for creating/migrating JDBC tables
 
 ## Breaking changes
 

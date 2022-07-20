@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ class SchemaUtilsTest extends AnyFlatSpec with Matchers {
         SchemaUtils.coerce(DecimalType(4,2), DecimalType(10,1)) should be (DecimalType(11,2))
     }
 
-    it should "limit DecimlTypes to supported precisions" in {
+    it should "limit DecimalTypes to supported precisions" in {
         SchemaUtils.coerce(DecimalType(38,2), DecimalType(38,10)) should be (DecimalType(38,10))
         SchemaUtils.coerce(DecimalType(38,2), DecimalType(38,10)).sparkType should be (org.apache.spark.sql.types.DecimalType(38,10))
     }
@@ -291,5 +291,34 @@ class SchemaUtilsTest extends AnyFlatSpec with Matchers {
                 )))
             ))
         )
+    }
+
+    "SchemaUtils.isCompatible" should "check field names" in {
+        SchemaUtils.isCompatible(Field("field", StringType), Field("field", StringType)) should be (true)
+        SchemaUtils.isCompatible(Field("FIELD", StringType), Field("field", StringType)) should be (true)
+        SchemaUtils.isCompatible(Field("field", StringType), Field("FIELD", StringType)) should be (true)
+        SchemaUtils.isCompatible(Field("field1", StringType), Field("field2", StringType)) should be (false)
+    }
+
+    it should "check data types" in {
+        SchemaUtils.isCompatible(Field("field", StringType), Field("field", StringType)) should be (true)
+        SchemaUtils.isCompatible(Field("field", StringType), Field("field", DoubleType)) should be (false)
+        SchemaUtils.isCompatible(Field("field", DoubleType), Field("field", StringType)) should be (true)
+    }
+
+    it should "check collations" in {
+        SchemaUtils.isCompatible(Field("field", StringType), Field("field", StringType)) should be (true)
+        SchemaUtils.isCompatible(Field("field", StringType, collation=Some("en_US")), Field("field", StringType)) should be (true)
+        SchemaUtils.isCompatible(Field("field", StringType), Field("field", StringType, collation=Some("en_US"))) should be (true)
+        SchemaUtils.isCompatible(Field("field", StringType, collation=Some("en_US")), Field("field", StringType, collation=Some("en_US"))) should be (true)
+        SchemaUtils.isCompatible(Field("field", StringType, collation=Some("en_US")), Field("field", StringType, collation=Some("de_DE"))) should be (false)
+    }
+
+    it should "check character sets" in {
+        SchemaUtils.isCompatible(Field("field", StringType), Field("field", StringType)) should be (true)
+        SchemaUtils.isCompatible(Field("field", StringType, charset=Some("en_US")), Field("field", StringType)) should be (true)
+        SchemaUtils.isCompatible(Field("field", StringType), Field("field", StringType, charset=Some("en_US"))) should be (true)
+        SchemaUtils.isCompatible(Field("field", StringType, charset=Some("en_US")), Field("field", StringType, charset=Some("en_US"))) should be (true)
+        SchemaUtils.isCompatible(Field("field", StringType, charset=Some("en_US")), Field("field", StringType, charset=Some("de_DE"))) should be (false)
     }
 }

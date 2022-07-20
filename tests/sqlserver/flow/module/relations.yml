@@ -25,6 +25,9 @@ relations:
           type: FLOAT
         - name: avg_temperature
           type: FLOAT
+        - name: comment
+          type: VARCHAR(32)
+          collation: Latin1_General_CS_AS
     # (Optionally) specify a primary key
     primaryKey:
       - date
@@ -58,6 +61,9 @@ relations:
           type: FLOAT
         - name: avg_temperature
           type: FLOAT
+        - name: comment
+          type: VARCHAR(32)
+          collation: Latin1_General_CI_AI
     # (Optionally) specify a primary key
     #primaryKey:
     #  - date

@@ -16,24 +16,24 @@
 
 package com.dimajix.flowman.jdbc
 
+import java.sql.Statement
 import java.sql.Types
 import java.util.Locale
+
+import scala.collection.mutable
 
 import org.apache.spark.sql.jdbc.JdbcType
 
 import com.dimajix.flowman.catalog.TableIdentifier
-import com.dimajix.flowman.types.FieldType
-import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.types.BooleanType
-import com.dimajix.flowman.types.ByteType
-import com.dimajix.flowman.types.DecimalType
+import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FloatType
-import com.dimajix.flowman.types.ShortType
-import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.LongType
 
 
 object MySQLDialect extends BaseDialect {
     private object Statements extends MySQLStatements(this)
+    private object Commands extends MySQLCommands(this)
 
     override def canHandle(url : String): Boolean = url.startsWith("jdbc:mysql") || url.startsWith("jdbc:mariadb")
 
@@ -65,6 +65,7 @@ object MySQLDialect extends BaseDialect {
     override def supportsAlterView : Boolean = true
 
     override def statement : SqlStatements = Statements
+    override def command : SqlCommands = Commands
 }
 
 
@@ -87,9 +88,11 @@ class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
     }
 
     // See https://dev.mysql.com/doc/refman/8.0/en/alter-table.html
-    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean): String = {
+    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
-        s"ALTER TABLE ${dialect.quote(table)} MODIFY COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType $nullable"
+        val cs = charset.map(c => s" CHARACTER SET $c").getOrElse("")
+        val col = collation.map(c => s" COLLATE $c").getOrElse("")
+        s"ALTER TABLE ${dialect.quote(table)} MODIFY COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType$cs$col $nullable"
     }
 
     // See Old Syntax: https://dev.mysql.com/doc/refman/5.6/en/alter-table.html
@@ -100,9 +103,11 @@ class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
     }
 
     // See https://dev.mysql.com/doc/refman/8.0/en/alter-table.html
-    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean): String = {
+    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
-        s"ALTER TABLE ${dialect.quote(table)} MODIFY COLUMN ${dialect.quoteIdentifier(columnName)} $dataType $nullable"
+        val cs = charset.map(c => s" CHARACTER SET $c").getOrElse("")
+        val col = collation.map(c => s" COLLATE $c").getOrElse("")
+        s"ALTER TABLE ${dialect.quote(table)} MODIFY COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$cs$col $nullable"
     }
 
     override def dropPrimaryKey(table: TableIdentifier): String = {
@@ -111,5 +116,45 @@ class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
 
     override def dropIndex(table: TableIdentifier, indexName: String): String = {
         s"DROP INDEX ${dialect.quoteIdentifier(indexName)} ON ${dialect.quote(table)}"
+    }
+}
+
+
+class MySQLCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
+    override def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField] = {
+        // Get basic information
+        val fields = super.getJdbcSchema(statement, table)
+
+        // Query extended information
+        val sql =
+            s"""
+               |SELECT
+               |    COLUMN_NAME,
+               |    CHARACTER_SET_NAME,
+               |    COLLATION_NAME
+               |FROM information_schema.COLUMNS
+               |WHERE lower(TABLE_SCHEMA) = ${table.space.headOption.map(s => dialect.literal(s.toUpperCase(Locale.ROOT))).getOrElse("lower(database())")}
+               |    AND lower(TABLE_NAME) = ${dialect.literal(table.table.toUpperCase(Locale.ROOT))}
+               |""".stripMargin
+        val rs = statement.executeQuery(sql)
+        val colInfo = mutable.Map[String,(String,String)]()
+        try {
+            while (rs.next()) {
+                val name = rs.getString(1)
+                val charset = rs.getString(2)
+                val collation = rs.getString(3)
+                colInfo.put(name, (charset, collation))
+            }
+        }
+        finally {
+            rs.close()
+        }
+
+        // Merge base info and extra info
+        fields.map { f =>
+            colInfo.get(f.name)
+                .map(c => f.copy(charset=Option(c._1), collation=Option(c._2)))
+                .getOrElse(f)
+        }
     }
 }

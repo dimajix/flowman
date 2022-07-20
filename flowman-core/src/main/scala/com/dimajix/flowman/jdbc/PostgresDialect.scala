@@ -108,10 +108,10 @@ class PostgresStatements(dialect: BaseDialect) extends BaseStatements(dialect)  
            |""".stripMargin
     }
 
-    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean): String =
+    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String =
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} TYPE $newDataType"
 
-    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean): String = {
+    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
         val nullable = if (isNullable) "DROP NOT NULL" else "SET NOT NULL"
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $nullable"
     }

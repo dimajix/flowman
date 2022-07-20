@@ -125,9 +125,10 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
     }
 
     // see https://docs.microsoft.com/en-us/sql/relational-databases/tables/add-columns-to-a-table-database-engine?view=sql-server-ver15
-    override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean): String = {
+    override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
-        s"ALTER TABLE ${dialect.quote(table)} ADD ${dialect.quoteIdentifier(columnName)} $dataType $nullable"
+        val col = collation.map(c => s" COLLATE $c").getOrElse("")
+        s"ALTER TABLE ${dialect.quote(table)} ADD ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable"
     }
 
     // See https://docs.microsoft.com/en-us/sql/relational-databases/system-stored-procedures/sp-rename-transact-sql?view=sql-server-ver15
@@ -135,9 +136,10 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
         s"EXEC sp_rename '${dialect.quote(table)}.${dialect.quoteIdentifier(columnName)}', ${dialect.quoteIdentifier(newName)}, 'COLUMN'"
     }
 
-    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean): String = {
+    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
-        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $dataType $nullable"
+        val col = collation.map(c => s" COLLATE $c").getOrElse("")
+        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable"
     }
 
     override def dropIndex(table: TableIdentifier, indexName: String): String = {
@@ -157,6 +159,40 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
 
 
 class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
+    override def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField] = {
+        // Get basic information
+        val fields = super.getJdbcSchema(statement, table)
+
+        // Query extended information
+        val sql =
+            s"""
+              |SELECT
+              |    c.name,
+              |    c.collation_name
+              |FROM sys.columns c
+              |WHERE c.object_id = OBJECT_ID(${dialect.literal(dialect.quote(table))})
+              |""".stripMargin
+        val rs = statement.executeQuery(sql)
+        val colInfo = mutable.Map[String,String]()
+        try {
+            while (rs.next()) {
+                val name = rs.getString(1)
+                val collation = rs.getString(2)
+                colInfo.put(name, collation)
+            }
+        }
+        finally {
+            rs.close()
+        }
+
+        // Merge base info and extra info
+        fields.map { f =>
+            colInfo.get(f.name)
+                .map(c => f.copy(collation=Option(c)))
+                .getOrElse(f)
+        }
+    }
+
     override def dropPrimaryKey(statement: Statement, table: TableIdentifier): Unit = {
         val meta = statement.getConnection.getMetaData
         val pkrs = meta.getPrimaryKeys(null, table.database.orNull, table.table)

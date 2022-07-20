@@ -24,6 +24,10 @@ relations:
           type: FLOAT
         - name: avg_temperature
           type: DOUBLE
+        - name: comment
+          type: VARCHAR(32)
+          charset: utf8mb4
+          collation: utf8mb4_general_ci
     # (Optionally) specify a primary key
     primaryKey:
       - date
@@ -56,6 +60,10 @@ relations:
           type: FLOAT
         - name: avg_temperature
           type: DOUBLE
+        - name: comment
+          type: VARCHAR(32)
+          charset: ucs2
+          collation: ucs2_general_ci
     # (Optionally) specify a primary key
     #primaryKey:
     #  - date

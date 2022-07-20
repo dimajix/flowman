@@ -24,6 +24,8 @@ import com.dimajix.flowman.catalog.TableIndex
 
 
 abstract class SqlCommands {
+    def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField]
+
     def getPrimaryKey(con: Connection, table:TableIdentifier) : Seq[String]
     def getIndexes(con: Connection, table:TableIdentifier) : Seq[TableIndex]
 

@@ -40,7 +40,7 @@ object TableChange {
     case class DropColumn(column:String) extends ColumnChange
     case class AddColumn(column:Field) extends ColumnChange
     case class UpdateColumnNullability(column:String, nullable:Boolean) extends ColumnChange
-    case class UpdateColumnType(column:String, dataType:FieldType) extends ColumnChange
+    case class UpdateColumnType(column:String, dataType:FieldType, charset:Option[String]=None, collation:Option[String]=None) extends ColumnChange
     case class UpdateColumnComment(column:String, comment:Option[String]) extends ColumnChange
 
     case class UpdatePartitionColumns(columns:Seq[Field]) extends PartitionChange
@@ -103,14 +103,18 @@ object TableChange {
                 case None => Seq(AddColumn(tgtField))
                 case Some(srcField) =>
                     val modType =
-                        if (migrationPolicy == MigrationPolicy.STRICT && srcField.ftype != tgtField.ftype)
-                            Seq(UpdateColumnType(srcField.name, tgtField.ftype))
+                        // Check if collation has changed
+                        if (tgtField.charset.exists(c => srcField.charset.exists(_ != c)) || tgtField.collation.exists(c => srcField.collation.exists(_ != c)))
+                            Seq(UpdateColumnType(srcField.name, tgtField.ftype, tgtField.charset, tgtField.collation))
+                        // Check if data type has changed
+                        else if (migrationPolicy == MigrationPolicy.STRICT && srcField.ftype != tgtField.ftype)
+                            Seq(UpdateColumnType(srcField.name, tgtField.ftype, tgtField.charset, tgtField.collation))
                         else if (migrationPolicy == MigrationPolicy.RELAXED && coerce(srcField.ftype, tgtField.ftype) != srcField.ftype)
-                            Seq(UpdateColumnType(srcField.name, tgtField.ftype))
+                            Seq(UpdateColumnType(srcField.name, tgtField.ftype, tgtField.charset, tgtField.collation))
                         // If new PK contains this field, we better always update data type
                         else if (migrationPolicy == MigrationPolicy.RELAXED && normalizedTarget.primaryKey.contains(srcField.name.toLowerCase(Locale.ROOT))
                             && srcField.ftype != tgtField.ftype)
-                            Seq(UpdateColumnType(srcField.name, tgtField.ftype))
+                            Seq(UpdateColumnType(srcField.name, tgtField.ftype, tgtField.charset, tgtField.collation))
                         else
                             Seq.empty
 
@@ -217,15 +221,26 @@ object TableChange {
     private def requiresSchemaMigration(sourceColumns:Seq[Field], targetColumns:Seq[Field], migrationPolicy:MigrationPolicy) : Boolean = {
         migrationPolicy match {
             case MigrationPolicy.RELAXED =>
-                val sourceFields = sourceColumns.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
+                val sourceFields = SchemaUtils.normalize(sourceColumns).map(f => f.name -> f).toMap
                 targetColumns.exists { tgt =>
-                    !sourceFields.get(tgt.name.toLowerCase(Locale.ROOT))
-                        .exists(src => SchemaUtils.isCompatible(tgt, src))
+                    sourceFields.get(tgt.name.toLowerCase(Locale.ROOT))
+                        .forall(src => requiresMigrationRelaxed(src, tgt))
                 }
             case MigrationPolicy.STRICT =>
                 val sourceFields = SchemaUtils.normalize(sourceColumns).sortBy(_.name)
                 val targetFields = SchemaUtils.normalize(targetColumns).sortBy(_.name)
-                sourceFields != targetFields
+                sourceFields.length != targetFields.length ||
+                    sourceFields.zip(targetFields).exists { case (s,t) => requiresMigrationStrict(s,t) }
         }
+    }
+
+    private def requiresMigrationRelaxed(sourceField:Field, targetField:Field) : Boolean = {
+        !SchemaUtils.isCompatible(targetField, sourceField)
+    }
+
+    private def requiresMigrationStrict(sourceField:Field, targetField:Field) : Boolean = {
+        sourceField.copy(charset=None, collation=None) != targetField.copy(charset=None, collation=None) ||
+            targetField.charset.exists(c => sourceField.charset.exists(_ != c)) ||
+            targetField.collation.exists(c => sourceField.collation.exists(_ != c))
     }
 }

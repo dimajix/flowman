@@ -36,7 +36,7 @@ object SchemaUtils {
         fields.map(normalize)
     }
     private def normalize(field:Field) : Field = {
-        Field(field.name.toLowerCase(Locale.ROOT), normalize(field.ftype), field.nullable, description=field.description)
+        field.copy(name=field.name.toLowerCase(Locale.ROOT), ftype=normalize(field.ftype))
     }
     private def normalize(dtype:FieldType) : FieldType = {
         dtype match {
@@ -108,7 +108,9 @@ object SchemaUtils {
             }
             else {
                 val coercedType = coerce(sourceField.ftype, targetField.ftype)
-                coercedType == targetField.ftype
+                coercedType == targetField.ftype &&
+                    targetField.charset.forall(c => sourceField.charset.forall(_ == c)) &&
+                    targetField.collation.forall(c => sourceField.collation.forall(_ == c))
             }
         }
     }

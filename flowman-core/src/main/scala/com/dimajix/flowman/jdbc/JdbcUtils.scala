@@ -70,7 +70,9 @@ case class JdbcField(
     fieldSize:Int,
     fieldScale:Int,
     isSigned:Boolean,
-    nullable:Boolean
+    nullable:Boolean,
+    collation:Option[String] = None,
+    charset:Option[String] = None
 )
 
 class JdbcUtils
@@ -335,7 +337,7 @@ object JdbcUtils {
     def getSchema(jdbcFields:Seq[JdbcField], dialect: SqlDialect) : StructType = {
         val fields = jdbcFields.map { field =>
             val columnType = dialect.getFieldType(field.dataType, field.typeName, field.fieldSize, field.fieldScale, field.isSigned)
-            Field(field.name, columnType, field.nullable)
+            Field(field.name, columnType, field.nullable, charset=field.charset, collation=field.collation)
         }
 
         StructType(fields)
@@ -356,14 +358,8 @@ object JdbcUtils {
     def getJdbcSchema(conn: Connection, table:TableIdentifier, options: JDBCOptions) : Seq[JdbcField] = {
         val dialect = SqlDialects.get(options.url)
 
-        withStatement(conn, dialect.statement.schema(table), options) { statement =>
-            val rs = statement.executeQuery()
-            try {
-                getJdbcSchema(rs)
-            }
-            finally {
-                rs.close()
-            }
+        withStatement(conn, options) { statement =>
+            dialect.command.getJdbcSchema(statement, table)
         }
     }
 
@@ -661,20 +657,24 @@ object JdbcUtils {
                 Some((stmt:Statement) => stmt.executeUpdate(statements.deleteColumn(table, a.column)))
             case a:AddColumn =>
                 val dataType = dialect.getJdbcType(a.column.ftype)
-                logger.info(s"Adding column '${a.column.name}' with type ${dataType.databaseTypeDefinition} (${a.column.ftype.sqlType}) to JDBC table $table")
+                val charset = a.column.charset.map(c => s" CHARACTER SET $c").getOrElse("")
+                val collation = a.column.collation.map(c => s" COLLATE $c").getOrElse("")
+                logger.info(s"Adding column '${a.column.name}' with type '${dataType.databaseTypeDefinition}${charset}${collation}' (${a.column.ftype.sqlType}) to JDBC table $table")
                 currentFields.put(a.column.name.toLowerCase(Locale.ROOT), JdbcField(a.column.name, dataType.databaseTypeDefinition, 0, 0, 0, false, a.column.nullable))
-                Some((stmt:Statement) => stmt.executeUpdate(statements.addColumn(table, a.column.name, dataType.databaseTypeDefinition, a.column.nullable)))
+                Some((stmt:Statement) => stmt.executeUpdate(statements.addColumn(table, a.column.name, dataType.databaseTypeDefinition, a.column.nullable, a.column.charset, a.column.collation)))
             case u:UpdateColumnType =>
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))
                 val dataType = dialect.getJdbcType(u.dataType)
-                logger.info(s"Changing column '${u.column}' type from ${current.typeName} to ${dataType.databaseTypeDefinition} (${u.dataType.sqlType}) in JDBC table $table")
+                val charset = u.charset.map(c => s" CHARACTER SET $c").getOrElse("")
+                val collation = u.collation.map(c => s" COLLATE $c").getOrElse("")
+                logger.info(s"Changing column '${u.column}' type from ${current.typeName} to '${dataType.databaseTypeDefinition}${charset}${collation}' (${u.dataType.sqlType}) in JDBC table $table")
                 currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(typeName=dataType.databaseTypeDefinition))
-                Some((stmt:Statement) => stmt.executeUpdate(statements.updateColumnType(table, u.column, dataType.databaseTypeDefinition, current.nullable)))
+                Some((stmt:Statement) => stmt.executeUpdate(statements.updateColumnType(table, u.column, dataType.databaseTypeDefinition, current.nullable, charset=u.charset.orElse(current.charset), collation=u.collation.orElse(current.collation))))
             case u:UpdateColumnNullability =>
                 logger.info(s"Updating nullability of column '${u.column}' to ${u.nullable} in JDBC table $table")
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))
                 currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(nullable=u.nullable))
-                Some((stmt:Statement) => stmt.executeUpdate(statements.updateColumnNullability(table, u.column, current.typeName, u.nullable)))
+                Some((stmt:Statement) => stmt.executeUpdate(statements.updateColumnNullability(table, u.column, current.typeName, u.nullable, charset=current.charset, collation=current.collation)))
             case u:UpdateColumnComment =>
                 logger.info(s"Updating comment of column '${u.column}' in JDBC table $table")
                 None

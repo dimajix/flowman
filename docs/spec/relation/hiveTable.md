@@ -160,10 +160,17 @@ The `hive` relation supports the following output modes in a [`relation` target]
 
 When using Hive tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the
 whole lifecycle for you. This means that
-* Hive tables will be created and migrated during `create` phase
-* Hive tables will be populated with records and partitions will be added during `build` phase
-* Hive tables will be truncated or individual partitions will be dropped during `clean` phase
-* Hive tables will be removed during `destroy` phase
+* Hive tables will be created and migrated during `CREATE` phase, but only if a schema is provided
+* Hive tables will be populated with records and partitions will be added during `BUILD` phase, but only if the
+  `relation` target contains a mapping.
+* Hive tables will be truncated or individual partitions will be dropped during `TRUNCATE` phase
+* Hive tables will be removed during `DESTROY` phase
+
+This means that you can
+* Externally manage tables by omitting the schema. Then Flowman will not create or migrate the table for
+  any [`relation` target](../target/relation.md) referring to this relation.
+* Only manage the tables by Flowman but not populate it with data by omitting a mapping in the
+  [`relation` target](../target/relation.md).
 
 ### Supported Data Types
 Please note that depending on the used tools accessing the data and the used Spark version, not all data types are

@@ -54,6 +54,7 @@ import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.UpdateClause
+import com.dimajix.flowman.jdbc.JdbcUtils.getJdbcSchema
 import com.dimajix.flowman.jdbc.JdbcUtils.withStatement
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
@@ -263,9 +264,10 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
         val columns = table.columns.map { field =>
             val name = dialect.quoteIdentifier(field.name)
             val typ = dialect.getJdbcType(field.ftype).databaseTypeDefinition
-            val nullable = if (field.nullable) ""
-            else " NOT NULL"
-            s"$name $typ$nullable"
+            val nullable = if (field.nullable) "" else " NOT NULL"
+            val cs = field.charset.map(c => s" CHARACTER SET $c").getOrElse("")
+            val col = field.collation.map(c => s" COLLATE $c").getOrElse("")
+            s"$name $typ$cs$col$nullable"
         }
         // Primary key
         val pk = if (table.primaryKey.nonEmpty) Seq(s"PRIMARY KEY (${table.primaryKey.map(dialect.quoteIdentifier).mkString(",")})") else Seq()
@@ -321,8 +323,12 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
             s"SELECT * FROM ${dialect.quote(table)} WHERE $condition LIMIT 1"
     }
 
-    override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean): String =
-        s"ALTER TABLE ${dialect.quote(table)} ADD COLUMN ${dialect.quoteIdentifier(columnName)} $dataType"
+    override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
+        val nullable = if (isNullable) "NULL" else "NOT NULL"
+        val cs = charset.map(c => s" CHARACTER SET $c").getOrElse("")
+        val col = collation.map(c => s" COLLATE $c").getOrElse("")
+        s"ALTER TABLE ${dialect.quote(table)} ADD COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$cs$col $nullable"
+    }
 
     override def renameColumn(table: TableIdentifier, columnName: String, newName: String): String =
         s"ALTER TABLE ${dialect.quote(table)} RENAME COLUMN ${dialect.quoteIdentifier(columnName)} TO ${dialect.quoteIdentifier(newName)}"
@@ -330,12 +336,14 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
     override def deleteColumn(table: TableIdentifier, columnName: String): String =
         s"ALTER TABLE ${dialect.quote(table)} DROP COLUMN ${dialect.quoteIdentifier(columnName)}"
 
-    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean): String = {
+    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
-        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType $nullable"
+        val cs = charset.map(c => s" CHARACTER SET $c").getOrElse("")
+        val col = collation.map(c => s" COLLATE $c").getOrElse("")
+        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType$cs$col $nullable"
     }
 
-    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean): String = {
+    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} SET $nullable"
     }
@@ -465,6 +473,17 @@ class BaseExpressions(dialect: SqlDialect) extends SqlExpressions {
 
 
 class BaseCommands(dialect: SqlDialect) extends SqlCommands {
+    override def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField] = {
+        val sql = dialect.statement.schema(table)
+        val rs = statement.executeQuery(sql)
+        try {
+            JdbcUtils.getJdbcSchema(rs)
+        }
+        finally {
+            rs.close()
+        }
+    }
+
     override def getPrimaryKey(con: Connection, table:TableIdentifier) : Seq[String] = {
         val meta = con.getMetaData
         val pkrs = meta.getPrimaryKeys(null, table.database.orNull, table.table)

@@ -199,6 +199,70 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
         ) should be (true)
     }
 
+    it should "handle changed collation in relaxed mode" in {
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=Some("de_DE")), Field("f2", StringType))),
+            MigrationPolicy.RELAXED
+        ) should be (true)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=None), Field("f2", StringType))),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=None), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=None), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=None), Field("f2", StringType))),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+    }
+
+    it should "handle changed collation in strict mode" in {
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=Some("de_DE")), Field("f2", StringType))),
+            MigrationPolicy.STRICT
+        ) should be (true)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=None), Field("f2", StringType))),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=None), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=None), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=None), Field("f2", StringType))),
+            MigrationPolicy.STRICT
+        ) should be (false)
+    }
+
     it should "handle changed primary key" in {
         TableChange.requiresMigration(
             TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
@@ -391,6 +455,58 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             UpdateColumnType("f2", StringType),
             AddColumn(Field("F5", StringType)),
             UpdateColumnNullability("f6", true)
+        ))
+    }
+
+    it should "change collation in relaxed mode" in {
+        val oldTable = TableDefinition(TableIdentifier(""),
+            columns=Seq(
+                Field("f1", StringType, collation=Some("en_US")),
+                Field("f2", StringType),
+                Field("f3", StringType, collation=Some("en_US")),
+                Field("f4", StringType, collation=Some("en_US")),
+                Field("f5", StringType)
+            )
+        )
+        val newTable = TableDefinition(TableIdentifier(""),
+            columns=Seq(
+                Field("F1", StringType),
+                Field("F2", StringType, collation=Some("en_US")),
+                Field("F3", StringType, collation=Some("de_DE")),
+                Field("F4", StringType, collation=Some("en_US")),
+                Field("F5", StringType)
+            )
+        )
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
+
+        changes should be (Seq(
+            UpdateColumnType("f3", StringType, collation=Some("de_DE"))
+        ))
+    }
+
+    it should "change collation in strict mode" in {
+        val oldTable = TableDefinition(TableIdentifier(""),
+            columns=Seq(
+                Field("f1", StringType, collation=Some("en_US")),
+                Field("f2", StringType),
+                Field("f3", StringType, collation=Some("en_US")),
+                Field("f4", StringType, collation=Some("en_US")),
+                Field("f5", StringType)
+            )
+        )
+        val newTable = TableDefinition(TableIdentifier(""),
+            columns=Seq(
+                Field("F1", StringType),
+                Field("F2", StringType, collation=Some("en_US")),
+                Field("F3", StringType, collation=Some("de_DE")),
+                Field("F4", StringType, collation=Some("en_US")),
+                Field("F5", StringType)
+            )
+        )
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.STRICT)
+
+        changes should be (Seq(
+            UpdateColumnType("f3", StringType, collation=Some("de_DE"))
         ))
     }
 

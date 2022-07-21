@@ -17,7 +17,10 @@
 package com.dimajix.flowman.spec.mapping
 
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.IntegerType
+import org.apache.spark.sql.types.Metadata
+import org.apache.spark.sql.types.MetadataBuilder
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
@@ -94,9 +97,10 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         mapping.output should be (MappingOutputIdentifier("map:main"))
         mapping.identifier should be (MappingIdentifier("map"))
 
-        mapping.describe(executor, Map(MappingOutputIdentifier("myview") -> inputSchema)) should be (Map(
-            "main" -> com.dimajix.flowman.types.StructType(Seq(Field("_2", FieldType.of("int"))))
-        ))
+        val desc = mapping.describe(executor, Map(MappingOutputIdentifier("myview") -> inputSchema))("main")
+        desc should be (com.dimajix.flowman.types.StructType(Seq(
+                Field("_2", FieldType.of("int"), nullable=false)
+        )))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> inputDf))("main")
             .orderBy("_2")
@@ -104,6 +108,13 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Row(12),
             Row(23)
         ))
+        result.schema should be (StructType(Seq(
+            StructField("_2", IntegerType, nullable=false)
+        )))
+        val resultSchema = com.dimajix.flowman.types.StructType.of(result.schema)
+        resultSchema should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("_2", FieldType.of("int"), nullable=false)
+        )))
     }
 
     it should "add NULL columns for missing columns" in {
@@ -140,5 +151,118 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Row(12, null),
             Row(23, null)
         ))
+    }
+
+    it should "correctly process column descriptions" in {
+        val inputDf = spark.createDataFrame(Seq(
+                ("col1", 12),
+                ("col2", 23)
+            ))
+            .withColumn("_1", col("_1").as("_1", new MetadataBuilder().putString("comment","This is _1 original").build()))
+            .withColumn("_2", col("_2").as("_2", new MetadataBuilder().putString("comment","This is _2 original").build()))
+            .withColumn("_5", col("_2").as("_2"))
+        val inputSchema = com.dimajix.flowman.types.StructType.of(inputDf.schema)
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.execution
+
+        val mapping = SchemaMapping(
+            Mapping.Properties(session.context, name = "map"),
+            MappingOutputIdentifier("myview"),
+            Seq(
+                Field("_1", FieldType.of("int"), description=None),
+                Field("_2", FieldType.of("int"), description=Some("This is _2")),
+                Field("_3", FieldType.of("int"), description=Some("This is _3"))
+            )
+        )
+
+        mapping.input should be (MappingOutputIdentifier("myview"))
+        mapping.columns should be (Seq(
+            Field("_1", FieldType.of("int"), description=None),
+            Field("_2", FieldType.of("int"), description=Some("This is _2")),
+            Field("_3", FieldType.of("int"), description=Some("This is _3"))
+        ))
+        mapping.inputs should be (Set(MappingOutputIdentifier("myview")))
+        mapping.output should be (MappingOutputIdentifier("map:main"))
+        mapping.identifier should be (MappingIdentifier("map"))
+
+        val desc = mapping.describe(executor, Map(MappingOutputIdentifier("myview") -> inputSchema))("main")
+        desc should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("int"), nullable=true, description=Some("This is _1 original")),
+            Field("_2", FieldType.of("int"), nullable=false, description=Some("This is _2")),
+            Field("_3", FieldType.of("int"), nullable=true, description=Some("This is _3"))
+        )))
+
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> inputDf))("main")
+        result.schema should be (StructType(Seq(
+            StructField("_1", IntegerType, nullable=true, metadata=new MetadataBuilder().putString("comment","This is _1 original").build()),
+            StructField("_2", IntegerType, nullable=false, metadata=new MetadataBuilder().putString("comment","This is _2").build()),
+            StructField("_3", IntegerType, nullable=true, metadata=new MetadataBuilder().putString("comment","This is _3").build())
+        )))
+        val resultSchema = com.dimajix.flowman.types.StructType.of(result.schema)
+        resultSchema should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("int"), nullable=true, description=Some("This is _1 original")),
+            Field("_2", FieldType.of("int"), nullable=false, description=Some("This is _2")),
+            Field("_3", FieldType.of("int"), nullable=true, description=Some("This is _3"))
+        )))
+    }
+
+    it should "correctly process collations" in {
+        val inputDf = spark.createDataFrame(Seq(
+            ("col1", "12", "33")
+        ))
+            .withColumn("_1", col("_1").as("_1"))
+            .withColumn("_2", col("_2").as("_2", new MetadataBuilder().putString("collation","_2_orig").build()))
+            .withColumn("_3", col("_3").as("_3", new MetadataBuilder().putString("collation","_3_orig").build()))
+            .withColumn("_5", col("_3").as("_3"))
+        val inputSchema = com.dimajix.flowman.types.StructType.of(inputDf.schema)
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.execution
+
+        val mapping = SchemaMapping(
+            Mapping.Properties(session.context, name = "map"),
+            MappingOutputIdentifier("myview"),
+            Seq(
+                Field("_1", FieldType.of("string"), collation=None),
+                Field("_2", FieldType.of("string"), collation=Some("_2")),
+                Field("_3", FieldType.of("string"), collation=None),
+                Field("_4", FieldType.of("string"), collation=Some("_4"))
+            )
+        )
+
+        mapping.input should be (MappingOutputIdentifier("myview"))
+        mapping.columns should be (Seq(
+            Field("_1", FieldType.of("string"), collation=None),
+            Field("_2", FieldType.of("string"), collation=Some("_2")),
+            Field("_3", FieldType.of("string"), collation=None),
+            Field("_4", FieldType.of("string"), collation=Some("_4"))
+        ))
+        mapping.inputs should be (Set(MappingOutputIdentifier("myview")))
+        mapping.output should be (MappingOutputIdentifier("map:main"))
+        mapping.identifier should be (MappingIdentifier("map"))
+
+        val desc = mapping.describe(executor, Map(MappingOutputIdentifier("myview") -> inputSchema))("main")
+        desc should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("string"), collation=None),
+            Field("_2", FieldType.of("string"), collation=Some("_2")),
+            Field("_3", FieldType.of("string"), collation=None),
+            Field("_4", FieldType.of("string"), collation=Some("_4"))
+        )))
+
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> inputDf))("main")
+        result.schema should be (StructType(Seq(
+            StructField("_1", StringType),
+            StructField("_2", StringType, metadata=new MetadataBuilder().putString("collation","_2").build()),
+            StructField("_3", StringType),
+            StructField("_4", StringType, metadata=new MetadataBuilder().putString("collation","_4").build()),
+        )))
+        val resultSchema = com.dimajix.flowman.types.StructType.of(result.schema)
+        resultSchema should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("string"), collation=None),
+            Field("_2", FieldType.of("string"), collation=Some("_2")),
+            Field("_3", FieldType.of("string"), collation=None),
+            Field("_4", FieldType.of("string"), collation=Some("_4"))
+        )))
     }
 }

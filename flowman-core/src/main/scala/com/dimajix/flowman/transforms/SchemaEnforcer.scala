@@ -20,6 +20,7 @@ import java.util.Locale
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.functions.rpad
@@ -184,7 +185,7 @@ final case class SchemaEnforcer(
 
         // Apply comments and metadata
         val metadata = mergeMetadata(requiredField, inputField)
-        field.as(requiredField.name, metadata)
+        alias(field, requiredField.name, metadata)
     }
 
     private def conformStruct(requiredSchema:StructType, inputSchema:StructType, prefix:String) : Seq[Column] = {
@@ -220,7 +221,7 @@ final case class SchemaEnforcer(
                 .map(f => conformField(field, f, prefix))
                 .orElse {
                     if (addColumns)
-                        Some(applyType(lit(null), field).as(field.name, field.metadata))
+                        Some(alias(applyType(lit(null), field), field.name, field.metadata))
                     else if (ignoreColumns)
                         None
                     else
@@ -231,15 +232,19 @@ final case class SchemaEnforcer(
 
     private def mergeMetadata(requiredField:StructField, inputField:StructField) : Metadata = {
         val metadata = requiredField.metadata
+        val builder = new MetadataBuilder()
+            .withMetadata(requiredField.metadata)
 
         // Try to get comment from input if no comment is provided in schema itself
         if (!metadata.contains("comment")) {
             inputField.getComment()
-                .map(c => new MetadataBuilder().withMetadata(metadata).putString("comment", c).build())
-                .getOrElse(metadata)
+                .foreach(c => builder.putString("comment", c))
         }
-        else {
-            metadata
-        }
+
+        builder.build()
+    }
+
+    private def alias(col:Column, alias:String, metadata: Metadata) : Column = {
+        SparkShim.alias(col, alias, metadata, Seq("collation", "charset"))
     }
 }

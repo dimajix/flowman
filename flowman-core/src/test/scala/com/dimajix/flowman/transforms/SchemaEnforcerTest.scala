@@ -33,6 +33,7 @@ import com.dimajix.flowman.execution.SchemaMismatchException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
+import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -514,6 +515,37 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         )))
     }
 
+    "The SchemaEnforcer" should "support extended string attributes" in {
+        val inputDf = spark.createDataFrame(Seq(
+            ("col1", "12"),
+            ("col2", "23")
+        ))
+            .withColumn("_1", col("_1").as("_1"))
+            .withColumn("_2", col("_2").as("_2"))
+            .withColumn("_5", col("_2").as("_2"))
+        val inputSchema = inputDf.schema
+
+        val requestedSchema = com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("varchar(10)")),
+            Field("_2", FieldType.of("char(20)")),
+            Field("_3", FieldType.of("string"))
+        ))
+        val xfs = SchemaEnforcer(requestedSchema.sparkType)
+
+        val columns = xfs.transform(inputSchema)
+        val outputDf = inputDf.select(columns:_*)
+        SchemaUtils.dropMetadata(outputDf.schema) should be (StructType(Seq(
+            StructField("_1", StringType),
+            StructField("_2", StringType),
+            StructField("_3", StringType)
+        )))
+        com.dimajix.flowman.types.StructType.of(outputDf.schema) should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("varchar(10)")),
+            Field("_2", FieldType.of("char(20)")),
+            Field("_3", FieldType.of("string"))
+        )))
+    }
+
     it should "support comments" in {
         val inputDf = spark.createDataFrame(Seq(
             ("col1", "12"),
@@ -538,6 +570,11 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             Field("_2", FieldType.of("int"), description=Some("This is _2")),
             Field("_3", FieldType.of("int"), description=Some("This is _3"))
         )).catalogType)
+        com.dimajix.flowman.types.StructType.of(outputDf.schema) should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("int"), description=Some("This is _1 original")),
+            Field("_2", FieldType.of("int"), description=Some("This is _2")),
+            Field("_3", FieldType.of("int"), description=Some("This is _3"))
+        )))
     }
 
     it should "support collations" in {
@@ -560,11 +597,17 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val xfs = SchemaEnforcer(requestedSchema.catalogType)
         val columns = xfs.transform(inputSchema)
         val outputDf = inputDf.select(columns:_*)
-        outputDf.schema should be (com.dimajix.flowman.types.StructType(Seq(
+        outputDf.schema should be (StructType(Seq(
+            StructField("_1", StringType),
+            StructField("_2", StringType, metadata=new MetadataBuilder().putString("collation","_2").build()),
+            StructField("_3", StringType),
+            StructField("_4", StringType, metadata=new MetadataBuilder().putString("collation","_4").build()))
+        ))
+        com.dimajix.flowman.types.StructType.of(outputDf.schema) should be (com.dimajix.flowman.types.StructType(Seq(
             Field("_1", FieldType.of("string"), collation=None),
             Field("_2", FieldType.of("string"), collation=Some("_2")),
             Field("_3", FieldType.of("string"), collation=None),
             Field("_4", FieldType.of("string"), collation=Some("_4"))
-        )).catalogType)
+        )))
     }
 }

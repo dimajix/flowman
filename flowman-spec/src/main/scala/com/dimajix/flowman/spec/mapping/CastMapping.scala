@@ -17,14 +17,6 @@
 package com.dimajix.flowman.spec.mapping
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonMappingException
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer
-import com.fasterxml.jackson.databind.node.JsonNodeType
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.common.MapIgnoreCase
@@ -33,11 +25,8 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
-import com.dimajix.flowman.transforms.ProjectTransformer
-import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
-import com.dimajix.spark.sql.ExpressionParser
 
 
 case class CastMapping(

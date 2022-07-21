@@ -44,9 +44,9 @@ object Field {
         val description = field.getComment()
         val size = if (field.metadata.contains("size")) Some(field.metadata.getLong("size").toInt) else None
         val default = if (field.metadata.contains("default")) Some(field.metadata.getString("default")) else None
-        val format = if (field.metadata.contains("format")) Some(field.metadata.getString("format")) else None
-        val charset = if (field.metadata.contains("charset")) Some(field.metadata.getString("charset")) else None
-        val collation = if (field.metadata.contains("collation")) Some(field.metadata.getString("collation")) else None
+        val format = if (field.metadata.contains("format")) Option(field.metadata.getString("format")) else None
+        val charset = if (field.metadata.contains("charset")) Option(field.metadata.getString("charset")) else None
+        val collation = if (field.metadata.contains("collation")) Option(field.metadata.getString("collation")) else None
         Field(field.name, ftype, field.nullable, description, default, size, format, charset, collation)
     }
 

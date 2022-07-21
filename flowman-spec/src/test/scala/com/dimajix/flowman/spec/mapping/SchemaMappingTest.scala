@@ -35,6 +35,7 @@ import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -151,6 +152,60 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Row(12, null),
             Row(23, null)
         ))
+    }
+
+    it should "correctly process extended string types" in {
+        val inputDf = spark.createDataFrame(Seq(
+            ("col1", "12"),
+            ("col2", "23")
+        ))
+            .withColumn("_1", col("_1").as("_1"))
+            .withColumn("_2", col("_2").as("_2"))
+            .withColumn("_5", col("_2").as("_2"))
+        val inputSchema = com.dimajix.flowman.types.StructType.of(inputDf.schema)
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.execution
+
+        val mapping = SchemaMapping(
+            Mapping.Properties(session.context, name = "map"),
+            MappingOutputIdentifier("myview"),
+            Seq(
+                Field("_1", FieldType.of("varchar(10)")),
+                Field("_2", FieldType.of("char(20)")),
+                Field("_3", FieldType.of("int"))
+            )
+        )
+
+        mapping.input should be (MappingOutputIdentifier("myview"))
+        mapping.columns should be (Seq(
+            Field("_1", FieldType.of("varchar(10)")),
+            Field("_2", FieldType.of("char(20)")),
+            Field("_3", FieldType.of("int"))
+        ))
+        mapping.inputs should be (Set(MappingOutputIdentifier("myview")))
+        mapping.output should be (MappingOutputIdentifier("map:main"))
+        mapping.identifier should be (MappingIdentifier("map"))
+
+        val desc = mapping.describe(executor, Map(MappingOutputIdentifier("myview") -> inputSchema))("main")
+        desc should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("varchar(10)")),
+            Field("_2", FieldType.of("char(20)")),
+            Field("_3", FieldType.of("int"))
+        )))
+
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> inputDf))("main")
+        SchemaUtils.dropMetadata(result.schema) should be (StructType(Seq(
+            StructField("_1", StringType),
+            StructField("_2", StringType),
+            StructField("_3", IntegerType)
+        )))
+        val resultSchema = com.dimajix.flowman.types.StructType.of(result.schema)
+        resultSchema should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("varchar(10)")),
+            Field("_2", FieldType.of("char(20)")),
+            Field("_3", FieldType.of("int"))
+        )))
     }
 
     it should "correctly process column descriptions" in {

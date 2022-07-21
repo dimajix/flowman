@@ -255,7 +255,7 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             StructField("_1", StringType),
             StructField("_2", StringType, metadata=new MetadataBuilder().putString("collation","_2").build()),
             StructField("_3", StringType),
-            StructField("_4", StringType, metadata=new MetadataBuilder().putString("collation","_4").build()),
+            StructField("_4", StringType, metadata=new MetadataBuilder().putString("collation","_4").build())
         )))
         val resultSchema = com.dimajix.flowman.types.StructType.of(result.schema)
         resultSchema should be (com.dimajix.flowman.types.StructType(Seq(

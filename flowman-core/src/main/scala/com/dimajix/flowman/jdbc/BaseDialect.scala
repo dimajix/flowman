@@ -265,9 +265,8 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
             val name = dialect.quoteIdentifier(field.name)
             val typ = dialect.getJdbcType(field.ftype).databaseTypeDefinition
             val nullable = if (field.nullable) "" else " NOT NULL"
-            val cs = field.charset.map(c => s" CHARACTER SET $c").getOrElse("")
-            val col = field.collation.map(c => s" COLLATE $c").getOrElse("")
-            s"$name $typ$cs$col$nullable"
+            val col = dialect.expr.collate(field.charset, field.collation)
+            s"$name $typ$col$nullable"
         }
         // Primary key
         val pk = if (table.primaryKey.nonEmpty) Seq(s"PRIMARY KEY (${table.primaryKey.map(dialect.quoteIdentifier).mkString(",")})") else Seq()
@@ -325,9 +324,8 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
 
     override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
-        val cs = charset.map(c => s" CHARACTER SET $c").getOrElse("")
-        val col = collation.map(c => s" COLLATE $c").getOrElse("")
-        s"ALTER TABLE ${dialect.quote(table)} ADD COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$cs$col $nullable"
+        val col = dialect.expr.collate(charset, collation)
+        s"ALTER TABLE ${dialect.quote(table)} ADD COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable"
     }
 
     override def renameColumn(table: TableIdentifier, columnName: String, newName: String): String =
@@ -338,9 +336,8 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
 
     override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
-        val cs = charset.map(c => s" CHARACTER SET $c").getOrElse("")
-        val col = collation.map(c => s" COLLATE $c").getOrElse("")
-        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType$cs$col $nullable"
+        val col = dialect.expr.collate(charset, collation)
+        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType$col $nullable"
     }
 
     override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
@@ -468,6 +465,10 @@ class BaseExpressions(dialect: SqlDialect) extends SqlExpressions {
         }        // Do not use column quoting for the PARTITION expression
         val partitionValues = partition.values.map { case (k, v) => k + "=" + literal(v) }
         s"PARTITION(${partitionValues.mkString(",")})"
+    }
+
+    def collate(charset:Option[String], collation:Option[String]) : String = {
+        collation.map(c => s" COLLATE $c").getOrElse("")
     }
 }
 

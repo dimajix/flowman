@@ -33,6 +33,7 @@ import com.dimajix.flowman.types.LongType
 
 object MySQLDialect extends BaseDialect {
     private object Statements extends MySQLStatements(this)
+    private object Expressions extends MySQLExpressions(this)
     private object Commands extends MySQLCommands(this)
 
     override def canHandle(url : String): Boolean = url.startsWith("jdbc:mysql") || url.startsWith("jdbc:mariadb")
@@ -65,9 +66,18 @@ object MySQLDialect extends BaseDialect {
     override def supportsAlterView : Boolean = true
 
     override def statement : SqlStatements = Statements
+    override def expr : SqlExpressions = Expressions
     override def command : SqlCommands = Commands
 }
 
+
+class MySQLExpressions(dialect: BaseDialect) extends BaseExpressions(dialect) {
+    override def collate(charset:Option[String], collation:Option[String]) : String = {
+        val cs = charset.map(c => s" CHARACTER SET $c").getOrElse("")
+        val col = collation.map(c => s" COLLATE $c").getOrElse("")
+        cs + col
+    }
+}
 
 class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
     override def getViewDefinition(table: TableIdentifier): String = {
@@ -75,8 +85,8 @@ class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
            |SELECT
            |    VIEW_DEFINITION
            |FROM information_schema.VIEWS
-           |WHERE lower(TABLE_SCHEMA) = ${table.space.headOption.map(s => dialect.literal(s.toUpperCase(Locale.ROOT))).getOrElse("lower(database())")}
-           |    AND lower(TABLE_NAME) = ${dialect.literal(table.table.toUpperCase(Locale.ROOT))}
+           |WHERE lower(TABLE_SCHEMA) = ${table.space.headOption.map(s => dialect.literal(s.toLowerCase(Locale.ROOT))).getOrElse("lower(database())")}
+           |    AND lower(TABLE_NAME) = ${dialect.literal(table.table.toLowerCase(Locale.ROOT))}
            |""".stripMargin
     }
 
@@ -90,9 +100,8 @@ class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
     // See https://dev.mysql.com/doc/refman/8.0/en/alter-table.html
     override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
-        val cs = charset.map(c => s" CHARACTER SET $c").getOrElse("")
-        val col = collation.map(c => s" COLLATE $c").getOrElse("")
-        s"ALTER TABLE ${dialect.quote(table)} MODIFY COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType$cs$col $nullable"
+        val col = dialect.expr.collate(charset, collation)
+        s"ALTER TABLE ${dialect.quote(table)} MODIFY COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType$col $nullable"
     }
 
     // See Old Syntax: https://dev.mysql.com/doc/refman/5.6/en/alter-table.html
@@ -105,9 +114,8 @@ class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
     // See https://dev.mysql.com/doc/refman/8.0/en/alter-table.html
     override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
-        val cs = charset.map(c => s" CHARACTER SET $c").getOrElse("")
-        val col = collation.map(c => s" COLLATE $c").getOrElse("")
-        s"ALTER TABLE ${dialect.quote(table)} MODIFY COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$cs$col $nullable"
+        val col = dialect.expr.collate(charset, collation)
+        s"ALTER TABLE ${dialect.quote(table)} MODIFY COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable"
     }
 
     override def dropPrimaryKey(table: TableIdentifier): String = {
@@ -133,8 +141,8 @@ class MySQLCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
                |    CHARACTER_SET_NAME,
                |    COLLATION_NAME
                |FROM information_schema.COLUMNS
-               |WHERE lower(TABLE_SCHEMA) = ${table.space.headOption.map(s => dialect.literal(s.toUpperCase(Locale.ROOT))).getOrElse("lower(database())")}
-               |    AND lower(TABLE_NAME) = ${dialect.literal(table.table.toUpperCase(Locale.ROOT))}
+               |WHERE lower(TABLE_SCHEMA) = ${table.space.headOption.map(s => dialect.literal(s.toLowerCase(Locale.ROOT))).getOrElse("lower(database())")}
+               |    AND lower(TABLE_NAME) = ${dialect.literal(table.table.toLowerCase(Locale.ROOT))}
                |""".stripMargin
         val rs = statement.executeQuery(sql)
         val colInfo = mutable.Map[String,(String,String)]()

@@ -44,7 +44,7 @@ object SqlDialects {
     registerDialect(H2Dialect)
     registerDialect(MySQLDialect)
     registerDialect(SqlServerDialect)
-    registerDialect(SqlServerDialect)
+    registerDialect(PostgresDialect)
 
     /**
       * Fetch the JdbcDialect class corresponding to a given database url.

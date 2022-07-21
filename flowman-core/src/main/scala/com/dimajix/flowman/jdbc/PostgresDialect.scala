@@ -16,8 +16,11 @@
 
 package com.dimajix.flowman.jdbc
 
+import java.sql.Statement
 import java.sql.Types
 import java.util.Locale
+
+import scala.collection.mutable
 
 import org.apache.spark.sql.jdbc.JdbcType
 
@@ -35,6 +38,8 @@ import com.dimajix.flowman.types.StringType
 
 object PostgresDialect extends BaseDialect {
     private object Statements extends PostgresStatements(this)
+    private object Expressions extends PostgresExpressions(this)
+    private object Commands extends PostgresCommands(this)
 
     override def canHandle(url: String): Boolean = url.startsWith("jdbc:postgresql")
 
@@ -68,22 +73,22 @@ object PostgresDialect extends BaseDialect {
     }
 
     /**
-     * Quotes the identifier. This is used to put quotes around the identifier in case the column
-     * name is a reserved keyword, or in case it contains characters that require quotes (e.g. space).
-     */
-    override def quoteIdentifier(colName: String): String = {
-        s"""`$colName`"""
-    }
-
-    /**
      * Returns true if a view definition can be changed
      * @return
      */
     override def supportsAlterView : Boolean = true
 
     override def statement : SqlStatements = Statements
+    override def expr : SqlExpressions = Expressions
+    override def command : SqlCommands = Commands
 }
 
+
+class PostgresExpressions(dialect: BaseDialect) extends BaseExpressions(dialect) {
+    override def collate(charset:Option[String], collation:Option[String]) : String = {
+        collation.map(c => s""" COLLATE "$c"""").getOrElse("")
+    }
+}
 
 class PostgresStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
     /**
@@ -108,11 +113,54 @@ class PostgresStatements(dialect: BaseDialect) extends BaseStatements(dialect)  
            |""".stripMargin
     }
 
-    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String =
-        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} TYPE $newDataType"
+    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
+        val col = dialect.expr.collate(charset, collation)
+        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} TYPE $newDataType$col"
+    }
 
     override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
         val nullable = if (isNullable) "DROP NOT NULL" else "SET NOT NULL"
-        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $nullable"
+        val col = dialect.expr.collate(charset, collation)
+        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $nullable$col"
+    }
+}
+
+
+
+class PostgresCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
+    override def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField] = {
+        // Get basic information
+        val fields = super.getJdbcSchema(statement, table)
+
+        // Query extended information
+        val sql =
+            s"""
+               |SELECT
+               |    column_name,
+               |    collation_name
+               |FROM information_schema.columns
+               |WHERE lower(table_catalog) = current_catalog
+               |  AND lower(table_schema) = ${table.space.headOption.map(s => dialect.literal(s.toLowerCase(Locale.ROOT))).getOrElse("lower(current_schema())")}
+               |  AND lower(table_name) = ${dialect.literal(table.table.toLowerCase(Locale.ROOT))}
+               |""".stripMargin
+        val rs = statement.executeQuery(sql)
+        val colInfo = mutable.Map[String,String]()
+        try {
+            while (rs.next()) {
+                val name = rs.getString(1)
+                val collation = rs.getString(2)
+                colInfo.put(name, collation)
+            }
+        }
+        finally {
+            rs.close()
+        }
+
+        // Merge base info and extra info
+        fields.map { f =>
+            colInfo.get(f.name)
+                .map(c => f.copy(collation=Option(c)))
+                .getOrElse(f)
+        }
     }
 }

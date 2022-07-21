@@ -29,6 +29,7 @@ changes over time.
 * github-144: Support changing primary key for JDBC relations
 * github-216: [BUG] Floats should be represented as FLOAT and not REAL in MySQL/MariaDB
 * github-217: Support collations for creating/migrating JDBC tables
+* github-218: [BUG] Postgres dialect should be used for Postgres JDBC URLs
 
 #### Breaking changes
 

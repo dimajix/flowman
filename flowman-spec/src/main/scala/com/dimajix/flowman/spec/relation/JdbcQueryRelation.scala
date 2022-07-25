@@ -61,7 +61,7 @@ case class JdbcQueryRelation(
     properties: Map[String,String] = Map.empty
 ) extends JdbcRelation(
     connection,
-    properties + (JDBCOptions.JDBC_QUERY_STRING -> query)
+    properties
 ) with SchemaRelation {
     protected val resource: ResourceIdentifier = ResourceIdentifier.ofJdbcQuery(query)
 
@@ -236,6 +236,11 @@ case class JdbcQueryRelation(
 
     override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
         throw new UnsupportedOperationException(s"Cannot migrate JDBC query relation '$identifier' which is defined by an SQL query")
+    }
+
+    override protected def createConnectionProperties() : Map[String,String] = {
+        val props = super.createConnectionProperties()
+        props + (JDBCOptions.JDBC_QUERY_STRING -> query)
     }
 
     private lazy val dependencies : Seq[String] = {

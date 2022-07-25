@@ -71,7 +71,7 @@ case class JdbcViewRelation(
     file: Option[Path] = None
 ) extends JdbcRelation(
     connection,
-    properties + (JDBCOptions.JDBC_TABLE_NAME -> view.unquotedString)
+    properties
 ) with PartitionedRelation {
     protected val resource: ResourceIdentifier = ResourceIdentifier.ofJdbcTable(view)
     /**
@@ -366,6 +366,11 @@ case class JdbcViewRelation(
             .getOrElse(
                 throw new IllegalArgumentException("JdbcView either requires explicit SQL SELECT statement or file")
             )
+    }
+
+    override protected def createConnectionProperties() : Map[String,String] = {
+        val props = super.createConnectionProperties()
+        props + (JDBCOptions.JDBC_TABLE_NAME -> view.unquotedString)
     }
 
     private lazy val dependencies : Seq[String] = {

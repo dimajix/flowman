@@ -31,6 +31,7 @@ changes over time.
 * github-217: Support collations for creating/migrating JDBC tables
 * github-218: [BUG] Postgres dialect should be used for Postgres JDBC URLs
 * github-219: [BUG] SchemaMapping should retain incoming comments
+* github-215: Support COLUMN STORE INDEX for MS SQL Server
 
 #### Breaking changes
 

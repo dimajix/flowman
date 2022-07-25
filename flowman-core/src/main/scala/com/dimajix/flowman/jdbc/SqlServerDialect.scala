@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.jdbc
 
+import java.lang
 import java.sql.Statement
 import java.util.Locale
 
@@ -25,6 +26,10 @@ import org.apache.spark.sql.Column
 import org.apache.spark.sql.jdbc.JdbcType
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.flowman.catalog.TableChange
+import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
+import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
+import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.types.BinaryType
@@ -76,6 +81,18 @@ object SqlServerDialect extends BaseDialect {
                 case java.sql.Types.NVARCHAR if precision <= 0 || precision >= 1073741823 => StringType
                 case _ => super.getFieldType(sqlType, typeName, precision, scale, signed)
             }
+        }
+    }
+
+    /**
+     * Returns true if the given table supports a specific table change
+     * @param change
+     * @return
+     */
+    override def supportsChange(table:TableIdentifier, change:TableChange) : Boolean = {
+        change match {
+            case _:ChangeStorageFormat => true
+            case _:TableChange => super.supportsChange(table, change)
         }
     }
 
@@ -159,6 +176,24 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
 
 
 class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
+    override def createTable(statement:Statement, table:TableDefinition) : Unit = {
+        val tableSql = dialect.statement.createTable(table)
+        val indexSql = table.indexes.map(idx => dialect.statement.createIndex(table.identifier, idx))
+        statement.executeUpdate(tableSql)
+
+        // Optionally create CLUSTERED COLUMNSTORE INDEX
+        table.storageFormat.map(_.toLowerCase(Locale.ROOT)) match {
+            case Some("columnstore") =>
+                statement.executeUpdate(s"CREATE CLUSTERED COLUMNSTORE INDEX columnstore_idx ON ${dialect.quote(table.identifier)}")
+            case Some("rowstore") =>
+            case Some(s) => throw new UnsupportedOperationException(s"Storage format '$s' not supported, only 'ROWSTORE' and 'COLUMNSTORE'")
+            case None =>
+        }
+
+        // Create other indexes
+        indexSql.foreach(statement.executeUpdate)
+    }
+
     override def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField] = {
         // Get basic information
         val fields = super.getJdbcSchema(statement, table)
@@ -191,6 +226,54 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
                 .map(c => f.copy(collation=Option(c)))
                 .getOrElse(f)
         }
+    }
+
+    override def getStorageFormat(statement:Statement, table:TableIdentifier) : Option[String] = {
+        getColumnStoreIndex(statement, table) match {
+            case Some(_) => Some("COLUMNSTORE")
+            case None => Some("ROWSTORE")
+        }
+    }
+
+    override def changeStorageFormat(statement: Statement, table: TableIdentifier, storageFormat: String): Unit = {
+        // 1. Retrieve current storage format
+        val current = getStorageFormat(statement, table)
+
+        // 2. Conditionally create or drop CLUSTERED COLUMN STORE INDEX
+        val desiredFormat = storageFormat.toLowerCase(Locale.ROOT)
+        if (!current.exists(_.toLowerCase(Locale.ROOT) == desiredFormat)) {
+            desiredFormat match {
+                case "columnstore" =>
+                    statement.executeUpdate(s"CREATE CLUSTERED COLUMNSTORE INDEX columnstore_idx ON ${dialect.quote(table)}")
+                case "rowstore" =>
+                    val indexName = getColumnStoreIndex(statement, table)
+                    indexName.foreach(idx => statement.executeUpdate(s"DROP INDEX $idx ON ${dialect.quote(table)}"))
+                case s => throw new UnsupportedOperationException(s"Storage format '$s' not supported, only 'ROWSTORE' and 'COLUMNSTORE'")
+            }
+        }
+    }
+
+    private def getColumnStoreIndex(statement: Statement, table: TableIdentifier) : Option[String] = {
+        val sql =
+            s"""
+               |SELECT
+               |    name,
+               |    type_desc
+               |FROM sys.indexes
+               |WHERE object_id = OBJECT_ID(${dialect.literal(dialect.quote(table))})
+               |AND type_desc = 'CLUSTERED COLUMNSTORE'
+               |""".stripMargin
+        val rs = statement.executeQuery(sql)
+        var name:Option[String] = None
+        try {
+            while (rs.next()) {
+                name = Option(rs.getString(1))
+            }
+        }
+        finally {
+            rs.close()
+        }
+        name
     }
 
     override def dropPrimaryKey(statement: Statement, table: TableIdentifier): Unit = {

@@ -16,18 +16,25 @@
 
 package com.dimajix.flowman.jdbc
 
-import java.sql.Connection
 import java.sql.Statement
 
+import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
 
 
 abstract class SqlCommands {
+    def createTable(statement:Statement, table:TableDefinition) : Unit
+    def dropTable(statement:Statement, table:TableIdentifier) : Unit
+    def dropView(statement:Statement, table:TableIdentifier) : Unit
+
     def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField]
 
-    def getPrimaryKey(con: Connection, table:TableIdentifier) : Seq[String]
-    def getIndexes(con: Connection, table:TableIdentifier) : Seq[TableIndex]
+    def getStorageFormat(statement:Statement, table:TableIdentifier) : Option[String]
+    def changeStorageFormat(statement:Statement, table:TableIdentifier, storageFormat:String) : Unit
+
+    def getPrimaryKey(statement:Statement, table:TableIdentifier) : Seq[String]
+    def getIndexes(statement:Statement, table:TableIdentifier) : Seq[TableIndex]
 
     def createIndex(statement:Statement, table:TableIdentifier, index:TableIndex) : Unit
     def dropIndex(statement:Statement, table:TableIdentifier, indexName:String) : Unit

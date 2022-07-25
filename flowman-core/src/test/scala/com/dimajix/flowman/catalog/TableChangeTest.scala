@@ -20,6 +20,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
 import com.dimajix.flowman.catalog.TableChange.CreateIndex
 import com.dimajix.flowman.catalog.TableChange.CreatePrimaryKey
 import com.dimajix.flowman.catalog.TableChange.DropColumn
@@ -394,6 +395,44 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
         TableChange.requiresMigration(
             TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
             TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1")),
+            MigrationPolicy.STRICT
+        ) should be (true)
+    }
+
+    it should "handle changes in storage format" in {
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            MigrationPolicy.STRICT
+        ) should be (true)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("COLUMNSTORE")),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("rowstore")),
             MigrationPolicy.STRICT
         ) should be (true)
     }
@@ -841,6 +880,48 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             MigrationPolicy.STRICT
         ) should be (Seq(
             UpdatePartitionColumns(Seq(Field("f1", StringType)))
+        ))
+    }
+
+    it should "update the storage format" in {
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            MigrationPolicy.STRICT
+        ) should be (Seq.empty)
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            MigrationPolicy.STRICT
+        ) should be (Seq(
+            ChangeStorageFormat("columnstore")
+        ))
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            MigrationPolicy.STRICT
+        ) should be (Seq.empty)
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            MigrationPolicy.STRICT
+        ) should be (Seq.empty)
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("COLUMNSTORE")),
+            MigrationPolicy.STRICT
+        ) should be (Seq.empty)
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("rowstore")),
+            MigrationPolicy.STRICT
+        ) should be (Seq(
+            ChangeStorageFormat("rowstore")
         ))
     }
 }

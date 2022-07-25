@@ -21,8 +21,10 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
+import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
+import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.Connection
@@ -43,11 +45,28 @@ case class SqlServerRelation(
     properties: Map[String,String] = Map.empty,
     mergeKey: Seq[String] = Seq.empty,
     override val primaryKey: Seq[String] = Seq.empty,
-    indexes: Seq[TableIndex] = Seq.empty
+    indexes: Seq[TableIndex] = Seq.empty,
+    storageFormat: Option[String] = None
 ) extends JdbcTableRelationBase(instanceProperties, schema, partitions, connection, table, properties, mergeKey, primaryKey, indexes) {
     private val tempTableIdentifier = TableIdentifier(s"##${tableIdentifier.table}_temp_staging")
     override protected val stagingIdentifier: Option[TableIdentifier] = Some(tempTableIdentifier)
-
+    override protected lazy val tableDefinition: Option[TableDefinition] = {
+        schema.map { schema =>
+            val pk = if (primaryKey.nonEmpty) primaryKey else schema.primaryKey
+            val columns = fullSchema.get.fields
+            TableDefinition(
+                tableIdentifier,
+                TableType.TABLE,
+                columns = columns,
+                comment = schema.description,
+                primaryKey = pk,
+                indexes = indexes,
+                storageFormat = storageFormat
+                // Currently partition tables are not supported on a physical level, only on a logical level
+                // partitionColumnNames = partitions.map(_.name)
+            )
+        }
+    }
     override protected def appendTable(execution: Execution, df:DataFrame, table:TableIdentifier): Unit = {
         val props = createConnectionProperties()
         this.writer(execution, df, "com.microsoft.sqlserver.jdbc.spark", Map(), SaveMode.Append)
@@ -72,6 +91,7 @@ class SqlServerRelationSpec extends RelationSpec with PartitionedRelationSpec wi
     @JsonProperty(value = "table", required = false) private var table: String = ""
     @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq.empty
     @JsonProperty(value = "primaryKey", required = false) private var primaryKey: Seq[String] = Seq.empty
+    @JsonProperty(value = "storageFormat", required = false) private var storageFormat: Option[String] = None
 
     override def instantiate(context: Context, props:Option[Relation.Properties] = None): SqlServerRelation = {
         SqlServerRelation(
@@ -83,7 +103,8 @@ class SqlServerRelationSpec extends RelationSpec with PartitionedRelationSpec wi
             context.evaluate(properties),
             mergeKey.map(context.evaluate),
             primaryKey.map(context.evaluate),
-            indexes.map(_.instantiate(context))
+            indexes.map(_.instantiate(context)),
+            context.evaluate(storageFormat)
         )
     }
 }

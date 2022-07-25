@@ -57,7 +57,8 @@ final case class TableDefinition(
     comment: Option[String] = None,
     primaryKey: Seq[String] = Seq.empty,
     indexes: Seq[TableIndex] = Seq.empty,
-    partitionColumnNames: Seq[String] = Seq.empty
+    partitionColumnNames: Seq[String] = Seq.empty,
+    storageFormat: Option[String] = None
 ) {
     /**
      * Returns only the data columns without partition columns
@@ -78,7 +79,8 @@ final case class TableDefinition(
         columns = columns.map(f => f.copy(name = f.name.toLowerCase(Locale.ROOT))),
         primaryKey = primaryKey.map(_.toLowerCase(Locale.ROOT)).sorted,
         indexes = indexes.map(_.normalize()),
-        partitionColumnNames = partitionColumnNames.map(_.toLowerCase(Locale.ROOT))
+        partitionColumnNames = partitionColumnNames.map(_.toLowerCase(Locale.ROOT)),
+        storageFormat = storageFormat.map(_.toLowerCase(Locale.ROOT))
     )
 }
 

@@ -44,6 +44,7 @@ import com.dimajix.flowman.catalog.PartitionChange
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
 import com.dimajix.flowman.catalog.TableChange.DropColumn
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
@@ -452,7 +453,10 @@ case class HiveTableRelation(
                 .filter(_.nonEmpty)
                 .orElse(fileStorage.outputFormat)
                 .orElse(defaultStorage.outputFormat)
-            val rowFormat = this.rowFormat.filter(_.nonEmpty).orElse(fileStorage.serde).orElse(defaultStorage.serde)
+            val rowFormat = this.rowFormat
+                .filter(_.nonEmpty)
+                .orElse(fileStorage.serde)
+                .orElse(defaultStorage.serde)
 
             // Configure catalog table by assembling all options
             val catalogTable = CatalogTable(
@@ -613,6 +617,7 @@ case class HiveTableRelation(
                 case _:UpdateColumnType => false
                 case _:UpdateColumnComment => true
                 case _:PartitionChange => false
+                case _:ChangeStorageFormat => false
                 case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
             }
         }

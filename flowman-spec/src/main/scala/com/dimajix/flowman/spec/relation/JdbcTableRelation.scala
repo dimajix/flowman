@@ -82,7 +82,7 @@ class JdbcTableRelationBase(
     indexes: Seq[TableIndex] = Seq.empty
 ) extends JdbcRelation(
     connection,
-    properties + (JDBCOptions.JDBC_TABLE_NAME -> table.unquotedString)
+    properties
 ) with SchemaRelation {
     protected val resource: ResourceIdentifier = ResourceIdentifier.ofJdbcTable(table)
     protected val tableIdentifier: TableIdentifier = table
@@ -589,7 +589,12 @@ class JdbcTableRelationBase(
                         logger.error(s"Cannot migrate relation JDBC relation '$identifier' of table $tableIdentifier, since that would require unsupported changes.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                         throw new MigrationFailedException(identifier)
                     }
-                    alter(migrations, con, options)
+                    try {
+                        alter(migrations, con, options)
+                    }
+                    catch {
+                        case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
+                    }
                 case MigrationStrategy.ALTER_REPLACE =>
                     val dialect = SqlDialects.get(options.url)
                     val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
@@ -598,9 +603,12 @@ class JdbcTableRelationBase(
                             alter(migrations, con, options)
                         }
                         catch {
-                            case e: SQLNonTransientConnectionException => throw e
-                            case e: SQLInvalidAuthorizationSpecException => throw e
-                            case _: SQLNonTransientException => recreate(con, options)
+                            case ex: SQLNonTransientConnectionException => throw new MigrationFailedException(identifier, ex)
+                            case ex: SQLInvalidAuthorizationSpecException => throw new MigrationFailedException(identifier, ex)
+                            case _: SQLNonTransientException =>
+                                logger.warn(s"Incremental migration of relation '$identifier' for table $tableIdentifier failed. Now falling back by re-creating target table.")
+                                recreate(con, options)
+                            case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
                         }
                     }
                     else {
@@ -616,12 +624,8 @@ class JdbcTableRelationBase(
             if (migrations.isEmpty)
                 logger.warn("Empty list of migrations - nothing to do")
 
-            try {
-                JdbcUtils.alterTable(con, tableIdentifier, migrations, options)
-            }
-            catch {
-                case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
-            }
+            // Do not enclose by try/catch block, such that we can inspect exception and fall back to re-create if required
+            JdbcUtils.alterTable(con, tableIdentifier, migrations, options)
         }
 
         def recreate(con:java.sql.Connection, options:JDBCOptions) : Unit = {
@@ -659,6 +663,11 @@ class JdbcTableRelationBase(
         withConnection { (con, options) =>
             Some(JdbcUtils.getTableSchema(con, tableIdentifier, options).catalogType)
         }
+    }
+
+    override protected def createConnectionProperties() : Map[String,String] = {
+        val props = super.createConnectionProperties()
+        props + (JDBCOptions.JDBC_TABLE_NAME -> table.unquotedString)
     }
 
     private def checkPartition(partition:Map[String,SingleValue]) : Boolean = {

@@ -4,6 +4,7 @@ relations:
     connection: sql_server
     database: dbo
     table: weather
+    storageFormat: ROWSTORE
     schema:
       kind: inline
       fields:
@@ -42,6 +43,7 @@ relations:
     connection: sql_server
     database: dbo
     table: weather
+    storageFormat: COLUMNSTORE
     schema:
       kind: inline
       fields:

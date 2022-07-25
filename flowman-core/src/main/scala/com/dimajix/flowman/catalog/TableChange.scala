@@ -35,7 +35,7 @@ abstract sealed class PartitionChange extends TableChange
 abstract sealed class IndexChange extends TableChange
 
 object TableChange {
-    case class ReplaceTable(schema:StructType) extends TableChange
+    case class ChangeStorageFormat(format:String) extends TableChange
 
     case class DropColumn(column:String) extends ColumnChange
     case class AddColumn(column:Field) extends ColumnChange
@@ -61,6 +61,16 @@ object TableChange {
     def migrate(sourceTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy) : Seq[TableChange] = {
         val normalizedSource = sourceTable.normalize()
         val normalizedTarget = targetTable.normalize()
+
+        // Check if desired storage format is different from current format
+        val storageChange = {
+            val changedStorage = normalizedTarget.storageFormat.exists(sf => !normalizedSource.storageFormat.contains(sf))
+
+            if (changedStorage)
+                targetTable.storageFormat.map(f => ChangeStorageFormat(f))
+            else
+                None
+        }
 
         // Check if partition columns need a change
         val partitionChange = {
@@ -184,7 +194,7 @@ object TableChange {
             }
         }
 
-        partitionChange.toSeq ++ dropIndexes ++ dropPk ++ dropFields ++ changeFields ++ createPk ++ addIndexes
+        partitionChange.toSeq ++ dropIndexes ++ dropPk ++ storageChange.toSeq ++ dropFields ++ changeFields ++ createPk ++ addIndexes
     }
 
     /**
@@ -197,6 +207,9 @@ object TableChange {
     def requiresMigration(sourceTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy) : Boolean = {
         val normalizedSource = sourceTable.normalize()
         val normalizedTarget = targetTable.normalize()
+
+        // Check if desired storage format is different from current format
+        val storageChanges = normalizedTarget.storageFormat.exists(sf => !normalizedSource.storageFormat.contains(sf))
 
         // Check if PK needs change
         val pkChanges = normalizedSource.primaryKey != normalizedTarget.primaryKey
@@ -215,7 +228,7 @@ object TableChange {
         // Check if partition columns require a change
         val partitionChanges = normalizedSource.partitionColumnNames.sorted != normalizedTarget.partitionColumnNames.sorted
 
-        pkChanges || dropIndexes || addIndexes || columnChanges || partitionChanges
+        storageChanges || pkChanges || dropIndexes || addIndexes || columnChanges || partitionChanges
     }
 
     private def requiresSchemaMigration(sourceColumns:Seq[Field], targetColumns:Seq[Field], migrationPolicy:MigrationPolicy) : Boolean = {

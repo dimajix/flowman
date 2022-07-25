@@ -39,6 +39,7 @@ import com.dimajix.flowman.catalog.PartitionChange
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
 import com.dimajix.flowman.catalog.TableChange.CreateIndex
 import com.dimajix.flowman.catalog.TableChange.CreatePrimaryKey
 import com.dimajix.flowman.catalog.TableChange.DropColumn
@@ -223,6 +224,7 @@ abstract class BaseDialect extends SqlDialect {
             case _:CreatePrimaryKey => true
             case _:DropPrimaryKey => true
             case _:PartitionChange => false
+            case _:ChangeStorageFormat => false
             case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
         }
     }
@@ -474,6 +476,20 @@ class BaseExpressions(dialect: SqlDialect) extends SqlExpressions {
 
 
 class BaseCommands(dialect: SqlDialect) extends SqlCommands {
+    override def createTable(statement:Statement, table:TableDefinition) : Unit = {
+        val tableSql = dialect.statement.createTable(table)
+        val indexSql = table.indexes.map(idx => dialect.statement.createIndex(table.identifier, idx))
+        statement.executeUpdate(tableSql)
+        indexSql.foreach(statement.executeUpdate)
+    }
+    override def dropTable(statement:Statement, table:TableIdentifier) : Unit = {
+        statement.executeUpdate(s"DROP TABLE ${dialect.quote(table)}")
+    }
+    override def dropView(statement:Statement, table:TableIdentifier) : Unit = {
+        val dropSql = dialect.statement.dropView(table)
+        statement.executeUpdate(dropSql)
+    }
+
     override def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField] = {
         val sql = dialect.statement.schema(table)
         val rs = statement.executeQuery(sql)
@@ -485,7 +501,12 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
         }
     }
 
-    override def getPrimaryKey(con: Connection, table:TableIdentifier) : Seq[String] = {
+    override def getStorageFormat(statement:Statement, table:TableIdentifier) : Option[String] = None
+
+    override def changeStorageFormat(statement: Statement, table: TableIdentifier, storageFormat: String): Unit = ???
+
+    override def getPrimaryKey(statement:Statement, table:TableIdentifier) : Seq[String] = {
+        val con = statement.getConnection
         val meta = con.getMetaData
         val pkrs = meta.getPrimaryKeys(null, table.database.orNull, table.table)
         val pk = mutable.ListBuffer[(Short,String)]()
@@ -499,7 +520,8 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
         pk.sortBy(_._1).map(_._2)
     }
 
-    override def getIndexes(con: Connection, table:TableIdentifier) : Seq[TableIndex] = {
+    override def getIndexes(statement:Statement, table:TableIdentifier) : Seq[TableIndex] = {
+        val con = statement.getConnection
         val meta = con.getMetaData
         val idxrs = meta.getIndexInfo(null, table.database.orNull, table.table, false, true)
         val idxcols = mutable.ListBuffer[(String, String, Boolean)]()

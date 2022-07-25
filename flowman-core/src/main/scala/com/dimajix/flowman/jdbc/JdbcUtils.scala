@@ -43,6 +43,7 @@ import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.tryWith
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
 import com.dimajix.flowman.catalog.TableChange.CreateIndex
 import com.dimajix.flowman.catalog.TableChange.CreatePrimaryKey
 import com.dimajix.flowman.catalog.TableChange.DropColumn
@@ -231,14 +232,17 @@ object JdbcUtils {
         val (realTable,realType) = resolveTable(meta, table)
 
         val currentSchema = getTableSchema(conn, table, options)
-        val pk = dialect.command.getPrimaryKey(conn, realTable)
-        val idxs = dialect.command.getIndexes(conn, realTable)
-            // Remove primary key
-            .filter { idx =>
-                idx.normalize().columns != pk.map(_.toLowerCase(Locale.ROOT)).sorted
-            }
+        withStatement(conn, options) { stmt =>
+            val pk = dialect.command.getPrimaryKey(stmt, realTable)
+            val idxs = dialect.command.getIndexes(stmt, realTable)
+                // Remove primary key
+                .filter { idx =>
+                    idx.normalize().columns != pk.map(_.toLowerCase(Locale.ROOT)).sorted
+                }
+            val storage = dialect.command.getStorageFormat(stmt, table)
 
-        TableDefinition(table, realType, currentSchema.fields, primaryKey=pk, indexes=idxs)
+            TableDefinition(table, realType, currentSchema.fields, primaryKey=pk, indexes=idxs, storageFormat=storage)
+        }
     }
 
     /**
@@ -416,11 +420,8 @@ object JdbcUtils {
      */
     def createTable(conn:Connection, table:TableDefinition, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val tableSql = dialect.statement.createTable(table)
-        val indexSql = table.indexes.map(idx => dialect.statement.createIndex(table.identifier, idx))
         withStatement(conn, options) { statement =>
-            statement.executeUpdate(tableSql)
-            indexSql.foreach(statement.executeUpdate)
+            dialect.command.createTable(statement, table)
         }
     }
 
@@ -439,7 +440,7 @@ object JdbcUtils {
     }
     def dropTable(statement:Statement, table:TableIdentifier, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        statement.executeUpdate(s"DROP TABLE ${dialect.quote(table)}")
+        dialect.command.dropTable(statement, table)
     }
 
     def createView(conn:Connection, table:TableIdentifier, sql:String, options: JDBCOptions) : Unit = {
@@ -481,8 +482,7 @@ object JdbcUtils {
     }
     def dropView(statement:Statement, table:TableIdentifier, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val dropSql = dialect.statement.dropView(table)
-        statement.executeUpdate(dropSql)
+        dialect.command.dropView(statement, table)
     }
 
     def dropTableOrView(conn:Connection, table:TableIdentifier, options: JDBCOptions, ifExists:Boolean=false) : Unit = {
@@ -688,8 +688,11 @@ object JdbcUtils {
                 logger.info(s"Creating primary key for JDBC table $table on columns ${pk.columns.mkString(",")}")
                 Some((stmt:Statement) => dialect.command.addPrimaryKey(stmt, table, pk.columns))
             case pk:DropPrimaryKey =>
-                logger.info(s"Removing primary key from JDBC table $table}")
+                logger.info(s"Removing primary key from JDBC table $table")
                 Some((stmt:Statement) => dialect.command.dropPrimaryKey(stmt, table))
+            case sf:ChangeStorageFormat =>
+                logger.info(s"Changing storage format of JDBC table $table to ${sf.format}")
+                Some((stmt:Statement) => dialect.command.changeStorageFormat(stmt, table, sf.format))
             case chg:TableChange => throw new SQLException(s"Unsupported table change $chg for JDBC table $table")
         }
 

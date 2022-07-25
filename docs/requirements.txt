@@ -1,3 +1,3 @@
 docutils==0.17.1
 markdown==3.3.7
-sphinx_markdown_tables
+sphinx_markdown_tables==0.0.15

@@ -18,6 +18,7 @@
 * github-215: Support COLUMN STORE INDEX for MS SQL Server
 * github-182: Support column descriptions in JDBC relations (SQL Server / Azure SQL)
 * github-224: Support column descriptions for MariaDB / MySQL databases
+* github-223: Support column descriptions for Postgres database
 
 ## Breaking changes
 

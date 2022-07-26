@@ -176,9 +176,7 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
 
 class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
     override def createTable(statement:Statement, table:TableDefinition) : Unit = {
-        val tableSql = dialect.statement.createTable(table)
-        val indexSql = table.indexes.map(idx => dialect.statement.createIndex(table.identifier, idx))
-        statement.executeUpdate(tableSql)
+        super.createTable(statement, table)
 
         // Attach any comments
         table.columns.foreach { col =>
@@ -197,9 +195,6 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
             case Some(s) => throw new UnsupportedOperationException(s"Storage format '$s' not supported, only 'ROWSTORE' and 'COLUMNSTORE'")
             case None =>
         }
-
-        // Create other indexes
-        indexSql.foreach(statement.executeUpdate)
     }
 
     override def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField] = {
@@ -256,6 +251,13 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         }
 
         values.toMap
+    }
+
+    override def addColumn(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
+        super.addColumn(statement, table, columnName, dataType, isNullable, charset, collation, comment)
+        comment.foreach { c =>
+            addColumnComment(statement, table, columnName, c)
+        }
     }
 
     override def updateColumnComment(statement:Statement, table: TableIdentifier, column: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]) : Unit = {

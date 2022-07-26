@@ -24,6 +24,7 @@ import scala.collection.mutable
 
 import org.apache.spark.sql.jdbc.JdbcType
 
+import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
@@ -123,11 +124,24 @@ class PostgresStatements(dialect: BaseDialect) extends BaseStatements(dialect)  
         val col = dialect.expr.collate(charset, collation)
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $nullable$col"
     }
+
+    override def updateColumnComment(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
+        s"COMMENT ON COLUMN ${dialect.quote(table)}.${dialect.quoteIdentifier(columnName)} IS ${comment.map{dialect.literal}.getOrElse("null")}"
+    }
 }
 
 
 
 class PostgresCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
+    override def createTable(statement:Statement, table:TableDefinition) : Unit = {
+        super.createTable(statement, table)
+
+        // Attach any comments
+        table.columns.foreach { col =>
+            updateColumnComment(statement, table.identifier, col.name, col.typeName, col.nullable, comment=col.description)
+        }
+    }
+
     override def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField] = {
         // Get basic information
         val fields = super.getJdbcSchema(statement, table)
@@ -143,24 +157,87 @@ class PostgresCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
                |  AND lower(table_schema) = ${table.space.headOption.map(s => dialect.literal(s.toLowerCase(Locale.ROOT))).getOrElse("lower(current_schema())")}
                |  AND lower(table_name) = ${dialect.literal(table.table.toLowerCase(Locale.ROOT))}
                |""".stripMargin
+        val collations = queryKeyValue(statement, sql)
+        val comments = getColumnComments(statement, table)
+
+        // Merge base info and extra info
+        fields.map { f =>
+            val c1 = collations.get(f.name)
+                .map(c => f.copy(collation=Option(c)))
+                .getOrElse(f)
+            comments.get(c1.name)
+                .map(c => c1.copy(description=Option(c)))
+                .getOrElse(c1)
+        }
+    }
+
+    private def getColumnComments(statement:Statement, table:TableIdentifier) : Map[String,String] = {
+        // Query extended information
+        val sql =
+            s"""
+               |SELECT
+               |    cols.column_name, (
+               |        SELECT
+               |            pg_catalog.col_description(c.oid, cols.ordinal_position::int)
+               |        FROM
+               |            pg_catalog.pg_class c
+               |        WHERE
+               |            c.oid = (SELECT ('"' || cols.table_name || '"')::regclass::oid)
+               |            AND c.relname = cols.table_name
+               |    ) AS column_comment
+               |FROM
+               |    information_schema.columns cols
+               |WHERE
+               |    cols.table_catalog = current_catalog
+               |    AND cols.table_schema = ${table.database.map(dialect.literal).getOrElse("current_schema()")}
+               |    AND cols.table_name = ${dialect.literal(table.table)}
+               |""".stripMargin
+        queryKeyValue(statement, sql)
+    }
+    private def queryKeyValue(statement:Statement, sql:String) : Map[String,String] = {
         val rs = statement.executeQuery(sql)
-        val colInfo = mutable.Map[String,String]()
+        val values = mutable.Map[String,String]()
         try {
             while (rs.next()) {
                 val name = rs.getString(1)
-                val collation = rs.getString(2)
-                colInfo.put(name, collation)
+                val value = rs.getString(2)
+                if (value != null)
+                    values.put(name, value)
             }
         }
         finally {
             rs.close()
         }
 
-        // Merge base info and extra info
-        fields.map { f =>
-            colInfo.get(f.name)
-                .map(c => f.copy(collation=Option(c)))
-                .getOrElse(f)
+        values.toMap
+    }
+
+    override def addColumn(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
+        super.addColumn(statement, table, columnName, dataType, isNullable, charset, collation, comment)
+        comment.foreach { c =>
+            val sql = dialect.statement.updateColumnComment(table, columnName, dataType, isNullable, charset, collation, comment)
+            statement.executeUpdate(sql)
+        }
+    }
+
+    override def updateColumnComment(statement:Statement, table: TableIdentifier, columnName:String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None) : Unit = {
+        val sql = dialect.statement.updateColumnComment(table, columnName, dataType, isNullable, charset, collation, comment)
+        statement.executeUpdate(sql)
+    }
+
+    override def dropPrimaryKey(statement: Statement, table: TableIdentifier): Unit = {
+        val meta = statement.getConnection.getMetaData
+        val pkrs = meta.getPrimaryKeys(null, table.database.orNull, table.table)
+        var name:String = ""
+        while(pkrs.next()) {
+            val pkname = pkrs.getString(6)
+            if (pkname != null)
+                name = pkname
+        }
+        pkrs.close()
+
+        if (name.nonEmpty) {
+            dropConstraint(statement, table, name)
         }
     }
 }

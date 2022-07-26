@@ -503,23 +503,23 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
         }
     }
 
-    def addColumn(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
+    override def addColumn(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
         val sql = dialect.statement.addColumn(table, columnName, dataType, isNullable, charset, collation, comment)
         statement.executeUpdate(sql)
     }
-    def deleteColumn(statement:Statement, table: TableIdentifier, columnName: String): Unit = {
+    override def deleteColumn(statement:Statement, table: TableIdentifier, columnName: String): Unit = {
         val sql = dialect.statement.dropColumn(table, columnName)
         statement.executeUpdate(sql)
     }
-    def updateColumnType(statement:Statement, table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
+    override def updateColumnType(statement:Statement, table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
         val sql = dialect.statement.updateColumnType(table, columnName, newDataType, isNullable, charset, collation, comment)
         statement.executeUpdate(sql)
     }
-    def updateColumnNullability(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
+    override def updateColumnNullability(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
         val sql = dialect.statement.updateColumnNullability(table, columnName, dataType, isNullable, charset, collation, comment)
         statement.executeUpdate(sql)
     }
-    def updateColumnComment(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]) : Unit = {
+    override def updateColumnComment(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]) : Unit = {
         // Default is empty implementation
     }
 

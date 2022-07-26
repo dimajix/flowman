@@ -59,12 +59,12 @@ relations:
           type: CHAR(2)
           description: "FIPS Country Code"
         - name: min_wind_speed
-          type: FLOAT
+          type: DOUBLE
           description: "Minimum wind speed (m/s)"
         - name: max_wind_speed
-          type: FLOAT
+          type: DOUBLE
           description: "Maximum wind speed (m/s)"
-        - name: avg_wind_speed
+        - name: AVG_WIND_SPEED
           type: FLOAT
           description: "Average wind speed (m/s)"
         - name: min_temperature

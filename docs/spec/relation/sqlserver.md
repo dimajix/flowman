@@ -52,6 +52,8 @@ relations:
       password: "$frontend_db_password"
     # Specify the table
     table: "users"
+    # Specify storage format
+    storageFormat: COLUMNSTORE
 ```
 For most cases, it is recommended not to embed the connection, since this prevents reusing the same connection in
 multiple places.
@@ -95,6 +97,11 @@ specific qualification, meaning that the default database will be used or the on
 
  * `indexes` **(optional)** *(type: list:index)* *(default: empty)*:
  Specifies a list of database indexes to be created. Each index has the properties `name`, `columns` and `unique`.
+
+ * `storageformat` **(optional)** *(type: string)* *(default: empty)*:
+ Specifies the internal storage format, which can either be `ROWSTORE` or `COLUMNSTORE`. Internally MS SQL Server
+ uses `ROWSTORE` as the default format. `COLUMNSTORE` will actually create a `CLUSTERED COLUMNSTORE INDEX` and is
+ preferable for typical OLAP workloads.
 
 
 ## Automatic Migrations

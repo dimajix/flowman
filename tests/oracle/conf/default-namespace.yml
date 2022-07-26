@@ -1,0 +1,30 @@
+name: "default"
+
+metrics:
+  - kind: console
+  - kind: jdbc
+    labels:
+      project: ${project.name}
+      version: ${project.version}
+      phase: ${phase}
+    connection:
+      kind: jdbc
+      url: jdbc:oracle:thin:@localhost:1521/flowman
+      driver: "oracle.jdbc.OracleDriver"
+      username: "flowman"
+      password: "yourStrong(!)Password"
+      properties:
+        databaseName: flowman
+
+config:
+  - spark.sql.warehouse.dir=/opt/sxp/flowman/hive/warehouse
+  - spark.hadoop.hive.metastore.uris=
+  - spark.hadoop.javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=/opt/sxp/flowman/hive/db;create=true
+  - spark.hadoop.datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
+
+  - spark.executor.cores=$System.getenv('SPARK_EXECUTOR_CORES', '8')
+  - spark.executor.memory=$System.getenv('SPARK_EXECUTOR_MEMORY', '16g')
+
+plugins:
+  - flowman-aws
+  - flowman-oracle

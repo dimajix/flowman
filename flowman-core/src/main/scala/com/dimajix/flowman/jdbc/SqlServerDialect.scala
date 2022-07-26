@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.jdbc
 
-import java.lang
 import java.sql.Statement
 import java.util.Locale
 

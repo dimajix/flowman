@@ -402,6 +402,8 @@ object JdbcUtils {
                 case java.sql.Types.VARCHAR => s"$typeName($fieldSize)"
                 case java.sql.Types.NCHAR if fieldSize > 1 => s"$typeName($fieldSize)"
                 case java.sql.Types.NVARCHAR => s"$typeName($fieldSize)"
+                case java.sql.Types.NUMERIC if fieldSize > 1 && fieldScale > 1 => s"$typeName($fieldSize,$fieldScale)"
+                case java.sql.Types.NUMERIC if fieldSize > 1 => s"$typeName($fieldSize,$fieldScale)"
                 case _ => typeName
             }
 
@@ -669,7 +671,7 @@ object JdbcUtils {
                 val dataType = dialect.getJdbcType(u.dataType)
                 val charset = u.charset.map(c => s" CHARACTER SET $c").getOrElse("")
                 val collation = u.collation.map(c => s" COLLATE $c").getOrElse("")
-                logger.info(s"Changing column '${u.column}' type from ${current.typeName} to '${dataType.databaseTypeDefinition}${charset}${collation}' (${u.dataType.sqlType}) in JDBC table $table")
+                logger.info(s"Changing column '${u.column}' type from '${current.typeName}' to '${dataType.databaseTypeDefinition}${charset}${collation}' (${u.dataType.sqlType}) in JDBC table $table")
                 currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(typeName=dataType.databaseTypeDefinition))
                 Some((stmt:Statement) => commands.updateColumnType(stmt, table, u.column, dataType.databaseTypeDefinition, current.nullable, charset=u.charset.orElse(current.charset), collation=u.collation.orElse(current.collation), current.description))
             case u:UpdateColumnNullability =>

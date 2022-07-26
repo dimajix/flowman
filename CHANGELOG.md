@@ -19,6 +19,7 @@
 * github-182: Support column descriptions in JDBC relations (SQL Server / Azure SQL)
 * github-224: Support column descriptions for MariaDB / MySQL databases
 * github-223: Support column descriptions for Postgres database
+* github-205: Initial support Oracle DB via JDBC
 
 ## Breaking changes
 

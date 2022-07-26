@@ -21,3 +21,4 @@ plugins:
   - flowman-mariadb
   - flowman-mysql
   - flowman-mssqlserver
+  - flowman-oracle

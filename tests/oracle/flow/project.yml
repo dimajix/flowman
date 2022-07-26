@@ -1,0 +1,5 @@
+name: "oracle"
+version: "1.0"
+
+modules:
+  - module

@@ -91,6 +91,7 @@ plugins:
   - flowman-mariadb
   - flowman-mysql
   - flowman-mssqlserver
+  - flowman-oracle
   - flowman-postgresql
   - flowman-swagger
   - flowman-openapi

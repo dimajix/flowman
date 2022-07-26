@@ -257,7 +257,7 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         s"""
            |SELECT
            |    objname,
-           |    value
+           |    TRY_CAST(value AS NVARCHAR(MAX)) AS value
            |FROM sys.fn_listextendedproperty ('MS_Description', 'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")}, 'TABLE', ${dialect.literal(table.table)}, 'column', ${dialect.literal(column)})
            |""".stripMargin
         if (queryKeyValue(statement, sql).nonEmpty) {

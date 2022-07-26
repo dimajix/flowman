@@ -141,7 +141,7 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
     }
 
     // see https://docs.microsoft.com/en-us/sql/relational-databases/tables/add-columns-to-a-table-database-engine?view=sql-server-ver15
-    override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
+    override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
         val col = collation.map(c => s" COLLATE $c").getOrElse("")
         s"ALTER TABLE ${dialect.quote(table)} ADD ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable"
@@ -152,7 +152,7 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
         s"EXEC sp_rename '${dialect.quote(table)}.${dialect.quoteIdentifier(columnName)}', ${dialect.quoteIdentifier(newName)}, 'COLUMN'"
     }
 
-    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
+    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
         val col = collation.map(c => s" COLLATE $c").getOrElse("")
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable"
@@ -181,6 +181,13 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         statement.executeUpdate(tableSql)
 
         // Attach any comments
+        table.columns.foreach { col =>
+            col.description match {
+                case Some(c) =>
+                    addColumnComment(statement, table.identifier, col.name, c)
+                case None => // Nothing to do
+            }
+        }
 
         // Optionally create CLUSTERED COLUMNSTORE INDEX
         table.storageFormat.map(_.toLowerCase(Locale.ROOT)) match {
@@ -251,7 +258,7 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         values.toMap
     }
 
-    override def updateComment(statement:Statement, table: TableIdentifier, column:String, comment:Option[String]) : Unit = {
+    override def updateColumnComment(statement:Statement, table: TableIdentifier, column: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]) : Unit = {
         // 1. Check if we currently do have a comment
         val sql =
         s"""
@@ -263,39 +270,49 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         if (queryKeyValue(statement, sql).nonEmpty) {
             comment match {
                 case Some(c) =>
-                    val sql = s"""
-                        |exec sp_updateextendedproperty
-                        |   'MS_Description', ${dialect.literal(c)},
-                        |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")},
-                        |   'TABLE', ${dialect.literal(table.table)},
-                        |   'COLUMN', ${dialect.literal(column)}
-                        |""".stripMargin
-                    statement.executeUpdate(sql)
+                    updateColumnComment(statement, table, column, c)
                 case None =>
-                    val sql = s"""
-                        |exec sp_dropextendedproperty
-                        |   'MS_Description',
-                        |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")},
-                        |   'TABLE', ${dialect.literal(table.table)},
-                        |   'COLUMN', ${dialect.literal(column)}
-                        |""".stripMargin
-                    statement.executeUpdate(sql)
+                    dropColumnComment(statement, table, column)
             }
         }
         else {
             comment match {
                 case Some(c) =>
-                    val sql = s"""
-                        |exec sp_addextendedproperty
-                        |   'MS_Description', ${dialect.literal(c)},
-                        |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")},
-                        |   'TABLE', ${dialect.literal(table.table)},
-                        |   'COLUMN', ${dialect.literal(column)}
-                        |""".stripMargin
-                    statement.executeUpdate(sql)
+                    addColumnComment(statement, table, column, c)
                 case None => // Nothing to do
             }
         }
+    }
+    private def addColumnComment(statement:Statement, table: TableIdentifier, column:String, comment:String) : Unit = {
+        val sql = s"""
+                     |exec sp_addextendedproperty
+                     |   'MS_Description', ${dialect.literal(comment)},
+                     |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")},
+                     |   'TABLE', ${dialect.literal(table.table)},
+                     |   'COLUMN', ${dialect.literal(column)}
+                     |""".stripMargin
+        statement.executeUpdate(sql)
+    }
+    private def dropColumnComment(statement:Statement, table: TableIdentifier, column:String) : Unit = {
+        val sql = s"""
+                     |exec sp_dropextendedproperty
+                     |   'MS_Description',
+                     |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")},
+                     |   'TABLE', ${dialect.literal(table.table)},
+                     |   'COLUMN', ${dialect.literal(column)}
+                     |""".stripMargin
+        statement.executeUpdate(sql)
+    }
+    private def updateColumnComment(statement:Statement, table: TableIdentifier, column:String, comment:String) : Unit = {
+        val sql = s"""
+                     |exec sp_updateextendedproperty
+                     |   'MS_Description', ${dialect.literal(comment)},
+                     |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")},
+                     |   'TABLE', ${dialect.literal(table.table)},
+                     |   'COLUMN', ${dialect.literal(column)}
+                     |""".stripMargin
+        statement.executeUpdate(sql)
+
     }
 
     override def getStorageFormat(statement:Statement, table:TableIdentifier) : Option[String] = {

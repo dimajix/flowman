@@ -27,4 +27,6 @@ abstract class SqlExpressions {
     def partition(partition: PartitionSpec): String
 
     def collate(charset:Option[String], collation:Option[String]) : String
+
+    def comment(comment:Option[String]) : String
 }

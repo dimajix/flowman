@@ -32,6 +32,9 @@ relations:
         - name: comment
           type: VARCHAR(32)
           collation: Latin1_General_CS_AS
+        - name: new_column
+          type: VARCHAR(32)
+          description: "This is a new column"
     # (Optionally) specify a primary key
     primaryKey:
       - date

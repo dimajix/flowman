@@ -77,6 +77,10 @@ class MySQLExpressions(dialect: BaseDialect) extends BaseExpressions(dialect) {
         val col = collation.map(c => s" COLLATE $c").getOrElse("")
         cs + col
     }
+
+    override def comment(comment:Option[String]) : String = {
+        comment.map(c => s" COMMENT ${dialect.literal(c)}").getOrElse("")
+    }
 }
 
 class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
@@ -97,11 +101,19 @@ class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
             s"SELECT * FROM ${dialect.quote(table)} WHERE $condition FETCH FIRST ROW ONLY"
     }
 
-    // See https://dev.mysql.com/doc/refman/8.0/en/alter-table.html
-    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
+    override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
+        val desc = dialect.expr.comment(comment)
         val col = dialect.expr.collate(charset, collation)
-        s"ALTER TABLE ${dialect.quote(table)} MODIFY COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType$col $nullable"
+        s"ALTER TABLE ${dialect.quote(table)} ADD COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable$desc"
+    }
+
+    // See https://dev.mysql.com/doc/refman/8.0/en/alter-table.html
+    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
+        val nullable = if (isNullable) "NULL" else "NOT NULL"
+        val desc = dialect.expr.comment(comment)
+        val col = dialect.expr.collate(charset, collation)
+        s"ALTER TABLE ${dialect.quote(table)} MODIFY COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType$col $nullable$desc"
     }
 
     // See Old Syntax: https://dev.mysql.com/doc/refman/5.6/en/alter-table.html
@@ -112,10 +124,17 @@ class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
     }
 
     // See https://dev.mysql.com/doc/refman/8.0/en/alter-table.html
-    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
+    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
+        val desc = dialect.expr.comment(comment)
         val col = dialect.expr.collate(charset, collation)
-        s"ALTER TABLE ${dialect.quote(table)} MODIFY COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable"
+        s"ALTER TABLE ${dialect.quote(table)} MODIFY COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable$desc"
+    }
+    override def updateColumnComment(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
+        val nullable = if (isNullable) "NULL" else "NOT NULL"
+        val desc = dialect.expr.comment(comment)
+        val col = dialect.expr.collate(charset, collation)
+        s"ALTER TABLE ${dialect.quote(table)} MODIFY COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable$desc"
     }
 
     override def dropPrimaryKey(table: TableIdentifier): String = {
@@ -129,7 +148,7 @@ class MySQLStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
 
 
 class MySQLCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
-    override def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField] = {
+    override def getJdbcSchema(statement: Statement, table: TableIdentifier): Seq[JdbcField] = {
         // Get basic information
         val fields = super.getJdbcSchema(statement, table)
 
@@ -139,19 +158,21 @@ class MySQLCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
                |SELECT
                |    COLUMN_NAME,
                |    CHARACTER_SET_NAME,
-               |    COLLATION_NAME
+               |    COLLATION_NAME,
+               |    COLUMN_COMMENT
                |FROM information_schema.COLUMNS
                |WHERE lower(TABLE_SCHEMA) = ${table.space.headOption.map(s => dialect.literal(s.toLowerCase(Locale.ROOT))).getOrElse("lower(database())")}
                |    AND lower(TABLE_NAME) = ${dialect.literal(table.table.toLowerCase(Locale.ROOT))}
                |""".stripMargin
         val rs = statement.executeQuery(sql)
-        val colInfo = mutable.Map[String,(String,String)]()
+        val colInfo = mutable.Map[String, (Option[String], Option[String], Option[String])]()
         try {
             while (rs.next()) {
                 val name = rs.getString(1)
-                val charset = rs.getString(2)
-                val collation = rs.getString(3)
-                colInfo.put(name, (charset, collation))
+                val charset = Option(rs.getString(2))
+                val collation = Option(rs.getString(3))
+                val comment = Option(rs.getString(4)).filter(_.nonEmpty)
+                colInfo.put(name, (charset, collation, comment))
             }
         }
         finally {
@@ -161,8 +182,13 @@ class MySQLCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         // Merge base info and extra info
         fields.map { f =>
             colInfo.get(f.name)
-                .map(c => f.copy(charset=Option(c._1), collation=Option(c._2)))
+                .map(c => f.copy(charset=c._1, collation=c._2, description=c._3))
                 .getOrElse(f)
         }
+    }
+
+    override def updateColumnComment(statement:Statement, table: TableIdentifier, columnName:String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None) : Unit = {
+        val sql = dialect.statement.updateColumnComment(table, columnName, dataType, isNullable, charset, collation, comment)
+        statement.executeUpdate(sql)
     }
 }

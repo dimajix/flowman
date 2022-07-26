@@ -30,7 +30,11 @@ abstract class SqlCommands {
 
     def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField]
 
-    def updateComment(statement:Statement, table: TableIdentifier, column:String, comment:Option[String]) : Unit
+    def addColumn(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit
+    def deleteColumn(statement:Statement, table: TableIdentifier, columnName: String): Unit
+    def updateColumnType(statement:Statement, table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit
+    def updateColumnNullability(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit
+    def updateColumnComment(statement:Statement, table: TableIdentifier, columnName:String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None) : Unit
 
     def getStorageFormat(statement:Statement, table:TableIdentifier) : Option[String]
     def changeStorageFormat(statement:Statement, table:TableIdentifier, storageFormat:String) : Unit

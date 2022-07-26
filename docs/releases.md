@@ -33,6 +33,7 @@ changes over time.
 * github-219: [BUG] SchemaMapping should retain incoming comments
 * github-215: Support COLUMN STORE INDEX for MS SQL Server
 * github-182: Support column descriptions in JDBC relations (SQL Server / Azure SQL)
+* github-224: Support column descriptions for MariaDB / MySQL databases
 
 #### Breaking changes
 

@@ -66,11 +66,12 @@ abstract class SqlStatements {
 
     def firstRow(table: TableIdentifier, condition:String) : String
 
-    def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String
+    def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String
     def renameColumn(table: TableIdentifier, columnName: String, newName: String) : String
-    def deleteColumn(table: TableIdentifier, columnName: String): String
-    def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String
-    def updateColumnNullability(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String
+    def dropColumn(table: TableIdentifier, columnName: String): String
+    def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String
+    def updateColumnNullability(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String
+    def updateColumnComment(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String
 
     def dropPrimaryKey(table: TableIdentifier) : String
     def addPrimaryKey(table: TableIdentifier, columns:Seq[String]) : String

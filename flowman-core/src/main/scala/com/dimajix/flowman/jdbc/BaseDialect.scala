@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.jdbc
 
-import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.Date
 import java.sql.JDBCType
@@ -30,7 +29,6 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions.Expression
-import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.jdbc.JdbcType
 import org.apache.spark.sql.types.StructType
 
@@ -55,8 +53,6 @@ import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.UpdateClause
-import com.dimajix.flowman.jdbc.JdbcUtils.getJdbcSchema
-import com.dimajix.flowman.jdbc.JdbcUtils.withStatement
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.ByteType
@@ -268,7 +264,8 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
             val typ = dialect.getJdbcType(field.ftype).databaseTypeDefinition
             val nullable = if (field.nullable) "" else " NOT NULL"
             val col = dialect.expr.collate(field.charset, field.collation)
-            s"$name $typ$col$nullable"
+            val desc = dialect.expr.comment(field.description)
+            s"$name $typ$col$nullable$desc"
         }
         // Primary key
         val pk = if (table.primaryKey.nonEmpty) Seq(s"PRIMARY KEY (${table.primaryKey.map(dialect.quoteIdentifier).mkString(",")})") else Seq()
@@ -324,7 +321,7 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
             s"SELECT * FROM ${dialect.quote(table)} WHERE $condition LIMIT 1"
     }
 
-    override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
+    override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
         val col = dialect.expr.collate(charset, collation)
         s"ALTER TABLE ${dialect.quote(table)} ADD COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable"
@@ -333,19 +330,20 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
     override def renameColumn(table: TableIdentifier, columnName: String, newName: String): String =
         s"ALTER TABLE ${dialect.quote(table)} RENAME COLUMN ${dialect.quoteIdentifier(columnName)} TO ${dialect.quoteIdentifier(newName)}"
 
-    override def deleteColumn(table: TableIdentifier, columnName: String): String =
+    override def dropColumn(table: TableIdentifier, columnName: String): String =
         s"ALTER TABLE ${dialect.quote(table)} DROP COLUMN ${dialect.quoteIdentifier(columnName)}"
 
-    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
+    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
         val col = dialect.expr.collate(charset, collation)
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType$col $nullable"
     }
 
-    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None): String = {
+    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} SET $nullable"
     }
+    override def updateColumnComment(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = ???
 
     override def merge(targetTable: TableIdentifier, targetAlias:String, targetSchema:Option[StructType], sourceAlias:String, sourceSchema:StructType, condition:Column, clauses:Seq[MergeClause]) : String = {
         val sourceColumns = sourceSchema.names
@@ -469,8 +467,12 @@ class BaseExpressions(dialect: SqlDialect) extends SqlExpressions {
         s"PARTITION(${partitionValues.mkString(",")})"
     }
 
-    def collate(charset:Option[String], collation:Option[String]) : String = {
+    override def collate(charset:Option[String], collation:Option[String]) : String = {
         collation.map(c => s" COLLATE $c").getOrElse("")
+    }
+
+    override def comment(comment:Option[String]) : String = {
+        ""
     }
 }
 
@@ -501,7 +503,23 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
         }
     }
 
-    def updateComment(statement:Statement, table: TableIdentifier, column:String, comment:Option[String]) : Unit = {
+    def addColumn(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
+        val sql = dialect.statement.addColumn(table, columnName, dataType, isNullable, charset, collation, comment)
+        statement.executeUpdate(sql)
+    }
+    def deleteColumn(statement:Statement, table: TableIdentifier, columnName: String): Unit = {
+        val sql = dialect.statement.dropColumn(table, columnName)
+        statement.executeUpdate(sql)
+    }
+    def updateColumnType(statement:Statement, table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
+        val sql = dialect.statement.updateColumnType(table, columnName, newDataType, isNullable, charset, collation, comment)
+        statement.executeUpdate(sql)
+    }
+    def updateColumnNullability(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
+        val sql = dialect.statement.updateColumnNullability(table, columnName, dataType, isNullable, charset, collation, comment)
+        statement.executeUpdate(sql)
+    }
+    def updateColumnComment(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]) : Unit = {
         // Default is empty implementation
     }
 

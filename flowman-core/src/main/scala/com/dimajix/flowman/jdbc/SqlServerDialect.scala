@@ -228,26 +228,27 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
             s"""
                |SELECT
                |    objname,
-               |    value
+               |    TRY_CAST(value AS VARCHAR) AS value
                |FROM sys.fn_listextendedproperty ('MS_Description', 'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")}, 'TABLE', ${dialect.literal(table.table)}, 'column', null)
                |""".stripMargin
         queryKeyValue(statement, sql)
     }
     private def queryKeyValue(statement:Statement, sql:String) : Map[String,String] = {
         val rs = statement.executeQuery(sql)
-        val comments = mutable.Map[String,String]()
+        val values = mutable.Map[String,String]()
         try {
             while (rs.next()) {
                 val name = rs.getString(1)
-                val comment = rs.getString(2)
-                comments.put(name, comment)
+                val value = rs.getString(2)
+                if (value != null)
+                    values.put(name, value)
             }
         }
         finally {
             rs.close()
         }
 
-        comments.toMap
+        values.toMap
     }
 
     override def updateComment(statement:Statement, table: TableIdentifier, column:String, comment:Option[String]) : Unit = {
@@ -257,7 +258,7 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
            |SELECT
            |    objname,
            |    value
-           |FROM sys.fn_listextendedproperty ('MS_Description', 'SCHEMA', ${dialect.literal(table.database.getOrElse(""))}, 'TABLE', ${dialect.literal(table.table)}, 'column', ${dialect.literal(column)})
+           |FROM sys.fn_listextendedproperty ('MS_Description', 'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")}, 'TABLE', ${dialect.literal(table.table)}, 'column', ${dialect.literal(column)})
            |""".stripMargin
         if (queryKeyValue(statement, sql).nonEmpty) {
             comment match {

@@ -17,7 +17,7 @@ relations:
           description: "FIPS Country Code"
         - name: min_wind_speed
           type: FLOAT
-          description: "Minimum wind speed"
+          description: "Minimum wind speed, which will explain the wind speed but not the direction, which is provided in another cölumn"
         - name: max_wind_speed
           type: FLOAT
           description: "Maximum wind speed"

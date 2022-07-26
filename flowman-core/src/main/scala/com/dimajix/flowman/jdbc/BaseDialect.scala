@@ -501,9 +501,18 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
         }
     }
 
-    override def getStorageFormat(statement:Statement, table:TableIdentifier) : Option[String] = None
+    def updateComment(statement:Statement, table: TableIdentifier, column:String, comment:Option[String]) : Unit = {
+        // Default is empty implementation
+    }
 
-    override def changeStorageFormat(statement: Statement, table: TableIdentifier, storageFormat: String): Unit = ???
+    override def getStorageFormat(statement:Statement, table:TableIdentifier) : Option[String] = {
+        // Per default we don't support different storage formats
+        None
+    }
+    override def changeStorageFormat(statement: Statement, table: TableIdentifier, storageFormat: String): Unit = {
+        // Per default we don't support different storage formats
+        ???
+    }
 
     override def getPrimaryKey(statement:Statement, table:TableIdentifier) : Seq[String] = {
         val con = statement.getConnection

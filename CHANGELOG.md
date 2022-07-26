@@ -16,6 +16,7 @@
 * github-218: [BUG] Postgres dialect should be used for Postgres JDBC URLs
 * github-219: [BUG] SchemaMapping should retain incoming comments
 * github-215: Support COLUMN STORE INDEX for MS SQL Server
+* github-182: Support column descriptions in JDBC relations (SQL Server / Azure SQL)
 
 ## Breaking changes
 

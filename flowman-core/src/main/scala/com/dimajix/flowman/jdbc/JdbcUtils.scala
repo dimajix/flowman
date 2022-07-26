@@ -73,7 +73,8 @@ case class JdbcField(
     isSigned:Boolean,
     nullable:Boolean,
     collation:Option[String] = None,
-    charset:Option[String] = None
+    charset:Option[String] = None,
+    description:Option[String] = None
 )
 
 class JdbcUtils
@@ -341,7 +342,7 @@ object JdbcUtils {
     def getSchema(jdbcFields:Seq[JdbcField], dialect: SqlDialect) : StructType = {
         val fields = jdbcFields.map { field =>
             val columnType = dialect.getFieldType(field.dataType, field.typeName, field.fieldSize, field.fieldScale, field.isSigned)
-            Field(field.name, columnType, field.nullable, charset=field.charset, collation=field.collation)
+            Field(field.name, columnType, field.nullable, description=field.description, charset=field.charset, collation=field.collation)
         }
 
         StructType(fields)
@@ -677,7 +678,7 @@ object JdbcUtils {
                 Some((stmt:Statement) => stmt.executeUpdate(statements.updateColumnNullability(table, u.column, current.typeName, u.nullable, charset=current.charset, collation=current.collation)))
             case u:UpdateColumnComment =>
                 logger.info(s"Updating comment of column '${u.column}' in JDBC table $table")
-                None
+                Some((stmt:Statement) => dialect.command.updateComment(stmt, table, u.column, u.comment))
             case idx:CreateIndex =>
                 logger.info(s"Adding index '${idx.name}' to JDBC table $table on columns ${idx.columns.mkString(",")}")
                 Some((stmt:Statement) => dialect.command.createIndex(stmt, table, TableIndex(idx.name, idx.columns, idx.unique)))

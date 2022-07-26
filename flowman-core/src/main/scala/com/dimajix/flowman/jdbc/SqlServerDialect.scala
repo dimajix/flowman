@@ -28,7 +28,6 @@ import org.apache.spark.sql.types.StructType
 
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
-import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.MergeClause
@@ -181,6 +180,8 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         val indexSql = table.indexes.map(idx => dialect.statement.createIndex(table.identifier, idx))
         statement.executeUpdate(tableSql)
 
+        // Attach any comments
+
         // Optionally create CLUSTERED COLUMNSTORE INDEX
         table.storageFormat.map(_.toLowerCase(Locale.ROOT)) match {
             case Some("columnstore") =>
@@ -207,24 +208,92 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
               |FROM sys.columns c
               |WHERE c.object_id = OBJECT_ID(${dialect.literal(dialect.quote(table))})
               |""".stripMargin
+        val collations = queryKeyValue(statement, sql)
+        val comments = getColumnComments(statement, table)
+
+        // Merge base info and extra info
+        fields.map { f =>
+            val c1 = collations.get(f.name)
+                .map(c => f.copy(collation=Option(c)))
+                .getOrElse(f)
+            comments.get(c1.name)
+                .map(c => c1.copy(description=Option(c)))
+                .getOrElse(c1)
+        }
+    }
+
+    private def getColumnComments(statement:Statement, table:TableIdentifier) : Map[String,String] = {
+        // Query extended information
+        val sql =
+            s"""
+               |SELECT
+               |    objname,
+               |    value
+               |FROM sys.fn_listextendedproperty ('MS_Description', 'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")}, 'TABLE', ${dialect.literal(table.table)}, 'column', null)
+               |""".stripMargin
+        queryKeyValue(statement, sql)
+    }
+    private def queryKeyValue(statement:Statement, sql:String) : Map[String,String] = {
         val rs = statement.executeQuery(sql)
-        val colInfo = mutable.Map[String,String]()
+        val comments = mutable.Map[String,String]()
         try {
             while (rs.next()) {
                 val name = rs.getString(1)
-                val collation = rs.getString(2)
-                colInfo.put(name, collation)
+                val comment = rs.getString(2)
+                comments.put(name, comment)
             }
         }
         finally {
             rs.close()
         }
 
-        // Merge base info and extra info
-        fields.map { f =>
-            colInfo.get(f.name)
-                .map(c => f.copy(collation=Option(c)))
-                .getOrElse(f)
+        comments.toMap
+    }
+
+    override def updateComment(statement:Statement, table: TableIdentifier, column:String, comment:Option[String]) : Unit = {
+        // 1. Check if we currently do have a comment
+        val sql =
+        s"""
+           |SELECT
+           |    objname,
+           |    value
+           |FROM sys.fn_listextendedproperty ('MS_Description', 'SCHEMA', ${dialect.literal(table.database.getOrElse(""))}, 'TABLE', ${dialect.literal(table.table)}, 'column', ${dialect.literal(column)})
+           |""".stripMargin
+        if (queryKeyValue(statement, sql).nonEmpty) {
+            comment match {
+                case Some(c) =>
+                    val sql = s"""
+                        |exec sp_updateextendedproperty
+                        |   'MS_Description', ${dialect.literal(c)},
+                        |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")},
+                        |   'TABLE', ${dialect.literal(table.table)},
+                        |   'COLUMN', ${dialect.literal(column)}
+                        |""".stripMargin
+                    statement.executeUpdate(sql)
+                case None =>
+                    val sql = s"""
+                        |exec sp_dropextendedproperty
+                        |   'MS_Description',
+                        |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")},
+                        |   'TABLE', ${dialect.literal(table.table)},
+                        |   'COLUMN', ${dialect.literal(column)}
+                        |""".stripMargin
+                    statement.executeUpdate(sql)
+            }
+        }
+        else {
+            comment match {
+                case Some(c) =>
+                    val sql = s"""
+                        |exec sp_addextendedproperty
+                        |   'MS_Description', ${dialect.literal(c)},
+                        |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")},
+                        |   'TABLE', ${dialect.literal(table.table)},
+                        |   'COLUMN', ${dialect.literal(column)}
+                        |""".stripMargin
+                    statement.executeUpdate(sql)
+                case None => // Nothing to do
+            }
         }
     }
 

@@ -14,7 +14,7 @@ The following gives an (incomplete) list of past releases of the last 12 months.
 changes over time.
 
 
-### Version 0.26.0
+### Version 0.26.0 - 2022-07-27
 
 * github-202: Add support for Spark 3.3
 * github-203: [BUG] Resource dependencies for Hive should be case-insensitive

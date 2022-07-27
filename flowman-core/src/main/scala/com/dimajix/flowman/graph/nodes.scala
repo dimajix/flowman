@@ -18,6 +18,7 @@ package com.dimajix.flowman.graph
 
 import scala.collection.mutable
 
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
@@ -137,8 +138,8 @@ final class RelationRef(val id:Int, val relation:Relation, val fields:Seq[Column
     override def kind: String = relation.kind
     override def name: String = relation.name
     override def project: Option[String] = relation.project.map(_.name)
-    def provides : Set[ResourceIdentifier] = relation.provides
-    def requires : Set[ResourceIdentifier] = relation.requires
+    def provides : Set[ResourceIdentifier] = relation.provides(Operation.CREATE)
+    def requires : Set[ResourceIdentifier] = relation.requires(Operation.CREATE)
     def identifier : RelationIdentifier = relation.identifier
 }
 final class MappingOutput(val id:Int, val output:String, val fields:Seq[Column]=Seq.empty) extends Node {

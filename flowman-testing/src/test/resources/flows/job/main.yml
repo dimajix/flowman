@@ -1,6 +1,6 @@
 targets:
   null:
-    kind: "null"
+    kind: empty
 
 jobs:
   main:

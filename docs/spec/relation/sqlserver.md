@@ -52,6 +52,8 @@ relations:
       password: "$frontend_db_password"
     # Specify the table
     table: "users"
+    # Specify storage format
+    storageFormat: COLUMNSTORE
 ```
 For most cases, it is recommended not to embed the connection, since this prevents reusing the same connection in
 multiple places.
@@ -96,6 +98,11 @@ specific qualification, meaning that the default database will be used or the on
  * `indexes` **(optional)** *(type: list:index)* *(default: empty)*:
  Specifies a list of database indexes to be created. Each index has the properties `name`, `columns` and `unique`.
 
+ * `storageformat` **(optional)** *(type: string)* *(default: empty)*:
+ Specifies the internal storage format, which can either be `ROWSTORE` or `COLUMNSTORE`. Internally MS SQL Server
+ uses `ROWSTORE` as the default format. `COLUMNSTORE` will actually create a `CLUSTERED COLUMNSTORE INDEX` and is
+ preferable for typical OLAP workloads.
+
 
 ## Automatic Migrations
 Flowman supports some automatic migrations, specifically with the migration strategies `ALTER`, `ALTER_REPLACE`
@@ -138,8 +145,31 @@ In addition, the `sqlserver` relation also supports complex merge operations in 
 
 ## Remarks
 
+When using SQL Server tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the
+whole lifecycle for you. This means that
+* SQL Server tables will be created and migrated during `CREATE` phase, but only if a schema is provided
+* SQL Server tables will be populated with records and partitions will be added during `BUILD` phase, but only if the
+  `relation` target contains a mapping.
+* SQL Server tables will be truncated or individual partitions will be dropped during `TRUNCATE` phase
+* SQL Server tables will be removed during `DESTROY` phase
+
+This means that you can
+* Externally manage tables by omitting the schema. Then Flowman will not create or migrate the table for
+  any [`relation` target](../target/relation.md) referring to this relation.
+* Only manage the tables by Flowman but not populate it with data by omitting a mapping in the
+  [`relation` target](../target/relation.md).
+
+### Mocking SQL server relations
 Note that Flowman will rely on schema inference in some important situations, like [mocking](mock.md) and generally
 for describing the schema of a relation. This might create unwanted connections to the physical data source,
 particular in case of self-contained tests. To prevent Flowman from creating a connection to the physical data 
 source, you simply need to explicitly specify a schema, which will then be used instead of the physical schema 
 in all situations where only schema information is required.
+
+### Using staging tables
+Since version 0.23.0 Flowman will always use a global temporary table as a staging table for any write/update
+operation for SQL Server relations.
+
+While this two-step approach might slow down write processes, it is often required when performing update/merge
+operations since these could result in database deadlocks otherwise when Spark performs these operations in parallel
+from multiple processes into a single database.

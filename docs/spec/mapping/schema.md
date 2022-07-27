@@ -55,7 +55,8 @@ Specifies the name of the input mapping to be filtered.
 Specifies the list of column names (key) with their type (value)
 
 * `schema` **(optional)** *(type: schema)*:
-As an alternative of specifying a list of columns you can also directly specify a schema.
+As an alternative of specifying a list of columns you can also directly specify a schema, as described in
+[schema](../schema/index.md).
 
 * `filter` **(optional)** *(type: string)* *(default: empty)*:
 An optional SQL filter expression that is applied *after* schema operation.
@@ -63,3 +64,38 @@ An optional SQL filter expression that is applied *after* schema operation.
 
 ## Outputs
 * `main` - the only output of the mapping
+
+
+## Remarks
+The `schema` mapping is similar to both the [`cast`](cast.md) mapping and the [`project`](project.md) mapping. The
+differences are as follows:
+* The [`project` mapping](project.md) only performs simple type conversions and will only emit the columns specified
+  in the `columns` list. It will drop all columns not specified in the list and cannot add new columns.
+* The [`schema` mapping](schema.md) allows to specify arbitrary complex data types including nested types. It will
+  make sure that the result precisely matches the specified schema, i.e. it will add and/or drop columns as required.
+* The [`cast` mapping](cast.md) will only change the data type of the specified columns and will keep all othe columns
+  unchanged. This means that it will not add or drop any of the incoming columns.
+
+
+
+### Supported data types
+
+The following simple data types are supported for the `columns` property:
+
+* `string`, `text` - text and strings of arbitrary length
+* `binary` - binary data of arbitrary length
+* `tinyint`, `byte` - 8 bit signed numbers
+* `smallint`, `short` - 16 bit signed numbers
+* `int`, `integer` - 32 bit signed numbers
+* `bigint`, `long` - 64 bit signed numbers
+* `boolean` - true or false
+* `float` - 32 bit floating point number
+* `double` - 64 bit floating point number
+* `decimal(a,b)`
+* `varchar(n)` - text with up to `n`characters. Note that this data type is only supported for specifying input or
+  output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length.
+* `char(n)` - text with exactly `n`characters. Note that this data type is only supported for specifying input or
+  output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length.
+* `date` - date type
+* `timestamp` - timestamp type (date and time)
+* `duration` - duration type

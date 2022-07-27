@@ -36,6 +36,7 @@ import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.hadoop.FileUtils
@@ -162,40 +163,51 @@ case class HiveUnionTableRelation(
       *
       * @return
       */
-    override def provides: Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofHiveTable(tableRegex),
-        ResourceIdentifier.ofHiveTable(viewIdentifier)
-    )
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty): Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                Set(
+                    ResourceIdentifier.ofHiveTable(tableRegex),
+                    ResourceIdentifier.ofHiveTable(viewIdentifier)
+                )
+            case Operation.READ => Set.empty
+            case Operation.WRITE =>
+                requireValidPartitionKeys(partitions)
+
+                // Only return Hive table partitions!
+                val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                allPartitions.map(p => ResourceIdentifier.ofHivePartition(tableRegex, p.toMap)).toSet
+        }
+    }
 
     /**
       * Returns the list of all resources which will be required by this relation for creation.
       *
       * @return
       */
-    override def requires: Set[ResourceIdentifier] = {
-        tablePrefix.database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet ++
-            viewIdentifier.database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet ++
-            super.requires
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty): Set[ResourceIdentifier] = {
+        val deps = op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                tablePrefix.database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet ++
+                    viewIdentifier.database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
+            case Operation.READ =>
+                requireValidPartitionKeys(partitions)
+
+                // Only return Hive table partitions!
+                val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                allPartitions.map(p => ResourceIdentifier.ofHivePartition(tableRegex, p.toMap)).toSet ++
+                    Set(
+                        ResourceIdentifier.ofHiveTable(tableRegex),
+                        ResourceIdentifier.ofHiveTable(viewIdentifier)
+                    )
+            case Operation.WRITE =>
+                Set(
+                    ResourceIdentifier.ofHiveTable(tableRegex),
+                    ResourceIdentifier.ofHiveTable(viewIdentifier)
+                )
+        }
+        deps ++ super.requires(op, partitions)
     }
-
-    /**
-      * Returns the list of all resources which will are managed by this relation for reading or writing a specific
-      * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
-      * partition is empty)
-      *
-      * @param partition
-      * @return
-      */
-    override def resources(partition: Map[String, FieldValue]): Set[ResourceIdentifier] = {
-        require(partitions != null)
-
-        requireValidPartitionKeys(partition)
-
-        // Only return Hive table partitions!
-        val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
-        allPartitions.map(p => ResourceIdentifier.ofHivePartition(tableRegex, p.toMap)).toSet
-    }
-
 
     /**
       * Reads data from the relation, possibly from specific partitions

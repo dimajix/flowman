@@ -35,6 +35,7 @@ import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.DataFrameBuilder
 
 
 case class SchemaMapping(
@@ -68,13 +69,6 @@ extends BaseMapping {
         require(execution != null)
         require(tables != null)
 
-        val xfs = if(schema.nonEmpty) {
-            SchemaEnforcer(schema.get.sparkSchema)
-        }
-        else {
-            SchemaEnforcer(StructType(columns).sparkType)
-        }
-
         val df = tables(input)
         val result = xfs.transform(df)
 
@@ -93,16 +87,19 @@ extends BaseMapping {
         require(execution != null)
         require(input != null)
 
-        val result = if(schema.nonEmpty) {
-            StructType(schema.get.fields)
-        }
-        else  {
-            StructType(columns)
-        }
+        val df = DataFrameBuilder.singleRow(execution.spark, input(this.input).sparkType)
+        val result = StructType.of(xfs.transform(df).schema)
 
         // Apply documentation
         val schemas = Map("main" -> result)
         applyDocumentation(schemas)
+    }
+
+    private lazy val xfs = if(schema.nonEmpty) {
+        SchemaEnforcer(schema.get.sparkSchema)
+    }
+    else {
+        SchemaEnforcer(StructType(columns).sparkType)
     }
 }
 

@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.JobToken
-import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.execution.Token
@@ -42,6 +41,7 @@ import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.hook.WebHook.DummyJobToken
 import com.dimajix.flowman.spec.hook.WebHook.DummyTargetToken
+import com.dimajix.flowman.util.ConsoleColors.yellow
 
 
 object WebHook {
@@ -157,7 +157,7 @@ case class WebHook(
                 httpClient.execute(httpGet)
             }
             catch {
-                case NonFatal(ex) => logger.warn(s"Could not post status to url '$url': ${ex.toString}")
+                case NonFatal(ex) => logger.warn(yellow(s"Could not post status to url '$url': ${ex.toString}"))
             }
         }
     }

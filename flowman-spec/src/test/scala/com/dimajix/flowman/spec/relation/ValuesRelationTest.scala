@@ -24,6 +24,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Module
@@ -70,8 +71,12 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
 
         relation.category should be (Category.RELATION)
         relation.kind should be ("values")
-        relation.provides should be (Set())
-        relation.requires should be (Set())
+        relation.requires(Operation.CREATE) should be (Set.empty)
+        relation.provides(Operation.CREATE) should be (Set.empty)
+        relation.requires(Operation.READ) should be (Set.empty)
+        relation.provides(Operation.READ) should be (Set.empty)
+        relation.requires(Operation.WRITE) should be (Set.empty)
+        relation.provides(Operation.WRITE) should be (Set.empty)
         relation.identifier should be (RelationIdentifier("project/fake"))
         relation.fields should be (Seq(
             Field("str_col", StringType),
@@ -111,8 +116,12 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
 
         relation.category should be (Category.RELATION)
         relation.kind should be ("values")
-        relation.provides should be (Set())
-        relation.requires should be (Set())
+        relation.provides(Operation.CREATE) should be (Set())
+        relation.requires(Operation.CREATE) should be (Set())
+        relation.provides(Operation.READ) should be (Set())
+        relation.requires(Operation.READ) should be (Set())
+        relation.provides(Operation.WRITE) should be (Set())
+        relation.requires(Operation.WRITE) should be (Set())
         relation.identifier should be (RelationIdentifier("project/fake"))
         relation.columns should be (Seq(
             Field("str_col", StringType),
@@ -169,9 +178,12 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
         (relationTemplate.instantiate _).expects(context, None).returns(valuesRelation)
         val relation = context.getRelation(RelationIdentifier("const"))
 
-        relation.provides should be (Set())
-        relation.requires should be (Set())
-        relation.resources(Map()) should be (Set())
+        relation.provides(Operation.CREATE) should be (Set())
+        relation.requires(Operation.CREATE) should be (Set())
+        relation.provides(Operation.READ) should be (Set())
+        relation.requires(Operation.READ) should be (Set())
+        relation.provides(Operation.WRITE) should be (Set())
+        relation.requires(Operation.WRITE) should be (Set())
         relation.partitions should be (Seq())
         relation.fields should be (Seq(
             Field("str_col", StringType),
@@ -219,9 +231,12 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
         (relationTemplate.instantiate _).expects(context, None).returns(mockRelation)
         val relation = context.getRelation(RelationIdentifier("const"))
 
-        relation.provides should be (Set())
-        relation.requires should be (Set())
-        relation.resources(Map()) should be (Set())
+        relation.provides(Operation.CREATE) should be (Set())
+        relation.requires(Operation.CREATE) should be (Set())
+        relation.provides(Operation.READ) should be (Set())
+        relation.requires(Operation.READ) should be (Set())
+        relation.provides(Operation.WRITE) should be (Set())
+        relation.requires(Operation.WRITE) should be (Set())
         relation.partitions should be (Seq())
         relation.fields should be (Seq(
             Field("str_col", StringType),

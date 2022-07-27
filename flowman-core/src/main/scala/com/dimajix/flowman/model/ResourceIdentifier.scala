@@ -18,6 +18,7 @@ package com.dimajix.flowman.model
 
 import java.io.File
 import java.net.URL
+import java.util.Locale
 import java.util.regex.Pattern
 
 import scala.annotation.tailrec
@@ -36,25 +37,27 @@ object ResourceIdentifier {
     def ofLocal(file:File): GlobbingResourceIdentifier =
         GlobbingResourceIdentifier("local", new Path(file.toURI.getPath).toString)
     def ofHiveDatabase(database:String): RegexResourceIdentifier =
-        RegexResourceIdentifier("hiveDatabase", database)
+        RegexResourceIdentifier("hiveDatabase", database, caseSensitive=false)
     def ofHiveTable(table:TableIdentifier): RegexResourceIdentifier =
         ofHiveTable(table.table, table.space.headOption)
     def ofHiveTable(table:String): RegexResourceIdentifier =
-        RegexResourceIdentifier("hiveTable", table)
+        RegexResourceIdentifier("hiveTable", table, caseSensitive=false)
     def ofHiveTable(table:String, database:Option[String]): RegexResourceIdentifier =
-        RegexResourceIdentifier("hiveTable", fqTable(table, database))
+        RegexResourceIdentifier("hiveTable", fqTable(table, database), caseSensitive=false)
     def ofHivePartition(table:TableIdentifier, partition:Map[String,Any]): RegexResourceIdentifier =
         ofHivePartition(table.table, table.space.headOption, partition)
     def ofHivePartition(table:String, partition:Map[String,Any]): RegexResourceIdentifier =
-        RegexResourceIdentifier("hiveTablePartition", table, partition.map { case(k,v) => k -> v.toString })
+        RegexResourceIdentifier("hiveTablePartition", table, partition.map { case(k,v) => k -> v.toString }, caseSensitive=false)
     def ofHivePartition(table:String, database:Option[String], partition:Map[String,Any]): RegexResourceIdentifier =
-        RegexResourceIdentifier("hiveTablePartition", fqTable(table, database), partition.map { case(k,v) => k -> v.toString })
+        RegexResourceIdentifier("hiveTablePartition", fqTable(table, database), partition.map { case(k,v) => k -> v.toString }, caseSensitive=false)
     def ofJdbcDatabase(database:String): RegexResourceIdentifier =
         RegexResourceIdentifier("jdbcDatabase", database)
     def ofJdbcTable(table:TableIdentifier): RegexResourceIdentifier =
         ofJdbcTable(table.table, table.space.headOption)
     def ofJdbcTable(table:String, database:Option[String]): RegexResourceIdentifier =
         RegexResourceIdentifier("jdbcTable", fqTable(table, database))
+    def ofJdbcTable(table:String): RegexResourceIdentifier =
+        RegexResourceIdentifier("jdbcTable", table)
     def ofJdbcQuery(query:String): SimpleResourceIdentifier =
         SimpleResourceIdentifier("jdbcQuery", "<sql_query>")
     def ofJdbcTablePartition(table:TableIdentifier, partition:Map[String,Any]): RegexResourceIdentifier =
@@ -203,16 +206,24 @@ extends ResourceIdentifier
  * @param name
  * @param partition
  */
-final case class RegexResourceIdentifier(override val category:String, override val name:String, override val partition:Map[String,String] = Map())
+final case class RegexResourceIdentifier(override val category:String, override val name:String, override val partition:Map[String,String] = Map(), caseSensitive:Boolean=true)
 extends ResourceIdentifier
 {
-    private lazy val regex = Pattern.compile(name, Pattern.DOTALL)
+    private lazy val regex = {
+        val opts =
+            if (caseSensitive) Pattern.DOTALL
+            else Pattern.DOTALL | Pattern.CASE_INSENSITIVE
+        Pattern.compile(name, opts)
+    }
 
     override def withPartition(partition:Map[String,String]) : ResourceIdentifier = copy(partition=partition)
 
     override protected def containsName(other:ResourceIdentifier) : Boolean = {
         // Test simple case: Perfect match
-        if (name == other.name) {
+        if (caseSensitive && name == other.name) {
+            true
+        }
+        else if (!caseSensitive && name.toLowerCase(Locale.ROOT) == other.name.toLowerCase(Locale.ROOT)) {
             true
         }
         // Test if wildcards do match

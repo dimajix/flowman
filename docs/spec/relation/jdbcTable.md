@@ -146,6 +146,20 @@ In addition, the `jdbcTable` relation also supports complex merge operations in 
 
 ## Remarks
 
+When using JDBC tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the
+whole lifecycle for you. This means that
+* JDBC tables will be created and migrated during `CREATE` phase, but only if a schema is provided
+* JDBC tables will be populated with records and partitions will be added during `BUILD` phase, but only if the 
+  `relation` target contains a mapping.
+* JDBC tables will be truncated or individual partitions will be dropped during `TRUNCATE` phase
+* JDBC tables will be removed during `DESTROY` phase
+
+This means that you can
+* Externally manage tables by omitting the schema. Then Flowman will not create or migrate the table for
+  any [`relation` target](../target/relation.md) referring to this relation.
+* Only manage the tables by Flowman but not populate it with data by omitting a mapping in the 
+  [`relation` target](../target/relation.md).
+
 ### Mocking JDBC relations
 Note that Flowman will rely on schema inference in some important situations, like [mocking](mock.md) and generally
 for describing the schema of a relation. This might create unwanted connections to the physical data source,

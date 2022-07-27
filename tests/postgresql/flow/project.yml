@@ -1,0 +1,8 @@
+name: "mariadb"
+version: "1.0"
+
+modules:
+  - config
+  - job
+  - mapping
+  - model

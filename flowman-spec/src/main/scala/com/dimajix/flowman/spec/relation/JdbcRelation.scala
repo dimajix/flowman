@@ -30,11 +30,13 @@ import com.dimajix.common.text.TimeFormatter
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.PartitionedRelation
 import com.dimajix.flowman.model.Reference
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.spec.connection.JdbcConnection
 
 
@@ -43,6 +45,7 @@ abstract class JdbcRelation(
     properties: Map[String,String] = Map.empty
 ) extends BaseRelation with PartitionedRelation {
     protected val logger: Logger = LoggerFactory.getLogger(getClass)
+    protected val resource: ResourceIdentifier
 
     protected def dropTableOrView(execution: Execution, table:TableIdentifier, ifExists: Boolean) : Unit = {
         require(execution != null)
@@ -50,43 +53,20 @@ abstract class JdbcRelation(
         logger.info(s"Destroying JDBC relation '$identifier', this will drop JDBC table/view $table")
         withConnection{ (con,options) =>
             JdbcUtils.dropTableOrView(con, table, options, ifExists)
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
 
-    protected def createConnectionProperties() : (String,Map[String,String]) = {
+    protected def createConnectionProperties() : Map[String,String] = {
         val connection = this.connection.value.asInstanceOf[JdbcConnection]
-        val props = mutable.Map[String,String]()
-        props.put(JDBCOptions.JDBC_URL, connection.url)
-        props.put(JDBCOptions.JDBC_DRIVER_CLASS, connection.driver)
-        connection.username.foreach(props.put("user", _))
-        connection.password.foreach(props.put("password", _))
-
-        connection.properties.foreach(kv => props.put(kv._1, kv._2))
-        properties.foreach(kv => props.put(kv._1, kv._2))
-
-        (connection.url,props.toMap)
+        connection.toConnectionProperties() ++ properties
     }
 
     protected def withConnection[T](fn:(java.sql.Connection,JDBCOptions) => T) : T = {
-        val (url,props) = createConnectionProperties()
-        logger.debug(s"Connecting to jdbc source at $url")
+        val props = createConnectionProperties()
 
         val options = new JDBCOptions(props)
-        val conn = try {
-            JdbcUtils.createConnection(options)
-        } catch {
-            case NonFatal(e) =>
-                logger.error(s"Error connecting to jdbc source at $url: ${e.getMessage}")
-                throw e
-        }
-
-        try {
-            fn(conn, options)
-        }
-        finally {
-            conn.close()
-        }
+        JdbcUtils.withConnection(options) { con => fn(con,options) }
     }
 
     protected def withTransaction[T](con:java.sql.Connection)(fn: => T) : T = {

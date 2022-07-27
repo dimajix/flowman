@@ -26,6 +26,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Relation
@@ -51,24 +52,27 @@ case class GenericRelation(
      *
      * @return
      */
-    override def provides : Set[ResourceIdentifier] = Set(resource)
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                Set(resource)
+            case Operation.READ | Operation.WRITE  =>
+                Set(resource)
+        }
+    }
 
     /**
      * Returns the list of all resources which will be required by this relation
      *
      * @return
      */
-    override def requires : Set[ResourceIdentifier] = Set()
-
-    /**
-     * Returns the list of all resources which will be required by this relation for reading a specific partition.
-     * The list will be specifically  created for a specific partition, or for the full relation (when the partition
-     * is empty)
-     *
-     * @param partitions
-     * @return
-     */
-    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = Set(resource)
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] =  {
+        op match {
+            case Operation.CREATE | Operation.DESTROY => Set.empty
+            case Operation.READ | Operation.WRITE  =>
+                Set(resource)
+        }
+    }
 
     /**
      * Reads data from the relation, possibly from specific partitions

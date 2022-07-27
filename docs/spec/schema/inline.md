@@ -40,7 +40,9 @@ relations:
 * `description` **(optional)** *(type: string)*
 * `default` **(optional)** *(type: string)* Specifies a default value
 * `format` **(optional)** *(type: string)* Some relations or file formats may support different formats for example
-for storing dates
+  for storing dates
+* `charset` **(optional)** *(type: string)* Specifies the character set of a column. Useful for MySQL / MariaDB tables.
+* `collation` **(optional)** *(type: string)* Specifies the collation of a column. Useful for SQL tables.
 
 
 ## Data Types

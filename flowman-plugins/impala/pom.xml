@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.25.1</version>
+        <version>0.26.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -17,7 +17,7 @@
         <plugin.name>flowman-impala</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <impala.jdbc.version>2.6.23.1028</impala.jdbc.version>
+        <impala.jdbc.version>2.6.26.1031</impala.jdbc.version>
     </properties>
 
     <repositories>

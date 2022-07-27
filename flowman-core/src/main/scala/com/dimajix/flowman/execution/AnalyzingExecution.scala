@@ -97,11 +97,11 @@ final class AnalyzingExecution(context: Context) extends CachingExecution(None, 
     override def assert(assertion: Assertion): AssertionResult = throw new UnsupportedOperationException
 
     /**
-     * Returns the [[OperationManager]] of this execution, which should be the instance created by the [[Session]]
+     * Returns the [[ActivityManager]] of this execution, which should be the instance created by the [[Session]]
      *
      * @return
      */
-    override def operations: OperationManager = throw new UnsupportedOperationException
+    override def activities: ActivityManager = throw new UnsupportedOperationException
 
     override def withListeners[T](listeners: Seq[ExecutionListener])(fn: Execution => T): T = throw new UnsupportedOperationException
 

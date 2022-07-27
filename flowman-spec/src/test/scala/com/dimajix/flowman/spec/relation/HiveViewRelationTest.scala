@@ -28,6 +28,8 @@ import com.dimajix.common.No
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
@@ -79,12 +81,19 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
       mapping = Some(MappingOutputIdentifier("t0"))
     )
 
-    relation.provides should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
-    relation.requires should be (Set(
+    relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
+    relation.requires(Operation.CREATE) should be (Set(
         ResourceIdentifier.ofHiveDatabase("default"),
         ResourceIdentifier.ofHiveTable("t0", Some("default"))
     ))
-    relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("t0", Some("default"), Map())))
+    relation.provides(Operation.WRITE) should be (Set.empty)
+    relation.requires(Operation.WRITE) should be (Set.empty)
+    relation.provides(Operation.READ) should be (Set(ResourceIdentifier.ofHivePartition("v0", Some("default"), Map())))
+    relation.requires(Operation.READ) should be (Set(
+        ResourceIdentifier.ofHiveTable("v0", Some("default")),
+        ResourceIdentifier.ofHiveTable("t0", Some("default")),
+        ResourceIdentifier.ofHivePartition("t0", Some("default"), Map())
+    ))
     an[Exception] should be thrownBy(relation.describe(execution))
 
     // == Create =================================================================================================
@@ -98,6 +107,24 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
     relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
     relation.loaded(execution, Map()) should be (Yes)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
+
+    // == Migrate =================================================================================================
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.NEVER)
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.FAIL)
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER)
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER_REPLACE)
+    relation.exists(execution) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL)
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+    relation.migrate(execution, MigrationPolicy.RELAXED)
+    relation.exists(execution) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
     // == Read ===================================================================================================
     relation.describe(execution) should be (ftypes.StructType(Seq(
@@ -174,17 +201,24 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
       mapping = Some(MappingOutputIdentifier("union"))
     )
 
-    relation.provides should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
-    relation.requires should be (Set(
+    relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
+    relation.requires(Operation.CREATE) should be (Set(
       ResourceIdentifier.ofHiveDatabase("default"),
       ResourceIdentifier.ofHiveTable("t0", Some("default")),
       ResourceIdentifier.ofHiveTable("t1", Some("default"))
     ))
-    relation.resources() should be (Set(
+    relation.provides(Operation.WRITE) should be (Set.empty)
+    relation.requires(Operation.WRITE) should be (Set.empty)
+    relation.provides(Operation.READ) should be (Set(ResourceIdentifier.ofHivePartition("v0", Some("default"), Map())))
+    relation.requires(Operation.READ) should be (Set(
+        ResourceIdentifier.ofHiveTable("v0", Some("default")),
+        ResourceIdentifier.ofHiveTable("t0", Some("default")),
+        ResourceIdentifier.ofHiveTable("t1", Some("default")),
         ResourceIdentifier.ofHivePartition("t0", Some("default"), Map()),
         ResourceIdentifier.ofHivePartition("t1", Some("default"), Map())
     ))
 
+    // == Create =================================================================================================
     relation.exists(execution) should be (No)
     relation.loaded(execution, Map()) should be (No)
     relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
@@ -196,8 +230,25 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
     relation.loaded(execution, Map()) should be (Yes)
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
 
-    //session.catalog.getTable(TableIdentifier("v0", Some("default"))).viewText.foreach(println)
+    // == Migrate =================================================================================================
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.NEVER)
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.FAIL)
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER)
+    relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER_REPLACE)
+    relation.exists(execution) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
 
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL)
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+    relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+    relation.migrate(execution, MigrationPolicy.RELAXED)
+    relation.exists(execution) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+    relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+    // == Destroy ================================================================================================
     relation.destroy(execution)
     relation.exists(execution) should be (No)
     relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
@@ -242,15 +293,21 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
             file = Some(new Path(basedir, "project/relation/some-view.sql"))
         )
 
-        relation.provides should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
-        relation.requires should be (Set(
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
+        relation.requires(Operation.CREATE) should be (Set(
             ResourceIdentifier.ofHiveDatabase("default"),
             ResourceIdentifier.ofHiveTable("t0", Some("default"))
         ))
-        relation.resources() should be (Set(
+        relation.provides(Operation.WRITE) should be (Set.empty)
+        relation.requires(Operation.WRITE) should be (Set.empty)
+        relation.provides(Operation.READ) should be (Set(ResourceIdentifier.ofHivePartition("v0", Some("default"), Map())))
+        relation.requires(Operation.READ) should be (Set(
+            ResourceIdentifier.ofHiveTable("v0", Some("default")),
+            ResourceIdentifier.ofHiveTable("t0", Some("default")),
             ResourceIdentifier.ofHivePartition("t0", Some("default"), Map())
         ))
 
+        // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
@@ -262,6 +319,25 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         relation.loaded(execution, Map()) should be (Yes)
         session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (true)
 
+        // == Migrate =================================================================================================
+        relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.NEVER)
+        relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.FAIL)
+        relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER)
+        relation.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER_REPLACE)
+        relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        relation.migrate(execution, MigrationPolicy.RELAXED)
+        relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+        // == Destroy ================================================================================================
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
@@ -376,13 +452,13 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         table.conforms(execution, MigrationPolicy.STRICT) should be (No)
         session.catalog.tableExists(TableIdentifier("table_or_view", Some("default"))) should be (false)
 
-        // == Destroy TABLE ===========================================================================================
-        table.destroy(execution, ifExists = true)
-        a[NoSuchTableException] should be thrownBy(table.destroy(execution, ifExists = false))
-
         // == Destroy VIEW ==========================================================================================
         view.destroy(execution, ifExists = true)
         a[NoSuchTableException] should be thrownBy(view.destroy(execution, ifExists = false))
+
+        // == Destroy TABLE ===========================================================================================
+        table.destroy(execution, ifExists = true)
+        a[NoSuchTableException] should be thrownBy(table.destroy(execution, ifExists = false))
 
         context.getRelation(RelationIdentifier("t0")).destroy(execution)
     }
@@ -480,8 +556,163 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table2.schema.get.sparkSchema)
 
         // == Destroy TABLE ===========================================================================================
-        table.destroy(execution, ifExists = true)
         view.destroy(execution, ifExists = true)
+        table.destroy(execution, ifExists = true)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (No)
+    }
+
+    it should "migrate a view if a column comment changes" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val view = HiveViewRelation(
+            Relation.Properties(context),
+            table = TableIdentifier("view", Some("default")),
+            sql = Some("SELECT * FROM table")
+        )
+        val table = HiveTableRelation(
+            Relation.Properties(context, "rel_1"),
+            schema = Some(InlineSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.StringType),
+                    Field("f2", com.dimajix.flowman.types.DoubleType),
+                    Field("f3", com.dimajix.flowman.types.IntegerType, description=Some("This is f3"))
+                )
+            )),
+            table = TableIdentifier("table", Some("default"))
+        )
+        val table2 = HiveTableRelation(
+            Relation.Properties(context, "rel_1"),
+            schema = Some(InlineSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.StringType),
+                    Field("f2", com.dimajix.flowman.types.DoubleType),
+                    Field("f3", com.dimajix.flowman.types.IntegerType, description=Some("This is really f3"))
+                )
+            )),
+            table =TableIdentifier("table", Some("default"))
+        )
+        val table3 = HiveTableRelation(
+            Relation.Properties(context, "rel_1"),
+            schema = Some(InlineSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.StringType),
+                    Field("f2", com.dimajix.flowman.types.DoubleType),
+                    Field("f3", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            table =TableIdentifier("table", Some("default"))
+        )
+
+        // == Create TABLE ============================================================================================
+        table.exists(execution) should be (No)
+        table.create(execution)
+        table.exists(execution) should be (Yes)
+        table.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        table.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        session.catalog.getTable(TableIdentifier("table", Some("default"))).tableType should be (CatalogTableType.MANAGED)
+        session.catalog.getTable(TableIdentifier("table", Some("default"))).schema should be (table.schema.get.sparkSchema)
+
+        // == Create VIEW =============================================================================================
+        view.exists(execution) should be (No)
+        view.create(execution)
+        view.exists(execution) should be (Yes)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table.schema.get.sparkSchema)
+
+        // == Migrate VIEW ===========================================================================================
+        view.migrate(execution)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table.schema.get.sparkSchema)
+
+        // == Replace TABLE ===========================================================================================
+        table.destroy(execution, ifExists = true)
+        table2.create(execution)
+        table2.exists(execution) should be (Yes)
+        table.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        table.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        table2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        table2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        session.catalog.getTable(TableIdentifier("table", Some("default"))).tableType should be (CatalogTableType.MANAGED)
+        session.catalog.getTable(TableIdentifier("table", Some("default"))).schema should be (table2.schema.get.sparkSchema)
+
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table.schema.get.sparkSchema)
+
+        // == Migrate VIEW ===========================================================================================
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        view.migrate(execution, MigrationPolicy.RELAXED)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        view.migrate(execution, MigrationPolicy.STRICT)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table2.schema.get.sparkSchema)
+
+        // == Migrate VIEW ===========================================================================================
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        view.migrate(execution, MigrationPolicy.RELAXED)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        view.migrate(execution, MigrationPolicy.STRICT)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table2.schema.get.sparkSchema)
+
+        // == Replace TABLE ===========================================================================================
+        table2.destroy(execution, ifExists = true)
+        table3.create(execution)
+        table3.exists(execution) should be (Yes)
+        table.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        table.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        table3.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        table3.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        session.catalog.getTable(TableIdentifier("table", Some("default"))).tableType should be (CatalogTableType.MANAGED)
+        session.catalog.getTable(TableIdentifier("table", Some("default"))).schema should be (table3.schema.get.sparkSchema)
+
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table2.schema.get.sparkSchema)
+
+        // == Migrate VIEW ===========================================================================================
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        view.migrate(execution, MigrationPolicy.RELAXED)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        view.migrate(execution, MigrationPolicy.STRICT)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table3.schema.get.sparkSchema)
+
+        // == Migrate VIEW ===========================================================================================
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        view.migrate(execution, MigrationPolicy.RELAXED)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        view.migrate(execution, MigrationPolicy.STRICT)
+        view.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        view.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).tableType should be (CatalogTableType.VIEW)
+        session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table3.schema.get.sparkSchema)
+
+        // == Destroy TABLE ===========================================================================================
+        view.destroy(execution, ifExists = true)
+        table.destroy(execution, ifExists = true)
         view.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         view.conforms(execution, MigrationPolicy.STRICT) should be (No)
     }

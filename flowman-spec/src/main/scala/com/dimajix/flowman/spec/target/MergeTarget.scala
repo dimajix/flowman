@@ -40,6 +40,7 @@ import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.graph.Linker
@@ -101,8 +102,8 @@ case class MergeTarget(
         val rel = relation.value
 
         phase match {
-            case Phase.CREATE|Phase.DESTROY => rel.provides
-            case Phase.BUILD => rel.resources()
+            case Phase.CREATE|Phase.DESTROY => rel.provides(Operation.CREATE)
+            case Phase.BUILD|Phase.TRUNCATE => rel.provides(Operation.WRITE)
             case _ => Set()
         }
     }
@@ -115,8 +116,8 @@ case class MergeTarget(
         val rel = relation.value
 
         phase match {
-            case Phase.CREATE|Phase.DESTROY => rel.requires
-            case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
+            case Phase.CREATE|Phase.DESTROY => rel.requires(Operation.CREATE)
+            case Phase.BUILD|Phase.TRUNCATE => MappingUtils.requires(context, mapping.mapping) ++ rel.requires(Operation.WRITE)
             case _ => Set()
         }
     }

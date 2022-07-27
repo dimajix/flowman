@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.graph.MappingRef
 import com.dimajix.flowman.model.BaseMapping
@@ -56,7 +57,7 @@ case class StreamMapping (
      */
     override def requires : Set[ResourceIdentifier] = {
         val rel = relation.value
-        rel.resources() ++ rel.requires ++ rel.provides
+        rel.requires(Operation.READ)
     }
 
     /**

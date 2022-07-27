@@ -1,0 +1,8 @@
+name: "oracle"
+version: "1.0"
+
+modules:
+  - model
+  - config
+  - mapping
+  - job

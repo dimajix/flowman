@@ -37,9 +37,10 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.StreamingOperation
+import com.dimajix.flowman.execution.StreamingActivity
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -80,7 +81,8 @@ case class StreamTarget(
         val rel = relation.value
 
         phase match {
-            case Phase.CREATE|Phase.DESTROY => rel.provides
+            case Phase.CREATE|Phase.DESTROY => rel.provides(Operation.CREATE)
+            case Phase.BUILD|Phase.TRUNCATE => rel.provides(Operation.WRITE)
             case _ => Set()
         }
     }
@@ -93,8 +95,9 @@ case class StreamTarget(
         val rel = relation.value
 
         phase match {
-            case Phase.CREATE|Phase.DESTROY => rel.requires
-            case Phase.BUILD => MappingUtils.requires(context, mapping.mapping)
+            case Phase.CREATE|Phase.DESTROY => rel.requires(Operation.CREATE)
+            case Phase.BUILD => MappingUtils.requires(context, mapping.mapping) ++ rel.requires(Operation.WRITE)
+            case Phase.TRUNCATE => rel.requires(Operation.WRITE)
             case _ => Set()
         }
     }
@@ -165,7 +168,7 @@ case class StreamTarget(
     }
 
     /**
-      * Abstract method which will perform the output operation. All required tables need to be
+      * Abstract method which will perform the output activity. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
       *
       * @param execution
@@ -193,8 +196,8 @@ case class StreamTarget(
             query.awaitTermination()
         }
         else {
-            // Otherwise create background operation
-            execution.operations.post(StreamingOperation(identifier.toString, query))
+            // Otherwise create background activity
+            execution.activities.post(StreamingActivity(identifier.toString, query))
         }
     }
 

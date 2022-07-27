@@ -352,7 +352,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
               |  grabenv:
               |    kind: grabenv
               |  dummy:
-              |    kind: "null"
+              |    kind: empty
               |
               |jobs:
               |  parent:

@@ -22,6 +22,7 @@ import org.apache.spark.sql.DataFrame
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.AbstractInstance
 import com.dimajix.flowman.model.Dataset
@@ -55,7 +56,7 @@ case class RelationDataset(
       */
     override def provides : Set[ResourceIdentifier] = {
         val instance = relation.value
-        instance.provides ++ instance.resources(partition)
+        instance.provides(Operation.WRITE, partition)
     }
 
     /**
@@ -64,7 +65,7 @@ case class RelationDataset(
      */
     override def requires : Set[ResourceIdentifier] = {
         val instance = relation.value
-        instance.provides ++ instance.requires ++ instance.resources(partition)
+        instance.requires(Operation.READ, partition)
     }
 
     /**

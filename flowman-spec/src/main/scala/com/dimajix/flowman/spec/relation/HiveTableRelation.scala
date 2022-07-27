@@ -40,9 +40,11 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
+import com.dimajix.flowman.catalog.PartitionChange
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
 import com.dimajix.flowman.catalog.TableChange.DropColumn
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
@@ -55,6 +57,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.hadoop.FileUtils
@@ -94,40 +97,45 @@ case class HiveTableRelation(
     writer: String = "hive"
 ) extends HiveRelation with SchemaRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
-
-    /**
-      * Returns the list of all resources which will be created by this relation. The list will be specifically
-      * created for a specific partition, or for the full relation (when the partition is empty)
-      *
-      * @param partition
-      * @return
-      */
-    override def resources(partition: Map[String, FieldValue]): Set[ResourceIdentifier] = {
-        require(partitions != null)
-
-        requireValidPartitionKeys(partition)
-
-        // Only return Hive table partitions!
-        val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
-        allPartitions.map(p => ResourceIdentifier.ofHivePartition(table, p.toMap)).toSet
-    }
+    private val resource = ResourceIdentifier.ofHiveTable(table)
 
     /**
       * Returns the list of all resources which will be created by this relation.
       *
       * @return
       */
-    override def provides : Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofHiveTable(table)
-    )
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY => Set(resource)
+            case Operation.READ => Set.empty
+            case Operation.WRITE =>
+                requireValidPartitionKeys(partitions)
+
+                // Only return Hive table partitions!
+                val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                allPartitions.map(p => ResourceIdentifier.ofHivePartition(table, p.toMap)).toSet
+        }
+    }
 
     /**
       * Returns the list of all resources which will be required by this relation for creation.
       *
       * @return
       */
-    override def requires : Set[ResourceIdentifier] = {
-        table.database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet ++ super.requires
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        val deps = op match {
+            case Operation.CREATE|Operation.DESTROY =>
+                table.database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
+            case Operation.READ =>
+                requireValidPartitionKeys(partitions)
+
+                // Only return Hive table partitions!
+                val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                allPartitions.map(p => ResourceIdentifier.ofHivePartition(table, p.toMap)).toSet ++ Set(resource)
+            case Operation.WRITE =>
+                Set(resource)
+        }
+        deps ++ super.requires(op, partitions)
     }
 
     /**
@@ -154,7 +162,7 @@ case class HiveTableRelation(
         else
             throw new IllegalArgumentException("Hive relations only support write modes 'hive' and 'spark'")
 
-        provides.foreach(execution.refreshResource)
+        execution.refreshResource(resource)
     }
 
     /**
@@ -331,21 +339,26 @@ case class HiveTableRelation(
     override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
         val catalog = execution.catalog
         if (catalog.tableExists(table)) {
-            if (schema.nonEmpty) {
-                val table = catalog.getTable(this.table)
-                if (table.tableType == CatalogTableType.VIEW) {
-                    false
-                }
-                else {
-                    val sourceTable = TableDefinition.ofTable(table)
-                    val targetSchema =  com.dimajix.flowman.types.StructType(schema.get.fields)
-                    val targetTable = TableDefinition(this.table, TableType.TABLE, targetSchema.fields)
+            fullSchema match {
+                case Some(fullSchema) =>
+                    val table = catalog.getTable(this.table)
+                    if (table.tableType == CatalogTableType.VIEW) {
+                        false
+                    }
+                    else {
+                        val sourceTable = TableDefinition.ofTable(table)
+                        val targetSchema =  com.dimajix.flowman.types.StructType(fullSchema.fields)
+                        val targetTable = TableDefinition(
+                            this.table,
+                            TableType.TABLE,
+                            columns = targetSchema.fields,
+                            partitionColumnNames = partitions.map(_.name)
+                        )
 
-                    !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
-                }
-            }
-            else {
-                true
+                        !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
+                    }
+                case None =>
+                    true
             }
         }
         else {
@@ -440,7 +453,10 @@ case class HiveTableRelation(
                 .filter(_.nonEmpty)
                 .orElse(fileStorage.outputFormat)
                 .orElse(defaultStorage.outputFormat)
-            val rowFormat = this.rowFormat.filter(_.nonEmpty).orElse(fileStorage.serde).orElse(defaultStorage.serde)
+            val rowFormat = this.rowFormat
+                .filter(_.nonEmpty)
+                .orElse(fileStorage.serde)
+                .orElse(defaultStorage.serde)
 
             // Configure catalog table by assembling all options
             val catalogTable = CatalogTable(
@@ -468,7 +484,7 @@ case class HiveTableRelation(
             // Create table
             val catalog = execution.catalog
             catalog.createTable(catalogTable, false)
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
 
@@ -484,7 +500,7 @@ case class HiveTableRelation(
         if (!ifExists || catalog.tableExists(table)) {
             logger.info(s"Destroying Hive table relation '$identifier' by dropping table $table")
             catalog.dropTable(table)
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
 
@@ -497,32 +513,46 @@ case class HiveTableRelation(
 
         val catalog = execution.catalog
         if (schema.nonEmpty && catalog.tableExists(table)) {
-            val table = catalog.getTable(this.table)
-            if (table.tableType == CatalogTableType.VIEW) {
-                migrationStrategy match {
-                    case MigrationStrategy.NEVER =>
-                        logger.warn(s"Migration required for HiveTable relation '$identifier' from VIEW to a TABLE ${this.table}, but migrations are disabled.")
-                    case MigrationStrategy.FAIL =>
-                        logger.error(s"Cannot migrate relation HiveTable '$identifier' from VIEW to a TABLE ${this.table}, since migrations are disabled.")
-                        throw new MigrationFailedException(identifier)
-                    case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
-                        logger.warn(s"TABLE target ${this.table} is currently a VIEW, dropping...")
-                        catalog.dropView(this.table, false)
-                        create(execution, false)
-                        provides.foreach(execution.refreshResource)
-                }
+            val curTable = catalog.getTable(table)
+            // Check if current table is a VIEW or a TABLE
+            if (curTable.tableType == CatalogTableType.VIEW) {
+                migrateFromView(execution, migrationStrategy)
             }
             else {
-                val sourceTable = TableDefinition.ofTable(table)
-                val targetSchema =  com.dimajix.flowman.types.StructType(schema.get.fields)
-                val targetTable = TableDefinition(this.table, TableType.TABLE, targetSchema.fields)
-
-                val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
-                if (requiresMigration) {
-                    doMigration(execution, sourceTable, targetTable, migrationPolicy, migrationStrategy)
-                    provides.foreach(execution.refreshResource)
-                }
+                migrateFromTable(execution, curTable, migrationPolicy, migrationStrategy)
             }
+        }
+    }
+
+    private def migrateFromView(execution:Execution, migrationStrategy:MigrationStrategy) : Unit = {
+        migrationStrategy match {
+            case MigrationStrategy.NEVER =>
+                logger.warn(s"Migration required for HiveTable relation '$identifier' from VIEW to a TABLE ${table}, but migrations are disabled.")
+            case MigrationStrategy.FAIL =>
+                logger.error(s"Cannot migrate relation HiveTable '$identifier' from VIEW to a TABLE ${table}, since migrations are disabled.")
+                throw new MigrationFailedException(identifier)
+            case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
+                logger.warn(s"TABLE target ${table} is currently a VIEW, dropping...")
+                val catalog = execution.catalog
+                catalog.dropView(table, false)
+                create(execution, false)
+                execution.refreshResource(resource)
+        }
+    }
+
+    private def migrateFromTable(execution:Execution, curTable:CatalogTable, migrationPolicy:MigrationPolicy,  migrationStrategy:MigrationStrategy) : Unit = {
+        val sourceTable = TableDefinition.ofTable(curTable)
+        val targetSchema =  com.dimajix.flowman.types.StructType(fullSchema.get.fields)
+        val targetTable = TableDefinition(
+            table,
+            TableType.TABLE,
+            columns = targetSchema.fields,
+            partitionColumnNames = partitions.map(_.name)
+        )
+
+        val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
+        if (requiresMigration) {
+            doMigration(execution, sourceTable, targetTable, migrationPolicy, migrationStrategy)
         }
     }
 
@@ -557,12 +587,14 @@ case class HiveTableRelation(
             if (migrations.isEmpty) {
                 logger.warn("Empty list of migrations - nothing to do")
             }
-
-            try {
-                execution.catalog.alterTable(table, migrations)
-            }
-            catch {
-                case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
+            else {
+                try {
+                    execution.catalog.alterTable(table, migrations)
+                    execution.refreshResource(resource)
+                }
+                catch {
+                    case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
+                }
             }
         }
 
@@ -584,6 +616,8 @@ case class HiveTableRelation(
                 case _:UpdateColumnNullability => true
                 case _:UpdateColumnType => false
                 case _:UpdateColumnComment => true
+                case _:PartitionChange => false
+                case _:ChangeStorageFormat => false
                 case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
             }
         }

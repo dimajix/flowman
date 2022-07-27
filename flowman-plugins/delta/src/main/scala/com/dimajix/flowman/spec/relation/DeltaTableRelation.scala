@@ -43,6 +43,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.jdbc.HiveDialect
@@ -67,14 +68,23 @@ case class DeltaTableRelation(
     mergeKey: Seq[String] = Seq()
 ) extends DeltaRelation(options, mergeKey) {
     private val logger = LoggerFactory.getLogger(classOf[DeltaTableRelation])
+    protected val resource = ResourceIdentifier.ofHiveTable(table)
 
     /**
      * Returns the list of all resources which will be created by this relation.
      *
      * @return
      */
-    override def provides: Set[ResourceIdentifier] = {
-        Set(ResourceIdentifier.ofHiveTable(table))
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY => Set(resource)
+            case Operation.READ => Set.empty
+            case Operation.WRITE =>
+                requireValidPartitionKeys(partitions)
+
+                val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                allPartitions.map(p => ResourceIdentifier.ofHivePartition(table, p.toMap)).toSet
+        }
     }
 
     /**
@@ -82,25 +92,19 @@ case class DeltaTableRelation(
      *
      * @return
      */
-    override def requires: Set[ResourceIdentifier] = {
-        table.space.headOption.map(ResourceIdentifier.ofHiveDatabase).toSet
-    }
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        val deps = op match {
+            case Operation.CREATE | Operation.DESTROY => table.space.headOption.map(ResourceIdentifier.ofHiveDatabase).toSet
+            case Operation.READ =>
+                requireValidPartitionKeys(partitions)
 
-    /**
-     * Returns the list of all resources which will are managed by this relation for reading or writing a specific
-     * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
-     * partition is empty)
-     *
-     * @param partitions
-     * @return
-     */
-    override def resources(partition: Map[String, FieldValue]): Set[ResourceIdentifier] = {
-        require(partitions != null)
-
-        requireValidPartitionKeys(partition)
-
-        val allPartitions = PartitionSchema(this.partitions).interpolate(partition)
-        allPartitions.map(p =>ResourceIdentifier.ofHivePartition(table, p.toMap)).toSet
+                val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                allPartitions.map(p => ResourceIdentifier.ofHivePartition(table, p.toMap)).toSet ++
+                    Set(resource)
+            case Operation.WRITE =>
+                Set(resource)
+        }
+        deps ++ super.requires(op, partitions)
     }
 
     /**
@@ -216,20 +220,32 @@ case class DeltaTableRelation(
     override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
         val catalog = execution.catalog
         if (catalog.tableExists(table)) {
-            val table = catalog.getTable(this.table)
-            if (table.tableType == CatalogTableType.VIEW) {
-                false
-            }
-            else if (schema.nonEmpty) {
-                val table = deltaCatalogTable(execution)
-                val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
-                val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
-                val sourceTable = TableDefinition(this.table, TableType.TABLE, sourceSchema.fields)
-                val targetTable = TableDefinition(this.table, TableType.TABLE, targetSchema.fields)
-                !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
-            }
-            else {
-                true
+            fullSchema match {
+                case Some(fullSchema) =>
+                    val table = catalog.getTable(this.table)
+                    if (table.tableType == CatalogTableType.VIEW) {
+                        false
+                    }
+                    else  {
+                        val table = deltaCatalogTable(execution)
+                        val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
+                        val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema)
+                        val sourceTable = TableDefinition(
+                            this.table,
+                            TableType.TABLE,
+                            columns = sourceSchema.fields,
+                            partitionColumnNames = table.snapshot.metadata.partitionColumns
+                        )
+                        val targetTable = TableDefinition(
+                            this.table,
+                            TableType.TABLE,
+                            columns = targetSchema.fields,
+                            partitionColumnNames = partitions.map(_.name)
+                        )
+                        !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
+                    }
+                case None =>
+                    true
             }
         }
         else {
@@ -294,7 +310,7 @@ case class DeltaTableRelation(
                 description
             )
 
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
 
@@ -335,7 +351,7 @@ case class DeltaTableRelation(
         if (!ifExists || catalog.tableExists(table)) {
             logger.info(s"Destroying Delta table relation '$identifier' by dropping table $table")
             catalog.dropTable(table)
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
 
@@ -375,13 +391,13 @@ case class DeltaTableRelation(
 
     override protected def deltaCatalogTable(execution: Execution): DeltaTableV2 = {
         val catalog = execution.catalog
-        val table = catalog.getTable(this.table)
+        val catalogTable = catalog.getTable(table)
 
         DeltaTableV2(
             execution.spark,
-            new Path(table.location),
-            catalogTable = Some(table),
-            tableIdentifier = Some(table.toString())
+            new Path(catalogTable.location),
+            catalogTable = Some(catalogTable),
+            tableIdentifier = Some(table.unquotedString)
         )
     }
 }

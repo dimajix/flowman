@@ -20,6 +20,7 @@ import java.util.Locale
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.functions.rpad
@@ -28,6 +29,8 @@ import org.apache.spark.sql.functions.substring
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.CharType
 import org.apache.spark.sql.types.DataType
+import org.apache.spark.sql.types.Metadata
+import org.apache.spark.sql.types.MetadataBuilder
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
@@ -147,14 +150,15 @@ final case class SchemaEnforcer(
 
     private def applyType(col:Column, field:StructField) : Column = {
         field.dataType match {
-            case CharType(n) => rpad(col.cast(StringType), n, " ").as(field.name, field.metadata)
-            case VarcharType(n) => substring(col.cast(StringType), 0, n).as(field.name, field.metadata)
-            case _ => col.cast(field.dataType).as(field.name, field.metadata)
+            case CharType(n) => rpad(col.cast(StringType), n, " ")
+            case VarcharType(n) => substring(col.cast(StringType), 0, n)
+            case _ => col.cast(field.dataType)
         }
     }
 
-    private def conformField(requiredField:StructField, inputType:DataType, prefix:String) : Column = {
-        requiredField.dataType match {
+    private def conformField(requiredField:StructField, inputField:StructField, prefix:String) : Column = {
+        val inputType = inputField.dataType
+        val field = requiredField.dataType match {
             // Simple match: DataType is already correct
             case `inputType` => col(prefix + requiredField.name)
             case st:StructType =>
@@ -178,6 +182,10 @@ final case class SchemaEnforcer(
                 else
                     throw new SchemaMismatchException(s"Column ${prefix}.${requiredField.name} has type '$inputType', but required is '${requiredField.dataType}'")
         }
+
+        // Apply comments and metadata
+        val metadata = mergeMetadata(requiredField, inputField)
+        alias(field, requiredField.name, metadata)
     }
 
     private def conformStruct(requiredSchema:StructType, inputSchema:StructType, prefix:String) : Seq[Column] = {
@@ -210,16 +218,33 @@ final case class SchemaEnforcer(
         val inputFields = MapIgnoreCase(inputSchema.fields.map(field => field.name -> field))
         allColumns.flatMap { field =>
             inputFields.get(field.name)
-                .map(f => conformField(field, f.dataType, prefix))
+                .map(f => conformField(field, f, prefix))
                 .orElse {
                     if (addColumns)
-                        Some(applyType(lit(null), field))
+                        Some(alias(applyType(lit(null), field), field.name, field.metadata))
                     else if (ignoreColumns)
                         None
                     else
                         throw new SchemaMismatchException(s"Missing column '${prefix}.${field.name}' on input side'")
                 }
-                .map(_.as(field.name))
         }.toSeq
+    }
+
+    private def mergeMetadata(requiredField:StructField, inputField:StructField) : Metadata = {
+        val metadata = requiredField.metadata
+        val builder = new MetadataBuilder()
+            .withMetadata(requiredField.metadata)
+
+        // Try to get comment from input if no comment is provided in schema itself
+        if (!metadata.contains("comment")) {
+            inputField.getComment()
+                .foreach(c => builder.putString("comment", c))
+        }
+
+        builder.build()
+    }
+
+    private def alias(col:Column, alias:String, metadata: Metadata) : Column = {
+        SparkShim.alias(col, alias, metadata, Seq("collation", "charset"))
     }
 }

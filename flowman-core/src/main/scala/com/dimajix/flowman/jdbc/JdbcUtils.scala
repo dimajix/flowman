@@ -27,29 +27,23 @@ import java.util.Locale
 
 import scala.collection.mutable
 import scala.util.Try
+import scala.util.control.NonFatal
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.createConnectionFactory
-import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils.savePartition
 import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{types => st}
 import org.slf4j.LoggerFactory
-import slick.jdbc.DerbyProfile
-import slick.jdbc.H2Profile
-import slick.jdbc.JdbcProfile
-import slick.jdbc.MySQLProfile
-import slick.jdbc.PostgresProfile
-import slick.jdbc.SQLServerProfile
-import slick.jdbc.SQLiteProfile
 
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.tryWith
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
 import com.dimajix.flowman.catalog.TableChange.CreateIndex
 import com.dimajix.flowman.catalog.TableChange.CreatePrimaryKey
 import com.dimajix.flowman.catalog.TableChange.DropColumn
@@ -77,7 +71,10 @@ case class JdbcField(
     fieldSize:Int,
     fieldScale:Int,
     isSigned:Boolean,
-    nullable:Boolean
+    nullable:Boolean,
+    collation:Option[String] = None,
+    charset:Option[String] = None,
+    description:Option[String] = None
 )
 
 class JdbcUtils
@@ -121,9 +118,28 @@ object JdbcUtils {
         options.asProperties.getProperty("queryTimeout", "0").toInt
     }
 
-    def createConnection(options: JDBCOptions) : Connection = {
-        val factory = createConnectionFactory(options)
-        factory()
+    def createConnection(options: JDBCOptions, partition:Int = -1) : Connection = {
+        val dialect = JdbcDialects.get(options.url)
+        val factory = SparkShim.createConnectionFactory(dialect, options)
+        factory(partition)
+    }
+
+    def withConnection[T](options: JDBCOptions)(fn:(java.sql.Connection) => T) : T = {
+        logger.debug(s"Connecting to jdbc source at ${options.url}")
+        val con = try {
+            createConnection(options, -1)
+        } catch {
+            case NonFatal(e) =>
+                logger.error(s"Error connecting to jdbc source at ${options.url}: ${e.getMessage}")
+                throw e
+        }
+
+        try {
+            fn(con)
+        }
+        finally {
+            con.close()
+        }
     }
 
     def withTransaction[T](con:java.sql.Connection)(fn: => T) : T = {
@@ -212,48 +228,22 @@ object JdbcUtils {
      * @return
      */
     def getTableOrView(conn: Connection, table:TableIdentifier, options: JDBCOptions) : TableDefinition = {
+        val dialect = SqlDialects.get(options.url)
         val meta = conn.getMetaData
         val (realTable,realType) = resolveTable(meta, table)
 
         val currentSchema = getTableSchema(conn, table, options)
-        val pk = getPrimaryKey(meta, realTable)
-        val idxs = getIndexes(meta, realTable)
-            // Remove primary key
-            .filter { idx =>
-                idx.normalize().columns != pk.map(_.toLowerCase(Locale.ROOT)).sorted
-            }
+        withStatement(conn, options) { stmt =>
+            val pk = dialect.command.getPrimaryKey(stmt, realTable)
+            val idxs = dialect.command.getIndexes(stmt, realTable)
+                // Remove primary key
+                .filter { idx =>
+                    idx.normalize().columns != pk.map(_.toLowerCase(Locale.ROOT)).sorted
+                }
+            val storage = dialect.command.getStorageFormat(stmt, table)
 
-        TableDefinition(table, realType, currentSchema.fields, primaryKey=pk, indexes=idxs)
-    }
-
-    private def getPrimaryKey(meta: DatabaseMetaData, table:TableIdentifier) : Seq[String] = {
-        val pkrs = meta.getPrimaryKeys(null, table.database.orNull, table.table)
-        val pk = mutable.ListBuffer[(Short,String)]()
-        while(pkrs.next()) {
-            val col = pkrs.getString(4)
-            val seq = pkrs.getShort(5)
-            // val name = pkrs.getString(6)
-            pk.append((seq,col))
+            TableDefinition(table, realType, currentSchema.fields, primaryKey=pk, indexes=idxs, storageFormat=storage)
         }
-        pkrs.close()
-        pk.sortBy(_._1).map(_._2)
-    }
-
-    private def getIndexes(meta: DatabaseMetaData, table:TableIdentifier) : Seq[TableIndex] = {
-        val idxrs = meta.getIndexInfo(null, table.database.orNull, table.table, false, true)
-        val idxcols = mutable.ListBuffer[(String, String, Boolean)]()
-        while(idxrs.next()) {
-            val unique = !idxrs.getBoolean(4)
-            val name = idxrs.getString(6) // May be null for statistics
-            val col = idxrs.getString(9)
-            idxcols.append((name, col, unique))
-        }
-        idxrs.close()
-
-        idxcols.filter(_._1 != null)
-            .groupBy(_._1).map { case(name,cols) =>
-                TableIndex(name, cols.map(_._2), cols.foldLeft(false)(_ || _._3))
-            }.toSeq
     }
 
     /**
@@ -352,7 +342,7 @@ object JdbcUtils {
     def getSchema(jdbcFields:Seq[JdbcField], dialect: SqlDialect) : StructType = {
         val fields = jdbcFields.map { field =>
             val columnType = dialect.getFieldType(field.dataType, field.typeName, field.fieldSize, field.fieldScale, field.isSigned)
-            Field(field.name, columnType, field.nullable)
+            Field(field.name, columnType, field.nullable, description=field.description, charset=field.charset, collation=field.collation)
         }
 
         StructType(fields)
@@ -373,14 +363,8 @@ object JdbcUtils {
     def getJdbcSchema(conn: Connection, table:TableIdentifier, options: JDBCOptions) : Seq[JdbcField] = {
         val dialect = SqlDialects.get(options.url)
 
-        withStatement(conn, dialect.statement.schema(table), options) { statement =>
-            val rs = statement.executeQuery()
-            try {
-                getJdbcSchema(rs)
-            }
-            finally {
-                rs.close()
-            }
+        withStatement(conn, options) { statement =>
+            dialect.command.getJdbcSchema(statement, table)
         }
     }
 
@@ -418,6 +402,8 @@ object JdbcUtils {
                 case java.sql.Types.VARCHAR => s"$typeName($fieldSize)"
                 case java.sql.Types.NCHAR if fieldSize > 1 => s"$typeName($fieldSize)"
                 case java.sql.Types.NVARCHAR => s"$typeName($fieldSize)"
+                case java.sql.Types.NUMERIC if fieldSize > 1 && fieldScale > 1 => s"$typeName($fieldSize,$fieldScale)"
+                case java.sql.Types.NUMERIC if fieldSize > 1 => s"$typeName($fieldSize,$fieldScale)"
                 case _ => typeName
             }
 
@@ -437,11 +423,8 @@ object JdbcUtils {
      */
     def createTable(conn:Connection, table:TableDefinition, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val tableSql = dialect.statement.createTable(table)
-        val indexSql = table.indexes.map(idx => dialect.statement.createIndex(table.identifier, idx))
         withStatement(conn, options) { statement =>
-            statement.executeUpdate(tableSql)
-            indexSql.foreach(statement.executeUpdate)
+            dialect.command.createTable(statement, table)
         }
     }
 
@@ -460,7 +443,7 @@ object JdbcUtils {
     }
     def dropTable(statement:Statement, table:TableIdentifier, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        statement.executeUpdate(s"DROP TABLE ${dialect.quote(table)}")
+        dialect.command.dropTable(statement, table)
     }
 
     def createView(conn:Connection, table:TableIdentifier, sql:String, options: JDBCOptions) : Unit = {
@@ -502,8 +485,7 @@ object JdbcUtils {
     }
     def dropView(statement:Statement, table:TableIdentifier, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val dropSql = dialect.statement.dropView(table)
-        statement.executeUpdate(dropSql)
+        dialect.command.dropView(statement, table)
     }
 
     def dropTableOrView(conn:Connection, table:TableIdentifier, options: JDBCOptions, ifExists:Boolean=false) : Unit = {
@@ -584,7 +566,6 @@ object JdbcUtils {
         val dialect = SqlDialects.get(url)
         val sparkDialect = JdbcDialects.get(url)
         val quotedTarget = dialect.quote(target)
-        val getConnection: () => Connection = createConnectionFactory(options)
         val sourceSchema = source.schema
         val batchSize = options.batchSize
         val isolationLevel = options.isolationLevel
@@ -594,8 +575,8 @@ object JdbcUtils {
             case Some(n) if n < source.rdd.getNumPartitions => source.coalesce(n)
             case _ => source
         }
-        repartitionedDF.rdd.foreachPartition { iterator => savePartition(
-            getConnection, quotedTarget, iterator, sourceSchema, insertStmt, batchSize, sparkDialect, isolationLevel, options)
+        repartitionedDF.rdd.foreachPartition { iterator => SparkShim.savePartition(
+            quotedTarget, iterator, sourceSchema, insertStmt, batchSize, sparkDialect, isolationLevel, options)
         }
     }
 
@@ -638,9 +619,8 @@ object JdbcUtils {
      */
     def createIndex(conn:Connection, table:TableIdentifier, index:TableIndex, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val indexSql = dialect.statement.createIndex(table, index)
         withStatement(conn, options) { statement =>
-            statement.executeUpdate(indexSql)
+            dialect.command.createIndex(statement, table, index)
         }
     }
 
@@ -652,9 +632,8 @@ object JdbcUtils {
      */
     def dropIndex(conn:Connection, table:TableIdentifier, indexName:String, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val indexSql = dialect.statement.dropIndex(table, indexName)
         withStatement(conn, options) { statement =>
-            statement.executeUpdate(indexSql)
+            dialect.command.dropIndex(statement, table, indexName)
         }
     }
 
@@ -669,74 +648,64 @@ object JdbcUtils {
     def alterTable(conn:Connection, table:TableIdentifier, changes:Seq[TableChange], options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
         val statements = dialect.statement
+        val commands = dialect.command
 
         // Get current schema, so we can lookup existing types etc
         val currentSchema = getJdbcSchema(conn, table, options)
         val currentFields = mutable.Map(currentSchema.map(f => (f.name.toLowerCase(Locale.ROOT), f)):_*)
 
-        val sqls = changes.flatMap {
+        val cmds = changes.flatMap {
             case a:DropColumn =>
-                logger.info(s"Dropping column ${a.column} from JDBC table $table")
+                logger.info(s"Dropping column '${a.column}' from JDBC table $table")
                 currentFields.remove(a.column.toLowerCase(Locale.ROOT))
-                Some(statements.deleteColumn(table, a.column))
+                Some((stmt:Statement) => commands.deleteColumn(stmt, table, a.column))
             case a:AddColumn =>
                 val dataType = dialect.getJdbcType(a.column.ftype)
-                logger.info(s"Adding column ${a.column.name} with type ${dataType.databaseTypeDefinition} (${a.column.ftype.sqlType}) to JDBC table $table")
-                currentFields.put(a.column.name.toLowerCase(Locale.ROOT), JdbcField(a.column.name, dataType.databaseTypeDefinition, 0, 0, 0, false, a.column.nullable))
-                Some(statements.addColumn(table, a.column.name, dataType.databaseTypeDefinition, a.column.nullable))
+                val charset = a.column.charset.map(c => s" CHARACTER SET $c").getOrElse("")
+                val collation = a.column.collation.map(c => s" COLLATE $c").getOrElse("")
+                logger.info(s"Adding column '${a.column.name}' with type '${dataType.databaseTypeDefinition}${charset}${collation}' (${a.column.ftype.sqlType}) to JDBC table $table")
+                currentFields.put(a.column.name.toLowerCase(Locale.ROOT), JdbcField(a.column.name, dataType.databaseTypeDefinition, 0, 0, 0, false, a.column.nullable, a.column.collation, a.column.charset, a.column.description))
+                Some((stmt:Statement) => commands.addColumn(stmt, table, a.column.name, dataType.databaseTypeDefinition, a.column.nullable, a.column.charset, a.column.collation, a.column.description))
             case u:UpdateColumnType =>
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))
                 val dataType = dialect.getJdbcType(u.dataType)
-                logger.info(s"Changing column ${u.column} type from ${current.typeName} to ${dataType.databaseTypeDefinition} (${u.dataType.sqlType}) in JDBC table $table")
+                val charset = u.charset.map(c => s" CHARACTER SET $c").getOrElse("")
+                val collation = u.collation.map(c => s" COLLATE $c").getOrElse("")
+                logger.info(s"Changing column '${u.column}' type from '${current.typeName}' to '${dataType.databaseTypeDefinition}${charset}${collation}' (${u.dataType.sqlType}) in JDBC table $table")
                 currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(typeName=dataType.databaseTypeDefinition))
-                Some(statements.updateColumnType(table, u.column, dataType.databaseTypeDefinition, current.nullable))
+                Some((stmt:Statement) => commands.updateColumnType(stmt, table, u.column, dataType.databaseTypeDefinition, current.nullable, charset=u.charset.orElse(current.charset), collation=u.collation.orElse(current.collation), current.description))
             case u:UpdateColumnNullability =>
-                logger.info(s"Updating nullability of column ${u.column} to ${u.nullable} in JDBC table $table")
+                logger.info(s"Updating nullability of column '${u.column}' to ${u.nullable} in JDBC table $table")
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))
                 currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(nullable=u.nullable))
-                Some(statements.updateColumnNullability(table, u.column, current.typeName, u.nullable))
+                Some((stmt:Statement) => commands.updateColumnNullability(stmt, table, u.column, current.typeName, u.nullable, charset=current.charset, collation=current.collation, comment=current.description))
             case u:UpdateColumnComment =>
-                logger.info(s"Updating comment of column ${u.column} in JDBC table $table")
-                None
+                logger.info(s"Updating comment of column '${u.column}' in JDBC table $table")
+                val current = currentFields(u.column.toLowerCase(Locale.ROOT))
+                currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(description=u.comment))
+                Some((stmt:Statement) => commands.updateColumnComment(stmt, table, u.column, current.typeName, current.nullable, charset=current.charset, collation=current.collation, comment=u.comment))
             case idx:CreateIndex =>
-                logger.info(s"Adding index ${idx.name} to JDBC table $table on columns ${idx.columns.mkString(",")}")
-                Some(statements.createIndex(table, TableIndex(idx.name, idx.columns, idx.unique)))
+                logger.info(s"Adding index '${idx.name}' to JDBC table $table on columns ${idx.columns.mkString(",")}")
+                Some((stmt:Statement) => commands.createIndex(stmt, table, TableIndex(idx.name, idx.columns, idx.unique)))
             case idx:DropIndex =>
-                logger.info(s"Dropping index ${idx.name} from JDBC table $table")
-                Some(statements.dropIndex(table, idx.name))
+                logger.info(s"Dropping index '${idx.name}' from JDBC table $table")
+                Some((stmt:Statement) => commands.dropIndex(stmt, table, idx.name))
             case pk:CreatePrimaryKey =>
                 logger.info(s"Creating primary key for JDBC table $table on columns ${pk.columns.mkString(",")}")
-                Some(statements.addPrimaryKey(table, pk.columns))
+                Some((stmt:Statement) => commands.addPrimaryKey(stmt, table, pk.columns))
             case pk:DropPrimaryKey =>
-                logger.info(s"Removing primary key from JDBC table $table}")
-                Some(statements.dropPrimaryKey(table))
+                logger.info(s"Dropping primary key from JDBC table $table")
+                Some((stmt:Statement) => commands.dropPrimaryKey(stmt, table))
+            case sf:ChangeStorageFormat =>
+                logger.info(s"Changing storage format of JDBC table $table to ${sf.format}")
+                Some((stmt:Statement) => commands.changeStorageFormat(stmt, table, sf.format))
             case chg:TableChange => throw new SQLException(s"Unsupported table change $chg for JDBC table $table")
         }
 
         withStatement(conn, options) { statement =>
-            sqls.foreach { sql =>
-                statement.executeUpdate(sql)
+            cmds.foreach { cmd =>
+                cmd(statement)
             }
-        }
-    }
-
-    def getProfile(driver:String) : JdbcProfile = {
-        val derbyPattern = """.*\.derby\..*""".r
-        val sqlitePattern = """.*\.sqlite\..*""".r
-        val h2Pattern = """.*\.h2\..*""".r
-        val mariadbPattern = """.*\.mariadb\..*""".r
-        val mysqlPattern = """.*\.mysql\..*""".r
-        val postgresqlPattern = """.*\.postgresql\..*""".r
-        val sqlserverPattern = """.*\.sqlserver\..*""".r
-        driver match {
-            case derbyPattern() => DerbyProfile
-            case sqlitePattern() => SQLiteProfile
-            case h2Pattern() => H2Profile
-            case mysqlPattern() => MySQLProfile
-            case mariadbPattern() => MySQLProfile
-            case postgresqlPattern() => PostgresProfile
-            case sqlserverPattern() => SQLServerProfile
-            case _ => throw new UnsupportedOperationException(s"Database with driver ${driver} is not supported")
         }
     }
 }

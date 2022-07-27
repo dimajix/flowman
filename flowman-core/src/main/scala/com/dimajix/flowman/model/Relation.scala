@@ -40,6 +40,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model
@@ -121,29 +122,20 @@ trait Relation extends Instance {
     def documentation : Option[RelationDoc]
 
     /**
-      * Returns the list of all resources which will be created by this relation. This method mainly refers to the
-      * CREATE and DESTROY execution phase.
+      * Returns the list of all resources which will be created by this relation. Depending on the given [[Operation]]
+      * this method should return resources created or created during the corresponding operation.
       *
       * @return
       */
-    def provides : Set[ResourceIdentifier]
+    def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier]
 
     /**
-      * Returns the list of all resources which will be required by this relation for creation. This method mainly
-      * refers to the CREATE and DESTROY execution phase.
+      * Returns the list of all resources which will be required by this relation for creation. Depending on the given
+      *  [[Operation]] this method should return resources accessed during the corresponding operation.
       *
       * @return
       */
-    def requires : Set[ResourceIdentifier]
-
-    /**
-      * Returns the list of all resources which will are managed by this relation for reading or writing a specific
-      * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
-      * partition is empty). This method mainly refers to the BUILD and TRUNCATE execution phase.
-      * @param partitions
-      * @return
-      */
-    def resources(partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier]
+    def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier]
 
     /**
       * Returns the schema of the relation, excluding partition columns
@@ -648,7 +640,12 @@ trait SchemaRelation { this: Relation =>
      *
      * @return
      */
-    override def requires: Set[ResourceIdentifier] = schema.map(_.requires).getOrElse(Set())
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty): Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE => schema.map(_.requires).getOrElse(Set.empty)
+            case _ => Set.empty
+        }
+    }
 
     /**
      * Returns the schema of the relation

@@ -45,11 +45,13 @@ import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Relation
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.schema.InlineSchema
@@ -107,6 +109,19 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
             table = TableIdentifier("delta_table", Some("default"))
         )
 
+        relation.requires(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("delta_table", Some("default"))))
+        relation.requires(Operation.READ) should be (Set(
+            ResourceIdentifier.ofHiveTable("delta_table", Some("default")),
+            ResourceIdentifier.ofHivePartition("delta_table", Some("default"), Map())
+        ))
+        relation.provides(Operation.READ) should be (Set.empty)
+        relation.requires(Operation.WRITE) should be (Set(ResourceIdentifier.ofHiveTable("delta_table", Some("default"))))
+        relation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofHivePartition("delta_table", Some("default"), Map())))
+        relation.describe(execution) should be (ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType)
+        )))
         relation.fields should be (Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType)
@@ -231,6 +246,11 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
             Field("int_col", ftypes.IntegerType),
             Field("part", ftypes.StringType, false)
         ))
+        relation.describe(execution) should be (ftypes.StructType(Seq(
+            Field("str_col", ftypes.StringType),
+            Field("int_col", ftypes.IntegerType),
+            Field("part", ftypes.StringType, false)
+        )))
 
         // == Create ================================================================================================
         location.exists() should be (false)

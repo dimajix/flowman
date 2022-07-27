@@ -364,7 +364,7 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         an[IllegalArgumentException] shouldBe thrownBy(mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema))))
     }
 
-    it should "support rename operations" in {
+    it should "support rename activities" in {
         val session = Session.builder().withSparkSession(spark).build()
         val executor = session.execution
 

@@ -32,6 +32,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
@@ -72,9 +73,12 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val localRelation = relation.asInstanceOf[LocalRelation]
         localRelation.location should be (new Path(outputPath.toUri))
         localRelation.pattern should be (Some("data.csv"))
-        localRelation.requires should be (Set())
-        localRelation.provides should be (Set(ResourceIdentifier.ofLocal(new Path(outputPath.toUri))))
-        localRelation.resources() should be (Set(ResourceIdentifier.ofLocal(new Path(outputPath.toUri))))
+        localRelation.requires(Operation.CREATE) should be (Set.empty)
+        localRelation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofLocal(new Path(outputPath.toUri))))
+        localRelation.requires(Operation.READ) should be (Set(ResourceIdentifier.ofLocal(new Path(outputPath.toUri))))
+        localRelation.provides(Operation.READ) should be (Set.empty)
+        localRelation.requires(Operation.WRITE) should be (Set.empty)
+        localRelation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofLocal(new Path(outputPath.toUri))))
 
         // ===== Create =============================================================================================
         outputPath.toFile.exists() should be (false)
@@ -141,9 +145,12 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val localRelation = relation.asInstanceOf[LocalRelation]
         localRelation.location should be (new Path(tempDir.toURI.toString + "/csv/test/data.csv"))
         localRelation.pattern should be (None)
-        localRelation.requires should be (Set())
-        localRelation.provides should be (Set(ResourceIdentifier.ofLocal(new Path(tempDir.toURI.toString + "/csv/test/data.csv"))))
-        localRelation.resources() should be (Set(ResourceIdentifier.ofLocal(new Path(tempDir.toURI.toString + "/csv/test/data.csv"))))
+        localRelation.requires(Operation.CREATE) should be (Set.empty)
+        localRelation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofLocal(new Path(tempDir.toURI.toString + "/csv/test/data.csv"))))
+        localRelation.requires(Operation.READ) should be (Set(ResourceIdentifier.ofLocal(new Path(tempDir.toURI.toString + "/csv/test/data.csv"))))
+        localRelation.provides(Operation.READ) should be (Set.empty)
+        localRelation.requires(Operation.WRITE) should be (Set.empty)
+        localRelation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofLocal(new Path(tempDir.toURI.toString + "/csv/test/data.csv"))))
 
         // ===== Create =============================================================================================
         relation.exists(executor) should be (No)
@@ -320,20 +327,32 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("local"))
-        relation.requires should be (Set())
-        relation.provides should be (Set(ResourceIdentifier.ofLocal(new Path(outputPath.toUri.toString))))
-        relation.provides should be (Set(ResourceIdentifier.ofLocal(new Path(outputPath.toUri))))
-        relation.provides should be (Set(ResourceIdentifier.ofLocal(outputPath.toFile)))
-        relation.resources(Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1"))) should be (Set(
+        relation.requires(Operation.CREATE) should be (Set.empty)
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofLocal(new Path(outputPath.toUri.toString))))
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofLocal(new Path(outputPath.toUri))))
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofLocal(outputPath.toFile)))
+        relation.requires(Operation.READ, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1"))) should be (Set(
             ResourceIdentifier.ofLocal(new Path(outputPath.toUri.toString, "p1=1/p2=1/*"))
         ))
-        relation.resources(Map("p1" -> SingleValue("1"))) should be (Set(
+        relation.provides(Operation.WRITE, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1"))) should be (Set(
+            ResourceIdentifier.ofLocal(new Path(outputPath.toUri.toString, "p1=1/p2=1/*"))
+        ))
+        relation.requires(Operation.READ, Map("p1" -> SingleValue("1"))) should be (Set(
             ResourceIdentifier.ofLocal(new Path(outputPath.toUri.toString, "p1=1/p2=*/*"))
         ))
-        relation.resources(Map("p2" -> SingleValue("1"))) should be (Set(
+        relation.provides(Operation.WRITE, Map("p1" -> SingleValue("1"))) should be (Set(
+            ResourceIdentifier.ofLocal(new Path(outputPath.toUri.toString, "p1=1/p2=*/*"))
+        ))
+        relation.requires(Operation.READ, Map("p2" -> SingleValue("1"))) should be (Set(
             ResourceIdentifier.ofLocal(new Path(outputPath.toUri.toString, "p1=*/p2=1/*"))
         ))
-        relation.resources(Map()) should be (Set(
+        relation.provides(Operation.WRITE, Map("p2" -> SingleValue("1"))) should be (Set(
+            ResourceIdentifier.ofLocal(new Path(outputPath.toUri.toString, "p1=*/p2=1/*"))
+        ))
+        relation.requires(Operation.READ, Map.empty) should be (Set(
+            ResourceIdentifier.ofLocal(new Path(outputPath.toUri.toString, "p1=*/p2=*/*"))
+        ))
+        relation.provides(Operation.WRITE, Map.empty) should be (Set(
             ResourceIdentifier.ofLocal(new Path(outputPath.toUri.toString, "p1=*/p2=*/*"))
         ))
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@
 package com.dimajix.flowman.transforms
 
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.FloatType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.LongType
+import org.apache.spark.sql.types.MetadataBuilder
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
@@ -28,6 +30,10 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.SchemaMismatchException
+import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldType
+import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -506,6 +512,102 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             )),
             StructField("col1", StringType),
             StructField("col4", IntegerType)
+        )))
+    }
+
+    "The SchemaEnforcer" should "support extended string attributes" in {
+        val inputDf = spark.createDataFrame(Seq(
+            ("col1", "12"),
+            ("col2", "23")
+        ))
+            .withColumn("_1", col("_1").as("_1"))
+            .withColumn("_2", col("_2").as("_2"))
+            .withColumn("_5", col("_2").as("_2"))
+        val inputSchema = inputDf.schema
+
+        val requestedSchema = com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("varchar(10)")),
+            Field("_2", FieldType.of("char(20)")),
+            Field("_3", FieldType.of("string"))
+        ))
+        val xfs = SchemaEnforcer(requestedSchema.sparkType)
+
+        val columns = xfs.transform(inputSchema)
+        val outputDf = inputDf.select(columns:_*)
+        SchemaUtils.dropMetadata(outputDf.schema) should be (StructType(Seq(
+            StructField("_1", StringType),
+            StructField("_2", StringType),
+            StructField("_3", StringType)
+        )))
+        com.dimajix.flowman.types.StructType.of(outputDf.schema) should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("varchar(10)")),
+            Field("_2", FieldType.of("char(20)")),
+            Field("_3", FieldType.of("string"))
+        )))
+    }
+
+    it should "support comments" in {
+        val inputDf = spark.createDataFrame(Seq(
+            ("col1", "12"),
+            ("col2", "23")
+        ))
+            .withColumn("_1", col("_1").as("_1", new MetadataBuilder().putString("comment","This is _1 original").build()))
+            .withColumn("_2", col("_2").as("_2", new MetadataBuilder().putString("comment","This is _2 original").build()))
+            .withColumn("_5", col("_2").as("_2"))
+        val inputSchema = inputDf.schema
+
+        val requestedSchema = com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("int"), description=None),
+            Field("_2", FieldType.of("int"), description=Some("This is _2")),
+            Field("_3", FieldType.of("int"), description=Some("This is _3"))
+        ))
+        val xfs = SchemaEnforcer(requestedSchema.catalogType)
+
+        val columns = xfs.transform(inputSchema)
+        val outputDf = inputDf.select(columns:_*)
+        outputDf.schema should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("int"), description=Some("This is _1 original")),
+            Field("_2", FieldType.of("int"), description=Some("This is _2")),
+            Field("_3", FieldType.of("int"), description=Some("This is _3"))
+        )).catalogType)
+        com.dimajix.flowman.types.StructType.of(outputDf.schema) should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("int"), description=Some("This is _1 original")),
+            Field("_2", FieldType.of("int"), description=Some("This is _2")),
+            Field("_3", FieldType.of("int"), description=Some("This is _3"))
+        )))
+    }
+
+    it should "support collations" in {
+        val inputDf = spark.createDataFrame(Seq(
+            ("col1", "12", "33")
+        ))
+            .withColumn("_1", col("_1").as("_1"))
+            .withColumn("_2", col("_2").as("_2", new MetadataBuilder().putString("collation","_2_orig").build()))
+            .withColumn("_3", col("_3").as("_3", new MetadataBuilder().putString("collation","_3_orig").build()))
+            .withColumn("_5", col("_3").as("_3"))
+        val inputSchema = inputDf.schema
+
+        val requestedSchema = com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("string"), collation=None),
+            Field("_2", FieldType.of("string"), collation=Some("_2")),
+            Field("_3", FieldType.of("string"), collation=None),
+            Field("_4", FieldType.of("string"), collation=Some("_4"))
+        ))
+
+        val xfs = SchemaEnforcer(requestedSchema.catalogType)
+        val columns = xfs.transform(inputSchema)
+        val outputDf = inputDf.select(columns:_*)
+        outputDf.schema should be (StructType(Seq(
+            StructField("_1", StringType),
+            StructField("_2", StringType, metadata=new MetadataBuilder().putString("collation","_2").build()),
+            StructField("_3", StringType),
+            StructField("_4", StringType, metadata=new MetadataBuilder().putString("collation","_4").build()))
+        ))
+        com.dimajix.flowman.types.StructType.of(outputDf.schema) should be (com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("string"), collation=None),
+            Field("_2", FieldType.of("string"), collation=Some("_2")),
+            Field("_3", FieldType.of("string"), collation=None),
+            Field("_4", FieldType.of("string"), collation=Some("_4"))
         )))
     }
 }

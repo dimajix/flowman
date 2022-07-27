@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,8 @@ object SqlDialects {
     registerDialect(H2Dialect)
     registerDialect(MySQLDialect)
     registerDialect(SqlServerDialect)
-    registerDialect(SqlServerDialect)
+    registerDialect(PostgresDialect)
+    registerDialect(OracleDialect)
 
     /**
       * Fetch the JdbcDialect class corresponding to a given database url.

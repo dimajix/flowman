@@ -1,3 +1,43 @@
+# Version 0.26.0 - 2022-07-27
+
+* github-202: Add support for Spark 3.3
+* github-203: [BUG] Resource dependencies for Hive should be case-insensitive
+* github-204: [BUG] Detect indirect dependencies in a chain of Hive views
+* github-207: [BUG] Build should not directly fail if inferring dirty status fails
+* github-209: [BUG] HiveViews should not trigger cascaded refresh during CREATE phase even when nothing is changed
+* github-211: Implement new hiveQuery relation
+* github-210: [BUG] HiveTables should be migrated if partition columns change
+* github-208: Implement JDBC hook for database based semaphores
+* github-212: [BUG] Hive views should not be migrated in RELAXED mode if only comments have changed
+* github-214: Update ImpalaJDBC driver to 2.6.26.1031
+* github-144: Support changing primary key for JDBC relations
+* github-216: [BUG] Floats should be represented as FLOAT and not REAL in MySQL/MariaDB
+* github-217: Support collations for creating/migrating JDBC tables
+* github-218: [BUG] Postgres dialect should be used for Postgres JDBC URLs
+* github-219: [BUG] SchemaMapping should retain incoming comments
+* github-215: Support COLUMN STORE INDEX for MS SQL Server
+* github-182: Support column descriptions in JDBC relations (SQL Server / Azure SQL)
+* github-224: Support column descriptions for MariaDB / MySQL databases
+* github-223: Support column descriptions for Postgres database
+* github-205: Initial support Oracle DB via JDBC
+* github-225: [BUG] Staging schema should not have comments
+
+## Breaking changes
+
+We take backward compatibility very seriously. But sometimes a breaking change is needed to clean up code and to
+enable new features. This release contains some breaking changes, which are annoying but simple to fix.
+In order to respect `null` as keyword in YAML with a special semantics, some entities needed to be renamed, as 
+described in the following table:
+
+| category | old kind | new kind |
+|----------|----------|----------|
+| mapping  | null     | empty    |
+| relation | null     | empty    |
+| target   | null     | empty    |
+| store    | null     | none     |
+| history  | null     | none     |
+
+
 # Version 0.25.1 - 2022-06-15
 
 * github-195: [BUG] Metric "target_records" is not reset correctly after an execution phase is finished

@@ -290,7 +290,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         // Invalidate schema caches
         relationSchemaCache.toSeq
             .map(_._1)
-            .filter(_.provides.exists(_.contains(key)))
+            .filter(_.provides(Operation.CREATE).exists(_.contains(key)))
             .foreach(relationSchemaCache.impl.remove)
     }
 

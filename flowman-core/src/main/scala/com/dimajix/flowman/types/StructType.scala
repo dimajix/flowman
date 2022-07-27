@@ -77,7 +77,9 @@ final case class StructType(@JsonProperty(value = "fields") fields:Seq[Field]) e
     }
 
     private def buildTreeString(field:Field, prefix:String, builder:StringBuilder) : Unit = {
-        builder.append(s"$prefix-- ${field.name}: ${field.typeName} (nullable = ${field.nullable})\n")
+        val charset = field.charset.map(c => s", charset = $c").getOrElse("")
+        val collation = field.collation.map(c => s", collation = $c").getOrElse("")
+        builder.append(s"$prefix-- ${field.name}: ${field.typeName} (nullable = ${field.nullable}$charset$collation)\n")
         buildTreeString(field.ftype, s"$prefix    |", builder)
     }
 

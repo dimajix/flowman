@@ -82,7 +82,7 @@ case class DocumentTarget(
             case Some(project) =>
                 document(execution, project)
             case None =>
-                logger.warn("Cannot generator documentation without project")
+                logger.warn("Cannot generate documentation without project")
         }
     }
 

@@ -30,7 +30,7 @@ class TemplateTargetTest extends AnyFlatSpec with Matchers {
             """
               |targets:
               |  xfs:
-              |    kind: null
+              |    kind: empty
               |    before: x
               |    after: y
               |
@@ -57,7 +57,7 @@ class TemplateTargetTest extends AnyFlatSpec with Matchers {
 
         val instance = target.asInstanceOf[TemplateTarget].targetInstance
         instance.name should be ("template")
-        instance.kind should be ("null")
+        instance.kind should be ("empty")
         instance.identifier should be (TargetIdentifier("project/template"))
         instance.project should be (Some(project))
         instance.before should be (Seq(TargetIdentifier("x"), TargetIdentifier("a")))
@@ -69,7 +69,7 @@ class TemplateTargetTest extends AnyFlatSpec with Matchers {
             """
               |targets:
               |  xfs:
-              |    kind: null
+              |    kind: empty
               |
               |  template:
               |    kind: template
@@ -94,7 +94,7 @@ class TemplateTargetTest extends AnyFlatSpec with Matchers {
             """
               |targets:
               |  xfs:
-              |    kind: null
+              |    kind: empty
               |    documentation:
               |      description: "This is the original target"
               |
@@ -119,7 +119,7 @@ class TemplateTargetTest extends AnyFlatSpec with Matchers {
             """
               |targets:
               |  xfs:
-              |    kind: null
+              |    kind: empty
               |    documentation:
               |      description: "This is the original target"
               |

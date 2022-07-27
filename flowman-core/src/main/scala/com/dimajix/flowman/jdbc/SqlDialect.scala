@@ -102,6 +102,6 @@ abstract class SqlDialect {
     def supportsAlterView : Boolean
 
     def statement : SqlStatements
-
     def expr : SqlExpressions
+    def command : SqlCommands
 }

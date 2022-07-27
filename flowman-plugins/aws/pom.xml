@@ -9,7 +9,7 @@
     <parent>
         <groupId>com.dimajix.flowman</groupId>
         <artifactId>flowman-root</artifactId>
-        <version>0.25.1</version>
+        <version>0.26.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -19,7 +19,7 @@
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
 
         <!-- Dependency versions -->
-        <aws.version>1.11.375</aws.version>
+        <aws.version>1.11.1026</aws.version>
     </properties>
 
     <profiles>
@@ -30,7 +30,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <aws.version>1.11.375</aws.version>
+                <aws.version>1.11.1026</aws.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -203,7 +203,7 @@
         <profile>
             <id>hadoop-3.3</id>
             <properties>
-                <aws.version>1.11.901</aws.version>
+                <aws.version>1.11.1026</aws.version>
             </properties>
             <dependencies>
                 <dependency>

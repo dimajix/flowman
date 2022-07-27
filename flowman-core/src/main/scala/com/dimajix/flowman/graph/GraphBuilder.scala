@@ -36,6 +36,7 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.MapType
 import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.util.ConsoleColors.yellow
 
 
 final class GraphBuilder(context:Context, phase:Phase) {
@@ -129,7 +130,7 @@ final class GraphBuilder(context:Context, phase:Phase) {
                     context.execution.describe(mapping, o)
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Error describing mapping '${mapping.identifier}', using empty schema instead: ${reasons(ex)}")
+                        logger.warn(yellow(s"Error describing mapping '${mapping.identifier}', using empty schema instead:\n${reasons(ex)}"))
                         StructType(Seq.empty)
                 }
                 val fields = createFields(schema)
@@ -163,7 +164,7 @@ final class GraphBuilder(context:Context, phase:Phase) {
                 context.execution.describe(relation, partitions)
             } catch {
                 case NonFatal(ex) =>
-                    logger.warn(s"Error describing relation '${relation.identifier}', using empty schema instead: ${reasons(ex)}")
+                    logger.warn(yellow(s"Error describing relation '${relation.identifier}', using empty schema instead:\n${reasons(ex)}"))
                     StructType(Seq.empty)
             }
             val fields = createFields(schema)

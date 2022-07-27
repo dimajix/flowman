@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>flowman-plugin-oracle</artifactId>
+    <name>Flowman Oracle plugin</name>
+
+    <parent>
+        <groupId>com.dimajix.flowman</groupId>
+        <artifactId>flowman-root</artifactId>
+        <version>0.26.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <properties>
+        <plugin.name>flowman-oracle</plugin.name>
+        <plugin.version>${project.version}</plugin.version>
+        <plugin.jar>${project.build.finalName}.jar</plugin.jar>
+        <oracle.version>21.6.0.0.1</oracle.version>
+    </properties>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc8</artifactId>
+            <version>${oracle.version}</version>
+        </dependency>
+    </dependencies>
+</project>
+
+

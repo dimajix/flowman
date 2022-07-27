@@ -34,6 +34,7 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog
@@ -50,6 +51,7 @@ import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.execution.UpdateClause
@@ -65,6 +67,7 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.SchemaUtils
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.{StructType => FlowmanStructType}
 
@@ -81,8 +84,9 @@ class JdbcTableRelationBase(
     indexes: Seq[TableIndex] = Seq.empty
 ) extends JdbcRelation(
     connection,
-    properties + (JDBCOptions.JDBC_TABLE_NAME -> table.unquotedString)
+    properties
 ) with SchemaRelation {
+    protected val resource: ResourceIdentifier = ResourceIdentifier.ofJdbcTable(table)
     protected val tableIdentifier: TableIdentifier = table
     protected val stagingIdentifier: Option[TableIdentifier] = None
     protected lazy val tableDefinition: Option[TableDefinition] = {
@@ -92,10 +96,12 @@ class JdbcTableRelationBase(
             TableDefinition(
                 tableIdentifier,
                 TableType.TABLE,
-                columns=columns,
-                comment=schema.description,
-                primaryKey=pk,
-                indexes=indexes
+                columns = columns,
+                comment = schema.description,
+                primaryKey = pk,
+                indexes = indexes
+                // Currently partition tables are not supported on a physical level, only on a logical level
+                // partitionColumnNames = partitions.map(_.name)
             )
         }
     }
@@ -105,10 +111,17 @@ class JdbcTableRelationBase(
       *
       * @return
       */
-    override def provides: Set[ResourceIdentifier] = {
-        // Only return a resource if a table is defined, which implies that this relation can be used for creating
-        // and destroying JDBC tables
-        Set(ResourceIdentifier.ofJdbcTable(table))
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                Set(resource)
+            case Operation.READ => Set.empty
+            case Operation.WRITE =>
+                requireValidPartitionKeys(partitions)
+
+                val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(tableIdentifier, p.toMap)).toSet
+        }
     }
 
     /**
@@ -116,27 +129,19 @@ class JdbcTableRelationBase(
       *
       * @return
       */
-    override def requires: Set[ResourceIdentifier] = {
-        // Only return a resource if a table is defined, which implies that this relation can be used for creating
-        // and destroying JDBC tables
-        table.database.map(db => ResourceIdentifier.ofJdbcDatabase(db)).toSet ++ super.requires
-    }
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        val deps = op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                table.database.map(db => ResourceIdentifier.ofJdbcDatabase(db)).toSet
+            case Operation.READ =>
+                requireValidPartitionKeys(partitions)
 
-    /**
-      * Returns the list of all resources which will are managed by this relation for reading or writing a specific
-      * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
-      * partition is empty)
-      *
-      * @param partitions
-      * @return
-      */
-    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = {
-        require(partitions != null)
-
-        requireValidPartitionKeys(partitions)
-
-        val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-        allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(tableIdentifier, p.toMap)).toSet
+                val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                allPartitions.map(p => ResourceIdentifier.ofJdbcTablePartition(tableIdentifier, p.toMap)).toSet ++ Set(resource)
+            case Operation.WRITE =>
+                Set(resource)
+        }
+        deps ++ super.requires(op, partitions)
     }
 
     /**
@@ -170,7 +175,7 @@ class JdbcTableRelationBase(
         logger.info(s"Reading JDBC relation '$identifier' from table $tableIdentifier via connection '$connection' partition $partitions")
 
         // Get Connection
-        val (_,props) = createConnectionProperties()
+        val props = createConnectionProperties()
 
         // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
         val reader = execution.spark.read
@@ -320,8 +325,9 @@ class JdbcTableRelationBase(
     }
 
     private def createStagingTable(execution:Execution, con:java.sql.Connection, options: JDBCOptions, df:DataFrame, schema:Option[FlowmanStructType]) : Unit = {
+        val currentSchema = schema.map(schema => JdbcUtils.createSchema(df.schema, schema)).getOrElse(FlowmanStructType.of(df.schema))
+        val stagingSchema = SchemaUtils.dropComments(currentSchema)
         val stagingTable = this.stagingIdentifier.get
-        val stagingSchema = schema.map(schema => JdbcUtils.createSchema(df.schema, schema)).getOrElse(FlowmanStructType.of(df.schema))
         logger.info(s"Creating staging table ${stagingTable} with schema\n${stagingSchema.treeString}")
 
         // First drop temp table if it already exists
@@ -341,7 +347,7 @@ class JdbcTableRelationBase(
 
     protected def appendTable(execution: Execution, df:DataFrame, table:TableIdentifier) : Unit = {
         // Save table
-        val (_,props) = createConnectionProperties()
+        val props = createConnectionProperties()
         df.write.format("jdbc")
             .mode(SaveMode.Append)
             .options(props)
@@ -371,8 +377,8 @@ class JdbcTableRelationBase(
         val targetSchema = outputSchema(execution)
         stagingIdentifier match {
             case None =>
-                val (url, props) = createConnectionProperties()
-                val options = new JDBCOptions(url, tableIdentifier.unquotedString, props)
+                val props = createConnectionProperties()
+                val options = new JDBCOptions(props)
                 JdbcUtils.mergeTable(tableIdentifier, "target", targetSchema, df, "source", condition, clauses, options)
             case Some(stagingTable) =>
                 withConnection { (con, options) =>
@@ -501,7 +507,7 @@ class JdbcTableRelationBase(
         withConnection{ (con,options) =>
             if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
                 doCreate(con, options)
-                provides.foreach(execution.refreshResource)
+                execution.refreshResource(resource)
             }
         }
     }
@@ -541,7 +547,7 @@ class JdbcTableRelationBase(
                     }
                     else if (TableChange.requiresMigration(currentTable, targetTable, migrationPolicy)) {
                         migrateFromTable(currentTable, targetTable, migrationPolicy, migrationStrategy)
-                        provides.foreach(execution.refreshResource)
+                        execution.refreshResource(resource)
                     }
                 }
             }
@@ -586,7 +592,12 @@ class JdbcTableRelationBase(
                         logger.error(s"Cannot migrate relation JDBC relation '$identifier' of table $tableIdentifier, since that would require unsupported changes.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                         throw new MigrationFailedException(identifier)
                     }
-                    alter(migrations, con, options)
+                    try {
+                        alter(migrations, con, options)
+                    }
+                    catch {
+                        case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
+                    }
                 case MigrationStrategy.ALTER_REPLACE =>
                     val dialect = SqlDialects.get(options.url)
                     val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
@@ -595,9 +606,12 @@ class JdbcTableRelationBase(
                             alter(migrations, con, options)
                         }
                         catch {
-                            case e: SQLNonTransientConnectionException => throw e
-                            case e: SQLInvalidAuthorizationSpecException => throw e
-                            case _: SQLNonTransientException => recreate(con, options)
+                            case ex: SQLNonTransientConnectionException => throw new MigrationFailedException(identifier, ex)
+                            case ex: SQLInvalidAuthorizationSpecException => throw new MigrationFailedException(identifier, ex)
+                            case ex: SQLNonTransientException =>
+                                logger.warn(s"Incremental migration of relation '$identifier' for table $tableIdentifier failed: ${reasons(ex)}\nNow falling back by re-creating target table.")
+                                recreate(con, options)
+                            case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
                         }
                     }
                     else {
@@ -613,17 +627,13 @@ class JdbcTableRelationBase(
             if (migrations.isEmpty)
                 logger.warn("Empty list of migrations - nothing to do")
 
-            try {
-                JdbcUtils.alterTable(con, tableIdentifier, migrations, options)
-            }
-            catch {
-                case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
-            }
+            // Do not enclose by try/catch block, such that we can inspect exception and fall back to re-create if required
+            JdbcUtils.alterTable(con, tableIdentifier, migrations, options)
         }
 
         def recreate(con:java.sql.Connection, options:JDBCOptions) : Unit = {
             try {
-                logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier. New schema:\n${targetTable.schema.treeString}")
+                logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier.")
                 JdbcUtils.dropTable(con, tableIdentifier, options)
                 doCreate(con, options)
             }
@@ -656,6 +666,11 @@ class JdbcTableRelationBase(
         withConnection { (con, options) =>
             Some(JdbcUtils.getTableSchema(con, tableIdentifier, options).catalogType)
         }
+    }
+
+    override protected def createConnectionProperties() : Map[String,String] = {
+        val props = super.createConnectionProperties()
+        props + (JDBCOptions.JDBC_TABLE_NAME -> table.unquotedString)
     }
 
     private def checkPartition(partition:Map[String,SingleValue]) : Boolean = {

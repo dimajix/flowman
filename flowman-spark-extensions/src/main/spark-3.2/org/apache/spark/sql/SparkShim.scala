@@ -16,6 +16,7 @@
 
 package org.apache.spark.sql
 
+import java.sql.Connection
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.TimeZone
@@ -25,31 +26,29 @@ import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.internal.config.ConfigEntry
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
-import org.apache.spark.sql.catalyst.analysis.NoSuchDatabaseException
-import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.ViewType
-import org.apache.spark.sql.catalyst.catalog.CatalogTable
-import org.apache.spark.sql.catalyst.catalog.SessionCatalog
+import org.apache.spark.sql.catalyst.expressions.Alias
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.expressions.GroupingSets
 import org.apache.spark.sql.catalyst.expressions.NamedExpression
 import org.apache.spark.sql.catalyst.plans.logical.Aggregate
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.catalyst.util.DateTimeUtils.localDateToDays
-import org.apache.spark.sql.catalyst.util.DateTimeUtils.microsToInstant
 import org.apache.spark.sql.catalyst.util.IntervalUtils
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.SQLExecution
-import org.apache.spark.sql.execution.SparkPlan
-import org.apache.spark.sql.execution.columnar.InMemoryRelation
 import org.apache.spark.sql.execution.command.AlterViewAsCommand
 import org.apache.spark.sql.execution.command.CreateViewCommand
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
+import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
+import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils
 import org.apache.spark.sql.execution.datasources.v2.FileDataSourceV2
 import org.apache.spark.sql.internal.SQLConf
+import org.apache.spark.sql.jdbc.JdbcDialect
 import org.apache.spark.sql.sources.RelationProvider
 import org.apache.spark.sql.sources.SchemaRelationProvider
+import org.apache.spark.sql.types.Metadata
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.unsafe.types.CalendarInterval
 import org.apache.spark.unsafe.types.UTF8String
 
@@ -116,6 +115,27 @@ object SparkShim {
     }
     def alterView(table:TableIdentifier, select:String, plan:LogicalPlan) : AlterViewAsCommand = {
         AlterViewAsCommand(table, select, plan, isAnalyzed=true)
+    }
+
+    def createConnectionFactory(dialect: JdbcDialect, options: JDBCOptions) :  Int => Connection = {
+        val factory = JdbcUtils.createConnectionFactory(options)
+        (_:Int) => factory()
+    }
+    def savePartition(
+        table: String,
+        iterator: Iterator[Row],
+        rddSchema: StructType,
+        insertStmt: String,
+        batchSize: Int,
+        dialect: JdbcDialect,
+        isolationLevel: Int,
+        options: JDBCOptions): Unit = {
+        val getConnection: () => Connection = JdbcUtils.createConnectionFactory(options)
+        JdbcUtils.savePartition(getConnection, table, iterator, rddSchema, insertStmt, batchSize, dialect, isolationLevel, options)
+    }
+
+    def alias(col: Column, alias: String, metadata: Metadata, nonInheritableMetadataKeys: Seq[String]): Column = {
+        Column(Alias(col.expr, alias)(explicitMetadata = Some(metadata), nonInheritableMetadataKeys = nonInheritableMetadataKeys))
     }
 
     val LocalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.LocalTempView

@@ -112,10 +112,11 @@ abstract class Execution {
     def catalog: HiveCatalog
 
     /**
-     * Returns the [[OperationManager]] of this execution, which should be the instance created by the [[Session]]
+     * Returns the [[ActivityManager]] of this execution, which should be the instance created by the [[Session]]
+     *
      * @return
      */
-    def operations: OperationManager
+    def activities: ActivityManager
 
     /**
       * Creates an instance of a mapping, or retrieves it from cache

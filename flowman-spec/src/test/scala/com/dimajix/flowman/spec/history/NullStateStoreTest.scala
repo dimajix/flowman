@@ -26,11 +26,10 @@ class NullStateStoreTest extends AnyFlatSpec with Matchers {
     "The NullStateStoreSpec" should "be parseable" in {
         val spec =
             """
-              |kind: null
+              |kind: none
             """.stripMargin
 
         val monitor = ObjectMapper.parse[HistorySpec](spec)
         monitor shouldBe a[NullHistorySpec]
     }
-
 }

@@ -24,7 +24,7 @@ import org.apache.spark.sql.types.StructField
 
 
 object Field {
-    def apply(name:String, ftype:FieldType, nullable:Boolean=true, description:Option[String]=None, default:Option[String]=None, size:Option[Int]=None, format:Option[String]=None) : Field = {
+    def apply(name:String, ftype:FieldType, nullable:Boolean=true, description:Option[String]=None, default:Option[String]=None, size:Option[Int]=None, format:Option[String]=None, charset:Option[String]=None, collation:Option[String]=None) : Field = {
         val field = new Field()
         field._name = name
         field._type = ftype
@@ -33,6 +33,8 @@ object Field {
         field._default = default
         field._format = format
         field._size = size
+        field._charset = charset
+        field._collation = collation
         field
     }
 
@@ -42,8 +44,10 @@ object Field {
         val description = field.getComment()
         val size = if (field.metadata.contains("size")) Some(field.metadata.getLong("size").toInt) else None
         val default = if (field.metadata.contains("default")) Some(field.metadata.getString("default")) else None
-        val format = if (field.metadata.contains("format")) Some(field.metadata.getString("format")) else None
-        Field(field.name, ftype, field.nullable, description, default, size, format)
+        val format = if (field.metadata.contains("format")) Option(field.metadata.getString("format")) else None
+        val charset = if (field.metadata.contains("charset")) Option(field.metadata.getString("charset")) else None
+        val collation = if (field.metadata.contains("collation")) Option(field.metadata.getString("collation")) else None
+        Field(field.name, ftype, field.nullable, description, default, size, format, charset, collation)
     }
 
     def of(schema:org.apache.spark.sql.types.StructType) : Seq[Field] = {
@@ -68,6 +72,8 @@ final class Field {
     @JsonSchemaInject(json="""{"type": [ "integer", "string" ]}""")
     @JsonProperty(value="size", required=false) private var _size: Option[Int] = None
     @JsonProperty(value="format", required=false) private var _format: Option[String] = None
+    @JsonProperty(value="charset", required=false) private var _charset: Option[String] = None
+    @JsonProperty(value="collation", required=false) private var _collation: Option[String] = None
 
     /**
       * The name of the field
@@ -112,6 +118,18 @@ final class Field {
       * @return
       */
     def format : Option[String] = _format
+
+    /**
+     * Collation to be used, mainly for JDBC relations
+     * @return
+     */
+    def collation : Option[String] = _collation
+
+    /**
+     * Charset to be used, mainly for JDBC relations
+     * @return
+     */
+    def charset : Option[String] = _charset
 
     /**
       * Returns an appropriate (Hive) SQL type for this field. These can be directly used in CREATE TABLE statements.
@@ -162,15 +180,19 @@ final class Field {
         default.foreach(d => metadata.putString("default", d))
         format.filter(_.nonEmpty).foreach(f => metadata.putString("format", f))
         size.foreach(s => metadata.putLong("size", s))
+        charset.foreach(s => metadata.putString("charset", s))
+        collation.foreach(s => metadata.putString("collation", s))
         metadata.build()
     }
 
     override def toString: String = {
-        val format = this.format.map(", format=" + _).getOrElse("")
-        val default = this.default.map(", default=" + _).getOrElse("")
-        val size = this.size.map(", size=" + _).getOrElse("")
-        val desc = this.description.map(", description=\"" + _ + "\"").getOrElse("")
-        s"Field($name, $ftype, $nullable$format$size$default$desc))"
+        val format = this._format.map(", format=" + _).getOrElse("")
+        val default = this._default.map(", default=" + _).getOrElse("")
+        val size = this._size.map(", size=" + _).getOrElse("")
+        val desc = this._description.map(", description=\"" + _ + "\"").getOrElse("")
+        val charset = this._charset.map(", charset=\"" + _ + "\"").getOrElse("")
+        val collation = this._collation.map(", collation=\"" + _ + "\"").getOrElse("")
+        s"Field($name, $ftype, $nullable$format$size$default$desc$charset$collation)"
     }
 
 
@@ -185,12 +207,14 @@ final class Field {
                 _description == that._description &&
                 _default == that._default &&
                 _size == that._size &&
-                _format == that._format
+                _format == that._format &&
+                _charset == that._charset &&
+                _collation == that._collation
         case _ => false
     }
 
     override def hashCode(): Int = {
-        val state = Seq(_name, _type, _nullable, _description, _default, _size, _format)
+        val state = Seq(_name, _type, _nullable, _description, _default, _size, _format, _charset, _collation)
         state.map(o => if (o != null) o.hashCode() else 0).foldLeft(0)((a, b) => 31 * a + b)
     }
 
@@ -200,7 +224,9 @@ final class Field {
              description:Option[String]=_description,
              default:Option[String]=_default,
              size:Option[Int]=_size,
-             format:Option[String]=_format) : Field = {
-        Field(name, ftype, nullable, description, default, size, format)
+             format:Option[String]=_format,
+             charset:Option[String]=_charset,
+             collation:Option[String]=_collation) : Field = {
+        Field(name, ftype, nullable, description, default, size, format, charset, collation)
     }
 }

@@ -32,6 +32,7 @@ import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.SetIgnoreCase
+import com.dimajix.flowman.catalog.PartitionChange
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableChange
@@ -50,12 +51,15 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionedRelation
+import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.spark.sql.delta.AlterTableChangeColumnDeltaCommand
 import com.dimajix.flowman.spark.sql.delta.QualifiedColumn
 
 
-abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String]) extends BaseRelation with PartitionedRelation {
+abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String]) extends BaseRelation with PartitionedRelation with SchemaRelation {
     private val logger = LoggerFactory.getLogger(classOf[DeltaRelation])
+    protected val resource : ResourceIdentifier
 
     protected def deltaCatalogTable(execution: Execution) : DeltaTableV2
     protected def deltaTable(execution: Execution) : DeltaTable
@@ -144,14 +148,22 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
         val table = deltaCatalogTable(execution)
         val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
         val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
-        val sourceTable = TableDefinition(TableIdentifier.empty, columns=sourceSchema.fields)
-        val targetTable = TableDefinition(TableIdentifier.empty, columns=targetSchema.fields)
+        val sourceTable = TableDefinition(
+            TableIdentifier.empty,
+            columns = sourceSchema.fields,
+            partitionColumnNames = table.snapshot.metadata.partitionColumns
+        )
+        val targetTable = TableDefinition(
+            TableIdentifier.empty,
+            columns = targetSchema.fields,
+            partitionColumnNames = partitions.map(_.name)
+        )
 
         val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
 
         if (requiresMigration) {
             doMigration(execution, table, sourceTable, targetTable, migrationPolicy, migrationStrategy)
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
     private def doMigration(execution: Execution, table:DeltaTableV2, currentTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
@@ -202,7 +214,7 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
                             oldColumn.copy(nullable=nullable),
                             None
                         ).run(spark)
-                    case UpdateColumnType(column, dataType) =>
+                    case UpdateColumnType(column, dataType, _, _) =>
                         val table = deltaCatalogTable(execution)
                         val oldColumn = table.schema()(column)
                         AlterTableChangeColumnDeltaCommand(
@@ -250,6 +262,7 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
                 case _:UpdateColumnNullability => true
                 case _:UpdateColumnType => false
                 case _:UpdateColumnComment => true
+                case _:PartitionChange => false
                 case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
             }
         }

@@ -72,10 +72,10 @@ class StreamTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         target.requires(Phase.TRUNCATE) should be (Set())
         target.requires(Phase.DESTROY) should be (Set())
 
-        target.provides(Phase.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path( new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
-        target.provides(Phase.BUILD) should be (Set())
+        target.provides(Phase.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
+        target.provides(Phase.BUILD) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.VERIFY) should be (Set())
-        target.provides(Phase.TRUNCATE) should be (Set())
+        target.provides(Phase.TRUNCATE) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
     }
 
@@ -173,8 +173,8 @@ class StreamTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         target.dirty(execution, Phase.BUILD) should be (Yes)
 
         Thread.sleep(2000)
-        execution.operations.stop()
-        execution.operations.awaitTermination()
+        execution.activities.stop()
+        execution.activities.awaitTermination()
         output.read(execution).count() should be (4)
 
         // == Verify =================================================================================================

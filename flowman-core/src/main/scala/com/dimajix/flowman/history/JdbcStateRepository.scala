@@ -34,6 +34,7 @@ import slick.jdbc.JdbcProfile
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.Action
+import com.dimajix.flowman.jdbc.SlickUtils
 import com.dimajix.flowman.model.Category
 
 
@@ -159,14 +160,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         connection.user.foreach(props.setProperty("user", _))
         connection.password.foreach(props.setProperty("password", _))
         logger.debug(s"Connecting via JDBC to $url with driver $driver")
-        val executor = slick.util.AsyncExecutor(
-            name="Flowman.default",
-            minThreads = 20,
-            maxThreads = 20,
-            queueSize = 1000,
-            maxConnections = 20)
         // Do not set username and password, since a bug in Slick would discard all other connection properties
-        Database.forURL(url, driver=driver, prop=props, executor=executor)
+        Database.forURL(url, driver=driver, prop=props, executor=SlickUtils.defaultExecutor)
     }
 
     val jobRuns = TableQuery[JobRuns]

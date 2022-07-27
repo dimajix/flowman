@@ -153,6 +153,14 @@ Spark 3.1 and Hadoop 3.2
 
     mvn clean install -Pspark-3.1 -Phadoop-3.2
 
+Spark 3.2 and Hadoop 3.2
+
+    mvn clean install -Pspark-3.2 -Phadoop-3.2
+
+Spark 3.3 and Hadoop 3.3
+
+    mvn clean install -Pspark-3.3 -Phadoop-3.3
+
 
 ### Building for Cloudera
 

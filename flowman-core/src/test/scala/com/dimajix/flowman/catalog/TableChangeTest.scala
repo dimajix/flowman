@@ -20,6 +20,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
 import com.dimajix.flowman.catalog.TableChange.CreateIndex
 import com.dimajix.flowman.catalog.TableChange.CreatePrimaryKey
 import com.dimajix.flowman.catalog.TableChange.DropColumn
@@ -27,6 +28,7 @@ import com.dimajix.flowman.catalog.TableChange.DropIndex
 import com.dimajix.flowman.catalog.TableChange.DropPrimaryKey
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
+import com.dimajix.flowman.catalog.TableChange.UpdatePartitionColumns
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
@@ -198,6 +200,70 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
         ) should be (true)
     }
 
+    it should "handle changed collation in relaxed mode" in {
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=Some("de_DE")), Field("f2", StringType))),
+            MigrationPolicy.RELAXED
+        ) should be (true)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=None), Field("f2", StringType))),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=None), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=None), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=None), Field("f2", StringType))),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+    }
+
+    it should "handle changed collation in strict mode" in {
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=Some("de_DE")), Field("f2", StringType))),
+            MigrationPolicy.STRICT
+        ) should be (true)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=None), Field("f2", StringType))),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=None), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=Some("en_US")), Field("f2", StringType))),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType, collation=None), Field("f2", StringType))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType, collation=None), Field("f2", StringType))),
+            MigrationPolicy.STRICT
+        ) should be (false)
+    }
+
     it should "handle changed primary key" in {
         TableChange.requiresMigration(
             TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
@@ -269,6 +335,108 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
         ) should be (false)
     }
 
+    it should "handle changed partitions in relaxed mode" in {
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", IntegerType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.RELAXED
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", IntegerType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.RELAXED
+        ) should be (true)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.RELAXED
+        ) should be (true)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1")),
+            MigrationPolicy.RELAXED
+        ) should be (true)
+    }
+
+    it should "handle changed partitions in strict mode" in {
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", IntegerType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.STRICT
+        ) should be (true)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", IntegerType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.STRICT
+        ) should be (true)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.STRICT
+        ) should be (true)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1")),
+            MigrationPolicy.STRICT
+        ) should be (true)
+    }
+
+    it should "handle changes in storage format" in {
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            MigrationPolicy.STRICT
+        ) should be (true)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("COLUMNSTORE")),
+            MigrationPolicy.STRICT
+        ) should be (false)
+
+        TableChange.requiresMigration(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("rowstore")),
+            MigrationPolicy.STRICT
+        ) should be (true)
+    }
+
     "TableChange.migrate" should "work in strict mode" in {
         val oldTable = TableDefinition(TableIdentifier(""),
             columns=Seq(
@@ -326,6 +494,58 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
             UpdateColumnType("f2", StringType),
             AddColumn(Field("F5", StringType)),
             UpdateColumnNullability("f6", true)
+        ))
+    }
+
+    it should "change collation in relaxed mode" in {
+        val oldTable = TableDefinition(TableIdentifier(""),
+            columns=Seq(
+                Field("f1", StringType, collation=Some("en_US")),
+                Field("f2", StringType),
+                Field("f3", StringType, collation=Some("en_US")),
+                Field("f4", StringType, collation=Some("en_US")),
+                Field("f5", StringType)
+            )
+        )
+        val newTable = TableDefinition(TableIdentifier(""),
+            columns=Seq(
+                Field("F1", StringType),
+                Field("F2", StringType, collation=Some("en_US")),
+                Field("F3", StringType, collation=Some("de_DE")),
+                Field("F4", StringType, collation=Some("en_US")),
+                Field("F5", StringType)
+            )
+        )
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
+
+        changes should be (Seq(
+            UpdateColumnType("f3", StringType, collation=Some("de_DE"))
+        ))
+    }
+
+    it should "change collation in strict mode" in {
+        val oldTable = TableDefinition(TableIdentifier(""),
+            columns=Seq(
+                Field("f1", StringType, collation=Some("en_US")),
+                Field("f2", StringType),
+                Field("f3", StringType, collation=Some("en_US")),
+                Field("f4", StringType, collation=Some("en_US")),
+                Field("f5", StringType)
+            )
+        )
+        val newTable = TableDefinition(TableIdentifier(""),
+            columns=Seq(
+                Field("F1", StringType),
+                Field("F2", StringType, collation=Some("en_US")),
+                Field("F3", StringType, collation=Some("de_DE")),
+                Field("F4", StringType, collation=Some("en_US")),
+                Field("F5", StringType)
+            )
+        )
+        val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.STRICT)
+
+        changes should be (Seq(
+            UpdateColumnType("f3", StringType, collation=Some("de_DE"))
         ))
     }
 
@@ -560,5 +780,148 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
 
         val changes2 = TableChange.migrate(oldTable, newTable, MigrationPolicy.STRICT)
         changes2 should be (Seq(DropIndex("name"), UpdateColumnType("cOl1",IntegerType), CreateIndex("NAME", Seq("col1", "COL3"), false)))
+    }
+
+    it should "update all partitions" in {
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.RELAXED
+        ) should be (Seq.empty)
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.STRICT
+        ) should be (Seq.empty)
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", IntegerType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.RELAXED
+        ) should be (Seq.empty)
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", IntegerType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.STRICT
+        ) should be (Seq(
+            UpdatePartitionColumns(Seq(Field("f1", StringType), Field("f2", IntegerType)))
+        ))
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", IntegerType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.RELAXED
+        ) should be (Seq(
+            UpdatePartitionColumns(Seq(Field("f1", StringType), Field("f2", StringType)))
+        ))
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", IntegerType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.STRICT
+        ) should be (Seq(
+            UpdatePartitionColumns(Seq(Field("f1", StringType), Field("f2", StringType)))
+        ))
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.RELAXED
+        ) should be (Seq(
+            UpdatePartitionColumns(Seq(Field("f1", StringType), Field("f2", StringType)))
+        ))
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.STRICT
+        ) should be (Seq(
+            UpdatePartitionColumns(Seq(Field("f1", StringType), Field("f2", StringType)))
+        ))
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType)), partitionColumnNames=Seq("f1")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.RELAXED
+        ) should be (Seq(
+            UpdatePartitionColumns(Seq(Field("f1", StringType), Field("f2", StringType)))
+        ))
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType)), partitionColumnNames=Seq("f1")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            MigrationPolicy.STRICT
+        ) should be (Seq(
+            UpdatePartitionColumns(Seq(Field("f1", StringType), Field("f2", StringType)))
+        ))
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1")),
+            MigrationPolicy.RELAXED
+        ) should be (Seq(
+            UpdatePartitionColumns(Seq(Field("f1", StringType)))
+        ))
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1")),
+            MigrationPolicy.STRICT
+        ) should be (Seq(
+            UpdatePartitionColumns(Seq(Field("f1", StringType)))
+        ))
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType)), partitionColumnNames=Seq("f1")),
+            MigrationPolicy.RELAXED
+        ) should be (Seq(
+            UpdatePartitionColumns(Seq(Field("f1", StringType)))
+        ))
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), partitionColumnNames=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType)), partitionColumnNames=Seq("f1")),
+            MigrationPolicy.STRICT
+        ) should be (Seq(
+            UpdatePartitionColumns(Seq(Field("f1", StringType)))
+        ))
+    }
+
+    it should "update the storage format" in {
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            MigrationPolicy.STRICT
+        ) should be (Seq.empty)
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            MigrationPolicy.STRICT
+        ) should be (Seq(
+            ChangeStorageFormat("columnstore")
+        ))
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=None),
+            MigrationPolicy.STRICT
+        ) should be (Seq.empty)
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            MigrationPolicy.STRICT
+        ) should be (Seq.empty)
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("COLUMNSTORE")),
+            MigrationPolicy.STRICT
+        ) should be (Seq.empty)
+
+        TableChange.migrate(
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("columnstore")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), storageFormat=Some("rowstore")),
+            MigrationPolicy.STRICT
+        ) should be (Seq(
+            ChangeStorageFormat("rowstore")
+        ))
     }
 }

@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.25.1</version>
+        <version>0.26.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -101,6 +101,27 @@
             <properties>
                 <delta.version>1.2.1</delta.version>
             </properties>
+        </profile>
+        <profile>
+            <id>spark-3.3</id>
+            <properties>
+                <delta.version>1.2.1</delta.version>
+            </properties>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <!-- Disable compilation -->
+                        <plugin>
+                            <groupId>net.alchim31.maven</groupId>
+                            <artifactId>scala-maven-plugin</artifactId>
+                            <configuration>
+                                <sourceDir>no-source</sourceDir>
+                                <testSourceDir>no-test-source</testSourceDir>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
         </profile>
     </profiles>
 

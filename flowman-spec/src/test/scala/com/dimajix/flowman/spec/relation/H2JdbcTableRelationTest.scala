@@ -47,6 +47,7 @@ import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.UpdateClause
@@ -209,9 +210,15 @@ class H2JdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkS
             an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM lala_001"""))
         }
 
-        relation.provides should be (Set(ResourceIdentifier.ofJdbcTable("lala_001", None)))
-        relation.requires should be (Set())
-        relation.resources() should be (Set(ResourceIdentifier.ofJdbcTablePartition("lala_001", None, Map())))
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofJdbcTable("lala_001", None)))
+        relation.requires(Operation.CREATE) should be (Set.empty)
+        relation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofJdbcTablePartition("lala_001", None, Map())))
+        relation.requires(Operation.WRITE) should be (Set(ResourceIdentifier.ofJdbcTable("lala_001", None)))
+        relation.provides(Operation.READ) should be (Set.empty)
+        relation.requires(Operation.READ) should be (Set(
+            ResourceIdentifier.ofJdbcTable("lala_001", None),
+            ResourceIdentifier.ofJdbcTablePartition("lala_001", None, Map())
+        ))
 
         // == Create ==================================================================================================
         relation.exists(execution) should be (No)
@@ -464,10 +471,22 @@ class H2JdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkS
             an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM lala_002"""))
         }
 
-        relation.provides should be (Set(ResourceIdentifier.ofJdbcTable("lala_002", None)))
-        relation.requires should be (Set())
-        relation.resources() should be (Set(ResourceIdentifier.ofJdbcTablePartition("lala_002", None, Map())))
-        relation.resources(Map("p_col" -> SingleValue("23"))) should be (Set(ResourceIdentifier.ofJdbcTablePartition("lala_002", None, Map("p_col" -> "23"))))
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofJdbcTable("lala_002", None)))
+        relation.requires(Operation.CREATE) should be (Set.empty)
+        relation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofJdbcTablePartition("lala_002", None, Map())))
+        relation.requires(Operation.WRITE) should be (Set(ResourceIdentifier.ofJdbcTable("lala_002", None)))
+        relation.provides(Operation.READ) should be (Set.empty)
+        relation.requires(Operation.READ) should be (Set(
+            ResourceIdentifier.ofJdbcTable("lala_002", None),
+            ResourceIdentifier.ofJdbcTablePartition("lala_002", None, Map())
+        ))
+        relation.provides(Operation.WRITE,Map("p_col" -> SingleValue("23"))) should be (Set(ResourceIdentifier.ofJdbcTablePartition("lala_002", None, Map("p_col" -> "23"))))
+        relation.requires(Operation.WRITE,Map("p_col" -> SingleValue("23"))) should be (Set(ResourceIdentifier.ofJdbcTable("lala_002", None)))
+        relation.provides(Operation.READ,Map("p_col" -> SingleValue("23"))) should be (Set.empty)
+        relation.requires(Operation.READ,Map("p_col" -> SingleValue("23"))) should be (Set(
+            ResourceIdentifier.ofJdbcTable("lala_002", None),
+            ResourceIdentifier.ofJdbcTablePartition("lala_002", None, Map("p_col" -> "23"))
+        ))
 
         // == Create =================================================================================================
         relation.exists(execution) should be (No)

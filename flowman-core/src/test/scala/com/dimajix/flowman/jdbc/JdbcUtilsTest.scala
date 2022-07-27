@@ -86,7 +86,7 @@ class JdbcUtilsTest extends AnyFlatSpec with Matchers with LocalTempDir {
             TableType.TABLE,
             Seq(
                 Field("str_field", VarcharType(20)),
-                Field("int_field", IntegerType)
+                Field("int_field", IntegerType, nullable=false)
             ),
             None,
             Seq()

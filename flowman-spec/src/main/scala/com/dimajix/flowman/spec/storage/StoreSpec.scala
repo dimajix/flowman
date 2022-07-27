@@ -34,7 +34,7 @@ object StoreSpec extends TypeRegistry[StoreSpec] {
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "file", value = classOf[FileStoreSpec]),
-    new JsonSubTypes.Type(name = "null", value = classOf[NullStoreSpec])
+    new JsonSubTypes.Type(name = "none", value = classOf[NullStoreSpec])
 ))
 abstract class StoreSpec extends Spec[Store] {
     override def instantiate(context:Context, properties:Option[Store.Properties] = None): Store

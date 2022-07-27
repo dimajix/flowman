@@ -54,8 +54,7 @@ extends BaseMapping {
      * @return
      */
     override def requires : Set[ResourceIdentifier] = {
-        Set(ResourceIdentifier.ofHiveTable(table)) ++
-            table.database.map(db => ResourceIdentifier.ofHiveDatabase(db)).toSet
+        Set(ResourceIdentifier.ofHivePartition(table, Map.empty[String,Any]))
     }
 
     /**

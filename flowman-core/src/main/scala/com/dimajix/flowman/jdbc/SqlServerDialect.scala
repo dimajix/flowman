@@ -16,12 +16,18 @@
 
 package com.dimajix.flowman.jdbc
 
+import java.sql.Statement
 import java.util.Locale
+
+import scala.collection.mutable
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.jdbc.JdbcType
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.flowman.catalog.TableChange
+import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
+import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.types.BinaryType
@@ -44,6 +50,7 @@ object SqlServerDialect extends BaseDialect {
     }
 
     private object Statements extends MsSqlServerStatements(this)
+    private object Commands extends MsSqlServerCommands(this)
 
     override def canHandle(url : String): Boolean = url.toLowerCase(Locale.ROOT).startsWith("jdbc:sqlserver")
 
@@ -76,6 +83,18 @@ object SqlServerDialect extends BaseDialect {
     }
 
     /**
+     * Returns true if the given table supports a specific table change
+     * @param change
+     * @return
+     */
+    override def supportsChange(table:TableIdentifier, change:TableChange) : Boolean = {
+        change match {
+            case _:ChangeStorageFormat => true
+            case _:TableChange => super.supportsChange(table, change)
+        }
+    }
+
+    /**
      * Returns true if the SQL database supports retrieval of the exact view definition
      *
      * @return
@@ -89,6 +108,7 @@ object SqlServerDialect extends BaseDialect {
     override def supportsAlterView : Boolean = true
 
     override def statement : SqlStatements = Statements
+    override def command : SqlCommands = Commands
 }
 
 
@@ -120,9 +140,10 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
     }
 
     // see https://docs.microsoft.com/en-us/sql/relational-databases/tables/add-columns-to-a-table-database-engine?view=sql-server-ver15
-    override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean): String = {
+    override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
-        s"ALTER TABLE ${dialect.quote(table)} ADD ${dialect.quoteIdentifier(columnName)} $dataType $nullable"
+        val col = collation.map(c => s" COLLATE $c").getOrElse("")
+        s"ALTER TABLE ${dialect.quote(table)} ADD ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable"
     }
 
     // See https://docs.microsoft.com/en-us/sql/relational-databases/system-stored-procedures/sp-rename-transact-sql?view=sql-server-ver15
@@ -130,9 +151,10 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
         s"EXEC sp_rename '${dialect.quote(table)}.${dialect.quoteIdentifier(columnName)}', ${dialect.quoteIdentifier(newName)}, 'COLUMN'"
     }
 
-    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean): String = {
+    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
-        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $dataType $nullable"
+        val col = collation.map(c => s" COLLATE $c").getOrElse("")
+        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable"
     }
 
     override def dropIndex(table: TableIdentifier, indexName: String): String = {
@@ -147,5 +169,224 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
     override def merge(targetTable: TableIdentifier, targetAlias:String, targetSchema:Option[StructType], sourceTable: TableIdentifier, sourceAlias:String, sourceSchema:StructType,  condition:Column, clauses:Seq[MergeClause]) : String = {
         val sql = super.merge(targetTable, targetAlias, targetSchema, sourceTable, sourceAlias, sourceSchema, condition, clauses)
         sql + ";\n" // Add semicolon for MS SQL Server
+    }
+}
+
+
+class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
+    override def createTable(statement:Statement, table:TableDefinition) : Unit = {
+        super.createTable(statement, table)
+
+        // Attach any comments
+        table.columns.foreach { col =>
+            col.description match {
+                case Some(c) =>
+                    addColumnComment(statement, table.identifier, col.name, c)
+                case None => // Nothing to do
+            }
+        }
+
+        // Optionally create CLUSTERED COLUMNSTORE INDEX
+        table.storageFormat.map(_.toLowerCase(Locale.ROOT)) match {
+            case Some("columnstore") =>
+                statement.executeUpdate(s"CREATE CLUSTERED COLUMNSTORE INDEX columnstore_idx ON ${dialect.quote(table.identifier)}")
+            case Some("rowstore") =>
+            case Some(s) => throw new UnsupportedOperationException(s"Storage format '$s' not supported, only 'ROWSTORE' and 'COLUMNSTORE'")
+            case None =>
+        }
+    }
+
+    override def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField] = {
+        // Get basic information
+        val fields = super.getJdbcSchema(statement, table)
+
+        // Query extended information
+        val sql =
+            s"""
+              |SELECT
+              |    c.name,
+              |    c.collation_name
+              |FROM sys.columns c
+              |WHERE c.object_id = OBJECT_ID(${dialect.literal(dialect.quote(table))})
+              |""".stripMargin
+        val collations = queryKeyValue(statement, sql)
+        val comments = getColumnComments(statement, table)
+
+        // Merge base info and extra info
+        fields.map { f =>
+            val c1 = collations.get(f.name)
+                .map(c => f.copy(collation=Option(c)))
+                .getOrElse(f)
+            comments.get(c1.name)
+                .map(c => c1.copy(description=Option(c)))
+                .getOrElse(c1)
+        }
+    }
+
+    private def getColumnComments(statement:Statement, table:TableIdentifier) : Map[String,String] = {
+        // Query extended information
+        val sql =
+            s"""
+               |SELECT
+               |    objname,
+               |    TRY_CAST(value AS NVARCHAR(MAX)) AS value
+               |FROM sys.fn_listextendedproperty ('MS_Description', 'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")}, 'TABLE', ${dialect.literal(table.table)}, 'column', null)
+               |""".stripMargin
+        queryKeyValue(statement, sql)
+    }
+    private def queryKeyValue(statement:Statement, sql:String) : Map[String,String] = {
+        val rs = statement.executeQuery(sql)
+        val values = mutable.Map[String,String]()
+        try {
+            while (rs.next()) {
+                val name = rs.getString(1)
+                val value = rs.getString(2)
+                if (value != null)
+                    values.put(name, value)
+            }
+        }
+        finally {
+            rs.close()
+        }
+
+        values.toMap
+    }
+
+    override def addColumn(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
+        super.addColumn(statement, table, columnName, dataType, isNullable, charset, collation, comment)
+        comment.foreach { c =>
+            addColumnComment(statement, table, columnName, c)
+        }
+    }
+
+    override def updateColumnComment(statement:Statement, table: TableIdentifier, column: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]) : Unit = {
+        // 1. Check if we currently do have a comment
+        val sql =
+        s"""
+           |SELECT
+           |    objname,
+           |    TRY_CAST(value AS NVARCHAR(MAX)) AS value
+           |FROM sys.fn_listextendedproperty ('MS_Description', 'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")}, 'TABLE', ${dialect.literal(table.table)}, 'column', ${dialect.literal(column)})
+           |""".stripMargin
+        if (queryKeyValue(statement, sql).nonEmpty) {
+            comment match {
+                case Some(c) =>
+                    updateColumnComment(statement, table, column, c)
+                case None =>
+                    dropColumnComment(statement, table, column)
+            }
+        }
+        else {
+            comment match {
+                case Some(c) =>
+                    addColumnComment(statement, table, column, c)
+                case None => // Nothing to do
+            }
+        }
+    }
+    private def addColumnComment(statement:Statement, table: TableIdentifier, column:String, comment:String) : Unit = {
+        val sql = s"""
+                     |declare @schema VARCHAR(255);
+                     |set @schema = schema_name();
+                     |exec sp_addextendedproperty
+                     |   'MS_Description', ${dialect.literal(comment)},
+                     |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("@schema")},
+                     |   'TABLE', ${dialect.literal(table.table)},
+                     |   'COLUMN', ${dialect.literal(column)}
+                     |;
+                     |""".stripMargin
+        statement.executeUpdate(sql)
+    }
+    private def dropColumnComment(statement:Statement, table: TableIdentifier, column:String) : Unit = {
+        val sql = s"""
+                     |declare @schema VARCHAR(255);
+                     |set @schema = schema_name();
+                     |exec sp_dropextendedproperty
+                     |   'MS_Description',
+                     |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("@schema")},
+                     |   'TABLE', ${dialect.literal(table.table)},
+                     |   'COLUMN', ${dialect.literal(column)}
+                     |;
+                     |""".stripMargin
+        statement.executeUpdate(sql)
+    }
+    private def updateColumnComment(statement:Statement, table: TableIdentifier, column:String, comment:String) : Unit = {
+        val sql = s"""
+                     |declare @schema VARCHAR(255);
+                     |set @schema = schema_name();
+                     |exec sp_updateextendedproperty
+                     |   'MS_Description', ${dialect.literal(comment)},
+                     |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("@schema")},
+                     |   'TABLE', ${dialect.literal(table.table)},
+                     |   'COLUMN', ${dialect.literal(column)}
+                     |;
+                     |""".stripMargin
+        statement.executeUpdate(sql)
+
+    }
+
+    override def getStorageFormat(statement:Statement, table:TableIdentifier) : Option[String] = {
+        getColumnStoreIndex(statement, table) match {
+            case Some(_) => Some("COLUMNSTORE")
+            case None => Some("ROWSTORE")
+        }
+    }
+
+    override def changeStorageFormat(statement: Statement, table: TableIdentifier, storageFormat: String): Unit = {
+        // 1. Retrieve current storage format
+        val current = getStorageFormat(statement, table)
+
+        // 2. Conditionally create or drop CLUSTERED COLUMN STORE INDEX
+        val desiredFormat = storageFormat.toLowerCase(Locale.ROOT)
+        if (!current.exists(_.toLowerCase(Locale.ROOT) == desiredFormat)) {
+            desiredFormat match {
+                case "columnstore" =>
+                    statement.executeUpdate(s"CREATE CLUSTERED COLUMNSTORE INDEX columnstore_idx ON ${dialect.quote(table)}")
+                case "rowstore" =>
+                    val indexName = getColumnStoreIndex(statement, table)
+                    indexName.foreach(idx => statement.executeUpdate(s"DROP INDEX $idx ON ${dialect.quote(table)}"))
+                case s => throw new UnsupportedOperationException(s"Storage format '$s' not supported, only 'ROWSTORE' and 'COLUMNSTORE'")
+            }
+        }
+    }
+
+    private def getColumnStoreIndex(statement: Statement, table: TableIdentifier) : Option[String] = {
+        val sql =
+            s"""
+               |SELECT
+               |    name,
+               |    type_desc
+               |FROM sys.indexes
+               |WHERE object_id = OBJECT_ID(${dialect.literal(dialect.quote(table))})
+               |AND type_desc = 'CLUSTERED COLUMNSTORE'
+               |""".stripMargin
+        val rs = statement.executeQuery(sql)
+        var name:Option[String] = None
+        try {
+            while (rs.next()) {
+                name = Option(rs.getString(1))
+            }
+        }
+        finally {
+            rs.close()
+        }
+        name
+    }
+
+    override def dropPrimaryKey(statement: Statement, table: TableIdentifier): Unit = {
+        val meta = statement.getConnection.getMetaData
+        val pkrs = meta.getPrimaryKeys(null, table.database.orNull, table.table)
+        var name:String = ""
+        while(pkrs.next()) {
+            val pkname = pkrs.getString(6)
+            if (pkname != null)
+                name = pkname
+        }
+        pkrs.close()
+
+        if (name.nonEmpty) {
+            dropConstraint(statement, table, name)
+            //dropIndex(statement, table, name)
+        }
     }
 }

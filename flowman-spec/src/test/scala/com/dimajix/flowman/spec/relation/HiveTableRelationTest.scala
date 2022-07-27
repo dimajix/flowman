@@ -43,6 +43,7 @@ import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingIdentifier
@@ -89,9 +90,15 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
-        relation.provides should be (Set(ResourceIdentifier.ofHiveTable("lala_0001", Some("default"))))
-        relation.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
-        relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_0001", Some("default"), Map())))
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("lala_0001", Some("default"))))
+        relation.requires(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
+        relation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofHivePartition("lala_0001", Some("default"), Map())))
+        relation.requires(Operation.WRITE) should be (Set(ResourceIdentifier.ofHiveTable("lala_0001", Some("default"))))
+        relation.provides(Operation.READ) should be (Set.empty)
+        relation.requires(Operation.READ) should be (Set(
+            ResourceIdentifier.ofHiveTable("lala_0001", Some("default")),
+            ResourceIdentifier.ofHivePartition("lala_0001", Some("default"), Map())
+        ))
         relation.fields should be(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType)
@@ -247,10 +254,22 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("t0"))
-        relation.provides should be (Set(ResourceIdentifier.ofHiveTable("lala_0003", Some("default"))))
-        relation.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
-        relation.resources() should be (Set(ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map())))
-        relation.resources(Map("spart" -> SingleValue("x"))) should be (Set(ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map("spart" -> "x"))))
+        relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("lala_0003", Some("default"))))
+        relation.requires(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
+        relation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map())))
+        relation.requires(Operation.WRITE) should be (Set(ResourceIdentifier.ofHiveTable("lala_0003", Some("default"))))
+        relation.provides(Operation.READ) should be (Set.empty)
+        relation.requires(Operation.READ) should be (Set(
+            ResourceIdentifier.ofHiveTable("lala_0003", Some("default")),
+            ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map())
+        ))
+        relation.provides(Operation.WRITE, Map("spart" -> SingleValue("x"))) should be (Set(ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map("spart" -> "x"))))
+        relation.requires(Operation.WRITE, Map("spart" -> SingleValue("x"))) should be (Set(ResourceIdentifier.ofHiveTable("lala_0003", Some("default"))))
+        relation.provides(Operation.READ, Map("spart" -> SingleValue("x"))) should be (Set.empty)
+        relation.requires(Operation.READ, Map("spart" -> SingleValue("x"))) should be (Set(
+            ResourceIdentifier.ofHiveTable("lala_0003", Some("default")),
+            ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map("spart" -> "x"))
+        ))
 
         // == Create ==================================================================================================
         relation.exists(execution) should be (No)
@@ -1916,6 +1935,194 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
     }
 
+    it should "support adding partitions in migrations" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val relation_1 = HiveTableRelation(
+            Relation.Properties(context, "rel_1"),
+            schema = Some(InlineSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.StringType),
+                    Field("f2", com.dimajix.flowman.types.IntegerType),
+                    Field("f3", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("f3", com.dimajix.flowman.types.IntegerType)
+            ),
+            table = TableIdentifier("some_table", Some("default"))
+        )
+        val relation_2 = HiveTableRelation(
+            Relation.Properties(context, "rel_2"),
+            schema = Some(InlineSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.StringType),
+                    Field("f2", com.dimajix.flowman.types.IntegerType),
+                    Field("f3", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            table = TableIdentifier("some_table", Some("default"))
+        )
+
+        // == Create ===================================================================
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
+        relation_1.create(execution)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
+        session.catalog.getTable(relation_1.table).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType, nullable = false)
+        )))
+        session.catalog.getTable(relation_1.table).dataSchema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).partitionSchema should be (StructType(Seq(
+            StructField("f3", IntegerType, nullable = false)
+        )))
+
+        // == Migrate ===================================================================
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL)
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
+        session.catalog.getTable(relation_1.table).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType, nullable = false)
+        )))
+        session.catalog.getTable(relation_1.table).dataSchema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).partitionSchema should be (StructType(Seq(
+            StructField("f3", IntegerType, nullable = false)
+        )))
+
+        // == Migrate =================================================================================================
+        relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
+
+        a[MigrationFailedException] should be thrownBy(relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL))
+        a[MigrationFailedException] should be thrownBy(relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER))
+
+        relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+        relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+        session.catalog.getTable(relation_1.table).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).dataSchema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).partitionSchema should be (StructType(Seq(
+        )))
+
+        // == Migrate =================================================================================================
+        relation_2.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.FAIL)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+        relation_2.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+
+        relation_2.migrate(execution, MigrationPolicy.STRICT, MigrationStrategy.ALTER_REPLACE)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        session.catalog.getTable(relation_1.table).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).dataSchema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).partitionSchema should be (StructType(Seq(
+        )))
+
+        // == Back Migrate ===================================================================
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.NEVER)
+        a[MigrationFailedException] should be thrownBy(relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL))
+        a[MigrationFailedException] should be thrownBy(relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER))
+
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        session.catalog.getTable(relation_1.table).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType, nullable = false)
+        )))
+        session.catalog.getTable(relation_1.table).dataSchema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).partitionSchema should be (StructType(Seq(
+            StructField("f3", IntegerType, nullable = false)
+        )))
+
+        relation_1.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        session.catalog.getTable(relation_1.table).schema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType, nullable = false)
+        )))
+        session.catalog.getTable(relation_1.table).dataSchema should be (StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType)
+        )))
+        session.catalog.getTable(relation_1.table).partitionSchema should be (StructType(Seq(
+            StructField("f3", IntegerType, nullable = false)
+        )))
+
+        // == Destroy =================================================================================================
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
+        relation_1.destroy(execution)
+        relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
+    }
+
     it should "provide its schema to mappings" in {
         val spec =
             s"""
@@ -2017,8 +2224,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType)
         ))
-        t0.provides should be (Set(ResourceIdentifier.ofHiveTable("lala_0004", Some("default"))))
-        t0.requires should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
+        t0.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("lala_0004", Some("default"))))
+        t0.requires(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
 
         val t1 = context.getRelation(RelationIdentifier("t1"))
         t1.fields should be (Seq(
@@ -2033,8 +2240,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             Field("spart", ftypes.StringType, false),
             Field("ip", ftypes.IntegerType, false)
         ))
-        t1.provides should be (Set(ResourceIdentifier.ofHiveTable("lala_0005", Some("default"))))
-        t1.requires should be (Set(
+        t1.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("lala_0005", Some("default"))))
+        t1.requires(Operation.CREATE) should be (Set(
             ResourceIdentifier.ofHiveTable("lala_0004", Some("default")),
             ResourceIdentifier.ofHiveDatabase("default")
         ))

@@ -401,7 +401,7 @@ class Session private[execution](
     private var sparkSession:SparkSession = null
 
     private val rootExecution : RootExecution = new RootExecution(this)
-    private val operationsManager = new OperationManager
+    private val operationsManager = new ActivityManager
 
     private val cachedProjects : mutable.Map[String,Project] = mutable.Map()
     private def loadProject(name:String) : Option[Project] = {
@@ -583,11 +583,12 @@ class Session private[execution](
     def execution : Execution = rootExecution
 
     /**
-     * Returns the [[OperationManager]] of this session, where all background operations and streaming queries are
+     * Returns the [[ActivityManager]] of this session, where all background activities and streaming queries are
      * managed.
+     *
      * @return
      */
-    def operations : OperationManager = operationsManager
+    def activities: ActivityManager = operationsManager
 
     /**
       * Either returns an existing or creates a new project specific context

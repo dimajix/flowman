@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Kaya Kupferschmidt
+ * Copyright 2020-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,27 +19,45 @@ package com.dimajix.spark.sql.catalyst
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.sql.catalyst.expressions.Alias
+import org.apache.spark.sql.catalyst.expressions.Attribute
+import org.apache.spark.sql.catalyst.expressions.AttributeSet
+import org.apache.spark.sql.catalyst.expressions.ExprId
 import org.apache.spark.sql.catalyst.expressions.Literal
+import org.apache.spark.sql.catalyst.expressions.NamedExpression
+import org.apache.spark.sql.catalyst.expressions.Unevaluable
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.OneRowRelation
 import org.apache.spark.sql.catalyst.plans.logical.Project
 import org.apache.spark.sql.catalyst.plans.logical.With
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.catalyst.rules.RuleExecutor
-import org.apache.spark.sql.types.BooleanType
-import org.apache.spark.sql.types.ByteType
-import org.apache.spark.sql.types.CharType
-import org.apache.spark.sql.types.DateType
-import org.apache.spark.sql.types.DecimalType
-import org.apache.spark.sql.types.DoubleType
-import org.apache.spark.sql.types.FloatType
-import org.apache.spark.sql.types.IntegerType
-import org.apache.spark.sql.types.LongType
-import org.apache.spark.sql.types.ShortType
-import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.types.DataType
+import org.apache.spark.sql.types.Metadata
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.types.TimestampType
-import org.apache.spark.sql.types.VarcharType
+
+
+case class NamedAttribute(name:String, dataType: DataType)(
+    val exprId: ExprId = NamedExpression.newExprId,
+    val qualifier: Seq[String] = Seq.empty,
+    val explicitMetadata: Metadata = Metadata.empty
+)
+extends Attribute with Unevaluable {
+    @transient
+    override lazy val references: AttributeSet = AttributeSet.empty
+
+    override def newInstance(): NamedAttribute = this
+
+    override def nullable: Boolean = true
+
+    override def metadata: Metadata = explicitMetadata
+
+    override def withNullability(newNullability: Boolean): Attribute = this
+    override def withQualifier(newQualifier: Seq[String]): Attribute = NamedAttribute(name, dataType)(exprId, newQualifier, explicitMetadata)
+    override def withName(newName: String): Attribute = NamedAttribute(newName, dataType)(exprId, qualifier, explicitMetadata)
+    override def withMetadata(newMetadata: Metadata): Attribute = NamedAttribute(name, dataType)(exprId, qualifier, newMetadata)
+    /*override*/ def withExprId(newExprId: ExprId): Attribute = NamedAttribute(name, dataType)(newExprId, qualifier, metadata)
+    /*override*/ def withDataType(newType: DataType): Attribute = NamedAttribute(name, newType)(exprId, qualifier, metadata)
+}
 
 
 object PlanUtils {
@@ -57,6 +75,13 @@ object PlanUtils {
                     Literal.default(field.dataType)
                 }
             Alias(literal, field.name)(explicitMetadata = Option(field.metadata))
+        }
+        Project(expressions, OneRowRelation())
+    }
+
+    def namedAttributePlan(schema:StructType) : LogicalPlan = {
+        val expressions = schema.map { field =>
+            NamedAttribute(field.name, field.dataType)(explicitMetadata = field.metadata)
         }
         Project(expressions, OneRowRelation())
     }

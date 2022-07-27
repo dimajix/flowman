@@ -10,7 +10,7 @@
     <parent>
         <groupId>com.dimajix.flowman</groupId>
         <artifactId>flowman-root</artifactId>
-        <version>0.25.1</version>
+        <version>0.26.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -39,6 +39,13 @@
             <properties>
                 <!-- The Spark 3.2 archives continue to have a wrong file name -->
                 <spark-hadoop-archive.version>3.2</spark-hadoop-archive.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-3.3</id>
+            <properties>
+                <!-- The Spark 3.3 archives have a generic Hadoop version-->
+                <spark-hadoop-archive.version>3</spark-hadoop-archive.version>
             </properties>
         </profile>
     </profiles>

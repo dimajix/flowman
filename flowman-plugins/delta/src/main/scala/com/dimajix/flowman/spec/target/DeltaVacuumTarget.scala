@@ -33,6 +33,7 @@ import com.dimajix.common.Unknown
 import com.dimajix.flowman.common.ThreadUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseTarget
@@ -70,8 +71,12 @@ case class DeltaVacuumTarget(
      * @return
      */
     override def requires(phase: Phase): Set[ResourceIdentifier] = {
-        val rel = relation.value
-        rel.provides ++ rel.requires
+        phase match {
+            case Phase.BUILD =>
+                val rel = relation.value
+                rel.provides(Operation.CREATE) ++ rel.provides(Operation.WRITE)
+            case _ => Set.empty
+        }
     }
 
     /**

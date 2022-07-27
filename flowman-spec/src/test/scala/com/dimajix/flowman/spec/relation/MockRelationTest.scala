@@ -23,6 +23,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Category
@@ -47,7 +48,7 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
             """
               |relations:
               |  empty:
-              |    kind: null
+              |    kind: empty
               |    schema:
               |      kind: inline
               |      fields:
@@ -108,9 +109,12 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
         relation shouldBe a[MockRelation]
         relation.category should be (Category.RELATION)
 
-        relation.requires should be (Set())
-        relation.provides should be (Set())
-        relation.resources(Map()) should be (Set())
+        relation.requires(Operation.CREATE) should be (Set.empty)
+        relation.provides(Operation.CREATE) should be (Set.empty)
+        relation.requires(Operation.READ) should be (Set.empty)
+        relation.provides(Operation.READ) should be (Set.empty)
+        relation.requires(Operation.WRITE) should be (Set.empty)
+        relation.provides(Operation.WRITE) should be (Set.empty)
 
         // Initial state
         relation.exists(executor) should be (No)

@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.jdbc.JdbcUtils
+import com.dimajix.flowman.jdbc.SlickUtils
 import com.dimajix.flowman.metric.AbstractMetricSink
 import com.dimajix.flowman.metric.GaugeMetric
 import com.dimajix.flowman.metric.MetricBoard
@@ -87,7 +87,7 @@ class JdbcMetricSink(
     private lazy val jdbcConnection = connection.value.asInstanceOf[JdbcConnection]
     private lazy val repository = new JdbcMetricRepository(
         jdbcConnection,
-        JdbcUtils.getProfile(jdbcConnection.driver),
+        SlickUtils.getProfile(jdbcConnection.driver),
         tablePrefix
     )
 

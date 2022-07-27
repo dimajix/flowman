@@ -32,6 +32,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.hadoop.FileCollector
 import com.dimajix.flowman.model.BaseRelation
@@ -59,7 +60,6 @@ case class LocalRelation(
 )
 extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[LocalRelation])
-
     private lazy val collector : FileCollector = {
         FileCollector.builder(context.hadoopConf)
             .path(location)
@@ -68,44 +68,53 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment.toMap)
             .build()
     }
-    lazy val qualifiedLocation:Path = collector.root
+    private lazy val qualifiedLocation:Path = collector.root
+    private lazy val resource = ResourceIdentifier.ofLocal(qualifiedLocation)
 
     /**
       * Returns the list of all resources which will be created by this relation.
       *
       * @return
       */
-    override def provides : Set[ResourceIdentifier] = Set(
-        ResourceIdentifier.ofLocal(qualifiedLocation)
-    )
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                Set(resource)
+            case Operation.READ => Set.empty
+            case Operation.WRITE =>
+                requireValidPartitionKeys(partitions)
+
+                if (this.partitions.nonEmpty) {
+                    val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                    allPartitions.map(p => ResourceIdentifier.ofLocal(collector.resolve(p))).toSet
+                }
+                else {
+                    Set(resource)
+                }
+        }
+    }
 
     /**
       * Returns the list of all resources which will be required by this relation
       *
       * @return
       */
-    override def requires : Set[ResourceIdentifier] = super.requires
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        val deps = op match {
+            case Operation.CREATE | Operation.DESTROY => Set.empty
+            case Operation.READ =>
+                requireValidPartitionKeys(partitions)
 
-    /**
-      * Returns the list of all resources which will be required by this relation for reading a specific partition.
-      * The list will be specifically  created for a specific partition, or for the full relation (when the partition
-      * is empty)
-      *
-      * @param partitions
-      * @return
-      */
-    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = {
-        require(partitions != null)
-
-        requireValidPartitionKeys(partitions)
-
-        if (this.partitions.nonEmpty) {
-            val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-            allPartitions.map(p => ResourceIdentifier.ofLocal(collector.resolve(p))).toSet
+                if (this.partitions.nonEmpty) {
+                    val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
+                    allPartitions.map(p => ResourceIdentifier.ofLocal(collector.resolve(p))).toSet
+                }
+                else {
+                    Set(resource)
+                }
+            case Operation.WRITE => Set.empty
         }
-        else {
-            Set(ResourceIdentifier.ofLocal(qualifiedLocation))
-        }
+        deps ++ super.requires(op, partitions)
     }
 
     /**
@@ -177,7 +186,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             .mode(mode.batchMode)
             .save(outputFile)
 
-        provides.foreach(execution.refreshResource)
+        execution.refreshResource(resource)
     }
 
     /**
@@ -278,7 +287,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         else {
             logger.info(s"Creating local directory '$localDirectory' for local file relation")
             path.mkdirs()
-            provides.foreach(execution.refreshResource)
+            execution.refreshResource(resource)
         }
     }
 
@@ -315,7 +324,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         }
 
         delete(root)
-        provides.foreach(execution.refreshResource)
+        execution.refreshResource(resource)
     }
 
     /**

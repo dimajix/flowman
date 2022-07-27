@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.graph.Graph
 import com.dimajix.flowman.graph.InputMapping
 import com.dimajix.flowman.graph.MappingRef
@@ -94,7 +95,7 @@ class RelationCollector extends AbstractCollector {
                     case map: InputMapping =>
                         collectMappingSources(map.mapping)
                     case rel: ReadRelation =>
-                        rel.input.relation.provides.toSeq
+                        rel.input.relation.provides(Operation.CREATE).toSeq
                     case _ => Seq.empty
                 }
             case _ => Seq.empty
@@ -108,8 +109,8 @@ class RelationCollector extends AbstractCollector {
             relation.description,
             None,
             inputs,
-            relation.provides.toSeq,
-            relation.requires.toSeq,
+            relation.provides(Operation.CREATE).toSeq,
+            relation.requires(Operation.CREATE).toSeq,
             sources,
             partitions
         )

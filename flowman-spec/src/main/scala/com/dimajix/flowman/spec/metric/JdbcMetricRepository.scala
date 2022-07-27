@@ -25,12 +25,12 @@ import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.language.higherKinds
-import scala.util.Success
 import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 import slick.jdbc.JdbcProfile
 
+import com.dimajix.flowman.jdbc.SlickUtils
 import com.dimajix.flowman.metric.GaugeMetric
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.metric.JdbcMetricRepository.Commit
@@ -86,14 +86,8 @@ private[metric] class JdbcMetricRepository(
         connection.username.foreach(props.setProperty("user", _))
         connection.password.foreach(props.setProperty("password", _))
         logger.debug(s"Connecting via JDBC to $url with driver $driver")
-        val executor = slick.util.AsyncExecutor(
-            name="Flowman.jdbc_metric_sink",
-            minThreads = 20,
-            maxThreads = 20,
-            queueSize = 1000,
-            maxConnections = 20)
         // Do not set username and password, since a bug in Slick would discard all other connection properties
-        Database.forURL(url, driver=driver, prop=props, executor=executor)
+        Database.forURL(url, driver=driver, prop=props, executor=SlickUtils.defaultExecutor)
     }
 
     class Commits(tag: Tag) extends Table[Commit](tag, commitTable) {

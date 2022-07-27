@@ -45,9 +45,9 @@ import org.apache.spark.sql.catalyst.expressions.UnixTimestamp
 import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateExpression
 import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateFunction
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.plans.logical.OneRowRelation
 import org.apache.spark.sql.catalyst.plans.logical.Union
 import org.apache.spark.sql.functions.expr
-import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.{types => st}
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.storage.StorageLevel
@@ -414,9 +414,14 @@ abstract class BaseMapping extends AbstractInstance with Mapping {
     private def linkColumns(linker:Linker, ins:Seq[(MappingOutputIdentifier,MappingOutput)]) : Unit = {
         // Create lineage on column level
         val execution = linker.execution
+
+        // Create lineage on column level
         val dummyInputs = ins.map { case(id,in) =>
             val schema = StructType(in.fields.map(_.field))
-            (id,in,DataFrameBuilder.singleRow(execution.spark, schema.sparkType))
+            // We use the custom NamedAttributes instead of singleRow, since Spark will optimize away important
+            // information in UNION operations with Alias(Literal())
+            val df = DataFrameBuilder.namedAttributes(execution.spark, schema.sparkType)
+            (id,in,df)
         }
 
         // Execute mapping

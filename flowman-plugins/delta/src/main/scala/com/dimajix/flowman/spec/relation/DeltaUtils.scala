@@ -125,7 +125,7 @@ object DeltaUtils {
 
     def upsert(table:DeltaTable, df: DataFrame, keyColumns:Iterable[String], partitionSpec: PartitionSpec) : Unit = {
         if (keyColumns.isEmpty)
-            throw new IllegalArgumentException(s"Cannot perform upsert operation without primary key")
+            throw new IllegalArgumentException(s"Cannot perform upsert activity without primary key")
 
         val keyCondition = keyColumns.map(k => col("relation." + k) <=> col("df." + k))
         val partitionCondition = partitionSpec.values.map { case (k, v) => (col("relation." + k) === lit(v)) }

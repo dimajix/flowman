@@ -77,11 +77,11 @@ final class MonitorExecution(parent:Execution, override val listeners:Seq[(Execu
     override def catalog: HiveCatalog = parent.catalog
 
     /**
-     * Returns the [[OperationManager]] of this execution, which should be the instance created by the [[Session]]
+     * Returns the [[ActivityManager]] of this execution, which should be the instance created by the [[Session]]
      *
      * @return
      */
-    override def operations: OperationManager = parent.operations
+    override def activities: ActivityManager = parent.activities
 
     /**
      * Creates an instance of a mapping, or retrieves it from cache

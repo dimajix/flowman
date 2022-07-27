@@ -51,7 +51,7 @@ import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.dataset.DatasetSpec
 import com.dimajix.flowman.spec.dataset.RelationDatasetSpec
 import com.dimajix.flowman.spec.mapping.ProvidedMapping
-import com.dimajix.flowman.spec.relation.NullRelation
+import com.dimajix.flowman.spec.relation.EmptyRelation
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -61,7 +61,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
             """
               |kind: relation
               |relation:
-              |  kind: null
+              |  kind: empty
               |  name: ${target_name}
               |mapping: some_mapping
               |""".stripMargin
@@ -116,7 +116,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         target.provides(Phase.CREATE) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.BUILD) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.VERIFY) should be (Set())
-        target.provides(Phase.TRUNCATE) should be (Set())
+        target.provides(Phase.TRUNCATE) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
     }
 
@@ -140,10 +140,10 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
 
         val target = context.getTarget(TargetIdentifier("out"))
         target.kind should be ("relation")
-        target.phases should be (Set(Phase.CREATE, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
+        target.phases should be (Set(Phase.CREATE, Phase.VERIFY, Phase.DESTROY))
 
         target.requires(Phase.CREATE) should be (Set())
-        target.requires(Phase.BUILD) should be (Set())
+        target.requires(Phase.BUILD) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.requires(Phase.VERIFY) should be (Set())
         target.requires(Phase.TRUNCATE) should be (Set())
         target.requires(Phase.DESTROY) should be (Set())
@@ -279,7 +279,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         val data = Seq(("v1", 12), ("v2", 23)).toDF()
         data.createOrReplaceTempView("some_table")
 
-        val relationGen = Prototype.of((context:Context) => NullRelation(
+        val relationGen = Prototype.of((context:Context) => EmptyRelation(
             Relation.Properties(context)
         ).asInstanceOf[Relation])
         val mappingGen = Prototype.of((context:Context) => ProvidedMapping(

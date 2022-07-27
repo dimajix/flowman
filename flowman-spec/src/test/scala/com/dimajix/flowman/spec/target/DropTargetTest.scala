@@ -79,13 +79,13 @@ class DropTargetTest extends AnyFlatSpec with Matchers with MockFactory with Loc
         target.provides(Phase.DESTROY) should be (Set())
 
         target.requires(Phase.VALIDATE) should be (Set())
-        (relation.requires _).expects().returns(Set(ResourceIdentifier.ofHiveDatabase("db")))
-        (relation.provides _).expects().returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
+        (relation.requires _).expects(*,*).returns(Set(ResourceIdentifier.ofHiveDatabase("db")))
+        (relation.provides _).expects(*,*).returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
         target.requires(Phase.CREATE) should be (Set(ResourceIdentifier.ofHiveDatabase("db"), ResourceIdentifier.ofHiveTable("some_table")))
         target.requires(Phase.BUILD) should be (Set())
         target.requires(Phase.VERIFY) should be (Set())
-        (relation.requires _).expects().returns(Set(ResourceIdentifier.ofHiveDatabase("db")))
-        (relation.provides _).expects().returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
+        (relation.requires _).expects(*,*).returns(Set(ResourceIdentifier.ofHiveDatabase("db")))
+        (relation.provides _).expects(*,*).returns(Set(ResourceIdentifier.ofHiveTable("some_table")))
         target.requires(Phase.DESTROY) should be (Set(ResourceIdentifier.ofHiveDatabase("db"), ResourceIdentifier.ofHiveTable("some_table")))
 
         (relation.exists _).expects(execution).returns(Yes)

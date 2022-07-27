@@ -31,16 +31,19 @@ import com.dimajix.flowman.types.StructType
 
 abstract sealed class TableChange extends Product with Serializable
 abstract sealed class ColumnChange extends TableChange
+abstract sealed class PartitionChange extends TableChange
 abstract sealed class IndexChange extends TableChange
 
 object TableChange {
-    case class ReplaceTable(schema:StructType) extends TableChange
+    case class ChangeStorageFormat(format:String) extends TableChange
 
     case class DropColumn(column:String) extends ColumnChange
     case class AddColumn(column:Field) extends ColumnChange
     case class UpdateColumnNullability(column:String, nullable:Boolean) extends ColumnChange
-    case class UpdateColumnType(column:String, dataType:FieldType) extends ColumnChange
+    case class UpdateColumnType(column:String, dataType:FieldType, charset:Option[String]=None, collation:Option[String]=None) extends ColumnChange
     case class UpdateColumnComment(column:String, comment:Option[String]) extends ColumnChange
+
+    case class UpdatePartitionColumns(columns:Seq[Field]) extends PartitionChange
 
     case class CreatePrimaryKey(columns:Seq[String]) extends IndexChange
     case class DropPrimaryKey() extends IndexChange
@@ -59,9 +62,37 @@ object TableChange {
         val normalizedSource = sourceTable.normalize()
         val normalizedTarget = targetTable.normalize()
 
-        val targetFields = targetTable.columns.map(f => f.name -> f)
+        // Check if desired storage format is different from current format
+        val storageChange = {
+            val changedStorage = normalizedTarget.storageFormat.exists(sf => !normalizedSource.storageFormat.contains(sf))
+
+            if (changedStorage)
+                targetTable.storageFormat.map(f => ChangeStorageFormat(f))
+            else
+                None
+        }
+
+        // Check if partition columns need a change
+        val partitionChange = {
+            val changedColumnNames = normalizedSource.partitionColumnNames.sorted != normalizedTarget.partitionColumnNames.sorted
+
+            // Ensure that current real schema is compatible with specified schema
+            val columnChanges = requiresSchemaMigration(sourceTable.partitionColumns, targetTable.partitionColumns, migrationPolicy)
+
+            if (changedColumnNames || columnChanges)
+                Some(UpdatePartitionColumns(targetTable.partitionColumns))
+            else
+                None
+        }
+
+        val targetFields = targetTable.dataColumns
+            .filterNot(f => normalizedSource.partitionColumnNames.contains(f.name.toLowerCase(Locale.ROOT)))
+            .map(f => f.name -> f)
         val targetFieldsByName = MapIgnoreCase(targetFields)
-        val sourceFieldsByName = MapIgnoreCase(sourceTable.columns.map(f => f.name -> f))
+        val sourceFields = sourceTable.dataColumns
+            .filterNot(f => normalizedTarget.partitionColumnNames.contains(f.name.toLowerCase(Locale.ROOT)))
+            .map(f => f.name -> f)
+        val sourceFieldsByName = MapIgnoreCase(sourceFields)
 
         // Check which fields need to be dropped
         val dropFields = (sourceFieldsByName.keySet -- targetFieldsByName.keySet).toSeq.flatMap { fieldName =>
@@ -82,14 +113,18 @@ object TableChange {
                 case None => Seq(AddColumn(tgtField))
                 case Some(srcField) =>
                     val modType =
-                        if (migrationPolicy == MigrationPolicy.STRICT && srcField.ftype != tgtField.ftype)
-                            Seq(UpdateColumnType(srcField.name, tgtField.ftype))
+                        // Check if collation has changed
+                        if (tgtField.charset.exists(c => srcField.charset.exists(_ != c)) || tgtField.collation.exists(c => srcField.collation.exists(_ != c)))
+                            Seq(UpdateColumnType(srcField.name, tgtField.ftype, tgtField.charset, tgtField.collation))
+                        // Check if data type has changed
+                        else if (migrationPolicy == MigrationPolicy.STRICT && srcField.ftype != tgtField.ftype)
+                            Seq(UpdateColumnType(srcField.name, tgtField.ftype, tgtField.charset, tgtField.collation))
                         else if (migrationPolicy == MigrationPolicy.RELAXED && coerce(srcField.ftype, tgtField.ftype) != srcField.ftype)
-                            Seq(UpdateColumnType(srcField.name, tgtField.ftype))
+                            Seq(UpdateColumnType(srcField.name, tgtField.ftype, tgtField.charset, tgtField.collation))
                         // If new PK contains this field, we better always update data type
                         else if (migrationPolicy == MigrationPolicy.RELAXED && normalizedTarget.primaryKey.contains(srcField.name.toLowerCase(Locale.ROOT))
                             && srcField.ftype != tgtField.ftype)
-                            Seq(UpdateColumnType(srcField.name, tgtField.ftype))
+                            Seq(UpdateColumnType(srcField.name, tgtField.ftype, tgtField.charset, tgtField.collation))
                         else
                             Seq.empty
 
@@ -159,7 +194,7 @@ object TableChange {
             }
         }
 
-        dropIndexes ++ dropPk ++ dropFields ++ changeFields ++ createPk ++ addIndexes
+        partitionChange.toSeq ++ dropIndexes ++ dropPk ++ storageChange.toSeq ++ dropFields ++ changeFields ++ createPk ++ addIndexes
     }
 
     /**
@@ -173,6 +208,9 @@ object TableChange {
         val normalizedSource = sourceTable.normalize()
         val normalizedTarget = targetTable.normalize()
 
+        // Check if desired storage format is different from current format
+        val storageChanges = normalizedTarget.storageFormat.exists(sf => !normalizedSource.storageFormat.contains(sf))
+
         // Check if PK needs change
         val pkChanges = normalizedSource.primaryKey != normalizedTarget.primaryKey
 
@@ -185,19 +223,37 @@ object TableChange {
         )
 
         // Ensure that current real schema is compatible with specified schema
-        val columnChanges = migrationPolicy match {
+        val columnChanges = requiresSchemaMigration(sourceTable.columns, targetTable.columns, migrationPolicy)
+
+        // Check if partition columns require a change
+        val partitionChanges = normalizedSource.partitionColumnNames.sorted != normalizedTarget.partitionColumnNames.sorted
+
+        storageChanges || pkChanges || dropIndexes || addIndexes || columnChanges || partitionChanges
+    }
+
+    private def requiresSchemaMigration(sourceColumns:Seq[Field], targetColumns:Seq[Field], migrationPolicy:MigrationPolicy) : Boolean = {
+        migrationPolicy match {
             case MigrationPolicy.RELAXED =>
-                val sourceFields = sourceTable.columns.map(f => (f.name.toLowerCase(Locale.ROOT), f)).toMap
-                targetTable.columns.exists { tgt =>
-                    !sourceFields.get(tgt.name.toLowerCase(Locale.ROOT))
-                        .exists(src => SchemaUtils.isCompatible(tgt, src))
+                val sourceFields = SchemaUtils.normalize(sourceColumns).map(f => f.name -> f).toMap
+                targetColumns.exists { tgt =>
+                    sourceFields.get(tgt.name.toLowerCase(Locale.ROOT))
+                        .forall(src => requiresMigrationRelaxed(src, tgt))
                 }
             case MigrationPolicy.STRICT =>
-                val sourceFields = SchemaUtils.normalize(sourceTable.columns).sortBy(_.name)
-                val targetFields = SchemaUtils.normalize(targetTable.columns).sortBy(_.name)
-                sourceFields != targetFields
+                val sourceFields = SchemaUtils.normalize(sourceColumns).sortBy(_.name)
+                val targetFields = SchemaUtils.normalize(targetColumns).sortBy(_.name)
+                sourceFields.length != targetFields.length ||
+                    sourceFields.zip(targetFields).exists { case (s,t) => requiresMigrationStrict(s,t) }
         }
+    }
 
-        pkChanges || dropIndexes || addIndexes || columnChanges
+    private def requiresMigrationRelaxed(sourceField:Field, targetField:Field) : Boolean = {
+        !SchemaUtils.isCompatible(targetField, sourceField)
+    }
+
+    private def requiresMigrationStrict(sourceField:Field, targetField:Field) : Boolean = {
+        sourceField.copy(charset=None, collation=None) != targetField.copy(charset=None, collation=None) ||
+            targetField.charset.exists(c => sourceField.charset.exists(_ != c)) ||
+            targetField.collation.exists(c => sourceField.collation.exists(_ != c))
     }
 }

@@ -25,4 +25,8 @@ abstract class SqlExpressions {
     def eq(column: String, value: Any): String
 
     def partition(partition: PartitionSpec): String
+
+    def collate(charset:Option[String], collation:Option[String]) : String
+
+    def comment(comment:Option[String]) : String
 }

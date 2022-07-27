@@ -24,6 +24,7 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.graph.Linker
@@ -75,7 +76,7 @@ case class DropTarget(
      */
     override def requires(phase: Phase) : Set[ResourceIdentifier] = {
         phase match {
-            case Phase.CREATE|Phase.DESTROY => relation.value.provides ++ relation.value.requires
+            case Phase.CREATE|Phase.DESTROY => relation.value.provides(Operation.CREATE) ++ relation.value.requires(Operation.CREATE)
             case _ => Set()
         }
     }

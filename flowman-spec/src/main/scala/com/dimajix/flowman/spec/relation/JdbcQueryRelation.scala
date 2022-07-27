@@ -36,6 +36,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.model.Connection
@@ -60,41 +61,39 @@ case class JdbcQueryRelation(
     properties: Map[String,String] = Map.empty
 ) extends JdbcRelation(
     connection,
-    properties + (JDBCOptions.JDBC_QUERY_STRING -> query)
+    properties
 ) with SchemaRelation {
+    protected val resource: ResourceIdentifier = ResourceIdentifier.ofJdbcQuery(query)
+
     /**
       * Returns the list of all resources which will be created by this relation.
       *
       * @return
       */
-    override def provides: Set[ResourceIdentifier] = Set.empty
+    override def provides(op:Operation, partitions:Map[String,FieldValue] = Map.empty): Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                Set.empty
+            case Operation.READ =>
+                requireValidPartitionKeys(partitions)
+                Set(ResourceIdentifier.ofJdbcQuery(query))
+            case Operation.WRITE => Set.empty
+        }
+    }
 
     /**
       * Returns the list of all resources which will be required by this relation for creation.
       *
       * @return
       */
-    override def requires: Set[ResourceIdentifier] = {
-        val statement = CCJSqlParserUtil.parse(query)
-        val tablesNamesFinder = new TablesNamesFinder()
-        val tableList = tablesNamesFinder.getTableList(statement).asScala
-        tableList.map(l => ResourceIdentifier.ofJdbcTable(TableIdentifier(l))).toSet
-    }
-
-    /**
-      * Returns the list of all resources which will are managed by this relation for reading or writing a specific
-      * partition. The list will be specifically  created for a specific partition, or for the full relation (when the
-      * partition is empty)
-      *
-      * @param partitions
-      * @return
-      */
-    override def resources(partitions: Map[String, FieldValue]): Set[ResourceIdentifier] = {
-        require(partitions != null)
-
-        requireValidPartitionKeys(partitions)
-
-        Set(ResourceIdentifier.ofJdbcQuery(query))
+    override def requires(op:Operation, partitions:Map[String,FieldValue] = Map.empty) : Set[ResourceIdentifier] = {
+        op match {
+            case Operation.CREATE | Operation.DESTROY =>
+                dependencies.map(l => ResourceIdentifier.ofJdbcTable(TableIdentifier(l))).toSet
+            case Operation.READ =>
+                dependencies.map(l => ResourceIdentifier.ofJdbcTablePartition(TableIdentifier(l), Map.empty)).toSet
+            case Operation.WRITE => Set.empty
+        }
     }
 
     /**
@@ -125,10 +124,10 @@ case class JdbcQueryRelation(
         require(execution != null)
         require(partitions != null)
 
-        logger.info(s"Reading JDBC relation '$identifier' with a custom query via connection '$connection' partition $partitions")
+        logger.info(s"Reading JDBC query relation '$identifier' with a custom query via connection '$connection' partition $partitions")
 
         // Get Connection
-        val (_,props) = createConnectionProperties()
+        val props = createConnectionProperties()
 
         // Read from database. We do not use this.reader, because Spark JDBC sources do not support explicit schemas
         val reader = execution.spark.read
@@ -143,8 +142,7 @@ case class JdbcQueryRelation(
 
         // Apply embedded schema, if it is specified. This will remove/cast any columns not present in the
         // explicit schema specification of the relation
-        //SchemaUtils.applySchema(filteredDf, inputSchema, insertNulls=false)
-        applyInputSchema(execution, filteredDf, includePartitions = false)
+        applyInputSchema(execution, filteredDf)
     }
 
     /**
@@ -169,7 +167,7 @@ case class JdbcQueryRelation(
      * @param clauses
      */
     override def merge(execution: Execution, df: DataFrame, condition:Option[Column], clauses: Seq[MergeClause]): Unit = {
-        throw new UnsupportedOperationException(s"Cannot write into JDBC relation '$identifier' which is defined by an SQL query")
+        throw new UnsupportedOperationException(s"Cannot write into JDBC query relation '$identifier' which is defined by an SQL query")
     }
 
     /**
@@ -179,7 +177,7 @@ case class JdbcQueryRelation(
       * @param partitions
       */
     override def truncate(execution: Execution, partitions: Map[String, FieldValue]): Unit = {
-        throw new UnsupportedOperationException(s"Cannot clean JDBC relation '$identifier' which is defined by an SQL query")
+        throw new UnsupportedOperationException(s"Cannot clean JDBC query relation '$identifier' which is defined by an SQL query")
     }
 
     /**
@@ -225,7 +223,7 @@ case class JdbcQueryRelation(
      * @param execution
       */
     override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
-        throw new UnsupportedOperationException(s"Cannot create JDBC relation '$identifier' which is defined by an SQL query")
+        throw new UnsupportedOperationException(s"Cannot create JDBC query relation '$identifier' which is defined by an SQL query")
     }
 
     /**
@@ -233,24 +231,22 @@ case class JdbcQueryRelation(
       * @param execution
       */
     override def destroy(execution:Execution, ifExists:Boolean=false) : Unit = {
-        throw new UnsupportedOperationException(s"Cannot destroy JDBC relation '$identifier' which is defined by an SQL query")
+        throw new UnsupportedOperationException(s"Cannot destroy JDBC query relation '$identifier' which is defined by an SQL query")
     }
 
     override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
-        throw new UnsupportedOperationException(s"Cannot migrate JDBC relation '$identifier' which is defined by an SQL query")
+        throw new UnsupportedOperationException(s"Cannot migrate JDBC query relation '$identifier' which is defined by an SQL query")
     }
 
-    /**
-      * Creates a Spark schema from the list of fields. This JDBC implementation will add partition columns, since
-      * these will be present while reading.
-      * @return
-      */
-    override protected def inputSchema : Option[StructType] = {
-        schema.map { s =>
-            val partitions = this.partitions
-            val partitionFields = SetIgnoreCase(partitions.map(_.name))
-            StructType(s.fields.map(_.sparkField).filter(f => !partitionFields.contains(f.name)) ++ partitions.map(_.sparkField))
-        }
+    override protected def createConnectionProperties() : Map[String,String] = {
+        val props = super.createConnectionProperties()
+        props + (JDBCOptions.JDBC_QUERY_STRING -> query)
+    }
+
+    private lazy val dependencies : Seq[String] = {
+        val statement = CCJSqlParserUtil.parse(query)
+        val tablesNamesFinder = new TablesNamesFinder()
+        tablesNamesFinder.getTableList(statement).asScala
     }
 }
 

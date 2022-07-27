@@ -41,7 +41,7 @@ class TestSpecTest extends AnyFlatSpec with Matchers {
               |
               |    fixtures:
               |      dummy_fixture:
-              |        kind: null
+              |        kind: empty
               |
               |    overrideMappings:
               |      some_mapping:

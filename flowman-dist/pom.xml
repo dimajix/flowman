@@ -10,7 +10,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.25.1</version>
+        <version>0.26.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -130,6 +130,14 @@
                                 <artifactItem>
                                     <groupId>com.dimajix.flowman</groupId>
                                     <artifactId>flowman-plugin-mariadb</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>tar.gz</type>
+                                    <classifier>bin</classifier>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.dimajix.flowman</groupId>
+                                    <artifactId>flowman-plugin-oracle</artifactId>
                                     <version>${project.version}</version>
                                     <type>tar.gz</type>
                                     <classifier>bin</classifier>

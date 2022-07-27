@@ -16,10 +16,14 @@
 
 package com.dimajix.flowman.jdbc
 
+import java.sql.DatabaseMetaData
 import java.sql.Date
 import java.sql.JDBCType
 import java.sql.SQLException
+import java.sql.Statement
 import java.util.Locale
+
+import scala.collection.mutable
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.Column
@@ -29,9 +33,11 @@ import org.apache.spark.sql.jdbc.JdbcType
 import org.apache.spark.sql.types.StructType
 
 import com.dimajix.common.SetIgnoreCase
+import com.dimajix.flowman.catalog.PartitionChange
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
+import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
 import com.dimajix.flowman.catalog.TableChange.CreateIndex
 import com.dimajix.flowman.catalog.TableChange.CreatePrimaryKey
 import com.dimajix.flowman.catalog.TableChange.DropColumn
@@ -69,6 +75,7 @@ import com.dimajix.spark.sql.expressions.UnresolvableExpression
 abstract class BaseDialect extends SqlDialect {
     private object Statements extends BaseStatements(this) { }
     private object Expressions extends BaseExpressions(this) { }
+    private object Commands extends BaseCommands(this) { }
 
     /**
       * Retrieve the jdbc / sql type for a given datatype.
@@ -212,6 +219,8 @@ abstract class BaseDialect extends SqlDialect {
             case _:DropIndex => true
             case _:CreatePrimaryKey => true
             case _:DropPrimaryKey => true
+            case _:PartitionChange => false
+            case _:ChangeStorageFormat => false
             case x:TableChange => throw new UnsupportedOperationException(s"Table change ${x} not supported")
         }
     }
@@ -230,8 +239,8 @@ abstract class BaseDialect extends SqlDialect {
     override def supportsAlterView : Boolean = false
 
     override def statement : SqlStatements = Statements
-
     override def expr : SqlExpressions = Expressions
+    override def command : SqlCommands = Commands
 }
 
 
@@ -253,9 +262,10 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
         val columns = table.columns.map { field =>
             val name = dialect.quoteIdentifier(field.name)
             val typ = dialect.getJdbcType(field.ftype).databaseTypeDefinition
-            val nullable = if (field.nullable) ""
-            else " NOT NULL"
-            s"$name $typ$nullable"
+            val nullable = if (field.nullable) "" else " NOT NULL"
+            val col = dialect.expr.collate(field.charset, field.collation)
+            val desc = dialect.expr.comment(field.description)
+            s"$name $typ$col$nullable$desc"
         }
         // Primary key
         val pk = if (table.primaryKey.nonEmpty) Seq(s"PRIMARY KEY (${table.primaryKey.map(dialect.quoteIdentifier).mkString(",")})") else Seq()
@@ -311,24 +321,29 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
             s"SELECT * FROM ${dialect.quote(table)} WHERE $condition LIMIT 1"
     }
 
-    override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean): String =
-        s"ALTER TABLE ${dialect.quote(table)} ADD COLUMN ${dialect.quoteIdentifier(columnName)} $dataType"
+    override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
+        val nullable = if (isNullable) "NULL" else "NOT NULL"
+        val col = dialect.expr.collate(charset, collation)
+        s"ALTER TABLE ${dialect.quote(table)} ADD COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable"
+    }
 
     override def renameColumn(table: TableIdentifier, columnName: String, newName: String): String =
         s"ALTER TABLE ${dialect.quote(table)} RENAME COLUMN ${dialect.quoteIdentifier(columnName)} TO ${dialect.quoteIdentifier(newName)}"
 
-    override def deleteColumn(table: TableIdentifier, columnName: String): String =
+    override def dropColumn(table: TableIdentifier, columnName: String): String =
         s"ALTER TABLE ${dialect.quote(table)} DROP COLUMN ${dialect.quoteIdentifier(columnName)}"
 
-    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean): String = {
+    override def updateColumnType(table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
-        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType $nullable"
+        val col = dialect.expr.collate(charset, collation)
+        s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $newDataType$col $nullable"
     }
 
-    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean): String = {
+    override def updateColumnNullability(table: TableIdentifier, columnName: String, dataType:String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} SET $nullable"
     }
+    override def updateColumnComment(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = ???
 
     override def merge(targetTable: TableIdentifier, targetAlias:String, targetSchema:Option[StructType], sourceAlias:String, sourceSchema:StructType, condition:Column, clauses:Seq[MergeClause]) : String = {
         val sourceColumns = sourceSchema.names
@@ -424,6 +439,10 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
 
         s"CREATE $unique INDEX ${dialect.quoteIdentifier(index.name)} ON ${dialect.quote(table)} (${columns.mkString(",")})"
     }
+
+    override def dropConstraint(table: TableIdentifier, constraintName: String): String = {
+        s"ALTER TABLE ${dialect.quote(table)} DROP CONSTRAINT ${dialect.quoteIdentifier(constraintName)}"
+    }
 }
 
 
@@ -446,5 +465,147 @@ class BaseExpressions(dialect: SqlDialect) extends SqlExpressions {
         }        // Do not use column quoting for the PARTITION expression
         val partitionValues = partition.values.map { case (k, v) => k + "=" + literal(v) }
         s"PARTITION(${partitionValues.mkString(",")})"
+    }
+
+    override def collate(charset:Option[String], collation:Option[String]) : String = {
+        collation.map(c => s" COLLATE $c").getOrElse("")
+    }
+
+    override def comment(comment:Option[String]) : String = {
+        ""
+    }
+}
+
+
+class BaseCommands(dialect: SqlDialect) extends SqlCommands {
+    override def createTable(statement:Statement, table:TableDefinition) : Unit = {
+        val tableSql = dialect.statement.createTable(table)
+        val indexSql = table.indexes.map(idx => dialect.statement.createIndex(table.identifier, idx))
+        statement.executeUpdate(tableSql)
+        indexSql.foreach(statement.executeUpdate)
+    }
+    override def dropTable(statement:Statement, table:TableIdentifier) : Unit = {
+        statement.executeUpdate(s"DROP TABLE ${dialect.quote(table)}")
+    }
+    override def dropView(statement:Statement, table:TableIdentifier) : Unit = {
+        val dropSql = dialect.statement.dropView(table)
+        statement.executeUpdate(dropSql)
+    }
+
+    override def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField] = {
+        val sql = dialect.statement.schema(table)
+        val rs = statement.executeQuery(sql)
+        try {
+            JdbcUtils.getJdbcSchema(rs)
+        }
+        finally {
+            rs.close()
+        }
+    }
+
+    override def addColumn(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
+        val sql = dialect.statement.addColumn(table, columnName, dataType, isNullable, charset, collation, comment)
+        statement.executeUpdate(sql)
+    }
+    override def deleteColumn(statement:Statement, table: TableIdentifier, columnName: String): Unit = {
+        val sql = dialect.statement.dropColumn(table, columnName)
+        statement.executeUpdate(sql)
+    }
+    override def updateColumnType(statement:Statement, table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
+        val sql = dialect.statement.updateColumnType(table, columnName, newDataType, isNullable, charset, collation, comment)
+        statement.executeUpdate(sql)
+    }
+    override def updateColumnNullability(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
+        val sql = dialect.statement.updateColumnNullability(table, columnName, dataType, isNullable, charset, collation, comment)
+        statement.executeUpdate(sql)
+    }
+    override def updateColumnComment(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]) : Unit = {
+        // Default is empty implementation
+    }
+
+    override def getStorageFormat(statement:Statement, table:TableIdentifier) : Option[String] = {
+        // Per default we don't support different storage formats
+        None
+    }
+    override def changeStorageFormat(statement: Statement, table: TableIdentifier, storageFormat: String): Unit = {
+        // Per default we don't support different storage formats
+        ???
+    }
+
+    override def getPrimaryKey(statement:Statement, table:TableIdentifier) : Seq[String] = {
+        val con = statement.getConnection
+        val meta = con.getMetaData
+        val pkrs = meta.getPrimaryKeys(null, table.database.orNull, table.table)
+        val pk = mutable.ListBuffer[(Short,String)]()
+        while(pkrs.next()) {
+            val col = pkrs.getString(4)
+            val seq = pkrs.getShort(5)
+            // val name = pkrs.getString(6)
+            pk.append((seq,col))
+        }
+        pkrs.close()
+        pk.sortBy(_._1).map(_._2)
+    }
+
+    override def getIndexes(statement:Statement, table:TableIdentifier) : Seq[TableIndex] = {
+        val con = statement.getConnection
+        val meta = con.getMetaData
+        val idxrs = meta.getIndexInfo(null, table.database.orNull, table.table, false, true)
+        val idxcols = mutable.ListBuffer[(String, String, Boolean)]()
+        while(idxrs.next()) {
+            val typ = idxrs.getShort(7)
+            if (typ != DatabaseMetaData.tableIndexStatistic) {
+                val name = idxrs.getString(6) // May be null for statistics
+                if (name != null) {
+                    val unique = !idxrs.getBoolean(4)
+                    val col = idxrs.getString(9)
+                    idxcols.append((name, col, unique))
+                }
+            }
+        }
+        idxrs.close()
+
+        idxcols
+            .groupBy(_._1).map { case(name,cols) =>
+            TableIndex(name, cols.map(_._2), cols.foldLeft(false)(_ || _._3))
+        }.toSeq
+    }
+
+    /**
+     * Adds an index to an existing table
+     * @param conn
+     * @param table
+     * @param index
+     * @param options
+     */
+    override def createIndex(statement:Statement, table:TableIdentifier, index:TableIndex) : Unit = {
+        val indexSql = dialect.statement.createIndex(table, index)
+        statement.executeUpdate(indexSql)
+    }
+
+    /**
+     * Drops an index from an existing table
+     * @param conn
+     * @param indexName
+     * @param options
+     */
+    override def dropIndex(statement:Statement, table:TableIdentifier, indexName:String) : Unit = {
+        val indexSql = dialect.statement.dropIndex(table, indexName)
+        statement.executeUpdate(indexSql)
+    }
+
+    override def dropConstraint(statement:Statement, table:TableIdentifier, constraintName:String) : Unit = {
+        val indexSql = dialect.statement.dropConstraint(table, constraintName)
+        statement.executeUpdate(indexSql)
+    }
+
+    override def addPrimaryKey(statement:Statement, table: TableIdentifier, columns:Seq[String]) : Unit = {
+        val sql = dialect.statement.addPrimaryKey(table, columns)
+        statement.executeUpdate(sql)
+    }
+
+    override def dropPrimaryKey(statement: Statement, table: TableIdentifier): Unit = {
+        val sql = dialect.statement.dropPrimaryKey(table)
+        statement.executeUpdate(sql)
     }
 }

@@ -1,5 +1,8 @@
 # Web Hook
 
+The `web` hook can be used to invoke an arbitrary web API at certain important lifecycle events during the project
+execution of Flowman. This feature can be used to inform downstream system whenever a a job has been finished.
+
 ## Example
 ```yaml
 job:
@@ -45,11 +48,13 @@ job:
 
 ## Variables
 In most scenarios, one wants to use environment variables in the URLs, for example to pass the job name to a REST
-endpoint. This is well supported by Flowman. In addition to the normal environment, the following variables can be
+endpoint. This is well-supported by Flowman. In addition to the normal environment, the following variables can be
 used:
 * `job` - The name of the job
 * `target` - The name of the target (can only be used in target specific URLs)
 * `project` - The name of the project
 * `version` - The version of the project
 * `namespace` - The name of the namespace
-* `phase` - The build phase (`create`, `build`, `verify`, `truncate` or `destroy`)
+* `phase` - The execution phase (`VALIDATE`, `CREATE`, `BUILD`, `VERIFY`, `TRUNCATE` or `DESTROY`)
+* `status` - The execution status (`UNKNOWN`, `RUNNING`, `SUCCESS`, `SUCCESS_WITH_ERRORS`, `FAILED`, `ABORTED` or `SKIPPED`).
+  Note that the execution status is only available at the end of the execution of a job or target. 

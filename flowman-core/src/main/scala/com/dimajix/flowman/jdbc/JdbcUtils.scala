@@ -694,7 +694,7 @@ object JdbcUtils {
                 logger.info(s"Creating primary key for JDBC table $table on columns ${pk.columns.mkString(",")}")
                 Some((stmt:Statement) => commands.addPrimaryKey(stmt, table, pk.columns))
             case pk:DropPrimaryKey =>
-                logger.info(s"Removing primary key from JDBC table $table")
+                logger.info(s"Dropping primary key from JDBC table $table")
                 Some((stmt:Statement) => commands.dropPrimaryKey(stmt, table))
             case sf:ChangeStorageFormat =>
                 logger.info(s"Changing storage format of JDBC table $table to ${sf.format}")

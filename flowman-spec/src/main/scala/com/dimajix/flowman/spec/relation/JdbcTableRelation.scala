@@ -34,6 +34,7 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog
@@ -605,8 +606,8 @@ class JdbcTableRelationBase(
                         catch {
                             case ex: SQLNonTransientConnectionException => throw new MigrationFailedException(identifier, ex)
                             case ex: SQLInvalidAuthorizationSpecException => throw new MigrationFailedException(identifier, ex)
-                            case _: SQLNonTransientException =>
-                                logger.warn(s"Incremental migration of relation '$identifier' for table $tableIdentifier failed. Now falling back by re-creating target table.")
+                            case ex: SQLNonTransientException =>
+                                logger.warn(s"Incremental migration of relation '$identifier' for table $tableIdentifier failed: ${reasons(ex)}\nNow falling back by re-creating target table.")
                                 recreate(con, options)
                             case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
                         }

@@ -17,6 +17,7 @@
 package com.dimajix.flowman.jdbc
 
 import java.sql.Date
+import java.sql.ResultSet
 import java.sql.Statement
 import java.sql.Timestamp
 import java.sql.Types
@@ -28,6 +29,7 @@ import org.apache.spark.sql.jdbc.JdbcType
 
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.ByteType
 import com.dimajix.flowman.types.CharType
@@ -115,6 +117,13 @@ object OracleDialect extends BaseDialect {
 
 
 class OracleStatements(dialect: BaseDialect) extends BaseStatements(dialect) {
+    override def firstRow(table: TableIdentifier, condition:String) : String = {
+        if (condition.isEmpty)
+            s"SELECT * FROM (SELECT * FROM ${dialect.quote(table)}) WHERE ROWNUM <= 1"
+        else
+            s"SELECT * FROM (SELECT * FROM ${dialect.quote(table)} WHERE $condition) WHERE ROWNUM <= 1"
+    }
+
     override def addColumn(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String = {
         val nullable = if (isNullable) "NULL" else "NOT NULL"
         val desc = dialect.expr.comment(comment)
@@ -167,6 +176,55 @@ class OracleCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         }
     }
 
+    override def getPrimaryKey(statement:Statement, table:TableIdentifier) : Seq[String] = {
+        // Query extended information
+        val sql =
+            s"""
+               |SELECT
+               |    column_name
+               |FROM SYS.all_cons_columns WHERE constraint_name = (
+               |  SELECT constraint_name FROM SYS.all_constraints
+               |  WHERE LOWER(table_name) = ${dialect.literal(table.table.toLowerCase(Locale.ROOT))} AND CONSTRAINT_TYPE = 'P'
+               |)
+               |""".stripMargin
+
+        val idxcols = mutable.ListBuffer[String]()
+        query(statement,sql) { rs =>
+            val name = rs.getString(1)
+            idxcols.append(name)
+        }
+
+        idxcols
+    }
+
+    override def getIndexes(statement: Statement, table: TableIdentifier): Seq[TableIndex] = {
+        // Query extended information
+        val sql =
+            s"""
+               |SELECT
+               |    c.INDEX_NAME,
+               |    c.COLUMN_NAME,
+               |    i.UNIQUENESS
+               |FROM SYS.ALL_IND_COLUMNS c
+               |LEFT JOIN SYS.ALL_INDEXES i
+               |    ON c.INDEX_NAME = i.INDEX_NAME
+               |WHERE lower(c.table_name) = ${dialect.literal(table.table.toLowerCase(Locale.ROOT))}
+               |""".stripMargin
+
+        val idxcols = mutable.ListBuffer[(String,String,Boolean)]()
+        query(statement,sql) { rs =>
+            val name = rs.getString(1)
+            val column = rs.getString(2)
+            val unique = rs.getString(3) == "UNIQUE"
+            idxcols.append((name,column,unique))
+        }
+
+        idxcols
+            .groupBy(_._1).map { case(name,cols) =>
+            TableIndex(name, cols.map(_._2), cols.foldLeft(false)(_ || _._3))
+        }.toSeq
+    }
+
     private def getColumnComments(statement:Statement, table:TableIdentifier) : Map[String,String] = {
         // Query extended information
         val sql =
@@ -180,18 +238,12 @@ class OracleCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         queryKeyValue(statement, sql)
     }
     private def queryKeyValue(statement:Statement, sql:String) : Map[String,String] = {
-        val rs = statement.executeQuery(sql)
         val values = mutable.Map[String,String]()
-        try {
-            while (rs.next()) {
-                val name = rs.getString(1)
-                val value = rs.getString(2)
-                if (value != null)
-                    values.put(name, value)
-            }
-        }
-        finally {
-            rs.close()
+        query(statement,sql) { rs =>
+            val name = rs.getString(1)
+            val value = rs.getString(2)
+            if (value != null)
+                values.put(name, value)
         }
 
         values.toMap
@@ -208,5 +260,17 @@ class OracleCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
     override def updateColumnComment(statement:Statement, table: TableIdentifier, columnName:String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None) : Unit = {
         val sql = dialect.statement.updateColumnComment(table, columnName, dataType, isNullable, charset, collation, comment)
         statement.executeUpdate(sql)
+    }
+
+    private def query(statement:Statement, sql:String)(fn:(ResultSet) => Unit) : Unit = {
+        val rs = statement.executeQuery(sql)
+        try {
+            while (rs.next()) {
+                fn(rs)
+            }
+        }
+        finally {
+            rs.close()
+        }
     }
 }

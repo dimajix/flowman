@@ -1,0 +1,30 @@
+jobs:
+  base:
+    parameters:
+      - name: year
+        type: Integer
+        default: 2013
+
+  v1:
+    extends:
+      - base
+    targets:
+      - aggregates_v1
+
+  v2:
+    extends:
+      - base
+    targets:
+      - aggregates_v2
+
+
+targets:
+  aggregates_v1:
+    kind: relation
+    relation: aggregates_v1
+    mapping: aggregates
+
+  aggregates_v2:
+    kind: relation
+    relation: aggregates_v2
+    mapping: aggregates

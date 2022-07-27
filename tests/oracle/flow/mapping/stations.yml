@@ -1,0 +1,5 @@
+mappings:
+  # This mapping refers to the "raw" relation and reads in data from the source in S3
+  stations_raw:
+    kind: relation
+    relation: stations_raw

@@ -1,5 +1,5 @@
 relations:
-  rel_v1:
+  aggregates_v1:
     kind: sqlserver
     connection: sql_server
     database: dbo
@@ -44,7 +44,7 @@ relations:
       - name: "measurement_idx0"
         columns: [country]
 
-  rel_v2:
+  aggregates_v2:
     kind: sqlserver
     connection: sql_server
     database: dbo

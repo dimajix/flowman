@@ -2,4 +2,7 @@ name: "sqlserver"
 version: "1.0"
 
 modules:
-  - module
+  - config
+  - job
+  - mapping
+  - model

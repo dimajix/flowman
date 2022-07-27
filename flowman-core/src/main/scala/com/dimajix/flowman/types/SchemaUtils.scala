@@ -47,6 +47,21 @@ object SchemaUtils {
         }
     }
 
+    def dropComments(schema:StructType) : StructType = {
+        StructType(schema.fields.map(dropComments))
+    }
+    def dropComments(field:Field) : Field = {
+        field.copy(ftype = dropComments(field.ftype), description = None)
+    }
+    private def dropComments(dtype:FieldType) : FieldType = {
+        dtype match {
+            case struct:StructType => dropComments(struct)
+            case array:ArrayType => ArrayType(dropComments(array.elementType),array.containsNull)
+            case map:MapType => MapType(dropComments(map.keyType), dropComments(map.valueType), map.containsNull)
+            case dt:FieldType => dt
+        }
+    }
+
     /**
      * Replaces all occurances of VarChar and Char types by String types.
      * @param schema

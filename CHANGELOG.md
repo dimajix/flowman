@@ -20,6 +20,7 @@
 * github-224: Support column descriptions for MariaDB / MySQL databases
 * github-223: Support column descriptions for Postgres database
 * github-205: Initial support Oracle DB via JDBC
+* github-225: [BUG] Staging schema should not have comments
 
 ## Breaking changes
 

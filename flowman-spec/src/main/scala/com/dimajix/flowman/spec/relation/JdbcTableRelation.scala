@@ -67,6 +67,7 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.types.SchemaUtils
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.{StructType => FlowmanStructType}
 
@@ -324,8 +325,9 @@ class JdbcTableRelationBase(
     }
 
     private def createStagingTable(execution:Execution, con:java.sql.Connection, options: JDBCOptions, df:DataFrame, schema:Option[FlowmanStructType]) : Unit = {
+        val currentSchema = schema.map(schema => JdbcUtils.createSchema(df.schema, schema)).getOrElse(FlowmanStructType.of(df.schema))
+        val stagingSchema = SchemaUtils.dropComments(currentSchema)
         val stagingTable = this.stagingIdentifier.get
-        val stagingSchema = schema.map(schema => JdbcUtils.createSchema(df.schema, schema)).getOrElse(FlowmanStructType.of(df.schema))
         logger.info(s"Creating staging table ${stagingTable} with schema\n${stagingSchema.treeString}")
 
         // First drop temp table if it already exists

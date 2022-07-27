@@ -286,31 +286,40 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
     }
     private def addColumnComment(statement:Statement, table: TableIdentifier, column:String, comment:String) : Unit = {
         val sql = s"""
+                     |declare @schema VARCHAR(255);
+                     |set @schema = schema_name();
                      |exec sp_addextendedproperty
                      |   'MS_Description', ${dialect.literal(comment)},
-                     |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")},
+                     |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("@schema")},
                      |   'TABLE', ${dialect.literal(table.table)},
                      |   'COLUMN', ${dialect.literal(column)}
+                     |;
                      |""".stripMargin
         statement.executeUpdate(sql)
     }
     private def dropColumnComment(statement:Statement, table: TableIdentifier, column:String) : Unit = {
         val sql = s"""
+                     |declare @schema VARCHAR(255);
+                     |set @schema = schema_name();
                      |exec sp_dropextendedproperty
                      |   'MS_Description',
-                     |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")},
+                     |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("@schema")},
                      |   'TABLE', ${dialect.literal(table.table)},
                      |   'COLUMN', ${dialect.literal(column)}
+                     |;
                      |""".stripMargin
         statement.executeUpdate(sql)
     }
     private def updateColumnComment(statement:Statement, table: TableIdentifier, column:String, comment:String) : Unit = {
         val sql = s"""
+                     |declare @schema VARCHAR(255);
+                     |set @schema = schema_name();
                      |exec sp_updateextendedproperty
                      |   'MS_Description', ${dialect.literal(comment)},
-                     |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("schema_name()")},
+                     |   'SCHEMA', ${table.database.map(dialect.literal).getOrElse("@schema")},
                      |   'TABLE', ${dialect.literal(table.table)},
                      |   'COLUMN', ${dialect.literal(column)}
+                     |;
                      |""".stripMargin
         statement.executeUpdate(sql)
 

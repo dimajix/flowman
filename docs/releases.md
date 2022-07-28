@@ -14,6 +14,11 @@ The following gives an (incomplete) list of past releases of the last 12 months.
 changes over time.
 
 
+### Version 0.26.1
+
+* github-226: Upgrade to Spark 3.2.2
+
+
 ### Version 0.26.0 - 2022-07-27
 
 * github-202: Add support for Spark 3.3

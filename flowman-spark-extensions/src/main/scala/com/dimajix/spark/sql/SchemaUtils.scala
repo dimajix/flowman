@@ -20,6 +20,7 @@ import java.util.Locale
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.parser.ParseException
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.functions.rpad
 import org.apache.spark.sql.functions.substring
@@ -235,13 +236,27 @@ object SchemaUtils {
     def recoverCharVarchar(field:StructField) : StructField = {
         if (field.metadata.contains(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)) {
             val typeString = field.metadata.getString(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
-            val dt = CustomSqlParser.parseDataType(typeString)
+            val dt = try {
+                CustomSqlParser.parseDataType(typeString)
+            } catch {
+                // Work around bad field names, which will fire a parse-exception
+                case _:ParseException =>
+                    recoverCharVarchar(field.dataType)
+            }
             val meta = new MetadataBuilder().withMetadata(field.metadata)
                 .remove(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
                 .build()
             field.copy(dataType = dt, metadata = meta)
         } else {
             field
+        }
+    }
+    private def recoverCharVarchar(dataType: DataType) : DataType = {
+        dataType match {
+            case struct: StructType => struct.copy(fields = struct.fields.map(recoverCharVarchar))
+            case array: ArrayType => ArrayType(recoverCharVarchar(array.elementType), array.containsNull)
+            case map: MapType => MapType(recoverCharVarchar(map.keyType), recoverCharVarchar(map.valueType), map.valueContainsNull)
+            case dt: DataType => dt
         }
     }
 

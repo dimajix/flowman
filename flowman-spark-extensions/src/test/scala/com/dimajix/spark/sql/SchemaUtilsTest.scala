@@ -175,6 +175,36 @@ class SchemaUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSession w
         recoveredSchema should be (originalSchema)
     }
 
+    it should "gracefully handle non-standard characters in field names" in {
+        val originalSchema = StructType(Seq(
+            StructField("array-col", ArrayType(CharType(10))),
+            StructField("map:col", MapType(CharType(15), VarcharType(20))),
+            StructField("struct col", StructType(Seq(
+                StructField("char-field", CharType(10)),
+                StructField("varchar:field", VarcharType(25)),
+                StructField("int field", IntegerType),
+                StructField("Mönster Fieldß", VarcharType(30))
+            ))),
+            StructField("varchar/col", VarcharType(4), nullable = false)
+        ))
+
+        val replacedSchema = SchemaUtils.replaceCharVarchar(originalSchema)
+        SchemaUtils.dropMetadata(replacedSchema) should be(StructType(Seq(
+            StructField("array-col", ArrayType(StringType)),
+            StructField("map:col", MapType(StringType, StringType)),
+            StructField("struct col", StructType(Seq(
+                StructField("char-field", StringType),
+                StructField("varchar:field", StringType),
+                StructField("int field", IntegerType),
+                StructField("Mönster Fieldß", StringType)
+            ))),
+            StructField("varchar/col", StringType, nullable = false)
+        )))
+
+        val recoveredSchema = SchemaUtils.recoverCharVarchar(replacedSchema)
+        recoveredSchema should be(originalSchema)
+    }
+
     "SchemaUtils.dropMetadata" should "remove all meta data" in {
         val comment = "123456789"
         val schema = StructType(Seq(

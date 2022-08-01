@@ -23,6 +23,9 @@ mappings:
   partial_facts:
     kind: schema
     input: facts
+    columnMismatchPolicy: ADD_REMOVE_COLUMNS
+    typeMismatchPolicy: CAST_ALWAYS
+    charVarcharPolicy: PAD_AND_TRUNCATE
     schema:
       kind: inline
       fields:
@@ -57,6 +60,31 @@ Specifies the list of column names (key) with their type (value)
 * `schema` **(optional)** *(type: schema)*:
 As an alternative of specifying a list of columns you can also directly specify a schema, as described in
 [schema](../schema/index.md).
+
+* `columnMismatchPolicy` **(optional)** *(type: string)* *(default: `ADD_REMOVE_COLUMNS`)*:
+Control how Flowman will handle a mismatch between column names in the source and the provided schema:
+  - `IGNORE` will simply pass through the input columns unchanged
+  - `ERROR` will fail the build once a mismatch between actual and requested schema is detected
+  - `ADD_COLUMNS_OR_IGNORE` will add (`NULL`) columns from the requested schema to the input schema, and will keep columns in the input schema which are not present in the requested schema
+  - `ADD_COLUMNS_OR_ERROR` will add (`NULL`) columns from the requested schema to the input schema, but will fail the build if the input schema contains columns not present in the requested schema
+  - `REMOVE_COLUMNS_OR_IGNORE` will remove columns from the input schema which are not present in the requested schema
+  - `REMOVE_COLUMNS_OR_ERROR` will remove columns from the input schema which are not present in the requested schema and will fail if the input schema is missing requested columns
+  - `ADD_REMOVE_COLUMNS` will essentially pass through the requested schema as is (the default)
+
+* `typeMismatchPolicy` **(optional)** *(type: string)* *(default: `CAST_ALWAYS`)*:
+Control how Flowman will convert between data types:
+  - `IGNORE` - Ignores any data type mismatches and does not perform any conversion
+  - `ERROR` - Throws an error on data type mismatches
+  - `CAST_COMPATIBLE_OR_ERROR` - Performs a data type conversion with compatible types, otherwise throws an error
+  - `CAST_COMPATIBLE_OR_IGNORE` - Performs a data type conversion with compatible types, otherwise does not perform conversion
+  - `CAST_ALWAYS` - Always performs data type conversion (the default)
+
+* `charVarcharPolicy` **(optional)** *(type: string)* *(default: `PAD_AND_TRUNCATE`)*:
+Control how Flowman will treat `VARCHAR(n)` and `CHAR(n)` data types. The possible values are
+  - `IGNORE` - Do not apply any length restrictions
+  - `PAD_AND_TRUNCATE` - Truncate `VARCHAR(n)`/`CHAR(n)` strings which are too long and pad `CHAR(n)` strings which are too short
+  - `PAD` - Pad `CHAR(n)` strings which are too short
+  - `TRUNCATE` - Truncate `VARCHAR(n)`/`CHAR(n)` strings which are too long
 
 * `filter` **(optional)** *(type: string)* *(default: empty)*:
 An optional SQL filter expression that is applied *after* schema operation.

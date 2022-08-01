@@ -40,7 +40,7 @@ import com.dimajix.spark.sql.catalyst.parser.CustomSqlParser
 
 object SchemaUtils {
     // This key is compatible with Spark 3.x
-    private val CHAR_VARCHAR_TYPE_STRING_METADATA_KEY = "__CHAR_VARCHAR_TYPE_STRING"
+    val CHAR_VARCHAR_TYPE_STRING_METADATA_KEY = "__CHAR_VARCHAR_TYPE_STRING"
 
     /**
       * Helper method for applying an optional schema to a given DataFrame. This will apply the types and order
@@ -199,9 +199,10 @@ object SchemaUtils {
     }
     def replaceCharVarchar(field:StructField) : StructField = {
         val metadata = if (hasCharVarchar(field.dataType)) {
-            val builder = new MetadataBuilder().withMetadata(field.metadata)
+            new MetadataBuilder()
+                .withMetadata(field.metadata)
                 .putString(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY, field.dataType.catalogString)
-            builder.build()
+                .build()
         } else {
             field.metadata
         }
@@ -262,22 +263,24 @@ object SchemaUtils {
         StructType(schema.map(recoverCharVarchar))
     }
     def recoverCharVarchar(field:StructField) : StructField = {
-        if (field.metadata.contains(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)) {
-            val typeString = field.metadata.getString(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
-            val dt = try {
-                CustomSqlParser.parseDataType(typeString)
-            } catch {
-                // Work around bad field names, which will fire a parse-exception
-                case _:ParseException =>
-                    recoverCharVarchar(field.dataType)
-            }
-            val meta = new MetadataBuilder().withMetadata(field.metadata)
-                .remove(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
-                .build()
-            field.copy(dataType = dt, metadata = meta)
-        } else {
-            field
+        val dt = field.dataType match {
+            case struct: StructType => recoverCharVarchar(struct)
+            case _:StringType|_:ArrayType|_:MapType if field.metadata.contains(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY) =>
+                val typeString = field.metadata.getString(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
+                try {
+                    CustomSqlParser.parseDataType(typeString)
+                } catch {
+                    // Work around bad field names, which will fire a parse-exception
+                    case _: ParseException =>
+                        recoverCharVarchar(field.dataType)
+                }
+            case dt: DataType => dt
         }
+
+        val meta = new MetadataBuilder().withMetadata(field.metadata)
+            .remove(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
+            .build()
+        field.copy(dataType = dt, metadata = meta)
     }
     private def recoverCharVarchar(dataType: DataType) : DataType = {
         dataType match {

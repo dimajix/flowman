@@ -155,9 +155,12 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
     }
 
     it should "correctly process extended string types" in {
+        val spark = this.spark
+        import spark.implicits._
+
         val inputDf = spark.createDataFrame(Seq(
-            ("col1", "12"),
-            ("col2", "23")
+            ("col", "1"),
+            ("col123", "2345")
         ))
             .withColumn("_1", col("_1").as("_1"))
             .withColumn("_2", col("_2").as("_2"))
@@ -171,16 +174,16 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Mapping.Properties(session.context, name = "map"),
             MappingOutputIdentifier("myview"),
             Seq(
-                Field("_1", FieldType.of("varchar(10)")),
-                Field("_2", FieldType.of("char(20)")),
+                Field("_1", FieldType.of("varchar(4)")),
+                Field("_2", FieldType.of("char(2)")),
                 Field("_3", FieldType.of("int"))
             )
         )
 
         mapping.input should be (MappingOutputIdentifier("myview"))
         mapping.columns should be (Seq(
-            Field("_1", FieldType.of("varchar(10)")),
-            Field("_2", FieldType.of("char(20)")),
+            Field("_1", FieldType.of("varchar(4)")),
+            Field("_2", FieldType.of("char(2)")),
             Field("_3", FieldType.of("int"))
         ))
         mapping.inputs should be (Set(MappingOutputIdentifier("myview")))
@@ -189,12 +192,18 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
         val desc = mapping.describe(executor, Map(MappingOutputIdentifier("myview") -> inputSchema))("main")
         desc should be (com.dimajix.flowman.types.StructType(Seq(
-            Field("_1", FieldType.of("varchar(10)")),
-            Field("_2", FieldType.of("char(20)")),
+            Field("_1", FieldType.of("varchar(4)")),
+            Field("_2", FieldType.of("char(2)")),
             Field("_3", FieldType.of("int"))
         )))
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("myview") -> inputDf))("main")
+        val recs = result.orderBy(col("_1"),col("_2")).as[(String,String,Option[Int])].collect()
+        recs should be (Seq(
+            ("col", "1 ", None),
+            ("col1", "23", None)
+        ))
+
         SchemaUtils.dropMetadata(result.schema) should be (StructType(Seq(
             StructField("_1", StringType),
             StructField("_2", StringType),
@@ -202,8 +211,8 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         )))
         val resultSchema = com.dimajix.flowman.types.StructType.of(result.schema)
         resultSchema should be (com.dimajix.flowman.types.StructType(Seq(
-            Field("_1", FieldType.of("varchar(10)")),
-            Field("_2", FieldType.of("char(20)")),
+            Field("_1", FieldType.of("varchar(4)")),
+            Field("_2", FieldType.of("char(2)")),
             Field("_3", FieldType.of("int"))
         )))
     }

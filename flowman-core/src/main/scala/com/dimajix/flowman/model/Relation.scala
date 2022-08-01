@@ -44,9 +44,10 @@ import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model
-import com.dimajix.flowman.transforms.ColumnMismatchStrategy
+import com.dimajix.flowman.transforms.ColumnMismatchPolicy
 import com.dimajix.flowman.transforms.SchemaEnforcer
-import com.dimajix.flowman.transforms.TypeMismatchStrategy
+import com.dimajix.flowman.transforms.CharVarcharPolicy
+import com.dimajix.flowman.transforms.TypeMismatchPolicy
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -514,8 +515,9 @@ abstract class BaseRelation extends AbstractInstance with Relation {
                 val conf = execution.flowmanConf
                 val enforcer = SchemaEnforcer(
                     schema,
-                    columnMismatchStrategy = ColumnMismatchStrategy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_OUTPUT_COLUMN_MISMATCH_STRATEGY)),
-                    typeMismatchStrategy = TypeMismatchStrategy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_OUTPUT_TYPE_MISMATCH_STRATEGY))
+                    columnMismatchPolicy = ColumnMismatchPolicy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_OUTPUT_COLUMN_MISMATCH_POLICY)),
+                    typeMismatchPolicy = TypeMismatchPolicy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_OUTPUT_TYPE_MISMATCH_POLICY)),
+                    charVarcharPolicy = CharVarcharPolicy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_OUTPUT_CHAR_VARCHAR_POLICY))
                 )
                 enforcer.transform(df)
             }
@@ -537,8 +539,9 @@ abstract class BaseRelation extends AbstractInstance with Relation {
                 val conf = execution.flowmanConf
                 val enforcer = SchemaEnforcer(
                     schema,
-                    columnMismatchStrategy = ColumnMismatchStrategy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_INPUT_COLUMN_MISMATCH_STRATEGY)),
-                    typeMismatchStrategy = TypeMismatchStrategy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_INPUT_TYPE_MISMATCH_STRATEGY))
+                    columnMismatchPolicy = ColumnMismatchPolicy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_INPUT_COLUMN_MISMATCH_POLICY)),
+                    typeMismatchPolicy = TypeMismatchPolicy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_INPUT_TYPE_MISMATCH_POLICY)),
+                    charVarcharPolicy = CharVarcharPolicy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_INPUT_CHAR_VARCHAR_POLICY))
                 )
                 enforcer.transform(df)
             }

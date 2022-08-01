@@ -24,8 +24,10 @@ Most relations support implicit schema conversions, which means that
 The details of these conversions can be controlled via some config variables
 * `flowman.default.relation.input.columnMismatchPolicy` (default is `IGNORE`)
 * `flowman.default.relation.input.typeMismatchPolicy` (default is `IGNORE`)
+* `flowman.default.relation.input.charVarcharPolicy` (default is `PAD_AND_TRUUNCATE`)
 * `flowman.default.relation.output.columnMismatchPolicy` (default is `ADD_REMOVE_COLUMNS`)
 * `flowman.default.relation.output.typeMismatchPolicy` (default is `CAST_ALWAYS`)
+* `flowman.default.relation.output.charVarcharPolicy` (default is `PAD_AND_TRUUNCATE`)
 
 The schema conversion is implemented using two aspects. The first is a mismatch between column (names). This can be
 configured using the `columnMismatchPolicy` as follows. Basically the idea is that
@@ -69,6 +71,14 @@ follows:
 | `CAST_COMPATIBLE_OR_IGNORE` | Source cannot be safely cast to dest | Input Data Type  |
 | `CAST_ALWAYS`               | Source can be safely cast to dest    | Target Data Type |
 | `CAST_ALWAYS`               | Source cannot be safely cast to dest | Target Data Type |
+
+The two options `flowman.default.relation.input.charVarcharPolicy` and `flowman.default.relation.output.charVarcharPolicy`
+control how Flowman will treat `VARCHAR(n)` and `CHAR(n)` data types. The possible values are
+* `IGNORE` - Do not apply any length restrictions
+* `PAD_AND_TRUNCATE` - Truncate `VARCHAR(n)`/`CHAR(n)` strings which are too long and pad `CHAR(n)` strings which are too short
+* `PAD` - Pad `CHAR(n)` strings which are too short
+* `TRUNCATE` - Truncate `VARCHAR(n)`/`CHAR(n)` strings which are too long
+
 
 ## Relation Types
 

@@ -50,6 +50,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.transforms.SchemaEnforcer
+import com.dimajix.flowman.transforms.CharVarcharPolicy
 import com.dimajix.flowman.transforms.UnionTransformer
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -66,7 +67,7 @@ object HiveUnionTableRelation {
      */
     private[relation] def unionSql(tables:Seq[DataFrame], schema:StructType) : String = {
         val union = UnionTransformer().transformDataFrames(tables)
-        val conformed = SchemaEnforcer(schema).transform(union)
+        val conformed = SchemaEnforcer(schema,charVarcharPolicy=CharVarcharPolicy.IGNORE).transform(union)
         new SqlBuilder(conformed).toSQL
     }
 }

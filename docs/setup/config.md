@@ -108,6 +108,9 @@ Sets the strategy to use how tables should be migrated. Possible values are:
   Defines how Flowman should handle a mismatch between the types of the actual schema of a relation when reading from 
   it and the types of the schema as defined in the relation. Per default, Flowman ignores any mismatch and simply passes 
   through the types of the actual relation. See [relations](../spec/relation/index.md) for possible options and more details.
+- `flowman.default.relation.input.charVarcharPolicy` *(type: string)* *(default:`PAD_AND_TRUUNCATE`)* (since Flowman 0.26.1)
+  Defines how Flowman will handle `CHAR(n)`/`VARCHAR(n)` data on reading. Per default Flowman will truncate/pad `CHAR(n)`
+  columns and truncate `VARCHAR(n)` columns. See [relations](../spec/relation/index.md) for possible options and more details.
 - `flowman.default.relation.output.columnMismatchPolicy` *(type: string)* *(default:`ADD_REMOVE_COLUMNS`)* (since Flowman 0.20.0)
   Defines how Flowman should handle a mismatch of columns of records being written to a relation and the relations
   actual defined columns. Per default Flowman will add/remove columns to/from records such that they match the current
@@ -116,6 +119,9 @@ Sets the strategy to use how tables should be migrated. Possible values are:
   Defines how Flowman should handle a mismatch of columns of records being written to a relation and the relations
   actual defined columns. Per default Flowman will add/remove columns to/from records such that they match the current
   physical layout. See [relations](../spec/relation/index.md) for possible options and more details.
+- `flowman.default.relation.output.charVarcharPolicy` *(type: string)* *(default:`PAD_AND_TRUUNCATE`)* (since Flowman 0.26.1)
+  Defines how Flowman will handle `CHAR(n)`/`VARCHAR(n)` data when writing. Per default Flowman will truncate/pad `CHAR(n)`
+  columns and truncate `VARCHAR(n)` columns. See [relations](../spec/relation/index.md) for possible options and more details.
 
 
 ### Target related Properties

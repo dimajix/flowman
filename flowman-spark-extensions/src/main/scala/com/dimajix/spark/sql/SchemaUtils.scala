@@ -225,6 +225,34 @@ object SchemaUtils {
         metadata.contains(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
     }
 
+    def dropExtendedTypeInfo(struct:StructType) : StructType = {
+        StructType(struct.fields.map(dropExtendedTypeInfo))
+    }
+    def dropExtendedTypeInfo(field:StructField) : StructField = {
+        val meta = dropExtendedTypeInfo(field.metadata)
+        val dt = dropExtendedTypeInfo(field.dataType)
+        field.copy(dataType = dt, metadata = meta)
+    }
+    def dropExtendedTypeInfo(metadata: Metadata): Metadata = {
+        if (metadata.contains(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)) {
+            new MetadataBuilder()
+                .withMetadata(metadata)
+                .remove(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
+                .build()
+        }
+        else {
+            metadata
+        }
+    }
+    private def dropExtendedTypeInfo(dtype: DataType): DataType = {
+        dtype match {
+            case struct: StructType => dropExtendedTypeInfo(struct)
+            case array: ArrayType => ArrayType(dropExtendedTypeInfo(array.elementType), array.containsNull)
+            case map: MapType => MapType(dropExtendedTypeInfo(map.keyType), dropExtendedTypeInfo(map.valueType), map.valueContainsNull)
+            case dt: DataType => dt
+        }
+    }
+
     /**
      * Recovers the original CHAR/VARCHAR types from a struct, which was previously cleaned via replaceCharVarchar
      * @param schema

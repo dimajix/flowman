@@ -205,6 +205,43 @@ class SchemaUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSession w
         recoveredSchema should be(originalSchema)
     }
 
+    "SchemaUtils.dropExtendedTypeInfo" should "remove only extended type info" in {
+        val comment = "123456789"
+        val schema = StructType(Seq(
+            StructField("Name", VarcharType(50), false).withComment(comment),
+            StructField("Nested",
+                StructType(Seq(
+                    StructField("AmOUnt", CharType(10)).withComment(comment),
+                    StructField("SomeArray", ArrayType(VarcharType(20), false)).withComment(comment)
+                ))
+            ).withComment(comment),
+            StructField("StructArray", ArrayType(
+                StructType(Seq(
+                    StructField("Name", StringType).withComment(comment)
+                ))
+            )).withComment(comment)
+        ))
+
+        val replacedSchema = SchemaUtils.replaceCharVarchar(schema)
+        val pureSchema = SchemaUtils.dropExtendedTypeInfo(replacedSchema)
+
+        val expectedSchema = StructType(Seq(
+            StructField("Name", StringType, false).withComment(comment),
+            StructField("Nested",
+                StructType(Seq(
+                    StructField("AmOUnt", StringType).withComment(comment),
+                    StructField("SomeArray", ArrayType(StringType, false)).withComment(comment)
+                ))
+            ).withComment(comment),
+            StructField("StructArray", ArrayType(
+                StructType(Seq(
+                    StructField("Name", StringType).withComment(comment)
+                ))
+            )).withComment(comment)
+        ))
+        pureSchema should be(expectedSchema)
+    }
+
     "SchemaUtils.dropMetadata" should "remove all meta data" in {
         val comment = "123456789"
         val schema = StructType(Seq(

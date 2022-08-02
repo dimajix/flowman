@@ -13,7 +13,7 @@ The following simple data types are supported by Flowman
 * `smallint`, `short` - 16 bit signed numbers
 * `int`, `integer` - 32 bit signed numbers
 * `bigint`, `long` - 64 bit signed numbers
-* `boolean` - true or false
+* `boolean`, `bool` - true or false
 * `float` - 32 bit floating point number
 * `double` - 64 bit floating point number
 * `decimal(a,b)`

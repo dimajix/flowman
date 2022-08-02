@@ -1,6 +1,6 @@
 # Conform Mapping
 The `conform` mapping performs simply name and type mangling transformations to conform data to some standard. For
-example you can replace all date columns by timestamp columns (this is required for older versions of Hive) or
+example, you can replace all date columns by timestamp columns (this is required for older versions of Hive) or
 you can transform column names from camel case to snake case to better match SQL.
 
 ## Example
@@ -39,7 +39,20 @@ Specifies the naming scheme used for the output. The following values are suppor
   * `camelCaseUpper`
 
 * `types` **(optional)** *(type: map:string)*:
-Specifies the list of types and how they should be replaced
+Specifies the list of types and how they should be replaced. The following types can be specified as source types:
+  * `BYTE` or `TNINYINT`
+  * `SHORT` or `SMALLINT`
+  * `INT` or `INTEGER`
+  * `LONG` or `BIGINT`
+  * `BOOLEAN` or `BOOL`
+  * `FLOAT`
+  * `DOUBLE`
+  * `DECIMAL`
+  * `STRING` or `TEXT`
+  * `DURATION`
+  * `TIMESTAMP`
+  * `DATE`
+Note that both `CHAR(n)` and `VARCHAR(n)` are matched to the entry for `STRING` type.
 
 * `flatten` **(optional)** *(type: boolean)* *(default: false)*:
 Flattens all nested structs into a flat list of columns if set to `true`
@@ -50,6 +63,3 @@ An optional SQL filter expression that is applied *after* conforming.
 
 ## Outputs
 * `main` - the only output of the mapping
-
-
-## Description

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,5 +22,6 @@ import org.apache.spark.sql.types.DataType
 case object IntegerType extends IntegralType[Int] {
     protected def parseRaw(value:String) : Int = value.toInt
 
+    override def sqlType: String = "int"
     override def sparkType : DataType = org.apache.spark.sql.types.IntegerType
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,18 @@ package com.dimajix.flowman.transforms
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.types.FloatType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.LongType
+import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.VarcharType
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -63,7 +67,7 @@ class TypeReplacerTest extends AnyFlatSpec with Matchers with LocalSparkSession 
     }
 
     "A TypeReplacer" should "transform DataFrames correctly" in {
-        val mapping = new TypeReplacer(
+        val mapping = TypeReplacer(
                 Map(
                     "string" -> ftypes.IntegerType
                 )
@@ -89,7 +93,7 @@ class TypeReplacerTest extends AnyFlatSpec with Matchers with LocalSparkSession 
     }
 
     it should "provide a correct output schema" in {
-        val mapping = new TypeReplacer(
+        val mapping = TypeReplacer(
             Map(
                 "string" -> ftypes.IntegerType
             )
@@ -110,10 +114,119 @@ class TypeReplacerTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         val outputSchema = mapping.transform(ftypes.StructType.of(inputDf.schema))
         outputSchema.sparkType should be (expectedSchema)
+        outputSchema.catalogType should be (expectedSchema)
+    }
+
+    it should "support simple types" in {
+        val rawInputDf = spark.createDataFrame(Seq(
+            ("1","1"),
+            ("123","123")
+        ))
+
+
+        val simpleTypes = Seq(
+            "string", "text",
+            "bool", "boolean",
+            "byte", "tinyint",
+            "short", "smallint",
+            "int", "integer",
+            "long", "bigint",
+            "float",
+            "double"
+        )
+        for (typeName <- simpleTypes) {
+            val fieldType =  ftypes.FieldType.of(typeName)
+            val inputSchema = ftypes.StructType(Seq(
+                ftypes.Field("_1", fieldType)
+            ))
+            val xfs = SchemaEnforcer(inputSchema.catalogType)
+            val inputDf = xfs.transform(rawInputDf)
+
+            val mapping = TypeReplacer(
+                Map(
+                    typeName -> ftypes.FloatType
+                )
+            )
+            val expectedSchema = StructType(Seq(
+                StructField("_1", FloatType)
+            ))
+
+            val outputSchema = mapping.transform(ftypes.StructType.of(inputDf.schema))
+            outputSchema.sparkType should be(expectedSchema)
+            outputSchema.catalogType should be(expectedSchema)
+
+            val outputDf = mapping.transform(inputDf)
+            outputDf.schema should be(expectedSchema)
+        }
+    }
+
+    it should "support extended string types (1)" in {
+        val mapping = TypeReplacer(
+            Map(
+                "string" -> ftypes.IntegerType
+            )
+        )
+
+        val rawInputDf = spark.createDataFrame(Seq(
+            ("col", 1.0f),
+            ("col123", 2345.0f)
+        ))
+        val inputSchema = ftypes.StructType(Seq(
+            ftypes.Field("_1", ftypes.VarcharType(10)),
+            ftypes.Field("_2", ftypes.FloatType)
+        ))
+        val xfs = SchemaEnforcer(inputSchema.catalogType)
+        val inputDf = xfs.transform(rawInputDf)
+        val expectedSchema = StructType(Seq(
+            StructField("_1", IntegerType),
+            StructField("_2", FloatType, false)
+        ))
+
+        val outputSchema = mapping.transform(ftypes.StructType.of(inputDf.schema))
+        outputSchema.sparkType should be(expectedSchema)
+        outputSchema.catalogType should be(expectedSchema)
+
+        val outputDf = mapping.transform(inputDf)
+        outputDf.schema should be (expectedSchema)
+    }
+
+    it should "support extended string types (2)" in {
+        val mapping = TypeReplacer(
+            Map(
+                "int" -> ftypes.FloatType
+            )
+        )
+
+        val rawInputDf = spark.createDataFrame(Seq(
+            ("col", 1),
+            ("col123", 2345)
+        ))
+        val inputSchema = ftypes.StructType(Seq(
+            ftypes.Field("_1", ftypes.VarcharType(10)),
+            ftypes.Field("_2", ftypes.IntegerType)
+        ))
+        val xfs = SchemaEnforcer(inputSchema.catalogType)
+        val inputDf = xfs.transform(rawInputDf)
+        val expectedSchema = StructType(Seq(
+            StructField("_1", VarcharType(10)),
+            StructField("_2", FloatType, false)
+        ))
+        val expectedSimpleSchema = StructType(Seq(
+            StructField("_1", StringType),
+            StructField("_2", FloatType, false)
+        ))
+
+        val outputSchema = mapping.transform(ftypes.StructType.of(inputDf.schema))
+        SchemaUtils.dropExtendedTypeInfo(outputSchema.sparkType) should be(expectedSimpleSchema)
+        outputSchema.catalogType should be(expectedSchema)
+
+        val outputDf = mapping.transform(inputDf)
+        SchemaUtils.dropExtendedTypeInfo(outputDf.schema) should be(expectedSimpleSchema)
+        SchemaUtils.recoverCharVarchar(outputDf.schema) should be(expectedSchema)
     }
 
     it should "throw an error for arrays" in {
-        val mapping = new TypeReplacer(
+        val mapping = TypeReplacer(
             Map(
                 "long" -> ftypes.IntegerType
             )

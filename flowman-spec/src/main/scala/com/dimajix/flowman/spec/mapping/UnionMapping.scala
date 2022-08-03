@@ -64,7 +64,7 @@ case class UnionMapping(
         val union =
             if (schema.nonEmpty) {
                 // Project all tables onto specified schema
-                val schemaEnforcer = SchemaEnforcer(schema.get.sparkSchema)
+                val schemaEnforcer = SchemaEnforcer(schema.get.catalogSchema)
                 val projectedTables = dfs.map(schemaEnforcer.transform)
                 projectedTables.reduce((l,r) => l.union(r))
             }

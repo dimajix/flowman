@@ -14,6 +14,13 @@ The following gives an (incomplete) list of past releases of the last 12 months.
 changes over time.
 
 
+### Version 0.26.1 - 2022-08-03
+
+* github-226: Upgrade to Spark 3.2.2
+* github-227: [BUG] Flowman should not fail with field names containing "-", "/" etc
+* github-228: Padding and truncation of CHAR(n)/VARCHAR(n) should be configurable
+
+
 ### Version 0.26.0 - 2022-07-27
 
 * github-202: Add support for Spark 3.3

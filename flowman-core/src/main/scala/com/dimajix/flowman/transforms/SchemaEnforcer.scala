@@ -23,9 +23,11 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.functions.length
 import org.apache.spark.sql.functions.rpad
 import org.apache.spark.sql.functions.struct
 import org.apache.spark.sql.functions.substring
+import org.apache.spark.sql.functions.when
 import org.apache.spark.sql.types.ArrayType
 import org.apache.spark.sql.types.CharType
 import org.apache.spark.sql.types.DataType
@@ -39,20 +41,21 @@ import org.apache.spark.sql.types.VarcharType
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.execution.SchemaMismatchException
 import com.dimajix.flowman.util.SchemaUtils.coerce
+import com.dimajix.spark.sql.SchemaUtils.CHAR_VARCHAR_TYPE_STRING_METADATA_KEY
 import com.dimajix.spark.sql.functions.nullable_struct
 
 
-sealed abstract class ColumnMismatchStrategy extends Product with Serializable
-object ColumnMismatchStrategy {
-    case object IGNORE extends ColumnMismatchStrategy
-    case object ERROR extends ColumnMismatchStrategy
-    case object ADD_COLUMNS_OR_IGNORE extends ColumnMismatchStrategy
-    case object ADD_COLUMNS_OR_ERROR extends ColumnMismatchStrategy
-    case object REMOVE_COLUMNS_OR_IGNORE extends ColumnMismatchStrategy
-    case object REMOVE_COLUMNS_OR_ERROR extends ColumnMismatchStrategy
-    case object ADD_REMOVE_COLUMNS extends ColumnMismatchStrategy
+sealed abstract class ColumnMismatchPolicy extends Product with Serializable
+object ColumnMismatchPolicy {
+    case object IGNORE extends ColumnMismatchPolicy
+    case object ERROR extends ColumnMismatchPolicy
+    case object ADD_COLUMNS_OR_IGNORE extends ColumnMismatchPolicy
+    case object ADD_COLUMNS_OR_ERROR extends ColumnMismatchPolicy
+    case object REMOVE_COLUMNS_OR_IGNORE extends ColumnMismatchPolicy
+    case object REMOVE_COLUMNS_OR_ERROR extends ColumnMismatchPolicy
+    case object ADD_REMOVE_COLUMNS extends ColumnMismatchPolicy
 
-    def ofString(mode:String) : ColumnMismatchStrategy = {
+    def ofString(mode:String) : ColumnMismatchPolicy = {
         mode.toLowerCase(Locale.ROOT) match {
             case "ignore" => IGNORE
             case "error" => ERROR
@@ -61,30 +64,49 @@ object ColumnMismatchStrategy {
             case "remove_columns_or_ignore"|"removecolumnsorignore" => REMOVE_COLUMNS_OR_IGNORE
             case "remove_columns_or_error"|"removecolumnsorerror" => REMOVE_COLUMNS_OR_ERROR
             case "add_remove_columns"|"addremovecolumnso" => ADD_REMOVE_COLUMNS
-            case _ => throw new IllegalArgumentException(s"Unknown column mismatch strategy: '$mode'. " +
-                "Accepted error strategies are ignore', 'error', 'add_columns_or_ignore', 'add_columns_or_error', 'remove_columns_or_ignore', 'remove_columns_or_error', 'add_remove_columns'.")
+            case _ => throw new IllegalArgumentException(s"Unknown column mismatch policy: '$mode'. " +
+                "Accepted error strategies are 'ignore', 'error', 'add_columns_or_ignore', 'add_columns_or_error', 'remove_columns_or_ignore', 'remove_columns_or_error', 'add_remove_columns'.")
         }
     }
 }
 
 
-sealed abstract class TypeMismatchStrategy extends Product with Serializable
-object TypeMismatchStrategy {
-    case object IGNORE extends TypeMismatchStrategy
-    case object ERROR extends TypeMismatchStrategy
-    case object CAST_COMPATIBLE_OR_ERROR extends TypeMismatchStrategy
-    case object CAST_COMPATIBLE_OR_IGNORE extends TypeMismatchStrategy
-    case object CAST_ALWAYS extends TypeMismatchStrategy
+sealed abstract class TypeMismatchPolicy extends Product with Serializable
+object TypeMismatchPolicy {
+    case object IGNORE extends TypeMismatchPolicy
+    case object ERROR extends TypeMismatchPolicy
+    case object CAST_COMPATIBLE_OR_ERROR extends TypeMismatchPolicy
+    case object CAST_COMPATIBLE_OR_IGNORE extends TypeMismatchPolicy
+    case object CAST_ALWAYS extends TypeMismatchPolicy
 
-    def ofString(mode:String) : TypeMismatchStrategy = {
+    def ofString(mode:String) : TypeMismatchPolicy = {
         mode.toLowerCase(Locale.ROOT) match {
             case "ignore" => IGNORE
             case "error" => ERROR
             case "cast_compatible_or_error"|"castcompatibleorerror" => CAST_COMPATIBLE_OR_ERROR
             case "cast_compatible_or_ignore"|"castcompatibleorignore" => CAST_COMPATIBLE_OR_IGNORE
             case "cast_always"|"castalways" => CAST_ALWAYS
-            case _ => throw new IllegalArgumentException(s"Unknown type mismatch strategy: '$mode'. " +
-                "Accepted error strategies are ignore', 'error', 'cast_compatible_or_error', 'cast_compatible_or_ignore', 'cast_always'.")
+            case _ => throw new IllegalArgumentException(s"Unknown type mismatch policy: '$mode'. " +
+                "Accepted error strategies are 'ignore', 'error', 'cast_compatible_or_error', 'cast_compatible_or_ignore', 'cast_always'.")
+        }
+    }
+}
+
+sealed abstract class CharVarcharPolicy extends Product with Serializable
+object CharVarcharPolicy {
+    case object PAD extends CharVarcharPolicy
+    case object TRUNCATE extends CharVarcharPolicy
+    case object PAD_AND_TRUNCATE extends CharVarcharPolicy
+    case object IGNORE extends CharVarcharPolicy
+
+    def ofString(mode: String): CharVarcharPolicy = {
+        mode.toLowerCase(Locale.ROOT) match {
+            case "ignore" => IGNORE
+            case "truncate" => TRUNCATE
+            case "pad" => PAD
+            case "pad_and_truncate" | "padandtruncate" => PAD_AND_TRUNCATE
+            case _ => throw new IllegalArgumentException(s"Unknown char/varchar policy: '$mode'. " +
+                "Accepted error strategies are 'ignore', 'truncate', 'pad', 'pad_and_truncate'.")
         }
     }
 }
@@ -92,29 +114,33 @@ object TypeMismatchStrategy {
 
 final case class SchemaEnforcer(
     schema:StructType,
-    columnMismatchStrategy:ColumnMismatchStrategy=ColumnMismatchStrategy.ADD_REMOVE_COLUMNS,
-    typeMismatchStrategy:TypeMismatchStrategy=TypeMismatchStrategy.CAST_ALWAYS
+    columnMismatchPolicy:ColumnMismatchPolicy=ColumnMismatchPolicy.ADD_REMOVE_COLUMNS,
+    typeMismatchPolicy:TypeMismatchPolicy=TypeMismatchPolicy.CAST_ALWAYS,
+    charVarcharPolicy:CharVarcharPolicy=CharVarcharPolicy.PAD_AND_TRUNCATE
 ) {
     private val addColumns =
-        columnMismatchStrategy == ColumnMismatchStrategy.ADD_COLUMNS_OR_IGNORE ||
-            columnMismatchStrategy == ColumnMismatchStrategy.ADD_COLUMNS_OR_ERROR ||
-            columnMismatchStrategy == ColumnMismatchStrategy.ADD_REMOVE_COLUMNS
+        columnMismatchPolicy == ColumnMismatchPolicy.ADD_COLUMNS_OR_IGNORE ||
+            columnMismatchPolicy == ColumnMismatchPolicy.ADD_COLUMNS_OR_ERROR ||
+            columnMismatchPolicy == ColumnMismatchPolicy.ADD_REMOVE_COLUMNS
     private val removeColumns =
-        columnMismatchStrategy == ColumnMismatchStrategy.REMOVE_COLUMNS_OR_IGNORE ||
-            columnMismatchStrategy == ColumnMismatchStrategy.REMOVE_COLUMNS_OR_ERROR ||
-            columnMismatchStrategy == ColumnMismatchStrategy.ADD_REMOVE_COLUMNS
-    private val ignoreColumns = columnMismatchStrategy == ColumnMismatchStrategy.IGNORE ||
-        columnMismatchStrategy == ColumnMismatchStrategy.REMOVE_COLUMNS_OR_IGNORE ||
-        columnMismatchStrategy == ColumnMismatchStrategy.ADD_COLUMNS_OR_IGNORE
+        columnMismatchPolicy == ColumnMismatchPolicy.REMOVE_COLUMNS_OR_IGNORE ||
+            columnMismatchPolicy == ColumnMismatchPolicy.REMOVE_COLUMNS_OR_ERROR ||
+            columnMismatchPolicy == ColumnMismatchPolicy.ADD_REMOVE_COLUMNS
+    private val ignoreColumns = columnMismatchPolicy == ColumnMismatchPolicy.IGNORE ||
+        columnMismatchPolicy == ColumnMismatchPolicy.REMOVE_COLUMNS_OR_IGNORE ||
+        columnMismatchPolicy == ColumnMismatchPolicy.ADD_COLUMNS_OR_IGNORE
 
     private val castCompatibleTypes =
-        typeMismatchStrategy == TypeMismatchStrategy.CAST_COMPATIBLE_OR_ERROR ||
-            typeMismatchStrategy == TypeMismatchStrategy.CAST_COMPATIBLE_OR_IGNORE
+        typeMismatchPolicy == TypeMismatchPolicy.CAST_COMPATIBLE_OR_ERROR ||
+            typeMismatchPolicy == TypeMismatchPolicy.CAST_COMPATIBLE_OR_IGNORE
     private val castAlways =
-        typeMismatchStrategy == TypeMismatchStrategy.CAST_ALWAYS
+        typeMismatchPolicy == TypeMismatchPolicy.CAST_ALWAYS
     private val ignoreTypes =
-        typeMismatchStrategy == TypeMismatchStrategy.IGNORE ||
-            typeMismatchStrategy == TypeMismatchStrategy.CAST_COMPATIBLE_OR_IGNORE
+        typeMismatchPolicy == TypeMismatchPolicy.IGNORE ||
+            typeMismatchPolicy == TypeMismatchPolicy.CAST_COMPATIBLE_OR_IGNORE
+
+    private val pad = charVarcharPolicy == CharVarcharPolicy.PAD || charVarcharPolicy == CharVarcharPolicy.PAD_AND_TRUNCATE
+    private val truncate = charVarcharPolicy == CharVarcharPolicy.TRUNCATE || charVarcharPolicy == CharVarcharPolicy.PAD_AND_TRUNCATE
 
     /**
       * Helper method for conforming a given schema to a target schema. This will project the given schema and also
@@ -123,7 +149,7 @@ final case class SchemaEnforcer(
       * @return
       */
     def transform(inputSchema:StructType) : Seq[Column] = {
-        if (columnMismatchStrategy != ColumnMismatchStrategy.IGNORE || typeMismatchStrategy != TypeMismatchStrategy.IGNORE) {
+        if (columnMismatchPolicy != ColumnMismatchPolicy.IGNORE || typeMismatchPolicy != TypeMismatchPolicy.IGNORE) {
             conformStruct(schema, inputSchema, "")
         }
         else {
@@ -138,7 +164,7 @@ final case class SchemaEnforcer(
       * @return
       */
     def transform(df:DataFrame) : DataFrame = {
-        if (columnMismatchStrategy != ColumnMismatchStrategy.IGNORE || typeMismatchStrategy != TypeMismatchStrategy.IGNORE) {
+        if (columnMismatchPolicy != ColumnMismatchPolicy.IGNORE || typeMismatchPolicy != TypeMismatchPolicy.IGNORE) {
             val unifiedColumns = transform(df.schema)
             df.select(unifiedColumns: _*)
         }
@@ -150,8 +176,21 @@ final case class SchemaEnforcer(
 
     private def applyType(col:Column, field:StructField) : Column = {
         field.dataType match {
-            case CharType(n) => rpad(col.cast(StringType), n, " ")
-            case VarcharType(n) => substring(col.cast(StringType), 0, n)
+            case CharType(n) =>
+                if (pad && truncate)
+                    rpad(col.cast(StringType), n, " ")
+                else if (pad)
+                    when(length(col.cast(StringType)) > lit(n), col.cast(StringType))
+                        .otherwise(rpad(col.cast(StringType), n, " "))
+                else if (truncate)
+                    substring(col.cast(StringType), 0, n)
+                else
+                    col.cast(StringType)
+            case VarcharType(n) =>
+                if (truncate)
+                    substring(col.cast(StringType), 0, n)
+                else
+                    col.cast(StringType)
             case _ => col.cast(field.dataType)
         }
     }
@@ -239,6 +278,15 @@ final case class SchemaEnforcer(
         if (!metadata.contains("comment")) {
             inputField.getComment()
                 .foreach(c => builder.putString("comment", c))
+        }
+
+        // Preserve extended string type info
+        requiredField.dataType match {
+            case VarcharType(_) if requiredField.dataType != inputField.dataType =>
+                builder.putString(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY, requiredField.dataType.catalogString)
+            case CharType(_) if requiredField.dataType != inputField.dataType =>
+                builder.putString(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY, requiredField.dataType.catalogString)
+            case _ =>
         }
 
         builder.build()

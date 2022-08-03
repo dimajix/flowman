@@ -25,13 +25,14 @@ import org.apache.spark.sql.functions.struct
 import org.apache.spark.sql.{types => stypes}
 
 import com.dimajix.spark.sql.functions.nullable_struct
-
 import com.dimajix.flowman.types.ArrayType
+import com.dimajix.flowman.types.CharType
 import com.dimajix.flowman.types.DecimalType
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.MapType
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.types.VarcharType
+import com.dimajix.spark.sql.SchemaUtils.dropExtendedTypeInfo
 
 
 /**
@@ -41,6 +42,8 @@ import com.dimajix.flowman.types.VarcharType
 final case class TypeReplacer(replace:Map[String, FieldType]) extends Transformer {
     private val typeAliases = Map(
         "text" -> "string",
+        "bool" -> "boolean",
+        "integer" -> "int",
         "long" -> "bigint",
         "short" -> "smallint",
         "byte" -> "tinyint"
@@ -94,6 +97,8 @@ final case class TypeReplacer(replace:Map[String, FieldType]) extends Transforme
             val column = field.dataType match {
                 case _:stypes.VarcharType =>
                     typeMap.get("string").map(d => col(fqn).cast(d.sparkType))
+                case _:stypes.CharType =>
+                    typeMap.get("string").map(d => col(fqn).cast(d.sparkType))
                 case _:stypes.DecimalType =>
                     typeMap.get("decimal").map(d => col(fqn).cast(d.sparkType))
                 case at:stypes.ArrayType => processArray(fqn, at)
@@ -102,7 +107,7 @@ final case class TypeReplacer(replace:Map[String, FieldType]) extends Transforme
                 case dt:stypes.DataType =>
                     typeMap.get(dt.sql.toLowerCase(Locale.ROOT)).map(t => col(fqn).cast(t.sparkType))
             }
-            column.map(_.as(field.name, field.metadata))
+            column.map(_.as(field.name, dropExtendedTypeInfo(field.metadata)))
         }
 
         val fields = df.schema.fields.map(f => (col(f.name), processField("", f)))
@@ -113,8 +118,9 @@ final case class TypeReplacer(replace:Map[String, FieldType]) extends Transforme
     override def transform(schema:StructType) : StructType = {
         def processType(fieldType: FieldType) : FieldType = {
             fieldType match {
-                case dt:DecimalType => typeMap.getOrElse("decimal", dt)
                 case dt:VarcharType => typeMap.getOrElse("string", dt)
+                case dt:CharType => typeMap.getOrElse("string", dt)
+                case dt:DecimalType => typeMap.getOrElse("decimal", dt)
                 case at:ArrayType => processArray(at)
                 case mt:MapType => processMap(mt)
                 case st:StructType => processStruct(st)

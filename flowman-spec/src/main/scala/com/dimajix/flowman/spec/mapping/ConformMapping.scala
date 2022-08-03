@@ -63,7 +63,6 @@ extends BaseMapping {
         require(input != null)
 
         val df = input(this.input)
-        val transforms = this.transforms
 
         // Apply all transformations in order
         val result = transforms.foldLeft(df)((df,xfs) => xfs.transform(df))
@@ -84,7 +83,6 @@ extends BaseMapping {
         require(input != null)
 
         val schema = input(this.input)
-        val transforms = this.transforms
 
         // Apply all transformations in order
         val result = transforms.foldLeft(schema)((df,xfs) => xfs.transform(df))
@@ -94,7 +92,7 @@ extends BaseMapping {
         applyDocumentation(schemas)
     }
 
-    private def transforms : Seq[Transformer] = {
+    lazy val transforms : Seq[Transformer] = {
         Seq(
             Option(types).filter(_.nonEmpty).map(t => TypeReplacer(t)),
             naming.map(f => CaseFormatter(f)),

@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
@@ -36,7 +37,10 @@ import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.spec.dataset.DatasetSpec
+import com.dimajix.flowman.transforms.ColumnMismatchPolicy
 import com.dimajix.flowman.transforms.SchemaEnforcer
+import com.dimajix.flowman.transforms.CharVarcharPolicy
+import com.dimajix.flowman.transforms.TypeMismatchPolicy
 import com.dimajix.flowman.types.SchemaWriter
 import com.dimajix.flowman.types.StructType
 
@@ -111,12 +115,12 @@ case class CopyTarget(
       *
       * @param executor
       */
-    override protected def build(executor: Execution): Unit = {
-        require(executor != null)
+    override protected def build(execution: Execution): Unit = {
+        require(execution != null)
 
         logger.info(s"Copying dataset ${source.name} to ${target.name}")
 
-        val dfIn = source.read(executor)
+        val dfIn = source.read(execution)
         val data =
             if (parallelism <= 0)
                 dfIn
@@ -124,15 +128,21 @@ case class CopyTarget(
                 dfIn.repartition(parallelism)
             else
                 dfIn.coalesce(parallelism)
-        val conformed = target.describe(executor).map { schema =>
-            val xfs = SchemaEnforcer(schema.sparkType)
+        val conformed = target.describe(execution).map { schema =>
+            val conf = execution.flowmanConf
+            val xfs = SchemaEnforcer(
+                schema.catalogType,
+                columnMismatchPolicy = ColumnMismatchPolicy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_OUTPUT_COLUMN_MISMATCH_POLICY)),
+                typeMismatchPolicy = TypeMismatchPolicy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_OUTPUT_TYPE_MISMATCH_POLICY)),
+                charVarcharPolicy = CharVarcharPolicy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_OUTPUT_CHAR_VARCHAR_POLICY))
+            )
             xfs.transform(data)
         }.getOrElse(data)
-        target.write(executor, conformed, mode)
+        target.write(execution, conformed, mode)
 
         schema.foreach { spec =>
             logger.info(s"Writing schema to file '${spec.file}'")
-            val schema = source.describe(executor).getOrElse(StructType.of(data.schema))
+            val schema = source.describe(execution).getOrElse(StructType.of(data.schema))
             val file = context.fs.file(spec.file)
             new SchemaWriter(schema.fields).format(spec.format).save(file)
         }

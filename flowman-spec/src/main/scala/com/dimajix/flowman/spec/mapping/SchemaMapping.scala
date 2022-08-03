@@ -31,7 +31,10 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.SchemaSpec
+import com.dimajix.flowman.transforms.ColumnMismatchPolicy
 import com.dimajix.flowman.transforms.SchemaEnforcer
+import com.dimajix.flowman.transforms.CharVarcharPolicy
+import com.dimajix.flowman.transforms.TypeMismatchPolicy
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
@@ -43,6 +46,9 @@ case class SchemaMapping(
     input:MappingOutputIdentifier,
     columns:Seq[Field] = Seq(),
     schema:Option[Schema] = None,
+    columnMismatchPolicy:ColumnMismatchPolicy = ColumnMismatchPolicy.ADD_REMOVE_COLUMNS,
+    typeMismatchPolicy:TypeMismatchPolicy = TypeMismatchPolicy.CAST_ALWAYS,
+    charVarcharPolicy:CharVarcharPolicy = CharVarcharPolicy.PAD_AND_TRUNCATE,
     filter:Option[String] = None
 )
 extends BaseMapping {
@@ -96,10 +102,10 @@ extends BaseMapping {
     }
 
     private lazy val xfs = if(schema.nonEmpty) {
-        SchemaEnforcer(schema.get.sparkSchema)
+        SchemaEnforcer(schema.get.catalogSchema)
     }
     else {
-        SchemaEnforcer(StructType(columns).sparkType)
+        SchemaEnforcer(StructType(columns).catalogType)
     }
 }
 
@@ -111,6 +117,9 @@ class SchemaMappingSpec extends MappingSpec {
     @JsonProperty(value = "columns", required = false) private var columns: ListMap[String,String] = ListMap()
     @JsonProperty(value = "schema", required = false) private var schema: Option[SchemaSpec] = None
     @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
+    @JsonProperty(value = "columnMismatchPolicy", required=false) private var columnMismatchPolicy:String = "ADD_REMOVE_COLUMNS"
+    @JsonProperty(value = "typeMismatchPolicy", required=false) private var typeMismatchPolicy:String = "CAST_ALWAYS"
+    @JsonProperty(value = "charVarcharPolicy", required=false) private var charVarcharPolicy:String = "PAD_AND_TRUNCATE"
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -123,6 +132,9 @@ class SchemaMappingSpec extends MappingSpec {
             MappingOutputIdentifier(context.evaluate(this.input)),
             columns.toSeq.map(kv => Field(kv._1, FieldType.of(context.evaluate(kv._2)))),
             schema.map(_.instantiate(context)),
+            ColumnMismatchPolicy.ofString(context.evaluate(columnMismatchPolicy)),
+            TypeMismatchPolicy.ofString(context.evaluate(typeMismatchPolicy)),
+            CharVarcharPolicy.ofString(context.evaluate(charVarcharPolicy)),
             context.evaluate(filter)
         )
     }

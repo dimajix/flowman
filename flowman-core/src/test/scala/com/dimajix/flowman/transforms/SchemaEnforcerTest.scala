@@ -38,65 +38,65 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-    "The ColumnMismatchStrategy" should "parse correctly" in {
-        ColumnMismatchStrategy.ofString("IGNORE") should be (ColumnMismatchStrategy.IGNORE)
-        ColumnMismatchStrategy.ofString("ignore") should be (ColumnMismatchStrategy.IGNORE)
-        ColumnMismatchStrategy.ofString("ERROR") should be (ColumnMismatchStrategy.ERROR)
-        ColumnMismatchStrategy.ofString("ADD_COLUMNS_OR_IGNORE") should be (ColumnMismatchStrategy.ADD_COLUMNS_OR_IGNORE)
-        ColumnMismatchStrategy.ofString("ADD_COLUMNS_OR_ERROR") should be (ColumnMismatchStrategy.ADD_COLUMNS_OR_ERROR)
-        ColumnMismatchStrategy.ofString("REMOVE_COLUMNS_OR_IGNORE") should be (ColumnMismatchStrategy.REMOVE_COLUMNS_OR_IGNORE)
-        ColumnMismatchStrategy.ofString("REMOVE_COLUMNS_OR_ERROR") should be (ColumnMismatchStrategy.REMOVE_COLUMNS_OR_ERROR)
-        ColumnMismatchStrategy.ofString("ADD_REMOVE_COLUMNS") should be (ColumnMismatchStrategy.ADD_REMOVE_COLUMNS)
-        a[NullPointerException] shouldBe thrownBy(ColumnMismatchStrategy.ofString(null))
-        an[IllegalArgumentException] shouldBe thrownBy(ColumnMismatchStrategy.ofString("NO_SUCH_MODE"))
+    "The ColumnMismatchPolicy" should "parse correctly" in {
+        ColumnMismatchPolicy.ofString("IGNORE") should be (ColumnMismatchPolicy.IGNORE)
+        ColumnMismatchPolicy.ofString("ignore") should be (ColumnMismatchPolicy.IGNORE)
+        ColumnMismatchPolicy.ofString("ERROR") should be (ColumnMismatchPolicy.ERROR)
+        ColumnMismatchPolicy.ofString("ADD_COLUMNS_OR_IGNORE") should be (ColumnMismatchPolicy.ADD_COLUMNS_OR_IGNORE)
+        ColumnMismatchPolicy.ofString("ADD_COLUMNS_OR_ERROR") should be (ColumnMismatchPolicy.ADD_COLUMNS_OR_ERROR)
+        ColumnMismatchPolicy.ofString("REMOVE_COLUMNS_OR_IGNORE") should be (ColumnMismatchPolicy.REMOVE_COLUMNS_OR_IGNORE)
+        ColumnMismatchPolicy.ofString("REMOVE_COLUMNS_OR_ERROR") should be (ColumnMismatchPolicy.REMOVE_COLUMNS_OR_ERROR)
+        ColumnMismatchPolicy.ofString("ADD_REMOVE_COLUMNS") should be (ColumnMismatchPolicy.ADD_REMOVE_COLUMNS)
+        a[NullPointerException] shouldBe thrownBy(ColumnMismatchPolicy.ofString(null))
+        an[IllegalArgumentException] shouldBe thrownBy(ColumnMismatchPolicy.ofString("NO_SUCH_MODE"))
     }
 
     it should "provide a toString method" in {
-        ColumnMismatchStrategy.IGNORE.toString should be ("IGNORE")
-        ColumnMismatchStrategy.ERROR.toString should be ("ERROR")
-        ColumnMismatchStrategy.ADD_COLUMNS_OR_IGNORE.toString should be ("ADD_COLUMNS_OR_IGNORE")
-        ColumnMismatchStrategy.ADD_COLUMNS_OR_ERROR.toString should be ("ADD_COLUMNS_OR_ERROR")
-        ColumnMismatchStrategy.REMOVE_COLUMNS_OR_IGNORE.toString should be ("REMOVE_COLUMNS_OR_IGNORE")
-        ColumnMismatchStrategy.REMOVE_COLUMNS_OR_ERROR.toString should be ("REMOVE_COLUMNS_OR_ERROR")
-        ColumnMismatchStrategy.ADD_REMOVE_COLUMNS.toString should be ("ADD_REMOVE_COLUMNS")
+        ColumnMismatchPolicy.IGNORE.toString should be ("IGNORE")
+        ColumnMismatchPolicy.ERROR.toString should be ("ERROR")
+        ColumnMismatchPolicy.ADD_COLUMNS_OR_IGNORE.toString should be ("ADD_COLUMNS_OR_IGNORE")
+        ColumnMismatchPolicy.ADD_COLUMNS_OR_ERROR.toString should be ("ADD_COLUMNS_OR_ERROR")
+        ColumnMismatchPolicy.REMOVE_COLUMNS_OR_IGNORE.toString should be ("REMOVE_COLUMNS_OR_IGNORE")
+        ColumnMismatchPolicy.REMOVE_COLUMNS_OR_ERROR.toString should be ("REMOVE_COLUMNS_OR_ERROR")
+        ColumnMismatchPolicy.ADD_REMOVE_COLUMNS.toString should be ("ADD_REMOVE_COLUMNS")
     }
 
     it should "parse toString correctly" in {
-        ColumnMismatchStrategy.ofString(ColumnMismatchStrategy.IGNORE.toString) should be (ColumnMismatchStrategy.IGNORE)
-        ColumnMismatchStrategy.ofString(ColumnMismatchStrategy.ERROR.toString) should be (ColumnMismatchStrategy.ERROR)
-        ColumnMismatchStrategy.ofString(ColumnMismatchStrategy.ADD_COLUMNS_OR_IGNORE.toString) should be (ColumnMismatchStrategy.ADD_COLUMNS_OR_IGNORE)
-        ColumnMismatchStrategy.ofString(ColumnMismatchStrategy.ADD_COLUMNS_OR_ERROR.toString) should be (ColumnMismatchStrategy.ADD_COLUMNS_OR_ERROR)
-        ColumnMismatchStrategy.ofString(ColumnMismatchStrategy.REMOVE_COLUMNS_OR_IGNORE.toString) should be (ColumnMismatchStrategy.REMOVE_COLUMNS_OR_IGNORE)
-        ColumnMismatchStrategy.ofString(ColumnMismatchStrategy.REMOVE_COLUMNS_OR_ERROR.toString) should be (ColumnMismatchStrategy.REMOVE_COLUMNS_OR_ERROR)
-        ColumnMismatchStrategy.ofString(ColumnMismatchStrategy.ADD_REMOVE_COLUMNS.toString) should be (ColumnMismatchStrategy.ADD_REMOVE_COLUMNS)
+        ColumnMismatchPolicy.ofString(ColumnMismatchPolicy.IGNORE.toString) should be (ColumnMismatchPolicy.IGNORE)
+        ColumnMismatchPolicy.ofString(ColumnMismatchPolicy.ERROR.toString) should be (ColumnMismatchPolicy.ERROR)
+        ColumnMismatchPolicy.ofString(ColumnMismatchPolicy.ADD_COLUMNS_OR_IGNORE.toString) should be (ColumnMismatchPolicy.ADD_COLUMNS_OR_IGNORE)
+        ColumnMismatchPolicy.ofString(ColumnMismatchPolicy.ADD_COLUMNS_OR_ERROR.toString) should be (ColumnMismatchPolicy.ADD_COLUMNS_OR_ERROR)
+        ColumnMismatchPolicy.ofString(ColumnMismatchPolicy.REMOVE_COLUMNS_OR_IGNORE.toString) should be (ColumnMismatchPolicy.REMOVE_COLUMNS_OR_IGNORE)
+        ColumnMismatchPolicy.ofString(ColumnMismatchPolicy.REMOVE_COLUMNS_OR_ERROR.toString) should be (ColumnMismatchPolicy.REMOVE_COLUMNS_OR_ERROR)
+        ColumnMismatchPolicy.ofString(ColumnMismatchPolicy.ADD_REMOVE_COLUMNS.toString) should be (ColumnMismatchPolicy.ADD_REMOVE_COLUMNS)
     }
 
 
-    "The TypeMismatchStrategy" should "parse correctly" in {
-        TypeMismatchStrategy.ofString("IGNORE") should be (TypeMismatchStrategy.IGNORE)
-        TypeMismatchStrategy.ofString("ignore") should be (TypeMismatchStrategy.IGNORE)
-        TypeMismatchStrategy.ofString("ERROR") should be (TypeMismatchStrategy.ERROR)
-        TypeMismatchStrategy.ofString("CAST_COMPATIBLE_OR_ERROR") should be (TypeMismatchStrategy.CAST_COMPATIBLE_OR_ERROR)
-        TypeMismatchStrategy.ofString("CAST_COMPATIBLE_OR_IGNORE") should be (TypeMismatchStrategy.CAST_COMPATIBLE_OR_IGNORE)
-        TypeMismatchStrategy.ofString("CAST_ALWAYS") should be (TypeMismatchStrategy.CAST_ALWAYS)
-        a[NullPointerException] shouldBe thrownBy(TypeMismatchStrategy.ofString(null))
-        an[IllegalArgumentException] shouldBe thrownBy(TypeMismatchStrategy.ofString("NO_SUCH_MODE"))
+    "The TypeMismatchPolicy" should "parse correctly" in {
+        TypeMismatchPolicy.ofString("IGNORE") should be (TypeMismatchPolicy.IGNORE)
+        TypeMismatchPolicy.ofString("ignore") should be (TypeMismatchPolicy.IGNORE)
+        TypeMismatchPolicy.ofString("ERROR") should be (TypeMismatchPolicy.ERROR)
+        TypeMismatchPolicy.ofString("CAST_COMPATIBLE_OR_ERROR") should be (TypeMismatchPolicy.CAST_COMPATIBLE_OR_ERROR)
+        TypeMismatchPolicy.ofString("CAST_COMPATIBLE_OR_IGNORE") should be (TypeMismatchPolicy.CAST_COMPATIBLE_OR_IGNORE)
+        TypeMismatchPolicy.ofString("CAST_ALWAYS") should be (TypeMismatchPolicy.CAST_ALWAYS)
+        a[NullPointerException] shouldBe thrownBy(TypeMismatchPolicy.ofString(null))
+        an[IllegalArgumentException] shouldBe thrownBy(TypeMismatchPolicy.ofString("NO_SUCH_MODE"))
     }
 
     it should "provide a toString method" in {
-        TypeMismatchStrategy.IGNORE.toString should be ("IGNORE")
-        TypeMismatchStrategy.ERROR.toString should be ("ERROR")
-        TypeMismatchStrategy.CAST_COMPATIBLE_OR_ERROR.toString should be ("CAST_COMPATIBLE_OR_ERROR")
-        TypeMismatchStrategy.CAST_COMPATIBLE_OR_IGNORE.toString should be ("CAST_COMPATIBLE_OR_IGNORE")
-        TypeMismatchStrategy.CAST_ALWAYS.toString should be ("CAST_ALWAYS")
+        TypeMismatchPolicy.IGNORE.toString should be ("IGNORE")
+        TypeMismatchPolicy.ERROR.toString should be ("ERROR")
+        TypeMismatchPolicy.CAST_COMPATIBLE_OR_ERROR.toString should be ("CAST_COMPATIBLE_OR_ERROR")
+        TypeMismatchPolicy.CAST_COMPATIBLE_OR_IGNORE.toString should be ("CAST_COMPATIBLE_OR_IGNORE")
+        TypeMismatchPolicy.CAST_ALWAYS.toString should be ("CAST_ALWAYS")
     }
 
     it should "parse toString correctly" in {
-        TypeMismatchStrategy.ofString(TypeMismatchStrategy.IGNORE.toString) should be (TypeMismatchStrategy.IGNORE)
-        TypeMismatchStrategy.ofString(TypeMismatchStrategy.ERROR.toString) should be (TypeMismatchStrategy.ERROR)
-        TypeMismatchStrategy.ofString(TypeMismatchStrategy.CAST_COMPATIBLE_OR_ERROR.toString) should be (TypeMismatchStrategy.CAST_COMPATIBLE_OR_ERROR)
-        TypeMismatchStrategy.ofString(TypeMismatchStrategy.CAST_COMPATIBLE_OR_IGNORE.toString) should be (TypeMismatchStrategy.CAST_COMPATIBLE_OR_IGNORE)
-        TypeMismatchStrategy.ofString(TypeMismatchStrategy.CAST_ALWAYS.toString) should be (TypeMismatchStrategy.CAST_ALWAYS)
+        TypeMismatchPolicy.ofString(TypeMismatchPolicy.IGNORE.toString) should be (TypeMismatchPolicy.IGNORE)
+        TypeMismatchPolicy.ofString(TypeMismatchPolicy.ERROR.toString) should be (TypeMismatchPolicy.ERROR)
+        TypeMismatchPolicy.ofString(TypeMismatchPolicy.CAST_COMPATIBLE_OR_ERROR.toString) should be (TypeMismatchPolicy.CAST_COMPATIBLE_OR_ERROR)
+        TypeMismatchPolicy.ofString(TypeMismatchPolicy.CAST_COMPATIBLE_OR_IGNORE.toString) should be (TypeMismatchPolicy.CAST_COMPATIBLE_OR_IGNORE)
+        TypeMismatchPolicy.ofString(TypeMismatchPolicy.CAST_ALWAYS.toString) should be (TypeMismatchPolicy.CAST_ALWAYS)
     }
 
 
@@ -123,7 +123,7 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         )))
     }
 
-    it should "support ColumnMismatchStrategy.ADD_REMOVE_COLUMNS" in {
+    it should "support ColumnMismatchPolicy.ADD_REMOVE_COLUMNS" in {
         val requestedSchema = StructType(Seq(
             StructField("col2", StringType),
             StructField("col1", StringType),
@@ -131,8 +131,8 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         ))
         val xfs = SchemaEnforcer(
             requestedSchema,
-            columnMismatchStrategy=ColumnMismatchStrategy.ADD_REMOVE_COLUMNS,
-            typeMismatchStrategy=TypeMismatchStrategy.CAST_ALWAYS
+            columnMismatchPolicy=ColumnMismatchPolicy.ADD_REMOVE_COLUMNS,
+            typeMismatchPolicy=TypeMismatchPolicy.CAST_ALWAYS
         )
 
         val inputSchema = StructType(Seq(
@@ -148,7 +148,7 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             StructField("col4", IntegerType)
         )))
     }
-    it should "support ColumnMismatchStrategy.IGNORE" in {
+    it should "support ColumnMismatchPolicy.IGNORE" in {
         val requestedSchema = StructType(Seq(
             StructField("col2", StringType),
             StructField("col1", StringType),
@@ -156,8 +156,8 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         ))
         val xfs = SchemaEnforcer(
             requestedSchema,
-            columnMismatchStrategy=ColumnMismatchStrategy.IGNORE,
-            typeMismatchStrategy=TypeMismatchStrategy.CAST_ALWAYS
+            columnMismatchPolicy=ColumnMismatchPolicy.IGNORE,
+            typeMismatchPolicy=TypeMismatchPolicy.CAST_ALWAYS
         )
 
         val inputSchema = StructType(Seq(
@@ -173,7 +173,7 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             StructField("col3", IntegerType)
         )))
     }
-    it should "support ColumnMismatchStrategy.ERROR (1)" in {
+    it should "support ColumnMismatchPolicy.ERROR (1)" in {
         val requestedSchema = StructType(Seq(
             StructField("col2", StringType),
             StructField("col1", StringType),
@@ -181,8 +181,8 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         ))
         val xfs = SchemaEnforcer(
             requestedSchema,
-            columnMismatchStrategy=ColumnMismatchStrategy.ERROR,
-            typeMismatchStrategy=TypeMismatchStrategy.CAST_ALWAYS
+            columnMismatchPolicy=ColumnMismatchPolicy.ERROR,
+            typeMismatchPolicy=TypeMismatchPolicy.CAST_ALWAYS
         )
 
         val inputSchema = StructType(Seq(
@@ -198,7 +198,7 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             StructField("col4", IntegerType)
         )))
     }
-    it should "support ColumnMismatchStrategy.ERROR (2)" in {
+    it should "support ColumnMismatchPolicy.ERROR (2)" in {
         val requestedSchema = StructType(Seq(
             StructField("col2", StringType),
             StructField("col1", StringType),
@@ -206,8 +206,8 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         ))
         val xfs = SchemaEnforcer(
             requestedSchema,
-            columnMismatchStrategy=ColumnMismatchStrategy.ERROR,
-            typeMismatchStrategy=TypeMismatchStrategy.CAST_ALWAYS
+            columnMismatchPolicy=ColumnMismatchPolicy.ERROR,
+            typeMismatchPolicy=TypeMismatchPolicy.CAST_ALWAYS
         )
 
         val inputSchema = StructType(Seq(
@@ -219,7 +219,7 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val inputDf = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], inputSchema)
         a[SchemaMismatchException] should be thrownBy(xfs.transform(inputDf))
     }
-    it should "support ColumnMismatchStrategy.ERROR (3)" in {
+    it should "support ColumnMismatchPolicy.ERROR (3)" in {
         val requestedSchema = StructType(Seq(
             StructField("col2", StringType),
             StructField("col1", StringType),
@@ -227,8 +227,8 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         ))
         val xfs = SchemaEnforcer(
             requestedSchema,
-            columnMismatchStrategy=ColumnMismatchStrategy.ERROR,
-            typeMismatchStrategy=TypeMismatchStrategy.CAST_ALWAYS
+            columnMismatchPolicy=ColumnMismatchPolicy.ERROR,
+            typeMismatchPolicy=TypeMismatchPolicy.CAST_ALWAYS
         )
 
         val inputSchema = StructType(Seq(
@@ -239,7 +239,7 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         a[SchemaMismatchException] should be thrownBy(xfs.transform(inputDf))
     }
 
-    it should "support ColumnMismatchStrategy.ADD_COLUMNS_OR_IGNORE (1)" in {
+    it should "support ColumnMismatchPolicy.ADD_COLUMNS_OR_IGNORE (1)" in {
         val requestedSchema = StructType(Seq(
             StructField("col2", StringType),
             StructField("col1", StringType),
@@ -248,8 +248,8 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         ))
         val xfs = SchemaEnforcer(
             requestedSchema,
-            columnMismatchStrategy=ColumnMismatchStrategy.ADD_COLUMNS_OR_IGNORE,
-            typeMismatchStrategy=TypeMismatchStrategy.CAST_ALWAYS
+            columnMismatchPolicy=ColumnMismatchPolicy.ADD_COLUMNS_OR_IGNORE,
+            typeMismatchPolicy=TypeMismatchPolicy.CAST_ALWAYS
         )
 
         val inputSchema = StructType(Seq(
@@ -266,7 +266,7 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             StructField("col4", IntegerType)
         )))
     }
-    it should "support ColumnMismatchStrategy.ADD_COLUMNS_OR_IGNORE (2)" in {
+    it should "support ColumnMismatchPolicy.ADD_COLUMNS_OR_IGNORE (2)" in {
         val requestedSchema = StructType(Seq(
             StructField("col2", StringType),
             StructField("col1", StringType),
@@ -274,8 +274,8 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         ))
         val xfs = SchemaEnforcer(
             requestedSchema,
-            columnMismatchStrategy=ColumnMismatchStrategy.ADD_COLUMNS_OR_IGNORE,
-            typeMismatchStrategy=TypeMismatchStrategy.CAST_ALWAYS
+            columnMismatchPolicy=ColumnMismatchPolicy.ADD_COLUMNS_OR_IGNORE,
+            typeMismatchPolicy=TypeMismatchPolicy.CAST_ALWAYS
         )
 
         val inputSchema = StructType(Seq(
@@ -293,7 +293,7 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         )))
     }
 
-    it should "support ColumnMismatchStrategy.ADD_COLUMNS_OR_ERROR (1)" in {
+    it should "support ColumnMismatchPolicy.ADD_COLUMNS_OR_ERROR (1)" in {
         val requestedSchema = StructType(Seq(
             StructField("col2", StringType),
             StructField("col1", StringType),
@@ -302,8 +302,8 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         ))
         val xfs = SchemaEnforcer(
             requestedSchema,
-            columnMismatchStrategy=ColumnMismatchStrategy.ADD_COLUMNS_OR_ERROR,
-            typeMismatchStrategy=TypeMismatchStrategy.CAST_ALWAYS
+            columnMismatchPolicy=ColumnMismatchPolicy.ADD_COLUMNS_OR_ERROR,
+            typeMismatchPolicy=TypeMismatchPolicy.CAST_ALWAYS
         )
 
         val inputSchema = StructType(Seq(
@@ -320,7 +320,7 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             StructField("col4", IntegerType)
         )))
     }
-    it should "support ColumnMismatchStrategy.ADD_COLUMNS_OR_ERROR (2)" in {
+    it should "support ColumnMismatchPolicy.ADD_COLUMNS_OR_ERROR (2)" in {
         val requestedSchema = StructType(Seq(
             StructField("col2", StringType),
             StructField("col1", StringType),
@@ -328,8 +328,8 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         ))
         val xfs = SchemaEnforcer(
             requestedSchema,
-            columnMismatchStrategy=ColumnMismatchStrategy.ADD_COLUMNS_OR_ERROR,
-            typeMismatchStrategy=TypeMismatchStrategy.CAST_ALWAYS
+            columnMismatchPolicy=ColumnMismatchPolicy.ADD_COLUMNS_OR_ERROR,
+            typeMismatchPolicy=TypeMismatchPolicy.CAST_ALWAYS
         )
 
         val inputSchema = StructType(Seq(
@@ -341,7 +341,7 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         a[SchemaMismatchException] should be thrownBy(xfs.transform(inputDf))
     }
 
-    it should "support ColumnMismatchStrategy.REMOVE_COLUMNS_OR_IGNORE (1)" in {
+    it should "support ColumnMismatchPolicy.REMOVE_COLUMNS_OR_IGNORE (1)" in {
         val requestedSchema = StructType(Seq(
             StructField("col2", StringType),
             StructField("col1", StringType),
@@ -350,8 +350,8 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         ))
         val xfs = SchemaEnforcer(
             requestedSchema,
-            columnMismatchStrategy=ColumnMismatchStrategy.REMOVE_COLUMNS_OR_IGNORE,
-            typeMismatchStrategy=TypeMismatchStrategy.CAST_ALWAYS
+            columnMismatchPolicy=ColumnMismatchPolicy.REMOVE_COLUMNS_OR_IGNORE,
+            typeMismatchPolicy=TypeMismatchPolicy.CAST_ALWAYS
         )
 
         val inputSchema = StructType(Seq(
@@ -367,7 +367,7 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             StructField("col4", IntegerType)
         )))
     }
-    it should "support ColumnMismatchStrategy.REMOVE_COLUMNS_OR_IGNORE (2)" in {
+    it should "support ColumnMismatchPolicy.REMOVE_COLUMNS_OR_IGNORE (2)" in {
         val requestedSchema = StructType(Seq(
             StructField("col2", StringType),
             StructField("col1", StringType),
@@ -375,8 +375,8 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         ))
         val xfs = SchemaEnforcer(
             requestedSchema,
-            columnMismatchStrategy=ColumnMismatchStrategy.REMOVE_COLUMNS_OR_IGNORE,
-            typeMismatchStrategy=TypeMismatchStrategy.CAST_ALWAYS
+            columnMismatchPolicy=ColumnMismatchPolicy.REMOVE_COLUMNS_OR_IGNORE,
+            typeMismatchPolicy=TypeMismatchPolicy.CAST_ALWAYS
         )
 
         val inputSchema = StructType(Seq(
@@ -394,7 +394,7 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         )))
     }
 
-    it should "support ColumnMismatchStrategy.REMOVE_COLUMNS_OR_ERROR (1)" in {
+    it should "support ColumnMismatchPolicy.REMOVE_COLUMNS_OR_ERROR (1)" in {
         val requestedSchema = StructType(Seq(
             StructField("col2", StringType),
             StructField("col1", StringType),
@@ -402,8 +402,8 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         ))
         val xfs = SchemaEnforcer(
             requestedSchema,
-            columnMismatchStrategy=ColumnMismatchStrategy.REMOVE_COLUMNS_OR_ERROR,
-            typeMismatchStrategy=TypeMismatchStrategy.CAST_ALWAYS
+            columnMismatchPolicy=ColumnMismatchPolicy.REMOVE_COLUMNS_OR_ERROR,
+            typeMismatchPolicy=TypeMismatchPolicy.CAST_ALWAYS
         )
 
         val inputSchema = StructType(Seq(
@@ -420,7 +420,7 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             StructField("col3", StringType)
         )))
     }
-    it should "support ColumnMismatchStrategy.REMOVE_COLUMNS_OR_ERROR (2)" in {
+    it should "support ColumnMismatchPolicy.REMOVE_COLUMNS_OR_ERROR (2)" in {
         val requestedSchema = StructType(Seq(
             StructField("col2", StringType),
             StructField("col1", StringType),
@@ -428,8 +428,8 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         ))
         val xfs = SchemaEnforcer(
             requestedSchema,
-            columnMismatchStrategy=ColumnMismatchStrategy.REMOVE_COLUMNS_OR_ERROR,
-            typeMismatchStrategy=TypeMismatchStrategy.CAST_ALWAYS
+            columnMismatchPolicy=ColumnMismatchPolicy.REMOVE_COLUMNS_OR_ERROR,
+            typeMismatchPolicy=TypeMismatchPolicy.CAST_ALWAYS
         )
 
         val inputSchema = StructType(Seq(
@@ -516,9 +516,12 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
     }
 
     "The SchemaEnforcer" should "support extended string attributes" in {
+        val spark = this.spark
+        import spark.implicits._
+
         val inputDf = spark.createDataFrame(Seq(
-            ("col1", "12"),
-            ("col2", "23")
+            ("col", "1"),
+            ("col123", "2345")
         ))
             .withColumn("_1", col("_1").as("_1"))
             .withColumn("_2", col("_2").as("_2"))
@@ -526,24 +529,94 @@ class SchemaEnforcerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val inputSchema = inputDf.schema
 
         val requestedSchema = com.dimajix.flowman.types.StructType(Seq(
-            Field("_1", FieldType.of("varchar(10)")),
-            Field("_2", FieldType.of("char(20)")),
+            Field("_1", FieldType.of("varchar(4)")),
+            Field("_2", FieldType.of("char(2)")),
             Field("_3", FieldType.of("string"))
         ))
-        val xfs = SchemaEnforcer(requestedSchema.sparkType)
+        val xfs = SchemaEnforcer(requestedSchema.catalogType)
 
         val columns = xfs.transform(inputSchema)
         val outputDf = inputDf.select(columns:_*)
+        val recs = outputDf.orderBy(col("_1"), col("_2")).as[(String, String, Option[String])].collect()
+        recs should be(Seq(
+            ("col", "1 ", None),
+            ("col1", "23", None)
+        ))
+
         SchemaUtils.dropMetadata(outputDf.schema) should be (StructType(Seq(
             StructField("_1", StringType),
             StructField("_2", StringType),
             StructField("_3", StringType)
         )))
         com.dimajix.flowman.types.StructType.of(outputDf.schema) should be (com.dimajix.flowman.types.StructType(Seq(
-            Field("_1", FieldType.of("varchar(10)")),
-            Field("_2", FieldType.of("char(20)")),
+            Field("_1", FieldType.of("varchar(4)")),
+            Field("_2", FieldType.of("char(2)")),
             Field("_3", FieldType.of("string"))
         )))
+    }
+
+    it should "work with different StringCastStrategies" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val inputDf = spark.createDataFrame(Seq(
+            ("col", "1"),
+            ("col123", "2345")
+        ))
+            .withColumn("_1", col("_1").as("_1"))
+            .withColumn("_2", col("_2").as("_2"))
+            .withColumn("_5", col("_2").as("_2"))
+        val inputSchema = inputDf.schema
+
+        val requestedSchema = com.dimajix.flowman.types.StructType(Seq(
+            Field("_1", FieldType.of("varchar(4)")),
+            Field("_2", FieldType.of("char(2)")),
+            Field("_3", FieldType.of("string"))
+        ))
+
+        {
+            val xfs = SchemaEnforcer(requestedSchema.catalogType, charVarcharPolicy = CharVarcharPolicy.PAD_AND_TRUNCATE)
+            val columns = xfs.transform(inputSchema)
+            val outputDf = inputDf.select(columns: _*)
+            val recs = outputDf.orderBy(col("_1"), col("_2")).as[(String, String, Option[String])].collect()
+            recs should be(Seq(
+                ("col", "1 ", None),
+                ("col1", "23", None)
+            ))
+        }
+
+        {
+            val xfs = SchemaEnforcer(requestedSchema.catalogType, charVarcharPolicy = CharVarcharPolicy.PAD)
+            val columns = xfs.transform(inputSchema)
+            val outputDf = inputDf.select(columns: _*)
+            val recs = outputDf.orderBy(col("_1"), col("_2")).as[(String, String, Option[String])].collect()
+            recs should be(Seq(
+                ("col", "1 ", None),
+                ("col123", "2345", None)
+            ))
+        }
+
+        {
+            val xfs = SchemaEnforcer(requestedSchema.catalogType, charVarcharPolicy = CharVarcharPolicy.TRUNCATE)
+            val columns = xfs.transform(inputSchema)
+            val outputDf = inputDf.select(columns: _*)
+            val recs = outputDf.orderBy(col("_1"), col("_2")).as[(String, String, Option[String])].collect()
+            recs should be(Seq(
+                ("col", "1", None),
+                ("col1", "23", None)
+            ))
+        }
+
+        {
+            val xfs = SchemaEnforcer(requestedSchema.catalogType, charVarcharPolicy = CharVarcharPolicy.IGNORE)
+            val columns = xfs.transform(inputSchema)
+            val outputDf = inputDf.select(columns: _*)
+            val recs = outputDf.orderBy(col("_1"), col("_2")).as[(String, String, Option[String])].collect()
+            recs should be(Seq(
+                ("col", "1", None),
+                ("col123", "2345", None)
+            ))
+        }
     }
 
     it should "support comments" in {

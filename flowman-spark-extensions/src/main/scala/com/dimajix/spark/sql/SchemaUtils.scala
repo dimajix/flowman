@@ -20,6 +20,7 @@ import java.util.Locale
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.parser.ParseException
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.functions.rpad
 import org.apache.spark.sql.functions.substring
@@ -39,7 +40,7 @@ import com.dimajix.spark.sql.catalyst.parser.CustomSqlParser
 
 object SchemaUtils {
     // This key is compatible with Spark 3.x
-    private val CHAR_VARCHAR_TYPE_STRING_METADATA_KEY = "__CHAR_VARCHAR_TYPE_STRING"
+    val CHAR_VARCHAR_TYPE_STRING_METADATA_KEY = "__CHAR_VARCHAR_TYPE_STRING"
 
     /**
       * Helper method for applying an optional schema to a given DataFrame. This will apply the types and order
@@ -198,9 +199,10 @@ object SchemaUtils {
     }
     def replaceCharVarchar(field:StructField) : StructField = {
         val metadata = if (hasCharVarchar(field.dataType)) {
-            val builder = new MetadataBuilder().withMetadata(field.metadata)
+            new MetadataBuilder()
+                .withMetadata(field.metadata)
                 .putString(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY, field.dataType.catalogString)
-            builder.build()
+                .build()
         } else {
             field.metadata
         }
@@ -224,6 +226,34 @@ object SchemaUtils {
         metadata.contains(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
     }
 
+    def dropExtendedTypeInfo(struct:StructType) : StructType = {
+        StructType(struct.fields.map(dropExtendedTypeInfo))
+    }
+    def dropExtendedTypeInfo(field:StructField) : StructField = {
+        val meta = dropExtendedTypeInfo(field.metadata)
+        val dt = dropExtendedTypeInfo(field.dataType)
+        field.copy(dataType = dt, metadata = meta)
+    }
+    def dropExtendedTypeInfo(metadata: Metadata): Metadata = {
+        if (metadata.contains(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)) {
+            new MetadataBuilder()
+                .withMetadata(metadata)
+                .remove(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
+                .build()
+        }
+        else {
+            metadata
+        }
+    }
+    private def dropExtendedTypeInfo(dtype: DataType): DataType = {
+        dtype match {
+            case struct: StructType => dropExtendedTypeInfo(struct)
+            case array: ArrayType => ArrayType(dropExtendedTypeInfo(array.elementType), array.containsNull)
+            case map: MapType => MapType(dropExtendedTypeInfo(map.keyType), dropExtendedTypeInfo(map.valueType), map.valueContainsNull)
+            case dt: DataType => dt
+        }
+    }
+
     /**
      * Recovers the original CHAR/VARCHAR types from a struct, which was previously cleaned via replaceCharVarchar
      * @param schema
@@ -233,15 +263,31 @@ object SchemaUtils {
         StructType(schema.map(recoverCharVarchar))
     }
     def recoverCharVarchar(field:StructField) : StructField = {
-        if (field.metadata.contains(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)) {
-            val typeString = field.metadata.getString(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
-            val dt = CustomSqlParser.parseDataType(typeString)
-            val meta = new MetadataBuilder().withMetadata(field.metadata)
-                .remove(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
-                .build()
-            field.copy(dataType = dt, metadata = meta)
-        } else {
-            field
+        val dt = field.dataType match {
+            case struct: StructType => recoverCharVarchar(struct)
+            case _:StringType|_:ArrayType|_:MapType if field.metadata.contains(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY) =>
+                val typeString = field.metadata.getString(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
+                try {
+                    CustomSqlParser.parseDataType(typeString)
+                } catch {
+                    // Work around bad field names, which will fire a parse-exception
+                    case _: ParseException =>
+                        recoverCharVarchar(field.dataType)
+                }
+            case dt: DataType => dt
+        }
+
+        val meta = new MetadataBuilder().withMetadata(field.metadata)
+            .remove(CHAR_VARCHAR_TYPE_STRING_METADATA_KEY)
+            .build()
+        field.copy(dataType = dt, metadata = meta)
+    }
+    private def recoverCharVarchar(dataType: DataType) : DataType = {
+        dataType match {
+            case struct: StructType => struct.copy(fields = struct.fields.map(recoverCharVarchar))
+            case array: ArrayType => ArrayType(recoverCharVarchar(array.elementType), array.containsNull)
+            case map: MapType => MapType(recoverCharVarchar(map.keyType), recoverCharVarchar(map.valueType), map.valueContainsNull)
+            case dt: DataType => dt
         }
     }
 

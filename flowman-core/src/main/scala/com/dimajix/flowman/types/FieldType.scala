@@ -57,7 +57,7 @@ object FieldType {
                 "byte" -> ByteType,
                 "short" -> ShortType,
                 "long" -> LongType,
-                "int" -> IntegerType,
+                "integer" -> IntegerType,
                 "text" -> StringType
             )
     }

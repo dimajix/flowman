@@ -1,4 +1,4 @@
-# Version 0.26.1
+# Version 0.26.1 - 2022-08-03
 
 * github-226: Upgrade to Spark 3.2.2
 * github-227: [BUG] Flowman should not fail with field names containing "-", "/" etc

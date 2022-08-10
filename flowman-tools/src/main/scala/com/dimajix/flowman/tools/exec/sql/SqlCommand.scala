@@ -59,7 +59,7 @@ class SqlCommand extends Command {
         }
         catch {
             case NonFatal(ex) =>
-                logger.error("Cannot execute sql: " + reasons(ex))
+                logger.error(s"Cannot execute sql: ${reasons(ex)}")
                 Status.FAILED
         }
     }

@@ -27,6 +27,10 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
+                            <delimiters>
+                                <delimiter>@</delimiter>
+                            </delimiters>
+                            <useDefaultDelimiters>false</useDefaultDelimiters>
                             <outputDirectory>${project.build.directory}</outputDirectory>
                             <filters>target/flowman-server-${project.version}-properties.properties,target/flowman-tools-${project.version}-properties.properties,target/flowman-studio-${project.version}-properties.properties,target/flowman-hub-${project.version}-properties.properties</filters>
                             <resources>

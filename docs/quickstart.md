@@ -1,87 +1,39 @@
 # Flowman Quickstart Guide
 
-This quickstart guide will walk you to a installation of Apache Spark and Flowman on your local Linux box. If you
-are using Windows, you will find some hints for setting up the required "Hadoop WinUtils", but we generally recommend
-to use Linux. You can also run a [Flowman Docker image](setup/docker.md), which is the simplest way to get up to speed.
+This quickstart guide will walk you through the first steps working with Flowman. We will be using Flowman in Docker
+to save setup and configuration of Spark and Flowman.
+
+Of course running Flowman inside Docker will probably prevent a proper integration with any existing Hadoop environment
+like Cloudera or EMR. This requires a local installation of Flowman on your Linux (or Windows) machine, which is described
+in more detail in [installation guide](setup/installation.md).
 
 
-## 1. Install Spark
+## 1. Start Docker image
 
-Although Flowman directly builds upon the power of Apache Spark, it does not provide a working Hadoop or Spark 
-environment — and there is a good reason for that: In many environments (specifically in companies using Hadoop 
-distributions) a Hadoop/Spark environment is already provided by some platform team. And Flowman tries its best not
-to mess this up and instead requires a working Spark installation.
-
-Fortunately, Spark is rather simple to install locally on your machine:
-
-### Download & Install Spark
-
-As of this writing, the latest release of Flowman is 0.26.0 and is available prebuilt for Spark 3.2.1 on the Spark 
-homepage. So we download the appropriate Spark distribution from the Apache archive and unpack it.
+Of course, you need a working Docker installation, which should be quite easy. Then you can start a Docker image
+containing Flowman via the following command:
 
 ```shell
-# Create a nice playground which doesn't mess up your system
-mkdir playground
-cd playground# Download and unpack Spark & Hadoop
-
-curl -L https://archive.apache.org/dist/spark/spark-3.2.1/spark-3.2.1-bin-hadoop3.2.tgz | tar xvzf -
-
-# Create a nice link
-ln -snf spark-3.2.1-bin-hadoop3.2 spark
+docker run --rm -ti dimajix/flowman:0.26.1-oss-spark3.2-hadoop3.3 bash   
 ```
 
-The Spark package already contains Hadoop, so with this single download you already have both installed and integrated with each other.
+Note that this simply starts a bash shell, but Flowman is only away some fingertips. 
 
-### Download & Install Hadoop Utils for Windows
+### Mounting volumes
 
-If you are trying to run Flowman on Windows, you also need the *Hadoop Winutils*, which is a set of
-DLLs required for the Hadoop libraries to be working. You can get a copy at https://github.com/kontext-tech/winutils .
-Once you downloaded the appropriate version, you need to place the DLLs into a directory `$HADOOP_HOME/bin`, where
-`HADOOP_HOME` refers to some arbitrary location of your choice on your Windows PC. You also need to set the following
-environment variables:
-* `HADOOP_HOME` should point to the parent directory of the `bin` directory
-* `PATH` should also contain `$HADOOP_HOME/bin`
-
-
-## 2. Install Flowman
-
-You find prebuilt Flowman packages on the corresponding release page on GitHub. For this quickstart, we chose 
-`flowman-dist-0.26.0-oss-spark3.2-hadoop3.3-bin.tar.gz` which nicely fits to the Spark package we just downloaded before.
+You probably might want to mount some local directory into the Docker container running Flowman. For example you
+may want to make local data accessible to Flowman or you may simply want to execute some Flowman project stored
+on your local machine. This can be easily achieved as follows:
 
 ```shell
-# Download and unpack Flowman
-curl -L https://github.com/dimajix/flowman/releases/download/0.26.0/flowman-dist-0.26.0-oss-spark3.2-hadoop3.3-bin.tar.gz | tar xvzf -# Create a nice link
-ln -snf flowman-0.26.0 flowman
+docker run --rm -ti -v /home/kaya/flowman/example/weather:/home/flowman/local dimajix/flowman:0.26.1-oss-spark3.2-hadoop3.3 bash   
 ```
 
-### Flowman Configuration
-
-Now before you can use Flowman, you need to tell it where it can find the Spark home directory which we just created 
-in the previous step. This can be either done by providing a valid configuration file in 
-`flowman/conf/flowman-env.sh` (a template can be found at `flowman/conf/flowman-env.sh.template` ), or we can simply 
-set an environment variable. For the sake of simplicity, we follow the second approach
-
-```shell
-# This assumes that we are still in the directory "playground"
-export SPARK_HOME=$(pwd)/spark
-```
-
-In order to access S3 in the example below, we also need to provide a default namespace which contains some basic 
-plugin configurations. We simply copy the provided template as follows:
-
-```shell
-# Copy default namespace
-cp flowman/conf/default-namespace.yml.template flowman/conf/default-namespace.yml
-cp flowman/conf/flowman-env.sh.template flowman/conf/flowman-env.sh
-
-# Optionally provide AWS keys. The example will use anonymous access to S3 and does not require the keys
-export AWS_ACCESS_KEY_ID=<your aws access key>
-export AWS_SECRET_ACCESS_KEY=<your aws secret key>
-```
-That’s all we need to run the Flowman example.
+This will mount the local directory `/home/kaya/flowman/example/weather` on your host computer into the Docker
+container at `/home/flowman/local`.
 
 
-## 3. Flowman Shell
+## 2. Flowman Shell
 
 The example data is stored in a publicly accessible S3 bucket. Since the data is publicly available and the project is
 configured to use anonymous AWS authentication, you do not need to provide your AWS credentials (you even do not
@@ -179,7 +131,7 @@ flowman:weather> quit
 ```
 
 
-## 4. Flowman Batch Execution
+## 3. Flowman Batch Execution
 
 So far we have only used the Flowman shell for interactive work with projects. Actually, the shell was developed as a
 second step to help to analyze problems and debugging data flows. The primary command for working with Flowman projects 
@@ -194,7 +146,7 @@ bin/flowexec -f examples/weather job build main year=2014
 ```
 
 
-## 5. Congratulations!
+## 4. Congratulations!
 
 A very special *Thank You!* goes to all of you who try to follow the example hands-on on your local machine. If you have 
 problems with following the example, please leave me a note — it’s always difficult to streamline such a process, and 

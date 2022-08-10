@@ -39,6 +39,7 @@ import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{types => st}
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.tryWith
 import com.dimajix.flowman.catalog.TableChange
@@ -130,7 +131,7 @@ object JdbcUtils {
             createConnection(options, -1)
         } catch {
             case NonFatal(e) =>
-                logger.error(s"Error connecting to jdbc source at ${options.url}: ${e.getMessage}")
+                logger.error(s"Error connecting to jdbc source at ${options.url}: ${reasons(e)}")
                 throw e
         }
 
@@ -151,7 +152,7 @@ object JdbcUtils {
             result
         } catch {
             case ex:SQLException =>
-                logger.error(s"SQL transaction failed, rolling back: ${ex.getMessage}")
+                logger.error(s"SQL transaction failed, rolling back: ${reasons(ex)}")
                 con.rollback()
                 throw ex
         } finally {

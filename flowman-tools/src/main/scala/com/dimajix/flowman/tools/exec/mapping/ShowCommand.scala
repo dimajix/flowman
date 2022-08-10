@@ -23,6 +23,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.common.ParserUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
@@ -61,7 +62,7 @@ class ShowCommand extends Command {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 Status.FAILED
             case Failure(e) =>
-                logger.error(s"Caught exception while dumping mapping '$mapping'", e)
+                logger.error(s"Caught exception while dumping mapping '$mapping': ${reasons(e)}")
                 Status.FAILED
         }
     }

@@ -22,6 +22,7 @@ import org.apache.spark.storage.StorageLevel
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Session
@@ -55,7 +56,7 @@ class CacheCommand extends Command {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Caught exception while caching mapping '$mapping", e)
+                logger.error(s"Caught exception while caching mapping '$mapping': ${reasons(e)}")
                 Status.FAILED
         }
     }

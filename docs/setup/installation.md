@@ -1,5 +1,10 @@
 # Installation Guide
 
+This setup guide will walk you to a installation of Apache Spark and Flowman on your local Linux box. If you
+are using Windows, you will find some hints for setting up the required "Hadoop WinUtils", but we generally recommend
+to use Linux. You can also run a [Flowman Docker image](setup/docker.md), which is the simplest way to get up to speed.
+
+
 ## 1. Requirements
 
 Flowman brings many dependencies with the installation archive, but everything related to Hadoop or Spark needs to 
@@ -119,7 +124,30 @@ Once you downloaded and unpacked Flowman, you will get a new directory which loo
 * The `examples` directory contains some example projects 
 
 
-## 4. Configuration (optional)
+## 4. Install additional Hadoop dependencies
+
+Starting with version 3.2, Spark has reduced the number of Hadoop libraries which are part of the downloadable Spark
+distribution. Unfortunately, some of the libraries which have been removed are required by some Flowman plugins (for 
+example the S3 and Delta plugin need the `hadoop-commons` library). Since at the same time Flowman will for good 
+reasons not include these missing libraries, you have to install these yourself and put them into the 
+`$SPARK_HOME/jars` folder.
+
+In order to simplify getting the appropriate Hadoop libraries and placing them into the correct Spark directory,
+Flowman provides a small script called `install-hadoop-dependencies`, which will download and install the missing
+jars:
+
+```shell
+export SPARK_HOME=your-spark-home
+
+cd $FLOWMAN_HOME
+bin/install-hadoop-dependencies
+```
+
+Note that you need to have appropriate write permissions into the `$SPARK_HOME/jars` directory, so you possibly need
+to execute this with super-user privileges.
+
+
+## 5. Configuration (optional)
 
 You probably need to perform some basic global configuration of Flowman. The relevant files are stored in the `conf`
 directory.
@@ -259,7 +287,7 @@ store:
 ```
 
 
-## 5. Running Flowman
+## 6. Running Flowman
 
 Now when you have installed Spark and Flowman, you can easily start Flowman via
 ```shell
@@ -270,7 +298,7 @@ bin/flowshell -f examples/weather
 ```
 
 
-## 6. Related Topics
+## 7. Related Topics
 
 ### Running Flowman on Windows
 Please have a look at [Running Flowman on Windows](../cookbook/windows.md) for detailed information.
@@ -280,6 +308,6 @@ Please have a look at [Running Flowman on Windows](../cookbook/windows.md) for d
 Please have a look at [Kerberos](../cookbook/kerberos.md) for detailed information.
 
 
-## 7. Running in Docker
-It is also possible to [run Flowman inside Docker](docker.md). We now also provide some images at
-[Docker Hub](https://hub.docker.com/repository/docker/dimajix/flowman)
+###  Running in Docker
+It is also possible to [run Flowman inside Docker](docker.md), which already offers a lot of functionality on developers
+local machines. Official Docker images are provided at [Docker Hub](https://hub.docker.com/repository/docker/dimajix/flowman)

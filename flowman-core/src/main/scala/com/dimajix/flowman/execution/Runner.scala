@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
@@ -297,7 +298,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                         catch {
                             case NonFatal(ex) =>
                                 // Primarily exceptions during target instantiation will be caught here
-                                logger.error(s"Caught exception during $title:", ex)
+                                logger.error(s"Caught exception during $title: ${reasons(ex)}")
                                 JobResult(job, instance, ex, startTime)
                         }
                     }

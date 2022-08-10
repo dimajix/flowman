@@ -65,7 +65,7 @@ class GenerateCommand extends Command {
             Status.SUCCESS
         } catch {
             case NonFatal(ex) =>
-                logger.error("Cannot generate documentation: ", ex)
+                logger.error(s"Error generating documentation for job '${job.identifier}': ${reasons(ex)}")
                 Status.FAILED
         }
     }

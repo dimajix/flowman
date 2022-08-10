@@ -1,3 +1,9 @@
+# Version 0.26.2
+
+* github-232: [BUG] Column descriptions should be propagates in UNIONs
+* github-233: [BUG] Missing Hadoop dependencies for S3, Delta, etc
+
+
 # Version 0.26.1 - 2022-08-03
 
 * github-226: Upgrade to Spark 3.2.2

@@ -83,7 +83,7 @@
         <netty.version>3.9.9.Final</netty.version>
 
         <!-- Default Hadoop version (3.3) -->
-        <hadoop.version>3.3.3</hadoop.version>
+        <hadoop.version>3.3.1</hadoop.version>
         <hadoop-api.version>3.3</hadoop-api.version>
         <json-smart.version>2.4.7</json-smart.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
@@ -520,7 +520,7 @@
         <profile>
             <id>hadoop-3.3</id>
             <properties>
-                <hadoop.version>3.3.3</hadoop.version>
+                <hadoop.version>3.3.1</hadoop.version>
                 <hadoop-api.version>3.3</hadoop-api.version>
                 <json-smart.version>2.4.7</json-smart.version>
                 <commons-beanutils.version>1.9.3</commons-beanutils.version>
@@ -1396,19 +1396,23 @@
                 <exclusions>
                     <exclusion>
                         <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-log4j12</artifactId>
+                        <artifactId>*</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>log4j</groupId>
-                        <artifactId>log4j</artifactId>
+                        <artifactId>*</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>org.eclipse.jetty</groupId>
-                        <artifactId>jetty</artifactId>
+                        <artifactId>*</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>javax.servlet</groupId>
                         <artifactId>servlet-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.sun.jersey</groupId>
+                        <artifactId>jersey-servlet</artifactId>
                     </exclusion>
                     <exclusion>
                         <groupId>org.apache.zookeeper</groupId>

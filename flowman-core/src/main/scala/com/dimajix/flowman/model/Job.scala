@@ -118,6 +118,8 @@ object Job {
         metadata:Metadata,
         description:Option[String]
    ) extends model.Properties[Properties] {
+        require(metadata.category == Category.JOB.lower)
+
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
         override val kind : String = metadata.kind

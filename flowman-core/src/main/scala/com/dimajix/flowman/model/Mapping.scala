@@ -99,6 +99,8 @@ object Mapping {
         cache:StorageLevel,
         documentation:Option[MappingDoc]
     ) extends model.Properties[Properties] {
+        require(metadata.category == Category.MAPPING.lower)
+
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
         override val kind : String = metadata.kind

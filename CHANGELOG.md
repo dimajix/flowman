@@ -1,6 +1,6 @@
 # Version 0.26.2
 
-* github-232: [BUG] Column descriptions should be propagates in UNIONs
+* github-232: [BUG] Column descriptions should be propagated in UNIONs
 * github-233: [BUG] Missing Hadoop dependencies for S3, Delta, etc
 
 

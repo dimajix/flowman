@@ -33,6 +33,10 @@ variable `FLOWMAN_PLUGIN_DIR` or `FLOWMAN_HOME`.
   [Impala Catalog plugin](../plugins/impala.md) whenever a Hive table is updated. The `REFRESH` statements will always
   be executed by the plugin.
 
+- `flowman.externalCatalog.ignoreErrors` *(type: boolean)* *(default:false)*
+  If enabled (i.e. set to `true`), then Flowman will ignore all errors from external catalogs like Impala. This is
+  desired in many cases, such that these will not block processing.
+
 
 ### Execution related Properties
 

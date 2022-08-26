@@ -66,6 +66,11 @@ object FlowmanConf {
         .doc("Performs COMPUTE STATS commands")
         .booleanConf
         .createWithDefault(true)
+    val EXTERNAL_CATALOG_IGNORE_ERRORS = buildConf("flowman.externalCatalog.ignoreErrors")
+        .doc("Ignore errors of external catalogs (like Impala)")
+        .booleanConf
+        .createWithDefault(false)
+
     val HOME_DIRECTORY = buildConf("flowman.home")
         .doc("Home directory of Flowman")
         .fileConf

@@ -2,6 +2,8 @@
 
 * github-232: [BUG] Column descriptions should be propagated in UNIONs
 * github-233: [BUG] Missing Hadoop dependencies for S3, Delta, etc
+* github-235: Implement new `rest` hook with fine control
+* github-229: A build target should not fail if Impala "COMPUTE STATS" fails
 
 
 # Version 0.26.1 - 2022-08-03

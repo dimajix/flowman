@@ -36,10 +36,12 @@ import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.JobResultWrapper
 import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
+import com.dimajix.flowman.model.TargetResultWrapper
 import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.hook.JdbcHook.DummyJobToken
@@ -81,7 +83,7 @@ case class JdbcHook(
      * @return
      */
     override def startJob(execution:Execution, job:Job, instance: JobDigest, parent:Option[Token]): JobToken = {
-        val env = instance.asMap -- context.environment.keys
+        val env = job.metadata.asMap ++ instance.asMap + ("status" -> Status.RUNNING.toString) -- context.environment.keys
         invoke(jobStart, env)
         DummyJobToken(env)
     }
@@ -94,7 +96,7 @@ case class JdbcHook(
      */
     override def finishJob(execution:Execution, token: JobToken, result: JobResult): Unit = {
         val status = result.status
-        val env = token.asInstanceOf[DummyJobToken].env + ("status" -> status)
+        val env = token.asInstanceOf[DummyJobToken].env + ("result" -> JobResultWrapper(result)) + ("status" -> status)
         invoke(jobFinish, env)
 
         status match {
@@ -112,11 +114,10 @@ case class JdbcHook(
      * @return
      */
     override def startTarget(execution:Execution, target:Target, instance: TargetDigest, parent: Option[Token]): TargetToken =  {
-        val parentEnv = parent.map {
+        val parentEnv = parent.collect {
             case t:DummyJobToken => t.env
-            case _ => Map()
         }.getOrElse(Map())
-        val env = parentEnv ++ instance.asMap -- context.environment.keys
+        val env = parentEnv ++ target.metadata.asMap ++ instance.asMap + ("status" -> Status.RUNNING.toString) -- context.environment.keys
         invoke(targetStart, env)
         DummyTargetToken(env)
     }
@@ -129,7 +130,7 @@ case class JdbcHook(
      */
     override def finishTarget(execution:Execution, token: TargetToken, result: TargetResult): Unit = {
         val status = result.status
-        val env = token.asInstanceOf[DummyTargetToken].env + ("status" -> status)
+        val env = token.asInstanceOf[DummyTargetToken].env + ("result" -> TargetResultWrapper(result)) + ("status" -> status)
         invoke(targetFinish, env)
 
         status match {

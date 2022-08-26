@@ -40,6 +40,7 @@ object HookSpec extends TypeRegistry[HookSpec] {
     new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcHookSpec]),
     new JsonSubTypes.Type(name = "simpleReport", value = classOf[SimpleReportHookSpec]),
     new JsonSubTypes.Type(name = "report", value = classOf[ReportHookSpec]),
+    new JsonSubTypes.Type(name = "rest", value = classOf[RestHookSpec]),
     new JsonSubTypes.Type(name = "web", value = classOf[WebHookSpec])
 ))
 abstract class HookSpec extends Spec[Hook] {

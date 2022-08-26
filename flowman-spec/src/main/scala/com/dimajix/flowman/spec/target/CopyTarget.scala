@@ -128,17 +128,7 @@ case class CopyTarget(
                 dfIn.repartition(parallelism)
             else
                 dfIn.coalesce(parallelism)
-        val conformed = target.describe(execution).map { schema =>
-            val conf = execution.flowmanConf
-            val xfs = SchemaEnforcer(
-                schema.catalogType,
-                columnMismatchPolicy = ColumnMismatchPolicy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_OUTPUT_COLUMN_MISMATCH_POLICY)),
-                typeMismatchPolicy = TypeMismatchPolicy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_OUTPUT_TYPE_MISMATCH_POLICY)),
-                charVarcharPolicy = CharVarcharPolicy.ofString(conf.getConf(FlowmanConf.DEFAULT_RELATION_OUTPUT_CHAR_VARCHAR_POLICY))
-            )
-            xfs.transform(data)
-        }.getOrElse(data)
-        target.write(execution, conformed, mode)
+        target.write(execution, data, mode)
 
         schema.foreach { spec =>
             logger.info(s"Writing schema to file '${spec.file}'")

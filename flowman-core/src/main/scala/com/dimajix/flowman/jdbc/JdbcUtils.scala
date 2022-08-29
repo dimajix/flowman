@@ -449,9 +449,9 @@ object JdbcUtils {
 
     def createView(conn:Connection, table:TableIdentifier, sql:String, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val tableSql = dialect.statement.createView(table, sql)
+        val createSql = dialect.statement.createView(table, sql)
         withStatement(conn, options) { statement =>
-            statement.executeUpdate(tableSql)
+            executeUpdate(statement, createSql)
         }
     }
 
@@ -459,14 +459,15 @@ object JdbcUtils {
         val dialect = SqlDialects.get(options.url)
         withStatement(conn, options) { statement =>
             if (dialect.supportsAlterView) {
-                val tableSql = dialect.statement.alterView(table, sql)
-                statement.executeUpdate(tableSql)
+                val alterSql = dialect.statement.alterView(table, sql)
+                executeUpdate(statement, alterSql)
             }
             else {
                 val dropSql = dialect.statement.dropView(table)
-                statement.executeUpdate(dropSql)
+                executeUpdate(statement, dropSql)
                 val createSql = dialect.statement.createView(table, sql)
-                statement.executeUpdate(createSql)
+                executeUpdate(statement, createSql)
+
             }
         }
     }
@@ -517,7 +518,7 @@ object JdbcUtils {
     }
     def truncateTable(statement:Statement, table:TableIdentifier, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        statement.executeUpdate(s"TRUNCATE TABLE ${dialect.quote(table)}")
+        executeUpdate(statement, s"TRUNCATE TABLE ${dialect.quote(table)}")
     }
 
     /**
@@ -529,7 +530,7 @@ object JdbcUtils {
      */
     def truncatePartition(statement:Statement, table:TableIdentifier, condition:String, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        statement.executeUpdate(s"DELETE FROM ${dialect.quote(table)} WHERE $condition")
+        executeUpdate(statement, s"DELETE FROM ${dialect.quote(table)} WHERE $condition")
     }
 
     /**
@@ -541,7 +542,7 @@ object JdbcUtils {
      */
     def appendTable(statement:Statement, targetTable:TableIdentifier, sourceTable:TableIdentifier, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        statement.executeUpdate(s"INSERT INTO ${dialect.quote(targetTable)}  SELECT * FROM ${dialect.quote(sourceTable)}")
+        executeUpdate(statement, s"INSERT INTO ${dialect.quote(targetTable)}  SELECT * FROM ${dialect.quote(sourceTable)}")
     }
 
     /**
@@ -608,7 +609,7 @@ object JdbcUtils {
         val url = options.url
         val dialect = SqlDialects.get(url)
         val sql = dialect.statement.merge(target, targetAlias, targetSchema, source, sourceAlias, sourceSchema, condition, clauses)
-        statement.executeUpdate(sql)
+        executeUpdate(statement, sql)
     }
 
     /**
@@ -707,6 +708,17 @@ object JdbcUtils {
             cmds.foreach { cmd =>
                 cmd(statement)
             }
+        }
+    }
+
+    protected def executeUpdate(statement: Statement, sql:String) : Unit = {
+        try {
+            statement.executeUpdate(sql)
+        }
+        catch {
+            case NonFatal(ex) =>
+                logger.error(s"Error executing sql: ${reasons(ex)}\n$sql")
+                throw ex
         }
     }
 }

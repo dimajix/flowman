@@ -1,7 +1,7 @@
 # JDBC Table Relations
 
-The `jdbcTable` relation allows you to access databases using a JDBC driver. Note that you need to put an appropriate JDBC
-driver onto the classpath of Flowman. This can be done by using an appropriate plugin.
+The `jdbcTable` relation allows you to access databases using a JDBC driver. Note that you need to put an appropriate 
+JDBC driver onto the classpath of Flowman. This can be done by using an appropriate plugin.
 
 
 ## Example
@@ -34,12 +34,14 @@ relations:
       - name: "users_idx0"
         columns: [user_first_name, user_last_name]
 ```
+
+### Embedding the Connection
 It is also possible to directly embed the connection as follows:
 ```yaml
 relations:
   frontend_users:
     kind: jdbcTable
-    # Specify the name of the connection to use
+    # Directly embed a connection
     connection:
       kind: jdbc
       driver: "$frontend_db_driver"
@@ -55,6 +57,35 @@ For most cases, it is recommended not to embed the connection, since this preven
 multiple places.
 
 The schema is still optional in this case, but it will help [mocking](mock.md) the relation for unittests.
+
+
+### Embedding SQL
+Whenever you need more control about the target table to be created in a relational database, you can also directly
+provide the SQL statement(s) to be used (since Flowman 0.27.0):
+```yaml
+relations:
+  frontend_users:
+    kind: jdbcTable
+    # Directly embed a connection
+    connection:
+      kind: jdbc
+      driver: "$frontend_db_driver"
+      url: "$frontend_db_url"
+      username: "$frontend_db_username"
+      password: "$frontend_db_password"
+    # Specify the table
+    table: "users"
+    sql: |
+      CREATE TABLE frontend_users(
+        "str_col" CLOB, 
+        "int_col" INTEGER, 
+        "varchar_col" VARCHAR(10)
+      )
+```
+In this case, Flowman will only use the SQL statement for creating the table. This gives you full control, but at the
+same time, completely disables automatic migrations.
+
+Again, the schema is optional in this case, but it will help [mocking](mock.md) the relation for unittests.
 
 
 ## Fields
@@ -175,3 +206,25 @@ in the staging table and then transactionally committed into the real table.
 While this two-step approach might slow down write processes, it is often required when performing update/merge
 operations since these could result in database deadlocks otherwise when Spark performs these operations in parallel
 from multiple processes into a single database.
+
+### Embedding SQL
+As seen in the examples, you can also directly specify the SQL statement(s) to be used for creating the table. This
+will give you full control over all the details. You can even specify multiple statements, for example for creating
+indexes etc.
+```yaml
+relations:
+  frontend_users:
+    kind: jdbcTable
+    # Specify name of connection to be used
+    connection: frontend
+    # Specify the table
+    table: "users"
+    sql:
+      - |
+        CREATE TABLE frontend_users(
+          "description" CLOB, 
+          "id" INTEGER, 
+          "name" VARCHAR(10)
+        )
+      - CREATE INDEX IDX_frontend_users ON frontend_users(id)
+```

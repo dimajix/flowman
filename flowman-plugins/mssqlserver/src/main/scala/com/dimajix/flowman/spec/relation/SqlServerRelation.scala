@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.relation
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonPropertyDescription
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
@@ -46,11 +47,13 @@ case class SqlServerRelation(
     mergeKey: Seq[String] = Seq.empty,
     override val primaryKey: Seq[String] = Seq.empty,
     indexes: Seq[TableIndex] = Seq.empty,
-    storageFormat: Option[String] = None
-) extends JdbcTableRelationBase(instanceProperties, schema, partitions, connection, table, properties, mergeKey, primaryKey, indexes) {
+    storageFormat: Option[String] = None,
+    sql: Seq[String] = Seq.empty
+) extends JdbcTableRelationBase(instanceProperties, schema, partitions, connection, table, properties, mergeKey, primaryKey, indexes, sql) {
     private val tempTableIdentifier = TableIdentifier(s"##${tableIdentifier.table}_temp_staging")
     override protected val stagingIdentifier: Option[TableIdentifier] = Some(tempTableIdentifier)
-    override protected lazy val tableDefinition: Option[TableDefinition] = {
+
+    override protected def createTableDefinition(): Option[TableDefinition] = {
         schema.map { schema =>
             val pk = if (primaryKey.nonEmpty) primaryKey else schema.primaryKey
             val columns = fullSchema.get.fields
@@ -67,6 +70,7 @@ case class SqlServerRelation(
             )
         }
     }
+
     override protected def appendTable(execution: Execution, df:DataFrame, table:TableIdentifier): Unit = {
         val props = createConnectionProperties()
         this.writer(execution, df, "com.microsoft.sqlserver.jdbc.spark", Map(), SaveMode.Append)
@@ -89,9 +93,14 @@ class SqlServerRelationSpec extends RelationSpec with PartitionedRelationSpec wi
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map.empty
     @JsonProperty(value = "database", required = false) private var database: Option[String] = None
     @JsonProperty(value = "table", required = false) private var table: String = ""
+    @JsonPropertyDescription("List of columns used for merge operations.")
     @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq.empty
+    @JsonPropertyDescription("List of columns making up the primary key.")
     @JsonProperty(value = "primaryKey", required = false) private var primaryKey: Seq[String] = Seq.empty
+    @JsonPropertyDescription("Storage format of table. Can be either 'rowstore' or 'columnstore'.")
     @JsonProperty(value = "storageFormat", required = false) private var storageFormat: Option[String] = None
+    @JsonPropertyDescription("SQL command(s) for creating the table. This has to be specified in database specific SQL syntax.")
+    @JsonProperty(value = "sql", required = false) private var sql: Seq[String] = Seq.empty
 
     override def instantiate(context: Context, props:Option[Relation.Properties] = None): SqlServerRelation = {
         SqlServerRelation(
@@ -104,7 +113,8 @@ class SqlServerRelationSpec extends RelationSpec with PartitionedRelationSpec wi
             mergeKey.map(context.evaluate),
             primaryKey.map(context.evaluate),
             indexes.map(_.instantiate(context)),
-            context.evaluate(storageFormat)
+            context.evaluate(storageFormat),
+            sql.map(context.evaluate)
         )
     }
 }

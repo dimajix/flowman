@@ -6,6 +6,7 @@
 * github-229: A build target should not fail if Impala "COMPUTE STATS" fails
 * github-236: 'copy' target should not apply output schema
 * github-237: jdbcQuery relation should use fields "sql" and "file" instead of "query"
+* github-239: Allow optional SQL statement for creating jdbcTable
 
 
 # Version 0.26.1 - 2022-08-03

@@ -82,7 +82,7 @@ class JdbcQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                |kind: jdbcQuery
                |name: some_relation
                |description: "This is a test table"
-               |query: "SELECT * FROM some_table"
+               |sql: "SELECT * FROM some_table"
                |connection:
                |  kind: jdbc
                |  name: some_connection
@@ -167,7 +167,7 @@ class JdbcQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         )
         val relation_t1 = JdbcQueryRelation(
             Relation.Properties(context, "t1"),
-            query = "SELECT * FROM lala_004",
+            sql = Some("SELECT * FROM lala_004"),
             connection = ConnectionReference(context, ConnectionIdentifier("c0"))
         )
 

@@ -16,18 +16,21 @@
 
 package com.dimajix.flowman.spec.relation
 
+import java.io.StringWriter
+import java.nio.charset.Charset
+
 import scala.collection.JavaConverters._
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonPropertyDescription
 import net.sf.jsqlparser.parser.CCJSqlParserUtil
 import net.sf.jsqlparser.util.TablesNamesFinder
+import org.apache.commons.io.IOUtils
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-import org.apache.spark.sql.types.StructType
 
-import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
@@ -57,7 +60,8 @@ case class JdbcQueryRelation(
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq.empty,
     connection: Reference[Connection],
-    query: String,
+    sql: Option[String] = None,
+    file: Option[Path] = None,
     properties: Map[String,String] = Map.empty
 ) extends JdbcRelation(
     connection,
@@ -248,6 +252,25 @@ case class JdbcQueryRelation(
         val tablesNamesFinder = new TablesNamesFinder()
         tablesNamesFinder.getTableList(statement).asScala
     }
+
+    private lazy val query: String = {
+        sql
+            .orElse(file.map { f =>
+                val fs = context.fs
+                val input = fs.file(f).open()
+                try {
+                    val writer = new StringWriter()
+                    IOUtils.copy(input, writer, Charset.forName("UTF-8"))
+                    writer.toString
+                }
+                finally {
+                    input.close()
+                }
+            })
+            .getOrElse(
+                throw new IllegalArgumentException("Require either 'sql' or 'file' property")
+            )
+    }
 }
 
 
@@ -256,7 +279,9 @@ class JdbcQueryRelationSpec extends RelationSpec with PartitionedRelationSpec wi
     @JsonProperty(value = "connection", required = true) private var connection: ConnectionReferenceSpec = _
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map.empty
     @JsonPropertyDescription("SQL query for the view definition. This has to be specified in database specific SQL syntax.")
-    @JsonProperty(value = "query", required = true) private var query: String = ""
+    @JsonProperty(value = "sql", required = false) private var sql: Option[String] = None
+    @JsonPropertyDescription("Name of a file containing the SQL query for the view definition. This has to be specified in database specific SQL syntax.")
+    @JsonProperty(value = "file", required = false) private var file: Option[String] = None
 
     /**
       * Creates the instance of the specified Relation with all variable interpolation being performed
@@ -269,7 +294,8 @@ class JdbcQueryRelationSpec extends RelationSpec with PartitionedRelationSpec wi
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             connection.instantiate(context),
-            context.evaluate(query),
+            context.evaluate(sql),
+            context.evaluate(file).map(p => new Path(p)),
             context.evaluate(properties)
         )
     }

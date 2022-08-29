@@ -52,9 +52,11 @@ WHERE rank = 1
 ## Fields
 * `kind` **(mandatory)** *(string)*: `hiveQuery`
 
+* `schema` **(optional)** *(type: schema)* *(default: empty)*:
+  Explicitly specifies the schema of the Hive source. Alternatively Flowman will automatically  try to infer the schema.
+
 * `description` **(optional)** *(string)* *(default: empty)*:
  A description of the relation. This is purely for informational purpose.
- 
 
 * `sql` **(optional)** *(string)* *(default: empty)*:
  Contains the SQL code of the Hive view. Cannot be used together with `file`.

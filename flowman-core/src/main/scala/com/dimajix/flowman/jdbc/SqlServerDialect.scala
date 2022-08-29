@@ -189,7 +189,7 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         // Optionally create CLUSTERED COLUMNSTORE INDEX
         table.storageFormat.map(_.toLowerCase(Locale.ROOT)) match {
             case Some("columnstore") =>
-                statement.executeUpdate(s"CREATE CLUSTERED COLUMNSTORE INDEX columnstore_idx ON ${dialect.quote(table.identifier)}")
+                statement.executeUpdate(s"CREATE CLUSTERED COLUMNSTORE INDEX IDX_${table.identifier.table}_columnstore ON ${dialect.quote(table.identifier)}")
             case Some("rowstore") =>
             case Some(s) => throw new UnsupportedOperationException(s"Storage format '$s' not supported, only 'ROWSTORE' and 'COLUMNSTORE'")
             case None =>
@@ -341,7 +341,7 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         if (!current.exists(_.toLowerCase(Locale.ROOT) == desiredFormat)) {
             desiredFormat match {
                 case "columnstore" =>
-                    statement.executeUpdate(s"CREATE CLUSTERED COLUMNSTORE INDEX columnstore_idx ON ${dialect.quote(table)}")
+                    statement.executeUpdate(s"CREATE CLUSTERED COLUMNSTORE INDEX IDX_${table.table}_columnstore ON ${dialect.quote(table)}")
                 case "rowstore" =>
                     val indexName = getColumnStoreIndex(statement, table)
                     indexName.foreach(idx => statement.executeUpdate(s"DROP INDEX $idx ON ${dialect.quote(table)}"))

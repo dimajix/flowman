@@ -20,7 +20,7 @@ relations:
   lineitem:
     kind: jdbcQuery
     connection: frontend
-    query: "
+    sql: "
       SELECT
         CONCAT('DIR_', li.id) AS lineitem,
         li.campaign_id AS campaign,
@@ -53,7 +53,7 @@ relations:
       url: "$frontend_db_url"
       username: "$frontend_db_username"
       password: "$frontend_db_password"
-    query: "
+    sql: "
       SELECT
         CONCAT('DIR_', li.id) AS lineitem,
         li.campaign_id AS campaign,
@@ -84,11 +84,14 @@ The schema is still optional in this case, but it will help [mocking](mock.md) t
  The *connection* field specifies the name of a [Connection](../connection/index.md)  object which has to be defined 
 elsewhere.
 
- * `query` **(optional)** *(type: string)*:
+ * `sql` **(optional)** *(type: string)*:
 This property specifies the SQL query which will be executed by the database for retrieving data. Of course, then only 
 read operations are possible. Since the SQL is directly forwarded to the database, you also need to use the SQL
-dialect of the corresponding database.
-  
+dialect of the corresponding database. Cannot be used together with `file`.
+* 
+* `file` **(optional)** *(string)* *(default: empty)*:
+  Contains the name of a file containing SQL code of the Hive query. Cannot be used together with `sql`.
+
  * `properties` **(optional)** *(type: map:string)* *(default: empty)*:
  Specifies any additional properties passed to the JDBC connection.  Note that both the JDBC
  relation and the JDBC connection can define properties. So it is advisable to define all

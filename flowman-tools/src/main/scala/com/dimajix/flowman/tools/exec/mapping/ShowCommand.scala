@@ -62,7 +62,7 @@ class ShowCommand extends Command {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 Status.FAILED
             case Failure(e) =>
-                logger.error(s"Caught exception while dumping mapping '$mapping': ${reasons(e)}")
+                logger.error(s"Caught exception while dumping mapping '$mapping':\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

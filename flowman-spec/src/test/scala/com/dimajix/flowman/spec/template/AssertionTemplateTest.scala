@@ -19,7 +19,7 @@ package com.dimajix.flowman.spec.template
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.execution.NoSuchTemplateException
+import com.dimajix.flowman.execution.InstantiateTargetFailedException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.TargetIdentifier
@@ -93,9 +93,9 @@ class AssertionTemplateTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
 
         context.getTarget(TargetIdentifier("t1"))
-        an[IllegalArgumentException] should be thrownBy(context.getTarget(TargetIdentifier("t2")))
+        an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("t2")))
         context.getTarget(TargetIdentifier("t3"))
-        an[IllegalArgumentException] should be thrownBy(context.getTarget(TargetIdentifier("t4")))
+        an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("t4")))
     }
 
     it should "throw an error on unknown templates" in {
@@ -114,6 +114,6 @@ class AssertionTemplateTest extends AnyFlatSpec with Matchers {
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        an[NoSuchTemplateException] should be thrownBy(context.getTarget(TargetIdentifier("t1")))
+        an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("t1")))
     }
 }

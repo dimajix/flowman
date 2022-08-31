@@ -158,7 +158,7 @@ private[metric] class JdbcMetricRepository(
             Await.result(query, Duration.Inf)
         }
         catch {
-            case NonFatal(ex) => logger.error(s"Cannot connect to JDBC metric database to create tables: ${reasons(ex)}")
+            case NonFatal(ex) => logger.error(s"Cannot create tables of JDBC metric database at '${connection.url}':\n  ${reasons(ex)}")
         }
     }
 

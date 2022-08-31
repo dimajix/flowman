@@ -137,7 +137,7 @@ object FlowmanConf {
     val DEFAULT_RELATION_INPUT_CHAR_VARCHAR_POLICY = buildConf("flowman.default.relation.input.charVarcharPolicy")
         .doc("Default strategy to use when reading CHAR(n)/VARCHAR(n) data types. Can be 'ignore', 'pad', 'truncate' or 'pad_and_truncate'")
         .stringConf
-        .createWithDefault(CharVarcharPolicy.PAD_AND_TRUNCATE.toString)
+        .createWithDefault(CharVarcharPolicy.IGNORE.toString)
     val DEFAULT_RELATION_OUTPUT_COLUMN_MISMATCH_POLICY = buildConf("flowman.default.relation.output.columnMismatchPolicy")
         .doc("Default strategy to use on schema column mismatch while reading relations. Can be 'ignore', 'error', 'add_columns_or_ignore', 'add_columns_or_error', 'remove_columns_or_ignore', 'remove_columns_or_error', 'add_remove_columns'")
         .stringConf

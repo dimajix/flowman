@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.template
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.execution.InstantiateConnectionFailedException
 import com.dimajix.flowman.execution.NoSuchTemplateException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.ConnectionIdentifier
@@ -85,12 +86,12 @@ class ConnectionTemplateTest extends AnyFlatSpec with Matchers {
         val rel_1 = context.getConnection(ConnectionIdentifier("rel_1"))
         rel_1 shouldBe a[JdbcConnection]
 
-        an[IllegalArgumentException] should be thrownBy(context.getConnection(ConnectionIdentifier("rel_2")))
+        an[InstantiateConnectionFailedException] should be thrownBy(context.getConnection(ConnectionIdentifier("rel_2")))
 
         val rel_3 = context.getConnection(ConnectionIdentifier("rel_3"))
         rel_3 shouldBe a[JdbcConnection]
 
-        an[IllegalArgumentException] should be thrownBy(context.getConnection(ConnectionIdentifier("rel_4")))
+        an[InstantiateConnectionFailedException] should be thrownBy(context.getConnection(ConnectionIdentifier("rel_4")))
     }
 
     it should "throw an error on unknown templates" in {
@@ -106,6 +107,6 @@ class ConnectionTemplateTest extends AnyFlatSpec with Matchers {
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        an[NoSuchTemplateException] should be thrownBy(context.getConnection(ConnectionIdentifier("rel_1")))
+        an[InstantiateConnectionFailedException] should be thrownBy(context.getConnection(ConnectionIdentifier("rel_1")))
     }
 }

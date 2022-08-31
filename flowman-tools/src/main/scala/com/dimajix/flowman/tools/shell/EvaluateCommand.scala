@@ -43,7 +43,7 @@ class EvaluateCommand extends Command {
         }
         catch {
             case NonFatal(e) =>
-                logger.error(s"Error evaluating expression: ${reasons(e)}")
+                logger.error(s"Error evaluating expression:\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

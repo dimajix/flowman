@@ -131,7 +131,7 @@ object JdbcUtils {
             createConnection(options, -1)
         } catch {
             case NonFatal(e) =>
-                logger.error(s"Error connecting to jdbc source at ${options.url}: ${reasons(e)}")
+                logger.error(s"Error connecting to jdbc source at ${options.url}:\n  ${reasons(e)}")
                 throw e
         }
 

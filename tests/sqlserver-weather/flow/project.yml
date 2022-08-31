@@ -1,4 +1,4 @@
-name: "sqlserver"
+name: "sqlserver-weather"
 version: "1.0"
 
 modules:

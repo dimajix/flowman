@@ -64,7 +64,7 @@ class ValidateCommand extends Command {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 Status.FAILED
             case Failure(e) =>
-                logger.error(s"Caught exception while validating mapping: ${reasons(e)}")
+                logger.error(s"Caught exception while validating mapping:\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

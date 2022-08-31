@@ -378,7 +378,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             Await.result(query, Duration.Inf)
         }
         catch {
-            case NonFatal(ex) => logger.error(s"Cannot create tables of JDBC history database: ${reasons(ex)}")
+            case NonFatal(ex) => logger.error(s"Cannot create tables of JDBC history database at '${connection.url}':\n  ${reasons(ex)}")
         }
     }
 

@@ -41,7 +41,7 @@ class ReloadCommand extends Command {
             }
             catch {
                 case NonFatal(e) =>
-                    logger.error(s"Error reloading current project '${fn}': ${reasons(e)}")
+                    logger.error(s"Error reloading current project '${fn}':\n  ${reasons(e)}")
                     Status.FAILED
             }
         }.getOrElse {

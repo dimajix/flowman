@@ -11,7 +11,7 @@ move to Spark 3.0+.
 ## Provided Entities
 * [`deltaTable` relation](../spec/relation/deltaTable.md)
 * [`deltaFile` relation](../spec/relation/deltaFile.md)
-* ['deltaVacuum' target](../spec/target/delta-vacuum.md)
+* ['deltaVacuum' target](../spec/target/deltaVacuum.md)
 
 
 ## Activation

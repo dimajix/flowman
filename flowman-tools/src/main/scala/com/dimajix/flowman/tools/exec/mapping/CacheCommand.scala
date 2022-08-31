@@ -56,7 +56,7 @@ class CacheCommand extends Command {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Caught exception while caching mapping '$mapping': ${reasons(e)}")
+                logger.error(s"Caught exception while caching mapping '$mapping':\n   ${reasons(e)}")
                 Status.FAILED
         }
     }

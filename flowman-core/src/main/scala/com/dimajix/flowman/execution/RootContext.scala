@@ -167,6 +167,8 @@ final class RootContext private[execution](
       * @param identifier
       * @return
       */
+    @throws[InstantiateMappingFailedException]
+    @throws[NoSuchMappingException]
     override def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true): Mapping = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -184,6 +186,8 @@ final class RootContext private[execution](
       * @param identifier
       * @return
       */
+    @throws[InstantiateRelationFailedException]
+    @throws[NoSuchRelationException]
     override def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -201,6 +205,8 @@ final class RootContext private[execution](
       * @param identifier
       * @return
       */
+    @throws[InstantiateTargetFailedException]
+    @throws[NoSuchTargetException]
     override def getTarget(identifier: TargetIdentifier): Target = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -218,6 +224,8 @@ final class RootContext private[execution](
       * @param identifier
       * @return
       */
+    @throws[InstantiateConnectionFailedException]
+    @throws[NoSuchConnectionException]
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -229,7 +237,14 @@ final class RootContext private[execution](
                             namespace
                                 .flatMap(_.connections.get(identifier.name))
                         )
-                        .map(_.instantiate(this))
+                        .map { p =>
+                            try {
+                                p.instantiate(this)
+                            }
+                            catch {
+                                case NonFatal(ex) => throw new InstantiateConnectionFailedException(identifier, ex)
+                            }
+                        }
                         .getOrElse(throw new NoSuchConnectionException(identifier))
                 )
             case Some(project) =>
@@ -244,6 +259,8 @@ final class RootContext private[execution](
       * @param identifier
       * @return
       */
+    @throws[InstantiateJobFailedException]
+    @throws[NoSuchJobException]
     override def getJob(identifier: JobIdentifier): Job = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -261,6 +278,8 @@ final class RootContext private[execution](
      * @param identifier
      * @return
      */
+    @throws[InstantiateTestFailedException]
+    @throws[NoSuchTestException]
     override def getTest(identifier: TestIdentifier): Test = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -278,6 +297,8 @@ final class RootContext private[execution](
      * @param identifier
      * @return
      */
+    @throws[InstantiateTemplateFailedException]
+    @throws[NoSuchTemplateException]
     override def getTemplate(identifier: TemplateIdentifier): Template[_] = {
         require(identifier != null && identifier.nonEmpty)
 

@@ -19,7 +19,7 @@ package com.dimajix.common
 
 object ExceptionUtils {
     def reasons(ex:Throwable) : String = {
-        val msg = ex.getMessage
+        val msg = ex.toString
         val cause = ex.getCause
         if (cause == null)
             msg

@@ -52,7 +52,7 @@ class DependencyTreeCommand extends Command {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Error '$mapping': ${reasons(e)}")
+                logger.error(s"Error in analyzing dependencies of '$mapping':\n  ${reasons(e)}")
                 Status.FAILED
         }
 

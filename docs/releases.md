@@ -14,10 +14,16 @@ The following gives an (incomplete) list of past releases of the last 12 months.
 changes over time.
 
 
-### Version 0.26.2
+### Version 0.27.0
 
 * github-232: [BUG] Column descriptions should be propagates in UNIONs
 * github-233: [BUG] Missing Hadoop dependencies for S3, Delta, etc
+* github-235: Implement new `rest` hook with fine control
+* github-229: A build target should not fail if Impala "COMPUTE STATS" fails
+* github-236: 'copy' target should not apply output schema
+* github-237: jdbcQuery relation should use fields "sql" and "file" instead of "query"
+* github-239: Allow optional SQL statement for creating jdbcTable
+* github-238: Implement new 'jdbcCommand' target
 
 
 ### Version 0.26.1 - 2022-08-03

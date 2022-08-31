@@ -280,7 +280,8 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         keepGoing:Boolean,
         dryRun:Boolean) : JobResult = {
         runner.withPhaseContext(jobContext, phase) { context =>
-            val title = s"${phase.upper} job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
+            val titleArgs = if (arguments.nonEmpty) " " + arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ") else ""
+            val title = s"${phase.upper} job '${job.identifier}'$titleArgs"
             logTitle(title)
             logEnvironment(context)
 
@@ -298,7 +299,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                         catch {
                             case NonFatal(ex) =>
                                 // Primarily exceptions during target instantiation will be caught here
-                                logger.error(s"Caught exception during $title: ${reasons(ex)}")
+                                logger.error(s"Caught exception during $title:\n  ${reasons(ex)}")
                                 JobResult(job, instance, ex, startTime)
                         }
                     }
@@ -368,7 +369,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             }
             catch {
                 case NonFatal(ex) =>
-                    logger.warn(yellow(s"Cannot infer dirty status for target '${target.identifier}' because of exception:\n${ExceptionUtils.reasons(ex)}"))
+                    logger.warn(yellow(s"Cannot infer dirty status for target '${target.identifier}' because of exception:\n  ${ExceptionUtils.reasons(ex)}"))
                     Unknown
             }
         }

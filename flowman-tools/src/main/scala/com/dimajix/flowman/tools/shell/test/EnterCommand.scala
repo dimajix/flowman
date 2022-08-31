@@ -49,7 +49,7 @@ class EnterCommand extends Command {
                 logger.error(s"Cannot resolve test '${ex.test}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Error entering test '$test': ${reasons(e)}")
+                logger.error(s"Error entering test '$test':\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

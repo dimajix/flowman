@@ -20,6 +20,7 @@ import org.apache.spark.storage.StorageLevel
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.execution.InstantiateMappingFailedException
 import com.dimajix.flowman.execution.NoSuchTemplateException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.MappingIdentifier
@@ -101,7 +102,7 @@ class MappingTemplateTest extends AnyFlatSpec with Matchers {
         map_1.checkpoint should be (false)
         map_1.cache should be (StorageLevel.NONE)
 
-        an[IllegalArgumentException] should be thrownBy(context.getMapping(MappingIdentifier("rel_2")))
+        an[InstantiateMappingFailedException] should be thrownBy(context.getMapping(MappingIdentifier("rel_2")))
 
         val map_3 = context.getMapping(MappingIdentifier("rel_3"))
         map_3 shouldBe a[ValuesMapping]
@@ -112,7 +113,7 @@ class MappingTemplateTest extends AnyFlatSpec with Matchers {
         map_3.checkpoint should be (false)
         map_3.cache should be (StorageLevel.MEMORY_AND_DISK)
 
-        an[IllegalArgumentException] should be thrownBy(context.getMapping(MappingIdentifier("rel_4")))
+        an[InstantiateMappingFailedException] should be thrownBy(context.getMapping(MappingIdentifier("rel_4")))
     }
 
     it should "throw an error on unknown templates" in {
@@ -128,6 +129,6 @@ class MappingTemplateTest extends AnyFlatSpec with Matchers {
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        an[NoSuchTemplateException] should be thrownBy(context.getMapping(MappingIdentifier("rel_1")))
+        an[InstantiateMappingFailedException] should be thrownBy(context.getMapping(MappingIdentifier("rel_1")))
     }
 }

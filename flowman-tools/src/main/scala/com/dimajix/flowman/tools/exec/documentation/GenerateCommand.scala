@@ -51,7 +51,7 @@ class GenerateCommand extends Command {
         }
         match {
             case Failure(e) =>
-                logger.error(s"Error instantiating job '$job': ${reasons(e)}")
+                logger.error(s"Error instantiating job '$job':\n  ${reasons(e)}")
                 Status.FAILED
             case Success(job) =>
                 generateDoc(session, project, job, job.arguments(args))
@@ -65,7 +65,7 @@ class GenerateCommand extends Command {
             Status.SUCCESS
         } catch {
             case NonFatal(ex) =>
-                logger.error(s"Error generating documentation for job '${job.identifier}': ${reasons(ex)}")
+                logger.error(s"Error generating documentation for job '${job.identifier}':\n  ${reasons(ex)}")
                 Status.FAILED
         }
     }

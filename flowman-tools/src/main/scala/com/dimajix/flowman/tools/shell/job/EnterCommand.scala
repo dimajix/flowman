@@ -53,7 +53,7 @@ class EnterCommand extends Command {
                 logger.error(s"Cannot resolve job '${ex.job}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Error entering job '$job': ${reasons(e)}")
+                logger.error(s"Error entering job '$job':\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

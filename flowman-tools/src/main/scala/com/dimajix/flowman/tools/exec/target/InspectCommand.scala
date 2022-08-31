@@ -57,7 +57,7 @@ class InspectCommand extends Command {
                 logger.error(s"Cannot resolve target '${ex.target}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Error inspecting '$target': ${reasons(e)}")
+                logger.error(s"Error inspecting '$target':\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

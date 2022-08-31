@@ -1,0 +1,28 @@
+relations:
+  tweets-raw:
+    kind: file
+    location: s3a://dimajix-training/data/twitter-sample/
+    format: json
+    schema:
+      kind: inline
+      fields:
+        - name: id
+          type: long
+        - name: text
+          type: varchar(160)
+        - name: lang
+          type: char(2)
+        - name: timestamp_ms
+          type: string
+        - name: user
+          type:
+            kind: struct
+            fields:
+              - name: id
+                type: long
+              - name: screen_name
+                type: varchar(140)
+              - name: description
+                type: varchar(140)
+              - name: lang
+                type: char(2)

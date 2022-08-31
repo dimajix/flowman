@@ -58,6 +58,7 @@ object TargetSpec extends TypeRegistry[TargetSpec] {
     new JsonSubTypes.Type(name = "file", value = classOf[FileTargetSpec]),
     new JsonSubTypes.Type(name = "getFile", value = classOf[GetFileTargetSpec]),
     new JsonSubTypes.Type(name = "hiveDatabase", value = classOf[HiveDatabaseTargetSpec]),
+    new JsonSubTypes.Type(name = "jdbcCommand", value = classOf[JdbcCommandTargetSpec]),
     new JsonSubTypes.Type(name = "local", value = classOf[LocalTargetSpec]),
     new JsonSubTypes.Type(name = "measure", value = classOf[MeasureTargetSpec]),
     new JsonSubTypes.Type(name = "merge", value = classOf[MergeTargetSpec]),

@@ -19,7 +19,7 @@ package com.dimajix.flowman.spec.template
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.execution.NoSuchTemplateException
+import com.dimajix.flowman.execution.InstantiateTargetFailedException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.TargetIdentifier
@@ -96,12 +96,12 @@ class MeasureTemplateTest extends AnyFlatSpec with Matchers {
         val rel_1 = context.getTarget(TargetIdentifier("rel_1"))
         rel_1 shouldBe a[MeasureTarget]
 
-        an[IllegalArgumentException] should be thrownBy(context.getTarget(TargetIdentifier("rel_2")))
+        an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("rel_2")))
 
         val rel_3 = context.getTarget(TargetIdentifier("rel_3"))
         rel_3 shouldBe a[MeasureTarget]
 
-        an[IllegalArgumentException] should be thrownBy(context.getTarget(TargetIdentifier("rel_4")))
+        an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("rel_4")))
     }
 
     it should "throw an error on unknown templates" in {
@@ -120,6 +120,6 @@ class MeasureTemplateTest extends AnyFlatSpec with Matchers {
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        an[NoSuchTemplateException] should be thrownBy(context.getTarget(TargetIdentifier("rel_1")))
+        an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("rel_1")))
     }
 }

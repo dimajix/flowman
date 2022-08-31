@@ -627,7 +627,7 @@ abstract class JdbcTableRelationBase(
                             case ex: SQLNonTransientConnectionException => throw new MigrationFailedException(identifier, ex)
                             case ex: SQLInvalidAuthorizationSpecException => throw new MigrationFailedException(identifier, ex)
                             case ex: SQLNonTransientException =>
-                                logger.warn(s"Incremental migration of relation '$identifier' for table $tableIdentifier failed: ${reasons(ex)}\nNow falling back by re-creating target table.")
+                                logger.warn(s"Incremental migration of relation '$identifier' for table $tableIdentifier failed:\n  ${reasons(ex)}\nNow falling back by re-creating target table.")
                                 recreate(con, options)
                             case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
                         }

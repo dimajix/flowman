@@ -17,10 +17,8 @@ metrics:
         databaseName: flowman
 
 config:
-  - spark.sql.warehouse.dir=/opt/sxp/flowman/hive/warehouse
+  - spark.sql.warehouse.dir=/tmp/flowman/hive/warehouse
   - spark.hadoop.hive.metastore.uris=
-  - spark.hadoop.javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=/opt/sxp/flowman/hive/db;create=true
-  - spark.hadoop.datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
 
   - spark.executor.cores=$System.getenv('SPARK_EXECUTOR_CORES', '8')
   - spark.executor.memory=$System.getenv('SPARK_EXECUTOR_MEMORY', '16g')

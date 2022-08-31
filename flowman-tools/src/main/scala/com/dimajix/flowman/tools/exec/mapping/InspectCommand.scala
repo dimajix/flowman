@@ -60,7 +60,7 @@ class InspectCommand extends Command {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Error inspecting '$mapping': ${reasons(e)}")
+                logger.error(s"Error inspecting '$mapping':\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

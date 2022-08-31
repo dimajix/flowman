@@ -51,7 +51,7 @@ class CheckExecutor(execution: Execution) {
                     runSchemaTests(relation.context, df, schema)
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(yellow(s"Error executing checks for relation '${relation.identifier}':\n${reasons(ex)}"))
+                        logger.warn(yellow(s"Error executing checks for relation '${relation.identifier}':\n  ${reasons(ex)}"))
                         failSchemaTests(schema)
                 }
             }
@@ -78,7 +78,7 @@ class CheckExecutor(execution: Execution) {
                         runSchemaTests(mapping.context, df, schema)
                     } catch {
                         case NonFatal(ex) =>
-                            logger.warn(yellow(s"Error executing checks for mapping '${mapping.identifier}':\n${reasons(ex)}"))
+                            logger.warn(yellow(s"Error executing checks for mapping '${mapping.identifier}':\n  ${reasons(ex)}"))
                             failSchemaTests(schema)
                     }
                 }
@@ -134,7 +134,7 @@ class CheckExecutor(execution: Execution) {
                     }
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(yellow(s"Error executing column test:\n${reasons(ex)}"))
+                        logger.warn(yellow(s"Error executing column test:\n  ${reasons(ex)}"))
                         CheckResult(Some(test.reference), status = CheckStatus.ERROR)
 
                 }
@@ -162,7 +162,7 @@ class CheckExecutor(execution: Execution) {
                     }
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(yellow(s"Error executing column test:\n${reasons(ex)}"))
+                        logger.warn(yellow(s"Error executing column test:\n  ${reasons(ex)}"))
                         CheckResult(Some(test.reference), status = CheckStatus.ERROR)
 
                 }

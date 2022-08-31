@@ -55,7 +55,7 @@ class InspectCommand extends Command {
                 logger.error(s"Cannot resolve relation '${ex.relation}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Error inspecting '$relation': ${reasons(e)}")
+                logger.error(s"Error inspecting '$relation':\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

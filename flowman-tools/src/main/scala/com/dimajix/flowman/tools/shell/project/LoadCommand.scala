@@ -44,7 +44,7 @@ class LoadCommand extends Command {
         }
         catch {
             case NonFatal(e) =>
-                logger.error(s"Error loading project '${this.project}': ${reasons(e)}")
+                logger.error(s"Error loading project '${this.project}':\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

@@ -130,6 +130,8 @@ abstract class Context {
       * @param identifier
       * @return
       */
+    @throws[InstantiateConnectionFailedException]
+    @throws[NoSuchConnectionException]
     def getConnection(identifier: ConnectionIdentifier): Connection
 
     /**
@@ -139,6 +141,8 @@ abstract class Context {
       * @param identifier
       * @return
       */
+    @throws[InstantiateMappingFailedException]
+    @throws[NoSuchMappingException]
     def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true) : Mapping
 
     /**
@@ -148,6 +152,8 @@ abstract class Context {
       * @param identifier
       * @return
       */
+    @throws[InstantiateRelationFailedException]
+    @throws[NoSuchRelationException]
     def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation
 
     /**
@@ -157,6 +163,8 @@ abstract class Context {
       * @param identifier
       * @return
       */
+    @throws[InstantiateTargetFailedException]
+    @throws[NoSuchTargetException]
     def getTarget(identifier: TargetIdentifier): Target
 
     /**
@@ -166,6 +174,8 @@ abstract class Context {
       * @param identifier
       * @return
       */
+    @throws[InstantiateJobFailedException]
+    @throws[NoSuchJobException]
     def getJob(identifier: JobIdentifier): Job
 
     /**
@@ -175,6 +185,8 @@ abstract class Context {
      * @param identifier
      * @return
      */
+    @throws[InstantiateTestFailedException]
+    @throws[NoSuchTestException]
     def getTest(identifier: TestIdentifier): Test
 
     /**
@@ -184,6 +196,8 @@ abstract class Context {
      * @param identifier
      * @return
      */
+    @throws[InstantiateTemplateFailedException]
+    @throws[NoSuchTemplateException]
     def getTemplate(identifier: TemplateIdentifier): Template[_]
 
     /**

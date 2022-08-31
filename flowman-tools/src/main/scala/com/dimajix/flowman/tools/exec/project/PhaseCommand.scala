@@ -64,7 +64,7 @@ sealed class PhaseCommand(phase:Phase) extends Command {
         }
         match {
             case Failure(e) =>
-                logger.error(s"Error instantiating job '$job': ${reasons(e)}")
+                logger.error(s"Error instantiating job '$job':\n  ${reasons(e)}")
                 Status.FAILED
             case Success(job) =>
                 executeJob(session, job, job.parseArguments(args))

@@ -1,0 +1,26 @@
+mappings:
+  tweets-raw:
+    kind: relation
+    relation: tweets-raw
+    filter: id IS NOT NULL
+
+  tweets-flattened:
+    kind: flatten
+    input: tweets-raw
+
+  tweets-deduplicated:
+    kind: deduplicate
+    input: tweets-flattened
+    columns: id
+
+  tweets-extended:
+    kind: extend
+    input: tweets-deduplicated
+    columns:
+      timestamp: "from_unixtime(CAST(timestamp_ms AS LONG)/1000)"
+
+  tweets:
+    kind: drop
+    input: tweets-extended
+    columns:
+      - timestamp_ms

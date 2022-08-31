@@ -770,7 +770,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
                 f(catalog)
             } catch {
                 case NonFatal(ex) if ignoreErrors =>
-                    logger.warn(s"Ignoring error when calling external catalog '${catalog.name}' (${catalog.kind}) for '$operation': ${reasons(ex)}")
+                    logger.warn(s"Ignoring error when calling external catalog '${catalog.name}' (${catalog.kind}) for '$operation':\n  ${reasons(ex)}")
             }
         }
     }

@@ -120,7 +120,7 @@ class JdbcCommandTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
             buildAction = Some(Action("CREATE TABLE t_build(str_col CLOB)",None)),
             verifyAction = Some(Action("CREATE TABLE t_verify(str_col CLOB)",Some("SELECT 1 FROM (VALUES(1)) x WHERE 1 = 0"))),
             truncateAction = Some(Action("CREATE TABLE t_truncate(str_col CLOB)",Some("ILLEGAL SQL"))),
-            destroyAction = Some(Action("CREATE TABLE t_destroy(str_col CLOB)",Some("VALUES(2)"))),
+            destroyAction = Some(Action("CREATE TABLE t_destroy(str_col CLOB)",Some("VALUES(2)")))
         )
 
         // ========== VALIDATE ========================================================================================

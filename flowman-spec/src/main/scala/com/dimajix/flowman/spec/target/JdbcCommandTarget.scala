@@ -276,7 +276,7 @@ class JdbcCommandTargetSpec extends TargetSpec {
             build.map(_.instantiate(context)),
             verify.map(_.instantiate(context)),
             truncate.map(_.instantiate(context)),
-            destroy.map(_.instantiate(context)),
+            destroy.map(_.instantiate(context))
         )
     }
 }

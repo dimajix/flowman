@@ -215,8 +215,8 @@ class DefaultSchemaCheckExecutor extends SchemaCheckExecutor {
 
     private def evaluateResult(df:DataFrame, test:SchemaCheck) : Option[CheckResult] = {
         val result = df.collect()
-        val numSuccess = result.find(_.getBoolean(0) == true).map(_.getLong(1)).getOrElse(0L)
-        val numFailed = result.find(_.getBoolean(0) == false).map(_.getLong(1)).getOrElse(0L)
+        val numSuccess = result.find(r => !r.isNullAt(0) && r.getBoolean(0)).map(_.getLong(1)).getOrElse(0L)
+        val numFailed = result.find(r => r.isNullAt(0) || !r.getBoolean(0)).map(_.getLong(1)).getOrElse(0L)
         val status = if (numFailed > 0) CheckStatus.FAILED else CheckStatus.SUCCESS
         val description = s"$numSuccess records passed, $numFailed records failed"
         Some(CheckResult(Some(test.reference), status, Some(description)))

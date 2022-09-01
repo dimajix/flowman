@@ -8,6 +8,7 @@
 * github-237: jdbcQuery relation should use fields "sql" and "file" instead of "query"
 * github-239: Allow optional SQL statement for creating jdbcTable
 * github-238: Implement new 'jdbcCommand' target
+* github-240: [BUG] Data quality checks in documentation should not fail on NULL values
 
 
 # Version 0.26.1 - 2022-08-03

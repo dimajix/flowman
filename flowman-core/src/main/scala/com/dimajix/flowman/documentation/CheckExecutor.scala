@@ -134,7 +134,7 @@ class CheckExecutor(execution: Execution) {
                     }
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(yellow(s"Error executing column test:\n  ${reasons(ex)}"))
+                        logger.warn(yellow(s"Error executing schema test:\n  ${reasons(ex)}"))
                         CheckResult(Some(test.reference), status = CheckStatus.ERROR)
 
                 }

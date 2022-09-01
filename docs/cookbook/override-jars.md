@@ -18,8 +18,8 @@ You need to add the following lines to your custom `flowman-env.sh` file which i
 # Add MS SQL JDBC Driver. Normally this is handled by the plugin mechanism, but Cloudera already provides some
 # old version of the JDBC driver, and this is the only place where we can force to use our JDBC driver
 SPARK_JARS="$FLOWMAN_HOME/plugins/flowman-mssqlserver/mssql-jdbc-9.2.1.jre8.jar"
-SPARK_OPTS="--conf spark.executor.extraClassPath=mssql-jdbc-9.2.1.jre8.jar"
+SPARK_OPTS="--conf spark.executor.extraClassPath=mssql-jdbc-9.2.1.jre8.jar --conf spark.driver.extraClassPath=$FLOWMAN_HOME/plugins/flowman-mssqlserver/mssql-jdbc-9.2.1.jre8.jar"
 ```
 The first line will explicitly add the plugin jar to the list of jars as passed to `spark-submit`. But this is still
-not enough, we also have to set `spark.executor.extraClassPath` which will *prepend* the specified jars to the
+not enough, we also have to set `spark.executor.extraClassPath` and `spark.driver.extraClassPath` which will *prepend* the specified jars to the
 classpath of the executor.

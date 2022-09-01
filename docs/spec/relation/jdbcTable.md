@@ -74,13 +74,17 @@ relations:
       username: "$frontend_db_username"
       password: "$frontend_db_password"
     # Specify the table
-    table: "users"
-    sql: |
-      CREATE TABLE frontend_users(
-        "str_col" CLOB, 
-        "int_col" INTEGER, 
-        "varchar_col" VARCHAR(10)
-      )
+    table: "frontend_users"
+    sql:
+      - |
+        CREATE TABLE dbo.frontend_users(
+          "id" BIGINT,
+          "description" CLOB, 
+          "flags" INTEGER, 
+          "name" VARCHAR(32)
+        )
+      - CREATE CLUSTERED COLUMNSTORE INDEX CI_frontend_users ON dbo.frontend_users
+      - ALTER TABLE dbo.frontend_users ADD CONSTRAINT PK_frontend_users PRIMARY KEY NONCLUSTERED(id);
 ```
 In this case, Flowman will only use the SQL statement for creating the table. This gives you full control, but at the
 same time, completely disables automatic migrations.

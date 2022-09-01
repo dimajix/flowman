@@ -65,6 +65,13 @@
                 <spark-mssql-connector.suffix>_${scala.api_version}</spark-mssql-connector.suffix>
             </properties>
         </profile>
+        <profile>
+            <id>spark-3.3</id>
+            <properties>
+                <spark-mssql-connector.version>1.2.0</spark-mssql-connector.version>
+                <spark-mssql-connector.suffix>_${scala.api_version}</spark-mssql-connector.suffix>
+            </properties>
+        </profile>
     </profiles>
 
     <build>

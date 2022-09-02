@@ -209,7 +209,7 @@ class DefaultColumnCheckExecutor extends ColumnCheckExecutor {
                 executePredicateTest(df.filter(df(column).isNotNull), check, df(column).between(lower, upper))
 
             case v: ExpressionColumnCheck =>
-                executePredicateTest(df, check, expr(v.expression).cast(BooleanType))
+                executePredicateTest(df, check, coalesce(expr(v.expression).cast(BooleanType), lit(false)))
 
             case l: LengthColumnCheck =>
                 val condition =  (l.minimumLength, l.maximumLength) match {
@@ -248,8 +248,8 @@ class DefaultColumnCheckExecutor extends ColumnCheckExecutor {
 
     private def executePredicateTest(df: DataFrame, test:ColumnCheck, predicate:Column) : Option[CheckResult] = {
         val result = df.groupBy(predicate).count().collect()
-        val numSuccess = result.find(r => !r.isNullAt(0) && r.getBoolean(0)).map(_.getLong(1)).getOrElse(0L)
-        val numFailed = result.find(r => r.isNullAt(0) || !r.getBoolean(0)).map(_.getLong(1)).getOrElse(0L)
+        val numSuccess = result.find(r => r.getBoolean(0)).map(_.getLong(1)).getOrElse(0L)
+        val numFailed = result.find(r => !r.getBoolean(0)).map(_.getLong(1)).getOrElse(0L)
         val status = if (numFailed > 0) CheckStatus.FAILED else CheckStatus.SUCCESS
         val description = s"$numSuccess records passed, $numFailed records failed"
         Some(CheckResult(Some(test.reference), status, Some(description)))

@@ -17,6 +17,11 @@ jobs:
     targets:
       - aggregates_v2
 
+  v3:
+    extends:
+      - base
+    targets:
+      - aggregates_v3
 
 targets:
   aggregates_v1:
@@ -27,4 +32,9 @@ targets:
   aggregates_v2:
     kind: relation
     relation: aggregates_v2
+    mapping: aggregates
+
+  aggregates_v3:
+    kind: relation
+    relation: aggregates_v3
     mapping: aggregates

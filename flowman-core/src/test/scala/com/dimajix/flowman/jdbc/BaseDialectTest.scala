@@ -26,6 +26,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.catalog
 import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableType
@@ -91,7 +92,7 @@ class BaseDialectTest extends AnyFlatSpec with Matchers {
                 Field("name", com.dimajix.flowman.types.StringType),
                 Field("sex", com.dimajix.flowman.types.StringType)
             ),
-            primaryKey = Seq("id")
+            primaryKey = Some(PrimaryKey(Seq("id")))
         )
 
         val sql = dialect.statement.createTable(tableDefinition)

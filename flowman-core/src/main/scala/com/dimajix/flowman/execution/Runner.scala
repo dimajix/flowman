@@ -92,7 +92,7 @@ private[execution] sealed class RunnerImpl {
             case Status.SKIPPED =>
                 logger.info(green(s"Skipped phase '$phase' for target '${target.identifier}'"))
             case Status.FAILED if result.exception.nonEmpty =>
-                logger.error(red(s"Failed phase '$phase' for target '${target.identifier}'  after ${TimeFormatter.toString(duration)} with exception: "), result.exception.get)
+                logger.error(red(s"Failed phase '$phase' for target '${target.identifier}'  after ${TimeFormatter.toString(duration)} with exception:\n  ${reasons(result.exception.get)}"))
             case Status.FAILED =>
                 logger.error(red(s"Failed phase '$phase' for target '${target.identifier}' after ${TimeFormatter.toString(duration)}"))
             case Status.ABORTED =>

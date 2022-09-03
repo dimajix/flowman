@@ -266,28 +266,28 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
 
     it should "handle changed primary key" in {
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
-            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Some(PrimaryKey(Seq("f1", "f2")))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Some(PrimaryKey(Seq("f1", "f2")))),
             MigrationPolicy.RELAXED
         ) should be (false)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
-            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f2", "f1")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Some(PrimaryKey(Seq("f1", "f2")))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Some(PrimaryKey(Seq("f2", "f1")))),
             MigrationPolicy.RELAXED
         ) should be (false)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1")),
-            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Some(PrimaryKey(Seq("f1")))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Some(PrimaryKey(Seq("f1", "f2")))),
             MigrationPolicy.RELAXED
         ) should be (true)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
-            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq()),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Some(PrimaryKey(Seq("f1", "f2")))),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=None),
             MigrationPolicy.RELAXED
         ) should be (true)
         TableChange.requiresMigration(
-            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=Seq()),
-            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Seq("f1", "f2")),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("f1", StringType), Field("f2", StringType)), primaryKey=None),
+            TableDefinition(TableIdentifier(""), columns=Seq(Field("F1", StringType), Field("f2", StringType)), primaryKey=Some(PrimaryKey(Seq("f1", "f2")))),
             MigrationPolicy.RELAXED
         ) should be (true)
     }
@@ -556,7 +556,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
                 Field("f2", LongType),
                 Field("f3", StringType)
             ),
-            primaryKey = Seq("f1", "f2")
+            primaryKey = Some(PrimaryKey(Seq("f1", "f2")))
         )
         val newTable = TableDefinition(TableIdentifier(""),
             columns=Seq(
@@ -564,7 +564,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
                 Field("F2", LongType),
                 Field("F3", StringType)
             ),
-            primaryKey = Seq("F2", "f1")
+            primaryKey = Some(PrimaryKey(Seq("F2", "f1")))
         )
         val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
         changes should be (Seq())
@@ -580,7 +580,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
                 Field("f2", LongType, nullable=false),
                 Field("f3", StringType)
             ),
-            primaryKey = Seq()
+            primaryKey = None
         )
         val newTable = TableDefinition(TableIdentifier(""),
             columns=Seq(
@@ -588,14 +588,14 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
                 Field("F2", LongType, nullable=false),
                 Field("F3", StringType)
             ),
-            primaryKey = Seq("f1", "f2")
+            primaryKey = Some(PrimaryKey(Seq("f1", "f2")))
         )
 
         val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
-        changes should be (Seq(UpdateColumnNullability("f1",false), CreatePrimaryKey(Seq("f1", "f2"))))
+        changes should be (Seq(UpdateColumnNullability("f1",false), CreatePrimaryKey(Seq("f1", "f2"), false)))
 
         val changes2 = TableChange.migrate(oldTable, newTable, MigrationPolicy.STRICT)
-        changes2 should be (Seq(UpdateColumnNullability("f1",false), CreatePrimaryKey(Seq("f1", "f2"))))
+        changes2 should be (Seq(UpdateColumnNullability("f1",false), CreatePrimaryKey(Seq("f1", "f2"), false)))
     }
 
     it should "drop PK" in {
@@ -605,7 +605,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
                 Field("f2", LongType),
                 Field("f3", StringType)
             ),
-            primaryKey = Seq("f1", "f2")
+            primaryKey = Some(PrimaryKey(Seq("f1", "f2")))
         )
         val newTable = TableDefinition(TableIdentifier(""),
             columns=Seq(
@@ -613,7 +613,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
                 Field("f2", LongType),
                 Field("f3", StringType)
             ),
-            primaryKey = Seq()
+            primaryKey = None
         )
 
         val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
@@ -630,7 +630,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
                 Field("f2", LongType),
                 Field("f3", StringType)
             ),
-            primaryKey = Seq("f1", "f2")
+            primaryKey = Some(PrimaryKey(Seq("f1", "f2")))
         )
         val newTable = TableDefinition(TableIdentifier(""),
             columns=Seq(
@@ -638,19 +638,19 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
                 Field("f2", LongType),
                 Field("f3", StringType)
             ),
-            primaryKey = Seq("f2")
+            primaryKey = Some(PrimaryKey(Seq("f2")))
         )
 
         val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
         changes should be (Seq(
             DropPrimaryKey(),
-            CreatePrimaryKey(Seq("f2"))
+            CreatePrimaryKey(Seq("f2"), false)
         ))
 
         val changes2 = TableChange.migrate(oldTable, newTable, MigrationPolicy.STRICT)
         changes2 should be (Seq(
             DropPrimaryKey(),
-            CreatePrimaryKey(Seq("f2"))
+            CreatePrimaryKey(Seq("f2"), false)
         ))
     }
 
@@ -661,7 +661,7 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
                 Field("f2", LongType),
                 Field("f3", StringType)
             ),
-            primaryKey = Seq("f1", "f2")
+            primaryKey = Some(PrimaryKey(Seq("f1", "f2")))
         )
         val newTable = TableDefinition(TableIdentifier(""),
             columns=Seq(
@@ -669,21 +669,21 @@ class TableChangeTest extends AnyFlatSpec with Matchers {
                 Field("f2", LongType),
                 Field("f3", StringType)
             ),
-            primaryKey = Seq("f1", "f2")
+            primaryKey = Some(PrimaryKey(Seq("f1", "f2")))
         )
 
         val changes = TableChange.migrate(oldTable, newTable, MigrationPolicy.STRICT)
         changes should be (Seq(
             DropPrimaryKey(),
             UpdateColumnType("f1", IntegerType),
-            CreatePrimaryKey(Seq("f1", "f2"))
+            CreatePrimaryKey(Seq("f1", "f2"), false)
         ))
 
         val changes2 = TableChange.migrate(oldTable, newTable, MigrationPolicy.RELAXED)
         changes2 should be (Seq(
             DropPrimaryKey(),
             UpdateColumnType("f1", IntegerType),
-            CreatePrimaryKey(Seq("f1", "f2"))
+            CreatePrimaryKey(Seq("f1", "f2"), false)
         ))
     }
 

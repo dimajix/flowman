@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.tryWith
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
 import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
@@ -236,10 +237,11 @@ object JdbcUtils {
         val currentSchema = getTableSchema(conn, table, options)
         withStatement(conn, options) { stmt =>
             val pk = dialect.command.getPrimaryKey(stmt, realTable)
+            val pkCols = pk.toSeq.flatMap(_.normalize().columns)
             val idxs = dialect.command.getIndexes(stmt, realTable)
                 // Remove primary key
                 .filter { idx =>
-                    idx.normalize().columns != pk.map(_.toLowerCase(Locale.ROOT)).sorted
+                    idx.normalize().columns != pkCols
                 }
             val storage = dialect.command.getStorageFormat(stmt, table)
 
@@ -649,7 +651,6 @@ object JdbcUtils {
      */
     def alterTable(conn:Connection, table:TableIdentifier, changes:Seq[TableChange], options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val statements = dialect.statement
         val commands = dialect.command
 
         // Get current schema, so we can lookup existing types etc
@@ -694,7 +695,7 @@ object JdbcUtils {
                 Some((stmt:Statement) => commands.dropIndex(stmt, table, idx.name))
             case pk:CreatePrimaryKey =>
                 logger.info(s"Creating primary key for JDBC table $table on columns ${pk.columns.mkString(",")}")
-                Some((stmt:Statement) => commands.addPrimaryKey(stmt, table, pk.columns))
+                Some((stmt:Statement) => commands.addPrimaryKey(stmt, table, PrimaryKey(pk.columns, pk.clustered)))
             case pk:DropPrimaryKey =>
                 logger.info(s"Dropping primary key from JDBC table $table")
                 Some((stmt:Statement) => commands.dropPrimaryKey(stmt, table))

@@ -38,6 +38,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
@@ -1282,7 +1283,7 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
                     Field("int_col", IntegerType, nullable=false),
                     Field("varchar_col", VarcharType(32), nullable=false)
                 ),
-                primaryKey = Seq("int_col", "varchar_col")
+                primaryKey = Some(PrimaryKey(Seq("int_col", "varchar_col")))
             ))
 
         // == Destroy =================================================================================================

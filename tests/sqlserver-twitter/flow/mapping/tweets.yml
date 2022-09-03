@@ -8,19 +8,21 @@ mappings:
     kind: flatten
     input: tweets-raw
 
-  tweets-deduplicated:
-    kind: deduplicate
-    input: tweets-flattened
-    columns: id
-
   tweets-extended:
     kind: extend
-    input: tweets-deduplicated
+    input: tweets-flattened
     columns:
+      # Make column non-nullable, since we require a non-nullable unique index
+      id: "COALESCE(id, 1)"
       timestamp: "from_unixtime(CAST(timestamp_ms AS LONG)/1000)"
+
+  tweets-deduplicated:
+    kind: deduplicate
+    input: tweets-extended
+    columns: id
 
   tweets:
     kind: drop
-    input: tweets-extended
+    input: tweets-deduplicated
     columns:
       - timestamp_ms

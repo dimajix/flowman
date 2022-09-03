@@ -19,6 +19,7 @@ package com.dimajix.flowman.jdbc
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
@@ -74,7 +75,7 @@ abstract class SqlStatements {
     def updateColumnComment(table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): String
 
     def dropPrimaryKey(table: TableIdentifier) : String
-    def addPrimaryKey(table: TableIdentifier, columns:Seq[String]) : String
+    def addPrimaryKey(table: TableIdentifier, pk:PrimaryKey) : String
 
     def dropIndex(table: TableIdentifier, indexName: String) : String
     def createIndex(table: TableIdentifier, index:TableIndex) : String

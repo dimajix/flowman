@@ -45,7 +45,7 @@ object TableChange {
 
     case class UpdatePartitionColumns(columns:Seq[Field]) extends PartitionChange
 
-    case class CreatePrimaryKey(columns:Seq[String]) extends IndexChange
+    case class CreatePrimaryKey(columns:Seq[String], clustered:Boolean) extends IndexChange
     case class DropPrimaryKey() extends IndexChange
     case class CreateIndex(name:String, columns:Seq[String], unique:Boolean) extends IndexChange
     case class DropIndex(name:String) extends IndexChange
@@ -122,14 +122,14 @@ object TableChange {
                         else if (migrationPolicy == MigrationPolicy.RELAXED && coerce(srcField.ftype, tgtField.ftype) != srcField.ftype)
                             Seq(UpdateColumnType(srcField.name, tgtField.ftype, tgtField.charset, tgtField.collation))
                         // If new PK contains this field, we better always update data type
-                        else if (migrationPolicy == MigrationPolicy.RELAXED && normalizedTarget.primaryKey.contains(srcField.name.toLowerCase(Locale.ROOT))
+                        else if (migrationPolicy == MigrationPolicy.RELAXED && normalizedTarget.primaryKey.exists(_.columns.contains(srcField.name.toLowerCase(Locale.ROOT)))
                             && srcField.ftype != tgtField.ftype)
                             Seq(UpdateColumnType(srcField.name, tgtField.ftype, tgtField.charset, tgtField.collation))
                         else
                             Seq.empty
 
                     // If the data type of a PK element changes, then the PK needs to recreated
-                    if (modType.nonEmpty && normalizedTarget.primaryKey.contains(srcField.name.toLowerCase(Locale.ROOT)))
+                    if (modType.nonEmpty && normalizedTarget.primaryKey.exists(_.columns.contains(srcField.name.toLowerCase(Locale.ROOT))))
                         changePk = true
 
                     val modNullability =
@@ -138,7 +138,7 @@ object TableChange {
                         else if (migrationPolicy == MigrationPolicy.RELAXED && !srcField.nullable && tgtField.nullable)
                             Seq(UpdateColumnNullability(srcField.name, tgtField.nullable))
                         // If new PK contains this field, we also might be required to update nullability
-                        else if (migrationPolicy == MigrationPolicy.RELAXED && normalizedTarget.primaryKey.contains(srcField.name.toLowerCase(Locale.ROOT))
+                        else if (migrationPolicy == MigrationPolicy.RELAXED && normalizedTarget.primaryKey.exists(_.columns.contains(srcField.name.toLowerCase(Locale.ROOT)))
                             && changePk && srcField.nullable && !tgtField.nullable)
                             Seq(UpdateColumnNullability(srcField.name, tgtField.nullable))
                         else
@@ -150,7 +150,7 @@ object TableChange {
                             Seq.empty
 
                     // If the data type of an index changes, then the Index needs to be recreated
-                    if (modType.nonEmpty) {
+                    if (modType.nonEmpty || modNullability.nonEmpty) {
                         normalizedTarget.indexes.foreach { idx =>
                             if (idx.columns.contains(srcField.name.toLowerCase(Locale.ROOT)))
                                 changeIndexes.add(idx.name)
@@ -163,13 +163,12 @@ object TableChange {
 
         // Check if primary key needs to be dropped
         val dropPk = if(normalizedSource.primaryKey.nonEmpty && changePk)
-            Some(DropPrimaryKey())
-        else
-            None
-        val createPk = if (normalizedTarget.primaryKey.nonEmpty && changePk)
-            Some(CreatePrimaryKey(targetTable.primaryKey))
-                else
-            None
+                Some(DropPrimaryKey())
+            else
+                None
+        val createPk = normalizedTarget.primaryKey
+            .filter(_.columns.nonEmpty && changePk)
+            .map(pk => CreatePrimaryKey(pk.columns, pk.clustered))
 
         // Check which Indexes need to be dropped
         val dropIndexes = sourceTable.indexes.flatMap { src =>

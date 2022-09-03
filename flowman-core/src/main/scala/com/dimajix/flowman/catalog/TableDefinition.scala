@@ -41,6 +41,7 @@ object TableDefinition {
             case CatalogTableType.EXTERNAL => TableType.TABLE
             case CatalogTableType.MANAGED => TableType.TABLE
             case CatalogTableType.VIEW => TableType.VIEW
+            case _ => TableType.UNKNOWN
         }
         TableDefinition(
             TableIdentifier(id.table, id.database.toSeq),
@@ -55,7 +56,7 @@ final case class TableDefinition(
     tableType: TableType = TableType.UNKNOWN,
     columns: Seq[Field] = Seq.empty,
     comment: Option[String] = None,
-    primaryKey: Seq[String] = Seq.empty,
+    primaryKey: Option[PrimaryKey] = None,
     indexes: Seq[TableIndex] = Seq.empty,
     partitionColumnNames: Seq[String] = Seq.empty,
     storageFormat: Option[String] = None
@@ -77,8 +78,8 @@ final case class TableDefinition(
 
     def normalize() : TableDefinition = copy(
         columns = columns.map(f => f.copy(name = f.name.toLowerCase(Locale.ROOT))),
-        primaryKey = primaryKey.map(_.toLowerCase(Locale.ROOT)).sorted,
-        indexes = indexes.map(_.normalize()),
+        primaryKey = primaryKey.filter(_.columns.nonEmpty).map(_.normalize()),
+        indexes = indexes.filter(_.columns.nonEmpty).map(_.normalize()),
         partitionColumnNames = partitionColumnNames.map(_.toLowerCase(Locale.ROOT)),
         storageFormat = storageFormat.map(_.toLowerCase(Locale.ROOT))
     )
@@ -88,10 +89,20 @@ final case class TableDefinition(
 final case class TableIndex(
     name: String,
     columns: Seq[String],
-    unique:Boolean = false
+    unique: Boolean = false
 ) {
     def normalize() : TableIndex = copy(
         name = name.toLowerCase(Locale.ROOT),
+        columns = columns.map(_.toLowerCase(Locale.ROOT)).sorted
+    )
+}
+
+
+final case class PrimaryKey(
+    columns: Seq[String],
+    clustered: Boolean = false
+) {
+    def normalize(): PrimaryKey = copy(
         columns = columns.map(_.toLowerCase(Locale.ROOT)).sorted
     )
 }

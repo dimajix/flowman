@@ -8,8 +8,9 @@ relations:
       fields:
         - name: id
           type: long
+        # Reserve a little bit more space because of Unicode hiccups (🔥 is 5 bytes in UTF-8, 2 chars in MS SQL, and 1 char in Spark)
         - name: text
-          type: varchar(160)
+          type: varchar(320)
         - name: lang
           type: char(2)
         - name: timestamp_ms

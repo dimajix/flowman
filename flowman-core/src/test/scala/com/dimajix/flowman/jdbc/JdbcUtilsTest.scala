@@ -63,7 +63,7 @@ class JdbcUtilsTest extends AnyFlatSpec with Matchers with LocalTempDir {
                 Field("int_field", IntegerType)
             ),
             None,
-            Seq()
+            None
         )
         JdbcUtils.createTable(conn, table, options)
 
@@ -89,7 +89,7 @@ class JdbcUtilsTest extends AnyFlatSpec with Matchers with LocalTempDir {
                 Field("int_field", IntegerType, nullable=false)
             ),
             None,
-            Seq()
+            None
         )
         JdbcUtils.createTable(conn, table, options)
 

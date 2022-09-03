@@ -19,6 +19,7 @@ package com.dimajix.flowman.jdbc
 import java.sql.DatabaseMetaData
 import java.sql.Date
 import java.sql.JDBCType
+import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.Statement
 import java.util.Locale
@@ -35,6 +36,7 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.flowman.catalog.PartitionChange
 import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
 import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
@@ -267,8 +269,12 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
             val desc = dialect.expr.comment(field.description)
             s"$name $typ$col$nullable$desc"
         }
+
         // Primary key
-        val pk = if (table.primaryKey.nonEmpty) Seq(s"PRIMARY KEY (${table.primaryKey.map(dialect.quoteIdentifier).mkString(",")})") else Seq()
+        val pk = table.primaryKey match {
+            case Some(primaryKey) if primaryKey.columns.nonEmpty => Seq(dialect.expr.primaryKey(primaryKey.columns, primaryKey.clustered))
+            case None => Seq.empty
+        }
 
         // Full schema
         val schema = columns ++ pk
@@ -424,8 +430,9 @@ class BaseStatements(dialect: SqlDialect) extends SqlStatements {
 
     override def dropPrimaryKey(table: TableIdentifier): String = ???
 
-    override def addPrimaryKey(table: TableIdentifier, columns: Seq[String]): String = {
-        s"ALTER TABLE ${dialect.quote(table)} ADD PRIMARY KEY (${columns.map(dialect.quoteIdentifier).mkString(",")})"
+    override def addPrimaryKey(table: TableIdentifier, pk:PrimaryKey): String = {
+        val pksql = dialect.expr.primaryKey(pk.columns, pk.clustered)
+        s"ALTER TABLE ${dialect.quote(table)} ADD $pksql"
     }
 
     override def dropIndex(table: TableIdentifier, indexName: String): String = {
@@ -473,6 +480,11 @@ class BaseExpressions(dialect: SqlDialect) extends SqlExpressions {
 
     override def comment(comment:Option[String]) : String = {
         ""
+    }
+
+    override def primaryKey(columns: Seq[String], clustered:Boolean) : String = {
+        require(columns.nonEmpty)
+        s"PRIMARY KEY (${columns.map(dialect.quoteIdentifier).mkString(",")})"
     }
 }
 
@@ -532,7 +544,7 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
         ???
     }
 
-    override def getPrimaryKey(statement:Statement, table:TableIdentifier) : Seq[String] = {
+    override def getPrimaryKey(statement:Statement, table:TableIdentifier) : Option[PrimaryKey] = {
         val con = statement.getConnection
         val meta = con.getMetaData
         val pkrs = meta.getPrimaryKeys(null, table.database.orNull, table.table)
@@ -544,7 +556,12 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
             pk.append((seq,col))
         }
         pkrs.close()
-        pk.sortBy(_._1).map(_._2)
+
+        val cols = pk.sortBy(_._1).map(_._2)
+        if (cols.nonEmpty)
+            Some(PrimaryKey(cols))
+        else
+            None
     }
 
     override def getIndexes(statement:Statement, table:TableIdentifier) : Seq[TableIndex] = {
@@ -599,13 +616,25 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
         statement.executeUpdate(indexSql)
     }
 
-    override def addPrimaryKey(statement:Statement, table: TableIdentifier, columns:Seq[String]) : Unit = {
-        val sql = dialect.statement.addPrimaryKey(table, columns)
+    override def addPrimaryKey(statement:Statement, table: TableIdentifier, pk:PrimaryKey) : Unit = {
+        val sql = dialect.statement.addPrimaryKey(table, pk)
         statement.executeUpdate(sql)
     }
 
     override def dropPrimaryKey(statement: Statement, table: TableIdentifier): Unit = {
         val sql = dialect.statement.dropPrimaryKey(table)
         statement.executeUpdate(sql)
+    }
+
+    protected def query[T](statement: Statement, sql: String)(fn: (ResultSet) => Unit): Unit = {
+        val rs = statement.executeQuery(sql)
+        try {
+            while (rs.next()) {
+                fn(rs)
+            }
+        }
+        finally {
+            rs.close()
+        }
     }
 }

@@ -38,6 +38,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
@@ -1392,7 +1393,7 @@ class H2JdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkS
                     Field("INT_COL", IntegerType, nullable=false),
                     Field("VARCHAR_COL", VarcharType(32), nullable=false)
                 ),
-                primaryKey = Seq("INT_COL", "VARCHAR_COL")
+                primaryKey = Some(PrimaryKey(Seq("INT_COL", "VARCHAR_COL")))
             ))
 
         // == Destroy =================================================================================================

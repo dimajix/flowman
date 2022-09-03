@@ -17,6 +17,7 @@
 package com.dimajix.flowman.jdbc
 
 import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.catalog.TableDefinition
 
 
 abstract class SqlExpressions {
@@ -29,4 +30,6 @@ abstract class SqlExpressions {
     def collate(charset:Option[String], collation:Option[String]) : String
 
     def comment(comment:Option[String]) : String
+
+    def primaryKey(columns: Seq[String], clustered:Boolean) : String
 }

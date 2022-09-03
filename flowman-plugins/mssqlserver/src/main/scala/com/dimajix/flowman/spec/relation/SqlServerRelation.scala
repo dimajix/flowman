@@ -16,12 +16,15 @@
 
 package com.dimajix.flowman.spec.relation
 
+import java.util.Locale
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonPropertyDescription
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
@@ -62,7 +65,7 @@ case class SqlServerRelation(
                 TableType.TABLE,
                 columns = columns,
                 comment = schema.description,
-                primaryKey = pk,
+                primaryKey = if (pk.nonEmpty) Some(PrimaryKey(pk, clustered = !storageFormat.map(_.toLowerCase(Locale.ROOT)).contains("columnstore"))) else None,
                 indexes = indexes,
                 storageFormat = storageFormat
                 // Currently partition tables are not supported on a physical level, only on a logical level

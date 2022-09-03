@@ -39,6 +39,7 @@ import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
@@ -102,7 +103,7 @@ abstract class JdbcTableRelationBase(
                 TableType.TABLE,
                 columns = columns,
                 comment = schema.description,
-                primaryKey = pk,
+                primaryKey = if (pk.nonEmpty) Some(PrimaryKey(pk)) else None,
                 indexes = indexes
                 // Currently partition tables are not supported on a physical level, only on a logical level
                 // partitionColumnNames = partitions.map(_.name)
@@ -519,8 +520,8 @@ abstract class JdbcTableRelationBase(
     protected def doCreate(con:java.sql.Connection, options:JDBCOptions): Unit = {
         tableDefinition match {
             case Some(table) =>
-                val pk = tableDefinition.filter(_.primaryKey.nonEmpty).map(t => s"\n  Primary key ${t.primaryKey.mkString(",")}").getOrElse("")
-                val idx = tableDefinition.map(t => t.indexes.map(i => s"\n  Index '${i.name}' on ${i.columns.mkString(",")}").foldLeft("")(_ + _)).getOrElse("")
+                val pk = table.primaryKey.filter(_.columns.nonEmpty).map(t => s"\n  Primary key ${t.columns.mkString(",")}").getOrElse("")
+                val idx = table.indexes.map(i => s"\n  Index '${i.name}' on ${i.columns.mkString(",")}").foldLeft("")(_ + _)
                 logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier with schema\n${schema.map(_.treeString).orNull}$pk$idx")
                 JdbcUtils.createTable(con, table, options)
             case None if sql.nonEmpty =>

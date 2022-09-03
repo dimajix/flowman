@@ -44,6 +44,7 @@ relations:
       - name: "measurement_idx0"
         columns: [country]
 
+
   aggregates_v2:
     kind: sqlserver
     connection: sql_server
@@ -84,4 +85,42 @@ relations:
     indexes:
       - name: "measurement_idx0"
         columns: [date,country]
+
+
+  aggregates_v3:
+    kind: sqlserver
+    connection: sql_server
+    database: dbo
+    table: weather
+    storageFormat: COLUMNSTORE
+    schema:
+      kind: inline
+      fields:
+        - name: date
+          type: DATE
+        - name: country
+          type: CHAR(2)
+          description: "FIPS Country Code"
+        - name: min_wind_speed
+          type: DOUBLE
+          description: "Minimum wind speed (m/s)"
+        - name: max_wind_speed
+          type: DOUBLE
+          description: "Maximum wind speed (m/s)"
+        - name: AVG_WIND_SPEED
+          type: FLOAT
+          description: "Average wind speed (m/s)"
+        - name: min_temperature
+          type: FLOAT
+        - name: max_temperature
+          type: FLOAT
+        - name: avg_temperature
+          type: FLOAT
+        - name: comment
+          type: VARCHAR(32)
+          collation: Latin1_General_CI_AI
+    # (Optionally) specify a primary key
+    primaryKey:
+      - date
+      - country
 

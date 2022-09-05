@@ -50,8 +50,11 @@ targets:
         WITH CHANGE_TRACKING OFF
     # Fill index by starting background indexing process
     build:
-      sql: |
-        ALTER FULLTEXT INDEX ON dbo.tweets START FULL POPULATION
+      transactional: true
+      sql:
+        - ALTER FULLTEXT INDEX ON dbo.tweets START FULL POPULATION
+        - EXEC sp_rename 'tweets', 'tweets2'
+        - EXEC sp_rename 'tweets2', 'tweets'
     # Delete index
     destroy:
       # Check that index really exists

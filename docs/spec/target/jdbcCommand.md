@@ -110,6 +110,11 @@ single row with a single integer column. If that column contains a value of `1` 
 to be in a *dirty* state and the action will be executed. Otherwise, it will be skipped. If no row is returned, the 
 target is considered to be in *clean* state, and the action will be skipped.
 
+* `transactional` **(optional)** *(type: boolean)* *(default: false)*:
+If set to `true`, then all SQL commands within the action will be executed as part of a single database transaction.
+Note that each database might impose some restrictions on what can be performed within a single transaction, especially
+not all DDL commands might be supported inside a transaction by all database servers.
+
 
 ## Supported Execution Phases
 * `VALIDATE` - The action specified in `validate` will be executed.

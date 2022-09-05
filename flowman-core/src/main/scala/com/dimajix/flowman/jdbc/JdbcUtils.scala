@@ -153,7 +153,7 @@ object JdbcUtils {
             result
         } catch {
             case ex:SQLException =>
-                logger.error(s"SQL transaction failed, rolling back: ${reasons(ex)}")
+                logger.error(s"SQL transaction failed, rolling back. Exception: ${reasons(ex)}")
                 con.rollback()
                 throw ex
         } finally {

@@ -199,4 +199,101 @@ class JdbcCommandTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
         result_destroy2.status should be(Status.FAILED)
         result_destroy2.exception.get shouldBe a[SQLException]
     }
+
+    it should "work in transactional mode" in {
+        val session = Session.builder.disableSpark().build()
+        val execution = session.execution
+        val context = session.context
+
+        val db = tempDir.toPath.resolve("mydb")
+        val url = "jdbc:derby:" + db + ";create=true"
+        val driver = "org.apache.derby.jdbc.EmbeddedDriver"
+        val connection = JdbcConnection(
+            Connection.Properties(context, "jdbc"),
+            url,
+            driver
+        )
+        val target = JdbcCommandTarget(
+            Target.Properties(context, "jdbc"),
+            connection = ConnectionReference(context, Prototype.of(connection.asInstanceOf[Connection])),
+            validateAction = Some(Action(Seq("CREATE TABLE t_validate2(str_col CLOB)"), Some("VALUES(1)"), transactional=true)),
+            createAction = Some(Action(Seq("CREATE TABLE t_create2(str_col CLOB)"), Some("VALUES(0)"), transactional=true)),
+            buildAction = Some(Action(Seq("CREATE TABLE t_build2(str_col CLOB)"), None, transactional=true)),
+            verifyAction = Some(Action(Seq("CREATE TABLE t_verify2(str_col CLOB)"), Some("SELECT 1 FROM (VALUES(1)) x WHERE 1 = 0"), transactional=true)),
+            truncateAction = Some(Action(Seq("CREATE TABLE t_truncate2(str_col CLOB)"), Some("ILLEGAL SQL"), transactional=true)),
+            destroyAction = Some(Action(Seq("CREATE TABLE t_destroy2(str_col CLOB)"), Some("VALUES(2)"), transactional=true))
+        )
+
+        // ========== VALIDATE ========================================================================================
+        target.dirty(execution, Phase.VALIDATE) should be(Yes)
+        val result_validate1 = target.execute(execution, Phase.VALIDATE)
+        result_validate1.status should be(Status.SUCCESS)
+        result_validate1.exception should be(None)
+        noException should be thrownBy (withDatabase(driver, url) {
+            _.executeQuery("SELECT COUNT(*) FROM t_validate").close()
+        })
+        val result_validate2 = target.execute(execution, Phase.VALIDATE)
+        result_validate2.status should be(Status.FAILED)
+        result_validate2.exception.get shouldBe a[SQLException]
+
+        // ========== CREATE ==========================================================================================
+        target.dirty(execution, Phase.CREATE) should be(No)
+        val result_create1 = target.execute(execution, Phase.CREATE)
+        result_create1.status should be(Status.SUCCESS)
+        result_create1.exception should be(None)
+        a[SQLException] should be thrownBy (withDatabase(driver, url) {
+            _.executeQuery("SELECT COUNT(*) FROM t_create").close()
+        })
+        val result_create2 = target.execute(execution, Phase.CREATE)
+        result_create2.status should be(Status.SUCCESS)
+        result_create2.exception should be(None)
+
+        // ========== BUILD ===========================================================================================
+        target.dirty(execution, Phase.BUILD) should be(Yes)
+        val result_build1 = target.execute(execution, Phase.BUILD)
+        result_build1.status should be(Status.SUCCESS)
+        result_build1.exception should be(None)
+        noException should be thrownBy (withDatabase(driver, url) {
+            _.executeQuery("SELECT COUNT(*) FROM t_build").close()
+        })
+        val result_build2 = target.execute(execution, Phase.BUILD)
+        result_build2.status should be(Status.FAILED)
+        result_build2.exception.get shouldBe a[SQLException]
+
+        // ========== VERIFY ==========================================================================================
+        target.dirty(execution, Phase.VERIFY) should be(No)
+        val result_verify1 = target.execute(execution, Phase.VERIFY)
+        result_verify1.status should be(Status.SUCCESS)
+        result_verify1.exception should be(None)
+        a[SQLException] should be thrownBy (withDatabase(driver, url) {
+            _.executeQuery("SELECT COUNT(*) FROM t_verify").close()
+        })
+        val result_verify2 = target.execute(execution, Phase.VERIFY)
+        result_verify2.status should be(Status.SUCCESS)
+        result_verify2.exception should be(None)
+
+        // ========== TRUNCATE ========================================================================================
+        target.dirty(execution, Phase.TRUNCATE) should be(Unknown)
+        val result_truncate1 = target.execute(execution, Phase.TRUNCATE)
+        result_truncate1.status should be(Status.SUCCESS)
+        result_truncate1.exception should be(None)
+        noException should be thrownBy (withDatabase(driver, url) {
+            _.executeQuery("SELECT COUNT(*) FROM t_truncate").close()
+        })
+        val result_truncate2 = target.execute(execution, Phase.TRUNCATE)
+        result_truncate2.status should be(Status.FAILED)
+        result_truncate2.exception.get shouldBe a[SQLException]
+
+        // ========== DESTROY =========================================================================================
+        target.dirty(execution, Phase.DESTROY) should be(Yes)
+        val result_destroy1 = target.execute(execution, Phase.DESTROY)
+        result_destroy1.status should be(Status.SUCCESS)
+        result_destroy1.exception should be(None)
+        noException should be thrownBy (withDatabase(driver, url) {
+            _.executeQuery("SELECT COUNT(*) FROM t_destroy").close()
+        })
+        val result_destroy2 = target.execute(execution, Phase.DESTROY)
+        result_destroy2.status should be(Status.FAILED)
+        result_destroy2.exception.get shouldBe a[SQLException]
+    }
 }

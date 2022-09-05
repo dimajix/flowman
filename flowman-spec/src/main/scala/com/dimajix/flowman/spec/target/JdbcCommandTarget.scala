@@ -29,6 +29,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
+import com.dimajix.common.text.StringUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
@@ -46,7 +47,8 @@ import com.dimajix.flowman.spec.target.JdbcCommandTargetSpec.ActionSpec
 object JdbcCommandTarget {
     case class Action(
         sql: Seq[String],
-        condition:Option[String] = None
+        condition:Option[String] = None,
+        transactional: Boolean = false
     )
 }
 
@@ -119,7 +121,7 @@ case class JdbcCommandTarget (
     }
     private def isDirty(action:Action, phase:Phase) : Trilean = {
         action.condition.map { c =>
-            withStatement { stmt =>
+            withStatement(false) { stmt =>
                 try {
                     val result = stmt.executeQuery(c)
                     try {
@@ -214,10 +216,10 @@ case class JdbcCommandTarget (
             val dirty = isDirty(a, phase)
             if (dirty == Yes || dirty == Unknown) {
                 logger.info(s"Executing phase $phase for jdbcCommand '$identifier'")
-                withStatement { stmt =>
+                withStatement(a.transactional) { stmt =>
                     a.sql.foreach { sql =>
                         try {
-                            logger.debug(s" - Executing SQL: $sql")
+                            logger.info(s" - ${StringUtils.truncate(sql, 60)}")
                             stmt.executeUpdate(sql)
                         }
                         catch {
@@ -230,6 +232,7 @@ case class JdbcCommandTarget (
             }
         }
     }
+
     private def withConnection[T](fn: (java.sql.Connection, JDBCOptions) => T): T = {
         val connection = this.connection.value.asInstanceOf[JdbcConnection]
         val props = connection.toConnectionProperties() ++ properties + ("query" -> "dummy")
@@ -238,8 +241,8 @@ case class JdbcCommandTarget (
         JdbcUtils.withConnection(options) { con => fn(con, options) }
     }
 
-    private def withStatement[T](fn: Statement => T): T = {
-        withConnection { (con, options) =>
+    private def withStatement[T](transactional:Boolean)(fn: Statement => T): T = {
+        def exec(con:java.sql.Connection, options:JDBCOptions) : T = {
             val statement = con.createStatement()
             try {
                 statement.setQueryTimeout(JdbcUtils.queryTimeout(options))
@@ -247,6 +250,17 @@ case class JdbcCommandTarget (
             }
             finally {
                 statement.close()
+            }
+        }
+
+        withConnection { (con, options) =>
+            if (transactional) {
+                JdbcUtils.withTransaction(con) {
+                    exec(con, options)
+                }
+            }
+            else {
+                exec(con, options)
             }
         }
     }
@@ -257,11 +271,13 @@ object JdbcCommandTargetSpec {
     class ActionSpec {
         @JsonProperty(value="sql", required=true) private var sql:Seq[String] = Seq.empty
         @JsonProperty(value="condition", required=false) private var condition:Option[String] = None
+        @JsonProperty(value="transactional", required=false) private var transactional:String = "false"
 
         def instantiate(context: Context) : JdbcCommandTarget.Action = {
             JdbcCommandTarget.Action(
                 sql.map(context.evaluate),
-                context.evaluate(condition)
+                context.evaluate(condition),
+                context.evaluate(transactional).toBoolean
             )
         }
     }

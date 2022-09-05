@@ -216,8 +216,15 @@ case class JdbcCommandTarget (
                 logger.info(s"Executing phase $phase for jdbcCommand '$identifier'")
                 withStatement { stmt =>
                     a.sql.foreach { sql =>
-                        logger.debug(s" - Executing SQL: $sql")
-                        stmt.executeUpdate(sql)
+                        try {
+                            logger.debug(s" - Executing SQL: $sql")
+                            stmt.executeUpdate(sql)
+                        }
+                        catch {
+                            case NonFatal(ex) =>
+                                logger.error(s"Error executing phase $phase for jdbcCommand '$identifier', because of failing SQL:\n$sql")
+                                throw ex
+                        }
                     }
                 }
             }

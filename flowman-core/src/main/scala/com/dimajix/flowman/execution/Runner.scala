@@ -47,11 +47,13 @@ import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.ProjectWrapper
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Result
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
+import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
@@ -619,7 +621,7 @@ final class Runner(
      * @param phases
      * @return
      */
-    def executeTargets(targets:Seq[Target], phases:Seq[Phase], jobName:String="execute-target", force:Boolean, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : Status = {
+    def executeTargets(targets:Seq[Target], phases:Seq[Phase], jobName:String="execute-target", force:Boolean, keepGoing:Boolean=false, dryRun:Boolean=false) : Status = {
         if (targets.nonEmpty) {
             val context = targets.head.context
 
@@ -630,11 +632,11 @@ final class Runner(
                 .build()
             val job = Job.builder(jobContext)
                 .setName(jobName)
-                .setTargets(targets.map(_.identifier))
+                .setTargets(targets.map(tgt => TargetIdentifier(tgt.name)))
                 .setParameters(Seq(Job.Parameter("execution_ts", LongType)))
                 .build()
 
-            executeJob(job, phases, args=Map("execution_ts" -> Clock.systemUTC().millis()), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=isolated)
+            executeJob(job, phases, args=Map("execution_ts" -> Clock.systemUTC().millis()), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
         }
         else {
             Status.SUCCESS
@@ -681,21 +683,23 @@ final class Runner(
                 val rootContext = RootContext.builder(job.context)
                     .withEnvironment("force", force)
                     .withEnvironment("dryRun", dryRun)
-                    .withEnvironment("job", JobWrapper(job))
+                    .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.JOB_OVERRIDE)
+                    .withEnvironment("job", JobWrapper(job), SettingLevel.JOB_OVERRIDE)
                     .withEnvironment(arguments, SettingLevel.SCOPE_OVERRIDE)
                     .withEnvironment(job.environment, SettingLevel.JOB_OVERRIDE)
                     .withExecution(execution)
                     .build()
-                if (job.context.project.nonEmpty)
-                    rootContext.getProjectContext(job.context.project.get)
-                else
-                    rootContext
+                job.context.project match {
+                    case Some(project) => rootContext.getProjectContext(project)
+                    case None => rootContext
+                }
             }
             else {
                 ScopeContext.builder(job.context)
                     .withEnvironment("force", force)
                     .withEnvironment("dryRun", dryRun)
-                    .withEnvironment("job", JobWrapper(job))
+                    .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.JOB_OVERRIDE)
+                    .withEnvironment("job", JobWrapper(job), SettingLevel.JOB_OVERRIDE)
                     .build()
             }
 
@@ -716,7 +720,8 @@ final class Runner(
         val rootContext = RootContext.builder(test.context)
             .withEnvironment("force", false)
             .withEnvironment("dryRun", dryRun)
-            .withEnvironment("test", TestWrapper(test))
+            .withEnvironment("project", ProjectWrapper(test.project), SettingLevel.JOB_OVERRIDE)
+            .withEnvironment("test", TestWrapper(test), SettingLevel.JOB_OVERRIDE)
             .withEnvironment(test.environment, SettingLevel.JOB_OVERRIDE)
             .withExecution(execution)
             .overrideRelations(test.overrideRelations.map(kv => RelationIdentifier(kv._1, project) -> kv._2))

@@ -81,7 +81,7 @@ class SessionService(sessionManager:SessionManager, val store:Store, val project
     }
     def enterJob(job: Job, args:Map[String,String]): Unit = {
         val jargs = job.arguments(args)
-        _context = runner.withJobContext(job, jargs, Some(session.execution)) { (context,args) => context }
+        _context = runner.withJobContext(job, jargs, Some(session.execution), isolated=true) { (context,args) => context }
         session.execution.cleanup()
         _test = None
         _job = Some(job)

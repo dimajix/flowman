@@ -124,7 +124,7 @@ final case class Documenter(
     def execute(session:Session, job:Job, args:Map[String,Any]) : Unit = {
         val runner = session.runner
         runner.withExecution(isolated=true) { execution =>
-            runner.withJobContext(job, args, Some(execution)) { (context, arguments) =>
+            runner.withJobContext(job, args, Some(execution), isolated=true) { (context, arguments) =>
                 execute(context, execution, job.project.get)
             }
         }

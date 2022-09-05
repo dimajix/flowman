@@ -90,14 +90,14 @@ sealed class PhaseCommand(phase:Phase) extends Command {
     private def executeLinear(session: Session, job:Job, args:Map[String,FieldValue], lifecycle: Seq[Phase]) : Status = {
         Status.ofAll(job.interpolate(args), keepGoing=keepGoing) { args =>
             val runner = session.runner
-            runner.executeJob(job, lifecycle, args, targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r), force=force, keepGoing=keepGoing, dryRun=dryRun)
+            runner.executeJob(job, lifecycle, args, targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=true)
         }
     }
 
     private def executeParallel(session: Session, job:Job, args:Map[String,FieldValue], lifecycle: Seq[Phase]) : Status = {
         Status.parallelOfAll(job.interpolate(args).toSeq, parallelism, keepGoing=keepGoing, prefix="JobExecution") { args =>
             val runner = session.runner
-            runner.executeJob(job, lifecycle, args, targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r), force=force, keepGoing=keepGoing, dryRun=dryRun)
+            runner.executeJob(job, lifecycle, args, targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=true)
         }
     }
 }

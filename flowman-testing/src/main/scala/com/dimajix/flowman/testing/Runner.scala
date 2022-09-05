@@ -280,7 +280,7 @@ class Runner private(
      */
     def runJob(job:Job, phases:Seq[Phase], args:Map[String,String]) : Boolean = {
         val runner = session.runner
-        val result = runner.executeJob(job, phases, args, force=true)
+        val result = runner.executeJob(job, phases, args, force=true, isolated=true)
 
         result.success
     }

@@ -85,6 +85,10 @@ class JdbcCommandTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
               |    HAVING COUNT(*) = 0
               |  sql: |
               |    CREATE FULLTEXT CATALOG ftcat
+              |build:
+              |  sql:
+              |    - INSERT INTO dbo.tweets SELECT * FROM raw_tweets
+              |    - ALTER FULLTEXT INDEX ON dbo.tweets START FULL POPULATION
               |# Remove fulltext catalog
               |destroy:
               |  # Check that catalog really exists
@@ -115,12 +119,12 @@ class JdbcCommandTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val target = JdbcCommandTarget(
             Target.Properties(context, "jdbc"),
             connection = ConnectionReference(context, Prototype.of(connection.asInstanceOf[Connection])),
-            validateAction = Some(Action("CREATE TABLE t_validate(str_col CLOB)",Some("VALUES(1)"))),
-            createAction = Some(Action("CREATE TABLE t_create(str_col CLOB)",Some("VALUES(0)"))),
-            buildAction = Some(Action("CREATE TABLE t_build(str_col CLOB)",None)),
-            verifyAction = Some(Action("CREATE TABLE t_verify(str_col CLOB)",Some("SELECT 1 FROM (VALUES(1)) x WHERE 1 = 0"))),
-            truncateAction = Some(Action("CREATE TABLE t_truncate(str_col CLOB)",Some("ILLEGAL SQL"))),
-            destroyAction = Some(Action("CREATE TABLE t_destroy(str_col CLOB)",Some("VALUES(2)")))
+            validateAction = Some(Action(Seq("CREATE TABLE t_validate(str_col CLOB)"),Some("VALUES(1)"))),
+            createAction = Some(Action(Seq("CREATE TABLE t_create(str_col CLOB)"),Some("VALUES(0)"))),
+            buildAction = Some(Action(Seq("CREATE TABLE t_build(str_col CLOB)"),None)),
+            verifyAction = Some(Action(Seq("CREATE TABLE t_verify(str_col CLOB)"),Some("SELECT 1 FROM (VALUES(1)) x WHERE 1 = 0"))),
+            truncateAction = Some(Action(Seq("CREATE TABLE t_truncate(str_col CLOB)"),Some("ILLEGAL SQL"))),
+            destroyAction = Some(Action(Seq("CREATE TABLE t_destroy(str_col CLOB)"),Some("VALUES(2)")))
         )
 
         // ========== VALIDATE ========================================================================================

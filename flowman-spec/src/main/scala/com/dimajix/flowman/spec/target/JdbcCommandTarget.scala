@@ -45,7 +45,7 @@ import com.dimajix.flowman.spec.target.JdbcCommandTargetSpec.ActionSpec
 
 object JdbcCommandTarget {
     case class Action(
-        sql: String,
+        sql: Seq[String],
         condition:Option[String] = None
     )
 }
@@ -215,7 +215,10 @@ case class JdbcCommandTarget (
             if (dirty == Yes || dirty == Unknown) {
                 logger.info(s"Executing phase $phase for jdbcCommand '$identifier'")
                 withStatement { stmt =>
-                    stmt.executeUpdate(a.sql)
+                    a.sql.foreach { sql =>
+                        logger.debug(s" - Executing SQL: $sql")
+                        stmt.executeUpdate(sql)
+                    }
                 }
             }
         }
@@ -245,12 +248,12 @@ case class JdbcCommandTarget (
 
 object JdbcCommandTargetSpec {
     class ActionSpec {
-        @JsonProperty(value="sql", required=true) private var sql:String = _
+        @JsonProperty(value="sql", required=true) private var sql:Seq[String] = Seq.empty
         @JsonProperty(value="condition", required=false) private var condition:Option[String] = None
 
         def instantiate(context: Context) : JdbcCommandTarget.Action = {
             JdbcCommandTarget.Action(
-                context.evaluate(sql),
+                sql.map(context.evaluate),
                 context.evaluate(condition)
             )
         }

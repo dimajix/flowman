@@ -56,8 +56,8 @@ targets:
         WITH CHANGE_TRACKING OFF
     # Fill index by starting background indexing process
     build:
-      sql: |
-        ALTER FULLTEXT INDEX ON dbo.tweets START FULL POPULATION
+      sql:
+        - "ALTER FULLTEXT INDEX ON dbo.tweets START FULL POPULATION"
     # Delete index
     destroy:
       # Check that index really exists
@@ -101,8 +101,8 @@ checking if the table already exists.
 
 Each action has the following fields:
 
-* `sql` **(required)** *(type: string)*:
-The SQL command to be executed
+* `sql` **(required)** *(type: array[string])*:
+One or more SQL command(s) to be executed
 
 * `condition` **(optional)** *(type: string)*:
 An optional SQL query which is used to determine if the execution needs to be executed. The query should return a

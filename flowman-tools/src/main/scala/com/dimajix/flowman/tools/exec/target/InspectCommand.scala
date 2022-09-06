@@ -66,12 +66,12 @@ class InspectCommand extends Command {
         println(s"Phase '$phase' ${if (!target.phases.contains(phase)) " (inactive)" else ""}:")
         println(s"  Provides:")
         target.provides(phase)
-            .map(_.toString)
+            .map(_.text)
             .toSeq.sorted
             .foreach{ p => println(s"    $p") }
         println(s"  Requires:")
         target.requires(phase)
-            .map(_.toString)
+            .map(_.text)
             .toSeq.sorted
             .foreach{ p => println(s"    $p") }
     }

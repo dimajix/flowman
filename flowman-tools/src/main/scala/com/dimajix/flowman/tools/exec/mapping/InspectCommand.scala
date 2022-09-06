@@ -50,7 +50,7 @@ class InspectCommand extends Command {
             println(s"    checkpoint: ${mapping.checkpoint}")
             println(s"  Requires:")
                 mapping.requires
-                    .map(_.toString)
+                    .map(_.text)
                     .toSeq.sorted
                     .foreach{ p => println(s"    $p") }
             Status.SUCCESS

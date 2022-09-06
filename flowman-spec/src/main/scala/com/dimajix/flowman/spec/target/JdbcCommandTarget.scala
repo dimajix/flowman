@@ -219,7 +219,7 @@ case class JdbcCommandTarget (
                 withStatement(a.transactional) { stmt =>
                     a.sql.foreach { sql =>
                         try {
-                            logger.info(s" - ${StringUtils.truncate(sql, 60)}")
+                            logger.info(s" - ${StringUtils.truncate(sql.replace('\n', ' ').replace('\r', ' '), 130)}")
                             stmt.executeUpdate(sql)
                         }
                         catch {

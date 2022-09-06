@@ -31,19 +31,16 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class RunnerTargetTest extends AnyFlatSpec with MockFactory with Matchers with LocalSparkSession {
-    "The Runner for Targets" should "execute targets" in {
-        val targetTemplate = mock[Prototype[Target]]
+    "The Runner for Targets" should "execute unknown targets in non-isolated mode" in {
         val target = mock[Target]
         val project = Project(
-            "project",
-            targets = Map("some_target" -> targetTemplate)
+            "project"
         )
         val session = Session.builder()
             .withSparkSession(spark)
             .build()
         val context = session.getContext(project)
 
-        (targetTemplate.instantiate _).expects(*, None).returns(target)
         (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier("project/some_target"))
         (target.name _).expects().atLeastOnce().returns("some_target")
         (target.context _).expects().atLeastOnce().returns(context)
@@ -57,6 +54,37 @@ class RunnerTargetTest extends AnyFlatSpec with MockFactory with Matchers with L
         (target.execute _).expects(*, Phase.BUILD).returns(TargetResult(target, Phase.BUILD, Status.SUCCESS))
 
         val runner = session.runner
-        runner.executeTargets(Seq(target), Seq(Phase.BUILD), jobName="cli-tools", force=true) should be(Status.SUCCESS)
+        runner.executeTargets(Seq(target), Seq(Phase.BUILD), jobName="cli-tools", force=true, isolated=false) should be(Status.SUCCESS)
+        //runner.executeTargets(Seq(target), Seq(Phase.BUILD), jobName="cli-tools", force=true, isolated=true) should be(Status.SUCCESS)
+    }
+
+    it should "execute known targets in shared and isolated mode" in {
+        val targetTemplate = mock[Prototype[Target]]
+        val target = mock[Target]
+        val project = Project(
+            "project",
+            targets = Map("some_target" -> targetTemplate)
+        )
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val context = session.getContext(project)
+
+        (targetTemplate.instantiate _).expects(*,*).once().returns(target)
+        (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier("project/some_target"))
+        (target.name _).expects().atLeastOnce().returns("some_target")
+        (target.context _).expects().atLeastOnce().returns(context)
+        (target.before _).expects().twice().returns(Seq())
+        (target.after _).expects().twice().returns(Seq())
+        (target.phases _).expects().atLeastOnce().returns(Set(Phase.BUILD))
+        (target.requires _).expects(Phase.BUILD).atLeastOnce().returns(Set())
+        (target.provides _).expects(Phase.BUILD).atLeastOnce().returns(Set())
+        (target.digest _).expects(Phase.BUILD).atLeastOnce().returns(TargetDigest("default", "project", "some_target", Phase.BUILD))
+        (target.metadata _).expects().atLeastOnce().returns(Metadata(name = "some_target", kind = "target", category = "target"))
+        (target.execute _).expects(*, Phase.BUILD).twice().returns(TargetResult(target, Phase.BUILD, Status.SUCCESS))
+
+        val runner = session.runner
+        runner.executeTargets(Seq(target), Seq(Phase.BUILD), jobName = "cli-tools", force = true, isolated = false) should be(Status.SUCCESS)
+        runner.executeTargets(Seq(target), Seq(Phase.BUILD), jobName = "cli-tools", force = true, isolated = true) should be(Status.SUCCESS)
     }
 }

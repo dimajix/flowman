@@ -56,7 +56,7 @@ class PhaseCommand(phase:Phase) extends Command {
             .map(tgt => context.getTarget(TargetIdentifier(tgt)))
 
         val runner = session.runner
-        runner.executeTargets(allTargets, lifecycle, jobName="cli-tools", force=force, keepGoing=keepGoing, dryRun=dryRun)
+        runner.executeTargets(allTargets, lifecycle, jobName="cli-tools", force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
     }
 }
 

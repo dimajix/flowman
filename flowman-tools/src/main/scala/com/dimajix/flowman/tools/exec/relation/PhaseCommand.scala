@@ -65,7 +65,7 @@ class PhaseCommand(phase:Phase) extends Command {
 
         val targets2 = toRun.map { rel => ctx.getTarget(TargetIdentifier(rel)) }
         val runner = session.runner
-        runner.executeTargets(targets2, Seq(phase), jobName="cli-tools", force=force, keepGoing=keepGoing, dryRun=dryRun)
+        runner.executeTargets(targets2, Seq(phase), jobName="cli-tools", force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
     }
 }
 

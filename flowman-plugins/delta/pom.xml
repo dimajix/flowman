@@ -99,29 +99,14 @@
         <profile>
             <id>spark-3.2</id>
             <properties>
-                <delta.version>1.2.1</delta.version>
+                <delta.version>2.0.0</delta.version>
             </properties>
         </profile>
         <profile>
             <id>spark-3.3</id>
             <properties>
-                <delta.version>1.2.1</delta.version>
+                <delta.version>2.1.0</delta.version>
             </properties>
-            <build>
-                <pluginManagement>
-                    <plugins>
-                        <!-- Disable compilation -->
-                        <plugin>
-                            <groupId>net.alchim31.maven</groupId>
-                            <artifactId>scala-maven-plugin</artifactId>
-                            <configuration>
-                                <sourceDir>no-source</sourceDir>
-                                <testSourceDir>no-test-source</testSourceDir>
-                            </configuration>
-                        </plugin>
-                    </plugins>
-                </pluginManagement>
-            </build>
         </profile>
     </profiles>
 

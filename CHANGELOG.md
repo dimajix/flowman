@@ -10,6 +10,7 @@
 * github-238: Implement new 'jdbcCommand' target
 * github-240: [BUG] Data quality checks in documentation should not fail on NULL values
 * github-241: Throw an error on duplicate entity definitions
+* github-220: Upgrade Delta-Lake to 2.0 / 2.1
 
 
 # Version 0.26.1 - 2022-08-03

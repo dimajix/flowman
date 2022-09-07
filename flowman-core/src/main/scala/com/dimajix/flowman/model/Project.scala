@@ -19,6 +19,7 @@ package com.dimajix.flowman.model
 import java.util.ServiceLoader
 
 import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
@@ -51,13 +52,16 @@ object Project {
          * @param file
          * @return
          */
+        @throws[ModelException]
         def file(file: File): Project = {
             if (!file.isAbsolute()) {
                 this.file(file.absolute)
             }
             else {
                 logger.info(s"Reading project from $file")
-                val spec = reader.file(file)
+                val spec = wrapExceptions(file.toString) {
+                    reader.file(file)
+                }
                 loadModules(spec, spec.basedir.getOrElse(file))
             }
         }
@@ -74,19 +78,50 @@ object Project {
             }
             else {
                 logger.info(s"Reading project manifest from $file")
-                reader.file(file)
+                wrapExceptions(file.toString) {
+                    reader.file(file)
+                }
             }
         }
 
+        @throws[ModelException]
         def string(text: String): Project = {
-            reader.string(text)
+            wrapExceptions("raw-string") {
+                reader.string(text)
+            }
         }
 
+        @throws[ModelException]
         private def loadModules(project: Project, directory: File): Project = {
-            val module = project.modules
+            val modules = project.modules
                 .par
-                .map(f => Module.read.file(directory / f))
-                .foldLeft(Module())((l, r) => l.merge(r))
+                .flatMap(f => Module.read.files(directory / f))
+
+            // Check for duplicate entities in different modules
+            def checkDuplicates(category: Category, fn: Module => Map[String, _]): Unit = {
+                modules.map { case (file,module) => fn(module).map { case(name,_) => name -> file } }
+                    .reduceLeftOption { (all, next) =>
+                        next.keySet.find(all.contains).foreach { name =>
+                            val prevFile = all(name)
+                            val newFile = next(name)
+                            throw new DuplicateEntityException(name, category, prevFile.toString, newFile.toString)
+                        }
+                        all ++ next
+                    }
+            }
+            checkDuplicates(Category.CONNECTION, _.connections)
+            checkDuplicates(Category.RELATION, _.relations)
+            checkDuplicates(Category.MAPPING, _.mappings)
+            checkDuplicates(Category.TARGET, _.targets)
+            checkDuplicates(Category.JOB, _.jobs)
+            checkDuplicates(Category.TEST, _.tests)
+            checkDuplicates(Category.TEMPLATE, _.templates)
+            checkDuplicates(Category.CONFIG, _.config)
+            checkDuplicates(Category.ENVIRONMENT, _.environment)
+            checkDuplicates(Category.PROFILE, _.profiles)
+
+            // Now merge all modules into a single one
+            val module = modules.foldLeft(Module())((l, r) => l.merge(r._2))
 
             logger.info(s"Loaded project '${project.name}'${project.version.map(v => s" version $v").getOrElse("")}")
 
@@ -106,7 +141,17 @@ object Project {
 
         private def reader : ProjectReader = {
             loader.find(_.supports(format))
-                .getOrElse(throw new IllegalArgumentException(s"Project format '$format' not supported'"))
+                .getOrElse(throw new UnsupportedProjectFormatException(format))
+        }
+
+        private def wrapExceptions[T](source:String)(fn: => T) : T = {
+            try {
+                fn
+            }
+            catch {
+                case ex: ModelException => throw ex
+                case NonFatal(ex) => throw new ProjectLoadException(source, ex)
+            }
         }
     }
 

@@ -9,6 +9,7 @@
 * github-239: Allow optional SQL statement for creating jdbcTable
 * github-238: Implement new 'jdbcCommand' target
 * github-240: [BUG] Data quality checks in documentation should not fail on NULL values
+* github-241: Throw an error on duplicate entity definitions
 
 
 # Version 0.26.1 - 2022-08-03

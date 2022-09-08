@@ -13,6 +13,7 @@
 * github-220: Upgrade Delta-Lake to 2.0 / 2.1
 * github-242: Switch to Spark 3.3 as default
 * github-243: Use alternative Spark MS SQL Connector for Spark 3.3
+* github-244: Generate project HTML documentation with optional external CSS file
 
 
 # Version 0.26.1 - 2022-08-03

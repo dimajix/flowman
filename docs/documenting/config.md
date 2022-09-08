@@ -24,6 +24,7 @@ generators:
   # Create an output file in the project directory
   - kind: file
     location: ${project.basedir}/doc
+    template: html+css
     # This will exclude all mappings
     excludeMappings: ".*"
     excludeRelations:
@@ -48,6 +49,12 @@ The generator is used for generating the documentation. You can configure multip
 differently configured documentations.
 
 * `kind` **(mandatory)** *(type: string)*: `file` 
+
+* `template` **(optional)** *(type: string)* *(default: html)*:
+Specifies the template to use. Currently, Flowman provides three predefined templates
+  * text - Single file plain text documentation
+  * html - Single file HTML page with inline CSS 
+  * html+css - Single file HTML page with additional CSS file
 
 * `location` **(mandatory)** *(type: string)*: Specifies the output location 
 

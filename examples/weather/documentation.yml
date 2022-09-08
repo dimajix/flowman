@@ -14,7 +14,7 @@ generators:
   # Create an output file in the project directory
   - kind: file
     location: ${project.basedir}/generated-documentation
-    template: html
+    template: html+css
     excludeRelations:
       # You can either specify a name (without the project)
       - "some_unwanted_relation"

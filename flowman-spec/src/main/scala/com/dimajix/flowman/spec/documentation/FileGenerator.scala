@@ -39,6 +39,7 @@ import com.dimajix.flowman.hadoop.File
 object FileGenerator {
     val textTemplate : URL = Resources.getResource(classOf[FileGenerator], "/com/dimajix/flowman/documentation/text")
     val htmlTemplate : URL = Resources.getResource(classOf[FileGenerator], "/com/dimajix/flowman/documentation/html")
+    val htmlCssTemplate : URL = Resources.getResource(classOf[FileGenerator], "/com/dimajix/flowman/documentation/html+css")
     val defaultTemplate : URL = htmlTemplate
 }
 
@@ -55,7 +56,7 @@ case class FileGenerator(
 ) extends TemplateGenerator(template, includeRelations, excludeRelations, includeMappings, excludeMappings, includeTargets, excludeTargets) {
     private val logger = LoggerFactory.getLogger(classOf[FileGenerator])
 
-    protected override def generateInternal(context:Context, execution: Execution, documentation: ProjectDoc): Unit = {
+    protected override def generateInternal(context:Context, execution: Execution, documentation: ProjectDoc) : Unit = {
         val props = new Properties()
         props.load(new StringReader(loadResource("template.properties")))
 
@@ -71,19 +72,24 @@ case class FileGenerator(
         }
         outputDir.mkdirs()
 
-        generateProjectFile(context, documentation, outputDir, props.asScala.toMap)
+        generateProjectFiles(context, documentation, outputDir, props.asScala.toMap)
     }
 
-    private def generateProjectFile(context:Context, documentation: ProjectDoc, outputDir:File, properties: Map[String,String]) : Unit= {
-        val in = properties.getOrElse("template.project.input", "project.vtl")
-        val out = properties("template.project.output")
+    private def generateProjectFiles(context:Context, documentation: ProjectDoc, outputDir:File, properties: Map[String,String]) : Unit = {
+        val keyPattern = raw"template\.(.+)\.input".r
+        val keys = properties.keySet.collect { case keyPattern(key) => key }
+        keys.foreach { key =>
+            val in = properties(s"template.$key.input")
+            val out = properties(s"template.$key.output")
+            val outputFile = outputDir / out
 
-        val projectDoc = renderProject(context, documentation, in)
-        writeFile(outputDir / out, projectDoc)
+            logger.info(s"Writing documentation template '$key' to file '${outputFile.toString}'")
+            val projectDoc = renderTemplate(context, documentation, in)
+            writeFile(outputFile, projectDoc)
+        }
     }
 
     private def writeFile(file:File, content:String) : Unit = {
-        logger.info(s"Writing documentation file '${file.toString}'")
         val out = file.create(true)
         try {
             // Manually convert string to UTF-8 and use write, since writeUTF apparently would write a BOM
@@ -99,7 +105,6 @@ case class FileGenerator(
 
 class FileGeneratorSpec extends TemplateGeneratorSpec {
     @JsonProperty(value="location", required=true) private var location:String = _
-    @JsonProperty(value="template", required=false) private var template:String = FileGenerator.defaultTemplate.toString
 
     override def instantiate(context: Context, properties:Option[Generator.Properties]): Generator = {
         val url = getTemplateUrl(context)

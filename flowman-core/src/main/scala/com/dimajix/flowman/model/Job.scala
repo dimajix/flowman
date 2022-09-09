@@ -118,6 +118,11 @@ object Job {
         metadata:Metadata,
         description:Option[String]
    ) extends model.Properties[Properties] {
+        require(metadata.category == Category.JOB.lower)
+        require(metadata.namespace == context.namespace.map(_.name))
+        require(metadata.project == context.project.map(_.name))
+        require(metadata.version == context.project.flatMap(_.version))
+
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
         override val kind : String = metadata.kind
@@ -437,6 +442,6 @@ final case class Job(
 
         val jobArgs = arguments(args)
         val jobRunner = new Runner(executor, new NullStateStore)
-        jobRunner.executeJob(this, Seq(phase), jobArgs, targets, force=force, dryRun=dryRun)
+        jobRunner.executeJob(this, Seq(phase), jobArgs, targets, force=force, dryRun=dryRun, isolated=true)
     }
 }

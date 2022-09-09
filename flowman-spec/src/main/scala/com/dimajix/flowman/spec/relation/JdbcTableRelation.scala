@@ -24,6 +24,7 @@ import java.util.Locale
 import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonPropertyDescription
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
@@ -38,6 +39,7 @@ import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
@@ -72,7 +74,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.{StructType => FlowmanStructType}
 
 
-class JdbcTableRelationBase(
+abstract class JdbcTableRelationBase(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq.empty,
@@ -81,7 +83,8 @@ class JdbcTableRelationBase(
     properties: Map[String,String] = Map.empty,
     mergeKey: Seq[String] = Seq.empty,
     override val primaryKey: Seq[String] = Seq.empty,
-    indexes: Seq[TableIndex] = Seq.empty
+    indexes: Seq[TableIndex] = Seq.empty,
+    sql: Seq[String] = Seq.empty
 ) extends JdbcRelation(
     connection,
     properties
@@ -89,7 +92,9 @@ class JdbcTableRelationBase(
     protected val resource: ResourceIdentifier = ResourceIdentifier.ofJdbcTable(table)
     protected val tableIdentifier: TableIdentifier = table
     protected val stagingIdentifier: Option[TableIdentifier] = None
-    protected lazy val tableDefinition: Option[TableDefinition] = {
+    protected final lazy val tableDefinition: Option[TableDefinition] = if (sql.isEmpty) createTableDefinition() else None
+
+    protected def createTableDefinition() : Option[TableDefinition] = {
         schema.map { schema =>
             val pk = if (primaryKey.nonEmpty) primaryKey else schema.primaryKey
             val columns = fullSchema.get.fields
@@ -98,7 +103,7 @@ class JdbcTableRelationBase(
                 TableType.TABLE,
                 columns = columns,
                 comment = schema.description,
-                primaryKey = pk,
+                primaryKey = if (pk.nonEmpty) Some(PrimaryKey(pk)) else None,
                 indexes = indexes
                 // Currently partition tables are not supported on a physical level, only on a logical level
                 // partitionColumnNames = partitions.map(_.name)
@@ -250,7 +255,7 @@ class JdbcTableRelationBase(
                     createStagingTable(execution, con, options, df, Some(stagingSchema))
 
                     withTransaction(con) {
-                        withStatement(con, options) { case (statement, options) =>
+                        withStatement(con, options) { statement =>
                             logger.debug(s"Truncating table ${tableIdentifier}")
                             JdbcUtils.truncateTable(statement, tableIdentifier, options)
                             logger.info(s"Copying data from staging table ${stagingTable} into table ${tableIdentifier}")
@@ -279,7 +284,7 @@ class JdbcTableRelationBase(
                     createStagingTable(execution, con, options, df, Some(stagingSchema))
 
                     withTransaction(con) {
-                        withStatement(con, options) { case (statement, options) =>
+                        withStatement(con, options) { statement =>
                             val condition = partitionCondition(partition, options)
                             logger.debug(s"Truncating table ${tableIdentifier} partition ${partition}")
                             JdbcUtils.truncatePartition(statement, tableIdentifier, condition, options)
@@ -302,7 +307,7 @@ class JdbcTableRelationBase(
                     createStagingTable(execution, con, options, df, Some(stagingSchema))
 
                     withTransaction(con) {
-                        withStatement(con, options) { case (statement, options) =>
+                        withStatement(con, options) { statement =>
                             logger.info(s"Copying data from temporary staging table ${stagingTable} into table ${tableIdentifier}")
                             JdbcUtils.appendTable(statement, tableIdentifier, stagingTable, options)
                             logger.debug(s"Dropping temporary staging table ${stagingTable}")
@@ -385,7 +390,7 @@ class JdbcTableRelationBase(
                     createStagingTable(execution, con, options, df, stagingSchema)
 
                     withTransaction(con) {
-                        withStatement(con, options) { case (statement, options) =>
+                        withStatement(con, options) { statement =>
                             logger.info(s"Merging data from temporary staging table ${stagingTable} into table ${tableIdentifier}")
                             JdbcUtils.mergeTable(statement, tableIdentifier, "target", targetSchema, stagingTable, "source", df.schema, condition, clauses, options)
                             logger.debug(s"Dropping temporary staging table ${stagingTable}")
@@ -513,14 +518,28 @@ class JdbcTableRelationBase(
     }
 
     protected def doCreate(con:java.sql.Connection, options:JDBCOptions): Unit = {
-        val pk = tableDefinition.filter(_.primaryKey.nonEmpty).map(t => s"\n  Primary key ${t.primaryKey.mkString(",")}").getOrElse("")
-        val idx = tableDefinition.map(t => t.indexes.map(i => s"\n  Index '${i.name}' on ${i.columns.mkString(",")}").foldLeft("")(_ + _)).getOrElse("")
-        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier with schema\n${schema.map(_.treeString).orNull}$pk$idx")
-
         tableDefinition match {
             case Some(table) =>
+                val pk = table.primaryKey.filter(_.columns.nonEmpty).map(t => s"\n  Primary key ${t.columns.mkString(",")}").getOrElse("")
+                val idx = table.indexes.map(i => s"\n  Index '${i.name}' on ${i.columns.mkString(",")}").foldLeft("")(_ + _)
+                logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier with schema\n${schema.map(_.treeString).orNull}$pk$idx")
                 JdbcUtils.createTable(con, table, options)
+            case None if sql.nonEmpty =>
+                logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier using provided SQL.")
+                withStatement(con, options) { stmt =>
+                    sql.foreach { cmd =>
+                        try {
+                            stmt.executeUpdate(cmd)
+                        }
+                        catch {
+                            case NonFatal(ex) =>
+                                logger.error(s"Error creating table $tableIdentifier, because of failing SQL:\n$cmd")
+                                throw ex
+                        }
+                    }
+                }
             case None =>
+                logger.error(s"Cannot create JDBC relation '$identifier' for JDBC table $tableIdentifier, since no schema is provided.")
                 throw new UnspecifiedSchemaException(identifier)
         }
     }
@@ -565,7 +584,7 @@ class JdbcTableRelationBase(
                 logger.info(s"Migrating JdbcTable relation '$identifier' from VIEW to TABLE $table")
                 withConnection { (con, options) =>
                     try {
-                        withStatement(con, options) { (stmt,options) =>
+                        withStatement(con, options) { stmt =>
                             JdbcUtils.dropView(stmt, tableIdentifier, options)
                         }
                         doCreate(con, options)
@@ -609,7 +628,7 @@ class JdbcTableRelationBase(
                             case ex: SQLNonTransientConnectionException => throw new MigrationFailedException(identifier, ex)
                             case ex: SQLInvalidAuthorizationSpecException => throw new MigrationFailedException(identifier, ex)
                             case ex: SQLNonTransientException =>
-                                logger.warn(s"Incremental migration of relation '$identifier' for table $tableIdentifier failed: ${reasons(ex)}\nNow falling back by re-creating target table.")
+                                logger.warn(s"Incremental migration of relation '$identifier' for table $tableIdentifier failed:\n  ${reasons(ex)}\nNow falling back by re-creating target table.")
                                 recreate(con, options)
                             case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
                         }
@@ -731,7 +750,8 @@ case class JdbcTableRelation(
     stagingTable: Option[TableIdentifier] = None,
     mergeKey: Seq[String] = Seq.empty,
     override val primaryKey: Seq[String] = Seq.empty,
-    indexes: Seq[TableIndex] = Seq.empty
+    indexes: Seq[TableIndex] = Seq.empty,
+    sql: Seq[String] = Seq.empty
 ) extends JdbcTableRelationBase(
     instanceProperties,
     schema,
@@ -741,7 +761,8 @@ case class JdbcTableRelation(
     properties,
     mergeKey,
     primaryKey,
-    indexes
+    indexes,
+    sql
 ) {
     override protected val stagingIdentifier: Option[TableIdentifier] = stagingTable
 }
@@ -752,9 +773,14 @@ class JdbcTableRelationSpec extends RelationSpec with PartitionedRelationSpec wi
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map.empty
     @JsonProperty(value = "database", required = false) private var database: Option[String] = None
     @JsonProperty(value = "table", required = false) private var table: String = ""
+    @JsonPropertyDescription("Optional name of an intermediate staging table.")
     @JsonProperty(value = "stagingTable", required = false) private var stagingTable: Option[String] = None
+    @JsonPropertyDescription("List of columns used for merge operations.")
     @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq.empty
+    @JsonPropertyDescription("List of columns making up the primary key.")
     @JsonProperty(value = "primaryKey", required = false) private var primaryKey: Seq[String] = Seq.empty
+    @JsonPropertyDescription("SQL command(s) for creating the table. This has to be specified in database specific SQL syntax.")
+    @JsonProperty(value = "sql", required = false) private var sql: Seq[String] = Seq.empty
 
     /**
       * Creates the instance of the specified Relation with all variable interpolation being performed
@@ -772,7 +798,8 @@ class JdbcTableRelationSpec extends RelationSpec with PartitionedRelationSpec wi
             context.evaluate(stagingTable).map(t => TableIdentifier(t, context.evaluate(database))),
             mergeKey.map(context.evaluate),
             primaryKey.map(context.evaluate),
-            indexes.map(_.instantiate(context))
+            indexes.map(_.instantiate(context)),
+            sql.map(context.evaluate)
         )
     }
 }

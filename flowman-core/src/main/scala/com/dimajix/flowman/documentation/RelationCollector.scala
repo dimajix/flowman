@@ -140,7 +140,7 @@ class RelationCollector extends AbstractCollector {
                 case Success(desc) =>
                     Some(desc.merge(mergedSchema))
                 case Failure(ex) =>
-                    logger.warn(s"Error while inferring schema description of relation '${relation.identifier}': ${reasons(ex)}")
+                    logger.warn(s"Error while inferring schema description of relation '${relation.identifier}':\n  ${reasons(ex)}")
                     mergedSchema
             }
         }

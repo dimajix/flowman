@@ -23,6 +23,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.model.DuplicateEntityException
 import com.dimajix.flowman.model.Project
 
 
@@ -60,5 +61,12 @@ class ProjectTest extends AnyFlatSpec with Matchers {
         project.basedir should be (Some(file.absolute.parent))
         project.environment should contain("x" -> "y")
         project.config should contain("spark.lala" -> "lolo")
+    }
+
+    it should "throw an exception on duplicate entity definitions" in {
+        val basedir = new Path(Resources.getResource(".").toURI)
+        val fs = FileSystem(new Configuration())
+        val file = fs.file(new Path(basedir, "project-with-dups/TestProject.yml"))
+        a[DuplicateEntityException] should be thrownBy(Project.read.file(file))
     }
 }

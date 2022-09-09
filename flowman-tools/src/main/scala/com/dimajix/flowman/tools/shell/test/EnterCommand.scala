@@ -21,6 +21,7 @@ import scala.util.control.NonFatal
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchTestException
 import com.dimajix.flowman.execution.Session
@@ -48,7 +49,7 @@ class EnterCommand extends Command {
                 logger.error(s"Cannot resolve test '${ex.test}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Error entering test '$test': ${e.getMessage}")
+                logger.error(s"Error entering test '$test':\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

@@ -107,7 +107,7 @@ class MappingCollector extends AbstractCollector {
             }
         } catch {
             case NonFatal(ex) =>
-                logger.warn(s"Error while inferring schema description of mapping '${mapping.identifier}': ${reasons(ex)}")
+                logger.warn(s"Error while inferring schema description of mapping '${mapping.identifier}':\n  ${reasons(ex)}")
                 mapping.outputs.map { output =>
                     MappingOutputDoc(
                         Some(ref),

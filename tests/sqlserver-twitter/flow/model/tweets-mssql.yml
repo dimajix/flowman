@@ -1,0 +1,35 @@
+relations:
+  tweets-mssql:
+    kind: sqlserver
+    connection: sql_server
+    database: dbo
+    table: tweets
+    storageFormat: COLUMNSTORE
+    # Automatically infer schema from mapping
+    schema:
+      kind: mapping
+      mapping: tweets
+    # (Optionally) specify a primary key
+    # primaryKey: id
+    # (Optionally) specify indexes
+    indexes:
+     - name: PK_tweets_id
+       columns: id
+       unique: true
+    # (Optionally) specify CREATE statement
+    #sql:
+      # Explicitly specify SQL for creating the table. We make the text column twice as large as needed because of
+      # Unicode hiccups (🔥 is 5 bytes in UTF-8, 2 chars in MS SQL, and 1 char in Spark)
+      #- |
+      #  CREATE TABLE dbo.tweets(
+      #      id BIGINT NOT NULL,
+      #      text NVARCHAR(320),
+      #      lang CHAR(2),
+      #      user_id BIGINT,
+      #      user_screen_name NVARCHAR(140),
+      #      user_description NVARCHAR(140),
+      #      user_lang CHAR(2),
+      #      timestamp DATETIME
+      #  )
+      #- CREATE CLUSTERED COLUMNSTORE INDEX CSI_tweets ON dbo.tweets
+      #- ALTER TABLE dbo.tweets ADD CONSTRAINT PK_tweets_id PRIMARY KEY(id)

@@ -33,6 +33,10 @@ variable `FLOWMAN_PLUGIN_DIR` or `FLOWMAN_HOME`.
   [Impala Catalog plugin](../plugins/impala.md) whenever a Hive table is updated. The `REFRESH` statements will always
   be executed by the plugin.
 
+- `flowman.externalCatalog.ignoreErrors` *(type: boolean)* *(default:false)*
+  If enabled (i.e. set to `true`), then Flowman will ignore all errors from external catalogs like Impala. This is
+  desired in many cases, such that these will not block processing.
+
 
 ### Execution related Properties
 
@@ -108,7 +112,7 @@ Sets the strategy to use how tables should be migrated. Possible values are:
   Defines how Flowman should handle a mismatch between the types of the actual schema of a relation when reading from 
   it and the types of the schema as defined in the relation. Per default, Flowman ignores any mismatch and simply passes 
   through the types of the actual relation. See [relations](../spec/relation/index.md) for possible options and more details.
-- `flowman.default.relation.input.charVarcharPolicy` *(type: string)* *(default:`PAD_AND_TRUUNCATE`)* (since Flowman 0.26.1)
+- `flowman.default.relation.input.charVarcharPolicy` *(type: string)* *(default:`IGNORE`)* (since Flowman 0.26.1)
   Defines how Flowman will handle `CHAR(n)`/`VARCHAR(n)` data on reading. Per default Flowman will truncate/pad `CHAR(n)`
   columns and truncate `VARCHAR(n)` columns. See [relations](../spec/relation/index.md) for possible options and more details.
 - `flowman.default.relation.output.columnMismatchPolicy` *(type: string)* *(default:`ADD_REMOVE_COLUMNS`)* (since Flowman 0.20.0)

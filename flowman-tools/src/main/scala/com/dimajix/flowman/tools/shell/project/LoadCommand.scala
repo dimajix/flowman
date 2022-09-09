@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.Path
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
@@ -43,7 +44,7 @@ class LoadCommand extends Command {
         }
         catch {
             case NonFatal(e) =>
-                logger.error(s"Error loading project '${this.project}': ${e.getMessage}")
+                logger.error(s"Error loading project '${this.project}':\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

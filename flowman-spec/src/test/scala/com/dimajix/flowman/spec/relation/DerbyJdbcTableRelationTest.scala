@@ -38,6 +38,7 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
@@ -439,6 +440,108 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
+        withDatabase(driver, url) { statement =>
+            an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM LALA_001"""))
+        }
+    }
+
+    it should "support the full lifecycle with explicit SQL" in {
+        val db = tempDir.toPath.resolve("mydb")
+        val url = "jdbc:derby:" + db + ";create=true"
+        val driver = "org.apache.derby.jdbc.EmbeddedDriver"
+
+        val spec =
+            s"""
+               |connections:
+               |  c0:
+               |    kind: jdbc
+               |    driver: $driver
+               |    url: $url
+        """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        val relation = JdbcTableRelation(
+            Relation.Properties(context, "t0"),
+            connection = ConnectionReference(context, ConnectionIdentifier("c0")),
+            table = TableIdentifier("lala_001"),
+            sql = Seq("""CREATE TABLE lala_001("str_col" CLOB, "int_col" INTEGER, "varchar_col" VARCHAR(10))""")
+        )
+
+        withDatabase(driver, url) { statement =>
+            an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM lala_001"""))
+        }
+
+        relation.provides(Operation.CREATE) should be(Set(ResourceIdentifier.ofJdbcTable("lala_001", None)))
+        relation.requires(Operation.CREATE) should be(Set.empty)
+        relation.provides(Operation.WRITE) should be(Set(ResourceIdentifier.ofJdbcTablePartition("lala_001", None, Map())))
+        relation.requires(Operation.WRITE) should be(Set(ResourceIdentifier.ofJdbcTable("lala_001", None)))
+        relation.provides(Operation.READ) should be(Set.empty)
+        relation.requires(Operation.READ) should be(Set(
+            ResourceIdentifier.ofJdbcTable("lala_001", None),
+            ResourceIdentifier.ofJdbcTablePartition("lala_001", None, Map())
+        ))
+        relation.fields should be(Seq.empty)
+
+        // == Create ==================================================================================================
+        relation.exists(execution) should be(No)
+        relation.loaded(execution, Map()) should be(No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(No)
+        relation.create(execution)
+        relation.exists(execution) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+        relation.loaded(execution, Map()) should be(No)
+
+        relation.describe(execution) should be(StructType(Seq(
+            Field("str_col", StringType),
+            Field("int_col", IntegerType),
+            Field("varchar_col", VarcharType(10))
+        )))
+
+        withDatabase(driver, url) { statement =>
+            val result = statement.executeQuery("""SELECT * FROM LALA_001""")
+            val meta = result.getMetaData
+            meta.getColumnName(1) should be("str_col")
+            meta.getColumnName(2) should be("int_col")
+            meta.getColumnName(3) should be("varchar_col")
+
+            val dialect = SqlDialects.get(url)
+            val schema = JdbcUtils.getSchema(result, dialect)
+            schema should be(StructType(Seq(
+                Field("str_col", StringType),
+                Field("int_col", IntegerType),
+                Field("varchar_col", VarcharType(10))
+            )))
+
+            result.next() should be(false)
+            result.close()
+        }
+
+        relation.read(execution).count() should be(0)
+
+        // == Migrate ==================================================================================================
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+
+        relation.migrate(execution, MigrationPolicy.RELAXED)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+
+        relation.migrate(execution, MigrationPolicy.STRICT)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+
+        // == Destroy =================================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be(No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(No)
+        relation.loaded(execution, Map()) should be(No)
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM LALA_001"""))
         }
@@ -1180,7 +1283,7 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
                     Field("int_col", IntegerType, nullable=false),
                     Field("varchar_col", VarcharType(32), nullable=false)
                 ),
-                primaryKey = Seq("int_col", "varchar_col")
+                primaryKey = Some(PrimaryKey(Seq("int_col", "varchar_col")))
             ))
 
         // == Destroy =================================================================================================

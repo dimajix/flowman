@@ -117,9 +117,9 @@ class DependencyScheduler extends Scheduler {
             if (candidates.isEmpty && dependencies.nonEmpty && running.isEmpty) {
                 val deps = dependencies.map { case(k,v) =>
                     s"""  ${k.identifier}
-                       |     depends on  ${v.map(_.identifier.toString).mkString(", ")}
-                       |     provides ${k.provides(phase).mkString(", ")}
-                       |     requires  ${k.requires(phase).mkString(", ")}""".stripMargin
+                       |     depends on: ${v.map(_.identifier.toString).mkString(", ")}
+                       |     provides: ${k.provides(phase).map(_.text).mkString(", ")}
+                       |     requires: ${k.requires(phase).map(_.text).mkString(", ")}""".stripMargin
                 }.mkString("\n")
                 throw new RuntimeException(s"Cannot create target order, probably due to cyclic dependencies.\n$deps")
             }

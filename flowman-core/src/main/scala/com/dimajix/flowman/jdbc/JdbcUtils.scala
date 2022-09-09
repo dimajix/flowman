@@ -39,8 +39,10 @@ import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{types => st}
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.tryWith
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
 import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
@@ -130,7 +132,7 @@ object JdbcUtils {
             createConnection(options, -1)
         } catch {
             case NonFatal(e) =>
-                logger.error(s"Error connecting to jdbc source at ${options.url}: ${e.getMessage}")
+                logger.error(s"Error connecting to jdbc source at ${options.url}:\n  ${reasons(e)}")
                 throw e
         }
 
@@ -151,7 +153,7 @@ object JdbcUtils {
             result
         } catch {
             case ex:SQLException =>
-                logger.error(s"SQL transaction failed, rolling back: ${ex.getMessage}")
+                logger.error(s"SQL transaction failed, rolling back. Exception: ${reasons(ex)}")
                 con.rollback()
                 throw ex
         } finally {
@@ -235,10 +237,11 @@ object JdbcUtils {
         val currentSchema = getTableSchema(conn, table, options)
         withStatement(conn, options) { stmt =>
             val pk = dialect.command.getPrimaryKey(stmt, realTable)
+            val pkCols = pk.toSeq.flatMap(_.normalize().columns)
             val idxs = dialect.command.getIndexes(stmt, realTable)
                 // Remove primary key
                 .filter { idx =>
-                    idx.normalize().columns != pk.map(_.toLowerCase(Locale.ROOT)).sorted
+                    idx.normalize().columns != pkCols
                 }
             val storage = dialect.command.getStorageFormat(stmt, table)
 
@@ -448,9 +451,9 @@ object JdbcUtils {
 
     def createView(conn:Connection, table:TableIdentifier, sql:String, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val tableSql = dialect.statement.createView(table, sql)
+        val createSql = dialect.statement.createView(table, sql)
         withStatement(conn, options) { statement =>
-            statement.executeUpdate(tableSql)
+            executeUpdate(statement, createSql)
         }
     }
 
@@ -458,14 +461,15 @@ object JdbcUtils {
         val dialect = SqlDialects.get(options.url)
         withStatement(conn, options) { statement =>
             if (dialect.supportsAlterView) {
-                val tableSql = dialect.statement.alterView(table, sql)
-                statement.executeUpdate(tableSql)
+                val alterSql = dialect.statement.alterView(table, sql)
+                executeUpdate(statement, alterSql)
             }
             else {
                 val dropSql = dialect.statement.dropView(table)
-                statement.executeUpdate(dropSql)
+                executeUpdate(statement, dropSql)
                 val createSql = dialect.statement.createView(table, sql)
-                statement.executeUpdate(createSql)
+                executeUpdate(statement, createSql)
+
             }
         }
     }
@@ -516,7 +520,7 @@ object JdbcUtils {
     }
     def truncateTable(statement:Statement, table:TableIdentifier, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        statement.executeUpdate(s"TRUNCATE TABLE ${dialect.quote(table)}")
+        executeUpdate(statement, s"TRUNCATE TABLE ${dialect.quote(table)}")
     }
 
     /**
@@ -528,7 +532,7 @@ object JdbcUtils {
      */
     def truncatePartition(statement:Statement, table:TableIdentifier, condition:String, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        statement.executeUpdate(s"DELETE FROM ${dialect.quote(table)} WHERE $condition")
+        executeUpdate(statement, s"DELETE FROM ${dialect.quote(table)} WHERE $condition")
     }
 
     /**
@@ -540,7 +544,7 @@ object JdbcUtils {
      */
     def appendTable(statement:Statement, targetTable:TableIdentifier, sourceTable:TableIdentifier, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        statement.executeUpdate(s"INSERT INTO ${dialect.quote(targetTable)}  SELECT * FROM ${dialect.quote(sourceTable)}")
+        executeUpdate(statement, s"INSERT INTO ${dialect.quote(targetTable)}  SELECT * FROM ${dialect.quote(sourceTable)}")
     }
 
     /**
@@ -607,7 +611,7 @@ object JdbcUtils {
         val url = options.url
         val dialect = SqlDialects.get(url)
         val sql = dialect.statement.merge(target, targetAlias, targetSchema, source, sourceAlias, sourceSchema, condition, clauses)
-        statement.executeUpdate(sql)
+        executeUpdate(statement, sql)
     }
 
     /**
@@ -647,7 +651,6 @@ object JdbcUtils {
      */
     def alterTable(conn:Connection, table:TableIdentifier, changes:Seq[TableChange], options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val statements = dialect.statement
         val commands = dialect.command
 
         // Get current schema, so we can lookup existing types etc
@@ -692,7 +695,7 @@ object JdbcUtils {
                 Some((stmt:Statement) => commands.dropIndex(stmt, table, idx.name))
             case pk:CreatePrimaryKey =>
                 logger.info(s"Creating primary key for JDBC table $table on columns ${pk.columns.mkString(",")}")
-                Some((stmt:Statement) => commands.addPrimaryKey(stmt, table, pk.columns))
+                Some((stmt:Statement) => commands.addPrimaryKey(stmt, table, PrimaryKey(pk.columns, pk.clustered)))
             case pk:DropPrimaryKey =>
                 logger.info(s"Dropping primary key from JDBC table $table")
                 Some((stmt:Statement) => commands.dropPrimaryKey(stmt, table))
@@ -706,6 +709,17 @@ object JdbcUtils {
             cmds.foreach { cmd =>
                 cmd(statement)
             }
+        }
+    }
+
+    protected def executeUpdate(statement: Statement, sql:String) : Unit = {
+        try {
+            statement.executeUpdate(sql)
+        }
+        catch {
+            case NonFatal(ex) =>
+                logger.error(s"Error executing sql: ${reasons(ex)}\n$sql")
+                throw ex
         }
     }
 }

@@ -27,6 +27,7 @@ import scala.collection.mutable
 
 import org.apache.spark.sql.jdbc.JdbcType
 
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
@@ -176,7 +177,7 @@ class OracleCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         }
     }
 
-    override def getPrimaryKey(statement:Statement, table:TableIdentifier) : Seq[String] = {
+    override def getPrimaryKey(statement:Statement, table:TableIdentifier) : Option[PrimaryKey] = {
         // Query extended information
         val sql =
             s"""
@@ -194,7 +195,10 @@ class OracleCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
             idxcols.append(name)
         }
 
-        idxcols
+        if (idxcols.nonEmpty)
+            Some(PrimaryKey(idxcols))
+        else
+            None
     }
 
     override def getIndexes(statement: Statement, table: TableIdentifier): Seq[TableIndex] = {
@@ -260,17 +264,5 @@ class OracleCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
     override def updateColumnComment(statement:Statement, table: TableIdentifier, columnName:String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None) : Unit = {
         val sql = dialect.statement.updateColumnComment(table, columnName, dataType, isNullable, charset, collation, comment)
         statement.executeUpdate(sql)
-    }
-
-    private def query(statement:Statement, sql:String)(fn:(ResultSet) => Unit) : Unit = {
-        val rs = statement.executeQuery(sql)
-        try {
-            while (rs.next()) {
-                fn(rs)
-            }
-        }
-        finally {
-            rs.close()
-        }
     }
 }

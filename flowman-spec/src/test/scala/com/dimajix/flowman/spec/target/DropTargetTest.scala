@@ -33,7 +33,6 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
-import com.dimajix.flowman.types.FieldValue
 import com.dimajix.spark.testing.LocalSparkSession
 
 

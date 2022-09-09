@@ -29,6 +29,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.catalog
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
@@ -66,7 +67,7 @@ class H2JdbcTest extends AnyFlatSpec with Matchers with LocalSparkSession {
                 Field("str_field", VarcharType(32)),
                 Field("int_field", IntegerType)
             ),
-            primaryKey = Seq("iD"),
+            primaryKey = Some(PrimaryKey(Seq("iD"))),
             indexes = Seq(
                 TableIndex("table_001_idx1", Seq("str_field", "int_field"))
             )
@@ -108,7 +109,7 @@ class H2JdbcTest extends AnyFlatSpec with Matchers with LocalSparkSession {
                 Field("State", StringType)
             ),
             None,
-            Seq()
+            None
         )
 
         // ===== Create Table =========================================================================================
@@ -205,7 +206,7 @@ class H2JdbcTest extends AnyFlatSpec with Matchers with LocalSparkSession {
                 Field("Sex", StringType)
             ),
             None,
-            Seq("id")
+            Some(PrimaryKey(Seq("id")))
         )
 
         // ===== Create Table =========================================================================================

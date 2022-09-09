@@ -1,0 +1,163 @@
+body {
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+}
+table.blueTable {
+    border: 1px solid #1C6EA4;
+    background-color: #EEEEEE;
+    width: 100%;
+    text-align: left;
+    border-collapse: collapse;
+}
+table.blueTable td, table.blueTable th {
+    border: 1px solid #AAAAAA;
+    padding: 3px 2px;
+}
+table.blueTable tbody td {
+    font-size: 13px;
+}
+table.blueTable tr:nth-child(even) {
+    background: #D0E4F5;
+}
+table.blueTable thead {
+    background: #1C6EA4;
+    background: -moz-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+    background: -webkit-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+    background: linear-gradient(to bottom, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+    border-bottom: 2px solid #444444;
+}
+table.blueTable thead th {
+    font-size: 15px;
+    font-weight: bold;
+    color: #FFFFFF;
+    border-left: 2px solid #D0E4F5;
+}
+table.blueTable thead th:first-child {
+    border-left: none;
+}
+
+table.columnChecks {
+    width: 100%;
+}
+table.columnChecks tbody td {
+    font-size: 12px;
+    border-width: 0;
+}
+table.columnChecks tr {
+    background: transparent;
+}
+table.columnChecks tr:nth-child(even) {
+    background: transparent;
+}
+
+h3 {
+    margin-top: 4px;
+    font-size: x-large;
+}
+h4 {
+    margin-top: 2px;
+    font-size: large;
+}
+h2.separator {
+    background-color: #6ab0de;
+    border-radius: 20px;
+    margin: 4px;
+    padding: 20px;
+    font-size: xx-large;
+}
+
+.identifier {
+    font-family: monospace;
+}
+.dataType {
+    font-family: monospace;
+}
+.checkName {
+    font-family: monospace;
+}
+.sourceType {
+    font-family: monospace;
+}
+.sourceLocation {
+    font-family: monospace;
+    font-weight: bolder;
+}
+.inputKind {
+    font-family: monospace;
+}
+.inputReference {
+    font-family: monospace;
+    font-weight: bolder;
+}
+
+div.indexBox {
+    background-color: #D0E4F5;
+    padding: 20px;
+    margin: 20px;
+    border-radius: 20px;
+}
+div.mainEntity {
+    background-color: #D0E4F5;
+    padding: 20px;
+    margin: 20px;
+    border-radius: 20px;
+}
+div.subEntity {
+    background-color: ghostwhite;
+    padding: 20px;
+    border-radius: 10px;
+}
+div.titleBox {
+    background-color: #5592bb;
+    margin: 4px;
+    padding: 20px;
+    border-radius: 20px;
+}
+div.detailsBox {
+    background-color: #9fbed4;
+    padding: 20px;
+    margin: 10px;
+    border-radius: 10px;
+}
+div.infoBox {
+    background-color: #5592bb;
+    padding: 20px;
+    border-radius: 10px;
+}
+div.description {
+    padding: 10px 20px;
+}
+
+div.multicolumn {
+    display: flex;
+}
+div.column_2 {
+    flex: 50%;
+}
+div.column_3 {
+    flex: 33%;
+}
+div.column_4 {
+    flex: 25%;
+}
+
+span.success {
+    color: forestgreen;
+    font-weight: bold;
+}
+span.failure {
+    color: orangered;
+    font-weight: bold;
+}
+span.description {
+    font-size: larger;
+    font-style: italic;
+}
+
+span.bubble {
+    display: inline-flex;
+    background-color: #0e84b5;
+    margin: 4px;
+    padding: 6px;
+    border-radius: 20px;
+    font-size: small;
+}

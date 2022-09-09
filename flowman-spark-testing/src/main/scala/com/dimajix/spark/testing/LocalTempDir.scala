@@ -29,6 +29,8 @@ trait LocalTempDir extends BeforeAndAfterAll {  this:Suite =>
     def tempDir: File = _tempDir.getOrElse(throw new IllegalStateException("No temp dir available"))
 
     override def beforeAll() : Unit = {
+        super.beforeAll()
+
         _tempDir = createTempDir()
     }
     override def afterAll() : Unit = {
@@ -36,6 +38,8 @@ trait LocalTempDir extends BeforeAndAfterAll {  this:Suite =>
             deleteTempDir(tempDir)
             _tempDir = None
         }
+
+        super.afterAll()
     }
 
     def withTempDir(f: File => Unit): Unit = {

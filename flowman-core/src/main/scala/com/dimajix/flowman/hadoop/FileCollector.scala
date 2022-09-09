@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.apache.velocity.VelocityContext
 import org.slf4j.LoggerFactory
 import scala.collection.parallel.ParIterable
 import scala.math.Ordering
+import scala.util.control.NonFatal
 
 
 object FileCollector {
@@ -227,17 +228,22 @@ case class FileCollector(
      * @return
      */
     def resolvePattern(partition:Seq[(String,Any)]) : String = {
-        if (filePattern.nonEmpty) {
-            val context = new VelocityContext(templateContext)
-            val partitionValues = defaults ++ partition.toMap
-            partitionValues.foreach(kv => context.put(kv._1, kv._2))
-            val output = new StringWriter()
-            templateEngine.evaluate(context, output, "FileCollector", filePattern.get)
-            output.getBuffer.toString
-        }
-        else {
-            ""
-        }
+        filePattern.map { filePattern =>
+                val partitionValues = defaults ++ partition.toMap
+                try {
+                    val context = new VelocityContext(templateContext)
+                    partitionValues.foreach(kv => context.put(kv._1, kv._2))
+                    val output = new StringWriter()
+                    templateEngine.evaluate(context, output, "FileCollector", filePattern)
+                    output.getBuffer.toString
+                }
+                catch {
+                    case NonFatal(ex) =>
+                        val parts = partitions.map(x => s"$x=${partitionValues.get(x).map(v => s"'$v'").getOrElse("<undefined>")}").mkString(",")
+                        throw new IllegalArgumentException(s"Cannot evaluate partition pattern '${filePattern}' with values $parts", ex)
+                }
+            }
+            .getOrElse("")
     }
 
     /**
@@ -250,7 +256,7 @@ case class FileCollector(
      * @return
      */
     def collect(partitions:Iterable[PartitionSpec]) : Iterable[Path] = {
-        logger.debug(s"Collecting files in location ${qualifiedPath} for multiple partitions with pattern '${filePattern.get}'")
+        logger.debug(s"Collecting files in location ${qualifiedPath} for multiple partitions with pattern '${filePattern.getOrElse("")}'")
         parFlatMap(partitions)((fs,p) => collectPath(fs,p,false)).toList
     }
 
@@ -264,7 +270,7 @@ case class FileCollector(
      * @return
      */
     def collect(partition:PartitionSpec) : Seq[Path] = {
-        logger.debug(s"Collecting files in location ${qualifiedPath} for partition ${partition.spec} using pattern '${filePattern.get}'")
+        logger.debug(s"Collecting files in location ${qualifiedPath} for partition ${partition.spec} using pattern '${filePattern.getOrElse("")}'")
         map(partition)((fs,p) => collectPath(fs,p,false))
     }
 
@@ -289,7 +295,7 @@ case class FileCollector(
      * @return
      */
     def glob(partitions:Iterable[PartitionSpec]) : Iterable[Path] = {
-        logger.debug(s"Globbing files in location ${qualifiedPath} for multiple partitions with pattern '${filePattern.get}'")
+        logger.debug(s"Globbing files in location ${qualifiedPath} for multiple partitions with pattern '${filePattern.getOrElse("")}'")
         parFlatMap(partitions)((fs,p) => collectPath(fs,p,true)).toList
     }
 
@@ -301,7 +307,7 @@ case class FileCollector(
      * @return
      */
     def glob(partition:PartitionSpec) : Seq[Path] = {
-        logger.debug(s"Globbing files in location ${qualifiedPath} for partition ${partition.spec} using pattern '${filePattern.get}'")
+        logger.debug(s"Globbing files in location ${qualifiedPath} for partition ${partition.spec} using pattern '${filePattern.getOrElse("")}'")
         map(partition)((fs,p) => collectPath(fs,p,true))
     }
 
@@ -325,7 +331,7 @@ case class FileCollector(
         requirePathAndPattern()
         requireValidPartitions(partitions)
 
-        logger.debug(s"Globbing files in location ${qualifiedPath} for multiple partitions with pattern '${filePattern.get}'")
+        logger.debug(s"Globbing files in location ${qualifiedPath} for multiple partitions with pattern '${filePattern.getOrElse("")}'")
         val parts = partitions.map(p => resolvePattern(p)).mkString("{",",","}")
         new Path(qualifiedPath, parts)
     }
@@ -337,7 +343,7 @@ case class FileCollector(
       * @return
       */
     def delete(partitions:Iterable[PartitionSpec]) : Unit = {
-        logger.info(s"Deleting files in location ${qualifiedPath} with pattern '${filePattern.get}'")
+        logger.info(s"Deleting files in location ${qualifiedPath} with pattern '${filePattern.getOrElse("")}'")
         foreach(partitions)(deletePath)
     }
 

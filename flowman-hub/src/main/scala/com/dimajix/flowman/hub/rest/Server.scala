@@ -76,7 +76,7 @@ class Server(
                         }
                     }
                     ~
-                    getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/3.22.2")
+                    getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/4.1.3")
                 )}
                 ~
                 pathEndOrSingleSlash {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Kaya Kupferschmidt
+ * Copyright 2020-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.spi.RestOfArgumentsHandler
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
@@ -42,7 +43,7 @@ class EvaluateCommand extends Command {
         }
         catch {
             case NonFatal(e) =>
-                logger.error(s"Error: ${e.getMessage}")
+                logger.error(s"Error evaluating expression:\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

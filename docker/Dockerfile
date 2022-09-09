@@ -42,7 +42,11 @@ RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/flowman-dist.tar.gz \
     && chown -R flowman:flowman ~flowman/examples \
     # Create new var directory with write permissions for "flowman" user
     && mkdir ${FLOWMAN_HOME}/var \
-    && chown flowman:flowman ${FLOWMAN_HOME}/var
+    && chown flowman:flowman ${FLOWMAN_HOME}/var \
+    # Install missing Hadoop dependencies, which are required for S3, DeltaLake etc
+    && ${FLOWMAN_HOME}/bin/install-hadoop-dependencies \
+    && rm -rf ~/.m2 \
+    && chown -R root:root $SPARK_HOME/jars
 
 USER flowman
 WORKDIR /home/flowman

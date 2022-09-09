@@ -1,0 +1,6 @@
+jobs:
+  main:
+    targets:
+      - tweets-mssql
+      - tweets-index
+      - fulltext-catalog

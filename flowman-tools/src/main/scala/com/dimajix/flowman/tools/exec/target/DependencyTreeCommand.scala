@@ -52,7 +52,7 @@ class DependencyTreeCommand extends Command {
                 logger.error(s"Cannot resolve target '${ex.target}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Error analyzing '$target': ${reasons(e)}")
+                logger.error(s"Error analyzing '$target':\n  ${reasons(e)}")
                 Status.FAILED
         }
 

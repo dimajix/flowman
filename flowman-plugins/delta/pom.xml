@@ -9,7 +9,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.26.1</version>
+        <version>0.27.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -17,7 +17,7 @@
         <plugin.name>flowman-delta</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <delta.version>1.2.1</delta.version>
+        <delta.version>2.1.0</delta.version>
     </properties>
 
     <profiles>
@@ -99,29 +99,14 @@
         <profile>
             <id>spark-3.2</id>
             <properties>
-                <delta.version>1.2.1</delta.version>
+                <delta.version>2.0.0</delta.version>
             </properties>
         </profile>
         <profile>
             <id>spark-3.3</id>
             <properties>
-                <delta.version>1.2.1</delta.version>
+                <delta.version>2.1.0</delta.version>
             </properties>
-            <build>
-                <pluginManagement>
-                    <plugins>
-                        <!-- Disable compilation -->
-                        <plugin>
-                            <groupId>net.alchim31.maven</groupId>
-                            <artifactId>scala-maven-plugin</artifactId>
-                            <configuration>
-                                <sourceDir>no-source</sourceDir>
-                                <testSourceDir>no-test-source</testSourceDir>
-                            </configuration>
-                        </plugin>
-                    </plugins>
-                </pluginManagement>
-            </build>
         </profile>
     </profiles>
 
@@ -189,6 +174,11 @@
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spark-testing</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
         </dependency>
 
         <dependency>

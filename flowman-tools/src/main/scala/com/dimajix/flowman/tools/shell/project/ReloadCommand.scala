@@ -21,6 +21,7 @@ import scala.util.control.NonFatal
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
@@ -40,7 +41,7 @@ class ReloadCommand extends Command {
             }
             catch {
                 case NonFatal(e) =>
-                    logger.error(s"Error reloading current project '${fn}': ${e.getMessage}")
+                    logger.error(s"Error reloading current project '${fn}':\n  ${reasons(e)}")
                     Status.FAILED
             }
         }.getOrElse {

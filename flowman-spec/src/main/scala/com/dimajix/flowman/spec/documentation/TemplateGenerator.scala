@@ -75,21 +75,9 @@ abstract class TemplateGenerator(
 
     protected def generateInternal(context:Context, execution: Execution, documentation: ProjectDoc): Unit
 
-    protected def renderProject(context:Context, documentation: ProjectDoc, template:String="project.vtl") : String = {
+    protected def renderTemplate(context:Context, documentation: ProjectDoc, template:String="project.vtl") : String = {
         val temp = loadResource(template)
         context.evaluate(temp, Map("project" -> ProjectDocWrapper(documentation)))
-    }
-    protected def renderRelation(context:Context, documentation: RelationDoc, template:String="relation.vtl") : String = {
-        val temp = loadResource(template)
-        context.evaluate(temp, Map("relation" -> RelationDocWrapper(documentation)))
-    }
-    protected def renderMapping(context:Context, documentation: MappingDoc, template:String="mapping.vtl") : String = {
-        val temp = loadResource(template)
-        context.evaluate(temp, Map("mapping" -> MappingDocWrapper(documentation)))
-    }
-    protected def renderTarget(context:Context, documentation: TargetDoc, template:String="target.vtl") : String = {
-        val temp = loadResource(template)
-        context.evaluate(temp, Map("target" -> TargetDocWrapper(documentation)))
     }
 
     protected def loadResource(name: String): String = {
@@ -117,8 +105,8 @@ abstract class TemplateGeneratorSpec extends GeneratorSpec {
         context.evaluate(template) match {
             case "text" => FileGenerator.textTemplate
             case "html" => FileGenerator.htmlTemplate
+            case "html+css" => FileGenerator.htmlCssTemplate
             case str => new URL(str)
         }
     }
-
 }

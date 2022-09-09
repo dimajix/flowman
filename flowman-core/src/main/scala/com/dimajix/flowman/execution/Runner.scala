@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
@@ -46,11 +47,13 @@ import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.ProjectWrapper
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Result
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
+import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
@@ -91,7 +94,7 @@ private[execution] sealed class RunnerImpl {
             case Status.SKIPPED =>
                 logger.info(green(s"Skipped phase '$phase' for target '${target.identifier}'"))
             case Status.FAILED if result.exception.nonEmpty =>
-                logger.error(red(s"Failed phase '$phase' for target '${target.identifier}'  after ${TimeFormatter.toString(duration)} with exception: "), result.exception.get)
+                logger.error(red(s"Failed phase '$phase' for target '${target.identifier}'  after ${TimeFormatter.toString(duration)} with exception:\n  ${reasons(result.exception.get)}"))
             case Status.FAILED =>
                 logger.error(red(s"Failed phase '$phase' for target '${target.identifier}' after ${TimeFormatter.toString(duration)}"))
             case Status.ABORTED =>
@@ -218,18 +221,21 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @param phases
      * @return
      */
-    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), targets:Seq[Regex]=Seq(".*".r), dirtyTargets:Seq[Regex]=Seq(), force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : LifecycleResult = {
+    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map.empty, targets:Seq[Regex]=Seq(".*".r), dirtyTargets:Seq[Regex]=Seq.empty, force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, ignoreHistory:Boolean=false, isolated:Boolean=true) : LifecycleResult = {
         require(args != null)
         require(phases != null)
         require(args != null)
 
-        val prj = job.project.map(prj => s" in project '${prj.name}'${prj.version.map(v => s" version $v").getOrElse("")}").getOrElse("")
+        // Disallow reusing current context if job parameters of environment are non-empty
+        val isolated2 = isolated || job.parameters.nonEmpty || job.environment.nonEmpty
+
+        val prj = job.project.map(prj => s" in project '${prj.name}'${prj.version.map(v => s" (version $v)").getOrElse("")}").getOrElse("")
+        val iso = if(isolated2) "with isolation" else "without isolation"
         logger.info("")
         logger.info(separator)
-        logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.name}'$prj")
+        logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.name}'$prj $iso")
 
         val startTime = Instant.now()
-        val isolated2 = isolated || job.parameters.nonEmpty || job.environment.nonEmpty
         runner.withExecution(isolated2) { execution =>
             runner.withJobContext(job, args, Some(execution), force, dryRun, isolated2) { (context, arguments) =>
                 val title = s"lifecycle for job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
@@ -252,7 +258,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                                 }
 
                             if (isActive)
-                                Some(executeJobPhase(execution, context, job, phase, arguments, targets, dirtyTargets, force=force, keepGoing=keepGoing, dryRun=dryRun))
+                                Some(executeJobPhase(execution, context, job, phase, arguments, targets, dirtyTargets, force=force, keepGoing=keepGoing, dryRun=dryRun, ignoreHistory=ignoreHistory))
                             else
                                 None
                         }
@@ -277,9 +283,11 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         dirtyTargets:Seq[Regex],
         force:Boolean,
         keepGoing:Boolean,
-        dryRun:Boolean) : JobResult = {
+        dryRun:Boolean,
+        ignoreHistory:Boolean) : JobResult = {
         runner.withPhaseContext(jobContext, phase) { context =>
-            val title = s"${phase.upper} job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
+            val titleArgs = if (arguments.nonEmpty) " " + arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ") else ""
+            val title = s"${phase.upper} job '${job.identifier}'$titleArgs"
             logTitle(title)
             logEnvironment(context)
 
@@ -291,13 +299,13 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                     execution.monitorJob(job, arguments, phase) { execution =>
                         val instance = job.digest(phase, arguments.map { case (k, v) => k -> v.toString })
                         try {
-                            val results = executeJobTargets(execution, context, job, phase, targets, dirtyTargets, force=force, keepGoing=keepGoing, dryRun=dryRun)
+                            val results = executeJobTargets(execution, context, job, phase, targets, dirtyTargets, force=force, keepGoing=keepGoing, dryRun=dryRun, ignoreHistory=ignoreHistory)
                             JobResult(job, instance, results, startTime)
                         }
                         catch {
                             case NonFatal(ex) =>
                                 // Primarily exceptions during target instantiation will be caught here
-                                logger.error(s"Caught exception during $title:", ex)
+                                logger.error(s"Caught exception during $title:\n  ${reasons(ex)}")
                                 JobResult(job, instance, ex, startTime)
                         }
                     }
@@ -317,7 +325,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @param token
      * @return
      */
-    private def executeJobTargets(execution:Execution, context:Context, job:Job, phase:Phase, targets:Seq[Regex], dirtyTargets:Seq[Regex], force:Boolean, keepGoing:Boolean, dryRun:Boolean) : Seq[TargetResult] = {
+    private def executeJobTargets(execution:Execution, context:Context, job:Job, phase:Phase, targets:Seq[Regex], dirtyTargets:Seq[Regex], force:Boolean, keepGoing:Boolean, dryRun:Boolean, ignoreHistory:Boolean) : Seq[TargetResult] = {
         require(phase != null)
 
         // This will throw an exception if instantiation fails
@@ -337,7 +345,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             val sc = execution.spark.sparkContext
             withJobGroup(sc, target.name, s"$phase target ${target.identifier}") {
                 val dirty = dirtyManager.isDirty(target)
-                val result = executeTargetPhase(execution, target, phase, force || dirty, dryRun)
+                val result = executeTargetPhase(execution, target, phase, force || dirty, dryRun, ignoreHistory)
                 if (result.status == Status.SUCCESS) {
                     dirtyManager.taint(target)
                 }
@@ -354,9 +362,9 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @param phase
      * @return
      */
-    private def executeTargetPhase(execution: Execution, target:Target, phase:Phase, force:Boolean, dryRun:Boolean) : TargetResult = {
+    private def executeTargetPhase(execution: Execution, target:Target, phase:Phase, force:Boolean, dryRun:Boolean, ignoreHistory:Boolean=false) : TargetResult = {
         val forceDirty = force || execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY)
-        val useHistory = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_USE_HISTORY)
+        val useHistory = !ignoreHistory && execution.flowmanConf.getConf(FlowmanConf.EXECUTION_TARGET_USE_HISTORY)
 
         // We need to check the target *before* we run code inside the monitor (which will mark the target as RUNNING)
         val isClean = !forceDirty && useHistory && checkTarget(target.digest(phase))
@@ -367,7 +375,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
             }
             catch {
                 case NonFatal(ex) =>
-                    logger.warn(yellow(s"Cannot infer dirty status for target '${target.identifier}' because of exception:\n${ExceptionUtils.reasons(ex)}"))
+                    logger.warn(yellow(s"Cannot infer dirty status for target '${target.identifier}' because of exception:\n  ${ExceptionUtils.reasons(ex)}"))
                     Unknown
             }
         }
@@ -572,7 +580,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
 final class Runner(
     private[execution] val parentExecution:Execution,
     private[execution] val stateStore: StateStore,
-    private[execution] val hooks: Seq[Prototype[Hook]]=Seq()
+    private[execution] val hooks: Seq[Prototype[Hook]]=Seq.empty
 ) {
     require(parentExecution != null)
     require(stateStore != null)
@@ -584,16 +592,25 @@ final class Runner(
       * Executes a single job using the given execution and a map of parameters. The Runner may decide not to
       * execute a specific job, because some information may indicate that the job has already been successfully
       * run in the past. This behaviour can be overridden with the force flag
-      * @param phases
+      * @param job - The [[Job]] to be executed
+      * @param phases - The execution phases to be executed
+      * @param args - Optional list of job parameters
+      * @param targets - Optional list of regular expressions for matching targets to be executed
+      * @param dirtyTargets - Optional list of regulat expressions for matching targets to be considered dirty
+      * @param force - Force target execution, even for clean targets
+      * @param keepGoing - Keep going, even if some targets fail
+      * @param dryRun - Only perform dry run
+      * @param ignoreHistory - Ignore job/target state in history database
+      * @param isolated - Setup isolated context and execution environment
       * @return
       */
-    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map(), targets:Seq[Regex]=Seq(".*".r), dirtyTargets:Seq[Regex]=Seq(), force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : Status = {
+    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map.empty, targets:Seq[Regex]=Seq(".*".r), dirtyTargets:Seq[Regex]=Seq.empty, force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, ignoreHistory:Boolean=false, isolated:Boolean=true) : Status = {
         require(args != null)
         require(phases != null)
         require(args != null)
 
         val runner = new JobRunnerImpl(this)
-        val result = runner.executeJob(job, phases, args, targets, dirtyTargets=dirtyTargets, force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=isolated)
+        val result = runner.executeJob(job, phases, args, targets, dirtyTargets=dirtyTargets, force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=isolated, ignoreHistory=ignoreHistory)
         result.status
     }
 
@@ -613,11 +630,16 @@ final class Runner(
      * Executes a single target using the given execution and a map of parameters. The Runner may decide not to
      * execute a specific target, because some information may indicate that the job has already been successfully
      * run in the past. This behaviour can be overriden with the force flag
+     *
      * @param targets
-     * @param phases
+     * @param phases - The execution phases to be executed
+     * @param jobName   - Name of job to be created containing all targets
+     * @param force     - Force target execution, even for clean targets
+     * @param keepGoing - Keep going, even if some targets fail
+     * @param dryRun    - Only perform dry run
      * @return
      */
-    def executeTargets(targets:Seq[Target], phases:Seq[Phase], jobName:String="execute-target", force:Boolean, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true) : Status = {
+    def executeTargets(targets:Seq[Target], phases:Seq[Phase], jobName:String="execute-target", force:Boolean, keepGoing:Boolean=false, dryRun:Boolean=false, isolated:Boolean=false) : Status = {
         if (targets.nonEmpty) {
             val context = targets.head.context
 
@@ -628,17 +650,23 @@ final class Runner(
                 .build()
             val job = Job.builder(jobContext)
                 .setName(jobName)
-                .setTargets(targets.map(_.identifier))
-                .setParameters(Seq(Job.Parameter("execution_ts", LongType)))
+                .setTargets(targets.map(tgt => TargetIdentifier(tgt.name)))
                 .build()
 
-            executeJob(job, phases, args=Map("execution_ts" -> Clock.systemUTC().millis()), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=isolated)
+            executeJob(job, phases, force=force, keepGoing=keepGoing, dryRun=dryRun, ignoreHistory=true, isolated=isolated)
         }
         else {
             Status.SUCCESS
         }
    }
 
+    /**
+     * Create new execution environment
+     * @param isolated - set up an isolated execution environment which does not share any resources
+     * @param fn
+     * @tparam T
+     * @return
+     */
     def withExecution[T](isolated:Boolean=false)(fn:Execution => T) : T = {
         val execution : Execution = new ScopedExecution(parentExecution, isolated)
         val result = fn(execution)
@@ -662,13 +690,16 @@ final class Runner(
      * Provides a context for the given job. This will apply all environment variables of the job and add
      * additional variables like a `force` flag.
      * @param job
-     * @param args
-     * @param force
+     * @param args - Optional job parameters
+     * @param execution - Optional execution used by context for analyzing
+     * @param force - Force execution even for non-dirty targets
+     * @param dryRun - Only simulate execution
+     * @param isolated - Force isolated context
      * @param fn
      * @tparam T
      * @return
      */
-    def withJobContext[T](job:Job, args:Map[String,Any]=Map(), execution:Option[Execution]=None, force:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true)(fn:(Context,Map[String,Any]) => T) : T = {
+    def withJobContext[T](job:Job, args:Map[String,Any]=Map.empty, execution:Option[Execution]=None, force:Boolean=false, dryRun:Boolean=false, isolated:Boolean=true)(fn:(Context,Map[String,Any]) => T) : T = {
         val arguments : Map[String,Any] = job.parameters.flatMap(p => p.default.map(d => p.name -> d)).toMap ++ args
         arguments.toSeq.sortBy(_._1).foreach { case (k,v) => logger.info(s"Job argument $k=$v")}
 
@@ -679,21 +710,23 @@ final class Runner(
                 val rootContext = RootContext.builder(job.context)
                     .withEnvironment("force", force)
                     .withEnvironment("dryRun", dryRun)
-                    .withEnvironment("job", JobWrapper(job))
+                    .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.JOB_OVERRIDE)
+                    .withEnvironment("job", JobWrapper(job), SettingLevel.JOB_OVERRIDE)
                     .withEnvironment(arguments, SettingLevel.SCOPE_OVERRIDE)
                     .withEnvironment(job.environment, SettingLevel.JOB_OVERRIDE)
                     .withExecution(execution)
                     .build()
-                if (job.context.project.nonEmpty)
-                    rootContext.getProjectContext(job.context.project.get)
-                else
-                    rootContext
+                job.context.project match {
+                    case Some(project) => rootContext.getProjectContext(project)
+                    case None => rootContext
+                }
             }
             else {
                 ScopeContext.builder(job.context)
                     .withEnvironment("force", force)
                     .withEnvironment("dryRun", dryRun)
-                    .withEnvironment("job", JobWrapper(job))
+                    .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.JOB_OVERRIDE)
+                    .withEnvironment("job", JobWrapper(job), SettingLevel.JOB_OVERRIDE)
                     .build()
             }
 
@@ -714,7 +747,8 @@ final class Runner(
         val rootContext = RootContext.builder(test.context)
             .withEnvironment("force", false)
             .withEnvironment("dryRun", dryRun)
-            .withEnvironment("test", TestWrapper(test))
+            .withEnvironment("project", ProjectWrapper(test.project), SettingLevel.JOB_OVERRIDE)
+            .withEnvironment("test", TestWrapper(test), SettingLevel.JOB_OVERRIDE)
             .withEnvironment(test.environment, SettingLevel.JOB_OVERRIDE)
             .withExecution(execution)
             .overrideRelations(test.overrideRelations.map(kv => RelationIdentifier(kv._1, project) -> kv._2))

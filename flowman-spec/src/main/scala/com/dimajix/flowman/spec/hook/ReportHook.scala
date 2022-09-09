@@ -35,6 +35,7 @@ import com.dimajix.flowman.execution.JobToken
 import com.dimajix.flowman.execution.LifecycleToken
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.execution.Token
 import com.dimajix.flowman.metric.CollectingMetricSink
@@ -146,7 +147,12 @@ case class ReportHook(
         logger.info(s"Creating new report to $location")
         val output = newOutput()
         output.foreach { p =>
-            val text = context.evaluate(lifecycleStartVtl, Map("job" -> JobWrapper(job), "lifecycle" -> instance.phases.map(_.toString).asJava))
+            val vars = Map(
+                "job" -> JobWrapper(job),
+                "lifecycle" -> instance.phases.map(_.toString).asJava,
+                "status" -> Status.RUNNING.toString
+            )
+            val text = context.evaluate(lifecycleStartVtl, vars)
             p.print(text)
             p.flush()
         }
@@ -202,7 +208,12 @@ case class ReportHook(
             case _ => newOutput()
         }
         output.foreach { p =>
-            val text = context.evaluate(jobStartVtl, Map("job" -> JobWrapper(job), "phase" -> instance.phase.toString))
+            val vars = Map(
+                "job" -> JobWrapper(job),
+                "phase" -> instance.phase.toString,
+                "status" -> Status.RUNNING.toString
+            )
+            val text = context.evaluate(jobStartVtl, vars)
             p.print(text)
             p.flush()
         }
@@ -254,7 +265,12 @@ case class ReportHook(
             case _ => None
         }
         output.foreach { p =>
-            val text = context.evaluate(targetStartVtl, Map("target" -> TargetWrapper(target), "phase" -> instance.phase.toString))
+            val vars = Map(
+                "target" -> TargetWrapper(target),
+                "phase" -> instance.phase.toString,
+                "status" -> Status.RUNNING.toString
+            )
+            val text = context.evaluate(targetStartVtl, vars)
             p.print(text)
             p.flush()
         }
@@ -293,7 +309,11 @@ case class ReportHook(
             case _ => None
         }
         output.foreach { p =>
-            val text = context.evaluate(assertionStartVtl, Map("assertion" -> AssertionWrapper(assertion)))
+            val vars = Map(
+                "assertion" -> AssertionWrapper(assertion),
+                "status" -> Status.RUNNING.toString
+            )
+            val text = context.evaluate(assertionStartVtl, vars)
             p.print(text)
             p.flush()
         }

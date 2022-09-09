@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.template
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.execution.InstantiateRelationFailedException
 import com.dimajix.flowman.execution.NoSuchTemplateException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
@@ -98,7 +99,7 @@ class RelationTemplateTest extends AnyFlatSpec with Matchers {
         rel_1.kind should be ("values")
         rel_1.description should be (Some("This is rel_1"))
 
-        an[IllegalArgumentException] should be thrownBy(context.getRelation(RelationIdentifier("rel_2")))
+        an[InstantiateRelationFailedException] should be thrownBy(context.getRelation(RelationIdentifier("rel_2")))
 
         val rel_3 = context.getRelation(RelationIdentifier("rel_3"))
         rel_3 shouldBe a[ValuesRelation]
@@ -107,7 +108,7 @@ class RelationTemplateTest extends AnyFlatSpec with Matchers {
         rel_3.kind should be ("values")
         rel_3.description should be (Some("No description"))
 
-        an[IllegalArgumentException] should be thrownBy(context.getRelation(RelationIdentifier("rel_4")))
+        an[InstantiateRelationFailedException] should be thrownBy(context.getRelation(RelationIdentifier("rel_4")))
     }
 
     it should "throw an error on unknown templates" in {
@@ -123,6 +124,6 @@ class RelationTemplateTest extends AnyFlatSpec with Matchers {
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        an[NoSuchTemplateException] should be thrownBy(context.getRelation(RelationIdentifier("rel_1")))
+        an[InstantiateRelationFailedException] should be thrownBy(context.getRelation(RelationIdentifier("rel_1")))
     }
 }

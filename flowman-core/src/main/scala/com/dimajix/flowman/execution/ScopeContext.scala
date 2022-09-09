@@ -18,6 +18,7 @@ package com.dimajix.flowman.execution
 
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
+import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
@@ -140,13 +141,22 @@ final class ScopeContext(
      */
     override def profiles: Set[String] = parent.profiles
 
+    @throws[InstantiateConnectionFailedException]
+    @throws[NoSuchConnectionException]
     override def getConnection(identifier: ConnectionIdentifier): Connection = {
         if (identifier.project.isEmpty) {
             connections.get(identifier.name) match {
                 case Some(result) => result
                 case None => scopeConnections.get(identifier.name) match {
                     case Some(spec) =>
-                        connections.getOrElseUpdate(identifier.name, spec.instantiate(this))
+                        connections.getOrElseUpdate(identifier.name,
+                            try {
+                                spec.instantiate(this)
+                            }
+                            catch {
+                                case NonFatal(ex) => throw new InstantiateConnectionFailedException(identifier, ex)
+                            }
+                        )
                     case None => parent.getConnection(identifier)
                 }
             }
@@ -155,13 +165,23 @@ final class ScopeContext(
             parent.getConnection(identifier)
         }
     }
+
+    @throws[InstantiateMappingFailedException]
+    @throws[NoSuchMappingException]
     override def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true): Mapping = {
         if (identifier.project.isEmpty) {
             mappings.get(identifier.name) match {
                 case Some(result) => result
                 case None => scopeMappings.get(identifier.name) match {
                     case Some(spec) =>
-                        mappings.getOrElseUpdate(identifier.name, spec.instantiate(this))
+                        mappings.getOrElseUpdate(identifier.name,
+                            try {
+                                spec.instantiate(this)
+                            }
+                            catch {
+                                case NonFatal(ex) => throw new InstantiateMappingFailedException(identifier, ex)
+                            }
+                        )
                     case None => parent.getMapping(identifier, allowOverrides)
                 }
             }
@@ -170,13 +190,22 @@ final class ScopeContext(
             parent.getMapping(identifier, allowOverrides)
         }
     }
+
+    @throws[InstantiateRelationFailedException]
+    @throws[NoSuchRelationException]
     override def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation = {
         if (identifier.project.isEmpty) {
             relations.get(identifier.name) match {
                 case Some(result) => result
                 case None => scopeRelations.get(identifier.name) match {
                     case Some(spec) =>
-                        relations.getOrElseUpdate(identifier.name, spec.instantiate(this))
+                        relations.getOrElseUpdate(identifier.name,
+                            try {
+                                spec.instantiate(this)
+                            }
+                            catch {
+                                case NonFatal(ex) => throw new InstantiateRelationFailedException(identifier, ex)
+                            })
                     case None => parent.getRelation(identifier, allowOverrides)
                 }
             }
@@ -185,13 +214,22 @@ final class ScopeContext(
             parent.getRelation(identifier, allowOverrides)
         }
     }
+
+    @throws[InstantiateTargetFailedException]
+    @throws[NoSuchTargetException]
     override def getTarget(identifier: TargetIdentifier): Target = {
         if (identifier.project.isEmpty) {
             targets.get(identifier.name) match {
                 case Some(result) => result
                 case None => scopeTargets.get(identifier.name) match {
                     case Some(spec) =>
-                        targets.getOrElseUpdate(identifier.name, spec.instantiate(this))
+                        targets.getOrElseUpdate(identifier.name,
+                            try {
+                                spec.instantiate(this)
+                            }
+                            catch {
+                                case NonFatal(ex) => throw new InstantiateTargetFailedException(identifier, ex)
+                            })
                     case None => parent.getTarget(identifier)
                 }
             }
@@ -200,13 +238,22 @@ final class ScopeContext(
             parent.getTarget(identifier)
         }
     }
+
+    @throws[InstantiateJobFailedException]
+    @throws[NoSuchJobException]
     override def getJob(identifier: JobIdentifier): Job = {
         if (identifier.project.isEmpty) {
             jobs.get(identifier.name) match {
                 case Some(result) => result
                 case None => scopeJobs.get(identifier.name) match {
                     case Some(spec) =>
-                        jobs.getOrElseUpdate(identifier.name, spec.instantiate(this))
+                        jobs.getOrElseUpdate(identifier.name,
+                            try {
+                                spec.instantiate(this)
+                            }
+                            catch {
+                                case NonFatal(ex) => throw new InstantiateJobFailedException(identifier, ex)
+                            })
                     case None => parent.getJob(identifier)
                 }
             }
@@ -215,13 +262,22 @@ final class ScopeContext(
             parent.getJob(identifier)
         }
     }
+
+    @throws[InstantiateTestFailedException]
+    @throws[NoSuchTestException]
     override def getTest(identifier: TestIdentifier): Test = {
         if (identifier.project.isEmpty) {
             tests.get(identifier.name) match {
                 case Some(result) => result
                 case None => scopeTests.get(identifier.name) match {
                     case Some(spec) =>
-                        tests.getOrElseUpdate(identifier.name, spec.instantiate(this))
+                        tests.getOrElseUpdate(identifier.name,
+                            try {
+                                spec.instantiate(this)
+                            }
+                            catch {
+                                case NonFatal(ex) => throw new InstantiateTestFailedException(identifier, ex)
+                            })
                     case None => parent.getTest(identifier)
                 }
             }
@@ -238,5 +294,7 @@ final class ScopeContext(
      * @param identifier
      * @return
      */
+    @throws[InstantiateTemplateFailedException]
+    @throws[NoSuchTemplateException]
     override def getTemplate(identifier: TemplateIdentifier): Template[_] = parent.getTemplate(identifier)
 }

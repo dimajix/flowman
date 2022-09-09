@@ -19,6 +19,7 @@ package com.dimajix.flowman.catalog
 import java.util.Locale
 
 import scala.collection.mutable
+import scala.util.control.NonFatal
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkSession
@@ -47,6 +48,7 @@ import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.catalog.HiveCatalog.cleanupField
 import com.dimajix.flowman.catalog.HiveCatalog.cleanupFields
@@ -213,7 +215,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             }
 
             // Publish table to external catalog
-            externalCatalogs.foreach(_.createTable(table))
+            callExternalCatalogs("CREATE TABLE")(_.createTable(table))
         }
     }
 
@@ -237,7 +239,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         }
 
         // Publish table to external catalog
-        externalCatalogs.foreach { catalog =>
+        callExternalCatalogs(s"REFRESH TABLE $table") { catalog =>
             val definition = getTable(table)
             catalog.refreshTable(definition)
         }
@@ -320,7 +322,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             FileUtils.deleteLocation(fs, location)
 
             // Remove table from external catalog
-            externalCatalogs.foreach(_.dropTable(catalogTable))
+            callExternalCatalogs(s"DROP TABLE $table")(_.dropTable(catalogTable))
         }
     }
 
@@ -348,7 +350,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         FileUtils.truncateLocation(fs, location)
 
         spark.catalog.refreshTable(table.quotedString)
-        externalCatalogs.foreach(_.truncateTable(catalogTable))
+        callExternalCatalogs(s"TRUNCATE TABLE $table")(_.truncateTable(catalogTable))
     }
 
     /**
@@ -392,7 +394,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             cmd.run(spark)
         }
 
-        externalCatalogs.foreach(_.alterTable(catalogTable))
+        callExternalCatalogs(s"ALTER TABLE $table")(_.alterTable(catalogTable))
     }
 
     /**
@@ -414,7 +416,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         val cmd = AlterTableAddColumnsCommand(table.toSpark, cleanedCols)
         cmd.run(spark)
 
-        externalCatalogs.foreach(_.alterTable(catalogTable))
+        callExternalCatalogs(s"ALTER TABLE $table")(_.alterTable(catalogTable))
     }
 
     /**
@@ -490,7 +492,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
         analyzePartition(table, sparkPartition)
 
-        externalCatalogs.foreach { ec =>
+        callExternalCatalogs(s"ADD PARTITION TO $table") { ec =>
             val catalogTable = getTable(table)
             val catalogPartition = catalog.getPartition(table.toSpark, sparkPartition)
             ec.addPartition(catalogTable, catalogPartition)
@@ -544,7 +546,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
         analyzePartition(table, sparkPartition)
 
-        externalCatalogs.foreach { ec =>
+        callExternalCatalogs(s"ALTER PARTITION $table") { ec =>
             val catalogTable = getTable(table)
             val catalogPartition = catalog.getPartition(table.toSpark, sparkPartition)
             ec.alterPartition(catalogTable, catalogPartition)
@@ -587,7 +589,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         val fs = location.getFileSystem(hadoopConf)
         FileUtils.truncateLocation(fs, location)
 
-        externalCatalogs.foreach { ec =>
+        callExternalCatalogs(s"TRUNCATE PARTITION $table") { ec =>
             val sparkPartition = partition.mapValues(_.toString).toMap
             val catalogTable = getTable(table)
             val catalogPartition = catalog.getPartition(table.toSpark, sparkPartition)
@@ -642,7 +644,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         val cmd = AlterTableDropPartitionCommand(table.toSpark, sparkPartitions, ignoreIfNotExists, purge = false, retainData = false)
         cmd.run(spark)
 
-        externalCatalogs.foreach { ec =>
+        callExternalCatalogs(s"DROP PARTITION $table") { ec =>
             val catalogTable = getTable(table)
             catalogPartitions.foreach(ec.dropPartition(catalogTable, _))
         }
@@ -666,7 +668,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             cmd.run(spark)
 
             // Publish view to external catalog
-            externalCatalogs.foreach(_.createView(getTable(table)))
+            callExternalCatalogs(s"CREATE VIEW $table")(_.createView(getTable(table)))
         }
     }
 
@@ -682,7 +684,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         cmd.run(spark)
 
         // Publish view to external catalog
-        externalCatalogs.foreach(_.alterView(getTable(table)))
+        callExternalCatalogs(s"ALTER VIEW $table")(_.alterView(getTable(table)))
     }
 
     /**
@@ -709,7 +711,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             cmd.run(spark)
 
             // Remove table from external catalog
-            externalCatalogs.foreach(_.dropView(catalogTable))
+            callExternalCatalogs(s"DROP VIEW $table")(_.dropView(catalogTable))
         }
     }
 
@@ -758,6 +760,18 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         if (tableExists(name)) {
             val db = name.database.getOrElse(catalog.getCurrentDatabase)
             throw new TableAlreadyExistsException(db = db, table = name.table)
+        }
+    }
+
+    private def callExternalCatalogs[U](operation:String)(f:ExternalCatalog => U) : Unit = {
+        val ignoreErrors = config.flowmanConf.getConf(FlowmanConf.EXTERNAL_CATALOG_IGNORE_ERRORS)
+        externalCatalogs.foreach { catalog =>
+            try {
+                f(catalog)
+            } catch {
+                case NonFatal(ex) if ignoreErrors =>
+                    logger.warn(s"Ignoring error when calling external catalog '${catalog.name}' (${catalog.kind}) for '$operation':\n  ${reasons(ex)}")
+            }
         }
     }
 }

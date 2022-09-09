@@ -79,15 +79,15 @@ abstract class JdbcRelation(
 
     protected def withStatement[T](fn:(Statement,JDBCOptions) => T) : T = {
         withConnection { (con, options) =>
-            withStatement(con,options)(fn)
+            withStatement(con,options)(fn(_,options))
         }
     }
 
-    protected def withStatement[T](con:java.sql.Connection,options:JDBCOptions)(fn:(Statement,JDBCOptions) => T) : T = {
+    protected def withStatement[T](con:java.sql.Connection,options:JDBCOptions)(fn:Statement => T) : T = {
         val statement = con.createStatement()
         try {
             statement.setQueryTimeout(JdbcUtils.queryTimeout(options))
-            fn(statement, options)
+            fn(statement)
         }
         finally {
             statement.close()

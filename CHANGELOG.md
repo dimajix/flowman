@@ -1,3 +1,21 @@
+# Version 0.27.0 - 2022-09-09
+
+* github-232: [BUG] Column descriptions should be propagated in UNIONs
+* github-233: [BUG] Missing Hadoop dependencies for S3, Delta, etc
+* github-235: Implement new `rest` hook with fine control
+* github-229: A build target should not fail if Impala "COMPUTE STATS" fails
+* github-236: 'copy' target should not apply output schema
+* github-237: jdbcQuery relation should use fields "sql" and "file" instead of "query"
+* github-239: Allow optional SQL statement for creating jdbcTable
+* github-238: Implement new 'jdbcCommand' target
+* github-240: [BUG] Data quality checks in documentation should not fail on NULL values
+* github-241: Throw an error on duplicate entity definitions
+* github-220: Upgrade Delta-Lake to 2.0 / 2.1
+* github-242: Switch to Spark 3.3 as default
+* github-243: Use alternative Spark MS SQL Connector for Spark 3.3
+* github-244: Generate project HTML documentation with optional external CSS file
+
+
 # Version 0.26.1 - 2022-08-03
 
 * github-226: Upgrade to Spark 3.2.2

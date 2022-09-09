@@ -27,6 +27,7 @@ import com.dimajix.flowman.tools.exec.Command
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Status
 
 
@@ -49,7 +50,7 @@ class InspectCommand extends Command {
             println(s"    checkpoint: ${mapping.checkpoint}")
             println(s"  Requires:")
                 mapping.requires
-                    .map(_.toString)
+                    .map(_.text)
                     .toSeq.sorted
                     .foreach{ p => println(s"    $p") }
             Status.SUCCESS
@@ -59,7 +60,7 @@ class InspectCommand extends Command {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Error '$mapping': ${e.getMessage}")
+                logger.error(s"Error inspecting '$mapping':\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

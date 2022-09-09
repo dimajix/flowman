@@ -21,6 +21,7 @@ import scala.util.control.NonFatal
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Phase
@@ -51,7 +52,7 @@ class DependencyTreeCommand extends Command {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Error '$mapping': ${e.getMessage}")
+                logger.error(s"Error in analyzing dependencies of '$mapping':\n  ${reasons(e)}")
                 Status.FAILED
         }
 

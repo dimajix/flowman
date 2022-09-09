@@ -16,21 +16,15 @@
 
 package com.dimajix.flowman.tools.exec.target
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
-import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Lifecycle
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.tools.exec.Command
@@ -58,9 +52,9 @@ class PhaseCommand(phase:Phase) extends Command {
             else
                 Lifecycle.ofPhase(phase)
 
-        val allTargets = targets.flatMap(_.split(",")).map { t =>
-            context.getTarget(TargetIdentifier(t))
-        }
+        val allTargets = targets.flatMap(_.split(","))
+            .map(tgt => context.getTarget(TargetIdentifier(tgt)))
+
         val runner = session.runner
         runner.executeTargets(allTargets, lifecycle, jobName="cli-tools", force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
     }

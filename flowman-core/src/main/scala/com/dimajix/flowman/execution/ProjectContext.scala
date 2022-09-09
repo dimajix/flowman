@@ -17,6 +17,7 @@
 package com.dimajix.flowman.execution
 
 import scala.collection.concurrent.TrieMap
+import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
@@ -146,19 +147,31 @@ final class ProjectContext private[execution](
       * @param identifier
       * @return
       */
+    @throws[InstantiateMappingFailedException]
+    @throws[NoSuchMappingException]
     override def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true): Mapping = {
         require(identifier != null && identifier.nonEmpty)
 
         def findOverride() = {
             if (allowOverrides) {
-                findOrInstantiate(identifier, overrideMappingTemplates, overrideMappings)
+                try {
+                    findOrInstantiate(identifier, overrideMappingTemplates, overrideMappings)
+                }
+                catch {
+                    case NonFatal(ex) => throw new InstantiateMappingFailedException(identifier, ex)
+                }
             }
             else {
                 None
             }
         }
         def find() = {
-            findOrInstantiate(identifier, _project.mappings, mappings)
+            try {
+                findOrInstantiate(identifier, _project.mappings, mappings)
+            }
+            catch {
+                case NonFatal(ex) => throw new InstantiateMappingFailedException(identifier, ex)
+            }
         }
 
         if (identifier.project.forall(_ == _project.name)) {
@@ -176,19 +189,31 @@ final class ProjectContext private[execution](
       * @param identifier
       * @return
       */
+    @throws[InstantiateRelationFailedException]
+    @throws[NoSuchRelationException]
     override def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation = {
         require(identifier != null && identifier.nonEmpty)
 
         def findOverride() = {
             if (allowOverrides) {
-                findOrInstantiate(identifier, overrideRelationTemplates, overrideRelations)
+                try {
+                    findOrInstantiate(identifier, overrideRelationTemplates, overrideRelations)
+                }
+                catch {
+                    case NonFatal(ex) => throw new InstantiateRelationFailedException(identifier, ex)
+                }
             }
             else {
                 None
             }
         }
         def find() = {
-            findOrInstantiate(identifier, _project.relations, relations)
+            try {
+                findOrInstantiate(identifier, _project.relations, relations)
+            }
+            catch {
+                case NonFatal(ex) => throw new InstantiateRelationFailedException(identifier, ex)
+            }
         }
 
         if (identifier.project.forall(_ == _project.name)) {
@@ -206,16 +231,24 @@ final class ProjectContext private[execution](
       * @param identifier
       * @return
       */
+    @throws[InstantiateTargetFailedException]
+    @throws[NoSuchTargetException]
     override def getTarget(identifier: TargetIdentifier): Target = {
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.forall(_ == _project.name)) {
-            targets.getOrElseUpdate(identifier.name,
-                _project.targets
-                    .getOrElse(identifier.name,
-                        throw new NoSuchTargetException(identifier)
-                    )
-                    .instantiate(this)
+            targets.getOrElseUpdate(identifier.name, {
+                    val p = _project.targets
+                        .getOrElse(identifier.name,
+                            throw new NoSuchTargetException(identifier)
+                        )
+                    try {
+                        p.instantiate(this)
+                    }
+                    catch {
+                        case NonFatal(ex) => throw new InstantiateTargetFailedException(identifier, ex)
+                    }
+                }
             )
         }
         else {
@@ -229,26 +262,40 @@ final class ProjectContext private[execution](
       * @param identifier
       * @return
       */
+    @throws[InstantiateConnectionFailedException]
+    @throws[NoSuchConnectionException]
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.contains(_project.name)) {
             // Case 1: Project identifier explicitly set. Only look inside project
-            connections.getOrElseUpdate(identifier.name,
-                extraConnections.getOrElse(identifier.name,
+            connections.getOrElseUpdate(identifier.name, {
+                val p = extraConnections.getOrElse(identifier.name,
                     _project.connections.getOrElse(identifier.name,
                         throw new NoSuchConnectionException(identifier)
                     )
                 )
-                .instantiate(this)
-            )
+                try {
+                    p.instantiate(this)
+                }
+                catch {
+                    case NonFatal(ex) => throw new InstantiateConnectionFailedException(identifier, ex)
+                }
+            })
         }
         else if (identifier.project.isEmpty) {
             // Case 2: Project identifier not set. Look in project and in parent.
             connections.getOrElse(identifier.name,
                 extraConnections.get(identifier.name)
                     .orElse(_project.connections.get(identifier.name))
-                    .map(t => connections.getOrElseUpdate(identifier.name, t.instantiate(this)))
+                    .map(t => connections.getOrElseUpdate(identifier.name, {
+                        try {
+                            t.instantiate(this)
+                        }
+                        catch {
+                            case NonFatal(ex) => throw new InstantiateConnectionFailedException(identifier, ex)
+                        }
+                    }))
                     .getOrElse(parent.getConnection(identifier))
             )
         }
@@ -265,17 +312,24 @@ final class ProjectContext private[execution](
       * @param identifier
       * @return
       */
+    @throws[InstantiateJobFailedException]
+    @throws[NoSuchJobException]
     override def getJob(identifier: JobIdentifier): Job = {
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.forall(_ == _project.name)) {
-            jobs.getOrElseUpdate(identifier.name,
-                _project.jobs
+            jobs.getOrElseUpdate(identifier.name, {
+                val p = _project.jobs
                     .getOrElse(identifier.name,
                         throw new NoSuchJobException(identifier)
                     )
-                    .instantiate(this)
-            )
+                try {
+                    p.instantiate(this)
+                }
+                catch {
+                    case NonFatal(ex) => throw new InstantiateJobFailedException(identifier, ex)
+                }
+            })
         }
         else {
             parent.getJob(identifier)
@@ -289,17 +343,24 @@ final class ProjectContext private[execution](
      * @param identifier
      * @return
      */
+    @throws[InstantiateTestFailedException]
+    @throws[NoSuchTestException]
     override def getTest(identifier: TestIdentifier): Test = {
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.forall(_ == _project.name)) {
-            tests.getOrElseUpdate(identifier.name,
-                _project.tests
+            tests.getOrElseUpdate(identifier.name, {
+                val p = _project.tests
                     .getOrElse(identifier.name,
                         throw new NoSuchTestException(identifier)
                     )
-                    .instantiate(this)
-            )
+                try {
+                    p.instantiate(this)
+                }
+                catch {
+                    case NonFatal(ex) => throw new InstantiateTestFailedException(identifier, ex)
+                }
+            })
         }
         else {
             parent.getTest(identifier)
@@ -313,17 +374,24 @@ final class ProjectContext private[execution](
      * @param identifier
      * @return
      */
+    @throws[InstantiateTemplateFailedException]
+    @throws[NoSuchTemplateException]
     override def getTemplate(identifier: TemplateIdentifier): Template[_] = {
         require(identifier != null && identifier.nonEmpty)
 
         if (identifier.project.forall(_ == _project.name)) {
-            templates.getOrElseUpdate(identifier.name,
-                _project.templates
+            templates.getOrElseUpdate(identifier.name, {
+                val p = _project.templates
                     .getOrElse(identifier.name,
                         throw new NoSuchTemplateException(identifier)
                     )
-                    .instantiate(this)
-            )
+                try {
+                    p.instantiate(this)
+                }
+                catch {
+                    case NonFatal(ex) => throw new InstantiateTemplateFailedException(identifier, ex)
+                }
+            })
         }
         else {
             parent.getTemplate(identifier)

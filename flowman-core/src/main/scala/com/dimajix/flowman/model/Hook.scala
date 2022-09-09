@@ -33,7 +33,7 @@ object Hook {
         def apply(context: Context, name:String = "", kind:String = "") : Properties = {
             Properties(
                 context,
-                Metadata(context, name, Category.TEST, kind)
+                Metadata(context, name, Category.HOOK, kind)
             )
         }
     }
@@ -42,6 +42,11 @@ object Hook {
         metadata:Metadata
     )
     extends model.Properties[Properties] {
+        require(metadata.category == Category.HOOK.lower)
+        require(metadata.namespace == context.namespace.map(_.name))
+        require(metadata.project == context.project.map(_.name))
+        require(metadata.version == context.project.flatMap(_.version))
+
         override val namespace : Option[Namespace] = context.namespace
         override val project : Option[Project] = context.project
         override val kind : String = metadata.kind

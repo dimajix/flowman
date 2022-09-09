@@ -338,7 +338,7 @@ case class JdbcViewRelation(
             case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
                 logger.info(s"Migrating JdbcView relation '$identifier' from TABLE to VIEW $view")
                 try {
-                    withStatement(connection, options) { (stmt,options) =>
+                    withStatement(connection, options) { stmt =>
                         JdbcUtils.dropTable(stmt, view, options)
                     }
                     doCreate(connection, options)

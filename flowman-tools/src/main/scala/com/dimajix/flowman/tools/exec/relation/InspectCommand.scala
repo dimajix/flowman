@@ -55,19 +55,19 @@ class InspectCommand extends Command {
                 logger.error(s"Cannot resolve relation '${ex.relation}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Error inspecting '$relation': ${reasons(e)}")
+                logger.error(s"Error inspecting '$relation':\n  ${reasons(e)}")
                 Status.FAILED
         }
     }
     private def printDependencies(relation:Relation, op:Operation) : Unit = {
         println(s"  Requires - $op:")
         relation.requires(op)
-            .map(_.toString)
+            .map(_.text)
             .toSeq.sorted
             .foreach{ p => println(s"    $p") }
         println(s"  Provides - $op:")
         relation.provides(op)
-            .map(_.toString)
+            .map(_.text)
             .toSeq.sorted
             .foreach{ p => println(s"    $p") }
 

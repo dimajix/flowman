@@ -115,6 +115,28 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         result1 should be (Some(CheckResult(Some(test1.reference), CheckStatus.SUCCESS, description=Some("1 records passed, 0 records failed"))))
     }
 
+    it should "work with null values" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+        val testExecutor = new DefaultSchemaCheckExecutor
+
+        val df = spark.createDataFrame(Seq(
+            (Some(1), 2),
+            (None, 3)
+        ))
+
+        val test1 = ExpressionSchemaCheck(None, expression = "_1 > _2")
+        val result1 = testExecutor.execute(execution, context, df, test1)
+        result1 should be(Some(CheckResult(Some(test1.reference), CheckStatus.FAILED, description = Some("0 records passed, 2 records failed"))))
+
+        val test2 = ExpressionSchemaCheck(None, expression = "_1 < _2")
+        val result2 = testExecutor.execute(execution, context, df, test2)
+        result2 should be(Some(CheckResult(Some(test1.reference), CheckStatus.FAILED, description = Some("1 records passed, 1 records failed"))))
+    }
+
     "A ForeignKeySchemaCheck" should "work" in {
         val mappingSpec = mock[Prototype[Mapping]]
         val mapping = mock[Mapping]

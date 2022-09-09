@@ -33,6 +33,11 @@ object Connection {
         context: Context,
         metadata:Metadata
     ) extends model.Properties[Properties] {
+        require(metadata.category == Category.CONNECTION.lower)
+        require(metadata.namespace == context.namespace.map(_.name))
+        require(metadata.project == context.project.map(_.name))
+        require(metadata.version == context.project.flatMap(_.version))
+
         override val namespace:Option[Namespace] = context.namespace
         override val project:Option[Project] = context.project
         override val kind : String = metadata.kind

@@ -24,7 +24,6 @@ import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes.Found
-import akka.http.scaladsl.server.Directives.pathPrefix
 import akka.http.scaladsl.settings.ServerSettings
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
@@ -77,7 +76,7 @@ class Server(
                         }
                     }
                     ~
-                    getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/3.22.2")
+                    getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/4.1.3")
                 )}
                 ~
                 pathEndOrSingleSlash {

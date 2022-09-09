@@ -20,6 +20,7 @@ import java.net.URL
 import java.util.ServiceLoader
 
 import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
@@ -46,6 +47,7 @@ object Module {
          * @param file
          * @return
          */
+        @throws[ModelException]
         def file(file:File) : Module = {
             if (!file.isAbsolute()) {
                 readFile(file.absolute)
@@ -55,33 +57,70 @@ object Module {
             }
         }
 
-        def url(url:URL) : Module = {
-            logger.info(s"Reading module from url ${url.toString}")
-            val stream = url.openStream()
-            try {
-                reader.stream(stream)
-            }
-            finally {
-                stream.close()
-            }
-        }
-
-        def string(text:String) : Module = {
-            reader.string(text)
-        }
-
-        private def readFile(file:File) : Module = {
-            if (file.isDirectory()) {
-                logger.info(s"Reading all module files in directory ${file.toString}")
-                val patterns = reader.globPatterns.map(GlobPattern(_))
-                file.list()
-                    .par
-                    .filter(f => f.isFile() && patterns.exists(_.matches(f.filename)))
-                    .map(f => loadFile(f))
-                    .foldLeft(Module())((l,r) => l.merge(r))
+        @throws[ModelException]
+        def files(file: File): Seq[(File,Module)] = {
+            if (!file.isAbsolute()) {
+                readFiles(file.absolute)
             }
             else {
-                loadFile(file)
+                readFiles(file)
+            }
+        }
+
+        @throws[ModelException]
+        def url(url:URL) : Module = {
+            logger.info(s"Reading module from url ${url.toString}")
+            wrapExceptions(url.toString) {
+                val stream = url.openStream()
+                try {
+                    reader.stream(stream)
+                }
+                finally {
+                    stream.close()
+                }
+            }
+        }
+
+        @throws[ModelException]
+        def string(text:String) : Module = {
+            wrapExceptions("raw-string") {
+                reader.string(text)
+            }
+        }
+
+        @throws[ModelException]
+        private def readFile(file:File) : Module = {
+            wrapExceptions(file.toString) {
+                if (file.isDirectory()) {
+                    logger.info(s"Reading all module files in directory ${file.toString}")
+                    val patterns = reader.globPatterns.map(GlobPattern(_))
+                    file.list()
+                        .par
+                        .filter(f => f.isFile() && patterns.exists(_.matches(f.filename)))
+                        .map(f => loadFile(f))
+                        .foldLeft(Module())((l, r) => l.merge(r))
+                }
+                else {
+                    loadFile(file)
+                }
+            }
+        }
+
+        @throws[ModelException]
+        private def readFiles(file: File): Seq[(File,Module)] = {
+            wrapExceptions(file.toString) {
+                if (file.isDirectory()) {
+                    logger.info(s"Reading all module files in directory ${file.toString}")
+                    val patterns = reader.globPatterns.map(GlobPattern(_))
+                    file.list()
+                        .par
+                        .filter(f => f.isFile() && patterns.exists(_.matches(f.filename)))
+                        .map(f => f -> loadFile(f))
+                        .seq
+                }
+                else {
+                    Seq(file -> loadFile(file))
+                }
             }
         }
 
@@ -92,7 +131,17 @@ object Module {
 
         private lazy val reader : ModuleReader = {
             loader.find(_.supports(format))
-                .getOrElse(throw new IllegalArgumentException(s"Module format '$format' not supported'"))
+                .getOrElse(throw new UnsupportedModuleFormatException(format))
+        }
+
+        private def wrapExceptions[T](source: String)(fn: => T): T = {
+            try {
+                fn
+            }
+            catch {
+                case ex: ModelException => throw ex
+                case NonFatal(ex) => throw new ModuleLoadException(source, ex)
+            }
         }
     }
 

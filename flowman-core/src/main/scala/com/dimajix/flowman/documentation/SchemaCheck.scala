@@ -20,7 +20,9 @@ import java.util.Locale
 
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.coalesce
 import org.apache.spark.sql.functions.expr
+import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.BooleanType
 import org.apache.spark.sql.types.LongType
 
@@ -168,7 +170,7 @@ class DefaultSchemaCheckExecutor extends SchemaCheckExecutor {
                 executePredicateTest(joined, check, otherCols.map(_.isNotNull).reduce(_ || _))
 
             case e:ExpressionSchemaCheck =>
-                executePredicateTest(df, check, expr(e.expression).cast(BooleanType))
+                executePredicateTest(df, check, coalesce(expr(e.expression).cast(BooleanType), lit(false)))
 
             case s:SqlSchemaCheck =>
                 val deps = SqlParser.resolveDependencies(s.query)
@@ -197,7 +199,7 @@ class DefaultSchemaCheckExecutor extends SchemaCheckExecutor {
                         Some(CheckResult(Some(s.reference), status, Some(description)))
                     case _ =>
                         val cols = plan.output
-                        val boolCol = new Column(cols(0)).cast(BooleanType).as("bool_col")
+                        val boolCol = coalesce(new Column(cols(0)).cast(BooleanType), lit(false)).as("bool_col")
                         val countCol = new Column(cols(1)).cast(LongType).as("count_col")
                         val df2 = df1.select(boolCol, countCol)
                         val result = df2.groupBy(df2("bool_col")).sum("count_col")
@@ -215,8 +217,8 @@ class DefaultSchemaCheckExecutor extends SchemaCheckExecutor {
 
     private def evaluateResult(df:DataFrame, test:SchemaCheck) : Option[CheckResult] = {
         val result = df.collect()
-        val numSuccess = result.find(_.getBoolean(0) == true).map(_.getLong(1)).getOrElse(0L)
-        val numFailed = result.find(_.getBoolean(0) == false).map(_.getLong(1)).getOrElse(0L)
+        val numSuccess = result.find(r => r.getBoolean(0)).map(_.getLong(1)).getOrElse(0L)
+        val numFailed = result.find(r => !r.getBoolean(0)).map(_.getLong(1)).getOrElse(0L)
         val status = if (numFailed > 0) CheckStatus.FAILED else CheckStatus.SUCCESS
         val description = s"$numSuccess records passed, $numFailed records failed"
         Some(CheckResult(Some(test.reference), status, Some(description)))

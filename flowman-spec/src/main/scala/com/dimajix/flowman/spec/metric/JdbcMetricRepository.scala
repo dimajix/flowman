@@ -30,6 +30,7 @@ import scala.util.control.NonFatal
 import org.slf4j.LoggerFactory
 import slick.jdbc.JdbcProfile
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.jdbc.SlickUtils
 import com.dimajix.flowman.metric.GaugeMetric
 import com.dimajix.flowman.spec.connection.JdbcConnection
@@ -157,7 +158,7 @@ private[metric] class JdbcMetricRepository(
             Await.result(query, Duration.Inf)
         }
         catch {
-            case NonFatal(ex) => logger.error(s"Cannot connect to JDBC metric database to create tables: ${ex.getMessage}")
+            case NonFatal(ex) => logger.error(s"Cannot create tables of JDBC metric database at '${connection.url}':\n  ${reasons(ex)}")
         }
     }
 

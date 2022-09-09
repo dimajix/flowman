@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import scala.util.control.NonFatal
 import org.slf4j.LoggerFactory
 import slick.jdbc.JdbcProfile
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.Action
@@ -377,7 +378,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             Await.result(query, Duration.Inf)
         }
         catch {
-            case NonFatal(ex) => logger.error(s"Cannot create tables of JDBC history database: ${ex.getMessage}")
+            case NonFatal(ex) => logger.error(s"Cannot create tables of JDBC history database at '${connection.url}':\n  ${reasons(ex)}")
         }
     }
 

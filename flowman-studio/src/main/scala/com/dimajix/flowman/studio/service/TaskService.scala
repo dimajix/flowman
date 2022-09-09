@@ -105,7 +105,7 @@ class TaskService(sessionService: SessionService) {
         val runner = sessionService.runner
 
         val future = Future {
-            runner.executeJob(job, lifecycle, jobArgs, force=force, keepGoing=keepGoing, dryRun=dryRun)
+            runner.executeJob(job, lifecycle, jobArgs, force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=true)
         }
 
         val task = JobTask(

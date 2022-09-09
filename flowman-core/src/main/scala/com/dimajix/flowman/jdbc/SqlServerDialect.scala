@@ -25,6 +25,7 @@ import org.apache.spark.sql.Column
 import org.apache.spark.sql.jdbc.JdbcType
 import org.apache.spark.sql.types.StructType
 
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
 import com.dimajix.flowman.catalog.TableDefinition
@@ -50,6 +51,7 @@ object SqlServerDialect extends BaseDialect {
     }
 
     private object Statements extends MsSqlServerStatements(this)
+    private object Expressions extends MsSqlServerExpressions(this)
     private object Commands extends MsSqlServerCommands(this)
 
     override def canHandle(url : String): Boolean = url.toLowerCase(Locale.ROOT).startsWith("jdbc:sqlserver")
@@ -108,9 +110,17 @@ object SqlServerDialect extends BaseDialect {
     override def supportsAlterView : Boolean = true
 
     override def statement : SqlStatements = Statements
+    override def expr : SqlExpressions = Expressions
     override def command : SqlCommands = Commands
 }
 
+class MsSqlServerExpressions(dialect: BaseDialect) extends BaseExpressions(dialect) {
+    override def primaryKey(columns: Seq[String], clustered:Boolean): String = {
+        require(columns.nonEmpty)
+        val cl = if (clustered) "CLUSTERED" else "NONCLUSTERED"
+        s"PRIMARY KEY $cl (${columns.map(dialect.quoteIdentifier).mkString(",")})"
+    }
+}
 
 class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {
     /**
@@ -189,7 +199,7 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         // Optionally create CLUSTERED COLUMNSTORE INDEX
         table.storageFormat.map(_.toLowerCase(Locale.ROOT)) match {
             case Some("columnstore") =>
-                statement.executeUpdate(s"CREATE CLUSTERED COLUMNSTORE INDEX columnstore_idx ON ${dialect.quote(table.identifier)}")
+                statement.executeUpdate(s"CREATE CLUSTERED COLUMNSTORE INDEX IDX_${table.identifier.table}_columnstore ON ${dialect.quote(table.identifier)}")
             case Some("rowstore") =>
             case Some(s) => throw new UnsupportedOperationException(s"Storage format '$s' not supported, only 'ROWSTORE' and 'COLUMNSTORE'")
             case None =>
@@ -341,7 +351,7 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         if (!current.exists(_.toLowerCase(Locale.ROOT) == desiredFormat)) {
             desiredFormat match {
                 case "columnstore" =>
-                    statement.executeUpdate(s"CREATE CLUSTERED COLUMNSTORE INDEX columnstore_idx ON ${dialect.quote(table)}")
+                    statement.executeUpdate(s"CREATE CLUSTERED COLUMNSTORE INDEX IDX_${table.table}_columnstore ON ${dialect.quote(table)}")
                 case "rowstore" =>
                     val indexName = getColumnStoreIndex(statement, table)
                     indexName.foreach(idx => statement.executeUpdate(s"DROP INDEX $idx ON ${dialect.quote(table)}"))
@@ -371,6 +381,28 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
             rs.close()
         }
         name
+    }
+
+
+    override def getPrimaryKey(statement:Statement, table:TableIdentifier) : Option[PrimaryKey] = {
+        val pk = super.getPrimaryKey(statement, table)
+        pk.map { pk =>
+            // Query extended information
+            val sql =
+                s"""
+                   |SELECT
+                   |    type
+                   |FROM sys.indexes
+                   |WHERE object_id = OBJECT_ID(${dialect.literal(dialect.quote(table))})
+                   |AND is_primary_key = 1
+                   |""".stripMargin
+            var cl = false
+            query(statement, sql) { rs =>
+                cl = rs.getInt(1) == 1
+            }
+
+            pk.copy(clustered=cl)
+        }
     }
 
     override def dropPrimaryKey(statement: Statement, table: TableIdentifier): Unit = {

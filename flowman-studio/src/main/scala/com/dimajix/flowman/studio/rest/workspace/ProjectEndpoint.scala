@@ -144,7 +144,7 @@ class ProjectEndpoint(sessionManager: SessionManager) {
                 val runner = session.runner
                 val phases = Lifecycle.ofPhase(phase.map(Phase.ofString).getOrElse(Phase.BUILD))
                 val jargs = job.arguments(args)
-                runner.executeJob(job, phases, jargs, force = force.getOrElse(false))
+                runner.executeJob(job, phases, jargs, force=force.getOrElse(false), isolated=true)
             }
             finally {
                 session.close()

@@ -64,7 +64,7 @@ sealed class PhaseCommand(phase:Phase) extends Command {
         }
         match {
             case Failure(e) =>
-                logger.error(s"Error instantiating job '$job': ${reasons(e)}")
+                logger.error(s"Error instantiating job '$job':\n  ${reasons(e)}")
                 Status.FAILED
             case Success(job) =>
                 executeJob(session, job, job.parseArguments(args))
@@ -84,7 +84,7 @@ sealed class PhaseCommand(phase:Phase) extends Command {
 
         Status.ofAll(job.interpolate(args), keepGoing=keepGoing) { args =>
             val runner = session.runner
-            runner.executeJob(job, lifecycle, args, targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r), force=force, keepGoing=keepGoing, dryRun=dryRun)
+            runner.executeJob(job, lifecycle, args, targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=true)
         }
     }
 }

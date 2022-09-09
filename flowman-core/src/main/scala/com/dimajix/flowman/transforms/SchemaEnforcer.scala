@@ -149,7 +149,7 @@ final case class SchemaEnforcer(
       * @return
       */
     def transform(inputSchema:StructType) : Seq[Column] = {
-        if (columnMismatchPolicy != ColumnMismatchPolicy.IGNORE || typeMismatchPolicy != TypeMismatchPolicy.IGNORE) {
+        if (columnMismatchPolicy != ColumnMismatchPolicy.IGNORE || typeMismatchPolicy != TypeMismatchPolicy.IGNORE || charVarcharPolicy != CharVarcharPolicy.IGNORE) {
             conformStruct(schema, inputSchema, "")
         }
         else {
@@ -164,7 +164,7 @@ final case class SchemaEnforcer(
       * @return
       */
     def transform(df:DataFrame) : DataFrame = {
-        if (columnMismatchPolicy != ColumnMismatchPolicy.IGNORE || typeMismatchPolicy != TypeMismatchPolicy.IGNORE) {
+        if (columnMismatchPolicy != ColumnMismatchPolicy.IGNORE || typeMismatchPolicy != TypeMismatchPolicy.IGNORE || charVarcharPolicy != CharVarcharPolicy.IGNORE) {
             val unifiedColumns = transform(df.schema)
             df.select(unifiedColumns: _*)
         }

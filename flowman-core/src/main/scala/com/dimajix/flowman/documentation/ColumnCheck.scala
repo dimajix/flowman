@@ -248,8 +248,8 @@ class DefaultColumnCheckExecutor extends ColumnCheckExecutor {
 
     private def executePredicateTest(df: DataFrame, test:ColumnCheck, predicate:Column) : Option[CheckResult] = {
         val result = df.groupBy(predicate).count().collect()
-        val numSuccess = result.find(_.getBoolean(0) == true).map(_.getLong(1)).getOrElse(0L)
-        val numFailed = result.find(_.getBoolean(0) == false).map(_.getLong(1)).getOrElse(0L)
+        val numSuccess = result.find(r => r.getBoolean(0)).map(_.getLong(1)).getOrElse(0L)
+        val numFailed = result.find(r => !r.getBoolean(0)).map(_.getLong(1)).getOrElse(0L)
         val status = if (numFailed > 0) CheckStatus.FAILED else CheckStatus.SUCCESS
         val description = s"$numSuccess records passed, $numFailed records failed"
         Some(CheckResult(Some(test.reference), status, Some(description)))

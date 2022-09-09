@@ -46,6 +46,9 @@ object Category {
     case object DOCUMENTER extends Category
     case object DOCUMENTATION_COLLECTOR extends Category
     case object DOCUMENTATION_GENERATOR extends Category
+    case object CONFIG extends Category
+    case object ENVIRONMENT extends Category
+    case object PROFILE extends Category
 
     def ofString(category:String) : Category = {
         category.toLowerCase(Locale.ROOT) match {
@@ -62,6 +65,9 @@ object Category {
             case "target" => TARGET
             case "template" => TEMPLATE
             case "test" => TEST
+            case "config" => CONFIG
+            case "environment" => ENVIRONMENT
+            case "profile" => PROFILE
             case _ => throw new IllegalArgumentException(s"No such category $category")
         }
     }

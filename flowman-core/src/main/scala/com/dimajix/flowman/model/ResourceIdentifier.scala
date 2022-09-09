@@ -85,6 +85,12 @@ abstract class ResourceIdentifier extends Product with Serializable {
     final def nonEmpty : Boolean = name.nonEmpty
 
     /**
+     * Provides a nice textual representation of the ResourceIdentifier used for console output
+     * @return
+     */
+    def text : String = s"$category:$name(${partition.map(kv => kv._1 + "=" + kv._2)})"
+
+    /**
       * Create new ResourceIdentifiers by exploding the powerset of all partitions
       * @return
       */

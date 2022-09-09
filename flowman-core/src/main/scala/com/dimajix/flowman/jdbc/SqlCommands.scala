@@ -18,6 +18,7 @@ package com.dimajix.flowman.jdbc
 
 import java.sql.Statement
 
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
@@ -39,7 +40,7 @@ abstract class SqlCommands {
     def getStorageFormat(statement:Statement, table:TableIdentifier) : Option[String]
     def changeStorageFormat(statement:Statement, table:TableIdentifier, storageFormat:String) : Unit
 
-    def getPrimaryKey(statement:Statement, table:TableIdentifier) : Seq[String]
+    def getPrimaryKey(statement:Statement, table:TableIdentifier) : Option[PrimaryKey]
     def getIndexes(statement:Statement, table:TableIdentifier) : Seq[TableIndex]
 
     def createIndex(statement:Statement, table:TableIdentifier, index:TableIndex) : Unit
@@ -47,6 +48,6 @@ abstract class SqlCommands {
 
     def dropConstraint(statement:Statement, table:TableIdentifier, constraintName:String) : Unit
 
-    def addPrimaryKey(statement:Statement, table: TableIdentifier, columns:Seq[String]) : Unit
+    def addPrimaryKey(statement:Statement, table: TableIdentifier, pk:PrimaryKey) : Unit
     def dropPrimaryKey(statement:Statement, table: TableIdentifier) : Unit
 }

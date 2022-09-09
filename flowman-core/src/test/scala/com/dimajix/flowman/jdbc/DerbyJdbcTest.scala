@@ -22,6 +22,7 @@ import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
@@ -55,7 +56,7 @@ class DerbyJdbcTest extends AnyFlatSpec with Matchers with LocalTempDir {
                 Field("str_field", VarcharType(32)),
                 Field("int_field", IntegerType)
             ),
-            primaryKey = Seq("Id"),
+            primaryKey = Some(PrimaryKey(Seq("Id"))),
             indexes = Seq(
                 TableIndex("table_001_idx1", Seq("str_field", "int_field"))
             )

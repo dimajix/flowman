@@ -9,7 +9,7 @@
     <parent>
         <artifactId>flowman-root</artifactId>
         <groupId>com.dimajix.flowman</groupId>
-        <version>0.26.1</version>
+        <version>0.27.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -107,7 +107,7 @@
         <dependency>
             <groupId>com.github.jsqlparser</groupId>
             <artifactId>jsqlparser</artifactId>
-            <version>4.4</version>
+            <version>4.5</version>
         </dependency>
 
         <dependency>
@@ -127,9 +127,21 @@
             <artifactId>guava</artifactId>
         </dependency>
 
+        <!-- Test dependencies  -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-http_${scala.api_version}</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-stream_${scala.api_version}</artifactId>
             <scope>test</scope>
         </dependency>
 

@@ -94,6 +94,7 @@ using the correct version. The following profiles are available:
 * spark-3.0
 * spark-3.1 
 * spark-3.2
+* spark-3.3
 * hadoop-2.6
 * hadoop-2.7
 * hadoop-2.8
@@ -123,61 +124,73 @@ mvn install -Djava.version=1.8
 ### Spark 2.4 and Hadoop 2.6:
 
 ```shell
-mvn clean install -Pspark-2.4 -Phadoop-2.6
+mvn clean install -Pspark-2.4 -Phadoop-2.6 -DskipTests
 ```
 
 ### Spark 2.4 and Hadoop 2.7:
 
 ```shell
-mvn clean install -Pspark-2.4 -Phadoop-2.7
+mvn clean install -Pspark-2.4 -Phadoop-2.7 -DskipTests
 ```
 
 ### Spark 2.4 and Hadoop 2.8:
 
 ```shell
-mvn clean install -Pspark-2.4 -Phadoop-2.8
+mvn clean install -Pspark-2.4 -Phadoop-2.8 -DskipTests
 ```
 
 ### Spark 2.4 and Hadoop 2.9:
 
 ```shell
-mvn clean install -Pspark-2.4 -Phadoop-2.9
+mvn clean install -Pspark-2.4 -Phadoop-2.9 -DskipTests
 ```
 
 ### Spark 3.0 and Hadoop 3.1
 
 ```shell
-mvn clean install -Pspark-3.0 -Phadoop-3.1
+mvn clean install -Pspark-3.0 -Phadoop-3.1 -DskipTests
 ```
 
 ### Spark 3.0 and Hadoop 3.2
 
 ```shell
-mvn clean install -Pspark-3.0 -Phadoop-3.2
+mvn clean install -Pspark-3.0 -Phadoop-3.2 -DskipTests
 ```
 
 ### Spark 3.1 and Hadoop 2.7
 
 ```shell
-mvn clean install -Pspark-3.1 -Phadoop-2.7
+mvn clean install -Pspark-3.1 -Phadoop-2.7 -DskipTests
 ```
 
 ### Spark 3.1 and Hadoop 3.2
 
 ```shell
-mvn clean install -Pspark-3.1 -Phadoop-3.2
+mvn clean install -Pspark-3.1 -Phadoop-3.2 -DskipTests
 ```
 
 ### Spark 3.2 and Hadoop 2.7
 
 ```shell
-mvn clean install -Pspark-3.2 -Phadoop-2.7
+mvn clean install -Pspark-3.2 -Phadoop-2.7 -DskipTests
 ```
 
 ### Spark 3.2 and Hadoop 3.3
 
 ```shell
-mvn clean install -Pspark-3.2 -Phadoop-3.3
+mvn clean install -Pspark-3.2 -Phadoop-3.3 -Dhadoop.version=3.3.1 -DskipTests
+```
+
+### Spark 3.3 and Hadoop 2.7
+
+```shell
+mvn clean install -Pspark-3.3 -Phadoop-2.7 -DskipTests
+```
+
+### Spark 3.3 and Hadoop 3.3
+
+```shell
+mvn clean install -Pspark-3.3 -Phadoop-3.3 -Dhadoop.version=3.3.2 -DskipTests
 ```
 
 

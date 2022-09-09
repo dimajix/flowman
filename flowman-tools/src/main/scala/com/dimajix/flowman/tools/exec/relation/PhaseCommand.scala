@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.tools.exec.relation
 
-import java.time.Clock
-
 import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
@@ -29,8 +27,10 @@ import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.target.RelationTarget
 import com.dimajix.flowman.tools.exec.Command
 
@@ -38,7 +38,7 @@ import com.dimajix.flowman.tools.exec.Command
 class PhaseCommand(phase:Phase) extends Command {
     private val logger = LoggerFactory.getLogger(this.getClass)
 
-    @Argument(usage = "specifies relations to create", metaVar = "<relation>")
+    @Argument(required=true, usage = "specifies relations to create", metaVar = "<relation>")
     var relations: Array[String] = Array()
     @Option(name = "-f", aliases=Array("--force"), usage = "forces execution, even if outputs are already created")
     var force: Boolean = false
@@ -52,19 +52,20 @@ class PhaseCommand(phase:Phase) extends Command {
     override def execute(session: Session, project: Project, context:Context) : Status = {
         logger.info(s"Executing phase '$phase' for relations ${if (relations != null) relations.mkString(",") else "all"}")
 
-        val toRun =
-            if (relations.nonEmpty)
-                relations.toSeq
-            else
-                project.relations.keys.toSeq
+        val toRun = relations.flatMap(_.split(",")).toSeq
         val partition = ParserUtils.parseDelimitedKeyValues(this.partition)
-        val targets = toRun.map { rel =>
-            val props = Target.Properties(context.root, rel, "relation")
-            RelationTarget(props, RelationIdentifier(rel, project.name), MappingOutputIdentifier.empty, partition)
-        }
 
+        // Create a new project with appropriate build targets
+        val targets = toRun.map { rel => rel -> Prototype.of { context =>
+            val props = Target.Properties(context, rel, "relation")
+            RelationTarget(props, RelationIdentifier(rel, project.name), MappingOutputIdentifier.empty, partition).asInstanceOf[Target]
+        }}
+        val prj = project.copy(targets = project.targets ++ targets.toMap)
+        val ctx = context.root.getProjectContext(prj)
+
+        val targets2 = toRun.map { rel => ctx.getTarget(TargetIdentifier(rel)) }
         val runner = session.runner
-        runner.executeTargets(targets, Seq(phase), jobName="cli-tools", force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
+        runner.executeTargets(targets2, Seq(phase), jobName="cli-tools", force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
     }
 }
 

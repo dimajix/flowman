@@ -19,7 +19,7 @@ package com.dimajix.flowman.spec.template
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.execution.NoSuchTemplateException
+import com.dimajix.flowman.execution.InstantiateTargetFailedException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.TargetIdentifier
@@ -90,7 +90,7 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
         tgt_1.kind should be ("blackhole")
         tgt_1.description should be (Some("This is rel_1"))
 
-        an[IllegalArgumentException] should be thrownBy(context.getTarget(TargetIdentifier("rel_2")))
+        an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("rel_2")))
 
         val tgt_3 = context.getTarget(TargetIdentifier("rel_3"))
         tgt_3 shouldBe a[BlackholeTarget]
@@ -99,7 +99,7 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
         tgt_3.kind should be ("blackhole")
         tgt_3.description should be (Some("No description"))
 
-        an[IllegalArgumentException] should be thrownBy(context.getTarget(TargetIdentifier("rel_4")))
+        an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("rel_4")))
     }
 
     it should "throw an error on unknown templates" in {
@@ -115,7 +115,7 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
         val session = Session.builder().disableSpark().build()
         val context = session.getContext(project)
 
-        an[NoSuchTemplateException] should be thrownBy(context.getTarget(TargetIdentifier("rel_1")))
+        an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("rel_1")))
     }
 
     it should "forward before and after" in {

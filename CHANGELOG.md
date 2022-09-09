@@ -1,4 +1,4 @@
-# Version 0.27.0
+# Version 0.27.0 - 2022-09-09
 
 * github-232: [BUG] Column descriptions should be propagated in UNIONs
 * github-233: [BUG] Missing Hadoop dependencies for S3, Delta, etc

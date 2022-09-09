@@ -14,7 +14,7 @@ The following gives an (incomplete) list of past releases of the last 12 months.
 changes over time.
 
 
-### Version 0.27.0
+### Version 0.27.0 - 2022-09-09
 
 * github-232: [BUG] Column descriptions should be propagates in UNIONs
 * github-233: [BUG] Missing Hadoop dependencies for S3, Delta, etc

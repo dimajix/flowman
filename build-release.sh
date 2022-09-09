@@ -10,11 +10,7 @@ mkdir -p release
 
 
 build_profile() {
-    profiles=""
-    for p in $@
-    do
-        profiles="$profiles -P$p"
-    done
+    profiles=$@
 
     # Set new version
     HADOOP_DIST=$(mvn $profiles -q -N help:evaluate -Dexpression=hadoop.dist -DforceStdout)
@@ -35,22 +31,22 @@ build_profile() {
 
 
 export JAVA_HOME=/usr/lib/jvm/java-1.8.0
-build_profile hadoop-2.6 spark-2.4
-build_profile hadoop-2.7 spark-2.4
+build_profile -phadoop-2.6 -pspark-2.4
+build_profile -phadoop-2.7 -pspark-2.4
 
 export JAVA_HOME=
-build_profile hadoop-2.7 spark-3.0
-build_profile hadoop-3.2 spark-3.0
-build_profile hadoop-2.7 spark-3.1
-build_profile hadoop-3.2 spark-3.1
-build_profile hadoop-2.7 spark-3.2
-build_profile hadoop-3.3 spark-3.2
-build_profile hadoop-2.7 spark-3.3
-build_profile hadoop-3.3 spark-3.3
+build_profile -phadoop-2.7 -pspark-3.0
+build_profile -phadoop-3.2 -pspark-3.0
+build_profile -phadoop-2.7 -pspark-3.1
+build_profile -phadoop-3.2 -pspark-3.1
+build_profile -phadoop-2.7 -pspark-3.2
+build_profile -phadoop-3.3 -pspark-3.2 -Dhadoop.version=3.3.1
+build_profile -phadoop-2.7 -pspark-3.3
+build_profile -phadoop-3.3 -pspark-3.3 -Dhadoop.version=3.3.2
 
 export JAVA_HOME=/usr/lib/jvm/java-1.8.0
-build_profile CDH-6.3
-build_profile CDP-7.1
+build_profile -pCDH-6.3
+build_profile -pCDP-7.1
 
 # Finally build default version
 export JAVA_HOME=

@@ -137,7 +137,7 @@ build-hadoop2.7-spark3.2:
 
 build-hadoop3.3-spark3.2:
   stage: build
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.3 -Pspark-3.2 -Ddockerfile.skip'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.3 -Pspark-3.2 -Dhadoop.version=3.3.1 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop3.3-spark3.2"
     paths:
@@ -155,7 +155,7 @@ build-hadoop2.7-spark3.3:
 
 build-hadoop3.3-spark3.3:
   stage: build
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.3 -Pspark-3.3 -Ddockerfile.skip'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.3 -Pspark-3.3 -Dhadoop.version=3.3.2 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-hadoop3.3-spark3.3"
     paths:

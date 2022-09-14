@@ -16,6 +16,12 @@ if [ -f "$HADOOP_HOME/etc/hadoop/hadoop-env.sh" ]; then
     source "$HADOOP_HOME/etc/hadoop/hadoop-env.sh"
 fi
 
+# Add log4j config
+if [ -f "$FLOWMAN_CONF_DIR/log4j.properties" ]; then
+    SPARK_DRIVER_JAVA_OPTS="-Dlog4j.configuration=$FLOWMAN_CONF_DIR/log4j.properties $SPARK_DRIVER_JAVA_OPTS"
+fi
+
+
 # Set basic Spark options
 : ${SPARK_SUBMIT:="$SPARK_HOME"/bin/spark-submit}
 : ${SPARK_OPTS:=""}

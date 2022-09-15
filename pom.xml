@@ -82,7 +82,7 @@
         <netty.version>3.9.9.Final</netty.version>
 
         <!-- Default Hadoop version (3.3) -->
-        <hadoop.version>3.3.2</hadoop.version>
+        <hadoop.version>3.3.3</hadoop.version>
         <hadoop-api.version>3.3</hadoop-api.version>
         <json-smart.version>2.4.7</json-smart.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>

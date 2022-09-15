@@ -54,7 +54,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.1.0</version>
+                    <version>3.2.0</version>
                     <configuration>
                         <failOnError>false</failOnError>
                     </configuration>
@@ -69,19 +69,19 @@
                     <inherited>true</inherited>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.2.2</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.3.0</version>
                     <configuration>
                         <propertiesEncoding>ISO-8859-1</propertiesEncoding>
                     </configuration>
@@ -90,7 +90,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.9.0</version>
+                    <version>3.10.1</version>
                     <configuration>
                         <source>${maven.compiler.source}</source>
                         <target>${maven.compiler.target}</target>
@@ -100,7 +100,7 @@
                     <inherited>true</inherited>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>4.5.6</version>
+                    <version>4.7.1</version>
                     <configuration>
                         <scalaVersion>${scala.version}</scalaVersion>
                         <scalaCompatVersion>${scala.api_version}</scalaCompatVersion>
@@ -140,7 +140,7 @@
                     <inherited>true</inherited>
                     <groupId>org.scalatest</groupId>
                     <artifactId>scalatest-maven-plugin</artifactId>
-                    <version>2.0.2</version>
+                    <version>2.1.0</version>
                     <configuration>
                         <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                         <systemProperties>
@@ -164,7 +164,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.3.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -193,7 +193,7 @@
                     <inherited>true</inherited>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.9.0</version>
+                    <version>2.12.0</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -205,7 +205,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>3.4.2</version>
                     <configuration>
                         <tarLongFileMode>posix</tarLongFileMode>
                         <archiverConfig>
@@ -234,25 +234,25 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>2.8.2</version>
+                    <version>3.0.0</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.10.0</version>
+                    <version>3.12.1</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <version>3.2.1</version>
+                    <version>3.4.1</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-help-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.3.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -668,9 +668,28 @@
             <dependency>
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
+                <version>1.2.17</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-1.2</artifactId>
                 <version>${log4j.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
@@ -688,6 +707,7 @@
                 <version>${slf4j.version}</version>
                 <scope>provided</scope>
             </dependency>
+
             <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>

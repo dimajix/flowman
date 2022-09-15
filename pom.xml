@@ -58,8 +58,7 @@
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <spark-avro.version>4.0.0</spark-avro.version>
         <scala-collection-compat.version>2.1.1</scala-collection-compat.version>
-        <h2.version>2.1.210</h2.version>
-        <log4j.version>1.2.17</log4j.version>
+        <h2.version>2.1.214</h2.version>
         <re2j.version>1.1</re2j.version>
         <scalamock.version>5.1.0</scalamock.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -83,7 +82,7 @@
         <netty.version>3.9.9.Final</netty.version>
 
         <!-- Default Hadoop version (3.3) -->
-        <hadoop.version>3.3.1</hadoop.version>
+        <hadoop.version>3.3.2</hadoop.version>
         <hadoop-api.version>3.3</hadoop-api.version>
         <json-smart.version>2.4.7</json-smart.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
@@ -112,6 +111,7 @@
         <avro.version>1.11.0</avro.version>
         <json4s.version>3.7.0-M11</json4s.version>
         <guava.version>14.0.1</guava.version>
+        <log4j.version>2.17.2</log4j.version>
         <slf4j.version>1.7.32</slf4j.version>
         <httpclient.version>4.5.13</httpclient.version>
         <httpcore.version>4.4.14</httpcore.version>
@@ -200,6 +200,7 @@
                 <commons-compress.version>1.19</commons-compress.version>
                 <commons-io.version>2.4</commons-io.version>
                 <commons-lang3.version>3.7</commons-lang3.version>
+                <log4j.version>2.8.2</log4j.version>
                 <slf4j.version>1.7.25</slf4j.version>
             </properties>
             <dependencyManagement>
@@ -250,6 +251,7 @@
                 <jackson.version>2.10.5</jackson.version>
                 <jackson-api.version>2.10</jackson-api.version>
                 <jackson.databind.version>2.10.5.1</jackson.databind.version>
+                <log4j.version>2.17.1</log4j.version>
                 <slf4j.version>1.7.25</slf4j.version>
                 <httpclient.version>4.5.13</httpclient.version>
                 <httpcore.version>4.4.13</httpcore.version>
@@ -291,6 +293,7 @@
                 <zookeeper.version>3.4.6</zookeeper.version>
                 <json4s.version>3.5.3</json4s.version>
                 <guava.version>14.0.1</guava.version>
+                <log4j.version>2.17.2</log4j.version>
                 <slf4j.version>1.7.16</slf4j.version>
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.10</httpcore.version>
@@ -329,6 +332,7 @@
                 <avro.version>1.8.2</avro.version>
                 <json4s.version>3.6.6</json4s.version>
                 <guava.version>14.0.1</guava.version>
+                <log4j.version>2.17.2</log4j.version>
                 <slf4j.version>1.7.30</slf4j.version>
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.12</httpcore.version>
@@ -367,6 +371,7 @@
                 <avro.version>1.8.2</avro.version>
                 <json4s.version>3.7.0-M5</json4s.version>
                 <guava.version>14.0.1</guava.version>
+                <log4j.version>2.17.2</log4j.version>
                 <slf4j.version>1.7.30</slf4j.version>
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.12</httpcore.version>
@@ -405,6 +410,7 @@
                 <avro.version>1.10.2</avro.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <guava.version>14.0.1</guava.version>
+                <log4j.version>2.17.2</log4j.version>
                 <slf4j.version>1.7.30</slf4j.version>
                 <httpclient.version>4.5.13</httpclient.version>
                 <httpcore.version>4.4.14</httpcore.version>
@@ -443,6 +449,7 @@
                 <avro.version>1.11.0</avro.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <guava.version>14.0.1</guava.version>
+                <log4j.version>2.17.2</log4j.version>
                 <slf4j.version>1.7.32</slf4j.version>
                 <httpclient.version>4.5.13</httpclient.version>
                 <httpcore.version>4.4.14</httpcore.version>
@@ -623,7 +630,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.6</version>
+                <version>3.0.1</version>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
@@ -637,12 +644,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.8.2</version>
             </plugin>
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.8</version>
+                <version>1.6.13</version>
                 <extensions>true</extensions>
                 <configuration>
                     <serverId>${deployment.repository.id}</serverId>
@@ -654,17 +660,17 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
-                <version>3.10.0</version>
+                <version>3.12.1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.2.1</version>
+                <version>3.4.1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-help-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.0</version>
             </plugin>
         </plugins>
 
@@ -674,10 +680,15 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.1.0</version>
+                    <version>3.2.0</version>
                     <configuration>
                         <failOnError>false</failOnError>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.0.0</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -689,19 +700,19 @@
                     <inherited>true</inherited>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.2.2</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.3.0</version>
                     <configuration>
                         <propertiesEncoding>ISO-8859-1</propertiesEncoding>
                     </configuration>
@@ -711,7 +722,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.9.0</version>
+                    <version>3.10.1</version>
                     <configuration>
                         <source>${maven.compiler.source}</source>
                         <target>${maven.compiler.target}</target>
@@ -731,7 +742,7 @@
                     <inherited>true</inherited>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>4.5.6</version>
+                    <version>4.7.1</version>
                     <configuration>
                         <scalaVersion>${scala.version}</scalaVersion>
                         <scalaCompatVersion>${scala.api_version}</scalaCompatVersion>
@@ -771,7 +782,7 @@
                     <inherited>true</inherited>
                     <groupId>org.scalatest</groupId>
                     <artifactId>scalatest-maven-plugin</artifactId>
-                    <version>2.0.2</version>
+                    <version>2.1.0</version>
                     <configuration>
                         <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                         <junitxml>.</junitxml>
@@ -797,7 +808,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.3.0</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -821,7 +832,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.2.4</version>
+                    <version>3.3.0</version>
                     <configuration>
                         <shadedArtifactAttached>false</shadedArtifactAttached>
                         <keepDependenciesWithProvidedScope>true</keepDependenciesWithProvidedScope>
@@ -843,7 +854,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>3.4.2</version>
                     <configuration>
                         <tarLongFileMode>posix</tarLongFileMode>
                         <archiverConfig>
@@ -912,36 +923,13 @@
                     <inherited>true</inherited>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.9.0</version>
+                    <version>2.12.0</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
                     <groupId>com.spotify</groupId>
                     <artifactId>dockerfile-maven-plugin</artifactId>
                     <version>1.4.13</version>
-                </plugin>
-                <plugin>
-                    <!-- The following plugin helps to make sure that we target a specific JDK version  -->
-                    <inherited>true</inherited>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>animal-sniffer-maven-plugin</artifactId>
-                    <version>1.20</version>
-                    <configuration>
-                        <signature>
-                            <groupId>org.codehaus.mojo.signature</groupId>
-                            <artifactId>java18</artifactId>
-                            <version>1.0</version>
-                        </signature>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>check-java-version</id>
-                            <phase>compile</phase>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                        </execution>
-                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -952,12 +940,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.2.1</version>
+                <version>3.4.1</version>
             </plugin>
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>4.5.6</version>
+                <version>4.7.1</version>
                 <configuration>
                     <jvmArgs>
                         <jvmArg>-Xms64m</jvmArg>
@@ -1490,10 +1478,27 @@
             <dependency>
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
+                <version>1.2.17</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-1.2-api</artifactId>
                 <version>${log4j.version}</version>
                 <scope>provided</scope>
             </dependency>
-
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j.version}</version>
+                <scope>provided</scope>
+            </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>

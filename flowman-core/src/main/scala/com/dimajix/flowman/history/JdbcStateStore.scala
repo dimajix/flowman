@@ -25,6 +25,7 @@ import java.time.Clock
 import javax.xml.bind.DatatypeConverter
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.GraphBuilder
 import com.dimajix.flowman.history.JdbcStateRepository.JobRun
@@ -179,7 +180,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         val graph = Graph.ofGraph(jdbcToken.graph.build())
         withRepository{ repository =>
-            repository.setJobStatus(run.copy(end_ts = Some(now), status=status.upper, error=result.exception.map(_.toString)))
+            repository.setJobStatus(run.copy(end_ts = Some(now), status=status.upper, error=result.exception.map(reasons)))
             repository.insertJobMetrics(run.id, metrics)
             repository.insertJobGraph(run.id, graph)
         }
@@ -261,7 +262,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
 
         val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
         withRepository{ repository =>
-            repository.setTargetStatus(run.copy(end_ts = Some(now), status=status.upper, error=result.exception.map(_.toString)))
+            repository.setTargetStatus(run.copy(end_ts = Some(now), status=status.upper, error=result.exception.map(reasons)))
         }
 
         // Add target to Job's build graph

@@ -1475,12 +1475,14 @@
                 <scope>compile</scope>
             </dependency>
 
+            <!--
             <dependency>
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
                 <version>1.2.17</version>
                 <scope>provided</scope>
             </dependency>
+            -->
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-1.2-api</artifactId>

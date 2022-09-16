@@ -58,7 +58,7 @@
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <spark-avro.version>4.0.0</spark-avro.version>
         <scala-collection-compat.version>2.1.1</scala-collection-compat.version>
-        <h2.version>2.1.214</h2.version>
+        <h2.version>2.1.210</h2.version>
         <re2j.version>1.1</re2j.version>
         <scalamock.version>5.1.0</scalamock.version>
         <protobuf.version>2.5.0</protobuf.version>

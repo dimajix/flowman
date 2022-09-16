@@ -36,7 +36,7 @@
           </v-list-item-content>
           <v-list-item-action>
             <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
+              <template v-slot:activator="{ attrs }">
                 <v-btn
                   v-bind="attrs"
                   @click.stop="executeJob(item)"
@@ -68,7 +68,7 @@
           </v-list-item-content>
           <v-list-item-action>
             <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
+              <template v-slot:activator="{ attrs }">
                 <v-btn
                   v-bind="attrs"
                   @click.stop="executeTest(item)"
@@ -100,7 +100,7 @@
           </v-list-item-content>
           <v-list-item-action>
             <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
+              <template v-slot:activator="{ attrs }">
                 <v-btn
                   v-bind="attrs"
                   @click.stop="executeTarget(item)"
@@ -132,7 +132,7 @@
           </v-list-item-content>
           <v-list-item-action>
             <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
+              <template v-slot:activator="{ attrs }">
                 <v-btn
                   v-bind="attrs"
                   @click.stop="collectMapping(item)"
@@ -144,7 +144,7 @@
           </v-list-item-action>
           <v-list-item-action>
             <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
+              <template v-slot:activator="{ attrs }">
                 <v-btn
                   v-bind="attrs"
                   @click.stop="inspectMappingSchema(item)"
@@ -178,7 +178,7 @@
           </v-list-item-content>
           <v-list-item-action>
             <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
+              <template v-slot:activator="{ attrs }">
                 <v-btn
                   v-bind="attrs"
                   @click.stop="collectRelation(item)"
@@ -190,7 +190,7 @@
           </v-list-item-action>
           <v-list-item-action>
             <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
+              <template v-slot:activator="{ attrs }">
                 <v-btn
                   v-bind="attrs"
                   @click.stop="inspectRelationSchema(item)"

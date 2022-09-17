@@ -51,7 +51,7 @@ export default {
     getData() {
       this.$api.getJobCounts('job', this.projects)
         .then(response => {
-          this.jobs =  Object.keys(response.data)
+          this.jobs =  Object.keys(response.data).sort()
           this.value.splice(0, this.value.length)
         })
     }

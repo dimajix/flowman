@@ -123,14 +123,14 @@ export default {
     getProjectList() {
       this.$api.getJobCounts('project')
         .then(response => {
-          this.projects =  Object.keys(response.data)
+          this.projects =  Object.keys(response.data).sort()
           this.selectedProject = this.projects[0]
         })
     },
     getJobList() {
-      this.$api.getJobCounts('job')
+      this.$api.getJobCounts('job', [this.selectedProject])
         .then(response => {
-          this.jobs =  Object.keys(response.data)
+          this.jobs =  Object.keys(response.data).sort()
           this.selectedJob = this.jobs[0]
         })
     },

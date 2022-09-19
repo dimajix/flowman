@@ -1,2 +1,3 @@
 environment:
   - basedir=file:///tmp/weather
+  - srcdir=$System.getenv('WEATHER_SRCDIR', 's3a://dimajix-training/data/weather')

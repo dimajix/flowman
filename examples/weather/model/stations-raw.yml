@@ -5,7 +5,7 @@ relations:
     # ... and it uses CSV as file format
     format: csv
     # data itself is stored at the following location
-    location: "s3a://dimajix-training/data/weather/isd-history/"
+    location: "$srcdir/isd-history/"
     # Specify some CSV-specific options
     options:
       sep: ","

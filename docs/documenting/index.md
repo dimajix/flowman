@@ -23,7 +23,7 @@ documentation will override any automatically inferred information.
 
 ### Generating Documentation via Command Line
 
-Generating the documentation is as easy as running [flowexec](../cli/flowexec.md) as follows:
+Generating the documentation is as easy as running [flowexec](../cli/flowexec/index.md) as follows:
 
 ```shell
 flowexec -f my_project_directory documentation generate

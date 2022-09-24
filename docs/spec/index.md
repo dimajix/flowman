@@ -13,7 +13,7 @@ can be executed independently.
 
 All specification files are written as declarations in YAML syntax, which provides easy 
 readability. These YAML files are read in by Flowman executables and data flows are 
-executed as specified on the command line (more on that in [Flowman CLI](../cli/flowexec.md))
+executed as specified on the command line (more on that in [Flowman CLI](../cli/flowexec/index.md))
 
 
 Flowman has a couple of different main entities, which are documented seperately:

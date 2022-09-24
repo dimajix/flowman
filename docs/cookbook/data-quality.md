@@ -40,7 +40,7 @@ targets:
 
 With the new [documentation framework](../documenting/index.md), Flowman adds the possibility not only to document
 mappings and relations, but also to add test cases. These will be executed as part of the documentation (which is
-generated with an independent command with [`flowexec`](../cli/flowexec.md)).
+generated with an independent command with [`flowexec`](../cli/flowexec/index.md)).
 
 
 ## Data Quality Metrics

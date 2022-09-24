@@ -69,7 +69,7 @@ Please find more details in the [testing documentation](../spec/test/index.md)
 
 ## Running Tests
 
-The easiest way to execute tests is to use the [Flowman Shell](../cli/flowshell.md), which provides a simple command
+The easiest way to execute tests is to use the [Flowman Shell](../cli/flowshell/index.md), which provides a simple command
 `test run`, which will run all tests defined in your project.
 
 

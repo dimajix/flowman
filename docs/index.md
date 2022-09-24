@@ -38,8 +38,8 @@ central place in your value chain for data preparations for the next steps.
 * Flexible expression language
 * Jobs for managing build targets (like copying files or uploading data via sftp)
 * Automatic dependency analysis to build targets in the correct order
-* Powerful yet simple [command line tool for batch execution](cli/flowexec.md)
-* Powerful [Command line tool for interactive data flow analysis](cli/flowshell.md)
+* Powerful yet simple [command line tool for batch execution](cli/flowexec/index.md)
+* Powerful [Command line tool for interactive data flow analysis](cli/flowshell/index.md)
 * [History server](cli/history-server.md) that provides an overview of past jobs and targets including lineage
 * [Metric system](cookbook/metrics.md) with the ability to publish these to servers like Prometheus
 * Extendable via Plugins
@@ -64,8 +64,8 @@ step by step.
 Flowman provides a command line utility (CLI) for running flows. Details are described in the
 following sections:
 
-* [Flowman Executor](cli/flowexec.md): Documentation of the Flowman Executor CLI
-* [Flowman Shell](cli/flowshell.md): Documentation of the Flowman Shell CLI
+* [Flowman Executor](cli/flowexec/index.md): Documentation of the Flowman Executor CLI
+* [Flowman Shell](cli/flowshell/index.md): Documentation of the Flowman Shell CLI
 * [Flowman Server](cli/history-server.md): Documentation of the Flowman Server CLI
 
 

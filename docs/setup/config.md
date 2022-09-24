@@ -1,7 +1,7 @@
 # Configuration Properties
 
 Flowman supports some configuration properties, which influence the behaviour. These properties either can be set
-on the command line via `--conf` (See [flowexec documentation](../cli/flowexec.md)), or in the `config` section of the flow 
+on the command line via `--conf` (See [flowexec documentation](../cli/flowexec/index.md)), or in the `config` section of the flow 
 specification (see [module documentation](../spec/module.md)) or in the namespace configuration (see
 [namespace documentation](../spec/namespace.md))
 

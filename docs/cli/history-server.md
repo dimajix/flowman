@@ -8,8 +8,8 @@ the [Flowman namespace](../spec/namespace.md).
 
 ## Configuration
 The history database needs to be configured in the `default-namespace.yml` file and also (if used) in the
-`history-server.yml` file. The first configuration will be used by [flowexec](flowexec.md) and 
-[flowshell](flowshell.md) while the second file will be picked up by the Flowman History Server.
+`history-server.yml` file. The first configuration will be used by [flowexec](flowexec/index.md) and 
+[flowshell](flowshell/index.md) while the second file will be picked up by the Flowman History Server.
 
 ```yaml
 # The following definition provides a "run history" stored in a database. If nothing else is specified, the database

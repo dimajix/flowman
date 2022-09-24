@@ -1,0 +1,10 @@
+relations:
+  stations:
+    kind: jdbcTable
+    description: "The 'stations' table contains meta data on all weather stations"
+    connection: mysql
+    database: $jdbc_db
+    table: stations
+    schema:
+      kind: mapping
+      mapping: stations_conformed

@@ -1,0 +1,23 @@
+relations:
+  measurements:
+    kind: jdbcTable
+    connection: mariadb
+    database: $jdbc_db
+    table: measurement
+    stagingTable: measurement_staging
+    schema:
+      kind: spark
+      file: "${project.basedir}/schema/measurements.json"
+    # Add partition column
+    partitions:
+      - name: year
+        type: integer
+        granularity: 1
+    primaryKey:
+      - usaf
+      - wban
+      - date
+      - time
+    indexes:
+      - name: "measurement_idx0"
+        columns: [usaf, wban]

@@ -113,5 +113,6 @@ Flowman also provides optional plugins which extend functionality. You can find 
    connectors/index
    plugins/index
    cookbook/index
+   faq/index
    releases
 ```

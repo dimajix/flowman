@@ -1707,14 +1707,12 @@
                 <version>${commons-lang3.version}</version>
                 <scope>provided</scope>
             </dependency>
-            <!--
             <dependency>
                 <groupId>commons-beanutils</groupId>
                 <artifactId>commons-beanutils</artifactId>
                 <version>${commons-beanutils.version}</version>
                 <scope>provided</scope>
             </dependency>
-            -->
             <dependency>
                 <groupId>commons-collections</groupId>
                 <artifactId>commons-collections</artifactId>

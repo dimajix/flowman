@@ -18,6 +18,18 @@ plugins:
   - flowman-mssqlserver 
 ```
 
+### Fixing JDBC driver version issues
+Some Hadoop distributions (e.g. Cloudera) come along with an outdated MS SQL JDBC connector. This causes problems with
+the plugin. Fortunately you can [manually explicitly force Spark to use the correct JDBC](../cookbook/override-jars.md).
+You need to add the following lines to your custom `flowman-env.sh` file which is stored in the `conf` subdirectory:
+
+```shell
+# Add MS SQL JDBC Driver. Normally this is handled by the plugin mechanism, but Cloudera already provides some
+# old version of the JDBC driver, and this is the only place where we can force to use our JDBC driver
+SPARK_JARS="$FLOWMAN_HOME/plugins/flowman-mssqlserver/mssql-jdbc-9.2.1.jre8.jar"
+SPARK_OPTS="--conf spark.executor.extraClassPath=mssql-jdbc-9.2.1.jre8.jar --conf spark.driver.extraClassPath=$FLOWMAN_HOME/plugins/flowman-mssqlserver/mssql-jdbc-9.2.1.jre8.jar"
+```
+
 
 ## Usage
 

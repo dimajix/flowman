@@ -11,6 +11,17 @@ plugins:
   - flowman-mariadb 
 ```
 
+### Fixing SQL syntax errors during write operations
+Newer MariaDB versions expect a slightly different syntax for quoting column names as opposed to the way that Spark
+is doing it. This can be changing the *SQL mode* on the MariaDB server to allow *ANSI Quotes*:
+```sql
+SET GLOBAL sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,ANSI_QUOTES';
+```
+You can also set the *SQL mode* as a MariaDB server startup parameter by adding the following option to the MariaDB daemon:
+```shell
+--sql-mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,ANSI_QUOTES
+```
+
 
 ## Usage
 

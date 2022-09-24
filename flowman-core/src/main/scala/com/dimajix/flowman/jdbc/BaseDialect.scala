@@ -547,7 +547,7 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
     override def getPrimaryKey(statement:Statement, table:TableIdentifier) : Option[PrimaryKey] = {
         val con = statement.getConnection
         val meta = con.getMetaData
-        val pkrs = meta.getPrimaryKeys(null, table.database.orNull, table.table)
+        val pkrs = meta.getPrimaryKeys(getDatabaseName(table), getSchemaName(table), table.table)
         val pk = mutable.ListBuffer[(Short,String)]()
         while(pkrs.next()) {
             val col = pkrs.getString(4)
@@ -567,7 +567,7 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
     override def getIndexes(statement:Statement, table:TableIdentifier) : Seq[TableIndex] = {
         val con = statement.getConnection
         val meta = con.getMetaData
-        val idxrs = meta.getIndexInfo(null, table.database.orNull, table.table, false, true)
+        val idxrs = meta.getIndexInfo(getDatabaseName(table), getSchemaName(table), table.table, false, true)
         val idxcols = mutable.ListBuffer[(String, String, Boolean)]()
         while(idxrs.next()) {
             val typ = idxrs.getShort(7)
@@ -637,4 +637,7 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
             rs.close()
         }
     }
+
+    protected def getSchemaName(table:TableIdentifier) : String = table.database.orNull
+    protected def getDatabaseName(table:TableIdentifier) : String = null
 }

@@ -139,6 +139,15 @@ the real JDBC table and the temporary table will be dropped.
    Specifies a list of database indexes to be created. Each index has the properties `name`, `columns` and `unique`.
 
 
+## Staging Tables
+Flowman supports using temporary staging tables when writing to a SQL database. In this mode, Flowman will first
+create this special staging table (which technically is just a normal table, but without any index or primary key),
+and then copy the table into the real target table. Afterwards, the staging table will be dropped. This approach
+helps to ensure consistency, since the copy process is performed within a single SQL transaction. Moreover, since
+no primary key or index is present in the staging table, this will also avoid locks on the database server side,
+which may lead to timeouts or other failures during the parallel write process that Spark uses under the hood.
+
+
 ## Automatic Migrations
 Flowman supports some automatic migrations, specifically with the migration strategies `ALTER`, `ALTER_REPLACE`
 and `REPLACE` (those can be set via the global config variable `flowman.default.relation.migrationStrategy`,

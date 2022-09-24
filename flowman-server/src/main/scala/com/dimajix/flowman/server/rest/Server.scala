@@ -26,6 +26,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes.Found
 import akka.http.scaladsl.settings.ServerSettings
 import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import org.slf4j.LoggerFactory
 
@@ -54,37 +55,44 @@ class Server(
         val targetHistoryService = new TargetHistoryService(session.history)
         val metricService = new MetricService(session.history)
 
-        val route = (
-                pathPrefix("api") {(
-                    SwaggerDocService.routes
-                    ~
-                    namespaceService.routes
-                    ~
-                    pathPrefix("history") {(
+        val apiRoute = pathPrefix("api") (
+                SwaggerDocService.routes
+                ~
+                namespaceService.routes
+                ~
+                pathPrefix("history") {
+                    (
                         jobHistoryService.routes
-                        ~
-                        targetHistoryService.routes
-                        ~
-                        metricService.routes
-                    )}
-                )}
-                ~
-                pathPrefix("swagger") {(
-                    pathEndOrSingleSlash {
-                        redirectToTrailingSlashIfMissing(Found) {
-                            getFromResource("swagger/index.html")
-                        }
-                    }
-                    ~
-                    getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/4.1.3")
-                )}
-                ~
+                            ~
+                            targetHistoryService.routes
+                            ~
+                            metricService.routes
+                        )
+                }
+            )
+        val swaggerRoute = pathPrefix("swagger") (
                 pathEndOrSingleSlash {
-                    getFromResource("META-INF/resources/webjars/flowman-server-ui/index.html")
+                    redirectToTrailingSlashIfMissing(Found) {
+                        getFromResource("swagger/index.html")
+                    }
+                }
+                ~
+                getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/4.1.3")
+            )
+        val uiRoute = ( pathEndOrSingleSlash {
+                getFromResource("META-INF/resources/webjars/flowman-server-ui/index.html")
                 }
                 ~
                 getFromResourceDirectory("META-INF/resources/webjars/flowman-server-ui")
             )
+        val route = extractRequestContext { ctx =>
+            extractClientIP { ip =>
+                logger.info(s"Client ${ip} ${ctx.request.method.value} ${ctx.request.uri.path}")
+                apiRoute ~
+                    swaggerRoute ~
+                    uiRoute
+            }
+        }
 
         logger.info("Connecting to history backend")
         session.history.countJobs(JobQuery())
@@ -95,24 +103,19 @@ class Server(
             .withVerboseErrorMessages(true)
             .withRemoteAddressHeader(true)
 
-        val server = Http().bind(conf.getBindHost(), conf.getBindPort(), akka.http.scaladsl.ConnectionContext.noEncryption(), settings)
-            .to(Sink.foreach { connection =>
+        val (binding,server) = Http().bind(conf.getBindHost(), conf.getBindPort(), akka.http.scaladsl.ConnectionContext.noEncryption(), settings)
+            .toMat(Sink.foreach { connection =>
                 connection.handleWith(
-                    extractRequestContext { ctx =>
-                        extractClientIP { ip =>
-                            logger.info(s"Client ${ip} ${ctx.request.method.value} ${ctx.request.uri.path}")
-                            route
-                        }
-                    }
+                    route
                 )
-            })
+            })(Keep.both)
             .run()
 
-        server.foreach { binding =>
+        binding.foreach { binding =>
             val listenUrl = SocketUtils.toURL("http", binding.localAddress, allowAny = true)
             logger.info(s"Flowman Server online at $listenUrl")
         }
 
-        Await.ready(Promise[Done].future, Duration.Inf)
+        Await.ready(server, Duration.Inf)
     }
 }

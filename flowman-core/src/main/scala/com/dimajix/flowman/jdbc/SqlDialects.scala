@@ -43,6 +43,7 @@ object SqlDialects {
     registerDialect(DerbyDialect)
     registerDialect(H2Dialect)
     registerDialect(MySQLDialect)
+    registerDialect(MariaDialect)
     registerDialect(SqlServerDialect)
     registerDialect(PostgresDialect)
     registerDialect(OracleDialect)

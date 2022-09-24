@@ -29,14 +29,15 @@ import com.dimajix.flowman.types.BooleanType
 import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FloatType
 import com.dimajix.flowman.types.LongType
+import com.dimajix.flowman.types.StringType
 
 
-object MySQLDialect extends BaseDialect {
+class MySQLDialect extends BaseDialect {
     private object Statements extends MySQLStatements(this)
     private object Expressions extends MySQLExpressions(this)
     private object Commands extends MySQLCommands(this)
 
-    override def canHandle(url : String): Boolean = url.startsWith("jdbc:mysql") || url.startsWith("jdbc:mariadb")
+    override def canHandle(url : String): Boolean = url.startsWith("jdbc:mysql")
 
     override def quoteIdentifier(colName: String): String = {
         s"`$colName`"
@@ -69,6 +70,7 @@ object MySQLDialect extends BaseDialect {
     override def expr : SqlExpressions = Expressions
     override def command : SqlCommands = Commands
 }
+object MySQLDialect extends MySQLDialect
 
 
 class MySQLExpressions(dialect: BaseDialect) extends BaseExpressions(dialect) {

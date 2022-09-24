@@ -1,8 +1,8 @@
-# Test Suite for MS SQL Server
+# Test Suite for MariaDB
 
 ## Start Docker Containers
 ```shell
-docker-compose up -d sqlserver
+docker-compose up -d mariadb
 docker-compose run flowman
 ```
 

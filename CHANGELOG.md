@@ -1,3 +1,8 @@
+# Version 0.27.1
+
+* Improve support for MariaDB / MySQL as data sinks
+
+
 # Version 0.27.0 - 2022-09-09
 
 * github-232: [BUG] Column descriptions should be propagated in UNIONs

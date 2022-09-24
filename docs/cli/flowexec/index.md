@@ -33,10 +33,10 @@ or for inspecting individual entities.
 All commands for `flowexec` are organized in *command groups*, for example project commands, job commands, target
 commands and so on. Please find an overview with links to the detailed documentation below:
 
+
 ```eval_rst
 .. toctree::
    :maxdepth: 1
-   :glob:
 
    project
    job

@@ -63,7 +63,7 @@ class InspectCommand extends Command {
     }
 
     private def printDependencies(target:Target, phase:Phase) : Unit = {
-        println(s"Phase '$phase' ${if (!target.phases.contains(phase)) " (inactive)" else ""}:")
+        println(s"Phase '$phase'${if (!target.phases.contains(phase)) " (inactive)" else ""}:")
         println(s"  Provides:")
         target.provides(phase)
             .map(_.text)

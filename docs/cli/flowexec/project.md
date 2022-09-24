@@ -1,26 +1,29 @@
-# `flowexec` Project Commands
+# Project Commands
 
 By using project commands with `flowexec`, you can perform operations on the project level. Most of these operations
 implicitly reference a `main` job, which must be defined within the project
 
-### General Parameters
-* `-h` displays help
-* `-f <project_directory>` specifies a different directory than the current for locating a Flowman project
-* `-P <profile_name>` activates a profile as being defined in the Flowman project
-* `-D <key>=<value>` Sets a environment variable
-* `--conf <key>=<value>` Sets a Flowman or Spark configuration variable
-* `--info` Dumps the active configuration to the console
-* `--spark-logging <level>` Sets the log level for Spark
-* `--spark-master <master>` Explicitly sets the address of the Spark master
-* `--spark-name <application_name>` Sets the Spark application name
 
-
-## `project <verify|create|build|verify|truncate|destroy>` - Lifecycle Commands
+## `verify|create|build|verify|truncate|destroy` - Lifecycle Commands
 The most important command group is for executing a specific lifecycle or an individual phase for the whole project.
 ```shell
 flowexec project <verify|create|build|verify|truncate|destroy> <args>
 ```
-This will execute the whole job by executing the desired lifecycle for the `main` job. Additional parameters are
+This will execute the whole job by executing the desired lifecycle for the `main` job. The `<args>` parameter
+refers to the parameters as defined in the `main` job. For example the following job defines one parameter 
+`processing_date` which needs to be specified on the command line.
+```yaml
+jobs:
+  main:
+    description: "Processes all outputs"
+    parameters:
+      - name: processing_date
+        type: string
+    targets:
+      - some_hive_table
+      - some_files
+``` 
+Additional parameters can be specified before or after `<args>` and are as follows:
 * `-h` displays help
 * `-f` or `--force` force execution of all targets in the project, even if Flowman considers the targets to be clean.
 * `-t` or `--targets` explicitly specify targets to be executed. The targets can be specified as regular expressions.
@@ -51,3 +54,10 @@ command line option `-nl` to skip the lifecycle:
 flowexec -f examples/weather project build year=2018 -nl
 ```
 
+## `inspect` - Retrieving general information
+The `project inspect` commands provides some general information, like a list of all jobs, targets, relations and
+mappings and environment variables.
+
+```shell
+flowexec -f examples/weather project inspect
+```

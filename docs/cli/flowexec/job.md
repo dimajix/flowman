@@ -1,31 +1,35 @@
-# `flowexec` Job Commands
-Similar to the project commands, individual jobs with different names than `main` can be executed.
-
-### General Parameters
-* `-h` displays help
-* `-f <project_directory>` specifies a different directory than the current for locating a Flowman project
-* `-P <profile_name>` activates a profile as being defined in the Flowman project
-* `-D <key>=<value>` Sets a environment variable
-* `--conf <key>=<value>` Sets a Flowman or Spark configuration variable
-* `--info` Dumps the active configuration to the console
-* `--spark-logging <level>` Sets the log level for Spark
-* `--spark-master <master>` Explicitly sets the address of the Spark master
-* `--spark-name <application_name>` Sets the Spark application name
+# Job Commands
+THis command group operates on the level of individual jobs with different names than `main`. 
 
 
-## `job list` - List all Jobs
+## `list` - List all Jobs
 The following command will list all jobs defined in a project
 ```shell
 flowexec job list
 ```
 
-## `job <validate|create|build|verify|truncate|destroy>` - Execute Job Phase
+
+## `validate|create|build|verify|truncate|destroy` - Execute Job Phase
 This set of commands is used for *executing a job phase*, or a complete lifecycle containing multiple individual
 phases.
 ```shell
 flowexec job <validate|create|build|verify|truncate|destroy> <job_name> <args>
 ```
-This will execute the whole job by executing the desired lifecycle for the `main` job. Additional parameters are
+This will execute the whole job by executing the desired lifecycle for the `main` job. The `<args>` parameter
+refers to the parameters as defined in a job. For example the following job defines one parameter `processing_date`
+which needs to be specified on the command line.
+```yaml
+jobs:
+  main:
+    description: "Processes all outputs"
+    parameters:
+      - name: processing_date
+        type: string
+    targets:
+      - some_hive_table
+      - some_files
+```
+Additional parameters can be specified before or after `<args>` and are as follows:
 * `-h` displays help
 * `-f` or `--force` force execution of all targets in the job, even if Flowman considers the targets to be clean.
 * `-t` or `--targets` explicitly specify targets to be executed. The targets can be specified as regular expressions
@@ -43,11 +47,11 @@ This will execute the whole job by executing the desired lifecycle for the `main
 
 
 ### Examples
-In order to build  (i.e. run `VALIDATE`, `CREATE` and `BUILD` execution phases) the `main` job of a project stored
-in the subdirectory `examples/weather` which defines an (optional) parameter `year`, simply run
+In order to forcibly build  (i.e. run `VALIDATE`, `CREATE` and `BUILD` execution phases) the `main` job of a project 
+stored in the subdirectory `examples/weather` which defines an (optional) parameter `year`, simply run
 
 ```shell
-flowexec -f examples/weather job build main year=2018
+flowexec -f examples/weather job build main year=2018 --force
 ```
 
 If you only want to execute the `BUILD` phase and skip the first two other phases, then you need to add the
@@ -58,9 +62,20 @@ flowexec -f examples/weather job build main year=2018 -nl
 ```
 
 The following example will only execute the `BUILD` phase of the job `daily`, which defines a parameter
-`processing_datetime` with type datetiem. The job will be executed for the whole date range from 2021-06-01 until
+`processing_datetime` with type datetime. The job will be executed for the whole date range from 2021-06-01 until
 2021-08-10 with a step size of one day. Flowman will execute up to four jobs in parallel (`-j 4`).
 
 ```shell
 flowexec job build daily processing_datetime:start=2021-06-01T00:00 processing_datetime:end=2021-08-10T00:00 processing_datetime:step=P1D --target parquet_lineitem --no-lifecycle -j 4
+```
+
+
+
+## `job inspect` - Retrieving general information
+The `job inspect` commands provides some general information on an individual job, for example the list of all targets
+within the job, parameters and environment variables. 
+
+The following example inspects the job `main`:
+```shell
+flowexec -f examples/weather job inspect main
 ```

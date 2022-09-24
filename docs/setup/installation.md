@@ -2,7 +2,7 @@
 
 This setup guide will walk you to a installation of Apache Spark and Flowman on your local Linux box. If you
 are using Windows, you will find some hints for setting up the required "Hadoop WinUtils", but we generally recommend
-to use Linux. You can also run a [Flowman Docker image](setup/docker.md), which is the simplest way to get up to speed.
+to use Linux. You can also run a [Flowman Docker image](docker.md), which is the simplest way to get up to speed.
 
 
 ## 1. Requirements

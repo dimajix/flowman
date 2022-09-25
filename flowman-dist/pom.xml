@@ -75,6 +75,14 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>com.dimajix.flowman</groupId>
+                                    <artifactId>flowman-yaml-schema</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>tar.gz</type>
+                                    <classifier>bin</classifier>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.dimajix.flowman</groupId>
                                     <artifactId>flowman-plugin-aws</artifactId>
                                     <version>${project.version}</version>
                                     <type>tar.gz</type>

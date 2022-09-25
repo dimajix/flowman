@@ -1,6 +1,7 @@
 # Version 0.27.1
 
 * Improve support for MariaDB / MySQL as data sinks
+* github-247: Automatically generate YAML schemas as part of build process
 
 
 # Version 0.27.0 - 2022-09-09

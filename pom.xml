@@ -561,6 +561,7 @@
         <module>flowman-studio</module>
         <module>flowman-hub</module>
         <module>flowman-client</module>
+        <module>flowman-yaml-schema</module>
         <module>flowman-parent</module>
         <module>flowman-dist</module>
         <module>docker</module>
@@ -641,6 +642,10 @@
                 <artifactId>maven-deploy-plugin</artifactId>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
                 <version>1.6.13</version>
@@ -684,6 +689,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>3.0.1</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -1051,6 +1061,11 @@
                 <artifactId>flowman-plugin-azure</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-delta</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <!--
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
@@ -1071,6 +1086,16 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-mariadb</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-mssqlserver</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-mysql</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

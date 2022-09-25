@@ -18,6 +18,7 @@
                 <include>conf/**/*</include>
                 <include>examples/**/*</include>
                 <include>plugins/**/*</include>
+                <include>yaml-schema/**/*</include>
             </includes>
         </fileSet>
         <fileSet>

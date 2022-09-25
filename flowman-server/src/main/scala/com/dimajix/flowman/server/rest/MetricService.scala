@@ -48,8 +48,10 @@ class MetricService(history:StateStore) {
     def routes : Route = (
         pathPrefix("metrics") {(
             pathEnd {
-                parameters(('project.?, 'job.?, 'phase.?, 'status.?, 'grouping?)) { (project,job,phase,status,grouping) =>
-                    findJobMetrics(project, job, phase, status, grouping)
+                get {
+                    parameters(('project.?, 'job.?, 'phase.?, 'status.?, 'grouping ?)) { (project, job, phase, status, grouping) =>
+                        findJobMetrics(project, job, phase, status, grouping)
+                    }
                 }
             }
         )}

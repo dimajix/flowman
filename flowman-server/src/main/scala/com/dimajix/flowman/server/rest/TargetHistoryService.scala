@@ -55,27 +55,35 @@ class TargetHistoryService(history:StateStore) {
         pathPrefix("target") {(
             pathPrefix(Segment) { target => (
                 pathEnd {
-                    getTargetState(target)
+                    get {
+                        getTargetState(target)
+                    }
                 }
                 ~
                 path("graph") {
-                    getTargetGraph(target)
+                    get {
+                        getTargetGraph(target)
+                    }
                 }
             )}
         )}
         ~
         pathPrefix("target-counts") {(
             pathEnd {
-                parameters(('project.?, 'job.?, 'jobId.?, 'target.?, 'phase.?, 'status.?, 'grouping)) { (project,job,jobId,target,phase,status,grouping) =>
-                    countTargets(project, job, target, jobId, phase, status, grouping)
+                get {
+                    parameters(('project.?, 'job.?, 'jobId.?, 'target.?, 'phase.?, 'status.?, 'grouping)) { (project, job, jobId, target, phase, status, grouping) =>
+                        countTargets(project, job, target, jobId, phase, status, grouping)
+                    }
                 }
             }
         )}
         ~
         pathPrefix("targets") {(
             pathEnd {
-                parameters(('project.?, 'job.?, 'jobId.?, 'target.?, 'phase.?, 'status.?, 'limit.as[Int].?, 'offset.as[Int].?)) { (project,job,jobId,target,phase,status,limit,offset) =>
-                    listTargetStates(project, job, target, jobId, phase, status,limit,offset)
+                get {
+                    parameters(('project.?, 'job.?, 'jobId.?, 'target.?, 'phase.?, 'status.?, 'limit.as[Int].?, 'offset.as[Int].?)) { (project, job, jobId, target, phase, status, limit, offset) =>
+                        listTargetStates(project, job, target, jobId, phase, status, limit, offset)
+                    }
                 }
             }
         )}

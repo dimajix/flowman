@@ -70,27 +70,36 @@ class Server(
                         )
                 }
             )
-        val swaggerRoute = pathPrefix("swagger") (
+        val swaggerUiRoute = pathPrefix("swagger") (
                 pathEndOrSingleSlash {
                     redirectToTrailingSlashIfMissing(Found) {
-                        getFromResource("swagger/index.html")
+                        get {
+                            getFromResource("swagger/index.html")
+                        }
                     }
                 }
                 ~
-                getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/4.1.3")
+                get {
+                    getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/4.1.3")
+                }
             )
-        val uiRoute = ( pathEndOrSingleSlash {
-                getFromResource("META-INF/resources/webjars/flowman-server-ui/index.html")
+        val flowmanUiRoute = (
+                pathEndOrSingleSlash {
+                    get {
+                        getFromResource("META-INF/resources/webjars/flowman-server-ui/index.html")
+                    }
                 }
                 ~
-                getFromResourceDirectory("META-INF/resources/webjars/flowman-server-ui")
+                get {
+                    getFromResourceDirectory("META-INF/resources/webjars/flowman-server-ui")
+                }
             )
         val route = extractRequestContext { ctx =>
             extractClientIP { ip =>
                 logger.info(s"Client ${ip} ${ctx.request.method.value} ${ctx.request.uri.path}")
                 apiRoute ~
-                    swaggerRoute ~
-                    uiRoute
+                swaggerUiRoute ~
+                flowmanUiRoute
             }
         }
 

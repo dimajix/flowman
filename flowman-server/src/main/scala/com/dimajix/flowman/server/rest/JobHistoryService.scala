@@ -55,27 +55,35 @@ class JobHistoryService(history:StateStore) {
         pathPrefix("job") {(
             pathPrefix(Segment) { job => (
                 pathEnd {
-                    getJobState(job)
+                    get {
+                        getJobState(job)
+                    }
                 }
                 ~
                 path("env") {
-                    getJobEnvironment(job)
+                    get {
+                        getJobEnvironment(job)
+                    }
                 }
             )}
         )}
         ~
         pathPrefix("job-counts") {(
             pathEnd {
-                parameters(('project.?, 'job.?, 'phase.?, 'status.?, 'grouping)) { (project,job,phase,status,grouping) =>
-                    countJobs(project, job, phase, status, grouping)
+                get {
+                    parameters(('project.?, 'job.?, 'phase.?, 'status.?, 'grouping)) { (project, job, phase, status, grouping) =>
+                        countJobs(project, job, phase, status, grouping)
+                    }
                 }
             }
         )}
         ~
         pathPrefix("jobs") {(
             pathEnd {
-                parameters(('project.?, 'job.?, 'phase.?, 'status.?, 'limit.as[Int].?, 'offset.as[Int].?)) { (project,job,phase,status,limit,offset) =>
-                    listJobStates(project, job, phase, status, limit, offset)
+                get {
+                    parameters(('project.?, 'job.?, 'phase.?, 'status.?, 'limit.as[Int].?, 'offset.as[Int].?)) { (project, job, phase, status, limit, offset) =>
+                        listJobStates(project, job, phase, status, limit, offset)
+                    }
                 }
             }
         )}

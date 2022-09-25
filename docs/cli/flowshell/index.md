@@ -12,6 +12,8 @@
 * `--spark-logging <level>` Sets the log level for Spark 
 * `--spark-master <master>` Explicitly sets the address of the Spark master
 * `--spark-name <application_name>` Sets the Spark application name
+* `-X` or `--verbose` Enables logging at more verbose level
+* `-XX` or `--debug` Enables logging at debug level
 
 
 ## Commands

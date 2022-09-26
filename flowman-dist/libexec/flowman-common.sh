@@ -20,6 +20,9 @@ fi
 if [ -f "$FLOWMAN_CONF_DIR/log4j.properties" ]; then
     SPARK_DRIVER_JAVA_OPTS="-Dlog4j.configuration=$FLOWMAN_CONF_DIR/log4j.properties $SPARK_DRIVER_JAVA_OPTS"
 fi
+if [ -f "$FLOWMAN_CONF_DIR/log4j2.properties" ]; then
+    SPARK_DRIVER_JAVA_OPTS="-Dlog4j.configurationFile=$FLOWMAN_CONF_DIR/log4j2.properties $SPARK_DRIVER_JAVA_OPTS"
+fi
 
 
 # Set basic Spark options

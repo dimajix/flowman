@@ -6,6 +6,7 @@
 * github-247: Automatically generate YAML schemas as part of build process
 * github-248: Bump scss-tokenizer and node-sass in /flowman-server-u
 * github-249: Add new options -X and -XX to increase logging
+* github-251: Support for log4j2 Configuration
 
 
 # Version 0.27.0 - 2022-09-09

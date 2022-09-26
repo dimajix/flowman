@@ -67,3 +67,14 @@ relations:
       - name: "users_idx0"
         columns: [user_first_name, user_last_name]
 ```
+
+
+### Changing log level
+Flowman provides two methods for changing the log level, either via command line arguments or via a log4j configuration
+file. If you temporarily want to increase the logging verbosity, you can simply use the `-X` and `-XX` command line
+switches for both [`flowexec`](../cli/flowexec/index.md) and the [Flowman Shell](../cli/flowshell/index.md).
+
+Another option is to provide either a `log4j.properties` or `log4j2.properties` file in the `conf` directory of your
+Flowman installation. Note that `log4j2.properties` uses the Log4j 2.x syntax and is only supported since Spark 3.3.
+Environments using older Spark versions still have to rely on the Log4j 1.x configuration file `log4j.properties`.
+You will find templates for both Log4j versions in the `conf` directory.

@@ -107,6 +107,7 @@ Once you downloaded and unpacked Flowman, you will get a new directory which loo
 │       └── target
 ├── lib
 ├── libexec
+├── yaml-schema
 └── plugins
     ├── flowman-aws
     ├── flowman-azure
@@ -121,6 +122,8 @@ Once you downloaded and unpacked Flowman, you will get a new directory which loo
 * The `lib` directory contains all Java jars
 * The `libexec` directory contains some internal helper scripts
 * The `plugins` directory contains more subdirectories, each containing a single plugin
+* The `yaml-schema` directory contains [YAML schema files for syntax highlighting and auto-completion](../cookbook/syntax-highlighting.md) 
+inside the code editor of your choice.
 * The `examples` directory contains some example projects 
 
 
@@ -285,6 +288,10 @@ store:
   kind: file
   location: $System.getenv('FLOWMAN_HOME')/examples
 ```
+
+### `log4j.properties`
+In order to control the console (logging) output at a very detailed level, you can provide your own version of a 
+Log4j configuration file inside the `conf` directory. You will find templates both for Log4j 1.x and 2.x.
 
 
 ## 6. Running Flowman

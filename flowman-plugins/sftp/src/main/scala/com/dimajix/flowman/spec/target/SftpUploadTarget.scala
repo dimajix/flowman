@@ -44,6 +44,7 @@ import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.spec.annotation.TargetType
 import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.spec.connection.SshConnection
 
@@ -308,6 +309,7 @@ case class SftpUploadTarget(
 
 
 
+@TargetType(kind="sftpUpload")
 class SftpUploadTargetSpec extends TargetSpec {
     @JsonProperty(value = "source", required = true) private var source: String = ""
     @JsonProperty(value = "target", required = true) private var target: String = ""

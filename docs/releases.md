@@ -14,6 +14,18 @@ The following gives an (incomplete) list of past releases of the last 12 months.
 changes over time.
 
 
+### Version 0.27.1
+
+* Improve support for MariaDB / MySQL as data sinks
+* github-245: Bump ejs, @vue/cli-plugin-babel, @vue/cli-plugin-eslint and @vue/cli-service in /flowman-studio-ui
+* github-246: Bump ejs, @vue/cli-plugin-babel, @vue/cli-plugin-eslint and @vue/cli-service in /flowman-server-ui
+* github-247: Automatically generate YAML schemas as part of build process
+* github-248: Bump scss-tokenizer and node-sass in /flowman-server-u
+* github-249: Add new options -X and -XX to increase logging
+* github-251: Support for log4j2 Configuration
+* github-252: Move sftp target into separate plugin
+
+
 ### Version 0.27.0 - 2022-09-09
 
 * github-232: [BUG] Column descriptions should be propagates in UNIONs

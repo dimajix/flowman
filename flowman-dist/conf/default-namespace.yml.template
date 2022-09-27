@@ -93,6 +93,7 @@ plugins:
   - flowman-mssqlserver
   - flowman-oracle
   - flowman-postgresql
+  - flowman-sftp
   - flowman-swagger
   - flowman-openapi
   - flowman-json

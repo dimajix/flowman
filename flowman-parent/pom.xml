@@ -389,6 +389,11 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-sftp</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-swagger</artifactId>
                 <version>${flowman.version}</version>
                 <scope>provided</scope>

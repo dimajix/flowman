@@ -549,6 +549,7 @@
         <module>flowman-plugins/mysql</module>
         <module>flowman-plugins/mssqlserver</module>
         <module>flowman-plugins/oracle</module>
+        <module>flowman-plugins/sftp</module>
         <module>flowman-plugins/swagger</module>
         <module>flowman-plugins/openapi</module>
         <module>flowman-plugins/json</module>
@@ -1096,6 +1097,11 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-mysql</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-sftp</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

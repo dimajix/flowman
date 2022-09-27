@@ -2,6 +2,10 @@
 
 The `deltaVacuum` target is used to truncate the history stored in DeltaLake. 
 
+## Plugin
+The `deltaVacuum` target is provided by the [Delta Plugin](../../plugins/delta.md), which needs to be enabled in your
+`namespace.yml` file. See [namespace documentation](../namespace.md) for more information for configuring plugins.
+
 ## Example
 
 ```yaml

@@ -1,5 +1,6 @@
 connections:
   sql_server:
+    kind: jdbc
     driver: "$jdbc_driver"
     url: "$jdbc_url"
     username: "$jdbc_username"

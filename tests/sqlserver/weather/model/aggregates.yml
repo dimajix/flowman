@@ -4,6 +4,7 @@ relations:
     connection: sql_server
     database: dbo
     table: weather
+    stagingTable: weather_staging
     storageFormat: ROWSTORE
     schema:
       kind: inline

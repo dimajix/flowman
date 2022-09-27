@@ -252,16 +252,14 @@ abstract class JdbcTableRelationBase(
             case Some(stagingTable) =>
                 withConnection { (con, options) =>
                     val stagingSchema = JdbcUtils.getTableSchema(con, tableIdentifier, options)
-                    createStagingTable(execution, con, options, df, Some(stagingSchema))
-
-                    withTransaction(con) {
-                        withStatement(con, options) { statement =>
-                            logger.debug(s"Truncating table ${tableIdentifier}")
-                            JdbcUtils.truncateTable(statement, tableIdentifier, options)
-                            logger.info(s"Copying data from staging table ${stagingTable} into table ${tableIdentifier}")
-                            JdbcUtils.appendTable(statement, tableIdentifier, stagingTable, options)
-                            logger.debug(s"Dropping temporary staging table ${stagingTable}")
-                            JdbcUtils.dropTable(statement, stagingTable, options)
+                    withStagingTable(execution, con, options, df, Some(stagingSchema)) {
+                        withTransaction(con) {
+                            withStatement(con, options) { statement =>
+                                logger.debug(s"Truncating table ${tableIdentifier}")
+                                JdbcUtils.truncateTable(statement, tableIdentifier, options)
+                                logger.info(s"Copying data from staging table ${stagingTable} into table ${tableIdentifier}")
+                                JdbcUtils.appendTable(statement, tableIdentifier, stagingTable, options)
+                            }
                         }
                     }
                 }
@@ -281,17 +279,15 @@ abstract class JdbcTableRelationBase(
             case Some(stagingTable) =>
                 withConnection { (con, options) =>
                     val stagingSchema = JdbcUtils.getTableSchema(con, tableIdentifier, options)
-                    createStagingTable(execution, con, options, df, Some(stagingSchema))
-
-                    withTransaction(con) {
-                        withStatement(con, options) { statement =>
-                            val condition = partitionCondition(partition, options)
-                            logger.debug(s"Truncating table ${tableIdentifier} partition ${partition}")
-                            JdbcUtils.truncatePartition(statement, tableIdentifier, condition, options)
-                            logger.info(s"Copying data from temporary staging table ${stagingTable} into table ${tableIdentifier}")
-                            JdbcUtils.appendTable(statement, tableIdentifier, stagingTable, options)
-                            logger.debug(s"Dropping temporary staging table ${stagingTable}")
-                            JdbcUtils.dropTable(statement, stagingTable, options)
+                    withStagingTable(execution, con, options, df, Some(stagingSchema)) {
+                        withTransaction(con) {
+                            withStatement(con, options) { statement =>
+                                val condition = partitionCondition(partition, options)
+                                logger.debug(s"Truncating table ${tableIdentifier} partition ${partition}")
+                                JdbcUtils.truncatePartition(statement, tableIdentifier, condition, options)
+                                logger.info(s"Copying data from temporary staging table ${stagingTable} into table ${tableIdentifier}")
+                                JdbcUtils.appendTable(statement, tableIdentifier, stagingTable, options)
+                            }
                         }
                     }
                 }
@@ -304,14 +300,12 @@ abstract class JdbcTableRelationBase(
             case Some(stagingTable) =>
                 withConnection { (con, options) =>
                     val stagingSchema = JdbcUtils.getTableSchema(con, tableIdentifier, options)
-                    createStagingTable(execution, con, options, df, Some(stagingSchema))
-
-                    withTransaction(con) {
-                        withStatement(con, options) { statement =>
-                            logger.info(s"Copying data from temporary staging table ${stagingTable} into table ${tableIdentifier}")
-                            JdbcUtils.appendTable(statement, tableIdentifier, stagingTable, options)
-                            logger.debug(s"Dropping temporary staging table ${stagingTable}")
-                            JdbcUtils.dropTable(statement, stagingTable, options)
+                    withStagingTable(execution, con, options, df, Some(stagingSchema)) {
+                        withTransaction(con) {
+                            withStatement(con, options) { statement =>
+                                logger.info(s"Copying data from temporary staging table ${stagingTable} into table ${tableIdentifier}")
+                                JdbcUtils.appendTable(statement, tableIdentifier, stagingTable, options)
+                            }
                         }
                     }
                 }
@@ -329,14 +323,14 @@ abstract class JdbcTableRelationBase(
         doMerge(execution, df, Some(stagingSchema), mergeCondition, clauses)
     }
 
-    private def createStagingTable(execution:Execution, con:java.sql.Connection, options: JDBCOptions, df:DataFrame, schema:Option[FlowmanStructType]) : Unit = {
+    private def withStagingTable[T](execution:Execution, con:java.sql.Connection, options: JDBCOptions, df:DataFrame, schema:Option[FlowmanStructType])(fn: => T) : T = {
         val currentSchema = schema.map(schema => JdbcUtils.createSchema(df.schema, schema)).getOrElse(FlowmanStructType.of(df.schema))
         val stagingSchema = SchemaUtils.dropComments(currentSchema)
         val stagingTable = this.stagingIdentifier.get
         logger.info(s"Creating staging table ${stagingTable} with schema\n${stagingSchema.treeString}")
 
         // First drop temp table if it already exists
-        JdbcUtils.dropTable(con, stagingTable, options, ifExists=true)
+        JdbcUtils.dropTable(con, stagingTable, options, ifExists = true)
 
         // Create temp table with specified schema, but without any primary key or indices
         val table = catalog.TableDefinition(
@@ -348,6 +342,16 @@ abstract class JdbcTableRelationBase(
 
         logger.info(s"Writing new data into temporary staging table ${stagingTable}")
         appendTable(execution, df, stagingTable)
+
+        try {
+            fn
+        }
+        finally {
+            withStatement(con, options) { statement =>
+                logger.debug(s"Dropping temporary staging table ${stagingTable}")
+                JdbcUtils.dropTable(statement, stagingTable, options)
+            }
+        }
     }
 
     protected def appendTable(execution: Execution, df:DataFrame, table:TableIdentifier) : Unit = {
@@ -387,14 +391,14 @@ abstract class JdbcTableRelationBase(
                 JdbcUtils.mergeTable(tableIdentifier, "target", targetSchema, df, "source", condition, clauses, options)
             case Some(stagingTable) =>
                 withConnection { (con, options) =>
-                    createStagingTable(execution, con, options, df, stagingSchema)
-
-                    withTransaction(con) {
-                        withStatement(con, options) { statement =>
-                            logger.info(s"Merging data from temporary staging table ${stagingTable} into table ${tableIdentifier}")
-                            JdbcUtils.mergeTable(statement, tableIdentifier, "target", targetSchema, stagingTable, "source", df.schema, condition, clauses, options)
-                            logger.debug(s"Dropping temporary staging table ${stagingTable}")
-                            JdbcUtils.dropTable(statement, stagingTable, options)
+                    withStagingTable(execution, con, options, df, stagingSchema) {
+                        withTransaction(con) {
+                            withStatement(con, options) { statement =>
+                                logger.info(s"Merging data from temporary staging table ${stagingTable} into table ${tableIdentifier}")
+                                JdbcUtils.mergeTable(statement, tableIdentifier, "target", targetSchema, stagingTable, "source", df.schema, condition, clauses, options)
+                                logger.debug(s"Dropping temporary staging table ${stagingTable}")
+                                JdbcUtils.dropTable(statement, stagingTable, options)
+                            }
                         }
                     }
                 }

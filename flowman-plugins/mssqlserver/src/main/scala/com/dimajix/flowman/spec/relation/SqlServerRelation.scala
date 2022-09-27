@@ -47,6 +47,7 @@ case class SqlServerRelation(
     connection: Reference[Connection],
     table: TableIdentifier,
     properties: Map[String,String] = Map.empty,
+    stagingTable: Option[TableIdentifier] = None,
     mergeKey: Seq[String] = Seq.empty,
     override val primaryKey: Seq[String] = Seq.empty,
     indexes: Seq[TableIndex] = Seq.empty,
@@ -54,7 +55,7 @@ case class SqlServerRelation(
     sql: Seq[String] = Seq.empty
 ) extends JdbcTableRelationBase(instanceProperties, schema, partitions, connection, table, properties, mergeKey, primaryKey, indexes, sql) {
     private val tempTableIdentifier = TableIdentifier(s"##${tableIdentifier.table}_temp_staging")
-    override protected val stagingIdentifier: Option[TableIdentifier] = Some(tempTableIdentifier)
+    override protected val stagingIdentifier: Option[TableIdentifier] = stagingTable.orElse(Some(tempTableIdentifier))
 
     override protected def createTableDefinition(): Option[TableDefinition] = {
         schema.map { schema =>
@@ -96,6 +97,8 @@ class SqlServerRelationSpec extends RelationSpec with PartitionedRelationSpec wi
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map.empty
     @JsonProperty(value = "database", required = false) private var database: Option[String] = None
     @JsonProperty(value = "table", required = false) private var table: String = ""
+    @JsonPropertyDescription("Optional name of an intermediate staging table.")
+    @JsonProperty(value = "stagingTable", required = false) private var stagingTable: Option[String] = None
     @JsonPropertyDescription("List of columns used for merge operations.")
     @JsonProperty(value = "mergeKey", required = false) private var mergeKey: Seq[String] = Seq.empty
     @JsonPropertyDescription("List of columns making up the primary key.")
@@ -113,6 +116,7 @@ class SqlServerRelationSpec extends RelationSpec with PartitionedRelationSpec wi
             connection.instantiate(context),
             TableIdentifier(context.evaluate(table), context.evaluate(database)),
             context.evaluate(properties),
+            context.evaluate(stagingTable).map(t => TableIdentifier(t, context.evaluate(database))),
             mergeKey.map(context.evaluate),
             primaryKey.map(context.evaluate),
             indexes.map(_.instantiate(context)),

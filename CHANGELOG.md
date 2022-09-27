@@ -8,6 +8,7 @@
 * github-249: Add new options -X and -XX to increase logging
 * github-251: Support for log4j2 Configuration
 * github-252: Move sftp target into separate plugin
+* github-253: SQL Server relation should support explicit staging table
 
 
 # Version 0.27.0 - 2022-09-09

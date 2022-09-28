@@ -340,16 +340,22 @@ abstract class JdbcTableRelationBase(
         )
         JdbcUtils.createTable(con, table, options)
 
-        logger.info(s"Writing new data into temporary staging table ${stagingTable}")
-        appendTable(execution, df, stagingTable)
-
         try {
+            logger.info(s"Writing new data into temporary staging table ${stagingTable}")
+            appendTable(execution, df, stagingTable)
+
             fn
         }
         finally {
             withStatement(con, options) { statement =>
                 logger.debug(s"Dropping temporary staging table ${stagingTable}")
-                JdbcUtils.dropTable(statement, stagingTable, options)
+                try {
+                    JdbcUtils.dropTable(statement, stagingTable, options)
+                }
+                catch {
+                    case NonFatal(ex) =>
+                        logger.error(s"Error dropping temporary staging table ${stagingTable}: ${reasons(ex)}")
+                }
             }
         }
     }
@@ -396,8 +402,6 @@ abstract class JdbcTableRelationBase(
                             withStatement(con, options) { statement =>
                                 logger.info(s"Merging data from temporary staging table ${stagingTable} into table ${tableIdentifier}")
                                 JdbcUtils.mergeTable(statement, tableIdentifier, "target", targetSchema, stagingTable, "source", df.schema, condition, clauses, options)
-                                logger.debug(s"Dropping temporary staging table ${stagingTable}")
-                                JdbcUtils.dropTable(statement, stagingTable, options)
                             }
                         }
                     }

@@ -16,3 +16,4 @@ targets:
   tgt_v2:
     kind: relation
     relation: rel_v2
+

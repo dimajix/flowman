@@ -1,0 +1,35 @@
+relations:
+  test_timestamp:
+    kind: sqlserver
+    connection: sql_server
+    table: test_timestamp
+    schema:
+      kind: inline
+      fields:
+        - name: ts
+          type: timestamp
+
+
+mappings:
+  test_timestamp:
+    kind: values
+    columns:
+      ts: string
+    records:
+      - ['2022-01-01 00:00:00']
+      - ['2022-01-01 00:00:00.123']
+      - ['2022-01-01 00:00:00.123456']
+      - ['2022-01-01 00:00:00.123456789']
+      - ['2022-01-01 00:00:00.123456789123']
+
+targets:
+  test_timestamp:
+    kind: relation
+    relation: test_timestamp
+    mapping: test_timestamp
+
+
+jobs:
+  test_timestamp:
+    targets:
+      -   test_timestamp

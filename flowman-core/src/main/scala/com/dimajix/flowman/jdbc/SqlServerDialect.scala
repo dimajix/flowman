@@ -57,7 +57,7 @@ object SqlServerDialect extends BaseDialect {
     override def canHandle(url : String): Boolean = url.toLowerCase(Locale.ROOT).startsWith("jdbc:sqlserver")
 
     override def getJdbcType(dt: FieldType): JdbcType = dt match {
-        case TimestampType => JdbcType("DATETIME", java.sql.Types.TIMESTAMP)
+        case TimestampType => JdbcType("DATETIME2", java.sql.Types.TIMESTAMP)
         case StringType => JdbcType("NVARCHAR(MAX)", java.sql.Types.NVARCHAR)
         case v : CharType => JdbcType(s"NCHAR(${v.length})", java.sql.Types.NCHAR)
         case v : VarcharType => JdbcType(s"NVARCHAR(${v.length})", java.sql.Types.NVARCHAR)

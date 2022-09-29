@@ -17,9 +17,11 @@ This command will create multiple different YAML schema files:
 
 ## Provided Schemas
 
-Currently, there is no readily provided schema for Flowman available. This means that you really have to run the
-command above to generate a YAML schema file for your environment. The reasoning behind not providing schema files is
-simple: Since the available entities and YAML tags depend on the presence of plugins, the best solution is provide
+Since version 0.27.1, Flowman will contain pre-generated schema definitions ready to use. The schema will include
+entity definitions from all plugins.
+
+But there may still be a good reason for you to generate a custom schema, which perfectly fits to your Flowman
+setup: Since the available entities and YAML tags depend on the presence of plugins, the best solution is to provide
 some means to generate a YAML schema file precisely for your configuration. 
 
 

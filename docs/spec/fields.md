@@ -7,23 +7,23 @@ data sources and sinks like CSV files but they are also used for describing exte
 
 The following simple data types are supported by Flowman
 
-* `string`, `text` - text and strings of arbitrary length
-* `binary` - binary data of arbitrary length
-* `tinyint`, `byte` - 8 bit signed numbers
-* `smallint`, `short` - 16 bit signed numbers
-* `int`, `integer` - 32 bit signed numbers
-* `bigint`, `long` - 64 bit signed numbers
-* `boolean`, `bool` - true or false
-* `float` - 32 bit floating point number
-* `double` - 64 bit floating point number
-* `decimal(a,b)`
-* `varchar(n)` - text with up to `n`characters. Note that this data type is only supported for specifying input or
-  output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length.
-* `char(n)` - text with exactly `n`characters. Note that this data type is only supported for specifying input or
-  output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length.
-* `date` - date type
-* `timestamp` - timestamp type (date and time)
-* `duration` - duration type
+| name                | description                                                                                                                                                                                                                   |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `string`, `text`    | text and strings of arbitrary length                                                                                                                                                                                          |
+| `binary`            | binary data of arbitrary length                                                                                                                                                                                               |
+| `tinyint`, `byte`   | 8 bit signed numbers                                                                                                                                                                                                          |
+| `smallint`, `short` | 16 bit signed numbers                                                                                                                                                                                                         |
+| `int`, `integer`    | 32 bit signed numbers                                                                                                                                                                                                         |
+| `bigint`, `long`    | 64 bit signed numbers                                                                                                                                                                                                         |
+| `boolean`, `bool`   | true or false                                                                                                                                                                                                                 |
+| `float`             | 32 bit floating point number                                                                                                                                                                                                  |
+| `double`            | 64 bit floating point number                                                                                                                                                                                                  |
+| `decimal(a,b)`      |                                                                                                                                                                                                                               |
+| `varchar(n)`        | text with up to `n`characters. Note that this data type is only supported for specifying input or output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length.   |
+| `char(n)`           | text with exactly `n`characters. Note that this data type is only supported for specifying input or output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length. |
+| `date`              | date type                                                                                                                                                                                                                     |
+| `timestamp`         | timestamp type (date and time)                                                                                                                                                                                                |
+| `duration`          | duration type                                                                                                                                                                                                                 |
 
 
 ## Specifying Fields

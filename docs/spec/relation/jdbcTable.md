@@ -188,6 +188,19 @@ The `jdbcTable` relation supports the following output modes in a [`relation` ta
 In addition, the `jdbcTable` relation also supports complex merge operations in a [`merge` target](../target/merge.md).
 
 
+## Connectors
+In order to connect to a SQL database, you need to load a corresponding plugin providing the JDBC driver. Currently
+Flowman provides the following plugins
+
+| Plugin                                              | Database                 |
+|-----------------------------------------------------|--------------------------|
+| [flowman-mariadb](../../plugins/mariadb.md)         | MariaDB                  |
+| [flowman-mssqlserver](../../plugins/mssqlserver.md) | MS SQL Server, Azure SQL |
+| [flowman-mysql](../../plugins/mysql.md)             | MySQL                    |
+| [flowman-oracle](../../plugins/oracle.md)           | Oracle DB                |
+| [flowman-postgresql](../../plugins/postgresql.md)   | Postgres SQL             |
+
+
 ## Remarks
 
 When using JDBC tables as data sinks in a [`relation` target](../target/relation.md), then Flowman will  manage the

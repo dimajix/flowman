@@ -9,21 +9,27 @@ The following simple data types are supported by Flowman
 
 | name                | description                                                                                                                                                                                                                   |
 |---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `string`, `text`    | text and strings of arbitrary length                                                                                                                                                                                          |
-| `binary`            | binary data of arbitrary length                                                                                                                                                                                               |
-| `tinyint`, `byte`   | 8 bit signed numbers                                                                                                                                                                                                          |
-| `smallint`, `short` | 16 bit signed numbers                                                                                                                                                                                                         |
-| `int`, `integer`    | 32 bit signed numbers                                                                                                                                                                                                         |
-| `bigint`, `long`    | 64 bit signed numbers                                                                                                                                                                                                         |
-| `boolean`, `bool`   | true or false                                                                                                                                                                                                                 |
-| `float`             | 32 bit floating point number                                                                                                                                                                                                  |
-| `double`            | 64 bit floating point number                                                                                                                                                                                                  |
-| `decimal(a,b)`      |                                                                                                                                                                                                                               |
-| `varchar(n)`        | text with up to `n`characters. Note that this data type is only supported for specifying input or output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length.   |
-| `char(n)`           | text with exactly `n`characters. Note that this data type is only supported for specifying input or output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length. |
-| `date`              | date type                                                                                                                                                                                                                     |
-| `timestamp`         | timestamp type (date and time)                                                                                                                                                                                                |
-| `duration`          | duration type                                                                                                                                                                                                                 |
+| `STRING`, `TEXT`    | text and strings of arbitrary length                                                                                                                                                                                          |
+| `BINARY`            | binary data of arbitrary length                                                                                                                                                                                               |
+| `TINYINT`, `BYTE`   | 8 bit signed numbers                                                                                                                                                                                                          |
+| `SMALLINT`, `SHORT` | 16 bit signed numbers                                                                                                                                                                                                         |
+| `INT`, `INTEGER`    | 32 bit signed numbers                                                                                                                                                                                                         |
+| `BIGINT`, `LONG`    | 64 bit signed numbers                                                                                                                                                                                                         |
+| `BOOLEAN`, `BOOL`   | true or false                                                                                                                                                                                                                 |
+| `FLOAT`             | 32 bit floating point number                                                                                                                                                                                                  |
+| `DOUBLE`            | 64 bit floating point number                                                                                                                                                                                                  |
+| `DECIMAL(A,B)`      |                                                                                                                                                                                                                               |
+| `VARCHAR(N)`        | text with up to `n`characters. Note that this data type is only supported for specifying input or output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length.   |
+| `CHAR(N)`           | text with exactly `n`characters. Note that this data type is only supported for specifying input or output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length. |
+| `DATE`              | date type                                                                                                                                                                                                                     |
+| `TIMESTAMP`         | timestamp type (date and time)                                                                                                                                                                                                |
+| `DURATION`          | duration type                                                                                                                                                                                                                 |
+
+Note that Spark itself does not fully support `VARCHAR(n)` and `CHAR(n)`, which means that you cannot use these
+data types in [`sql` mappings](mapping/sql.md) and SQL expressions. But Flowman well supports these data types for
+all [schema definitions](schema/index.md) and in [`cast` mappings](mapping/cast.md). The main use case of these 
+extended character types is to define data schemas for physical tables managed by Flowman (i.e. mainly for 
+[`jdbcTable` relation](relation/jdbcTable.md).
 
 
 ## Specifying Fields
@@ -44,7 +50,7 @@ collation:
 Each field can have the following properties:
 * `name` **(mandatory)** *(type: string)*: specifies the name of the column
 * `type` **(mandatory)** *(type: data type)*: specifies the data type of the column
-* `nullable` **(optional)** *(type: boolean)* *(default: true)*: Set to `true` if the field can contain null values
+* `nullable` **(optional)** *(type: boolean)* *(default: true)*: Set to `true` if the field can contain SQL `NULL` values
 * `description` **(optional)** *(type: string)*: Arbitrary user provided description, which will be used for
 documentation or attached as a column comment in the target database (if supported)
 * `default` **(optional)** *(type: string)* Specifies a default value
@@ -53,6 +59,40 @@ documentation or attached as a column comment in the target database (if support
 * `size` **(optional)** *(type: int)* Some relations or file formats may support different sizes of data types
 * `charset` **(optional)** *(type: string)* Specifies the character set of a column. Useful for MySQL / MariaDB tables.
 * `collation` **(optional)** *(type: string)* Specifies the collation of a column. Useful for SQL tables.
+
+
+### Example
+For example, you can specify the desired schema of a [`jdbcTable` relation](relation/jdbcTable.md) by using fields
+as follows:
+```yaml
+relations:
+  aggregates:
+    kind: jdbcTable
+    connection: jdbcConnection
+    table: weather
+    schema:
+      kind: inline
+      fields:
+        - name: date
+          type: DATE
+          nullable: false
+        - name: country
+          type: CHAR(2)
+          nullable: false
+          description: "FIPS Country Code"
+        - name: min_wind_speed
+          type: FLOAT
+          description: "Minimum wind speed, which will explain the wind speed but not the direction, which is provided in another cölumn"
+        - name: max_wind_speed
+          type: FLOAT
+          description: "Maximum wind speed"
+        - name: avg_wind_speed
+          type: DOUBLE
+        - name: comment
+          type: VARCHAR(32)
+          charset: utf8mb4
+          collation: utf8mb4_general_ci
+```
 
 
 ## Specifying Partition Columns

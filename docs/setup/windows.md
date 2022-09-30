@@ -1,4 +1,4 @@
-# Running Flowman on Windows
+# Running on Windows
 
 Flowman is best run on Linux, especially for production usage. Windows support is at best experimental and will
 probably be never within the focus of the project. Nevertheless, there are also some options for running Flowman on
@@ -30,4 +30,4 @@ A simpler way to run Flowman on Windows is to use a Docker image available on
 
 ## Using WSL
 And of course you can also simply install a Linux distro of your choice via WSL and then normally 
-[install Flowman](../setup/installation.md) within WSL.
+[install Flowman](installation.md) within WSL.

@@ -51,7 +51,7 @@ environment variables:
 * `HADOOP_HOME` should point to the parent directory of the `bin` directory
 * `PATH` should also contain `$HADOOP_HOME/bin`
 
-The documentation contains a [dedicated section for Windows users](../cookbook/windows.md)
+The documentation contains a [dedicated section for Windows users](windows.md)
 
 
 ## 2. Downloading Flowman
@@ -308,7 +308,7 @@ bin/flowshell -f examples/weather
 ## 7. Related Topics
 
 ### Running Flowman on Windows
-Please have a look at [Running Flowman on Windows](../cookbook/windows.md) for detailed information.
+Please have a look at [Running Flowman on Windows](windows.md) for detailed information.
 
 
 ### Running in a Kerberized Environment

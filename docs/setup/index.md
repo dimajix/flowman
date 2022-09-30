@@ -11,6 +11,7 @@ which is especially useful for development.
 
    installation
    docker
+   windows
    config
    building
 ```

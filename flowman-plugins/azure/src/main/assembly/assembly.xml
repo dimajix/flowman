@@ -26,7 +26,7 @@
             <useTransitiveFiltering>false</useTransitiveFiltering>
             <unpack>false</unpack>
             <scope>runtime</scope>
-            <useProjectArtifact>true</useProjectArtifact>
+            <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>
     </dependencySets>
 </assembly>

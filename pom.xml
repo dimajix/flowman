@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dimajix.flowman</groupId>
     <artifactId>flowman-root</artifactId>
-    <version>0.27.1-SNAPSHOT</version>
+    <version>0.28.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Flowman root pom</name>
     <description>A Spark based ETL tool</description>
@@ -564,6 +564,7 @@
         <module>flowman-client</module>
         <module>flowman-yaml-schema</module>
         <module>flowman-parent</module>
+        <module>flowman-archetype-quickstart</module>
         <module>flowman-dist</module>
         <module>docker</module>
     </modules>
@@ -1005,6 +1006,12 @@
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-core</artifactId>
                 <version>${project.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.velocity</groupId>
+                        <artifactId>velocity-engine-core</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>

@@ -1,0 +1,9 @@
+environment:
+  - basedir=file:///tmp/weather
+  - srcdir=$System.getenv('WEATHER_SRCDIR', 's3a://dimajix-training/data/weather')
+
+  - jdbc_driver=$System.getenv('JDBC_DRIVER', 'org.mariadb.jdbc.Driver')
+  - jdbc_url=$System.getenv('JDBC_URL', 'jdbc:mariadb://localhost')
+  - jdbc_db=$System.getenv('JDBC_DB', 'weather')
+  - jdbc_username=$System.getenv('JDBC_USERNAME', 'weather')
+  - jdbc_password=$System.getenv('JDBC_PASSWORD' ,'weather')

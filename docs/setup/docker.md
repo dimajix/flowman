@@ -35,7 +35,7 @@ flowexec -f examples/weather job build main
 By using Docker volumes, you can easily mount a Flowman project into the Docker container, for example
 
 ```shell
-docker run --rm -ti --mount type=bind,source=$(pwd)/lessons,target=/opt/flowman/project dimajix/flowman:0.26.0-oss-spark3.2-hadoop3.3 bash
+docker run --rm -ti --mount type=bind,source=$(pwd)/lessons,target=/opt/flowman/project dimajix/flowman:0.27.0-oss-spark3.3-hadoop3.3 bash
 ```
 
 

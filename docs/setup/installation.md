@@ -70,7 +70,7 @@ flowman-dist-0.27.0-oss-spark3.3-hadoop3.3-bin.tar.gz
 ```
 and the full URL then would be
 ```
-https://github.com/dimajix/flowman/releases/download/0.26.0/flowman-dist-0.26.0-oss-spark3.3-hadoop3.3-bin.tar.gz
+https://github.com/dimajix/flowman/releases/download/0.27.0/flowman-dist-0.27.0-oss-spark3.3-hadoop3.3-bin.tar.gz
 ```
 
 

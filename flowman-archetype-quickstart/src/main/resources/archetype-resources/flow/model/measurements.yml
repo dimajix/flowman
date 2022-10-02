@@ -1,0 +1,137 @@
+relations:
+  measurements:
+    kind: file
+    format: parquet
+    location: "$basedir/measurements/"
+    partitions:
+      - name: year
+        type: integer
+        granularity: 1
+    # The following schema would use an explicitly specified schema
+    #schema:
+    #  kind: avro
+    #  file: "${project.basedir}/schema/measurements.avsc"
+
+    # We prefer to use the inferred schema of the mapping that is written into the relation. This way the relation
+    # will inherit any column documentation
+    schema:
+      kind: mapping
+      mapping: measurements_extracted
+
+    documentation:
+      description: "This model contains all individual measurements"
+      # This section contains additional documentation to the columns, including some simple test cases
+      columns:
+        - name: year
+          description: "The year of the measurement, used for partitioning the data"
+          checks:
+            - kind: notNull
+            - kind: range
+              lower: 1901
+              upper: 2022
+        - name: usaf
+          checks:
+            - kind: notNull
+        - name: wban
+          checks:
+            - kind: notNull
+        - name: date
+          checks:
+            - kind: notNull
+        - name: time
+          checks:
+            - kind: notNull
+        - name: wind_direction_qual
+          checks:
+            - kind: notNull
+        - name: wind_direction
+          checks:
+            - kind: notNull
+            - kind: expression
+              expression: "(wind_direction >= 0 AND wind_direction <= 360) OR wind_direction_qual <> 1"
+        - name: air_temperature_qual
+          checks:
+            - kind: notNull
+            - kind: values
+              values: [0,1,2,3,4,5,6,7,8,9]
+      # Schema Tests, which might involve multiple columns
+      checks:
+        kind: foreignKey
+        relation: stations
+        columns:
+          - usaf
+          - wban
+        references:
+          - usaf
+          - wban
+
+
+  measurements_jdbc:
+    kind: jdbcTable
+    connection: mariadb
+    database: $jdbc_db
+    table: measurement
+    stagingTable: measurement_staging
+    schema:
+      kind: spark
+      file: "${project.basedir}/schema/measurements.json"
+    # Add partition column
+    partitions:
+      - name: year
+        type: integer
+        granularity: 1
+    primaryKey:
+      - usaf
+      - wban
+      - date
+      - time
+    indexes:
+      - name: "measurement_idx0"
+        columns: [usaf, wban]
+
+    documentation:
+      description: "This model contains all individual measurements"
+      # This section contains additional documentation to the columns, including some simple test cases
+      columns:
+        - name: year
+          description: "The year of the measurement, used for partitioning the data"
+          checks:
+            - kind: notNull
+            - kind: range
+              lower: 1901
+              upper: 2022
+        - name: usaf
+          checks:
+            - kind: notNull
+        - name: wban
+          checks:
+            - kind: notNull
+        - name: date
+          checks:
+            - kind: notNull
+        - name: time
+          checks:
+            - kind: notNull
+        - name: wind_direction_qual
+          checks:
+            - kind: notNull
+        - name: wind_direction
+          checks:
+            - kind: notNull
+            - kind: expression
+              expression: "(wind_direction >= 0 AND wind_direction <= 360) OR wind_direction_qual <> 1"
+        - name: air_temperature_qual
+          checks:
+            - kind: notNull
+            - kind: values
+              values: [0,1,2,3,4,5,6,7,8,9]
+      # Schema Tests, which might involve multiple columns
+      checks:
+        kind: foreignKey
+        relation: stations
+        columns:
+          - usaf
+          - wban
+        references:
+          - usaf
+          - wban

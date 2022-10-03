@@ -58,7 +58,7 @@ Flowman provides complete Docker images on Docker Hub, which can be readily used
 mounting the source directory as a volume into the Docker container, you can still use the editor of your choice,
 and then use the Flowman Shell for interactive development.
 ```shell
-docker run --rm -ti --mount type=bind,source=./flow,target=/opt/flowman/project dimajix/flowman:0.27.0-oss-spark3.2-hadoop3.3 bash
+docker run --rm -ti --mount type=bind,source=./flow,target=/opt/flowman/project dimajix/flowman:0.27.0-oss-spark3.3-hadoop3.3 bash
 ```
 
 
@@ -98,7 +98,7 @@ If you have Flowman installed locally on your machine, you can execute the proje
 ```shell
 bin/flowexec -f flow test run
 ```
-Or you can of couse also start the Flowman Shell via
+Or you can of course also start the Flowman Shell via
 ```shell
 bin/flowshell -f flow
 ```

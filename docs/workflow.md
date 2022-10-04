@@ -1,13 +1,19 @@
 # Development & Deployment Workflow
 
-This text will give you some guidance how a typical development workflow would look like. It starts from creating
+This text will give you some guidance how a typical development workflow would look like. Unsurprisingly, the steps
+should look very familiar since they represent the typical development workflow based on local development, CI/CD and
+production deployment. The workflow starts from creating
 a new Flowman project, describes how to run the project locally, build a self-contained redistributable package
 and then deploy it to a remote repository manager like Nexus.
 
 ![Flowman Development Workflow](images/flowman-workflow.png)
 
+The whole workflow is implemented with [Apache Maven](https://maven.apache.org/), but you could of course also chose a 
+different build tool. Maven was chosen simply because one can assume that this is present in a Big Data environment, so 
+no additional installation on developer machines or CI/CD infrastructure is required.
 
-## 1. Creating a new project via Maven
+
+## 1. Creating a new project from a Maven Archetype
 First you need to create a new Flowman project. You can either copy/paste from one of the official Flowman examples,
 or you can create a new project from a Maven archetype provided. This can be done as follows:
 ```shell
@@ -119,7 +125,7 @@ directory.  The package will contain both Flowman and your project. It will not 
 need to be provided by your environment.
 
 
-## 5. Deploying to remote Repository
+## 5. Pushing to remote Repository
 
 This step possibly should be performed via a CI/CD pipeline (for example Jenkins). Of course the details heavily depend
 on your infrastructure, but basically the following command will do the job:
@@ -131,15 +137,24 @@ course, you will need to configure appropriate credentials in your Maven `settin
 settings file, and not part of the project).
 
 
-## 6. Installing from the package
+## 6. Deploying to Production
 
+This is the most difficult part and completely depends on your build and deployment infrastructure and on your target
+environment (Kubernetes, Cloudera, EMR, ...). But generally, the following steps need to be performed:
+
+### 1. Fetch redistributable package from remote repository
+You can use Maven again to retrieve the correct package via
+```shell
+mvn dependency:get -Dartifact=<your-groupId>:<your-artifactId>:<version> -Ddest=<your-dest-directory>
+```
+
+### 2. Unpack redistributable package at appropriate location
 You can easily unpack the package, which will provide a complete Flowman installation (minus Spark and Hadoop):
 ```shell
 tar xvzf <your-artifactId>-<version>-dist-bin.tar.gz
 ```
 
-
-## 7. Running from the installation
+### 3. Run on your infrastructure
 
 Within the installation directory, you can easily run Flowman via
 ```shell
@@ -149,13 +164,3 @@ Or you can of course also start the Flowman Shell via
 ```shell
 bin/flowshell -f flow
 ```
-
-
-## 8. Deploying to Production
-
-This is the most difficult part and completely depends on your build and deployment infrastructure and on your target
-environment (Kubernetes, Cloudera, EMR, ...). But generally, the following steps need to be performed:
-
-1. Fetch redistributable package from remote repository
-2. Unpack redistributable package at appropriate location
-3. Do whatever is required for your infrastructure

@@ -3,5 +3,3 @@ targets:
     kind: relation
     mapping: aggregates
     relation: aggregates
-    partition:
-      year: $year

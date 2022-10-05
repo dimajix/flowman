@@ -136,7 +136,9 @@ the real JDBC table and the temporary table will be dropped.
  a relation property can overwrite a connection property if it has the same name.
 
  * `indexes` **(optional)** *(type: list:index)* *(default: empty)*:
-   Specifies a list of database indexes to be created. Each index has the properties `name`, `columns` and `unique`.
+   Specifies a list of database indexes to be created. Each index has the properties `name`, `columns`, `unique` 
+(default=`false`) and `clustered` (default=`false`). Note that `clustered` indexes are currently only supported by MS 
+Flowman for SQL Server and Azure SQL.
 
 
 ## Staging Tables

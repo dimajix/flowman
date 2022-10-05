@@ -11,6 +11,7 @@
 * github-253: SQL Server relation should support explicit staging table
 * github-254: Use DATETIME2 for timestamps in MS SQL Server
 * github-256: Provide Maven archetype for simple Flowman projects
+* github-258: Support clustered indexes in MS SQL Server
 
 
 # Version 0.27.0 - 2022-09-09

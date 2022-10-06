@@ -35,7 +35,7 @@ targets:
       - tweets-mssql
     # Create Index
     create:
-      # Check that index does nto already exist
+      # Check that index does not already exist
       condition: |
         SELECT 1 FROM sys.fulltext_indexes i
         WHERE i.object_id = OBJECT_ID('dbo.tweets')
@@ -52,9 +52,14 @@ targets:
     build:
       transactional: true
       sql:
+        # Start Population of full text search index
         - ALTER FULLTEXT INDEX ON dbo.tweets START FULL POPULATION
-        - EXEC sp_rename 'tweets', 'tweets2'
-        - EXEC sp_rename 'tweets2', 'tweets'
+        # Wait until indexing has finished (optional)
+        - |
+          WHILE (FULLTEXTCATALOGPROPERTY('ftcat','PopulateStatus') = 1)
+          BEGIN
+              WAITFOR DELAY '00:00:03'
+          END
     # Delete index
     destroy:
       # Check that index really exists

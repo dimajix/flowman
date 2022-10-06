@@ -124,6 +124,11 @@ This will run all tests and create package `<your-artifactId>-<version>-dist-bin
 directory.  The package will contain both Flowman and your project. It will not include Spark or Hadoop, these still 
 need to be provided by your environment.
 
+Note for Windows users: Maven will also execute all tests in your Flowman project. The Hadoop dependency will require 
+the so called *WinUtils* to be installed on your machine, please read more about 
+[setting up your Windows environment](setup/windows.md).
+
+
 
 ## 5. Pushing to remote Repository
 

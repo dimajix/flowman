@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-client</artifactId>
     <name>Flowman console client</name>
+    <description>Flowman console client</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

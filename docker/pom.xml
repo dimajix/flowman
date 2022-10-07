@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-docker</artifactId>
     <name>Flowman Docker image</name>
+    <description>Flowman Docker image</description>
     <packaging>pom</packaging>
 
     <parent>

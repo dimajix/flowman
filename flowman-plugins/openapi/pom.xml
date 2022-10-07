@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-plugin-openapi</artifactId>
     <name>Flowman OpenAPI Schema plugin</name>
+    <description>Flowman OpenAPI Schema plugin</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-spark-testing</artifactId>
     <name>Flowman Spark testing utilities</name>
+    <description>Flowman Spark testing utilities</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

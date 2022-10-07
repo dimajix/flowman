@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-plugin-mysql</artifactId>
     <name>Flowman MySQL plugin</name>
+    <description>Flowman MySQL plugin</description>
     <packaging>pom</packaging>
 
     <parent>

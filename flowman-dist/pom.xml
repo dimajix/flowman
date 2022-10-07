@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-dist</artifactId>
     <name>Flowman Distribution</name>
+    <description>Flowman installable binary distribution</description>
     <packaging>pom</packaging>
 
     <parent>

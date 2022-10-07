@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-tools</artifactId>
     <name>Flowman CLI tools</name>
+    <description>Flowman command line tools</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

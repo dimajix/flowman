@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-testing</artifactId>
     <name>Flowman testing utilities</name>
+    <description>Flowman testing utilities</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

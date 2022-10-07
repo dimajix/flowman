@@ -3,6 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-archetype-quickstart</artifactId>
     <name>Flowman quickstart Maven archetype</name>
+    <description>Maven archetype for a Flowman quickstart project</description>
     <packaging>maven-archetype</packaging>
 
     <parent>

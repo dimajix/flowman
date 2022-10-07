@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-common</artifactId>
     <name>Flowman common library</name>
+    <description>Flowman common library</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

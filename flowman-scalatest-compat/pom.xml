@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-scalatest-compat</artifactId>
     <name>Flowman ScalaTest compatibility library</name>
+    <description>Flowman ScalaTest compatibility library</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

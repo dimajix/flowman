@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-plugin-impala</artifactId>
     <name>Flowman Impala plugin</name>
+    <description>Flowman Impala plugin</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

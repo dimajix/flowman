@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-plugin-swagger</artifactId>
     <name>Flowman Swagger Schema plugin</name>
+    <description>Flowman Swagger Schema plugin</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

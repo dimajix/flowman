@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-studio</artifactId>
     <name>Flowman Studio</name>
+    <description>Flowman Studio</description>
 
     <parent>
         <artifactId>flowman-root</artifactId>

@@ -1,6 +1,7 @@
 # Version 0.28.1
 
-* github-260 Remove hive-storage-api from several plugins and lib
+* github-260: Remove hive-storage-api from several plugins and lib
+* github-261: Add descriptions to all pom.xml
 
 
 # Version 0.28.0 - 2022-10-07

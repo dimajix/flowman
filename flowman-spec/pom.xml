@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-spec</artifactId>
     <name>Flowman YAML spec</name>
+    <description>Flowman YAML spec</description>
 
     <parent>
         <artifactId>flowman-root</artifactId>

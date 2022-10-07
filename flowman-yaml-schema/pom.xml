@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-yaml-schema</artifactId>
     <name>Flowman YAML schema</name>
+    <description>Flowman YAML schema to be used for syntax highlighting and auto-completion in capable editors</description>
     <packaging>pom</packaging>
 
     <parent>

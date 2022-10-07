@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-core</artifactId>
     <name>Flowman core library</name>
+    <description>Flowman core library</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

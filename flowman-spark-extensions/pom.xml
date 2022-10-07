@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-spark-extensions</artifactId>
     <name>Flowman Spark extensions</name>
+    <description>Flowman Spark extensions</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

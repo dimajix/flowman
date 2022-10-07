@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-plugin-aws</artifactId>
     <name>Flowman AWS plugin</name>
+    <description>Flowman AWS plugin</description>
 
     <parent>
         <groupId>com.dimajix.flowman</groupId>

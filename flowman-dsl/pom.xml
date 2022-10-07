@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-dsl</artifactId>
     <name>Flowman Scala DSL</name>
+    <description>Flowman Scala DSL</description>
 
     <parent>
         <artifactId>flowman-root</artifactId>

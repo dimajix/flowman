@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-server-ui</artifactId>
     <name>Flowman Server UI</name>
+    <description>Flowman Server UI</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

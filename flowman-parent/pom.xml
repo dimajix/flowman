@@ -503,10 +503,6 @@
                         <groupId>org.apache.hive</groupId>
                         <artifactId>hive-llap-common</artifactId>
                     </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.hive</groupId>
-                        <artifactId>hive-storage-api</artifactId>
-                    </exclusion>
                     <!-- There is no hadoop-client-api for Hadoop < 3 -->
                     <exclusion>
                         <groupId>org.apache.hadoop</groupId>

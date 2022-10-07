@@ -1,4 +1,9 @@
-# Version 0.28.0
+# Version 0.28.1
+
+* github-260 Remove hive-storage-api from several plugins and lib
+
+
+# Version 0.28.0 - 2022-10-07
 
 * Improve support for MariaDB / MySQL as data sinks
 * github-245: Bump ejs, @vue/cli-plugin-babel, @vue/cli-plugin-eslint and @vue/cli-service in /flowman-studio-ui

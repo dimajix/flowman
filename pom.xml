@@ -51,7 +51,8 @@
 
     <properties>
         <hadoop.dist>oss</hadoop.dist>
-        <hive.version>2.3.3</hive.version>
+        <hive.version>2.3.9</hive.version>
+        <hive-storage-api.version>2.7.2</hive-storage-api.version>
         <hbase.version>1.2.0</hbase.version>
         <args4j.version>2.33</args4j.version>
         <ivy.version>2.4.0</ivy.version>
@@ -175,6 +176,7 @@
                 <hadoop.version>3.0.0-${cdh.version}</hadoop.version>
                 <hadoop-api.version>3.0</hadoop-api.version>
                 <hive.version>2.1.1-${cdh.version}</hive.version>
+                <hive-storage-api.version>2.1.1-${cdh.version}</hive-storage-api.version>
                 <hbase.version>2.1.0-${cdh.version}</hbase.version>
                 <kafka.version>2.2.1-${cdh.version}</kafka.version>
                 <derby.version>10.14.2.0</derby.version>
@@ -236,6 +238,7 @@
                 <hadoop.version>3.1.1.${cdp.version}</hadoop.version>
                 <hadoop-api.version>3.1</hadoop-api.version>
                 <hive.version>3.1.3000.${cdp.version}</hive.version>
+                <hive-storage-api.version>3.1.30000.${cdp.version}</hive-storage-api.version>
                 <hbase.version>2.2.3.${cdp.version}</hbase.version>
                 <kafka.version>2.4.1.7.1.5.0-257</kafka.version>
                 <derby.version>10.14.2.0</derby.version>
@@ -279,6 +282,8 @@
                 <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
                 <spark.version>2.4.8</spark.version>
                 <spark-api.version>2.4</spark-api.version>
+                <hive.version>1.2.1</hive.version>
+                <hive-storage-api.version>1.2.1</hive-storage-api.version>
                 <snappy.version>1.1.7.3</snappy.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <antlr4.version>4.7</antlr4.version>
@@ -318,6 +323,8 @@
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <spark.version>3.0.3</spark.version>
                 <spark-api.version>3.0</spark-api.version>
+                <hive.version>2.3.7</hive.version>
+                <hive-storage-api.version>2.7.1</hive-storage-api.version>
                 <snappy.version>1.1.8.2</snappy.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <antlr4.version>4.7.1</antlr4.version>
@@ -357,6 +364,8 @@
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <spark.version>3.1.2</spark.version>
                 <spark-api.version>3.1</spark-api.version>
+                <hive.version>2.3.7</hive.version>
+                <hive-storage-api.version>2.7.2</hive-storage-api.version>
                 <snappy.version>1.1.8.2</snappy.version>
                 <netty-all.version>4.1.51.Final</netty-all.version>
                 <antlr4.version>4.8-1</antlr4.version>
@@ -396,6 +405,8 @@
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <spark.version>3.2.2</spark.version>
                 <spark-api.version>3.2</spark-api.version>
+                <hive.version>2.3.9</hive.version>
+                <hive-storage-api.version>2.7.2</hive-storage-api.version>
                 <snappy.version>1.1.8.4</snappy.version>
                 <netty-all.version>4.1.68.Final</netty-all.version>
                 <antlr4.version>4.8</antlr4.version>
@@ -436,6 +447,8 @@
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <spark.version>3.3.0</spark.version>
                 <spark-api.version>3.3</spark-api.version>
+                <hive.version>2.3.9</hive.version>
+                <hive-storage-api.version>2.7.2</hive-storage-api.version>
                 <snappy.version>1.1.8.4</snappy.version>
                 <netty-all.version>4.1.74.Final</netty-all.version>
                 <antlr4.version>4.8</antlr4.version>
@@ -1193,10 +1206,6 @@
                         <groupId>org.apache.hive</groupId>
                         <artifactId>hive-llap-common</artifactId>
                     </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.hive</groupId>
-                        <artifactId>hive-storage-api</artifactId>
-                    </exclusion>
                     <!-- There is no hadoop-client-api for Hadoop < 3 -->
                     <exclusion>
                         <groupId>org.apache.hadoop</groupId>
@@ -1289,6 +1298,16 @@
                 <artifactId>spark-sql-kafka-0-10_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
                 <scope>compile</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-client-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-client-runtime</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
@@ -1296,6 +1315,13 @@
                 <version>${spark.version}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hive</groupId>
+                <artifactId>hive-storage-api</artifactId>
+                <version>${hive-storage-api.version}</version>
+                <scope>provided</scope>
             </dependency>
 
             <dependency>

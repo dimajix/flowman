@@ -31,22 +31,22 @@ build_profile() {
 
 
 export JAVA_HOME=/usr/lib/jvm/java-1.8.0
-build_profile -phadoop-2.6 -pspark-2.4
-build_profile -phadoop-2.7 -pspark-2.4
+build_profile -Phadoop-2.6 -Pspark-2.4
+build_profile -Phadoop-2.7 -Pspark-2.4
 
 export JAVA_HOME=
-build_profile -phadoop-2.7 -pspark-3.0
-build_profile -phadoop-3.2 -pspark-3.0
-build_profile -phadoop-2.7 -pspark-3.1
-build_profile -phadoop-3.2 -pspark-3.1
-build_profile -phadoop-2.7 -pspark-3.2
-build_profile -phadoop-3.3 -pspark-3.2 -Dhadoop.version=3.3.1
-build_profile -phadoop-2.7 -pspark-3.3
-build_profile -phadoop-3.3 -pspark-3.3 -Dhadoop.version=3.3.2
+build_profile -Phadoop-2.7 -Pspark-3.0
+build_profile -Phadoop-3.2 -Pspark-3.0
+build_profile -Phadoop-2.7 -Pspark-3.1
+build_profile -Phadoop-3.2 -Pspark-3.1
+build_profile -Phadoop-2.7 -Pspark-3.2
+build_profile -Phadoop-3.3 -Pspark-3.2 -Dhadoop.version=3.3.1
+build_profile -Phadoop-2.7 -Pspark-3.3
+build_profile -Phadoop-3.3 -Pspark-3.3 -Dhadoop.version=3.3.2
 
 export JAVA_HOME=/usr/lib/jvm/java-1.8.0
-build_profile -pCDH-6.3
-build_profile -pCDP-7.1
+build_profile -PCDH-6.3
+build_profile -PCDP-7.1
 
 # Finally build default version
 export JAVA_HOME=

@@ -1,0 +1,40 @@
+relations:
+  aggregates:
+    kind: sqlserver
+    connection: sql_server
+    database: dbo
+    table: weather
+    stagingTable: weather_staging
+    storageFormat: ROWSTORE
+    schema:
+      kind: inline
+      fields:
+        - name: date
+          type: DATE
+          nullable: false
+        - name: country
+          type: CHAR(2)
+          nullable: false
+          description: "FIPS Country Code"
+        - name: min_wind_speed
+          type: FLOAT
+          description: "Minimum wind speed, which will explain the wind speed but not the direction, which is provided in another cölumn"
+        - name: max_wind_speed
+          type: FLOAT
+          description: "Maximum wind speed"
+        - name: avg_wind_speed
+          type: FLOAT
+        - name: min_temperature
+          type: FLOAT
+        - name: max_temperature
+          type: FLOAT
+        - name: avg_temperature
+          type: FLOAT
+    # (Optionally) specify a primary key
+    primaryKey:
+      - date
+      - country
+    # (Optionally) specify indexes
+    indexes:
+      - name: "measurement_idx0"
+        columns: [country]

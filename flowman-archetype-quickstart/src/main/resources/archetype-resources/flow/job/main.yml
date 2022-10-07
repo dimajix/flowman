@@ -1,0 +1,27 @@
+jobs:
+  # Define the 'main' job, which implicitly is used whenever you build the whole project
+  main:
+    # Add a parameter for selecting the year to process. This will create an environment variable `$year` which
+    # can be accessed from within other entities like mappings, relations, etc
+    parameters:
+      - name: year
+        type: Integer
+        default: 2013
+    # List all targets which should be built as part of the `main` job
+    targets:
+      - measurements
+      - measurements_jdbc
+      # Generate documentation
+      - documentation
+
+    # Define metrics to be published while running this job
+    metrics:
+      labels:
+        project: "${project.name}"
+      metrics:
+        - selector:
+            name: ".*"
+          labels:
+            category: "$category"
+            kind: "$kind"
+            name: "$name"

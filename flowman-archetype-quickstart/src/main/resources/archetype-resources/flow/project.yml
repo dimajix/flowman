@@ -1,0 +1,12 @@
+name: "@project.artifactId@"
+version: "@project.version@"
+description: "Flowman quickstart project"
+
+# The following modules simply contain a list of subdirectories containing the specification files
+modules:
+  - model
+  - mapping
+  - target
+  - job
+  - config
+  - test

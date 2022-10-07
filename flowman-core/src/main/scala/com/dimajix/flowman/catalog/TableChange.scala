@@ -144,7 +144,7 @@ object TableChange {
                         else
                             Seq.empty
                     val modComment =
-                        if (migrationPolicy == MigrationPolicy.STRICT && srcField.description != tgtField.description)
+                        if (migrationPolicy == MigrationPolicy.STRICT && srcField.description.filter(_.nonEmpty) != tgtField.description.filter(_.nonEmpty))
                             Seq(UpdateColumnComment(srcField.name, tgtField.description))
                         else
                             Seq.empty
@@ -222,7 +222,7 @@ object TableChange {
         )
 
         // Ensure that current real schema is compatible with specified schema
-        val columnChanges = requiresSchemaMigration(sourceTable.columns, targetTable.columns, migrationPolicy)
+        val columnChanges = requiresSchemaMigration(normalizedSource.columns, normalizedTarget.columns, migrationPolicy)
 
         // Check if partition columns require a change
         val partitionChanges = normalizedSource.partitionColumnNames.sorted != normalizedTarget.partitionColumnNames.sorted
@@ -251,7 +251,9 @@ object TableChange {
     }
 
     private def requiresMigrationStrict(sourceField:Field, targetField:Field) : Boolean = {
-        sourceField.copy(charset=None, collation=None) != targetField.copy(charset=None, collation=None) ||
+        val sourceField0 = sourceField.copy(charset=None, collation=None)
+        val targetField0 = targetField.copy(charset=None, collation=None)
+        sourceField0 != targetField0 ||
             targetField.charset.exists(c => sourceField.charset.exists(_ != c)) ||
             targetField.collation.exists(c => sourceField.collation.exists(_ != c))
     }

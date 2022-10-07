@@ -34,8 +34,12 @@
             item-key="id"
             @click:row="clickRow"
             :footer-props="{
+              itemsPerPageOptions: [10, 25, 50, 100, -1],
               prevIcon: 'navigate_before',
-              nextIcon: 'navigate_next'
+              nextIcon: 'navigate_next',
+              firstIcon: 'first_page',
+              lastIcon: 'last_page',
+              showFirstLastPage: true
             }"
           >
             <template v-slot:item.phase="{ item }">

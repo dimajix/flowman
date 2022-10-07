@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.documentation
 
+import java.lang
 import java.util.Locale
 
 import org.apache.spark.sql.Column
@@ -197,13 +198,15 @@ class DefaultSchemaCheckExecutor extends SchemaCheckExecutor {
                         val status = if (success) CheckStatus.SUCCESS else CheckStatus.FAILED
                         val description = values.mkString(", ")
                         Some(CheckResult(Some(s.reference), status, Some(description)))
-                    case _ =>
+                    case _ if df1.columns.length == 2 =>
                         val cols = plan.output
                         val boolCol = coalesce(new Column(cols(0)).cast(BooleanType), lit(false)).as("bool_col")
                         val countCol = new Column(cols(1)).cast(LongType).as("count_col")
                         val df2 = df1.select(boolCol, countCol)
                         val result = df2.groupBy(df2("bool_col")).sum("count_col")
                         evaluateResult(result, s)
+                    case _ =>
+                        throw new IllegalArgumentException("Schema check either needs to return a single row with a column 'success', or it needs to return exactly two columns 'success', 'count' with possibly multiple rows")
                 }
 
             case _ => None

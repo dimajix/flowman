@@ -66,7 +66,7 @@ jobs:
               category: job
 ```
 
-Now you only need to provide a metric sink in the `default-namespace.yml` file
+Now you only need to provide a metric sink in the `default-namespace.yml` file.
 ```yaml
 metrics:
   kind: prometheus
@@ -76,3 +76,4 @@ metrics:
     instance: "default"
     namespace: $System.getenv('NAMESPACE')
 ```
+This configuration will commit all Flowman execution metrics to a Prometheus Push Gateway after every execution.

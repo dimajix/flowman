@@ -30,6 +30,7 @@ import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.ChangeStorageFormat
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.types.BinaryType
 import com.dimajix.flowman.types.BooleanType
@@ -57,7 +58,7 @@ object SqlServerDialect extends BaseDialect {
     override def canHandle(url : String): Boolean = url.toLowerCase(Locale.ROOT).startsWith("jdbc:sqlserver")
 
     override def getJdbcType(dt: FieldType): JdbcType = dt match {
-        case TimestampType => JdbcType("DATETIME", java.sql.Types.TIMESTAMP)
+        case TimestampType => JdbcType("DATETIME2", java.sql.Types.TIMESTAMP)
         case StringType => JdbcType("NVARCHAR(MAX)", java.sql.Types.NVARCHAR)
         case v : CharType => JdbcType(s"NCHAR(${v.length})", java.sql.Types.NCHAR)
         case v : VarcharType => JdbcType(s"NVARCHAR(${v.length})", java.sql.Types.NVARCHAR)
@@ -165,6 +166,15 @@ class MsSqlServerStatements(dialect: BaseDialect) extends BaseStatements(dialect
         val nullable = if (isNullable) "NULL" else "NOT NULL"
         val col = collation.map(c => s" COLLATE $c").getOrElse("")
         s"ALTER TABLE ${dialect.quote(table)} ALTER COLUMN ${dialect.quoteIdentifier(columnName)} $dataType$col $nullable"
+    }
+
+    override def createIndex(table: TableIdentifier, index: TableIndex): String = {
+        // Column definitions
+        val columns = index.columns.map(dialect.quoteIdentifier)
+        val unique = if (index.unique) "UNIQUE" else ""
+        val clustered = if (index.clustered) "CLUSTERED" else "NONCLUSTERED"
+
+        s"CREATE $unique $clustered INDEX ${dialect.quoteIdentifier(index.name)} ON ${dialect.quote(table)} (${columns.mkString(",")})"
     }
 
     override def dropIndex(table: TableIdentifier, indexName: String): String = {
@@ -402,6 +412,28 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
             }
 
             pk.copy(clustered=cl)
+        }
+    }
+
+
+    override def getIndexes(statement: Statement, table: TableIdentifier): Seq[TableIndex] = {
+        val idxs = super.getIndexes(statement, table)
+        idxs.map { idx =>
+            // Query extended information
+            val sql =
+                s"""
+                   |SELECT
+                   |    type
+                   |FROM sys.indexes
+                   |WHERE object_id = OBJECT_ID(${dialect.literal(dialect.quote(table))})
+                   |AND name = ${dialect.literal(idx.name)}
+                   |""".stripMargin
+            var cl = false
+            query(statement, sql) { rs =>
+                cl = rs.getInt(1) == 1
+            }
+
+            idx.copy(clustered = cl)
         }
     }
 

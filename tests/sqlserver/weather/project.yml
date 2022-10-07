@@ -1,0 +1,9 @@
+name: "sqlserver-weather"
+version: "1.0"
+
+modules:
+  - config
+  - job
+  - target
+  - mapping
+  - model

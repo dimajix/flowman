@@ -2,6 +2,10 @@
 The SFTP upload target is used for uploading data which resides either on the local machine or
 in a Hadoop compatible filesystem (HDFS, S3, ...) to an external SFTP server.
 
+## Plugin
+The `sftpUpload` target is provided by the [SFTP Plugin](../../plugins/sftp.md), which needs to be enabled in your
+`namespace.yml` file. See [namespace documentation](../namespace.md) for more information for configuring plugins.
+
 ## Example
 ```yaml
 connections:
@@ -16,7 +20,7 @@ connections:
 jobs:
   main:
     upload_data:
-      kind: sftp-upload
+      kind: sftpUpload
       description: "Upload some data to a SFTP server"
       connection: my-sftp-connection
       source: "$hdfs_export_basedir/export_table/${processing_date}"
@@ -29,7 +33,7 @@ You can also directly embed the connection into the target as follows:
 jobs:
   main:
     upload_data:
-      kind: sftp-upload
+      kind: sftpUpload
       description: "Upload some data to a SFTP server"
       connection:
         kind: ssh
@@ -46,7 +50,7 @@ jobs:
 
 
 ## Fields
-* `kind` **(mandatory)** *(type: string)*: `sftp-upload`
+* `kind` **(mandatory)** *(type: string)*: `sftpUpload`
 
 * `description` **(optional)** *(type: string)*: 
 A textual description of the build target.

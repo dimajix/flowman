@@ -243,4 +243,24 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val result2 = testExecutor.execute(execution, context, df, test2)
         result2 should be (Some(CheckResult(Some(test1.reference), CheckStatus.SUCCESS, description=Some("sum_1=3, sum_3=3"))))
     }
+
+    it should "throw an exception for unsupported queries" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+        val testExecutor = new DefaultSchemaCheckExecutor
+
+        val df = spark.createDataFrame(Seq(
+            (Some(1), 2, 1),
+            (None, 3, 2)
+        ))
+
+        val test1 = SqlSchemaCheck(None, query = "SELECT _2 > _3 FROM __this__")
+        an[IllegalArgumentException] should be thrownBy(testExecutor.execute(execution, context, df, test1))
+
+        val test2 = SqlSchemaCheck(None, query = "SELECT _2 > _3, TRUE, FALSE FROM __this__")
+        an[IllegalArgumentException] should be thrownBy (testExecutor.execute(execution, context, df, test2))
+    }
 }

@@ -1,0 +1,27 @@
+version: "3"
+
+services:
+  flowman:
+    image: dimajix/flowman:latest
+    command: bash
+    volumes:
+      - ./flow:/home/flowman/flow
+      - ./conf:/opt/flowman/conf
+    environment:
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - SPARK_MASTER=local[*]
+      - JDBC_URL=jdbc:mysql://mysql:3306
+      - JDBC_DB=flowman
+      - JDBC_USERNAME=flowman
+      - JDBC_PASSWORD=yourStrong(!)Password
+
+  mysql:
+    image: mysql:8.0.30
+    environment:
+      - MYSQL_USER=flowman
+      - MYSQL_PASSWORD=yourStrong(!)Password
+      - MYSQL_ROOT_PASSWORD=yourStrong(!)Password
+      - MYSQL_DATABASE=weather
+    ports:
+      - "3306:3306"

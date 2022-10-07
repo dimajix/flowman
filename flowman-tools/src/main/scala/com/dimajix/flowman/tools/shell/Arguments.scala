@@ -35,6 +35,10 @@ class Arguments(args:Array[String]) {
     var profiles: Array[String] = Array()
     @Option(name = "-D", aliases=Array("--env"), usage = "set environment variables which can be accessed inside config", metaVar = "<key=value>")
     var environment: Array[String] = Array()
+    @Option(name = "-X", aliases = Array("--verbose"), usage = "Produce execution output at info level.")
+    var infoLogging: Boolean = false
+    @Option(name = "-XX", aliases = Array("--debug"), usage = "Produce execution output at debug level.")
+    var debugLogging: Boolean = false
     @Option(name = "--conf", usage = "set a Flowman or Spark config", metaVar = "<confname>=<value>")
     var config: Array[String] = Array()
     @Option(name = "--info", usage = "dump configuration information")

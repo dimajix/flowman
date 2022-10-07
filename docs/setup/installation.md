@@ -2,7 +2,7 @@
 
 This setup guide will walk you to a installation of Apache Spark and Flowman on your local Linux box. If you
 are using Windows, you will find some hints for setting up the required "Hadoop WinUtils", but we generally recommend
-to use Linux. You can also run a [Flowman Docker image](setup/docker.md), which is the simplest way to get up to speed.
+to use Linux. You can also run a [Flowman Docker image](docker.md), which is the simplest way to get up to speed.
 
 
 ## 1. Requirements
@@ -21,7 +21,7 @@ needs to match the ones of your platform
 
 ### Download & Install Spark
 
-As of this writing, the latest release of Flowman is 0.26.0 and is available prebuilt for Spark 3.2.1 on the Spark
+As of this writing, the latest release of Flowman is 0.27.0 and is available prebuilt for Spark 3.3.0 on the Spark
 homepage. So we download the appropriate Spark distribution from the Apache archive and unpack it.
 
 ```shell
@@ -30,8 +30,8 @@ mkdir playground
 cd playground
 
 # Download and unpack Spark & Hadoop
-curl -L https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.2.1-bin-hadoop3.2.tgz | tar xvzf -# Create a nice link
-ln -snf spark-3.2.1-bin-hadoop3.2 spark
+curl -L https://archive.apache.org/dist/spark/spark-3.3.0/spark-3.3.0-bin-hadoop3.tgz | tar xvzf -# Create a nice link
+ln -snf spark-3.3.0-bin-hadoop3 spark
 ```
 The Spark package already contains Hadoop, so with this single download you already have both installed and integrated with each other.
 
@@ -51,7 +51,7 @@ environment variables:
 * `HADOOP_HOME` should point to the parent directory of the `bin` directory
 * `PATH` should also contain `$HADOOP_HOME/bin`
 
-The documentation contains a [dedicated section for Windows users](../cookbook/windows.md)
+The documentation contains a [dedicated section for Windows users](windows.md)
 
 
 ## 2. Downloading Flowman
@@ -64,13 +64,13 @@ versions. The naming is very simple:
 flowman-dist-<version>-oss-spark<spark-version>-hadoop<hadoop-version>-bin.tar.gz
 ```
 You simply have to use the package which fits to the Spark and Hadoop versions of your environment. For example the
-package of Flowman 0.26.0 and for Spark 3.2 and Hadoop 3.3 would be
+package of Flowman 0.27.0 and for Spark 3.3 and Hadoop 3.3 would be
 ```
-flowman-dist-0.26.0-oss-spark32-hadoop33-bin.tar.gz
+flowman-dist-0.27.0-oss-spark3.3-hadoop3.3-bin.tar.gz
 ```
 and the full URL then would be
 ```
-https://github.com/dimajix/flowman/releases/download/0.26.0/flowman-dist-0.26.0-oss-spark3.2-hadoop3.3-bin.tar.gz
+https://github.com/dimajix/flowman/releases/download/0.27.0/flowman-dist-0.27.0-oss-spark3.3-hadoop3.3-bin.tar.gz
 ```
 
 
@@ -107,6 +107,7 @@ Once you downloaded and unpacked Flowman, you will get a new directory which loo
 │       └── target
 ├── lib
 ├── libexec
+├── yaml-schema
 └── plugins
     ├── flowman-aws
     ├── flowman-azure
@@ -121,6 +122,8 @@ Once you downloaded and unpacked Flowman, you will get a new directory which loo
 * The `lib` directory contains all Java jars
 * The `libexec` directory contains some internal helper scripts
 * The `plugins` directory contains more subdirectories, each containing a single plugin
+* The `yaml-schema` directory contains [YAML schema files for syntax highlighting and auto-completion](../cookbook/syntax-highlighting.md) 
+inside the code editor of your choice.
 * The `examples` directory contains some example projects 
 
 
@@ -286,6 +289,10 @@ store:
   location: $System.getenv('FLOWMAN_HOME')/examples
 ```
 
+### `log4j.properties`
+In order to control the console (logging) output at a very detailed level, you can provide your own version of a 
+Log4j configuration file inside the `conf` directory. You will find templates both for Log4j 1.x and 2.x.
+
 
 ## 6. Running Flowman
 
@@ -301,7 +308,7 @@ bin/flowshell -f examples/weather
 ## 7. Related Topics
 
 ### Running Flowman on Windows
-Please have a look at [Running Flowman on Windows](../cookbook/windows.md) for detailed information.
+Please have a look at [Running Flowman on Windows](windows.md) for detailed information.
 
 
 ### Running in a Kerberized Environment

@@ -1,0 +1,29 @@
+# Here go all project specific configuration options for Spark and Flowman
+config:
+  # Enable Hive (default: true)
+  - flowman.spark.enableHive=true
+  # Always perform an ANALYZE TABLE when tables are written (default: true)
+  - flowman.hive.analyzeTable=true
+  # Enable eager caching, experimental (default: false)
+  - flowman.spark.eagerCache=false
+  # Always assume that build targets are dirty (default: false)
+  - flowman.execution.target.forceDirty=false
+  # The executor to use (default: com.dimajix.flowman.execution.SimpleExecutor). The currently only alternative
+  # executor is com.dimajix.flowman.execution.ParallelExecutor
+  - flowman.execution.executor.class=com.dimajix.flowman.execution.SimpleExecutor
+  # Parallelism of executor for com.dimajix.flowman.execution.ParallelExecutor (default: 4)
+  - flowman.execution.executor.parallelism=4
+  # Execution scheduler class (default: com.dimajix.flowman.execution.DependencyScheduler)
+  - flowman.execution.scheduler.class=com.dimajix.flowman.execution.DependencyScheduler
+  # Parallelism of instantiating mappings
+  - flowman.execution.mapping.parallelism=4
+  # Default migration policy for relations (default: RELAXED)
+  - flowman.default.relation.migrationPolicy=STRICT
+  # Default migration strategy for relations (default: ALTER)
+  - flowman.default.relation.migrationStrategy=ALTER
+  # Default output mode for build targets (default: OVERWRITE)
+  - flowman.default.target.outputMode=OVERWRITE
+  # Perform a rebalance operation per default on output targets (default: false)
+  - flowman.default.target.rebalance=false
+  # Number of partitions/files to create with rebalance operation on output targets (default: 16)
+  - flowman.default.target.parallelism=16

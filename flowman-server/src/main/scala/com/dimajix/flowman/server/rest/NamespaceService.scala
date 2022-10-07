@@ -37,7 +37,9 @@ class NamespaceService(ns:model.Namespace) {
 
     def routes : server.Route = pathPrefix("namespace") {
         pathEndOrSingleSlash {
-            info()
+            get {
+                info()
+            }
         }
     }
 

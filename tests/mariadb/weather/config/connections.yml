@@ -1,0 +1,6 @@
+connections:
+  mariadb:
+    driver: "$jdbc_driver"
+    url: "$jdbc_url"
+    username: "$jdbc_username"
+    password: "$jdbc_password"

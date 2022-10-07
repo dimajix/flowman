@@ -1,0 +1,14 @@
+targets:
+  measurements:
+    kind: relation
+    mapping: measurements_extracted
+    relation: measurements
+    partition:
+      year: $year
+
+  measurements_jdbc:
+    kind: relation
+    mapping: measurements_deduplicated
+    relation: measurements_jdbc
+    partition:
+      year: $year

@@ -1,0 +1,81 @@
+mappings:
+  # This mapping refers to the "raw" relation and reads in data from the source in S3
+  measurements_raw:
+    kind: relation
+    relation: measurements_raw
+    partitions:
+      year: $year
+    columns:
+      raw_data: String
+
+  # Extract multiple columns from the raw measurements data using SQL SUBSTR functions
+  measurements_extracted:
+    kind: select
+    input: measurements_raw
+    columns:
+      usaf: "CAST(SUBSTR(raw_data,5,6) AS INT)"
+      wban: "CAST(SUBSTR(raw_data,11,5) AS INT)"
+      date: "TO_DATE(SUBSTR(raw_data,16,8), 'yyyyMMdd')"
+      time: "SUBSTR(raw_data,24,4)"
+      report_type: "SUBSTR(raw_data,42,5)"
+      wind_direction: "CAST(SUBSTR(raw_data,61,3) AS INT)"
+      wind_direction_qual: "SUBSTR(raw_data,64,1)"
+      wind_observation: "SUBSTR(raw_data,65,1)"
+      wind_speed: "CAST(CAST(SUBSTR(raw_data,66,4) AS FLOAT)/10 AS FLOAT)"
+      wind_speed_qual: "SUBSTR(raw_data,70,1)"
+      air_temperature: "CAST(CAST(SUBSTR(raw_data,88,5) AS FLOAT)/10 AS FLOAT)"
+      air_temperature_qual: "SUBSTR(raw_data,93,1)"
+
+    documentation:
+      columns:
+        - name: usaf
+          description: "The USAF (US Air Force) id of the weather station"
+        - name: wban
+          description: "The WBAN id of the weather station"
+        - name: date
+          description: "The date when the measurement was made"
+        - name: time
+          description: "The time when the measurement was made"
+        - name: report_type
+          description: "The report type of the measurement"
+        - name: wind_direction
+          description: "The direction from where the wind blows in degrees"
+        - name: wind_direction_qual
+          description: "The quality indicator of the wind direction. 1 means trustworthy quality."
+        - name: wind_observation
+          description: ""
+        - name: wind_speed
+          description: "The wind speed in m/s"
+        - name: wind_speed_qual
+          description: "The quality indicator of the wind speed. 1 means trustworthy quality."
+        - name: air_temperature
+          description: "The air temperature in degree Celsius"
+        - name: air_temperature_qual
+          description: "The quality indicator of the air temperature. 1 means trustworthy quality."
+
+
+  # This mapping refers to the processed data stored as Parquet on the local filesystem
+  measurements:
+    kind: relation
+    relation: measurements
+    partitions:
+      year: $year
+
+
+  measurements_deduplicated:
+    kind: aggregate
+    input: measurements
+    dimensions:
+      - usaf
+      - wban
+      - date
+      - time
+    aggregations:
+      report_type: "FIRST(report_type, True)"
+      wind_direction: "FIRST(CASE WHEN wind_direction_qual='1' THEN wind_direction END, True)"
+      wind_direction_qual: "FIRST(wind_direction_qual, True)"
+      wind_observation: "FIRST(wind_observation, True)"
+      wind_speed: "FIRST(CASE WHEN wind_speed_qual='1' THEN wind_speed END, True)"
+      wind_speed_qual: "FIRST(wind_speed_qual, True)"
+      air_temperature: "FIRST(CASE WHEN air_temperature_qual='1' THEN air_temperature END, True)"
+      air_temperature_qual: "FIRST(air_temperature_qual, True)"

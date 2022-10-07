@@ -3,6 +3,8 @@
 Flowman sees data as artifacts with a common lifecycle, from creation until deletion. The lifecycle itself consists of 
 multiple different phases, each of them representing one stage of the whole lifecycle. 
 
+![Flowman Lifecycle](../images/flowman-lifecycle.png)
+
 ## Execution Phases
 
 The full lifecycle consists out of specific execution phases, as follows:

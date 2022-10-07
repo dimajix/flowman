@@ -77,7 +77,8 @@ final case class TableDefinition(
     def partitionSchema : StructType = StructType(partitionColumns)
 
     def normalize() : TableDefinition = copy(
-        columns = columns.map(f => f.copy(name = f.name.toLowerCase(Locale.ROOT))),
+        comment = comment.filter(_.nonEmpty),
+        columns = columns.map(f => f.copy(name = f.name.toLowerCase(Locale.ROOT), description = f.description.filter(_.nonEmpty))),
         primaryKey = primaryKey.filter(_.columns.nonEmpty).map(_.normalize()),
         indexes = indexes.filter(_.columns.nonEmpty).map(_.normalize()),
         partitionColumnNames = partitionColumnNames.map(_.toLowerCase(Locale.ROOT)),
@@ -89,7 +90,8 @@ final case class TableDefinition(
 final case class TableIndex(
     name: String,
     columns: Seq[String],
-    unique: Boolean = false
+    unique: Boolean = false,
+    clustered: Boolean = false
 ) {
     def normalize() : TableIndex = copy(
         name = name.toLowerCase(Locale.ROOT),

@@ -8,7 +8,7 @@ module.exports = {
       'entry': './src/main.js',
       'template': 'public/index.html',
       'title': 'Flowman Studio',
-      'chucnks': ['chunk-vendors', 'chunk-common', 'index']
+      'chunks': ['chunk-vendors', 'chunk-common', 'index']
     }
   },
   devServer: {

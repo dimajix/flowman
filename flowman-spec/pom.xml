@@ -9,7 +9,7 @@
     <parent>
         <artifactId>flowman-root</artifactId>
         <groupId>com.dimajix.flowman</groupId>
-        <version>0.27.0</version>
+        <version>0.28.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -99,22 +99,9 @@
         </dependency>
 
         <dependency>
-            <groupId>ch.ethz.ganymed</groupId>
-            <artifactId>ganymed-ssh2</artifactId>
-            <version>262</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.github.jsqlparser</groupId>
             <artifactId>jsqlparser</artifactId>
             <version>4.5</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.damnhandy</groupId>
-            <artifactId>handy-uri-templates</artifactId>
-            <version>2.1.8</version>
-            <scope>compile</scope>
         </dependency>
 
         <dependency>

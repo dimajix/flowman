@@ -100,8 +100,15 @@ targets:
         WITH CHANGE_TRACKING OFF
     # Fill index by starting background indexing process
     build:
-      sql: |
-        ALTER FULLTEXT INDEX ON dbo.tweets START FULL POPULATION
+      sql:
+        # Start Population
+        - ALTER FULLTEXT INDEX ON dbo.tweets START FULL POPULATION
+        # Wait until indexing has finished (optional)
+        - |
+          WHILE (FULLTEXTCATALOGPROPERTY('ftcat','PopulateStatus') = 1)
+          BEGIN
+              WAITFOR DELAY '00:00:03'
+          END
     # Delete index
     destroy:
       # Check that index really exists

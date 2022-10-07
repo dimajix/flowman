@@ -81,7 +81,7 @@ environment:
   - export_location=hdfs://export/weather-data
 ```
 All values specified in the environment can be overriden either by [profiles](profiles.md) or by explicitly setting 
-them as property definitions on the [command line](../cli/flowexec.md).
+them as property definitions on the [command line](../cli/flowexec/index.md).
 
 Note the difference between `environment` and `config`. While the first provides user defined variables to be used
 as placeholders in the specification, all entries in `config` impact the execution and are used either directly by
@@ -217,7 +217,7 @@ sequentially (first task would show all environment variables, second would prin
 information on the console and the last would call another job called `dump-all`).
 
 Every project should contain one job called `main` which is executed whenever the whole
-project is to be executed using the [Flowman CLI](../cli/flowexec.md)
+project is to be executed using the [Flowman CLI](../cli/flowexec/index.md)
 
 
 ### `templates` Section

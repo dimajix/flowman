@@ -11,17 +11,19 @@ services:
       - http_proxy=${http_proxy}
       - https_proxy=${https_proxy}
       - SPARK_MASTER=local[*]
-      - JDBC_URL=jdbc:mysql://mariadb:3306
+      - JDBC_URL=jdbc:mariadb://mariadb:3306
       - JDBC_DB=flowman
       - JDBC_USERNAME=flowman
       - JDBC_PASSWORD=yourStrong(!)Password
 
   mariadb:
-    image: mariadb:10.8.3
+    image: mariadb:10.9.3
     environment:
       - MARIADB_USER=flowman
       - MARIADB_PASSWORD=yourStrong(!)Password
       - MARIADB_ROOT_PASSWORD=yourStrong(!)Password
-      - MARIADB_DATABASE=flowman
+      - MARIADB_DATABASE=weather
+    command:
+      - --sql-mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,ANSI_QUOTES
     ports:
       - "3306:3306"

@@ -84,6 +84,12 @@ object Driver {
             Status.SUCCESS
         }
         else {
+            if (options.infoLogging) {
+                Logging.setLogging("INFO")
+            }
+            if (options.debugLogging) {
+                Logging.setLogging("DEBUG")
+            }
             Logging.setSparkLogging(options.sparkLogging)
 
             val driver = new Driver(options)

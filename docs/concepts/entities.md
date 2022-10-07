@@ -9,6 +9,9 @@ But how can we instruct Flowman to build data? The input and output data is spec
 together with all transformations applied along the way from reading to writing data. At the core of these yaml
 files are the following entity types
 
+![Flowman Entities](../images/flowman-entities.png)
+
+
 ## Relations
 
 [*Relations*](../spec/relation/index.md) specify *physical manifestations of data* in external systems. A relation may

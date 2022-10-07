@@ -11,5 +11,7 @@ Server will provide you a powerful Web UI for keeping track of past runs.
    :maxdepth: 1
    :glob:
 
+   flowexec/index
+   flowshell/index
    *
 ```

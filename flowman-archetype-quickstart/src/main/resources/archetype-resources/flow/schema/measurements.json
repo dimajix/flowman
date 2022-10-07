@@ -1,0 +1,71 @@
+{
+    "type": "struct",
+    "fields": [
+        {
+            "name": "usaf",
+            "type": "char(6)",
+            "nullable": false,
+            "metadata": {}
+        },
+        {
+            "name": "wban",
+            "type": "char(5)",
+            "nullable": false,
+            "metadata": {}
+        },
+        {
+            "name": "date",
+            "type": "date",
+            "nullable": false,
+            "metadata": {}
+        },
+        {
+            "name": "time",
+            "type": "char(4)",
+            "nullable": false,
+            "metadata": {}
+        },
+        {
+            "name": "wind_direction",
+            "type": "integer",
+            "nullable": true,
+            "metadata": {}
+        },
+        {
+            "name": "wind_direction_qual",
+            "type": "char(1)",
+            "nullable": true,
+            "metadata": {}
+        },
+        {
+            "name": "wind_observation",
+            "type": "char(1)",
+            "nullable": true,
+            "metadata": {}
+        },
+        {
+            "name": "wind_speed",
+            "type": "float",
+            "nullable": true,
+            "metadata": {}
+        },
+        {
+            "name": "wind_speed_qual",
+            "type": "char(1)",
+            "nullable": true,
+            "metadata": {}
+        },
+        {
+            "name": "air_temperature",
+            "type": "float",
+            "nullable": true,
+            "metadata": {}
+        },
+        {
+            "name": "air_temperature_qual",
+            "type": "char(1)",
+            "nullable": true,
+            "metadata": {}
+        }
+    ]
+}

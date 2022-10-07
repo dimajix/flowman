@@ -37,3 +37,25 @@ relations:
     # Specify the table
     table: "users"
 ```
+
+
+## Data Types
+Flowman will map its [built in data types](../spec/fields.md) to the following data types in MariaDB
+
+| Flowman/Spark Datatype | MariaDB Datatype   |
+|------------------------|--------------------|
+| `string`, `text`       | `TEXT`             |
+| `binary`               | `BLOB`             |
+| `tinyint`, `byte`      | `BYTE`             |
+| `smallint`, `short`    | `INTEGER`          |
+| `int`, `integer`       | `INTEGER`          |
+| `bigint`, `long`       | `BIGINT`           |
+| `boolean`, `bool`      | `BIT(1)`           |
+| `float`                | `FLOAT`            |
+| `double`               | `DOUBLE PRECISION` |
+| `decimal(a,b)`         | `DECIMAL(a,b)`     |
+| `varchar(n)`           | `VARCHAR(n)`       |
+| `char(n)`              | `CHAR(n)`          |
+| `date`                 | `DATE`             |
+| `timestamp`            | `TIMESTAMP`        |
+| `duration`             | unsupported        |

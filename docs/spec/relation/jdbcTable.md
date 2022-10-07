@@ -136,7 +136,18 @@ the real JDBC table and the temporary table will be dropped.
  a relation property can overwrite a connection property if it has the same name.
 
  * `indexes` **(optional)** *(type: list:index)* *(default: empty)*:
-   Specifies a list of database indexes to be created. Each index has the properties `name`, `columns` and `unique`.
+   Specifies a list of database indexes to be created. Each index has the properties `name`, `columns`, `unique` 
+(default=`false`) and `clustered` (default=`false`). Note that `clustered` indexes are currently only supported by MS 
+Flowman for SQL Server and Azure SQL.
+
+
+## Staging Tables
+Flowman supports using temporary staging tables when writing to a SQL database. In this mode, Flowman will first
+create this special staging table (which technically is just a normal table, but without any index or primary key),
+and then copy the table into the real target table. Afterwards, the staging table will be dropped. This approach
+helps to ensure consistency, since the copy process is performed within a single SQL transaction. Moreover, since
+no primary key or index is present in the staging table, this will also avoid locks on the database server side,
+which may lead to timeouts or other failures during the parallel write process that Spark uses under the hood.
 
 
 ## Automatic Migrations
@@ -177,6 +188,19 @@ The `jdbcTable` relation supports the following output modes in a [`relation` ta
 | `update`            | yes       | Perform upsert operations using the merge key or primary key |
 
 In addition, the `jdbcTable` relation also supports complex merge operations in a [`merge` target](../target/merge.md).
+
+
+## Connectors
+In order to connect to a SQL database, you need to load a corresponding plugin providing the JDBC driver. Currently
+Flowman provides the following plugins
+
+| Plugin                                              | Database                 |
+|-----------------------------------------------------|--------------------------|
+| [flowman-mariadb](../../plugins/mariadb.md)         | MariaDB                  |
+| [flowman-mssqlserver](../../plugins/mssqlserver.md) | MS SQL Server, Azure SQL |
+| [flowman-mysql](../../plugins/mysql.md)             | MySQL                    |
+| [flowman-oracle](../../plugins/oracle.md)           | Oracle DB                |
+| [flowman-postgresql](../../plugins/postgresql.md)   | Postgres SQL             |
 
 
 ## Remarks

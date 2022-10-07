@@ -87,7 +87,12 @@ specific qualification, meaning that the default database will be used or the on
 
  * `table` **(mandatory)** *(type: string)*:
  Specifies the name of the table in the relational database.
-  
+ 
+ * `stagingTable` **(optional)** *(type: string)*  *(default: empty)*:
+  Specifies the name of the staging table to use for write operations. This table will be created and filled with data,
+and the final table will be populated from this table inside a transaction. If not table is specified (the default),
+then Flowman will use a global temporary table.
+
  * `properties` **(optional)** *(type: map:string)* *(default: empty)*:
  Specifies any additional properties passed to the JDBC connection.  Note that both the JDBC
  relation and the JDBC connection can define properties. So it is advisable to define all
@@ -96,12 +101,27 @@ specific qualification, meaning that the default database will be used or the on
  a relation property can overwrite a connection property if it has the same name.
 
  * `indexes` **(optional)** *(type: list:index)* *(default: empty)*:
- Specifies a list of database indexes to be created. Each index has the properties `name`, `columns` and `unique`.
+ Specifies a list of database indexes to be created. Each index has the properties `name`, `columns`, `unique`
+ (default=`false`) and `clustered` (default=`false`). Note that `clustered` indexes are currently only supported by MS
+ Flowman for SQL Server and Azure SQL.
 
  * `storageformat` **(optional)** *(type: string)* *(default: empty)*:
  Specifies the internal storage format, which can either be `ROWSTORE` or `COLUMNSTORE`. Internally MS SQL Server
  uses `ROWSTORE` as the default format. `COLUMNSTORE` will actually create a `CLUSTERED COLUMNSTORE INDEX` and is
  preferable for typical OLAP workloads.
+
+
+## Staging Tables
+When using the `sqlserver?`relation, Flowman will always use staging tables when writing to a SQL database. This
+means, Flowman will first create this special staging table (which technically is just a normal table, but without any 
+index or primary key), and then copy the table into the real target table. Afterwards, the staging table will be dropped. 
+This approach helps to ensure consistency, since the copy process is performed within a single SQL transaction. Moreover, 
+since no primary key or index is present in the staging table, this will also avoid locks on the database server side,
+which may lead to timeouts or other failures during the parallel write process that Spark uses under the hood.
+
+You can either explicitly specify the name of the staging table via `stagingTable`, or Flowman will automatically use
+a global temporary table. In both cases, Flowman will automatically remove the staging table after the write operation
+has finished (either successfully or with an error).
 
 
 ## Automatic Migrations

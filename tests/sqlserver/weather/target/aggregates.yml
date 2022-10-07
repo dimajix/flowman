@@ -1,0 +1,5 @@
+targets:
+  aggregates:
+    kind: relation
+    mapping: aggregates
+    relation: aggregates

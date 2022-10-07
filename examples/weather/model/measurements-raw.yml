@@ -2,7 +2,7 @@ relations:
   measurements_raw:
     kind: file
     format: text
-    location: "s3a://dimajix-training/data/weather/"
+    location: "$srcdir/"
     # Define the pattern to be used for partitions
     pattern: "${year}"
     # Define data partitions. Each year is stored in a separate sub directory

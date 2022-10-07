@@ -25,13 +25,15 @@ import com.dimajix.flowman.execution.Context
 class IndexSpec {
     @JsonProperty(value = "name", required = true) protected var name: String = _
     @JsonProperty(value = "columns", required = true) protected var columns: Seq[String] = Seq.empty
-    @JsonProperty(value = "unique", required = true) protected var unique: String = "false"
+    @JsonProperty(value = "unique", required = false) protected var unique: String = "false"
+    @JsonProperty(value = "clustered", required = false) protected var clustered: String = "false"
 
     def instantiate(context:Context) : TableIndex = {
         TableIndex(
             context.evaluate(name),
             columns.map(context.evaluate),
-            context.evaluate(unique).toBoolean
+            context.evaluate(unique).toBoolean,
+            context.evaluate(clustered).toBoolean
         )
     }
 }

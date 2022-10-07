@@ -60,15 +60,15 @@ object Shell {
             case Success (true) =>
                 System.exit(0)
             case Success (false) =>
-                System.exit(1)
+                System.exit(3)
             case Failure(ex:CmdLineException) =>
                 System.err.println(ex.getMessage)
                 ex.getParser.printUsage(System.err)
                 System.err.println
-                System.exit(1)
+                System.exit(4)
             case Failure(exception) =>
                 exception.printStackTrace(System.err)
-                System.exit(1)
+                System.exit(5)
         }
     }
 
@@ -87,6 +87,12 @@ object Shell {
             true
         }
         else {
+            if (options.infoLogging) {
+                Logging.setLogging("INFO")
+            }
+            if (options.debugLogging) {
+                Logging.setLogging("DEBUG")
+            }
             Logging.setSparkLogging(options.sparkLogging)
 
             _instance = new Shell(options)

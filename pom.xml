@@ -238,7 +238,7 @@
                 <hadoop.version>3.1.1.${cdp.version}</hadoop.version>
                 <hadoop-api.version>3.1</hadoop-api.version>
                 <hive.version>3.1.3000.${cdp.version}</hive.version>
-                <hive-storage-api.version>3.1.30000.${cdp.version}</hive-storage-api.version>
+                <hive-storage-api.version>3.1.3000.${cdp.version}</hive-storage-api.version>
                 <hbase.version>2.2.3.${cdp.version}</hbase.version>
                 <kafka.version>2.4.1.7.1.5.0-257</kafka.version>
                 <derby.version>10.14.2.0</derby.version>

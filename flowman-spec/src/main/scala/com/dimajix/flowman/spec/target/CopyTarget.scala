@@ -29,6 +29,7 @@ import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
@@ -147,14 +148,17 @@ case class CopyTarget(
         require(executor != null)
 
         if (target.exists(executor) == No) {
-            throw new VerificationFailedException(identifier)
+            val error = s"Verification of target '$identifier' failed - target '${target.name}' does not exist"
+            logger.error(error)
+            throw new VerificationFailedException(identifier, new ExecutionException(error))
         }
 
         schema.foreach { spec =>
             val file = executor.fs.file(spec.file)
             if (!file.exists()) {
-                logger.error(s"Verification of target '$identifier' failed - schema file '${spec.file}' does not exist")
-                throw new VerificationFailedException(identifier)
+                val error = s"Verification of target '$identifier' failed - schema file '${spec.file}' does not exist"
+                logger.error(error)
+                throw new VerificationFailedException(identifier, new ExecutionException(error))
             }
         }
     }

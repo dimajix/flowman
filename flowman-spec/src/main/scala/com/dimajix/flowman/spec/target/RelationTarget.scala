@@ -39,6 +39,7 @@ import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
@@ -304,8 +305,9 @@ case class RelationTarget(
                 val policy = VerifyPolicy.ofString(execution.flowmanConf.getConf(FlowmanConf.DEFAULT_TARGET_VERIFY_POLICY))
                 policy match {
                     case VerifyPolicy.EMPTY_AS_FAILURE =>
-                        logger.error(s"Verification of target '$identifier' failed - partition $partition of relation '${relation.identifier}' does not exist")
-                        throw new VerificationFailedException(identifier)
+                        val error = s"Verification of target '$identifier' failed - partition $partition of relation '${relation.identifier}' does not exist"
+                        logger.error(error)
+                        throw new VerificationFailedException(identifier, new ExecutionException(error))
                     case VerifyPolicy.EMPTY_AS_SUCCESS|VerifyPolicy.EMPTY_AS_SUCCESS_WITH_ERRORS =>
                         if (rel.exists(execution) != No) {
                             logger.warn(s"Verification of target '$identifier' failed - partition $partition of relation '${relation.identifier}' does not exist. Ignoring.")
@@ -315,8 +317,9 @@ case class RelationTarget(
                                 Status.SUCCESS
                         }
                         else {
-                            logger.error(s"Verification of target '$identifier' failed - relation '${relation.identifier}' does not exist")
-                            throw new VerificationFailedException(identifier)
+                            val error = s"Verification of target '$identifier' failed - relation '${relation.identifier}' does not exist"
+                            logger.error(error)
+                            throw new VerificationFailedException(identifier, new ExecutionException(error))
                         }
                 }
             }

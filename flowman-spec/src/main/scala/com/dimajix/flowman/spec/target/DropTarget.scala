@@ -24,6 +24,7 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
@@ -137,8 +138,9 @@ case class DropTarget(
 
         val rel = relation.value
         if (rel.exists(execution) == Yes) {
-            logger.error(s"Verification of target '$identifier' failed - relation '${relation.identifier}' still exists")
-            throw new VerificationFailedException(identifier)
+            val error = s"Verification of target '$identifier' failed - relation '${relation.identifier}' still exists"
+            logger.error(error)
+            throw new VerificationFailedException(identifier, new ExecutionException(error))
         }
     }
 

@@ -17,6 +17,8 @@ changes over time.
 ### Version 0.28.1
 
 * github-260 Remove hive-storage-api from several plugins and lib
+* github-261: Add descriptions to all pom.xml
+* github-262: Verification of "relation" targets should only check existence
 
 
 ### Version 0.28.0 - 2022-10-07

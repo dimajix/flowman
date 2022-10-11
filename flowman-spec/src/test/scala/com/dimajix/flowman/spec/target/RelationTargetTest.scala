@@ -272,6 +272,83 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         target.dirty(execution, Phase.DESTROY) should be (No)
     }
 
+    it should "support the whole lifecycle without a mapping" in {
+        val outputPath = Paths.get(tempDir.toString, "test_" + UUID.randomUUID().toString)
+        val spec =
+            s"""
+               |relations:
+               |  output:
+               |    kind: file
+               |    location: ${outputPath.toUri}
+               |    format: csv
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: int_col
+               |          type: integer
+               |        - name: dbl_col
+               |          type: double
+               |        - name: str_col
+               |          type: string
+               |
+               |targets:
+               |  out:
+               |    kind: relation
+               |    relation: output
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .build()
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        val output = context.getRelation(RelationIdentifier("output"))
+        val target = context.getTarget(TargetIdentifier("out"))
+
+        // == Create =================================================================================================
+        output.exists(execution) should be(No)
+        output.loaded(execution) should be(No)
+        target.dirty(execution, Phase.CREATE) should be(Yes)
+        target.execute(execution, Phase.CREATE)
+        output.exists(execution) should be(Yes)
+        output.loaded(execution) should be(No)
+        target.dirty(execution, Phase.CREATE) should be(No)
+        output.read(execution).count() should be(0)
+
+        // == Build ==================================================================================================
+        target.dirty(execution, Phase.BUILD) should be(No)
+        target.execute(execution, Phase.BUILD)
+        output.exists(execution) should be(Yes)
+        output.loaded(execution) should be(No)
+        target.dirty(execution, Phase.BUILD) should be(No)
+        output.read(execution).count() should be(0)
+
+        // == Verify =================================================================================================
+        target.dirty(execution, Phase.VERIFY) should be(Yes)
+        target.execute(execution, Phase.VERIFY)
+        output.exists(execution) should be(Yes)
+        output.loaded(execution) should be(No)
+        target.dirty(execution, Phase.VERIFY) should be(Yes)
+        output.read(execution).count() should be(0)
+
+        // == Truncate ===============================================================================================
+        target.dirty(execution, Phase.TRUNCATE) should be(No)
+        target.execute(execution, Phase.TRUNCATE)
+        output.exists(execution) should be(Yes)
+        output.loaded(execution) should be(No)
+        target.dirty(execution, Phase.TRUNCATE) should be(No)
+        output.read(execution).count() should be(0)
+
+        // == Destroy ================================================================================================
+        target.dirty(execution, Phase.DESTROY) should be(Yes)
+        target.execute(execution, Phase.DESTROY)
+        output.exists(execution) should be(No)
+        output.loaded(execution) should be(No)
+        target.dirty(execution, Phase.DESTROY) should be(No)
+    }
+
     it should "count the number of records" in {
         val spark = this.spark
         import spark.implicits._

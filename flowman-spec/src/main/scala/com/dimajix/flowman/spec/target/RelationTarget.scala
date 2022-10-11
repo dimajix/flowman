@@ -297,8 +297,7 @@ case class RelationTarget(
     override def verify2(execution: Execution) : TargetResult = {
         require(execution != null)
 
-        val startTime = Instant.now()
-        Try {
+        def verifyWithData() : Status = {
             val partition = this.partition.mapValues(v => SingleValue(v))
             val rel = relation.value
             if (rel.loaded(execution, partition) == No) {
@@ -308,7 +307,7 @@ case class RelationTarget(
                         val error = s"Verification of target '$identifier' failed - partition $partition of relation '${relation.identifier}' does not exist"
                         logger.error(error)
                         throw new VerificationFailedException(identifier, new ExecutionException(error))
-                    case VerifyPolicy.EMPTY_AS_SUCCESS|VerifyPolicy.EMPTY_AS_SUCCESS_WITH_ERRORS =>
+                    case VerifyPolicy.EMPTY_AS_SUCCESS | VerifyPolicy.EMPTY_AS_SUCCESS_WITH_ERRORS =>
                         if (rel.exists(execution) != No) {
                             logger.warn(s"Verification of target '$identifier' failed - partition $partition of relation '${relation.identifier}' does not exist. Ignoring.")
                             if (policy == VerifyPolicy.EMPTY_AS_SUCCESS_WITH_ERRORS)
@@ -325,6 +324,27 @@ case class RelationTarget(
             }
             else {
                 Status.SUCCESS
+            }
+        }
+        def verifyWithoutData() : Status = {
+            val rel = relation.value
+            if (rel.exists(execution) != No) {
+                Status.SUCCESS
+            }
+            else {
+                val error = s"Verification of target '$identifier' failed - relation '${relation.identifier}' does not exist"
+                logger.error(error)
+                throw new VerificationFailedException(identifier, new ExecutionException(error))
+            }
+        }
+
+        val startTime = Instant.now()
+        Try {
+            if (mapping.nonEmpty) {
+                verifyWithData()
+            }
+            else {
+                verifyWithoutData()
             }
         }
         match {

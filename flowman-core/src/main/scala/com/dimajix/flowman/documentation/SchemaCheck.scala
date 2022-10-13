@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.documentation
 
-import java.lang
 import java.util.Locale
 
 import org.apache.spark.sql.Column
@@ -53,6 +52,10 @@ final case class SchemaCheckReference(
 
 abstract class SchemaCheck extends Fragment with Product with Serializable {
     def name : String
+    def text: String = filter match {
+        case Some(condition) => s"$name WHERE $condition"
+        case None => name
+    }
     def filter : Option[String]
     def result : Option[CheckResult]
     def withResult(result:CheckResult) : SchemaCheck

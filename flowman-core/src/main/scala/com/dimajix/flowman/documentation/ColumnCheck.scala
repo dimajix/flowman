@@ -49,6 +49,10 @@ final case class ColumnCheckReference(
 
 abstract class ColumnCheck extends Fragment with Product with Serializable {
     def name : String
+    def text : String = filter match {
+        case Some(condition) => s"$name WHERE $condition"
+        case None => name
+    }
     def filter : Option[String]
     def result : Option[CheckResult]
     def withResult(result:CheckResult) : ColumnCheck

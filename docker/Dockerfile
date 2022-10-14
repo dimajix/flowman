@@ -21,6 +21,8 @@ RUN curl -sL --retry 3 "https://archive.apache.org/dist/spark/spark-${BUILD_SPAR
 COPY bin/ /opt/docker/bin/
 COPY libexec/ /opt/docker/libexec/
 
+# Update OS
+RUN apt-get update && apt-get upgrade --yes && apt clean
 
 # Copy and install Repository
 COPY $DIST_FILE /tmp/repo/flowman-dist.tar.gz

@@ -6,7 +6,6 @@
     <artifactId>flowman-plugin-azure</artifactId>
     <name>Flowman Azure plugin</name>
     <description>Flowman Azure plugin</description>
-    <packaging>pom</packaging>
 
     <parent>
         <groupId>com.dimajix.flowman</groupId>
@@ -43,20 +42,6 @@
             </resource>
         </resources>
         <plugins>
-            <!-- Reenable maven-resources-plugin for packaging "pom" -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>default-resources</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>resources</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>

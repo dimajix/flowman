@@ -265,7 +265,7 @@
                         <configuration>
                             <finalName>${project.artifactId}-${flowman.dist.label}</finalName>
                             <descriptors>
-                                <descriptor>src/main/assembly/assembly.xml</descriptor>
+                                <descriptor>src/assembly/assembly.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </execution>

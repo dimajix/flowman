@@ -5,6 +5,7 @@
 * github-262: Verification of "relation" targets should only check existence
 * github-263: Add filter condition to data quality checks in documentation
 * github-265: Make JDBC dialects pluggable
+* github-264: Provide "jars" for all plugins
 
 
 # Version 0.28.0 - 2022-10-07

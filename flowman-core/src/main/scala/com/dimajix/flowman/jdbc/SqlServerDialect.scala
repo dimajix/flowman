@@ -43,7 +43,7 @@ import com.dimajix.flowman.types.TimestampType
 import com.dimajix.flowman.types.VarcharType
 
 
-object SqlServerDialect extends BaseDialect {
+class SqlServerDialect extends BaseDialect {
     // Special JDBC types in Microsoft SQL Server.
     // https://github.com/microsoft/mssql-jdbc/blob/v8.2.2/src/main/java/microsoft/sql/Types.java
     private object SpecificTypes {
@@ -114,6 +114,8 @@ object SqlServerDialect extends BaseDialect {
     override def expr : SqlExpressions = Expressions
     override def command : SqlCommands = Commands
 }
+object SqlServerDialect extends SqlServerDialect
+
 
 class MsSqlServerExpressions(dialect: BaseDialect) extends BaseExpressions(dialect) {
     override def primaryKey(columns: Seq[String], clustered:Boolean): String = {

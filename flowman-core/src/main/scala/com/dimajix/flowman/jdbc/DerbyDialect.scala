@@ -32,7 +32,7 @@ import com.dimajix.flowman.types.ShortType
 import com.dimajix.flowman.types.StringType
 
 
-object DerbyDialect extends BaseDialect {
+class DerbyDialect extends BaseDialect {
     private object Statements extends DerbyStatements(this)
 
     override def canHandle(url: String): Boolean = url.startsWith("jdbc:derby")
@@ -88,6 +88,7 @@ object DerbyDialect extends BaseDialect {
 
     override def statement : SqlStatements = Statements
 }
+object DerbyDialect extends DerbyDialect
 
 
 class DerbyStatements(dialect: BaseDialect) extends BaseStatements(dialect)  {

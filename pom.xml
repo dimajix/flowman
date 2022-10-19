@@ -7,8 +7,14 @@
     <artifactId>flowman-root</artifactId>
     <version>0.28.1-SNAPSHOT</version>
     <packaging>pom</packaging>
+
     <name>Flowman root pom</name>
-    <description>A Spark based ETL tool</description>
+    <description>
+        Flowman is a Big Data build tool powered by Apache Spark. It simplified the development of complex data
+        transformations by employing a purely declarative workflow. Moreover, Flowman can also take over the complete
+        lifecycle management of outgoing data sinks, let them be Hive tables, JDBC tables or simply files. This
+        lifecycle management includes table creation, automatic migration, populating and optional clean up.
+    </description>
     <url>https://flowman.io</url>
     <inceptionYear>2018</inceptionYear>
 
@@ -25,7 +31,7 @@
             <name>Kaya Kupferschmidt</name>
             <email>k.kupferschmidt@dimajix.de</email>
             <organization>dimajix</organization>
-            <organizationUrl>https://www.dimajix.com</organizationUrl>
+            <organizationUrl>https://www.dimajix.de</organizationUrl>
         </developer>
     </developers>
 

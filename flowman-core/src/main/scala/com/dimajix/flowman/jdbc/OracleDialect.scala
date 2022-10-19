@@ -48,7 +48,7 @@ import com.dimajix.flowman.types.VarcharType
 import com.dimajix.flowman.util.UtcTimestamp
 
 
-object OracleDialect extends BaseDialect {
+class OracleDialect extends BaseDialect {
     private object Statements extends OracleStatements(this)
     private object Commands extends OracleCommands(this)
 
@@ -115,6 +115,7 @@ object OracleDialect extends BaseDialect {
     override def statement : SqlStatements = Statements
     override def command: SqlCommands = Commands
 }
+object OracleDialect extends OracleDialect
 
 
 class OracleStatements(dialect: BaseDialect) extends BaseStatements(dialect) {

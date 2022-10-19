@@ -17,7 +17,7 @@
 package com.dimajix.flowman.jdbc
 
 
-object HiveDialect extends BaseDialect {
+class HiveDialect extends BaseDialect {
     override def canHandle(url : String): Boolean = url.startsWith("jdbc:hive")
 
     def quote(table:org.apache.spark.sql.catalyst.TableIdentifier): String = {
@@ -40,3 +40,4 @@ object HiveDialect extends BaseDialect {
      */
     override def supportsExactViewRetrieval: Boolean = true
 }
+object HiveDialect extends HiveDialect

@@ -138,37 +138,12 @@
         <!-- Main Flowman executable for running tests -->
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-spark-dependencies</artifactId>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-tools</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
-        </dependency>
-
-        <!-- Add required Spark & Hadoop dependencies -->
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_${scala.api_version}</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-hive_${scala.api_version}</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-beanutils</groupId>
-            <artifactId>commons-beanutils</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
         </dependency>
     </dependencies>
 </project>

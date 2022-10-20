@@ -10,7 +10,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.28.1-SNAPSHOT</version>
+        <version>0.29.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -168,38 +168,19 @@
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-spec</artifactId>
+            <artifactId>flowman-spark-dependencies</artifactId>
+            <type>pom</type>
+            <scope>provided</scope>
         </dependency>
-
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-spec</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spark-testing</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-hive_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
         </dependency>
 
         <dependency>

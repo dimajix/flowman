@@ -11,7 +11,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.28.1-SNAPSHOT</version>
+        <version>0.29.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -268,6 +268,13 @@
     <dependencyManagement>
         <dependencies>
             <!-- Flowman Dependencies -->
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-spark-dependencies</artifactId>
+                <version>${flowman.version}</version>
+                <type>pom</type>
+                <scope>provided</scope>
+            </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spark-extensions</artifactId>
@@ -961,6 +968,25 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty</artifactId>
+                <version>${netty.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty-all.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-handler</artifactId>
+                <version>${netty-all.version}</version>
                 <scope>provided</scope>
             </dependency>
 

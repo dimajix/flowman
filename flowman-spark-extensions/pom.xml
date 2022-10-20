@@ -10,7 +10,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.28.1-SNAPSHOT</version>
+        <version>0.29.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -63,32 +63,16 @@
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-spark-dependencies</artifactId>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-scalatest-compat</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spark-testing</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-hive_${scala.api_version}</artifactId>
         </dependency>
 
         <dependency>

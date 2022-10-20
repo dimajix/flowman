@@ -1,4 +1,4 @@
-# Version 0.28.1
+# Version 0.29.0
 
 * github-260: Remove hive-storage-api from several plugins and lib
 * github-261: Add descriptions to all pom.xml
@@ -6,6 +6,7 @@
 * github-263: Add filter condition to data quality checks in documentation
 * github-265: Make JDBC dialects pluggable
 * github-264: Provide "jars" for all plugins
+* github-267: Add new flowman-spark-dependencies module to simplify dependency management
 
 
 # Version 0.28.0 - 2022-10-07

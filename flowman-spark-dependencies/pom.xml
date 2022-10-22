@@ -37,6 +37,11 @@
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
+            <artifactId>spark-tags_${scala.api_version}</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_${scala.api_version}</artifactId>
             <scope>compile</scope>
         </dependency>

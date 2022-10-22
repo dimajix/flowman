@@ -32,12 +32,12 @@ case class FileSystem(conf:Configuration) {
 
     def file(path:Path) : File = {
         val fs = path.getFileSystem(conf)
-        File(fs, path)
+        HadoopFile(fs, path)
     }
     def file(path:String) : File = file(new Path(path))
     def file(path:URI) : File = file(new Path(path))
 
-    def local(path:Path) : File = File(localFs, path)
+    def local(path:Path) : File = HadoopFile(localFs, path)
     def local(path:String) : File = local(new Path(path))
     def local(path:java.io.File) : File = local(new Path(path.toString))
     def local(path:URI) : File = local(new Path(path))

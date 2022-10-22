@@ -16,25 +16,15 @@
 
 package com.dimajix.flowman.hadoop
 
-import java.io.FileNotFoundException
-import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FSDataInputStream
-import org.apache.hadoop.fs.FSDataOutputStream
-import org.apache.hadoop.fs.LocalFileSystem
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.io.IOUtils
 
 
 object File {
-    def empty = new File(null, null)
-    def apply(conf:Configuration, path:Path) : File  = {
-        File(path.getFileSystem(conf), path)
-    }
-    def apply(conf:Configuration, path:String) : File = {
-        apply(conf, new Path(path))
-    }
+    def empty = HadoopFile(null, null)
 }
 
 /**
@@ -43,17 +33,17 @@ object File {
   * @param fs
   * @param path
   */
-case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
+abstract  class File {
     override def toString: String = if (path != null) path.toString else ""
+
+    def path : Path
 
     /**
       * Creates a new File object by attaching a child entry
       * @param sub
       * @return
       */
-    def /(sub:String) : File = {
-        File(fs, new Path(path, sub))
-    }
+    def /(sub:String) : File
 
     /**
       * Returns the file name of the File
@@ -67,173 +57,87 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
       * Returns the parent directory of the File
       * @return
       */
-    def parent : File = {
-        File(fs, path.getParent)
-    }
+    def parent : File
 
     /**
       * Returns the absolute path
       * @return
       */
-    def absolute : File = {
-        File(fs, path.makeQualified(fs.getUri, fs.getWorkingDirectory))
-    }
+    def absolute : File
 
     /**
       * Returns the size of the file. Will throw an exception if the file does not exist
       * @return
       */
-    def length : Long = {
-        fs.getFileStatus(path).getLen
-    }
+    def length : Long
 
-    def resolve(name:String) : File = {
-        File(fs, new Path(path.toUri.resolve(name)))
-    }
+    def resolve(name:String) : File
 
     /**
       * Lists all directory entries. Will throw an exception if the File is not a directory
       * @return
       */
-    def list() : Seq[File] = {
-        if (!isDirectory())
-            throw new IOException(s"File '$path' is not a directory - cannot list files")
-        fs.listStatus(path)
-            .map(item => (item.getPath.toString, File(fs, item.getPath)))
-            .sortBy(_._1)
-            .map(_._2)
-    }
+    def list() : Seq[File]
 
-    def glob(pattern:Path) : Seq[File] = {
-        if (!isDirectory())
-            throw new IOException(s"File '$path' is not a directory - cannot list files")
-        fs.globStatus(new Path(path, pattern))
-            .map(item => (item.getPath.toString, File(fs, item.getPath)))
-            .sortBy(_._1)
-            .map(_._2)
-    }
-
-    /**
-      * Renames the file to a different name. The destination has to be on the same FileSystem, otherwise an
-      * exception will be thrown
-      * @param dst
-      */
-    def rename(dst:File) : Unit  = {
-        if (!dst.fs.eq(fs)) {
-            throw new IOException(s"Target of rename needs to be on the same filesystem")
-        }
-        rename(dst.path)
-    }
+    def glob(pattern:Path) : Seq[File]
 
     /**
       * Renamed the file to a different name
       * @param dst
       */
-    def rename(dst:Path) : Unit  = {
-        if (fs.exists(dst) && !fs.delete(dst, false)) {
-            throw new IOException(s"Cannot rename '$path' to '$dst', because '$dst' already exists")
-        }
-
-        if (!fs.rename(path, dst)) {
-            throw new IOException(s"Cannot rename '$path' to '$dst'")
-        }
-    }
+    def rename(dst:Path) : Unit
 
     /**
       * Copies the file to a different file. The relation file may reside on a different file system
       * @param dst
       * @param overwrite
       */
-    def copy(dst:File, overwrite:Boolean) : Unit = {
-        if (!overwrite && dst.isFile())
-            throw new IOException("Target $dst already exists")
-
-        // Append file name if relation is a directory
-        val dstFile = if (dst.isDirectory())
-            dst / path.getName
-        else
-            dst
-
-        // Perform copy
-        if (dstFile.fs.isInstanceOf[LocalFileSystem])
-            copyToLocal(dstFile, overwrite)
-        else
-            copyToRemote(dstFile, overwrite)
-    }
+    def copy(dst:File, overwrite:Boolean) : Unit
 
     /**
       * Creates a file and returns the correspondiong output stream
       * @param overwrite
       * @return
       */
-    def create(overwrite:Boolean = false) : FSDataOutputStream = {
-        fs.create(path, overwrite)
-    }
+    def create(overwrite:Boolean = false) : OutputStream
 
     /**
       * Opens an existing file and returns the corresponding input stream
       * @return
       */
-    def open() : FSDataInputStream = {
-        fs.open(path)
-    }
+    def open() : InputStream
 
     /**
       * Deletes the file and/or directory
       * @param recursive
       */
-    def delete(recursive:Boolean = false) : Unit = {
-        if (fs.exists(path) && !fs.delete(path, recursive)) {
-            throw new IOException(s"Cannot delete '$path'")
-        }
-    }
+    def delete(recursive:Boolean = false) : Unit
 
     /**
       * Returns true if the file exists. It can either be a file or a directory
       * @return
       */
-    def exists() : Boolean = {
-        fs.exists(path)
-    }
+    def exists() : Boolean
 
-    def mkdirs() : Unit = {
-        if (!fs.mkdirs(path))
-            throw new IOException(s"Cannot create directory '$path'")
-    }
+    def mkdirs() : Unit
 
     /**
       * Returns true if the file exists as a directory
       * @return
       */
-    def isDirectory() : Boolean = {
-      try {
-         fs.getFileStatus(path).isDirectory
-      }
-      catch {
-        case _: FileNotFoundException => false
-      }
-    }
+    def isDirectory() : Boolean
 
     /**
       * Returns true if the file exists as a normal file
       * @return
       */
-    def isFile() : Boolean = {
-      try {
-        fs.getFileStatus(path).isFile
-      }
-      catch {
-        case _: FileNotFoundException => false
-      }
-    }
+    def isFile() : Boolean
 
     /**
       * Returns true if the File is an absolute path
       * @return
       */
-    def isAbsolute() : Boolean = {
-        path.isAbsolute
-    }
+    def isAbsolute() : Boolean
 
     /**
       * Creates a new File instance with an additional suffix attached. This will not physically create the file
@@ -241,51 +145,7 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
       * @param suffix
       * @return
       */
-    def withSuffix(suffix:String) : File = {
-        File(fs, path.suffix(suffix))
-    }
+    def withSuffix(suffix:String) : File
 
-    def withName(name:String) : File = {
-        File(fs, new Path(path.getParent, name))
-    }
-
-    private def copyToLocal(dst:File, overwrite:Boolean) : Unit = {
-        val output = dst.create(overwrite)
-        try {
-            val input = open()
-            try {
-                IOUtils.copyBytes(input, output, 16384, true)
-            }
-            finally {
-                input.close()
-            }
-        }
-        catch {
-            case ex:Throwable =>
-                output.close()
-                dst.delete()
-                throw ex
-        }
-    }
-
-    private def copyToRemote(dst:File, overwrite:Boolean) : Unit = {
-        val tmp = dst.withSuffix("._COPYING_")
-        val output = tmp.create(overwrite)
-        try {
-            val input = open()
-            try {
-                IOUtils.copyBytes(input, output, 16384, true)
-                tmp.rename(dst)
-            }
-            finally {
-                input.close()
-            }
-        }
-        catch {
-            case ex:Throwable =>
-                output.close()
-                tmp.delete()
-                throw ex
-        }
-    }
+    def withName(name:String) : File
 }

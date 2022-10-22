@@ -85,7 +85,7 @@ class FileTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         file.isDirectory() should be (false)
 
         val newName = file.withName("lolo-" + System.currentTimeMillis().toString + ".tmp")
-        file.rename(newName)
+        file.rename(newName.path)
         file.exists() should be (false)
         file.isFile() should be (false)
         file.isDirectory() should be (false)

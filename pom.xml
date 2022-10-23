@@ -859,11 +859,11 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>3.4.0</version>
                     <configuration>
                         <shadedArtifactAttached>false</shadedArtifactAttached>
-                        <keepDependenciesWithProvidedScope>true</keepDependenciesWithProvidedScope>
-                        <createDependencyReducedPom>false</createDependencyReducedPom>
+                        <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
+                        <createDependencyReducedPom>true</createDependencyReducedPom>
                         <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
                         <shadeSourcesContent>true</shadeSourcesContent>
                         <createSourcesJar>true</createSourcesJar>

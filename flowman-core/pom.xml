@@ -111,10 +111,11 @@
         </dependency>
 
         <dependency>
+            <!-- Will be shaded -->
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity-engine-core</artifactId>
             <version>2.3</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>

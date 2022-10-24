@@ -17,10 +17,12 @@
 package com.dimajix.flowman.tools
 
 import java.io.File
+import java.net.URL
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 
+import com.dimajix.common.Resources
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Session
@@ -50,6 +52,10 @@ class Tool {
             .map(confDir => new File(confDir, "system.yml"))
             .filter(_.isFile)
             .map(file => SystemSettings.read.file(file))
+            .orElse(
+                Option(getResource("META-INF/flowman/conf/system.yml"))
+                    .map(SystemSettings.read.url)
+            )
             .getOrElse(SystemSettings.read.default())
 
         // Load all global plugins from System settings
@@ -62,11 +68,20 @@ class Tool {
             .map(confDir => new File(confDir, "default-namespace.yml"))
             .filter(_.isFile)
             .map(file => Namespace.read.file(file))
+            .orElse(
+                Option(getResource("META-INF/flowman/conf/default-namespace.yml"))
+                    .map(Namespace.read.url)
+            )
             .getOrElse(Namespace.read.default())
 
         // Load all plugins from Namespace
         ns.plugins.foreach(plugins.load)
         ns
+    }
+
+    private def getResource(name:String) : URL = {
+        val loader = Thread.currentThread.getContextClassLoader
+        loader.getResource(name)
     }
 
     def loadProject(projectPath:Path) : Project = {
@@ -75,6 +90,7 @@ class Tool {
         val fs = FileSystem(hadoopConfig)
 
         // Load Project. If no schema is specified, load from local file system
+        // TODO: Support resources in jar files
         val projectUri = projectPath.toUri
         if (projectUri.getAuthority == null && projectUri.getScheme == null)
             Project.read.file(fs.local(projectPath))

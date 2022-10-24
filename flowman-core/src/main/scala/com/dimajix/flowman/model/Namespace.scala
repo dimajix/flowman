@@ -72,7 +72,10 @@ object Namespace {
         def string(text:String) : Namespace = {
             reader.string(text)
         }
-        def default() : Namespace = defaultNamespace
+        def default() : Namespace = {
+            logger.info(s"Using Flowman default namespace settings")
+            defaultNamespace
+        }
 
         private def reader : NamespaceReader = {
             loader.find(_.supports(format))

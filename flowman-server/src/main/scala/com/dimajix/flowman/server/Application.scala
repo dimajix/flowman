@@ -42,6 +42,7 @@ object Application {
 
 class Application extends Tool {
     override protected def loadNamespace() : Namespace = {
+        // TODO: Fall back to resources if nothing is found
         val ns = ToolConfig.confDirectory
             .map(confDir => new File(confDir, "history-server.yml"))
             .filter(_.isFile)

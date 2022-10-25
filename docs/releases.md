@@ -23,6 +23,7 @@ changes over time.
 * github-265: Make JDBC dialects pluggable
 * github-264: Provide "jars" for all plugins
 * github-267: Add new flowman-spark-dependencies module to simplify dependency management
+* github-269: Create 'iterativeSql' mapping
 
 
 ### Version 0.28.0 - 2022-10-07

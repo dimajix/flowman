@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.mapping
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
@@ -142,6 +143,69 @@ class RecursiveSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkS
 
         val resultSchema = mapping.describe(executor, Map())
         resultSchema should be (Map(
+            "main" -> StructType(Seq(
+                Field("n", IntegerType, false),
+                Field("fact", IntegerType, false)
+            ))
+        ))
+    }
+
+    it should "throw an exception on unsupported query structure" in {
+        val spark = this.spark
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val executor = session.execution
+
+        val mapping = RecursiveSqlMapping(
+            Mapping.Properties(context),
+            Some(
+                """
+                  |SELECT
+                  |     n+1 AS n,
+                  |     (n+1)*fact AS fact
+                  |FROM __this__
+                  |WHERE n < 6
+                  |""".stripMargin),
+            None,
+            None
+        )
+
+        an[IllegalArgumentException] should be thrownBy (mapping.execute(executor, Map())("main"))
+        an[IllegalArgumentException] should be thrownBy (mapping.describe(executor, Map()))
+    }
+
+    it should "throw an exception on too many iterations" in {
+        val spark = this.spark
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val executor = session.execution
+
+        val mapping = RecursiveSqlMapping(
+            Mapping.Properties(context),
+            Some(
+                """
+                  |SELECT
+                  |     0 AS n,
+                  |     1 AS fact
+                  |
+                  |UNION DISTINCT
+                  |
+                  |SELECT
+                  |     n+1 AS n,
+                  |     (n+1)*fact AS fact
+                  |FROM __this__
+                  |WHERE n < 6
+                  |""".stripMargin),
+            None,
+            None,
+            maxIterations = 2
+        )
+
+        an[ExecutionException] should be thrownBy(mapping.execute(executor, Map())("main"))
+        val resultSchema = mapping.describe(executor, Map())
+        resultSchema should be(Map(
             "main" -> StructType(Seq(
                 Field("n", IntegerType, false),
                 Field("fact", IntegerType, false)

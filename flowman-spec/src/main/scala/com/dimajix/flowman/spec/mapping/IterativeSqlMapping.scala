@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright 2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,10 @@ import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.UnaryNode
 import org.apache.spark.sql.catalyst.plans.logical.Union
+import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.count
+import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.functions.not
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -50,28 +54,29 @@ import com.dimajix.spark.sql.DataFrameUtils.withTempViews
 import com.dimajix.spark.sql.SqlParser
 
 
-case class RecursiveSqlMapping(
+case class IterativeSqlMapping(
     instanceProperties:Mapping.Properties,
+    input:MappingOutputIdentifier,
     sql:Option[String],
     file:Option[Path] = None,
     url:Option[URL] = None,
-    maxIterations: Int = 99
+    maxIterations:Int = 99
 )
 extends BaseMapping {
     /**
-      * Resolves all dependencies required to build the SQL
-      *
-      * @return
-      */
+     * Resolves all dependencies required to build the SQL
+     *
+     * @return
+     */
     override def inputs : Set[MappingOutputIdentifier] = dependencies
 
     /**
-      * Executes this MappingType and returns a corresponding DataFrame
-      *
-      * @param execution
-      * @param input
-      * @return
-      */
+     * Executes this MappingType and returns a corresponding DataFrame
+     *
+     * @param execution
+     * @param input
+     * @return
+     */
     override def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]) : Map[String,DataFrame] = {
         require(execution != null)
         require(input != null)
@@ -79,42 +84,26 @@ extends BaseMapping {
         val statement = this.statement
 
         @tailrec
-        def fix(in:DataFrame, inCount:Long, iteration:Int=1) : DataFrame = {
+        def fix(in:DataFrame, iteration:Int=1) : DataFrame = {
             if (iteration > maxIterations)
                 throw new ExecutionException(s"Recursive mapping '$identifier' exceeded maximum iterations $maxIterations")
             val result = nextDf(statement, in)
-            val resultCount = result.count()
-            if (resultCount != inCount)
-                fix(result, resultCount, iteration+1)
+            if (!checkDataFramesEquals(in, result))
+                fix(result, iteration+1)
             else
                 result
         }
 
         // Register all input DataFrames as temp views
         val result = withTempViews(input.map(kv => kv._1.name -> kv._2)) {
-            val first = firstDf(execution.spark, statement)
-            fix(first, first.count())
+            val first = nextDf(statement, input(this.input))
+            fix(first)
         }
 
         Map("main" -> result)
     }
 
-    private def firstDf(spark:SparkSession, statement:String) : DataFrame = {
-        @tailrec
-        def findUnion(plan:LogicalPlan) : LogicalPlan = {
-            plan match {
-                case union:Union => union
-                case node:UnaryNode => findUnion(node.child)
-                case _ => throw new IllegalArgumentException(s"SQL provided in recursiveSql mapping '$identifier' is not supported. Please use a structure like  'SELECT starting_point UNION ALL recursion', where starting_point does not reference __this__.")
-            }
-        }
 
-        val plan = SqlParser.parsePlan(statement)
-        val union = findUnion(plan)
-        val firstChild = union.children.head
-        val resolvedStart = spark.sessionState.analyzer.execute(firstChild)
-        new Dataset[Row](spark, firstChild, RowEncoder(resolvedStart.schema))
-    }
     private def nextDf(statement:String, prev:DataFrame) : DataFrame = {
         val spark = prev.sparkSession
         withTempView("__this__", prev) {
@@ -122,12 +111,32 @@ extends BaseMapping {
         }
     }
 
+    private def checkDataFramesEquals(expected:DataFrame, result:DataFrame) : Boolean = {
+        val expectedCol = "assertDataFrameNoOrderEquals_expected"
+        val actualCol = "assertDataFrameNoOrderEquals_actual"
+        val expectedColumns = expected.columns.map(s => expected(s))
+        val expectedElementsCount = expected
+            .groupBy(expectedColumns: _*)
+            .agg(count(lit(1)).as(expectedCol))
+        val resultColumns = result.columns.map(s => result(s))
+        val resultElementsCount = result
+            .groupBy(resultColumns: _*)
+            .agg(count(lit(1)).as(actualCol))
+
+        val joinExprs = expected.columns
+            .map(s => expected.col(s) <=> result.col(s)).reduce(_.and(_))
+        val diff = expectedElementsCount
+            .join(resultElementsCount, joinExprs, "full_outer")
+            .filter(not(col(expectedCol) <=> col(actualCol)))
+        diff.take(1).length == 0
+    }
+
     /**
-      * Returns the schema as produced by this mapping, relative to the given input schema. The map might not contain
-      * schema information for all outputs, if the schema cannot be inferred.
-      * @param input
-      * @return
-      */
+     * Returns the schema as produced by this mapping, relative to the given input schema. The map might not contain
+     * schema information for all outputs, if the schema cannot be inferred.
+     * @param input
+     * @return
+     */
     override def describe(execution: Execution, input: Map[MappingOutputIdentifier, StructType]): Map[String, StructType] = {
         require(execution != null)
         require(input != null)
@@ -138,9 +147,10 @@ extends BaseMapping {
         val replacements = input.map { case (id,schema) =>
             id.name -> DataFrameBuilder.singleRow(spark, schema.sparkType)
         }
+        val firstDf = replacements(this.input.name)
 
         val result = withTempViews(replacements) {
-            firstDf(spark, statement)
+            nextDf(statement, firstDf)
         }
 
         // Apply documentation
@@ -151,7 +161,7 @@ extends BaseMapping {
     private lazy val dependencies = {
         SqlParser.resolveDependencies(statement)
             .filter(_.toLowerCase(Locale.ROOT) != "__this__")
-            .map(MappingOutputIdentifier.parse)
+            .map(MappingOutputIdentifier.parse) + input
     }
     private lazy val statement : String = {
         if (sql.exists(_.nonEmpty)) {
@@ -179,20 +189,22 @@ extends BaseMapping {
 }
 
 
-class RecursiveSqlMappingSpec extends MappingSpec {
+class IterativeSqlMappingSpec extends MappingSpec {
+    @JsonProperty(value="input", required = true) private var input: String = _
     @JsonProperty(value="sql", required=false) private var sql:Option[String] = None
     @JsonProperty(value="file", required=false) private var file:Option[String] = None
     @JsonProperty(value="url", required=false) private var url: Option[String] = None
     @JsonProperty(value="maxIterations", required=false) private var maxIterations: String = "99"
 
     /**
-      * Creates the instance of the specified Mapping with all variable interpolation being performed
-      * @param context
-      * @return
-      */
-    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): RecursiveSqlMapping = {
-        RecursiveSqlMapping(
+     * Creates the instance of the specified Mapping with all variable interpolation being performed
+     * @param context
+     * @return
+     */
+    override def instantiate(context: Context, properties:Option[Mapping.Properties] = None): IterativeSqlMapping = {
+        IterativeSqlMapping(
             instanceProperties(context, properties),
+            MappingOutputIdentifier(context.evaluate(input)),
             context.evaluate(sql),
             file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
             url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)),

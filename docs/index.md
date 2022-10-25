@@ -109,7 +109,7 @@ Flowman also provides optional plugins which extend functionality. You can find 
    spec/index
    testing/index
    documenting/index
-   workflow
+   workflow/index
    setup/index
    connectors/index
    plugins/index

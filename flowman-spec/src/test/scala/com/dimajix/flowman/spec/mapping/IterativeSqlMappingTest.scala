@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Kaya Kupferschmidt
+ * Copyright 2020-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.mapping
 
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.functions.col
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -28,10 +30,11 @@ import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StructType
+import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class IterativeSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession{
+class IterativeSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "The IterativeSqlMapping" should "be parseable" in {
         val spec =
             """
@@ -119,5 +122,57 @@ class IterativeSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkS
                 Field("n", IntegerType, false)
             ))
         ))
+    }
+
+    it should "support complex hierarchical lookups" in {
+        val spark = this.spark
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val executor = session.execution
+
+        val mapping = IterativeSqlMapping(
+            Mapping.Properties(context),
+            MappingOutputIdentifier("organization_hierarchy_start"),
+            Some(
+                """
+                  |SELECT
+                  |    COALESCE(parent.tree_id, t.tree_id) AS tree_id,
+                  |    t.account_number,
+                  |    t.parent_account_number,
+                  |    t.company_name
+                  |FROM organization_hierarchy_start t
+                  |LEFT JOIN __this__ parent
+                  |    ON t.parent_account_number = parent.account_number
+                  |""".stripMargin),
+            None,
+            None,
+            maxIterations = 99
+        )
+
+        val inputDf = spark.createDataFrame(Seq(
+                ("1000", null, "Company 1000"),
+                ("1100", "1000", "Company 1100"),
+                ("1110", "1100", "Company 1110"),
+                ("1111", "1110", "Company 1111"),
+                ("11111", "1111", "Company 11111"),
+                ("1200", "1000", "Company 1200"),
+                ("2000", null, "Company 2000")
+            ))
+            .withColumnRenamed("_1", "account_number")
+            .withColumnRenamed("_2", "parent_account_number")
+            .withColumnRenamed("_3", "company_name")
+            .withColumn("tree_id", col("account_number"))
+        val result = mapping.execute(executor, Map(MappingOutputIdentifier("organization_hierarchy_start") -> inputDf))("main")
+        val expected = Seq(
+            Row("1000", "1000", null, "Company 1000"),
+            Row("1000", "1100", "1000", "Company 1100"),
+            Row("1000", "1110", "1100", "Company 1110"),
+            Row("1000", "1111", "1110", "Company 1111"),
+            Row("1000", "11111", "1111", "Company 11111"),
+            Row("1000", "1200", "1000", "Company 1200"),
+            Row("2000", "2000", null, "Company 2000"),
+        )
+        DataFrameUtils.quickCompare(result.collect(), expected) should be (true)
     }
 }

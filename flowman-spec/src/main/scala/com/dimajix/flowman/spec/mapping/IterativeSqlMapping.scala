@@ -87,9 +87,10 @@ extends BaseMapping {
         def fix(in:DataFrame, iteration:Int=1) : DataFrame = {
             if (iteration > maxIterations)
                 throw new ExecutionException(s"Recursive mapping '$identifier' exceeded maximum iterations $maxIterations")
+
             val result = nextDf(statement, in)
-            if (!checkDataFramesEquals(in, result))
-                fix(result, iteration+1)
+            if (!DataFrameUtils.compare(in, result))
+                fix(result.localCheckpoint(false), iteration+1)
             else
                 result
         }
@@ -103,33 +104,13 @@ extends BaseMapping {
         Map("main" -> result)
     }
 
-
     private def nextDf(statement:String, prev:DataFrame) : DataFrame = {
         val spark = prev.sparkSession
         withTempView("__this__", prev) {
-            spark.sql(statement).localCheckpoint(false)
+            spark.sql(statement)
         }
     }
 
-    private def checkDataFramesEquals(expected:DataFrame, result:DataFrame) : Boolean = {
-        val expectedCol = "assertDataFrameNoOrderEquals_expected"
-        val actualCol = "assertDataFrameNoOrderEquals_actual"
-        val expectedColumns = expected.columns.map(s => expected(s))
-        val expectedElementsCount = expected
-            .groupBy(expectedColumns: _*)
-            .agg(count(lit(1)).as(expectedCol))
-        val resultColumns = result.columns.map(s => result(s))
-        val resultElementsCount = result
-            .groupBy(resultColumns: _*)
-            .agg(count(lit(1)).as(actualCol))
-
-        val joinExprs = expected.columns
-            .map(s => expected.col(s) <=> result.col(s)).reduce(_.and(_))
-        val diff = expectedElementsCount
-            .join(resultElementsCount, joinExprs, "full_outer")
-            .filter(not(col(expectedCol) <=> col(actualCol)))
-        diff.take(1).length == 0
-    }
 
     /**
      * Returns the schema as produced by this mapping, relative to the given input schema. The map might not contain

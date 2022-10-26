@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.execution
 
-import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -37,7 +36,6 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.text.TimeFormatter
 import com.dimajix.flowman.config.FlowmanConf
-import com.dimajix.flowman.execution.AbstractContext.Builder
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.StateStoreAdaptorListener
 import com.dimajix.flowman.history.TargetState
@@ -58,8 +56,6 @@ import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.flowman.spi.LogFilter
-import com.dimajix.flowman.types.FieldType
-import com.dimajix.flowman.types.LongType
 import com.dimajix.flowman.util.ConsoleColors._
 import com.dimajix.spark.SparkUtils.withJobGroup
 
@@ -432,7 +428,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         }
         catch {
             case NonFatal(ex) =>
-                logger.error("Cannot retrieve status from history database.", ex)
+                logger.error(s"Cannot retrieve status from history database. Exception:\n  ${ExceptionUtils.reasons(ex)}")
                 false
         }
     }
@@ -535,7 +531,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
         catch {
             // Catch all exceptions
             case NonFatal(ex) =>
-                logger.error(s"Caught exception during $title:", ex)
+                logger.error(s"Caught exception during $title: ${reasons(ex)}")
                 Status.FAILED
         }
     }

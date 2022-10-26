@@ -17,11 +17,15 @@
 package com.dimajix.spark.testing
 
 import java.io.File
+import java.io.IOException
+import java.net.URL
+import java.util.Properties
 
 import scala.util.control.NonFatal
 
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hive.common.util.HiveVersionInfo
+import org.apache.log4j.PropertyConfigurator
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -53,6 +57,8 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
 
     override def beforeAll() : Unit = {
         super.beforeAll()
+
+        configureLogging()
 
         val builder = SparkSession.builder()
             .master("local[4]")
@@ -141,5 +147,29 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
         }
 
         super.afterAll()
+    }
+
+    private def configureLogging(): Unit = {
+        val loader = Thread.currentThread.getContextClassLoader
+        val configUrl = loader.getResource("com/dimajix/spark/testing/log4j.properties")
+        val props = loadProperties(configUrl)
+        PropertyConfigurator.configure(props)
+    }
+
+    private def loadProperties(url: URL): Properties = {
+        try {
+            val urlConnection = url.openConnection
+            urlConnection.setUseCaches(false)
+            val inputStream = urlConnection.getInputStream
+            try {
+                val loaded = new Properties
+                loaded.load(inputStream)
+                loaded
+            } finally {
+                inputStream.close()
+            }
+        } catch {
+            case e: IOException => null
+        }
     }
 }

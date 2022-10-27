@@ -9,6 +9,7 @@
 * github-267: Add new flowman-spark-dependencies module to simplify dependency management
 * github-269: Implement new 'iterativeSql' mapping
 * github-270: Upgrade Spark to 3.3.1
+* github-271: Upgrade Delta to 2.1.1
 
 
 # Version 0.28.0 - 2022-10-07

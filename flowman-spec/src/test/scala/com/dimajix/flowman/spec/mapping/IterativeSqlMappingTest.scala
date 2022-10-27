@@ -171,7 +171,7 @@ class IterativeSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkS
             Row("1000", "1111", "1110", "Company 1111"),
             Row("1000", "11111", "1111", "Company 11111"),
             Row("1000", "1200", "1000", "Company 1200"),
-            Row("2000", "2000", null, "Company 2000"),
+            Row("2000", "2000", null, "Company 2000")
         )
         DataFrameUtils.quickCompare(result.collect(), expected) should be (true)
     }

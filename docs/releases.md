@@ -24,6 +24,7 @@ changes over time.
 * github-264: Provide "jars" for all plugins
 * github-267: Add new flowman-spark-dependencies module to simplify dependency management
 * github-269: Create 'iterativeSql' mapping
+* github-270: Upgrade Spark to 3.3.1
 
 
 ### Version 0.28.0 - 2022-10-07

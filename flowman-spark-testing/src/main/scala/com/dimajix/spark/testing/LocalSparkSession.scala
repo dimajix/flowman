@@ -58,7 +58,7 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
     override def beforeAll() : Unit = {
         super.beforeAll()
 
-        configureLogging()
+        setupLogging()
 
         val builder = SparkSession.builder()
             .master("local[4]")
@@ -149,27 +149,17 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
         super.afterAll()
     }
 
-    private def configureLogging(): Unit = {
+    protected def setupLogging(): Unit = {
         val loader = Thread.currentThread.getContextClassLoader
         val configUrl = loader.getResource("com/dimajix/spark/testing/log4j.properties")
-        val props = loadProperties(configUrl)
-        PropertyConfigurator.configure(props)
+        setupLogging(configUrl)
     }
 
-    private def loadProperties(url: URL): Properties = {
-        try {
-            val urlConnection = url.openConnection
-            urlConnection.setUseCaches(false)
-            val inputStream = urlConnection.getInputStream
-            try {
-                val loaded = new Properties
-                loaded.load(inputStream)
-                loaded
-            } finally {
-                inputStream.close()
-            }
-        } catch {
-            case e: IOException => null
+    protected def setupLogging(url: URL): Unit = {
+        val log4j = System.getProperty("log4j.configuration")
+        if (log4j == null || log4j.isEmpty) {
+            val loader = Thread.currentThread.getContextClassLoader
+            PropertyConfigurator.configure(url)
         }
     }
 }

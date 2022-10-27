@@ -117,9 +117,9 @@ case class GroupedAggregateMapping(
         val allGroupings = performGroupedAggregation(filteredInput, dimensionColumns, groupingColumns)
 
         // This is a workaround for newer Spark version, which apparently use a different mechanism to derive
-        // grouping-ids than Spark up until 3.1.x
+        // grouping-ids than Spark up until 3.1.x. It was changed back in Spark 3.3.1
         val dimensionIndices2 = {
-            if (org.apache.spark.SPARK_VERSION >= "3.2")
+            if (org.apache.spark.SPARK_VERSION >= "3.2" && org.apache.spark.SPARK_VERSION < "3.3.1")
                 groups.values.flatMap(g => g.dimensions ++ g.filter.map(f => filterNames(filterIndices(f)))).toSeq.distinct.zipWithIndex.toMap
             else
                 dimensionIndices

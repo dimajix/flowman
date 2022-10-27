@@ -173,7 +173,7 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
         )
 
         mapping.input should be (MappingOutputIdentifier("data"))
-        mapping.outputs.toSet should be (Set("g1", "g2", "g3", "cache"))
+        mapping.outputs should be (Set("g1", "g2", "g3", "cache"))
 
         val data = execution.spark.createDataFrame(Seq(
             ("c1_v1", "c2_v1", "c3_v1", 23.0),

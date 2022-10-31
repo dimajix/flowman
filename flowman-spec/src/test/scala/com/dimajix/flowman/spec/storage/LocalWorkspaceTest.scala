@@ -20,7 +20,7 @@ import org.apache.hadoop.conf.Configuration
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.spark.testing.LocalTempDir
 
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.hadoop
+package com.dimajix.flowman.fs
 
 import java.io.InputStream
 import java.io.OutputStream
@@ -33,7 +33,7 @@ object File {
   * @param fs
   * @param path
   */
-abstract  class File {
+abstract class File {
     override def toString: String = if (path != null) path.toString else ""
 
     def path : Path
@@ -49,7 +49,7 @@ abstract  class File {
       * Returns the file name of the File
       * @return
       */
-    def filename : String = {
+    def name : String = {
         path.getName
     }
 
@@ -71,15 +71,13 @@ abstract  class File {
       */
     def length : Long
 
-    def resolve(name:String) : File
-
     /**
       * Lists all directory entries. Will throw an exception if the File is not a directory
       * @return
       */
     def list() : Seq[File]
 
-    def glob(pattern:Path) : Seq[File]
+    def glob(pattern:String) : Seq[File]
 
     /**
       * Renamed the file to a different name
@@ -95,7 +93,7 @@ abstract  class File {
     def copy(dst:File, overwrite:Boolean) : Unit
 
     /**
-      * Creates a file and returns the correspondiong output stream
+      * Creates a file and returns the corresponding output stream. Intermediate directories will be created as required.
       * @param overwrite
       * @return
       */
@@ -148,4 +146,5 @@ abstract  class File {
     def withSuffix(suffix:String) : File
 
     def withName(name:String) : File
+
 }

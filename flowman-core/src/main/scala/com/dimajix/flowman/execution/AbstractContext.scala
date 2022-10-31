@@ -24,7 +24,7 @@ import org.slf4j.Logger
 
 import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
-import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.Profile
 import com.dimajix.flowman.model.Prototype

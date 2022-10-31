@@ -19,7 +19,7 @@ package com.dimajix.flowman.spi
 import java.io.IOException
 import java.io.InputStream
 
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.Module
 
 

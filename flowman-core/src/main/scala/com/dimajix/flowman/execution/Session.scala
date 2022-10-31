@@ -29,7 +29,7 @@ import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.documentation.Documenter
 import com.dimajix.flowman.execution.Session.builder
-import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.history.NullStateStore
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.metric.MetricSystem

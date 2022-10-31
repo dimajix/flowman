@@ -28,7 +28,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.graph.Graph
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model
 import com.dimajix.flowman.model.AbstractInstance
 import com.dimajix.flowman.model.Job

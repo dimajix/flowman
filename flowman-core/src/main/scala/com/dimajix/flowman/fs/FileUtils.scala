@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.hadoop
+package com.dimajix.flowman.fs
 
 import java.io.FileNotFoundException
 

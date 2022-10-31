@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.hadoop
+package com.dimajix.flowman.fs
 
 import java.net.URI
+import java.nio.file.FileSystemNotFoundException
+import java.nio.file.Paths
+import java.util.Collections
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.LocalFileSystem
 import org.apache.hadoop.fs.Path
+
+import com.dimajix.common.Resources
 
 
 /**
@@ -28,8 +32,6 @@ import org.apache.hadoop.fs.Path
   * @param conf
   */
 case class FileSystem(conf:Configuration) {
-    private val localFs = org.apache.hadoop.fs.FileSystem.getLocal(conf)
-
     def file(path:Path) : File = {
         val fs = path.getFileSystem(conf)
         HadoopFile(fs, path)
@@ -37,8 +39,25 @@ case class FileSystem(conf:Configuration) {
     def file(path:String) : File = file(new Path(path))
     def file(path:URI) : File = file(new Path(path))
 
-    def local(path:Path) : File = HadoopFile(localFs, path)
-    def local(path:String) : File = local(new Path(path))
-    def local(path:java.io.File) : File = local(new Path(path.toString))
-    def local(path:URI) : File = local(new Path(path))
+    def local(path:Path) : File = local(path.toUri)
+    def local(path:String) : File = JavaFile(Paths.get(path))
+    def local(path:java.io.File) : File = JavaFile(path.toPath)
+    def local(path:URI) : File = JavaFile(Paths.get(path))
+
+    def resource(path:String) : File = {
+        val uri = Resources.getURL(path).toURI
+        if (uri.getScheme == "jar") {
+            try {
+                java.nio.file.FileSystems.getFileSystem(uri)
+            }
+            catch {
+                case _: FileSystemNotFoundException =>
+                    java.nio.file.FileSystems.newFileSystem(uri, Collections.emptyMap[String, String]())
+            }
+            JavaFile(Paths.get(uri))
+        }
+        else {
+            JavaFile(Paths.get(uri))
+        }
+    }
 }

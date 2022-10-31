@@ -33,7 +33,7 @@ import org.apache.spark.sql.internal.SQLConf
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Namespace

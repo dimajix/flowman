@@ -26,7 +26,7 @@ import com.dimajix.common.Resources
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.SystemSettings

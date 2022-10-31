@@ -22,7 +22,7 @@ import org.apache.hadoop.fs.Path
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.model.DuplicateEntityException
 import com.dimajix.flowman.model.Project
 

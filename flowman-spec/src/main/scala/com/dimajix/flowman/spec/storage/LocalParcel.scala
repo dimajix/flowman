@@ -28,7 +28,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.io.IOUtils
 
 import com.dimajix.common.tryWith
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.ToSpec
 import com.dimajix.flowman.storage.AbstractParcel
@@ -59,7 +59,7 @@ case class LocalParcel(override val name:String, override val root:File) extends
         if (!targz.isFile())
             throw new IOException(s"Source file '$targz' doesn't exists!")
 
-        root.glob(new org.apache.hadoop.fs.Path("*")).foreach(_.delete(true))
+        root.glob("*").foreach(_.delete(true))
         decompressTarGzipFile(targz, root)
     }
 

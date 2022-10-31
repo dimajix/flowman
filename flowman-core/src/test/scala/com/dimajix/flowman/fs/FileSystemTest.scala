@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.hadoop
+package com.dimajix.flowman.fs
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -22,7 +22,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class FileTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "A local File" should "be useable with simple strings" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
@@ -32,7 +32,7 @@ class FileTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         tmpFromString.isDirectory() should be (true)
     }
 
-    it should "be useable with Files" in {
+    it should "be usable with Files" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val tmpFromUri = fs.local(tempDir)
@@ -41,7 +41,7 @@ class FileTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         tmpFromUri.isDirectory() should be (true)
     }
 
-    it should "be useable with URIs" in {
+    it should "be usable with URIs" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val tmpFromUri = fs.local(tempDir.toURI)
@@ -97,5 +97,37 @@ class FileTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         newName.exists() should be (false)
         newName.isFile() should be (false)
         newName.isDirectory() should be (false)
+    }
+
+    it should "support resources somewhere" in {
+        val conf = spark.sparkContext.hadoopConfiguration
+        val fs = FileSystem(conf)
+        val file = fs.resource("com/dimajix/flowman/flowman.properties")
+        file.exists() should be(true)
+        file.isFile() should be(true)
+        file.isAbsolute() should be(true)
+        file.isDirectory() should be(false)
+
+        val dir = fs.resource("com/dimajix/flowman")
+        dir.exists() should be(true)
+        dir.isFile() should be(false)
+        dir.isAbsolute() should be(true)
+        dir.isDirectory() should be(true)
+    }
+
+    it should "support resources in JARs" in {
+        val conf = spark.sparkContext.hadoopConfiguration
+        val fs = FileSystem(conf)
+        val file = fs.resource("org/apache/spark/log4j2-defaults.properties")
+        file.exists() should be(true)
+        file.isFile() should be(true)
+        file.isAbsolute() should be(true)
+        file.isDirectory() should be(false)
+
+        val dir = fs.resource("org/apache/spark")
+        dir.exists() should be(true)
+        dir.isFile() should be(false)
+        dir.isAbsolute() should be(true)
+        dir.isDirectory() should be(true)
     }
 }

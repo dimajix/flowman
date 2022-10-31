@@ -17,7 +17,7 @@
 package com.dimajix.flowman.spec
 
 import com.dimajix.flowman.documentation.Documenter
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.spec.documentation.DocumenterSpec
 import com.dimajix.flowman.spi.DocumenterReader

@@ -25,7 +25,7 @@ import org.apache.spark.SparkConf
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.config.FlowmanConf
-import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.ConnectionIdentifier
 import com.dimajix.flowman.model.Job

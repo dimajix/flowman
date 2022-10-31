@@ -24,8 +24,8 @@ import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.hadoop.File
-import com.dimajix.flowman.hadoop.GlobPattern
+import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.fs.GlobPattern
 import com.dimajix.flowman.spi.ModuleReader
 
 
@@ -96,7 +96,7 @@ object Module {
                     val patterns = reader.globPatterns.map(GlobPattern(_))
                     file.list()
                         .par
-                        .filter(f => f.isFile() && patterns.exists(_.matches(f.filename)))
+                        .filter(f => f.isFile() && patterns.exists(_.matches(f.name)))
                         .map(f => loadFile(f))
                         .foldLeft(Module())((l, r) => l.merge(r))
                 }
@@ -114,7 +114,7 @@ object Module {
                     val patterns = reader.globPatterns.map(GlobPattern(_))
                     file.list()
                         .par
-                        .filter(f => f.isFile() && patterns.exists(_.matches(f.filename)))
+                        .filter(f => f.isFile() && patterns.exists(_.matches(f.name)))
                         .map(f => f -> loadFile(f))
                         .seq
                 }

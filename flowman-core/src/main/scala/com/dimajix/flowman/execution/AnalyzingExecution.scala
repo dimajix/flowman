@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.FlowmanConf
-import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Assertion

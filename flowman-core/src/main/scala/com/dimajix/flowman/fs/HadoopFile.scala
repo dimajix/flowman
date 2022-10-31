@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.hadoop
+package com.dimajix.flowman.fs
 
 import java.io.FileNotFoundException
 import java.io.IOException
+import java.net.URI
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FSDataInputStream
@@ -42,7 +43,11 @@ case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) extends Fil
       * @return
       */
     def /(sub:String) : File = {
-        HadoopFile(fs, new Path(path, sub))
+        val rel = new Path(new URI(sub))
+        if (rel.isAbsolute)
+            HadoopFile(fs, rel)
+        else
+            HadoopFile(fs, new Path(path, sub))
     }
 
     /**
@@ -50,7 +55,17 @@ case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) extends Fil
       * @return
       */
     def parent : File = {
-        HadoopFile(fs, path.getParent)
+        val p = path.getParent
+        if (p == null) {
+            this
+        }
+        else if (p.getName.isEmpty) {
+            HadoopFile(fs, p)
+        }
+        else {
+            val uri = new URI(p.toUri.toString + "/")
+            HadoopFile(fs, new Path(uri))
+        }
     }
 
     /**
@@ -69,10 +84,6 @@ case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) extends Fil
         fs.getFileStatus(path).getLen
     }
 
-    def resolve(name:String) : File = {
-        HadoopFile(fs, new Path(path.toUri.resolve(name)))
-    }
-
     /**
       * Lists all directory entries. Will throw an exception if the File is not a directory
       * @return
@@ -86,7 +97,7 @@ case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) extends Fil
             .map(_._2)
     }
 
-    def glob(pattern:Path) : Seq[File] = {
+    def glob(pattern:String) : Seq[File] = {
         if (!isDirectory())
             throw new IOException(s"File '$path' is not a directory - cannot list files")
         fs.globStatus(new Path(path, pattern))
@@ -134,7 +145,7 @@ case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) extends Fil
     }
 
     /**
-      * Creates a file and returns the correspondiong output stream
+      * Creates a file and returns the corresponding output stream. Intermediate directories will be created as required.
       * @param overwrite
       * @return
       */

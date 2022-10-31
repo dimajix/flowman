@@ -34,7 +34,7 @@ import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
-import com.dimajix.flowman.hadoop.FileCollector
+import com.dimajix.flowman.fs.FileCollector
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema

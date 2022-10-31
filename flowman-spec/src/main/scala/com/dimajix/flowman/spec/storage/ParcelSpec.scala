@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 import com.dimajix.common.TypeRegistry
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.spec.annotation.ParcelType
 import com.dimajix.flowman.spi.ClassAnnotationHandler
 import com.dimajix.flowman.storage.Parcel

@@ -22,7 +22,7 @@ import org.apache.hadoop.{fs => hdfs}
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Environment
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model
 import com.dimajix.flowman.model.Identifier
 import com.dimajix.flowman.model.Instance

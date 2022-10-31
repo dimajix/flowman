@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.storage
 
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.AbstractInstance
 
 

@@ -24,6 +24,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.util.Comparator
+import java.util.function.Consumer
 import java.util.stream.Collectors
 
 import scala.collection.JavaConverters._
@@ -151,7 +152,9 @@ case class JavaFile(jpath:Path) extends File {
         if (recursive) {
             Files.walk(jpath)
                 .sorted(Comparator.reverseOrder[Path]())
-                .forEach(p => p.toFile.delete())
+                .forEach(new Consumer[Path] {
+                    override def accept(t: Path): Unit = t.toFile.delete()
+                })
         }
         else {
             Files.delete(jpath)

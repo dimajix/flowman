@@ -33,19 +33,41 @@ import com.dimajix.common.Resources
   */
 case class FileSystem(conf:Configuration) {
     def file(path:Path) : File = {
-        val fs = path.getFileSystem(conf)
-        HadoopFile(fs, path)
+        if (path.toUri.getScheme == "jar") {
+            resource(path.toUri)
+        }
+        else {
+            val fs = path.getFileSystem(conf)
+            HadoopFile(fs, path)
+        }
     }
-    def file(path:String) : File = file(new Path(path))
+    def file(path:String) : File = {
+        val uri = new URI(path)
+        if (uri.getScheme == "jar")
+            resource(uri)
+        else
+            file(new Path(path))
+    }
     def file(path:URI) : File = file(new Path(path))
 
     def local(path:Path) : File = local(path.toUri)
     def local(path:String) : File = JavaFile(Paths.get(path))
     def local(path:java.io.File) : File = JavaFile(path.toPath)
-    def local(path:URI) : File = JavaFile(Paths.get(path))
+    def local(path:URI) : File = {
+        if (path.getScheme == null) {
+            val uri = new URI("file", path.getUserInfo, path.getHost, path.getPort, path.getPath, path.getQuery, path.getFragment)
+            JavaFile(Paths.get(uri))
+        }
+        else {
+            JavaFile(Paths.get(path))
+        }
+    }
 
     def resource(path:String) : File = {
         val uri = Resources.getURL(path).toURI
+        resource(uri)
+    }
+    def resource(uri:URI) : File = {
         if (uri.getScheme == "jar") {
             try {
                 java.nio.file.FileSystems.getFileSystem(uri)

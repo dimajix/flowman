@@ -23,11 +23,13 @@ import java.util.Properties
 class Resources
 object Resources {
     def getURL(resourceName:String) : URL = {
-        classOf[Resources].getClassLoader.getResource(resourceName)
+        val loader = Thread.currentThread.getContextClassLoader
+        loader.getResource(resourceName)
     }
 
     def loadProperties(resourceName:String) : Properties = {
-        val url = classOf[Resources].getClassLoader.getResource(resourceName)
+        val loader = Thread.currentThread.getContextClassLoader
+        val url = loader.getResource(resourceName)
         loadProperties(url)
     }
 

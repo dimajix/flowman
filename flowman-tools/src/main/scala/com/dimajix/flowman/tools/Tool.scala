@@ -53,7 +53,7 @@ class Tool {
             .filter(_.isFile)
             .map(file => SystemSettings.read.file(file))
             .orElse(
-                Option(getResource("META-INF/flowman/conf/system.yml"))
+                Option(Resources.getURL("META-INF/flowman/conf/system.yml"))
                     .map(SystemSettings.read.url)
             )
             .getOrElse(SystemSettings.read.default())
@@ -69,7 +69,7 @@ class Tool {
             .filter(_.isFile)
             .map(file => Namespace.read.file(file))
             .orElse(
-                Option(getResource("META-INF/flowman/conf/default-namespace.yml"))
+                Option(Resources.getURL("META-INF/flowman/conf/default-namespace.yml"))
                     .map(Namespace.read.url)
             )
             .getOrElse(Namespace.read.default())
@@ -77,11 +77,6 @@ class Tool {
         // Load all plugins from Namespace
         ns.plugins.foreach(plugins.load)
         ns
-    }
-
-    private def getResource(name:String) : URL = {
-        val loader = Thread.currentThread.getContextClassLoader
-        loader.getResource(name)
     }
 
     def loadProject(projectPath:Path) : Project = {

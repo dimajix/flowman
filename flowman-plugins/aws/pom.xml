@@ -229,6 +229,35 @@
                 </dependency>
             </dependencies>
         </profile>
+
+        <profile>
+            <id>EMR-6.8</id>
+            <properties>
+                <aws.version>1.12.170</aws.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-core</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-dynamodb</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-kms</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-s3</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
     </profiles>
 
     <build>

@@ -65,6 +65,12 @@
             </build>
         </profile>
         <profile>
+            <id>EMR-6.8</id>
+            <properties>
+                <delta.version>2.1.1</delta.version>
+            </properties>
+        </profile>
+        <profile>
             <id>spark-2.4</id>
             <properties>
                 <delta.version>0.6.1</delta.version>

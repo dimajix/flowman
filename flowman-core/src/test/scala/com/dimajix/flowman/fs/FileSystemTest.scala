@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.fs
 
+import java.nio.file.NoSuchFileException
+
 import org.apache.hadoop.fs.Path
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -191,6 +193,8 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         dir.isFile() should be(false)
         dir.isAbsolute() should be(true)
         dir.isDirectory() should be(true)
+
+        a[NoSuchFileException] should be thrownBy (fs.resource("com/dimajix/flowman/no-such-file"))
     }
 
     it should "support resources in JARs" in {
@@ -207,6 +211,8 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         dir.isFile() should be(false)
         dir.isAbsolute() should be(true)
         dir.isDirectory() should be(true)
+
+        a[NoSuchFileException] should be thrownBy (fs.resource("org/apache/spark/no-such-file"))
     }
 
     "FileSystem.file" should "support resources somewhere via 'file(URI)'" in {
@@ -244,7 +250,7 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     it should "support resources in JARs via 'file(URI)'" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
-        val file = fs.file(Resources.getURL("org/apache/spark/log4j2-defaults.properties").toURI)
+        val file = fs.file(Resources.getURL("org/apache/spark/SparkContext.class").toURI)
         file.exists() should be(true)
         file.isFile() should be(true)
         file.isAbsolute() should be(true)
@@ -260,7 +266,7 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     it should "support resources in JARs via 'file(String)'" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
-        val file = fs.file(Resources.getURL("org/apache/spark/log4j2-defaults.properties").toString)
+        val file = fs.file(Resources.getURL("org/apache/spark/SparkContext.class").toString)
         file.exists() should be(true)
         file.isFile() should be(true)
         file.isAbsolute() should be(true)

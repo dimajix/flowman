@@ -18,6 +18,7 @@ package com.dimajix.flowman.fs
 
 import java.net.URI
 import java.nio.file.FileSystemNotFoundException
+import java.nio.file.NoSuchFileException
 import java.nio.file.Paths
 import java.util.Collections
 
@@ -64,7 +65,10 @@ case class FileSystem(conf:Configuration) {
     }
 
     def resource(path:String) : File = {
-        val uri = Resources.getURL(path).toURI
+        val url = Resources.getURL(path)
+        if (url == null)
+            throw new NoSuchFileException(s"Resource '$path' not found")
+        val uri = url.toURI
         resource(uri)
     }
     def resource(uri:URI) : File = {

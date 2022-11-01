@@ -19,9 +19,9 @@ package com.dimajix.flowman.fs
 import java.nio.file.Paths
 import java.util.Collections
 
+import org.apache.hadoop.fs
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.apache.hadoop.fs
 
 import com.dimajix.common.Resources
 import com.dimajix.spark.testing.LocalTempDir
@@ -102,7 +102,7 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
     }
 
     it should "support resources in JARs" in {
-        val res = Resources.getURL("org/apache/spark/log4j2-defaults.properties")
+        val res = Resources.getURL("org/apache/spark/SparkContext.class")
         val xyz = java.nio.file.FileSystems.newFileSystem(res.toURI, Collections.emptyMap[String,String]())
         val file = JavaFile(Paths.get(res.toURI))
         file.exists() should be(true)

@@ -200,7 +200,7 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     it should "support resources in JARs" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
-        val file = fs.resource("org/apache/spark/log4j2-defaults.properties")
+        val file = fs.resource("org/apache/spark/SparkContext.class")
         file.exists() should be(true)
         file.isFile() should be(true)
         file.isAbsolute() should be(true)

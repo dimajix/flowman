@@ -18,6 +18,7 @@ package com.dimajix.flowman.fs
 
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.URI
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
@@ -38,6 +39,8 @@ abstract class File {
 
     def path : Path
 
+    def uri : URI
+
     /**
       * Creates a new File object by attaching a child entry
       * @param sub
@@ -49,9 +52,7 @@ abstract class File {
       * Returns the file name of the File
       * @return
       */
-    def name : String = {
-        path.getName
-    }
+    def name : String
 
     /**
       * Returns the parent directory of the File

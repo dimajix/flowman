@@ -33,7 +33,11 @@ import org.apache.hadoop.fs
 
 
 case class JavaFile(jpath:Path) extends File {
-    override def path: fs.Path = new fs.Path(jpath.toUri)
+    override def toString: String = uri.toString
+
+    override def path: fs.Path = new fs.Path(uri)
+
+    override def uri : URI = new URI(jpath.toUri.toString.replace("file:///", "file:/"))
 
     /**
      * Creates a new File object by attaching a child entry
@@ -47,6 +51,16 @@ case class JavaFile(jpath:Path) extends File {
             JavaFile(Paths.get(uri))
         else
             JavaFile(jpath.resolve(sub))
+    }
+
+    /**
+     * Returns the file name of the File
+     *
+     * @return
+     */
+    override def name : String = {
+        val n = jpath.getFileName
+        if (n != null) n.toString else ""
     }
 
     /**

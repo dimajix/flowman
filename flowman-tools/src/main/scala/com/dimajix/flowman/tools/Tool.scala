@@ -17,10 +17,9 @@
 package com.dimajix.flowman.tools
 
 import java.io.File
-import java.net.URL
+import java.net.URI
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
 
 import com.dimajix.common.Resources
 import com.dimajix.flowman.common.ToolConfig
@@ -79,17 +78,23 @@ class Tool {
         ns
     }
 
-    def loadProject(projectPath:Path) : Project = {
+    def loadProject(projectPath:String) : Project = {
         // Create Hadoop FileSystem instance
         val hadoopConfig = new Configuration()
         val fs = FileSystem(hadoopConfig)
 
         // Load Project. If no schema is specified, load from local file system
-        val projectUri = projectPath.toUri
-        if (projectUri.getAuthority == null && projectUri.getScheme == null)
-            Project.read.file(fs.local(projectPath))
-        else
-            Project.read.file(fs.file(projectPath))
+        val uri = new URI(projectPath)
+        val file =
+            if (uri.getAuthority == null && uri.getScheme == null)
+                fs.local(projectPath)
+            else
+                fs.file(projectPath)
+        loadProject(file)
+    }
+
+    def loadProject(file:com.dimajix.flowman.fs.File) : Project = {
+        Project.read.file(file)
     }
 
     def createSession(

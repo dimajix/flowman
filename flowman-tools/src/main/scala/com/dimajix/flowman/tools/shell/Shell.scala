@@ -17,6 +17,7 @@
 package com.dimajix.flowman.tools.shell
 
 import java.io.File
+import java.net.URI
 
 import scala.collection.JavaConverters._
 import scala.util.Failure
@@ -96,7 +97,7 @@ object Shell {
             Logging.setSparkLogging(options.sparkLogging)
 
             _instance = new Shell(options)
-            _instance.loadProject(new Path(options.projectFile))
+            _instance.loadProject(options.projectFile)
             _instance.run()
         }
     }

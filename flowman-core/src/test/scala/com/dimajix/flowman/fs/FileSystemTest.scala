@@ -49,6 +49,7 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val file = fs.local("target/classes")
+        file.name should be ("classes")
         file.exists() should be(true)
         file.isFile() should be(false)
         file.isDirectory() should be(true)
@@ -58,6 +59,8 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val tmpFromUri = fs.local(new Path(tempDir.toString))
+        //tmpFromUri.path should be (new Path("file:" + tempDir.toString + "/"))
+        tmpFromUri.path should be (new Path(tempDir.toURI))
         tmpFromUri.exists() should be(true)
         tmpFromUri.isFile() should be(false)
         tmpFromUri.isDirectory() should be(true)
@@ -67,6 +70,8 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val tmpFromUri = fs.local(tempDir.toURI)
+        //tmpFromUri.path should be(new Path("file:" + tempDir.toString + "/"))
+        tmpFromUri.path should be(new Path(tempDir.toURI))
         tmpFromUri.exists() should be (true)
         tmpFromUri.isFile() should be (false)
         tmpFromUri.isDirectory() should be (true)
@@ -76,7 +81,9 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val tmp = fs.local(tempDir)
-        val file = tmp / ("lala-" + System.currentTimeMillis().toString + ".tmp")
+        val name = "lala-" + System.currentTimeMillis().toString + ".tmp"
+        val file = tmp / name
+        file.name should be (name)
         file.exists() should be (false)
         file.isFile() should be (false)
         file.isDirectory() should be (false)

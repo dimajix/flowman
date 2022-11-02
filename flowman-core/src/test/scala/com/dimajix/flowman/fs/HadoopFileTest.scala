@@ -16,8 +16,11 @@
 
 package com.dimajix.flowman.fs
 
+import java.net.URI
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs
+import org.apache.hadoop.fs.Path
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -29,6 +32,7 @@ class HadoopFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
 
     "The HadoopFile" should "work" in {
         val dir = HadoopFile(localFs, new fs.Path(tempDir.toURI))
+        dir.uri should be (tempDir.toURI)
         dir.path should be (new fs.Path(tempDir.toURI))
         dir.exists() should be (true)
         dir.isFile() should be (false)
@@ -38,6 +42,9 @@ class HadoopFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
         (dir / dir.toString) should be (dir)
 
         val file = dir / "lala"
+        file.uri should be(tempDir.toURI.resolve("lala"))
+        file.path should be(new Path(tempDir.toURI.resolve("lala")))
+        file.path should be(new Path(tempDir.toURI.toString, "lala"))
         file.exists() should be (false)
         file.isFile() should be (false)
         file.isDirectory() should be (false)
@@ -50,6 +57,8 @@ class HadoopFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
     it should "work at root level" in {
         val dir = HadoopFile(localFs, new fs.Path("file:/"))
         dir.parent should be (dir)
+        dir.uri should be (new URI("file:/"))
+        dir.name should be ("")
         dir.path should be(new fs.Path("file:/"))
         dir.exists() should be(true)
         dir.isFile() should be(false)

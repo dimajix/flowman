@@ -16,10 +16,12 @@
 
 package com.dimajix.flowman.fs
 
+import java.net.URI
 import java.nio.file.Paths
 import java.util.Collections
 
 import org.apache.hadoop.fs
+import org.apache.hadoop.fs.Path
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -30,6 +32,7 @@ import com.dimajix.spark.testing.LocalTempDir
 class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
     "The JavaFile" should "work" in {
         val dir = JavaFile(tempDir.toPath)
+        dir.uri should be (tempDir.toURI)
         dir.path should be (new fs.Path(tempDir.toURI))
         dir.exists() should be (true)
         dir.isFile() should be (false)
@@ -39,6 +42,8 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
         (dir / dir.toString) should be (dir)
 
         val file = dir / "lala"
+        file.name should be ("lala")
+        file.uri should be (tempDir.toURI.resolve("lala"))
         file.exists() should be(false)
         file.isFile() should be(false)
         file.isDirectory() should be(false)
@@ -51,6 +56,8 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
     it should "work at root level" in {
         val dir = JavaFile(tempDir.toPath.getRoot)
         dir.parent should be (dir)
+        dir.name should be ("")
+        dir.uri should be(new URI("file:/"))
         dir.path should be(new fs.Path("file:/"))
         dir.exists() should be(true)
         dir.isFile() should be(false)
@@ -58,6 +65,7 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
         dir.isAbsolute() should be(true)
 
         val file = dir / "lala"
+        file.name should be ("lala")
         file.exists() should be(false)
         file.isFile() should be(false)
         file.isDirectory() should be(false)
@@ -69,7 +77,12 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
 
     it should "support creating entries" in {
         val tmp = JavaFile(tempDir.toPath)
-        val file = tmp / ("lala-" + System.currentTimeMillis().toString + ".tmp")
+        val name = "lala-" + System.currentTimeMillis().toString + ".tmp"
+        val file = tmp / name
+        file.uri should be (tempDir.toURI.resolve(name))
+        file.path should be (new Path(tempDir.toURI.resolve(name)))
+        file.path should be (new Path(tempDir.toURI.toString ,name))
+        file.name should be (name)
         file.exists() should be(false)
         file.isFile() should be(false)
         file.isDirectory() should be(false)
@@ -88,34 +101,69 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
     it should "support resources somewhere" in {
         val res = Resources.getURL("com/dimajix/flowman/flowman.properties")
         val file = JavaFile(Paths.get(res.toURI))
+        file.name should be ("flowman.properties")
+        file.uri should be (res.toURI)
+        file.path.toUri should be (res.toURI)
+        file.path should be (new Path(res.toURI))
         file.exists() should be (true)
         file.isFile() should be (true)
         file.isAbsolute() should be (true)
         file.isDirectory() should be(false)
 
         val res1 = Resources.getURL("com/dimajix/flowman")
-        val dir = JavaFile(Paths.get(res1.toURI))
-        dir.exists() should be(true)
-        dir.isFile() should be(false)
-        dir.isAbsolute() should be(true)
-        dir.isDirectory() should be(true)
+        val dir1 = JavaFile(Paths.get(res1.toURI))
+        dir1.name should be ("flowman")
+        //dir1.uri should be (res1.toURI)
+        dir1.path.toString should be (res1.toURI.toString + "/")
+        dir1.exists() should be(true)
+        dir1.isFile() should be(false)
+        dir1.isAbsolute() should be(true)
+        dir1.isDirectory() should be(true)
+
+        val res2 = Resources.getURL("com/dimajix/flowman/")
+        val dir2 = JavaFile(Paths.get(res2.toURI))
+        dir2.name should be ("flowman")
+        dir2.uri should be (res2.toURI)
+        dir2.path should be(new Path(res2.toURI))
+        dir2.path.toUri should be(res2.toURI)
+        dir2.exists() should be(true)
+        dir2.isFile() should be(false)
+        dir2.isAbsolute() should be(true)
+        dir2.isDirectory() should be(true)
     }
 
     it should "support resources in JARs" in {
         val res = Resources.getURL("org/apache/spark/SparkContext.class")
         val xyz = java.nio.file.FileSystems.newFileSystem(res.toURI, Collections.emptyMap[String,String]())
         val file = JavaFile(Paths.get(res.toURI))
+        file.uri should be (res.toURI)
+        file.path.toUri should be (res.toURI)
+        file.path should be (new Path(res.toURI))
+        file.name should be ("SparkContext.class")
         file.exists() should be(true)
         file.isFile() should be(true)
         file.isAbsolute() should be(true)
         file.isDirectory() should be(false)
 
         val res1 = Resources.getURL("org/apache/spark")
-        val dir = JavaFile(Paths.get(res1.toURI))
-        dir.exists() should be(true)
-        dir.isFile() should be(false)
-        dir.isAbsolute() should be(true)
-        dir.isDirectory() should be(true)
+        val dir1 = JavaFile(Paths.get(res1.toURI))
+        dir1.uri should be (res1.toURI)
+        dir1.path should be (new Path(res1.toURI))
+        dir1.name should be ("spark")
+        dir1.exists() should be(true)
+        dir1.isFile() should be(false)
+        dir1.isAbsolute() should be(true)
+        dir1.isDirectory() should be(true)
+
+        val res2 = Resources.getURL("org/apache/spark/")
+        val dir2 = JavaFile(Paths.get(res2.toURI))
+        //dir2.uri should be(res2.toURI)
+        //dir2.path should be(new Path(res2.toURI))
+        dir2.name should be("spark")
+        dir2.exists() should be(true)
+        dir2.isFile() should be(false)
+        dir2.isAbsolute() should be(true)
+        dir2.isDirectory() should be(true)
 
         xyz.close()
     }

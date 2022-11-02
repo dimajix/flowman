@@ -35,14 +35,14 @@ import org.apache.hadoop.io.IOUtils
   * @param path
   */
 case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) extends File {
-    override def toString: String = if (path != null) path.toString else ""
+    override def uri : URI = path.toUri
 
     /**
       * Creates a new File object by attaching a child entry
       * @param sub
       * @return
       */
-    def /(sub:String) : File = {
+    override def /(sub:String) : File = {
         val rel = new Path(new URI(sub))
         if (rel.isAbsolute)
             HadoopFile(fs, rel)
@@ -51,10 +51,19 @@ case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) extends Fil
     }
 
     /**
+     * Returns the file name of the File
+     *
+     * @return
+     */
+    override def name: String = {
+        path.getName
+    }
+
+    /**
       * Returns the parent directory of the File
       * @return
       */
-    def parent : File = {
+    override def parent : File = {
         val p = path.getParent
         if (p == null) {
             this

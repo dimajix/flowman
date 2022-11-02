@@ -16,24 +16,25 @@
 
 package com.dimajix.flowman.tools.exec
 
+import java.net.URI
+
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import org.apache.hadoop.fs.Path
 import org.kohsuke.args4j.CmdLineException
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.HADOOP_BUILD_VERSION
-import com.dimajix.flowman.JAVA_VERSION
-import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.HADOOP_VERSION
+import com.dimajix.flowman.JAVA_VERSION
 import com.dimajix.flowman.SCALA_VERSION
 import com.dimajix.flowman.SPARK_BUILD_VERSION
+import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.common.Logging
-import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.common.ParserUtils.splitSettings
+import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.tools.Tool
 import com.dimajix.flowman.util.ConsoleColors
@@ -117,7 +118,7 @@ class Driver(options:Arguments) extends Tool {
         }
         else {
             // Create Flowman Session, which also includes a Spark Session
-            val project = loadProject(new Path(options.projectFile))
+            val project = loadProject(options.projectFile)
 
             val config = splitSettings(options.config)
             val environment = splitSettings(options.environment)

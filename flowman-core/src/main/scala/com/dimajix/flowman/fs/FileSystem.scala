@@ -44,10 +44,14 @@ case class FileSystem(conf:Configuration) {
     }
     def file(path:String) : File = {
         val uri = new URI(path)
-        if (uri.getScheme == "jar")
+        if (uri.getScheme == "jar") {
             resource(uri)
-        else
-            file(new Path(path))
+        }
+        else {
+            val p = new Path(path)
+            val fs = p.getFileSystem(conf)
+            HadoopFile(fs, p)
+        }
     }
     def file(path:URI) : File = file(new Path(path))
 

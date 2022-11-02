@@ -376,20 +376,20 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         else
             instances
 
+        // Optionally cache the DataFrames, before potentially marking them as broadcast candidates
+        if (cacheLevel != null && cacheLevel != StorageLevel.NONE) {
+            // If one of the DataFrame is called 'cache', then only cache that one, otherwise all will be cached
+            if (df1.keySet.contains("cache"))
+                df1("cache").persist(cacheLevel)
+            else
+                df1.values.foreach(_.persist(cacheLevel))
+        }
+
         // Optionally mark DataFrame to be broadcasted
         val df2 = if (doBroadcast)
             df1.map { case (name,df) => (name, broadcast(df)) }
         else
             df1
-
-        // Optionally cache the DataFrames
-        if (cacheLevel != null && cacheLevel != StorageLevel.NONE) {
-            // If one of the DataFrame is called 'cache', then only cache that one, otherwise all will be cached
-            if (df2.keySet.contains("cache"))
-                df2("cache").persist(cacheLevel)
-            else
-                df2.values.foreach(_.persist(cacheLevel))
-        }
 
         df2
     }

@@ -116,6 +116,81 @@ class MappingTemplateTest extends AnyFlatSpec with Matchers {
         an[InstantiateMappingFailedException] should be thrownBy(context.getMapping(MappingIdentifier("rel_4")))
     }
 
+    it should "respect broadcast & cache" in {
+        val spec =
+            """
+              |templates:
+              |  user:
+              |    kind: mapping
+              |    parameters:
+              |      - name: p0
+              |        type: string
+              |      - name: p1
+              |        type: int
+              |        default: 12
+              |    template:
+              |      kind: values
+              |      records:
+              |        - ["$p0",$p1]
+              |      schema:
+              |        kind: inline
+              |        fields:
+              |          - name: str_col
+              |            type: string
+              |          - name: int_col
+              |            type: integer
+              |
+              |mappings:
+              |  rel_1:
+              |    kind: template/user
+              |    p0: some_value
+              |  rel_2:
+              |    kind: template/user
+              |    broadcast: true
+              |    p0: some_value
+              |  rel_3:
+              |    kind: template/user
+              |    p0: some_value
+              |    p1: 27
+              |    cache: MEMORY_AND_DISK
+              |  rel_4:
+              |    kind: template/user
+              |    p0: some_value
+              |    p3: no_such_param
+              |""".stripMargin
+
+        val project = Module.read.string(spec).toProject("project")
+        val session = Session.builder().disableSpark().build()
+        val context = session.getContext(project)
+
+        val map_1 = context.getMapping(MappingIdentifier("rel_1"))
+        map_1 shouldBe a[ValuesMapping]
+        map_1.name should be("rel_1")
+        map_1.identifier should be(MappingIdentifier("project/rel_1"))
+        map_1.kind should be("values")
+        map_1.broadcast should be(false)
+        map_1.checkpoint should be(false)
+        map_1.cache should be(StorageLevel.NONE)
+
+        val map_2 = context.getMapping(MappingIdentifier("rel_2"))
+        map_2 shouldBe a[ValuesMapping]
+        map_2.name should be("rel_2")
+        map_2.identifier should be(MappingIdentifier("project/rel_2"))
+        map_2.kind should be("values")
+        map_2.broadcast should be(true)
+        map_2.checkpoint should be(false)
+        map_2.cache should be(StorageLevel.NONE)
+
+        val map_3 = context.getMapping(MappingIdentifier("rel_3"))
+        map_3 shouldBe a[ValuesMapping]
+        map_3.name should be("rel_3")
+        map_3.identifier should be(MappingIdentifier("project/rel_3"))
+        map_3.kind should be("values")
+        map_3.broadcast should be(false)
+        map_3.checkpoint should be(false)
+        map_3.cache should be(StorageLevel.MEMORY_AND_DISK)
+    }
+
     it should "throw an error on unknown templates" in {
         val spec =
             """

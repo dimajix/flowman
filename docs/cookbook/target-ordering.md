@@ -1,9 +1,10 @@
-# Manual Target Execution Order
+# Target Execution Ordering
 
 When executing a [job](../spec/job/index.md), Flowman normally figures out the correct execution order of all
 [targets](../spec/target/index.md) automatically. This is implemented by looking at the different targets inputs
 and outputs, such that Flowman ensures that first all the inputs of a target is build before the target itself is
 executed.
+
 
 ## Cyclic Dependencies
 But sometimes, this does not give you the desired result, or Flowman might even detect a cyclic dependency between 

@@ -1,7 +1,7 @@
 # Measures
 
 Flowman provides capabilities to assess data quality by taking *measures* from mappings and provide the result as
-[metrics](../../cookbook/metrics.md). This enables developer to build data quality dashboards using well known tools
+[metrics](../../cookbook/execution-metrics.md). This enables developer to build data quality dashboards using well known tools
 like Prometheus and Grafana.
 
 

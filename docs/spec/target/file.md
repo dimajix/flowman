@@ -76,4 +76,4 @@ The relation target also provides some metric containing the number of records w
     - `project` - Name of the project
     - `version` - Version of the project
 
-See [Execution Metrics](../../cookbook/metrics.md) for more information how to use these metrics.
+See [Execution Metrics](../../cookbook/execution-metrics.md) for more information how to use these metrics.

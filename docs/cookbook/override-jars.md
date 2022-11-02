@@ -1,4 +1,4 @@
-# Force Spark to specific jar version
+# Override jar versions
 
 A common problem with Spark and specifically with many Hadoop environments (like Cloudera) are mismatches between
 application jar versions and jars provided by the runtime environment. Flowman is built with carefully set dependency

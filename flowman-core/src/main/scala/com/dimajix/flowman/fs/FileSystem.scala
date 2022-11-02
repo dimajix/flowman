@@ -56,8 +56,14 @@ case class FileSystem(conf:Configuration) {
     def local(path:java.io.File) : File = JavaFile(path.toPath)
     def local(path:URI) : File = {
         if (path.getScheme == null) {
-            val uri = new URI("file", path.getUserInfo, path.getHost, path.getPort, path.getPath, path.getQuery, path.getFragment)
-            JavaFile(Paths.get(uri))
+            val file = Paths.get(path.getPath)
+            if (!file.isAbsolute) {
+                JavaFile(file.toAbsolutePath)
+            }
+            else {
+                val uri = new URI("file", path.getUserInfo, path.getHost, path.getPort, path.getPath, path.getQuery, path.getFragment)
+                JavaFile(Paths.get(uri))
+            }
         }
         else {
             JavaFile(Paths.get(path))

@@ -68,7 +68,7 @@ case class FileGenerator(
             outputDir.list().foreach(_.delete(true))
         }
         else if (outputDir.isFile()) {
-            outputDir.isFile()
+            outputDir.delete(false)
         }
         outputDir.mkdirs()
 

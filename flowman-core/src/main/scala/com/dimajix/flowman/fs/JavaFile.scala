@@ -134,6 +134,11 @@ case class JavaFile(jpath:Path) extends File {
             Files.newOutputStream(jpath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
     }
 
+    override def append(): OutputStream = {
+        Files.createDirectories(jpath.getParent)
+        Files.newOutputStream(jpath, StandardOpenOption.CREATE, StandardOpenOption.APPEND, StandardOpenOption.WRITE)
+    }
+
     /**
      * Opens an existing file and returns the corresponding input stream
      *

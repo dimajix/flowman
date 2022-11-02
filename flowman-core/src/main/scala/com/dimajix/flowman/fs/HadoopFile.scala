@@ -153,6 +153,10 @@ case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) extends Fil
         fs.create(path, overwrite)
     }
 
+    def append(): FSDataOutputStream = {
+        fs.append(path)
+    }
+
     /**
       * Opens an existing file and returns the corresponding input stream
       * @return

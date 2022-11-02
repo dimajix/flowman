@@ -45,6 +45,15 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         tmpFromUri.isDirectory() should be (true)
     }
 
+    it should "be usable relative paths" in {
+        val conf = spark.sparkContext.hadoopConfiguration
+        val fs = FileSystem(conf)
+        val file = fs.local("target/classes")
+        file.exists() should be(true)
+        file.isFile() should be(false)
+        file.isDirectory() should be(true)
+    }
+
     it should "be usable with Paths" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)

@@ -85,7 +85,6 @@ class Tool {
         val fs = FileSystem(hadoopConfig)
 
         // Load Project. If no schema is specified, load from local file system
-        // TODO: Support resources in jar files
         val projectUri = projectPath.toUri
         if (projectUri.getAuthority == null && projectUri.getScheme == null)
             Project.read.file(fs.local(projectPath))

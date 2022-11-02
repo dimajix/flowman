@@ -99,6 +99,8 @@ abstract class File {
       */
     def create(overwrite:Boolean = false) : OutputStream
 
+    def append() : OutputStream
+
     /**
       * Opens an existing file and returns the corresponding input stream
       * @return

@@ -39,7 +39,15 @@ case class FileSystem(conf:Configuration) {
         }
         else {
             val fs = path.getFileSystem(conf)
-            HadoopFile(fs, path)
+            val uri = path.toUri
+            if (uri.getScheme == null && path.isAbsolute) {
+                val p = new Path(fs.getScheme, uri.getAuthority, uri.getPath)
+                HadoopFile(fs, p)
+
+            }
+            else {
+                HadoopFile(fs, path)
+            }
         }
     }
     def file(path:String) : File = {
@@ -48,29 +56,27 @@ case class FileSystem(conf:Configuration) {
             resource(uri)
         }
         else {
-            val p = new Path(path)
-            val fs = p.getFileSystem(conf)
-            HadoopFile(fs, p)
+            file(new Path(path))
         }
     }
     def file(path:URI) : File = file(new Path(path))
 
     def local(path:Path) : File = local(path.toUri)
-    def local(path:String) : File = JavaFile(Paths.get(path))
-    def local(path:java.io.File) : File = JavaFile(path.toPath)
+    def local(path:String) : File = JavaFile(Paths.get(path).normalize())
+    def local(path:java.io.File) : File = JavaFile(path.toPath.normalize())
     def local(path:URI) : File = {
         if (path.getScheme == null) {
             val file = Paths.get(path.getPath)
             if (!file.isAbsolute) {
-                JavaFile(file.toAbsolutePath)
+                JavaFile(file.normalize())
             }
             else {
                 val uri = new URI("file", path.getUserInfo, path.getHost, path.getPort, path.getPath, path.getQuery, path.getFragment)
-                JavaFile(Paths.get(uri))
+                JavaFile(Paths.get(uri).normalize())
             }
         }
         else {
-            JavaFile(Paths.get(path))
+            JavaFile(Paths.get(path).normalize())
         }
     }
 

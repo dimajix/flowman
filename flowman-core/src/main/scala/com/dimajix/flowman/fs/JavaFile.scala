@@ -50,7 +50,7 @@ case class JavaFile(jpath:Path) extends File {
     override def /(sub: String): File = {
         val uri = new URI(sub)
         if (uri.isAbsolute)
-            JavaFile(Paths.get(uri))
+            JavaFile(Paths.get(uri).normalize().toAbsolutePath)
         else
             JavaFile(jpath.resolve(sub))
     }

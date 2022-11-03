@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.fs
 
+import java.net.URI
 import java.nio.file.NoSuchFileException
 
 import org.apache.hadoop.fs.Path
@@ -30,29 +31,61 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "FileSystem.local" should "be usable with simple strings" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
-        val tmpFromString = fs.local(tempDir.toString)
-        tmpFromString.exists() should be (true)
-        tmpFromString.isFile() should be (false)
-        tmpFromString.isDirectory() should be (true)
+        val dir1 = fs.local(tempDir.toString)
+        dir1.uri should be (tempDir.toURI)
+        dir1.path should be (new Path(tempDir.toURI))
+        //dir1.path should be (new Path(tempDir.toURI.toString))
+        dir1.exists() should be (true)
+        dir1.isFile() should be (false)
+        dir1.isDirectory() should be (true)
+
+        val dir2 = fs.local(tempDir.toString + "/lolo")
+        dir2.uri should be(tempDir.toURI.resolve("lolo"))
+        dir2.path should be(new Path(tempDir.toURI.resolve("lolo")))
+        dir2.path should be (new Path(tempDir.toURI.resolve("lolo").toString))
+        dir2.name should be ("lolo")
+        dir2.exists() should be(false)
+        dir2.isFile() should be(false)
+        dir2.isDirectory() should be(false)
+
+        val dir3 = fs.local(tempDir.toString + "/lolo/")
+        dir3.uri should be(tempDir.toURI.resolve("lolo"))
+        dir3.path should be(new Path(tempDir.toURI.resolve("lolo")))
+        dir3.path should be(new Path(tempDir.toURI.resolve("lolo").toString))
+        dir3.name should be("lolo")
+        dir3.exists() should be(false)
+        dir3.isFile() should be(false)
+        dir3.isDirectory() should be(false)
     }
 
-    it should "be usable with Files" in {
+    it should "be usable with URIs" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
-        val tmpFromUri = fs.local(tempDir)
-        tmpFromUri.exists() should be (true)
-        tmpFromUri.isFile() should be (false)
-        tmpFromUri.isDirectory() should be (true)
-    }
+        val dir = fs.local(tempDir.toURI)
+        dir.uri should be(tempDir.toURI)
+        dir.path should be(new Path(tempDir.toURI))
+        //tmpFromUri.path should be(new Path(tempDir.toURI.toString))
+        dir.exists() should be(true)
+        dir.isFile() should be(false)
+        dir.isDirectory() should be(true)
 
-    it should "be usable relative paths" in {
-        val conf = spark.sparkContext.hadoopConfiguration
-        val fs = FileSystem(conf)
-        val file = fs.local("target/classes")
-        file.name should be ("classes")
-        file.exists() should be(true)
-        file.isFile() should be(false)
-        file.isDirectory() should be(true)
+        val dir2 = fs.local(tempDir.toURI.resolve("lolo"))
+        dir2.uri should be(tempDir.toURI.resolve("lolo"))
+        dir2.path should be(new Path(tempDir.toURI.resolve("lolo")))
+        dir2.path should be(new Path(tempDir.toURI.resolve("lolo").toString))
+        dir2.name should be("lolo")
+        dir2.exists() should be(false)
+        dir2.isFile() should be(false)
+        dir2.isDirectory() should be(false)
+
+        val dir3 = fs.local(tempDir.toURI.resolve("lolo/"))
+        dir3.uri should be(tempDir.toURI.resolve("lolo"))
+        dir3.path should be(new Path(tempDir.toURI.resolve("lolo")))
+        dir3.path should be(new Path(tempDir.toURI.resolve("lolo").toString))
+        dir3.name should be("lolo")
+        dir3.exists() should be(false)
+        dir3.isFile() should be(false)
+        dir3.isDirectory() should be(false)
     }
 
     it should "be usable with Paths" in {
@@ -60,21 +93,142 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val fs = FileSystem(conf)
         val tmpFromUri = fs.local(new Path(tempDir.toString))
         //tmpFromUri.path should be (new Path("file:" + tempDir.toString + "/"))
-        tmpFromUri.path should be (new Path(tempDir.toURI))
+        tmpFromUri.path should be(new Path(tempDir.toURI))
+        tmpFromUri.uri should be(tempDir.toURI)
         tmpFromUri.exists() should be(true)
         tmpFromUri.isFile() should be(false)
         tmpFromUri.isDirectory() should be(true)
+
+        val dir = tmpFromUri / "lala"
+        dir.uri should be(new Path(new Path(tempDir.toURI), "lala").toUri)
+        dir.path should be(new Path(new Path(tempDir.toURI), "lala"))
+        dir.name should be("lala")
+        val file = dir / "lolo.tmp"
+        file.uri should be(new Path(dir.path, "lolo.tmp").toUri)
+        file.path should be(new Path(dir.path, "lolo.tmp"))
+        file.name should be("lolo.tmp")
+
+        val dir2 = fs.local(new Path(tempDir.toURI.resolve("lolo")))
+        dir2.uri should be(tempDir.toURI.resolve("lolo"))
+        dir2.path should be(new Path(tempDir.toURI.resolve("lolo")))
+        dir2.path should be(new Path(tempDir.toURI.resolve("lolo").toString))
+        dir2.name should be("lolo")
+        dir2.exists() should be(false)
+        dir2.isFile() should be(false)
+        dir2.isDirectory() should be(false)
+
+        val dir3 = fs.local(new Path(tempDir.toURI.resolve("lolo/")))
+        dir3.uri should be(tempDir.toURI.resolve("lolo"))
+        dir3.path should be(new Path(tempDir.toURI.resolve("lolo")))
+        dir3.path should be(new Path(tempDir.toURI.resolve("lolo").toString))
+        dir3.name should be("lolo")
+        dir3.exists() should be(false)
+        dir3.isFile() should be(false)
+        dir3.isDirectory() should be(false)
     }
 
-    it should "be usable with URIs" in {
+    it should "be usable with Files" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
-        val tmpFromUri = fs.local(tempDir.toURI)
-        //tmpFromUri.path should be(new Path("file:" + tempDir.toString + "/"))
+        val tmpFromUri = fs.local(tempDir)
+        tmpFromUri.uri should be (tempDir.toURI)
         tmpFromUri.path should be(new Path(tempDir.toURI))
+        //tmpFromUri.path should be(new Path(tempDir.toURI.toString))
         tmpFromUri.exists() should be (true)
         tmpFromUri.isFile() should be (false)
         tmpFromUri.isDirectory() should be (true)
+    }
+
+    it should "be usable relative paths (String)" in {
+        val conf = spark.sparkContext.hadoopConfiguration
+        val fs = FileSystem(conf)
+        val file = fs.local("target/classes")
+        file.name should be ("classes")
+        file.path.isAbsolute should be (true)
+        file.uri.isAbsolute should be (true)
+        file.exists() should be(true)
+        file.isFile() should be(false)
+        file.isDirectory() should be(true)
+
+        val abs = file.absolute
+        abs.name should be("classes")
+        abs.path.isAbsolute should be(true)
+        abs.uri.isAbsolute should be(true)
+        abs.exists() should be(true)
+        abs.isFile() should be(false)
+        abs.isDirectory() should be(true)
+    }
+
+    it should "be usable relative paths (Path)" in {
+        val conf = spark.sparkContext.hadoopConfiguration
+        val fs = FileSystem(conf)
+        val file = fs.local(new Path("target/classes"))
+        file.name should be("classes")
+        file.path.isAbsolute should be(true)
+        file.uri.isAbsolute should be(true)
+        file.exists() should be(true)
+        file.isFile() should be(false)
+        file.isDirectory() should be(true)
+
+        val abs = file.absolute
+        abs.name should be("classes")
+        abs.path.isAbsolute should be(true)
+        abs.uri.isAbsolute should be(true)
+        abs.exists() should be(true)
+        abs.isFile() should be(false)
+        abs.isDirectory() should be(true)
+    }
+
+    it should "resolve relative Paths in local(String)" in {
+        val conf = spark.sparkContext.hadoopConfiguration
+        val fs = FileSystem(conf)
+        val file = fs.local(tempDir.toString + "/lala/../lolo")
+        //tmpFromUri.path should be (new Path("file:" + tempDir.toString + "/"))
+        file.path should be(new Path(tempDir.toURI.toString + "/lolo"))
+        file.uri should be(tempDir.toURI.resolve("lolo"))
+        file.exists() should be(false)
+        file.isFile() should be(false)
+        file.isDirectory() should be(false)
+
+        file.create(true).close
+        file.exists() should be(true)
+        file.isFile() should be(true)
+        file.isDirectory() should be(false)
+
+        file.parent.exists() should be(true)
+        file.parent.isFile() should be(false)
+        file.parent.isDirectory() should be(true)
+
+        file.delete()
+        file.exists() should be(false)
+        file.isFile() should be(false)
+        file.isDirectory() should be(false)
+    }
+
+    it should "resolve relative Paths in local(URI)" in {
+        val conf = spark.sparkContext.hadoopConfiguration
+        val fs = FileSystem(conf)
+        val file = fs.local(new URI(tempDir.toString + "/lala2/../lolo2"))
+        //tmpFromUri.path should be (new Path("file:" + tempDir.toString + "/"))
+        file.path should be(new Path(tempDir.toURI.toString + "/lolo2"))
+        file.uri should be(tempDir.toURI.resolve("lolo2"))
+        file.exists() should be(false)
+        file.isFile() should be(false)
+        file.isDirectory() should be(false)
+
+        file.create(true).close
+        file.exists() should be(true)
+        file.isFile() should be(true)
+        file.isDirectory() should be(false)
+
+        file.parent.exists() should be(true)
+        file.parent.isFile() should be(false)
+        file.parent.isDirectory() should be(true)
+
+        file.delete()
+        file.exists() should be(false)
+        file.isFile() should be(false)
+        file.isDirectory() should be(false)
     }
 
     it should "support creating entries" in {
@@ -144,6 +298,98 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         tmpFromUri.exists() should be(true)
         tmpFromUri.isFile() should be(false)
         tmpFromUri.isDirectory() should be(true)
+    }
+
+    it should "be usable relative paths (String)" in {
+        val conf = spark.sparkContext.hadoopConfiguration
+        val fs = FileSystem(conf)
+        val file = fs.file("target/classes")
+        file.name should be("classes")
+        file.path.isAbsolute should be(false)
+        file.uri.isAbsolute should be(false)
+        file.exists() should be(true)
+        file.isFile() should be(false)
+        file.isDirectory() should be(true)
+
+        val abs = file.absolute
+        abs.name should be("classes")
+        abs.path.isAbsolute should be(true)
+        abs.uri.isAbsolute should be(true)
+        abs.exists() should be(true)
+        abs.isFile() should be(false)
+        abs.isDirectory() should be(true)
+    }
+
+    it should "be usable relative paths (Path)" in {
+        val conf = spark.sparkContext.hadoopConfiguration
+        val fs = FileSystem(conf)
+        val file = fs.file(new Path("target/classes"))
+        file.name should be("classes")
+        file.path.isAbsolute should be(false)
+        file.uri.isAbsolute should be(false)
+        file.exists() should be(true)
+        file.isFile() should be(false)
+        file.isDirectory() should be(true)
+
+        val abs = file.absolute
+        abs.name should be("classes")
+        abs.path.isAbsolute should be(true)
+        abs.uri.isAbsolute should be(true)
+        abs.exists() should be(true)
+        abs.isFile() should be(false)
+        abs.isDirectory() should be(true)
+    }
+
+    it should "resolve relative Paths in file(String)" in {
+        val conf = spark.sparkContext.hadoopConfiguration
+        val fs = FileSystem(conf)
+        val file = fs.file(tempDir.toString + "/lala/../lolo")
+        //tmpFromUri.path should be (new Path("file:" + tempDir.toString + "/"))
+        file.path should be(new Path(tempDir.toURI.toString + "/lolo"))
+        file.uri should be(tempDir.toURI.resolve("lolo"))
+        file.exists() should be(false)
+        file.isFile() should be(false)
+        file.isDirectory() should be(false)
+
+        file.create(true).close
+        file.exists() should be(true)
+        file.isFile() should be(true)
+        file.isDirectory() should be(false)
+
+        file.parent.exists() should be(true)
+        file.parent.isFile() should be(false)
+        file.parent.isDirectory() should be(true)
+
+        file.delete()
+        file.exists() should be(false)
+        file.isFile() should be(false)
+        file.isDirectory() should be(false)
+    }
+
+    it should "resolve relative Paths in file(URI)" in {
+        val conf = spark.sparkContext.hadoopConfiguration
+        val fs = FileSystem(conf)
+        val file = fs.file(new URI(tempDir.toString + "/lala/../lolo"))
+        //tmpFromUri.path should be (new Path("file:" + tempDir.toString + "/"))
+        file.path should be(new Path(tempDir.toURI.toString + "/lolo"))
+        file.uri should be(tempDir.toURI.resolve("lolo"))
+        file.exists() should be(false)
+        file.isFile() should be(false)
+        file.isDirectory() should be(false)
+
+        file.create(true).close
+        file.exists() should be(true)
+        file.isFile() should be(true)
+        file.isDirectory() should be(false)
+
+        file.parent.exists() should be(true)
+        file.parent.isFile() should be(false)
+        file.parent.isDirectory() should be(true)
+
+        file.delete()
+        file.exists() should be(false)
+        file.isFile() should be(false)
+        file.isDirectory() should be(false)
     }
 
     it should "support creating entries" in {
@@ -235,63 +481,212 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val file = fs.file(Resources.getURL("com/dimajix/flowman/flowman.properties").toURI)
+        file.uri should be (Resources.getURL("com/dimajix/flowman/flowman.properties").toURI)
+        file.path should be (new Path(Resources.getURL("com/dimajix/flowman/flowman.properties").toURI))
+        file.name should be ("flowman.properties")
         file.exists() should be(true)
         file.isFile() should be(true)
         file.isAbsolute() should be(true)
         file.isDirectory() should be(false)
 
+        val file2 = fs.file(Resources.getURL("com/dimajix/flowman/../flowman/flowman.properties").toURI)
+        file2.uri should be(Resources.getURL("com/dimajix/flowman/flowman.properties").toURI)
+        file2.path should be(new Path(Resources.getURL("com/dimajix/flowman/flowman.properties").toURI))
+        file2.name should be("flowman.properties")
+        file2.exists() should be(true)
+        file2.isFile() should be(true)
+        file2.isAbsolute() should be(true)
+        file2.isDirectory() should be(false)
+
         val dir = fs.file(Resources.getURL("com/dimajix/flowman").toURI)
+        dir.uri should be(Resources.getURL("com/dimajix/flowman").toURI)
+        dir.path should be(new Path(Resources.getURL("com/dimajix/flowman").toURI))
+        dir.name should be("flowman")
         dir.exists() should be(true)
         dir.isFile() should be(false)
         dir.isAbsolute() should be(true)
         dir.isDirectory() should be(true)
+
+        val dir2 = fs.file(Resources.getURL("com/dimajix/flowman/").toURI)
+        dir2.uri should be(Resources.getURL("com/dimajix/flowman/").toURI)
+        dir2.path should be(new Path(Resources.getURL("com/dimajix/flowman/").toURI))
+        //dir2.name should be("flowman")
+        dir2.exists() should be(true)
+        dir2.isFile() should be(false)
+        dir2.isAbsolute() should be(true)
+        dir2.isDirectory() should be(true)
+    }
+
+    it should "support resources somewhere via 'file(Path)'" in {
+        val conf = spark.sparkContext.hadoopConfiguration
+        val fs = FileSystem(conf)
+        val file = fs.file(new Path(Resources.getURL("com/dimajix/flowman/flowman.properties").toString))
+        file.uri should be(Resources.getURL("com/dimajix/flowman/flowman.properties").toURI)
+        file.path should be(new Path(Resources.getURL("com/dimajix/flowman/flowman.properties").toURI))
+        file.name should be("flowman.properties")
+        file.exists() should be(true)
+        file.isFile() should be(true)
+        file.isAbsolute() should be(true)
+        file.isDirectory() should be(false)
+
+        val file2 = fs.file(new Path(Resources.getURL("com/dimajix/flowman/../flowman/flowman.properties").toString))
+        file2.uri should be(Resources.getURL("com/dimajix/flowman/flowman.properties").toURI)
+        file2.path should be(new Path(Resources.getURL("com/dimajix/flowman/flowman.properties").toURI))
+        file2.name should be("flowman.properties")
+        file2.exists() should be(true)
+        file2.isFile() should be(true)
+        file2.isAbsolute() should be(true)
+        file2.isDirectory() should be(false)
+
+        val dir = fs.file(new Path(Resources.getURL("com/dimajix/flowman").toString))
+        dir.uri should be(Resources.getURL("com/dimajix/flowman").toURI)
+        dir.path should be(new Path(Resources.getURL("com/dimajix/flowman").toURI))
+        dir.name should be("flowman")
+        dir.exists() should be(true)
+        dir.isFile() should be(false)
+        dir.isAbsolute() should be(true)
+        dir.isDirectory() should be(true)
+
+        val dir2 = fs.file(new Path(Resources.getURL("com/dimajix/flowman/").toString))
+        dir2.uri should be(Resources.getURL("com/dimajix/flowman").toURI)
+        dir2.path should be(new Path(Resources.getURL("com/dimajix/flowman").toURI))
+        dir2.name should be("flowman")
+        dir2.exists() should be(true)
+        dir2.isFile() should be(false)
+        dir2.isAbsolute() should be(true)
+        dir2.isDirectory() should be(true)
     }
 
     it should "support resources somewhere via 'file(String)'" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val file = fs.file(Resources.getURL("com/dimajix/flowman/flowman.properties").toString)
+        file.uri should be(Resources.getURL("com/dimajix/flowman/flowman.properties").toURI)
+        file.path should be(new Path(Resources.getURL("com/dimajix/flowman/flowman.properties").toURI))
+        file.name should be("flowman.properties")
         file.exists() should be(true)
         file.isFile() should be(true)
         file.isAbsolute() should be(true)
         file.isDirectory() should be(false)
 
+        val file2 = fs.file(Resources.getURL("com/dimajix/flowman/../flowman/flowman.properties").toString)
+        file2.uri should be(Resources.getURL("com/dimajix/flowman/flowman.properties").toURI)
+        file2.path should be(new Path(Resources.getURL("com/dimajix/flowman/flowman.properties").toURI))
+        file2.name should be("flowman.properties")
+        file2.exists() should be(true)
+        file2.isFile() should be(true)
+        file2.isAbsolute() should be(true)
+        file2.isDirectory() should be(false)
+
         val dir = fs.file(Resources.getURL("com/dimajix/flowman").toString)
+        dir.uri should be(Resources.getURL("com/dimajix/flowman").toURI)
+        dir.path should be(new Path(Resources.getURL("com/dimajix/flowman").toURI))
+        dir.name should be("flowman")
         dir.exists() should be(true)
         dir.isFile() should be(false)
         dir.isAbsolute() should be(true)
         dir.isDirectory() should be(true)
+
+        val dir2 = fs.file(Resources.getURL("com/dimajix/flowman/").toString)
+        dir2.uri should be(Resources.getURL("com/dimajix/flowman").toURI)
+        dir2.path should be(new Path(Resources.getURL("com/dimajix/flowman").toURI))
+        dir2.name should be("flowman")
+        dir2.exists() should be(true)
+        dir2.isFile() should be(false)
+        dir2.isAbsolute() should be(true)
+        dir2.isDirectory() should be(true)
     }
 
     it should "support resources in JARs via 'file(URI)'" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val file = fs.file(Resources.getURL("org/apache/spark/SparkContext.class").toURI)
+        file.uri should be(Resources.getURL("org/apache/spark/SparkContext.class").toURI)
+        file.path should be(new Path(Resources.getURL("org/apache/spark/SparkContext.class").toURI))
+        file.name should be("SparkContext.class")
         file.exists() should be(true)
         file.isFile() should be(true)
         file.isAbsolute() should be(true)
         file.isDirectory() should be(false)
 
         val dir = fs.file(Resources.getURL("org/apache/spark").toURI)
+        dir.uri should be(Resources.getURL("org/apache/spark").toURI)
+        dir.path should be(new Path(Resources.getURL("org/apache/spark").toURI))
+        dir.name should be("spark")
         dir.exists() should be(true)
         dir.isFile() should be(false)
         dir.isAbsolute() should be(true)
         dir.isDirectory() should be(true)
+
+        val dir2 = fs.file(Resources.getURL("org/apache/spark/").toURI)
+        dir2.uri should be(Resources.getURL("org/apache/spark").toURI)
+        dir2.path should be(new Path(Resources.getURL("org/apache/spark").toURI))
+        dir2.name should be("spark")
+        dir2.exists() should be(true)
+        dir2.isFile() should be(false)
+        dir2.isAbsolute() should be(true)
+        dir2.isDirectory() should be(true)
+    }
+
+    it should "support resources in JARs via 'file(Path)'" in {
+        val conf = spark.sparkContext.hadoopConfiguration
+        val fs = FileSystem(conf)
+        val file = fs.file(new Path(Resources.getURL("org/apache/spark/SparkContext.class").toURI))
+        file.uri should be(Resources.getURL("org/apache/spark/SparkContext.class").toURI)
+        file.path should be(new Path(Resources.getURL("org/apache/spark/SparkContext.class").toURI))
+        file.name should be("SparkContext.class")
+        file.exists() should be(true)
+        file.isFile() should be(true)
+        file.isAbsolute() should be(true)
+        file.isDirectory() should be(false)
+
+        val dir = fs.file(new Path(Resources.getURL("org/apache/spark").toURI))
+        dir.uri should be(Resources.getURL("org/apache/spark").toURI)
+        dir.path should be(new Path(Resources.getURL("org/apache/spark").toURI))
+        dir.name should be("spark")
+        dir.exists() should be(true)
+        dir.isFile() should be(false)
+        dir.isAbsolute() should be(true)
+        dir.isDirectory() should be(true)
+
+        val dir2 = fs.file(new Path(Resources.getURL("org/apache/spark/").toURI))
+        dir2.uri should be(Resources.getURL("org/apache/spark").toURI)
+        dir2.path should be(new Path(Resources.getURL("org/apache/spark").toURI))
+        dir2.name should be("spark")
+        dir2.exists() should be(true)
+        dir2.isFile() should be(false)
+        dir2.isAbsolute() should be(true)
+        dir2.isDirectory() should be(true)
     }
 
     it should "support resources in JARs via 'file(String)'" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val file = fs.file(Resources.getURL("org/apache/spark/SparkContext.class").toString)
+        file.uri should be(Resources.getURL("org/apache/spark/SparkContext.class").toURI)
+        file.path should be(new Path(Resources.getURL("org/apache/spark/SparkContext.class").toURI))
+        file.name should be("SparkContext.class")
         file.exists() should be(true)
         file.isFile() should be(true)
         file.isAbsolute() should be(true)
         file.isDirectory() should be(false)
 
         val dir = fs.file(Resources.getURL("org/apache/spark").toString)
+        dir.uri should be(Resources.getURL("org/apache/spark").toURI)
+        dir.path should be(new Path(Resources.getURL("org/apache/spark").toURI))
+        dir.name should be("spark")
         dir.exists() should be(true)
         dir.isFile() should be(false)
         dir.isAbsolute() should be(true)
         dir.isDirectory() should be(true)
+
+        val dir2 = fs.file(Resources.getURL("org/apache/spark/").toString)
+        dir2.uri should be(Resources.getURL("org/apache/spark").toURI)
+        dir2.path should be(new Path(Resources.getURL("org/apache/spark").toURI))
+        dir2.name should be("spark")
+        dir2.exists() should be(true)
+        dir2.isFile() should be(false)
+        dir2.isAbsolute() should be(true)
+        dir2.isDirectory() should be(true)
     }
 }

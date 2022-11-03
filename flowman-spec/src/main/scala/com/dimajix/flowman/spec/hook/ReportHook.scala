@@ -87,7 +87,7 @@ case class ReportHook(
 ) extends BaseHook {
     private val logger = LoggerFactory.getLogger(classOf[ReportHook])
 
-    private def newOutput():Option[PrintStream] = {
+    private def newOutput(execution:Execution):Option[PrintStream] = {
         if (location.toString == "stdout") {
             Some(System.out)
         }
@@ -95,17 +95,18 @@ case class ReportHook(
             Some(System.err)
         }
         else {
-            val fs = location.getFileSystem(context.hadoopConf)
+            val fs = execution.fs
+            val file = fs.file(location)
             val out = mode match {
-                case OutputMode.OVERWRITE => fs.create(location)
-                case OutputMode.APPEND => fs.append(location)
+                case OutputMode.OVERWRITE => file.create(true)
+                case OutputMode.APPEND => file.append()
                 case OutputMode.ERROR_IF_EXISTS =>
-                    if (fs.exists(location))
+                    if (file.exists())
                         throw new FileAlreadyExistsException(s"Cannot open report output, file $location already exists")
-                    fs.create(location)
+                    file.create(false)
                 case OutputMode.IGNORE_IF_EXISTS =>
-                    if (!fs.exists(location)) {
-                        fs.create(location)
+                    if (!file.exists()) {
+                        file.create(false)
                     }
                     else {
                         null
@@ -145,7 +146,7 @@ case class ReportHook(
      */
     override def startLifecycle(execution:Execution, job:Job, instance:JobLifecycle) : LifecycleToken = {
         logger.info(s"Creating new report to $location")
-        val output = newOutput()
+        val output = newOutput(execution)
         output.foreach { p =>
             val vars = Map(
                 "job" -> JobWrapper(job),
@@ -205,7 +206,7 @@ case class ReportHook(
 
         val output = parent.flatMap {
             case ReporterLifecycleToken(output) => output
-            case _ => newOutput()
+            case _ => newOutput(execution)
         }
         output.foreach { p =>
             val vars = Map(

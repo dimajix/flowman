@@ -89,10 +89,6 @@ object Runner {
             this.project = Project.read.file(fs.local(project.toURI))
             this
         }
-        def withProject(project:URI) : Builder = {
-            this.project = Project.read.file(fs.local(project))
-            this
-        }
         def withProject(project:Project) : Builder = {
             this.project = project
             this

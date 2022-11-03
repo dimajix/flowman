@@ -63,7 +63,7 @@ case class JavaFile(jpath:Path) extends File {
     override def name : String = {
         val n = jpath.getFileName
         if (n != null) {
-            // Remove trailing "/". Required for Java.18 (not Java 11)
+            // Remove trailing "/". Required for Java 1.8 (not Java 11)
             val sep = jpath.getFileSystem.getSeparator.head
             n.toString.takeWhile(_ != sep)
         } else {

@@ -618,6 +618,7 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         dir.isAbsolute() should be(true)
         dir.isDirectory() should be(true)
 
+        // TODO
         val dir2 = fs.file(Resources.getURL("org/apache/spark/").toURI)
         dir2.uri should be(Resources.getURL("org/apache/spark").toURI)
         dir2.path should be(new Path(Resources.getURL("org/apache/spark").toURI))
@@ -649,6 +650,7 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         dir.isAbsolute() should be(true)
         dir.isDirectory() should be(true)
 
+        // TODO
         val dir2 = fs.file(new Path(Resources.getURL("org/apache/spark/").toURI))
         dir2.uri should be(Resources.getURL("org/apache/spark").toURI)
         dir2.path should be(new Path(Resources.getURL("org/apache/spark").toURI))
@@ -680,6 +682,7 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         dir.isAbsolute() should be(true)
         dir.isDirectory() should be(true)
 
+        // TODO
         val dir2 = fs.file(Resources.getURL("org/apache/spark/").toString)
         dir2.uri should be(Resources.getURL("org/apache/spark").toURI)
         dir2.path should be(new Path(Resources.getURL("org/apache/spark").toURI))

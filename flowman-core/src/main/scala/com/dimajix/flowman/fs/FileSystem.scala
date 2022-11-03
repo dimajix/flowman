@@ -26,6 +26,12 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.common.Resources
+import com.dimajix.flowman.fs.FileSystem.SEPARATOR
+
+
+object FileSystem {
+    val SEPARATOR = "/"
+}
 
 
 /**
@@ -33,6 +39,7 @@ import com.dimajix.common.Resources
   * @param conf
   */
 case class FileSystem(conf:Configuration) {
+
     def file(path:Path) : File = {
         if (path.toUri.getScheme == "jar") {
             resource(path.toUri)
@@ -43,7 +50,6 @@ case class FileSystem(conf:Configuration) {
             if (uri.getScheme == null && path.isAbsolute) {
                 val p = new Path(fs.getScheme, uri.getAuthority, uri.getPath)
                 HadoopFile(fs, p)
-
             }
             else {
                 HadoopFile(fs, path)
@@ -84,11 +90,11 @@ case class FileSystem(conf:Configuration) {
         val url = Resources.getURL(path)
         if (url == null)
             throw new NoSuchFileException(s"Resource '$path' not found")
-        val uri = url.toURI
-        resource(uri)
+        resource(url.toURI)
     }
     def resource(uri:URI) : File = {
         if (uri.getScheme == "jar") {
+            // Ensure JAR is opened as a file system
             try {
                 java.nio.file.FileSystems.getFileSystem(uri)
             }
@@ -96,10 +102,21 @@ case class FileSystem(conf:Configuration) {
                 case _: FileSystemNotFoundException =>
                     java.nio.file.FileSystems.newFileSystem(uri, Collections.emptyMap[String, String]())
             }
-            JavaFile(Paths.get(uri))
+
+            // Remove trailing "/", this is only present in Java 1.8
+            val str = uri.toString
+            val lastEx = str.lastIndexOf("!")
+            val lastSep = str.lastIndexOf(SEPARATOR)
+            if (lastSep == str.length - 1 && lastSep > lastEx + 1 && lastEx > 0) {
+                JavaFile(Paths.get(new URI(str.dropRight(1))))
+            }
+            else {
+                JavaFile(Paths.get(uri))
+            }
         }
         else {
             JavaFile(Paths.get(uri))
         }
+
     }
 }

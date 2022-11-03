@@ -31,6 +31,8 @@ import scala.collection.JavaConverters._
 
 import org.apache.hadoop.fs
 
+import com.dimajix.common.text.StringUtils
+
 
 case class JavaFile(jpath:Path) extends File {
     override def toString: String = uri.toString
@@ -60,7 +62,13 @@ case class JavaFile(jpath:Path) extends File {
      */
     override def name : String = {
         val n = jpath.getFileName
-        if (n != null) n.toString else ""
+        if (n != null) {
+            // Remove trailing "/". Required for Java.18 (not Java 11)
+            val sep = jpath.getFileSystem.getSeparator.head
+            n.toString.takeWhile(_ != sep)
+        } else {
+            ""
+        }
     }
 
     /**

@@ -388,10 +388,12 @@ class Session private[execution](
 
         // Log all config properties
         val logFilters = LogFilter.filters
-        spark.conf.getAll.toSeq.sortBy(_._1).foreach { keyValue =>
-            logFilters.foldLeft(Option(keyValue))((kv, f) => kv.flatMap(kv => f.filterConfig(kv._1,kv._2)))
-                .foreach { case (key,value) => logger.info("Spark Config: {} = {}", key: Any, value: Any) }
-        }
+        spark.conf.getAll.toSeq
+            .sortBy(_._1)
+            .foreach { keyValue =>
+                logFilters.foldLeft(Option(keyValue))((kv, f) => kv.flatMap(kv => f.filterConfig(kv._1,kv._2)))
+                    .foreach { case (key,value) => logger.info("Spark Config: {} = {}", key: Any, value: Any) }
+            }
 
         // Copy all Spark configs over to SparkConf inside the Context
         sparkConf.setAll(spark.conf.getAll)
@@ -446,9 +448,11 @@ class Session private[execution](
             context.config
         }
 
-        conf.flowmanConf.getAll.foreach { case(key,value) =>
-            logger.info("Flowman Config: {} = {}", key: Any, value: Any)
-        }
+        conf.flowmanConf.getAll.toSeq
+            .sortBy(_._1)
+            .foreach { case(key,value) =>
+                logger.info("Flowman Config: {} = {}", key: Any, value: Any)
+            }
 
         conf
     }

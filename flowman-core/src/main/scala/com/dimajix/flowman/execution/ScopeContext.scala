@@ -134,13 +134,6 @@ final class ScopeContext(
      */
     override def root: RootContext = parent.root
 
-    /**
-     * Returns the list of active profile names
-     *
-     * @return
-     */
-    override def profiles: Set[String] = parent.profiles
-
     @throws[InstantiateConnectionFailedException]
     @throws[NoSuchConnectionException]
     override def getConnection(identifier: ConnectionIdentifier): Connection = {

@@ -27,6 +27,8 @@ changes over time.
 * github-270: Upgrade Spark to 3.3.1
 * github-271: Upgrade Delta to 2.1.1
 * github-272: Create build profile for AWS EMR 6.8.0
+* github-273: Refactor file abstraction
+* github-274: Print Flowman configuration to console
 
 
 ### Version 0.28.0 - 2022-10-07

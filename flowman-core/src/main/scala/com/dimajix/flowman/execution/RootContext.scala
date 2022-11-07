@@ -155,13 +155,6 @@ final class RootContext private[execution](
     override def root : RootContext = this
 
     /**
-     * Returns the list of active profile names
-     *
-     * @return
-     */
-    override def profiles: Set[String] = _profiles
-
-    /**
       * Returns a fully qualified mapping from a project belonging to the namespace of this execution
       *
       * @param identifier
@@ -335,7 +328,8 @@ final class RootContext private[execution](
 
     private def createProjectContext(project: Project) : Context = {
         val builder = ProjectContext.builder(this, project)
-        profiles.foreach { prof =>
+        // Apply all selected profiles defined in the project
+        _profiles.foreach { prof =>
                 project.profiles.get(prof).foreach { profile =>
                     builder.withProfile(profile)
                 }

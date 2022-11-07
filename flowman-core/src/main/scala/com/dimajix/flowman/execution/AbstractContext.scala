@@ -59,7 +59,7 @@ object AbstractContext {
                     rawConfig.update(key, (value, settingLevel.level))
                 }
                 else {
-                    logger.info(s"Ignoring changing final config variable '$key=${currentValue._1}' to '$value'")
+                    logger.debug(s"Ignoring changing final config variable $key='${currentValue._1}' to '$value'")
                 }
             }
 
@@ -69,7 +69,7 @@ object AbstractContext {
                     rawEnvironment.update(key, (value, settingLevel.level))
                 }
                 else {
-                    logger.info(s"Ignoring changing final environment variable '$key=${currentValue._1}' to '$value'")
+                    logger.debug(s"Ignoring changing final environment variable $key='${currentValue._1}' to '$value'")
                 }
             }
 
@@ -79,7 +79,7 @@ object AbstractContext {
                     rawConnections.update(name, (connection, settingLevel.level))
                 }
                 else {
-                    logger.info(s"Ignoring changing final database $name")
+                    logger.debug(s"Ignoring changing final connection '$name'")
                 }
             }
 

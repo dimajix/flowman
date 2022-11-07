@@ -201,12 +201,6 @@ abstract class Context {
     def getTemplate(identifier: TemplateIdentifier): Template[_]
 
     /**
-     * Returns the list of active profile names
-     * @return
-     */
-    def profiles : Set[String]
-
-    /**
       * Returns all configuration options as a key-value map
       *
       * @return

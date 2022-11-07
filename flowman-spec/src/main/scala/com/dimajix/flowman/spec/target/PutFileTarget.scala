@@ -146,14 +146,14 @@ case class PutFileTarget(
 
 class PutFileTargetSpec extends TargetSpec {
     @JsonProperty(value = "source", required = true) private var source: String = ""
-    @JsonProperty(value = "tarPut", required = true) private var tarPut: String = ""
+    @JsonProperty(value = "target", required = true) private var target: String = ""
     @JsonProperty(value = "overwrite", required = false) private var overwrite: String = "true"
 
     override def instantiate(context: Context, properties:Option[Target.Properties] = None): PutFileTarget = {
         PutFileTarget(
             instanceProperties(context, properties),
             new Path(context.evaluate(source)),
-            new Path(context.evaluate(tarPut)),
+            new Path(context.evaluate(target)),
             context.evaluate(overwrite).toBoolean
         )
     }

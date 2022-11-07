@@ -57,9 +57,16 @@ case class FileSystem(conf:Configuration) {
         }
     }
     def file(path:String) : File = {
-        val uri = new URI(path)
-        if (uri.getScheme == "jar") {
-            resource(uri)
+        // parse uri scheme, if any
+        var scheme:String = null
+        val colon = path.indexOf(':')
+        val slash = path.indexOf('/')
+        if ((colon != -1) && ((slash == -1) || (colon < slash))) { // has a scheme
+            scheme = path.substring(0, colon)
+        }
+
+        if (scheme == "jar") {
+            resource(new URI(path))
         }
         else {
             file(new Path(path))

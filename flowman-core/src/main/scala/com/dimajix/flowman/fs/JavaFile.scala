@@ -31,11 +31,9 @@ import scala.collection.JavaConverters._
 
 import org.apache.hadoop.fs
 
-import com.dimajix.common.text.StringUtils
-
 
 case class JavaFile(jpath:Path) extends File {
-    override def toString: String = uri.toString
+    override def toString: String = "file:" + jpath.toString
 
     override def path: fs.Path = new fs.Path(uri)
 

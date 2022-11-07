@@ -131,7 +131,7 @@ private[execution] sealed class RunnerImpl {
         logger.info("Environment:")
         context.environment.toSeq.sortBy(_._1).foreach { case (key,value) =>
             LogFilter.filter(logFilters, key, value.toString)
-                .foreach { case (key,value) => logger.info(s"  $key=$value") }
+                .foreach { case (key,value) => logger.info(s"  $key = $value") }
         }
         logger.info("")
     }

@@ -387,12 +387,13 @@ class Session private[execution](
         sparkJars.foreach(spark.sparkContext.addJar)
 
         // Log all config properties
+        logger.info("Spark configuration:")
         val logFilters = LogFilter.filters
         spark.conf.getAll.toSeq
             .sortBy(_._1)
             .foreach { keyValue =>
                 logFilters.foldLeft(Option(keyValue))((kv, f) => kv.flatMap(kv => f.filterConfig(kv._1,kv._2)))
-                    .foreach { case (key,value) => logger.info("Spark Config: {} = {}", key: Any, value: Any) }
+                    .foreach { case (key,value) => logger.info("  {} = {}", key: Any, value: Any) }
             }
 
         // Copy all Spark configs over to SparkConf inside the Context
@@ -448,10 +449,12 @@ class Session private[execution](
             context.config
         }
 
+        // Log Flowman configuration
+        logger.info("Flowman configuration:")
         conf.flowmanConf.getAll.toSeq
             .sortBy(_._1)
             .foreach { case(key,value) =>
-                logger.info("Flowman Config: {} = {}", key: Any, value: Any)
+                logger.info("  {} = {}", key: Any, value: Any)
             }
 
         conf

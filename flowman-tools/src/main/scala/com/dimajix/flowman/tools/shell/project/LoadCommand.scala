@@ -39,7 +39,7 @@ class LoadCommand extends Command {
 
     override def execute(session: Session, project:Project, context:Context): Status = {
         try {
-            Shell.instance.loadProject(new Path(this.project))
+            Shell.instance.loadProject(this.project)
             Status.SUCCESS
         }
         catch {

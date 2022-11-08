@@ -57,6 +57,7 @@ final case class ColumnCheckWrapper(check:ColumnCheck) extends FragmentWrapper(c
     override def toString: String = check.name
 
     def getName() : String = check.name
+    def getText() : String = check.text
     def getResult() : CheckResultWrapper = check.result.map(CheckResultWrapper).orNull
     def getStatus() : String = check.result.map(_.status.toString).getOrElse("NOT_RUN")
     def getSuccess() : Boolean = check.result.exists(_.success)
@@ -85,6 +86,7 @@ final case class SchemaCheckWrapper(check:SchemaCheck) extends FragmentWrapper(c
     override def toString: String = check.name
 
     def getName() : String = check.name
+    def getText() : String = check.text
     def getResult() : CheckResultWrapper = check.result.map(CheckResultWrapper).orNull
     def getStatus() : String = check.result.map(_.status.toString).getOrElse("NOT_RUN")
     def getSuccess() : Boolean = check.result.exists(_.success)

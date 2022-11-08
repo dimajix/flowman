@@ -20,7 +20,7 @@ import java.util.Locale
 import com.dimajix.flowman.catalog.TableIdentifier
 
 
-object H2Dialect extends BaseDialect {
+class H2Dialect extends BaseDialect {
     private object Statements extends H2Statements(this)
 
     override def canHandle(url: String): Boolean = url.startsWith("jdbc:h2")
@@ -41,6 +41,7 @@ object H2Dialect extends BaseDialect {
 
     override def statement : SqlStatements = Statements
 }
+object H2Dialect extends H2Dialect
 
 
 class H2Statements(dialect: BaseDialect) extends BaseStatements(dialect)  {

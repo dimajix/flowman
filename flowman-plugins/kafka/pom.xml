@@ -5,11 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-plugin-kafka</artifactId>
     <name>Flowman Kafka plugin</name>
+    <description>Flowman Kafka plugin</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.28.0</version>
+        <version>0.29.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -45,9 +46,15 @@
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-spec</artifactId>
+            <artifactId>flowman-spark-dependencies</artifactId>
+            <type>pom</type>
+            <scope>provided</scope>
         </dependency>
-
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-spec</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spark-testing</artifactId>
@@ -56,42 +63,7 @@
 
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-hive_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql-kafka-0-10_${scala.api_version}</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-client-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-client-runtime</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
         </dependency>
 
         <dependency>

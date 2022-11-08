@@ -43,11 +43,11 @@ class MergeFilesTargetTest extends AnyFlatSpec with Matchers with LocalSparkSess
         dest.isFile() should be (false)
         dest.isDirectory() should be (false)
 
-        val file1 = (source / "file_1.txt").create()
+        val file1 = (source / "file_1.txt").create(true)
         file1.write("This is a test".getBytes(Charset.forName("UTF-8")))
         file1.close()
 
-        val file2 = (source / "file_2.txt").create()
+        val file2 = (source / "file_2.txt").create(false)
         file2.write("The second line".getBytes(Charset.forName("UTF-8")))
         file2.close()
 

@@ -29,7 +29,7 @@ import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.documentation.Documenter
 import com.dimajix.flowman.execution.Session.builder
-import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.history.NullStateStore
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.metric.MetricSystem
@@ -387,11 +387,14 @@ class Session private[execution](
         sparkJars.foreach(spark.sparkContext.addJar)
 
         // Log all config properties
+        logger.info("Spark configuration:")
         val logFilters = LogFilter.filters
-        spark.conf.getAll.toSeq.sortBy(_._1).foreach { keyValue =>
-            logFilters.foldLeft(Option(keyValue))((kv, f) => kv.flatMap(kv => f.filterConfig(kv._1,kv._2)))
-                .foreach { case (key,value) => logger.info("Config: {} = {}", key: Any, value: Any) }
-        }
+        spark.conf.getAll.toSeq
+            .sortBy(_._1)
+            .foreach { keyValue =>
+                logFilters.foldLeft(Option(keyValue))((kv, f) => kv.flatMap(kv => f.filterConfig(kv._1,kv._2)))
+                    .foreach { case (key,value) => logger.info("  {} = {}", key: Any, value: Any) }
+            }
 
         // Copy all Spark configs over to SparkConf inside the Context
         sparkConf.setAll(spark.conf.getAll)
@@ -419,7 +422,7 @@ class Session private[execution](
             .withProjectResolver(loadProject)
         _namespace.foreach { ns =>
             _profiles.foreach(p => ns.profiles.get(p).foreach { profile =>
-                logger.info(s"Applying namespace profile $p")
+                logger.info(s"Activating namespace profile '$p'")
                 builder.withProfile(profile)
             })
             builder.withEnvironment(ns.environment)
@@ -428,7 +431,7 @@ class Session private[execution](
         _project.foreach { prj =>
             // github-155: Apply project configuration to session
             _profiles.foreach(p => prj.profiles.get(p).foreach { profile =>
-                logger.info(s"Applying project profile $p")
+                logger.info(s"Activating project profile '$p'")
                 builder.withConfig(profile.config, SettingLevel.PROJECT_PROFILE)
             })
             builder.withConfig(prj.config, SettingLevel.PROJECT_SETTING)
@@ -437,7 +440,7 @@ class Session private[execution](
     }
 
     private lazy val _configuration : Configuration = {
-        if (_project.nonEmpty) {
+        val conf = if (_project.nonEmpty) {
             logger.info("Using project specific configuration settings")
             getContext(_project.get).config
         }
@@ -445,6 +448,16 @@ class Session private[execution](
             logger.info("Using global configuration settings")
             context.config
         }
+
+        // Log Flowman configuration
+        logger.info("Flowman configuration:")
+        conf.flowmanConf.getAll.toSeq
+            .sortBy(_._1)
+            .foreach { case(key,value) =>
+                logger.info("  {} = {}", key: Any, value: Any)
+            }
+
+        conf
     }
 
     private lazy val _catalog = {

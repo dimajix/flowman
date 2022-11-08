@@ -38,7 +38,7 @@ import javax.ws.rs.PUT
 import javax.ws.rs.Path
 import org.apache.hadoop.conf.Configuration
 
-import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.spec.storage.LocalParcel
 import com.dimajix.flowman.storage.Parcel
 import com.dimajix.flowman.storage.Workspace

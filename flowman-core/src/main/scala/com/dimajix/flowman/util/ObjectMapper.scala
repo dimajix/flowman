@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.{ObjectMapper => JacksonMapper}
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 
 
 /**

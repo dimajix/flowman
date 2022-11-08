@@ -5,11 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-plugin-delta</artifactId>
     <name>Flowman Delta plugin</name>
+    <description>Flowman Delta plugin</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.28.0</version>
+        <version>0.29.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -17,7 +18,7 @@
         <plugin.name>flowman-delta</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <delta.version>2.1.0</delta.version>
+        <delta.version>2.1.1</delta.version>
     </properties>
 
     <profiles>
@@ -64,6 +65,12 @@
             </build>
         </profile>
         <profile>
+            <id>EMR-6.8</id>
+            <properties>
+                <delta.version>2.1.1</delta.version>
+            </properties>
+        </profile>
+        <profile>
             <id>spark-2.4</id>
             <properties>
                 <delta.version>0.6.1</delta.version>
@@ -105,7 +112,7 @@
         <profile>
             <id>spark-3.3</id>
             <properties>
-                <delta.version>2.1.0</delta.version>
+                <delta.version>2.1.1</delta.version>
             </properties>
         </profile>
     </profiles>
@@ -167,38 +174,19 @@
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-spec</artifactId>
+            <artifactId>flowman-spark-dependencies</artifactId>
+            <type>pom</type>
+            <scope>provided</scope>
         </dependency>
-
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-spec</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spark-testing</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-hive_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
         </dependency>
 
         <dependency>

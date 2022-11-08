@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.hadoop
+package com.dimajix.flowman.fs
 
 import java.io.FileNotFoundException
 import java.io.IOException
+import java.net.URI
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FSDataInputStream
@@ -27,39 +28,34 @@ import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.IOUtils
 
 
-object File {
-    def empty = new File(null, null)
-    def apply(conf:Configuration, path:Path) : File  = {
-        File(path.getFileSystem(conf), path)
-    }
-    def apply(conf:Configuration, path:String) : File = {
-        apply(conf, new Path(path))
-    }
-}
-
 /**
   * The File class represents a file on a Hadoop filesystem. It contains a path and a filesystem and provides
   * convenience methods for working with files.
   * @param fs
   * @param path
   */
-case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
-    override def toString: String = if (path != null) path.toString else ""
+final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) extends File {
+    override def uri : URI = path.toUri
 
     /**
       * Creates a new File object by attaching a child entry
       * @param sub
       * @return
       */
-    def /(sub:String) : File = {
-        File(fs, new Path(path, sub))
+    override def /(sub:String) : File = {
+        val rel = new Path(new URI(sub))
+        if (rel.isAbsolute)
+            HadoopFile(fs, rel)
+        else
+            HadoopFile(fs, new Path(path, sub))
     }
 
     /**
-      * Returns the file name of the File
-      * @return
-      */
-    def filename : String = {
+     * Returns the file name of the File
+     *
+     * @return
+     */
+    override def name: String = {
         path.getName
     }
 
@@ -67,8 +63,18 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
       * Returns the parent directory of the File
       * @return
       */
-    def parent : File = {
-        File(fs, path.getParent)
+    override def parent : File = {
+        val p = path.getParent
+        if (p == null) {
+            this
+        }
+        else if (p.getName.isEmpty) {
+            HadoopFile(fs, p)
+        }
+        else {
+            val uri = new URI(p.toUri.toString + "/")
+            HadoopFile(fs, new Path(uri))
+        }
     }
 
     /**
@@ -76,7 +82,7 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
       * @return
       */
     def absolute : File = {
-        File(fs, path.makeQualified(fs.getUri, fs.getWorkingDirectory))
+        HadoopFile(fs, path.makeQualified(fs.getUri, fs.getWorkingDirectory))
     }
 
     /**
@@ -87,10 +93,6 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
         fs.getFileStatus(path).getLen
     }
 
-    def resolve(name:String) : File = {
-        File(fs, new Path(path.toUri.resolve(name)))
-    }
-
     /**
       * Lists all directory entries. Will throw an exception if the File is not a directory
       * @return
@@ -99,30 +101,18 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
         if (!isDirectory())
             throw new IOException(s"File '$path' is not a directory - cannot list files")
         fs.listStatus(path)
-            .map(item => (item.getPath.toString, File(fs, item.getPath)))
+            .map(item => (item.getPath.toString, HadoopFile(fs, item.getPath)))
             .sortBy(_._1)
             .map(_._2)
     }
 
-    def glob(pattern:Path) : Seq[File] = {
+    def glob(pattern:String) : Seq[File] = {
         if (!isDirectory())
             throw new IOException(s"File '$path' is not a directory - cannot list files")
         fs.globStatus(new Path(path, pattern))
-            .map(item => (item.getPath.toString, File(fs, item.getPath)))
+            .map(item => (item.getPath.toString, HadoopFile(fs, item.getPath)))
             .sortBy(_._1)
             .map(_._2)
-    }
-
-    /**
-      * Renames the file to a different name. The destination has to be on the same FileSystem, otherwise an
-      * exception will be thrown
-      * @param dst
-      */
-    def rename(dst:File) : Unit  = {
-        if (!dst.fs.eq(fs)) {
-            throw new IOException(s"Target of rename needs to be on the same filesystem")
-        }
-        rename(dst.path)
     }
 
     /**
@@ -155,19 +145,25 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
             dst
 
         // Perform copy
-        if (dstFile.fs.isInstanceOf[LocalFileSystem])
-            copyToLocal(dstFile, overwrite)
-        else
-            copyToRemote(dstFile, overwrite)
+        dstFile match {
+            case HadoopFile(fs, _) if fs.isInstanceOf[LocalFileSystem] =>
+                copyToLocal(dstFile, overwrite)
+            case _ =>
+                copyToRemote(dstFile, overwrite)
+        }
     }
 
     /**
-      * Creates a file and returns the correspondiong output stream
+      * Creates a file and returns the corresponding output stream. Intermediate directories will be created as required.
       * @param overwrite
       * @return
       */
     def create(overwrite:Boolean = false) : FSDataOutputStream = {
         fs.create(path, overwrite)
+    }
+
+    def append(): FSDataOutputStream = {
+        fs.append(path)
     }
 
     /**
@@ -242,11 +238,11 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
       * @return
       */
     def withSuffix(suffix:String) : File = {
-        File(fs, path.suffix(suffix))
+        HadoopFile(fs, path.suffix(suffix))
     }
 
     def withName(name:String) : File = {
-        File(fs, new Path(path.getParent, name))
+        HadoopFile(fs, new Path(path.getParent, name))
     }
 
     private def copyToLocal(dst:File, overwrite:Boolean) : Unit = {
@@ -275,7 +271,7 @@ case class File(fs:org.apache.hadoop.fs.FileSystem, path:Path) {
             val input = open()
             try {
                 IOUtils.copyBytes(input, output, 16384, true)
-                tmp.rename(dst)
+                tmp.rename(dst.path)
             }
             finally {
                 input.close()

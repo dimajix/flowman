@@ -1,4 +1,21 @@
-# Version 0.28.0
+# Version 0.29.0 - 2022-11-08
+
+* github-260: Remove hive-storage-api from several plugins and lib
+* github-261: Add descriptions to all pom.xml
+* github-262: Verification of "relation" targets should only check existence
+* github-263: Add filter condition to data quality checks in documentation
+* github-265: Make JDBC dialects pluggable
+* github-264: Provide "jars" for all plugins
+* github-267: Add new flowman-spark-dependencies module to simplify dependency management
+* github-269: Implement new 'iterativeSql' mapping
+* github-270: Upgrade Spark to 3.3.1
+* github-271: Upgrade Delta to 2.1.1
+* github-272: Create build profile for AWS EMR 6.8.0
+* github-273: Refactor file abstraction
+* github-274: Print Flowman configuration to console
+
+
+# Version 0.28.0 - 2022-10-07
 
 * Improve support for MariaDB / MySQL as data sinks
 * github-245: Bump ejs, @vue/cli-plugin-babel, @vue/cli-plugin-eslint and @vue/cli-service in /flowman-studio-ui

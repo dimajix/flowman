@@ -23,7 +23,7 @@ import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.spi.ProjectReader
 
 

@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.execution.NoSuchProjectException
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.ToSpec
@@ -36,7 +36,7 @@ object LocalWorkspace {
     def load(file:File) : LocalWorkspace = new LocalWorkspace(file)
 
     def list(root:File) : Seq[Workspace] = {
-        val globPattern = new Path("*/.flowman-workspace.yaml")
+        val globPattern = "*/.flowman-workspace.yaml"
         root.glob(globPattern)
             .flatMap(file => Try(load(file.parent)).toOption)
     }

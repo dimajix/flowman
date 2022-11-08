@@ -21,7 +21,7 @@ import java.io.IOException
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JsonMappingException
 
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spi.ProjectReader
 

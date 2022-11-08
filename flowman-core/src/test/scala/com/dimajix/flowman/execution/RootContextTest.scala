@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,35 +35,7 @@ import com.dimajix.flowman.types.StringType
 
 
 class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
-    "The RootContext" should "apply profiles" in {
-        val namespace = Namespace(
-            name = "default",
-            profiles = Map(
-                "profile" -> Profile(name="profile")
-            )
-        )
-        val project = Project(
-            name = "my_project",
-            profiles = Map(
-                "profile" -> Profile(name="profile")
-            )
-        )
-
-        val session = Session.builder()
-            .withNamespace(namespace)
-            .withProfile("profile")
-            .withProfile("profile2")
-            .disableSpark()
-            .build()
-
-        val rootContext = session.context
-        rootContext.profiles should be (Set("profile", "profile2"))
-
-        val projectContext = session.getContext(project)
-        projectContext.profiles should be (Set("profile", "profile2"))
-    }
-
-    it should "correctly lookup connections in profiles" in {
+    "The RootContext" should "correctly lookup connections in profiles" in {
         val namespaceConnectionTemplate = mock[Prototype[Connection]]
         val namespaceConnection = mock[Connection]
         val namespaceProfileConnectionTemplate = mock[Prototype[Connection]]

@@ -25,6 +25,7 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.BaseTarget
@@ -117,8 +118,9 @@ case class GetFileTarget(
 
         val file = executor.fs.local(target)
         if (!file.exists()) {
-            logger.error(s"Verification of target '$identifier' failed - local file '$target' does not exist")
-            throw new VerificationFailedException(identifier)
+            val error = s"Verification of target '$identifier' failed - local file '$target' does not exist"
+            logger.error(error)
+            throw new VerificationFailedException(identifier, new ExecutionException(error))
         }
     }
 

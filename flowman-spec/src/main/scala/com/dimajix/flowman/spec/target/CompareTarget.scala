@@ -25,6 +25,7 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.BaseTarget
@@ -99,7 +100,7 @@ case class CompareTarget(
         if (diff.nonEmpty) {
             logger.error(s"Dataset '${actual.name}' does not equal the expected dataset '${expected.name}'")
             logger.error(s"Difference between datasets: \n${diff.get}")
-            throw new VerificationFailedException(identifier)
+            throw new VerificationFailedException(identifier, new ExecutionException(s"Dataset '${actual.name}' does not equal the expected dataset '${expected.name}'"))
         }
         else {
             logger.info(s"Dataset '${actual.name}' matches the expected dataset '${expected.name}'")

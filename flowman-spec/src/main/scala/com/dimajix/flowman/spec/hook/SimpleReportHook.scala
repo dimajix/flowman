@@ -70,7 +70,7 @@ case class SimpleReportHook(
 ) extends BaseHook {
     private val logger = LoggerFactory.getLogger(classOf[ReportHook])
 
-    private def newOutput():Option[PrintStream] = {
+    private def newOutput(execution:Execution):Option[PrintStream] = {
         if (location.toString == "stdout") {
             Some(System.out)
         }
@@ -78,17 +78,18 @@ case class SimpleReportHook(
             Some(System.err)
         }
         else {
-            val fs = location.getFileSystem(context.hadoopConf)
+            val fs = execution.fs
+            val file = fs.file(location)
             val out = mode match {
-                case OutputMode.OVERWRITE => fs.create(location)
-                case OutputMode.APPEND => fs.append(location)
+                case OutputMode.OVERWRITE => file.create(true)
+                case OutputMode.APPEND => file.append()
                 case OutputMode.ERROR_IF_EXISTS =>
-                    if (fs.exists(location))
+                    if (file.exists())
                         throw new FileAlreadyExistsException(s"Cannot open report output, file $location already exists")
-                    fs.create(location)
+                    file.create(false)
                 case OutputMode.IGNORE_IF_EXISTS =>
-                    if (!fs.exists(location)) {
-                        fs.create(location)
+                    if (!file.exists()) {
+                        file.create(false)
                     }
                     else {
                         null
@@ -172,7 +173,7 @@ case class SimpleReportHook(
     override def startLifecycle(execution:Execution, job:Job, instance:JobLifecycle) : LifecycleToken = {
         val now = Instant.now()
         logger.info(s"Creating new report to $location")
-        val output = newOutput()
+        val output = newOutput(execution)
         output.foreach { p =>
             printBigTitle(p, s"Processing job ${job.identifier} at $now")
             printEnvironment(p, job.context)
@@ -207,7 +208,7 @@ case class SimpleReportHook(
         val now = Instant.now()
         val output = parent.flatMap {
             case ReporterLifecycleToken(output) => output
-            case _ => newOutput()
+            case _ => newOutput(execution)
         }
         output.foreach { p =>
             printTitle(p, s"${instance.phase} job ${job.identifier} at $now")

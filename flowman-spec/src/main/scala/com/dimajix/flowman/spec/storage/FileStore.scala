@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchProjectException
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.storage.AbstractStore
 import com.dimajix.flowman.storage.Store
@@ -31,7 +31,7 @@ import com.dimajix.flowman.storage.Store
 
 case class FileStore(root:File) extends AbstractStore {
     private val logger = LoggerFactory.getLogger(classOf[FileStore])
-    private val globPattern = new Path("*/project.{yml,yaml}")
+    private val globPattern = "*/project.{yml,yaml}"
 
     /**
      * Loads a project via its name (not its filename or directory)

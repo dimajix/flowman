@@ -1,4 +1,4 @@
-# Installing additional Hadoop Dependencies
+# Hadoop Dependencies Installation
 
 Starting with version 3.2, Spark has reduced the number of Hadoop libraries which are part of the downloadable Spark
 distribution. Unfortunately, some of the libraries which have been removed are required by some Flowman plugins (for

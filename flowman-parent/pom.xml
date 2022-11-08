@@ -5,12 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-parent</artifactId>
     <name>Flowman Parent BOM</name>
+    <description>Flowman Parent BOM</description>
     <packaging>pom</packaging>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.28.0</version>
+        <version>0.29.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -76,6 +77,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>3.2.2</version>
+                    <configuration>
+                        <excludes>
+                            <exclude>plugin.yml</exclude>
+                        </excludes>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -224,7 +230,7 @@
                             <configuration>
                                 <finalName>${project.artifactId}-${project.version}</finalName>
                                 <descriptors>
-                                    <descriptor>src/main/assembly/assembly.xml</descriptor>
+                                    <descriptor>src/assembly/assembly.xml</descriptor>
                                 </descriptors>
                             </configuration>
                         </execution>
@@ -269,21 +275,28 @@
             <!-- Flowman Dependencies -->
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-spark-dependencies</artifactId>
+                <version>${flowman.version}</version>
+                <type>pom</type>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spark-extensions</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-common</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-core</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.velocity</groupId>
@@ -295,132 +308,133 @@
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spec</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-dsl</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-tools</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-server</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-server-ui</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-hub</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-studio</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-studio-ui</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-aws</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-azure</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-delta</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-kafka</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-impala</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-postgresql</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-mariadb</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-mysql</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-mssqlserver</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-sftp</artifactId>
                 <version>${project.version}</version>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-swagger</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-openapi</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-json</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-client</artifactId>
                 <version>${flowman.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
@@ -428,7 +442,7 @@
                 <version>${flowman.version}</version>
                 <type>tar.gz</type>
                 <classifier>bin</classifier>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
@@ -502,10 +516,6 @@
                     <exclusion>
                         <groupId>org.apache.hive</groupId>
                         <artifactId>hive-llap-common</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.hive</groupId>
-                        <artifactId>hive-storage-api</artifactId>
                     </exclusion>
                     <!-- There is no hadoop-client-api for Hadoop < 3 -->
                     <exclusion>
@@ -841,6 +851,12 @@
                 <version>${jackson.version}</version>
                 <scope>compile</scope>
             </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jdk8</artifactId>
+                <version>${jackson.version}</version>
+                <scope>compile</scope>
+            </dependency>
 
             <dependency>
                 <groupId>com.thoughtworks.paranamer</groupId>
@@ -964,6 +980,25 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty</artifactId>
+                <version>${netty.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty-all.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-handler</artifactId>
+                <version>${netty-all.version}</version>
                 <scope>provided</scope>
             </dependency>
 

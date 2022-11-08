@@ -1,9 +1,10 @@
 package com.dimajix.flowman.tools
 
-import org.apache.hadoop.fs.Path
+import java.net.URI
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Test
@@ -56,9 +57,9 @@ class StatefulTool(
         _session
     }
 
-    override def loadProject(path: Path): Project = {
+    override def loadProject(file:File): Project = {
         // First try to load new project
-        _project = super.loadProject(path)
+        _project = super.loadProject(file)
 
         // Then create new session. If project loading fails, the old session will remain
         newSession()

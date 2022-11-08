@@ -36,7 +36,7 @@ class ReloadCommand extends Command {
     override def execute(session: Session, project:Project, context:Context): Status = {
         project.filename.map { fn =>
             try {
-                Shell.instance.loadProject(fn.path)
+                Shell.instance.loadProject(fn)
                 Status.SUCCESS
             }
             catch {

@@ -36,7 +36,7 @@ import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.templating.FileWrapper.logger
 import com.dimajix.flowman.util.UtcTimestamp
 
@@ -82,7 +82,7 @@ case class FileWrapper(file:File) {
     def getParent() : FileWrapper = FileWrapper(file.parent)
     def getAbsPath() : FileWrapper = FileWrapper(file.absolute)
     def getPath() : String = Path.getPathWithoutSchemeAndAuthority(file.path).toString
-    def getFilename() : String = file.filename
+    def getFilename() : String = file.name
     def withSuffix(suffix:String) : FileWrapper = FileWrapper(file.withSuffix(suffix))
     def withName(name:String) : FileWrapper = FileWrapper(file.withName(name))
 }

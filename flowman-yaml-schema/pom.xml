@@ -5,12 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-yaml-schema</artifactId>
     <name>Flowman YAML schema</name>
+    <description>Flowman YAML schema to be used for syntax highlighting and auto-completion in capable editors</description>
     <packaging>pom</packaging>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.28.0</version>
+        <version>0.29.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -64,6 +65,11 @@
             <version>${jackson.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-scala_${scala.api_version}</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
             <version>2.0.2</version>
@@ -110,6 +116,19 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_${scala.api_version}</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-hive_${scala.api_version}</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
         </dependency>
     </dependencies>
 </project>

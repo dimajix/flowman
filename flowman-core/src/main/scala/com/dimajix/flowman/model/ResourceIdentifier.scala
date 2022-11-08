@@ -26,7 +26,7 @@ import scala.annotation.tailrec
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.catalog.TableIdentifier
-import com.dimajix.flowman.hadoop.GlobPattern
+import com.dimajix.flowman.fs.GlobPattern
 
 
 object ResourceIdentifier {

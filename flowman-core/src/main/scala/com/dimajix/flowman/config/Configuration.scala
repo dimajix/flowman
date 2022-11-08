@@ -22,7 +22,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkShim
 
 
-class Configuration(userSettings:Map[String,String]) {
+final class Configuration(userSettings:Map[String,String]) {
     private val systemSettings =
         System.getProperties.stringPropertyNames().asScala.filter(_.startsWith("flowman."))
             .map(key => (key, System.getProperty(key)))
@@ -37,7 +37,7 @@ class Configuration(userSettings:Map[String,String]) {
     /**
      * This variable contains Flowman configuration object
      */
-    val flowmanConf:FlowmanConf = new FlowmanConf(flowmanSettings)
+    val flowmanConf:FlowmanConf = FlowmanConf(flowmanSettings)
     /**
      * Spark configuration also derived from all global settings
      */

@@ -1,4 +1,4 @@
-# Using advanced Features of JDBC Databases
+# Advanced JDBC Database Features
 
 Flowman already provides a very robust for dealing with relation databases, both as data sources and as data sinks.
 But when writing into a relational database, you eventually might find yourself in a situation where Flowman does 

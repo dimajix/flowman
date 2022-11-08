@@ -16,37 +16,14 @@
 
 package com.dimajix.flowman.jdbc
 
+import java.util.ServiceLoader
+import scala.collection.JavaConverters._
 
 object SqlDialects {
-    /**
-      * Register a dialect for use on all new matching jdbc `org.apache.spark.sql.DataFrame`.
-      * Reading an existing dialect will cause a move-to-front.
-      *
-      * @param dialect The new dialect.
-      */
-    def registerDialect(dialect: SqlDialect) : Unit = {
-        dialects = dialect :: dialects.filterNot(_ == dialect)
+    private lazy val dialects = {
+        val loader = ServiceLoader.load(classOf[SqlDialect])
+        loader.iterator().asScala.toSeq
     }
-
-    /**
-      * Unregister a dialect. Does nothing if the dialect is not registered.
-      *
-      * @param dialect The jdbc dialect.
-      */
-    def unregisterDialect(dialect : SqlDialect) : Unit = {
-        dialects = dialects.filterNot(_ == dialect)
-    }
-
-    private[this] var dialects = List[SqlDialect]()
-
-    registerDialect(HiveDialect)
-    registerDialect(DerbyDialect)
-    registerDialect(H2Dialect)
-    registerDialect(MySQLDialect)
-    registerDialect(MariaDialect)
-    registerDialect(SqlServerDialect)
-    registerDialect(PostgresDialect)
-    registerDialect(OracleDialect)
 
     /**
       * Fetch the JdbcDialect class corresponding to a given database url.

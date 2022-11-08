@@ -20,7 +20,7 @@ import scala.collection.mutable
 
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.spec.storage.LocalWorkspace
 import com.dimajix.flowman.storage.Workspace
 

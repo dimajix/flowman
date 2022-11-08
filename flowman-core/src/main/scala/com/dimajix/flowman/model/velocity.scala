@@ -18,7 +18,7 @@ package com.dimajix.flowman.model
 
 import scala.collection.JavaConverters._
 
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.templating.FileWrapper
 
 

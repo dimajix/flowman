@@ -16,7 +16,7 @@
 
 package com.dimajix.flowman.jdbc
 
-object NoopDialect extends BaseDialect {
+class NoopDialect extends BaseDialect {
     /**
       * Check if this dialect instance can handle a certain jdbc url.
       *
@@ -26,3 +26,4 @@ object NoopDialect extends BaseDialect {
       */
     override def canHandle(url: String): Boolean = true
 }
+object NoopDialect extends NoopDialect

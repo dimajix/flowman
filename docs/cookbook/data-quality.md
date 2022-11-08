@@ -46,7 +46,7 @@ generated with an independent command with [`flowexec`](../cli/flowexec/index.md
 ## Data Quality Metrics
 In addition to the `validate` and `verify` targets, Flowman also offers a special [measure target](../spec/target/measure.md).
 This target provides some means to collect some important metrics from data and provide the results as metrics. These 
-in turn can be [published to Prometheus](metrics.md) or other metric collectors.
+in turn can be [published to Prometheus](execution-metrics.md) or other metric collectors.
 
 
 ### Example

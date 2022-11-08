@@ -41,7 +41,7 @@ central place in your value chain for data preparations for the next steps.
 * Powerful yet simple [command line tool for batch execution](cli/flowexec/index.md)
 * Powerful [Command line tool for interactive data flow analysis](cli/flowshell/index.md)
 * [History server](cli/history-server.md) that provides an overview of past jobs and targets including lineage
-* [Metric system](cookbook/metrics.md) with the ability to publish these to servers like Prometheus
+* [Metric system](cookbook/execution-metrics.md) with the ability to publish these to servers like Prometheus
 * Extendable via Plugins
 
 
@@ -109,7 +109,7 @@ Flowman also provides optional plugins which extend functionality. You can find 
    spec/index
    testing/index
    documenting/index
-   workflow
+   workflow/index
    setup/index
    connectors/index
    plugins/index

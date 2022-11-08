@@ -4,24 +4,6 @@ In order to support the development of Flowman projects, Flowman provides the ca
 which can be used by editors to perform syntax validation and auto complete. You will find a set of pre-generated
 files in the `yaml-schema` directory, which contain syntax information for all core entities and all plugins.
 
-Since you might not use all plugins (or have your own plugins), Flowman also offers a small utility to generate
-the YAML schema files yourself. Using the provided schema generator will ensure that the schema perfectly matches
-to your setup with the right plugins. The schema files can be created with the [`flowman-schema`](../cli/schema.md) 
-command, such that the schema files will include all entities from any plugin loaded via the 
-[`default-namespace`](../spec/namespace.md).
-
-
-## Creating YAML schemas
-
-```shell
-flowman-schema -o my-schema-directory
-```
-
-This command will create multiple different YAML schema files:
-* `module.json` - This is the YAML schema for all modules, i.e. defining relations, mapping, etc.
-* `project.json` - This YAML schema file contains all entities of the [`project.yml`](../spec/project.md) file.
-* `namespace.sjon` - This YAML schema file contains all entities of [namespace definitions](../spec/namespace.md).
-* `documentation.sjon` - This YAML schema file contains all entities of [`documentation.yml`](../documenting/config.md).
 
 
 ## Supported Editors
@@ -64,3 +46,21 @@ In order to benefit from a really excellent autocompletion in Visual Studio Code
     }
 }
 ```
+
+## Creating YAML schemas
+
+Since you might not use all plugins (or have your own plugins), Flowman also offers a small utility to generate
+the YAML schema files yourself. Using the provided schema generator will ensure that the schema perfectly matches
+to your setup with the right plugins. The schema files can be created with the [`flowman-schema`](../cli/schema.md)
+command, such that the schema files will include all entities from any plugin loaded via the
+[`default-namespace`](../spec/namespace.md).
+
+```shell
+flowman-schema -o my-schema-directory
+```
+
+This command will create multiple different YAML schema files:
+* `module.json` - This is the YAML schema for all modules, i.e. defining relations, mapping, etc.
+* `project.json` - This YAML schema file contains all entities of the [`project.yml`](../spec/project.md) file.
+* `namespace.sjon` - This YAML schema file contains all entities of [namespace definitions](../spec/namespace.md).
+* `documentation.sjon` - This YAML schema file contains all entities of [`documentation.yml`](../documenting/config.md).

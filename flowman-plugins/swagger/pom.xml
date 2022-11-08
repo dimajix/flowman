@@ -5,11 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-plugin-swagger</artifactId>
     <name>Flowman Swagger Schema plugin</name>
+    <description>Flowman Swagger Schema plugin</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.28.0</version>
+        <version>0.29.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -45,35 +46,24 @@
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-spark-dependencies</artifactId>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spec</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-dsl</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spark-testing</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_${scala.api_version}</artifactId>
         </dependency>
 
         <dependency>

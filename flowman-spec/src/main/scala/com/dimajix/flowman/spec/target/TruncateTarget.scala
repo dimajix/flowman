@@ -27,6 +27,7 @@ import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
@@ -177,11 +178,13 @@ case class TruncateTarget(
         resolvedPartitions(rel)
             .find(p => rel.loaded(execution, p) == Yes)
             .foreach { partition =>
-                if (partition.isEmpty)
-                    logger.error(s"Verification of target '$identifier' failed - relation '$relation' not empty")
-                else
-                    logger.error(s"Verification of target '$identifier' failed - partition $partition of relation '$relation' exists")
-                throw new VerificationFailedException(identifier)
+                val error =
+                    if (partition.isEmpty)
+                        s"Verification of target '$identifier' failed - relation '$relation' not empty"
+                    else
+                        s"Verification of target '$identifier' failed - partition $partition of relation '$relation' exists"
+                logger.error(error)
+                throw new VerificationFailedException(identifier, new ExecutionException(error))
             }
     }
 

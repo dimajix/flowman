@@ -24,6 +24,7 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.BaseTarget
@@ -93,8 +94,9 @@ case class HiveDatabaseTarget(
         require(executor != null)
 
         if (!executor.catalog.databaseExists(database)) {
-            logger.error(s"Database '$database' provided by target '$identifier' does not exist")
-            throw new VerificationFailedException(identifier)
+            val error = s"Database '$database' provided by target '$identifier' does not exist"
+            logger.error(error)
+            throw new VerificationFailedException(identifier, new ExecutionException(error))
         }
     }
 

@@ -68,7 +68,7 @@ class Driver(options:Arguments) extends Tool {
       * @return
       */
     def run() : Boolean = {
-        val project = loadProject(new Path(options.projectFile))
+        val project = loadProject(options.projectFile)
 
         // Create Flowman Session, which also includes a Spark Session
         val config = splitSettings(options.config)

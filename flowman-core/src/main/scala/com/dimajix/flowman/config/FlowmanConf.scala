@@ -175,7 +175,7 @@ object FlowmanConf {
 }
 
 
-class FlowmanConf(settings:Map[String,String]) {
+final case class FlowmanConf(settings:Map[String,String]) {
     import FlowmanConf._
 
     settings.foreach{ case (key,value) => validateSetting(key, value) }

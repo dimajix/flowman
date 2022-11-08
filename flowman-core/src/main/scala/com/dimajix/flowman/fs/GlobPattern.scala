@@ -16,7 +16,7 @@
   * limitations under the License.
   */
 
-package com.dimajix.flowman.hadoop
+package com.dimajix.flowman.fs
 
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException

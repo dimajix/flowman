@@ -39,6 +39,7 @@ import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
@@ -296,17 +297,17 @@ case class RelationTarget(
     override def verify2(execution: Execution) : TargetResult = {
         require(execution != null)
 
-        val startTime = Instant.now()
-        Try {
+        def verifyWithData() : Status = {
             val partition = this.partition.mapValues(v => SingleValue(v))
             val rel = relation.value
             if (rel.loaded(execution, partition) == No) {
                 val policy = VerifyPolicy.ofString(execution.flowmanConf.getConf(FlowmanConf.DEFAULT_TARGET_VERIFY_POLICY))
                 policy match {
                     case VerifyPolicy.EMPTY_AS_FAILURE =>
-                        logger.error(s"Verification of target '$identifier' failed - partition $partition of relation '${relation.identifier}' does not exist")
-                        throw new VerificationFailedException(identifier)
-                    case VerifyPolicy.EMPTY_AS_SUCCESS|VerifyPolicy.EMPTY_AS_SUCCESS_WITH_ERRORS =>
+                        val error = s"Verification of target '$identifier' failed - partition $partition of relation '${relation.identifier}' does not exist"
+                        logger.error(error)
+                        throw new VerificationFailedException(identifier, new ExecutionException(error))
+                    case VerifyPolicy.EMPTY_AS_SUCCESS | VerifyPolicy.EMPTY_AS_SUCCESS_WITH_ERRORS =>
                         if (rel.exists(execution) != No) {
                             logger.warn(s"Verification of target '$identifier' failed - partition $partition of relation '${relation.identifier}' does not exist. Ignoring.")
                             if (policy == VerifyPolicy.EMPTY_AS_SUCCESS_WITH_ERRORS)
@@ -315,13 +316,35 @@ case class RelationTarget(
                                 Status.SUCCESS
                         }
                         else {
-                            logger.error(s"Verification of target '$identifier' failed - relation '${relation.identifier}' does not exist")
-                            throw new VerificationFailedException(identifier)
+                            val error = s"Verification of target '$identifier' failed - relation '${relation.identifier}' does not exist"
+                            logger.error(error)
+                            throw new VerificationFailedException(identifier, new ExecutionException(error))
                         }
                 }
             }
             else {
                 Status.SUCCESS
+            }
+        }
+        def verifyWithoutData() : Status = {
+            val rel = relation.value
+            if (rel.exists(execution) != No) {
+                Status.SUCCESS
+            }
+            else {
+                val error = s"Verification of target '$identifier' failed - relation '${relation.identifier}' does not exist"
+                logger.error(error)
+                throw new VerificationFailedException(identifier, new ExecutionException(error))
+            }
+        }
+
+        val startTime = Instant.now()
+        Try {
+            if (mapping.nonEmpty) {
+                verifyWithData()
+            }
+            else {
+                verifyWithoutData()
             }
         }
         match {

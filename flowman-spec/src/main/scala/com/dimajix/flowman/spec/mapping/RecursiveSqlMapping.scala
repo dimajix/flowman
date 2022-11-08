@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.mapping
 
 import java.io.StringWriter
+import java.lang
 import java.net.URL
 import java.nio.charset.Charset
 import java.util.Locale
@@ -37,6 +38,7 @@ import org.apache.spark.sql.catalyst.plans.logical.Union
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -47,11 +49,13 @@ import com.dimajix.spark.sql.DataFrameUtils.withTempView
 import com.dimajix.spark.sql.DataFrameUtils.withTempViews
 import com.dimajix.spark.sql.SqlParser
 
+
 case class RecursiveSqlMapping(
     instanceProperties:Mapping.Properties,
     sql:Option[String],
-    file:Option[Path],
-    url:Option[URL]
+    file:Option[Path] = None,
+    url:Option[URL] = None,
+    maxIterations: Int = 99
 )
 extends BaseMapping {
     /**
@@ -75,11 +79,13 @@ extends BaseMapping {
         val statement = this.statement
 
         @tailrec
-        def fix(in:DataFrame, inCount:Long) : DataFrame = {
+        def fix(in:DataFrame, inCount:Long, iteration:Int=1) : DataFrame = {
+            if (iteration > maxIterations)
+                throw new ExecutionException(s"Recursive mapping '$identifier' exceeded maximum iterations $maxIterations")
             val result = nextDf(statement, in)
             val resultCount = result.count()
             if (resultCount != inCount)
-                fix(result, resultCount)
+                fix(result, resultCount, iteration+1)
             else
                 result
         }
@@ -98,7 +104,8 @@ extends BaseMapping {
         def findUnion(plan:LogicalPlan) : LogicalPlan = {
             plan match {
                 case union:Union => union
-                case node:UnaryNode =>findUnion(node.child)
+                case node:UnaryNode => findUnion(node.child)
+                case _ => throw new IllegalArgumentException(s"SQL provided in recursiveSql mapping '$identifier' is not supported. Please use a structure like  'SELECT starting_point UNION ALL recursion', where starting_point does not reference __this__.")
             }
         }
 
@@ -176,6 +183,7 @@ class RecursiveSqlMappingSpec extends MappingSpec {
     @JsonProperty(value="sql", required=false) private var sql:Option[String] = None
     @JsonProperty(value="file", required=false) private var file:Option[String] = None
     @JsonProperty(value="url", required=false) private var url: Option[String] = None
+    @JsonProperty(value="maxIterations", required=false) private var maxIterations: String = "99"
 
     /**
       * Creates the instance of the specified Mapping with all variable interpolation being performed
@@ -187,7 +195,8 @@ class RecursiveSqlMappingSpec extends MappingSpec {
             instanceProperties(context, properties),
             context.evaluate(sql),
             file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
-            url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u))
+            url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)),
+            context.evaluate(maxIterations).toInt
         )
     }
 }

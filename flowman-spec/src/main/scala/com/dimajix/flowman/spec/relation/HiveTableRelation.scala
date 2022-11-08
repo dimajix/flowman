@@ -60,7 +60,7 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
-import com.dimajix.flowman.hadoop.FileUtils
+import com.dimajix.flowman.fs.FileUtils
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema

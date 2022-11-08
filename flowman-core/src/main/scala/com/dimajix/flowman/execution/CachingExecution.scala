@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.execution
 
-import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.TaskSupport
@@ -24,7 +23,6 @@ import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.concurrent.duration.Duration
-import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -184,15 +182,16 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
     private def describeMapping(mapping:Mapping) : Map[String,StructType] = {
         val context = mapping.context
 
-        val deps = if (parallelism > 1 ) {
-            val inputs = mapping.inputs.par
-            inputs.tasksupport = taskSupport
-            inputs.map(id => id -> describe(context.getMapping(id.mapping), id.output))
+        val inputs = mapping.inputs.toSeq
+        val deps = if (inputs.size > 1 && parallelism > 1 ) {
+            val parInputs = inputs.par
+            parInputs.tasksupport = taskSupport
+            parInputs.map(id => id -> describe(context.getMapping(id.mapping), id.output))
                 .seq
                 .toMap
         }
         else {
-            mapping.inputs
+            inputs
                 .map(id => id -> describe(context.getMapping(id.mapping), id.output))
                 .toMap
         }
@@ -333,13 +332,14 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         }
 
         val dependencies = {
-            if (parallelism > 1) {
-                val inputs = mapping.inputs.par
-                inputs.tasksupport = taskSupport
-                inputs.map(dep).seq.toMap
+            val inputs = mapping.inputs.toSeq
+            if (inputs.size > 1 && parallelism > 1) {
+                val parInputs = inputs.par
+                parInputs.tasksupport = taskSupport
+                parInputs.map(dep).seq.toMap
             }
             else {
-                mapping.inputs.map(dep).toMap
+                inputs.map(dep).toMap
             }
         }
 
@@ -376,20 +376,20 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         else
             instances
 
+        // Optionally cache the DataFrames, before potentially marking them as broadcast candidates
+        if (cacheLevel != null && cacheLevel != StorageLevel.NONE) {
+            // If one of the DataFrame is called 'cache', then only cache that one, otherwise all will be cached
+            if (df1.keySet.contains("cache"))
+                df1("cache").persist(cacheLevel)
+            else
+                df1.values.foreach(_.persist(cacheLevel))
+        }
+
         // Optionally mark DataFrame to be broadcasted
         val df2 = if (doBroadcast)
             df1.map { case (name,df) => (name, broadcast(df)) }
         else
             df1
-
-        // Optionally cache the DataFrames
-        if (cacheLevel != null && cacheLevel != StorageLevel.NONE) {
-            // If one of the DataFrame is called 'cache', then only cache that one, otherwise all will be cached
-            if (df2.keySet.contains("cache"))
-                df2("cache").persist(cacheLevel)
-            else
-                df2.values.foreach(_.persist(cacheLevel))
-        }
 
         df2
     }

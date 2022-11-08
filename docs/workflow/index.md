@@ -6,7 +6,7 @@ production deployment. The workflow starts from creating
 a new Flowman project, describes how to run the project locally, build a self-contained redistributable package
 and then deploy it to a remote repository manager like Nexus.
 
-![Flowman Development Workflow](images/flowman-workflow.png)
+![Flowman Development Workflow](../images/flowman-workflow.png)
 
 The whole workflow is implemented with [Apache Maven](https://maven.apache.org/), but you could of course also chose a 
 different build tool. Maven was chosen simply because one can assume that this is present in a Big Data environment, so 
@@ -90,7 +90,7 @@ like Linux, Windows and Mac OS).
 
 #### 1. Running with installed Flowman
 In order to run tests with a local Flowman installation, you first need to setup Flowman on your local machine
-[as described in the documentation](setup/installation.md).
+[as described in the documentation](../setup/installation.md).
 
 #### 2. Running wih Docker
 A much simpler option than setting up a local Flowman development installation is to use the pre-built Docker
@@ -106,7 +106,7 @@ Flowman shell via
 ```shell
 bin/flowshell -f <your-project-dir>
 ```
-Please read more about using the Flowman Shell in the [corresponding documentation](cli/flowshell/index.md).
+Please read more about using the Flowman Shell in the [corresponding documentation](../cli/flowshell/index.md).
 
 Whenever you change something in your project, you can easily reload the project in the shell via
 ```shell
@@ -126,7 +126,7 @@ need to be provided by your environment.
 
 Note for Windows users: Maven will also execute all tests in your Flowman project. The Hadoop dependency will require 
 the so called *WinUtils* to be installed on your machine, please read more about 
-[setting up your Windows environment](setup/windows.md).
+[setting up your Windows environment](../setup/windows.md).
 
 
 

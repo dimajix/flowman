@@ -17,14 +17,15 @@
 package com.dimajix.flowman.tools
 
 import java.io.File
+import java.net.URI
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
 
+import com.dimajix.common.Resources
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Session
-import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.SystemSettings
@@ -50,6 +51,10 @@ class Tool {
             .map(confDir => new File(confDir, "system.yml"))
             .filter(_.isFile)
             .map(file => SystemSettings.read.file(file))
+            .orElse(
+                Option(Resources.getURL("META-INF/flowman/conf/system.yml"))
+                    .map(SystemSettings.read.url)
+            )
             .getOrElse(SystemSettings.read.default())
 
         // Load all global plugins from System settings
@@ -62,6 +67,10 @@ class Tool {
             .map(confDir => new File(confDir, "default-namespace.yml"))
             .filter(_.isFile)
             .map(file => Namespace.read.file(file))
+            .orElse(
+                Option(Resources.getURL("META-INF/flowman/conf/default-namespace.yml"))
+                    .map(Namespace.read.url)
+            )
             .getOrElse(Namespace.read.default())
 
         // Load all plugins from Namespace
@@ -69,17 +78,23 @@ class Tool {
         ns
     }
 
-    def loadProject(projectPath:Path) : Project = {
+    def loadProject(projectPath:String) : Project = {
         // Create Hadoop FileSystem instance
         val hadoopConfig = new Configuration()
         val fs = FileSystem(hadoopConfig)
 
         // Load Project. If no schema is specified, load from local file system
-        val projectUri = projectPath.toUri
-        if (projectUri.getAuthority == null && projectUri.getScheme == null)
-            Project.read.file(fs.local(projectPath))
-        else
-            Project.read.file(fs.file(projectPath))
+        val uri = new URI(projectPath)
+        val file =
+            if (uri.getAuthority == null && uri.getScheme == null)
+                fs.local(projectPath)
+            else
+                fs.file(projectPath)
+        loadProject(file)
+    }
+
+    def loadProject(file:com.dimajix.flowman.fs.File) : Project = {
+        Project.read.file(file)
     }
 
     def createSession(

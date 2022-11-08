@@ -181,3 +181,12 @@ build-cdp7.1:
     paths:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days
+
+build-emr6.8:
+  stage: build
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -PEMR-6.8 -Ddockerfile.skip'
+  artifacts:
+    name: "flowman-dist-emr6.8"
+    paths:
+      - flowman-dist/target/flowman-dist-*-bin.tar.gz
+    expire_in: 5 days

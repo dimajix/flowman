@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.util.BadRecordException
+import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.BinaryType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructType
@@ -35,6 +36,9 @@ import org.apache.spark.storage.StorageLevel
 
 import com.dimajix.spark.sql.catalyst.PlanUtils
 import com.dimajix.spark.sql.local.csv.CsvOptions
+import org.apache.spark.sql.functions.count
+import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.not
 
 
 object DataFrameUtils {
@@ -122,20 +126,64 @@ object DataFrameUtils {
         }
     }
 
-    def compare(left:DataFrame, right:DataFrame) : Boolean = {
-        val leftRows = left.collect().toSeq
-        val rightRows = right.collect().toSeq
-        compare(leftRows, rightRows)
+    /**
+     * Compare two DataFrames. They are considered to be equal if their schema and all records match. The order of
+     * the records may be different, though. The comparison is conducted distributed and works with DataFrames of
+     * arbitrary sizes, but is much slower than [[quickCompare]]
+     *
+     * @param expected
+     * @param result
+     * @return
+     */
+    def compare(expected: DataFrame, result: DataFrame): Boolean = {
+        if (SchemaUtils.dropMetadata(expected.schema) != SchemaUtils.dropMetadata(result.schema)) {
+            false
+        }
+        else {
+            val expectedCol = "flowman_compareDataFrames_expected"
+            val actualCol = "flowman_compareDataFrames_actual"
+            val expectedColumns = expected.columns.map(s => expected(s))
+            val expectedElementsCount = expected.as("l")
+                .groupBy(expectedColumns: _*)
+                .agg(count(lit(1)).as(expectedCol))
+            val resultColumns = result.columns.map(s => result(s))
+            val resultElementsCount = result.as("r")
+                .groupBy(resultColumns: _*)
+                .agg(count(lit(1)).as(actualCol))
+
+            val joinExprs = expected.columns
+                .map(s => resultElementsCount(s) <=> expectedElementsCount(s)).reduce(_.and(_))
+            val diff = expectedElementsCount
+                .join(resultElementsCount, joinExprs, "full_outer")
+                .filter(not(col(expectedCol) <=> col(actualCol)))
+            diff.take(1).length == 0
+        }
     }
 
     /**
      * Compare two DataFrames. They are considered to be equal if their schema and all records match. The order of
-     * the records may be different, though.
+     * the records may be different, though. The comparison is conducted locally, so it should only be used on small
+     * DataFrames
+     *
      * @param left
      * @param right
      * @return
      */
-    def compare(left:Seq[Row], right:Seq[Row]) : Boolean = {
+    def quickCompare(left:DataFrame, right:DataFrame) : Boolean = {
+        val leftRows = left.collect().toSeq
+        val rightRows = right.collect().toSeq
+        quickCompare(leftRows, rightRows)
+    }
+
+    /**
+     * Compare two DataFrames. They are considered to be equal if their schema and all records match. The order of
+     * the records may be different, though. The comparison is conducted locally, so it should only be used on small
+     * DataFrames
+     * @param left
+     * @param right
+     * @return
+     */
+    def quickCompare(left:Seq[Row], right:Seq[Row]) : Boolean = {
         normalizeRows(left) == normalizeRows(right)
     }
 
@@ -149,13 +197,13 @@ object DataFrameUtils {
         val expectedRows = expected.collect().toSeq
         val actualRows = actual.collect().toSeq
 
-        if (!compare(expectedRows, actualRows))
+        if (!quickCompare(expectedRows, actualRows))
             Some(genError(expectedRows, actualRows))
         else
             None
     }
     def diff(expected:Seq[Row], actual:Seq[Row]) : Option[String] = {
-        if (!compare(expected, actual))
+        if (!quickCompare(expected, actual))
             Some(genError(expected, actual))
         else
             None

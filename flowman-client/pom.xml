@@ -5,11 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-client</artifactId>
     <name>Flowman console client</name>
+    <description>Flowman console client</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.28.0</version>
+        <version>0.29.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 

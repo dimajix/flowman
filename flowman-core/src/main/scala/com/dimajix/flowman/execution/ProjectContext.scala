@@ -134,13 +134,6 @@ final class ProjectContext private[execution](
     override def root : RootContext = parent.root
 
     /**
-     * Returns the list of active profile names
-     *
-     * @return
-     */
-    override def profiles: Set[String] = parent.profiles
-
-    /**
       * Returns a specific named Transform. The Transform can either be inside this Contexts project or in a different
       * project within the same namespace
       *

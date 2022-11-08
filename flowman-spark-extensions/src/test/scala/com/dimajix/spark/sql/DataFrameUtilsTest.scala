@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,29 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
             StructField("c1", IntegerType),
             StructField("c2", StringType),
             StructField("c3", DoubleType),
+            StructField("c4", DecimalType(30, 6)),
+            StructField("c5", DateType)
+        ))
+        val lines = Seq(
+            Array("1", "lala", "2.3", "2.5", "2019-02-01"),
+            Array("2", "", "3.4", "", ""),
+            Array("", null, "", null, null)
+        )
+        val df1 = DataFrameBuilder.ofStringValues(spark, lines, schema)
+        val df2 = DataFrameBuilder.ofStringValues(spark, lines, schema)
+
+        DataFrameUtils.compare(df1, df2) should be(true)
+        DataFrameUtils.compare(df1.limit(2), df2) should be(false)
+        DataFrameUtils.compare(df1, df2.limit(2)) should be(false)
+        DataFrameUtils.compare(df1.drop("c1"), df2) should be(false)
+        DataFrameUtils.compare(df1, df2.drop("c1")) should be(false)
+    }
+
+    "DataFrameUtils.quickCompare" should "work" in {
+        val schema = StructType(Seq(
+            StructField("c1", IntegerType),
+            StructField("c2", StringType),
+            StructField("c3", DoubleType),
             StructField("c4", DecimalType(30,6)),
             StructField("c5", DateType)
         ))
@@ -61,11 +84,11 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val df1 = DataFrameBuilder.ofStringValues(spark, lines, schema)
         val df2 = DataFrameBuilder.ofStringValues(spark, lines, schema)
 
-        DataFrameUtils.compare(df1, df2) should be (true)
-        DataFrameUtils.compare(df1.limit(2), df2) should be (false)
-        DataFrameUtils.compare(df1, df2.limit(2)) should be (false)
-        DataFrameUtils.compare(df1.drop("c1"), df2) should be (false)
-        DataFrameUtils.compare(df1, df2.drop("c1")) should be (false)
+        DataFrameUtils.quickCompare(df1, df2) should be (true)
+        DataFrameUtils.quickCompare(df1.limit(2), df2) should be (false)
+        DataFrameUtils.quickCompare(df1, df2.limit(2)) should be (false)
+        DataFrameUtils.quickCompare(df1.drop("c1"), df2) should be (false)
+        DataFrameUtils.quickCompare(df1, df2.drop("c1")) should be (false)
     }
 
     "DataFrameUtils.diff" should "work" in {
@@ -161,4 +184,5 @@ class DataFrameUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         spark.sessionState.catalog.getTempView("temp") should be (None)
     }
+
 }

@@ -5,11 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-plugin-mssqlserver</artifactId>
     <name>Flowman MS SQL Server plugin</name>
+    <description>Flowman MS SQL Server plugin</description>
 
     <parent>
         <groupId>com.dimajix.flowman</groupId>
         <artifactId>flowman-root</artifactId>
-        <version>0.28.0</version>
+        <version>0.29.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -49,6 +50,14 @@
                 <spark-mssql-connector.group>com.microsoft.azure</spark-mssql-connector.group>
                 <spark-mssql-connector.version>1.0.2</spark-mssql-connector.version>
                 <spark-mssql-connector.suffix></spark-mssql-connector.suffix>
+            </properties>
+        </profile>
+        <profile>
+            <id>EMR-6.8</id>
+            <properties>
+                <spark-mssql-connector.group>com.solytic</spark-mssql-connector.group>
+                <spark-mssql-connector.version>1.4.0</spark-mssql-connector.version>
+                <spark-mssql-connector.suffix>_${scala.api_version}</spark-mssql-connector.suffix>
             </properties>
         </profile>
         <profile>
@@ -119,38 +128,19 @@
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-spec</artifactId>
+            <artifactId>flowman-spark-dependencies</artifactId>
+            <type>pom</type>
+            <scope>provided</scope>
         </dependency>
-
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-spec</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spark-testing</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-hive_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
         </dependency>
 
         <dependency>

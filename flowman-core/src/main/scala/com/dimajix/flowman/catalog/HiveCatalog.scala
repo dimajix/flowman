@@ -57,7 +57,7 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
-import com.dimajix.flowman.hadoop.FileUtils
+import com.dimajix.flowman.fs.FileUtils
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.spark.features.hiveVarcharSupported

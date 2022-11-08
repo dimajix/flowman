@@ -25,6 +25,7 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.BaseTarget
@@ -85,8 +86,9 @@ case class DeleteFileTarget(
 
         val file = executor.fs.file(location)
         if (file.exists()) {
-            logger.error(s"Verification of target '$identifier' failed - location '$location' exists")
-            throw new VerificationFailedException(identifier)
+            val error = s"Verification of target '$identifier' failed - location '$location' exists"
+            logger.error(error)
+            throw new VerificationFailedException(identifier, new ExecutionException(error))
         }
     }
 }

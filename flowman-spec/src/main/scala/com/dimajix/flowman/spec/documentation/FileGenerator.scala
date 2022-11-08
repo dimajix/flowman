@@ -33,7 +33,7 @@ import com.dimajix.flowman.documentation.Generator
 import com.dimajix.flowman.documentation.ProjectDoc
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.hadoop.File
+import com.dimajix.flowman.fs.File
 
 
 object FileGenerator {
@@ -68,7 +68,7 @@ case class FileGenerator(
             outputDir.list().foreach(_.delete(true))
         }
         else if (outputDir.isFile()) {
-            outputDir.isFile()
+            outputDir.delete(false)
         }
         outputDir.mkdirs()
 

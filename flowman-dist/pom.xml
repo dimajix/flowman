@@ -5,12 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-dist</artifactId>
     <name>Flowman Distribution</name>
+    <description>Flowman installable binary distribution</description>
     <packaging>pom</packaging>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.28.0</version>
+        <version>0.29.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -264,7 +265,7 @@
                         <configuration>
                             <finalName>${project.artifactId}-${flowman.dist.label}</finalName>
                             <descriptors>
-                                <descriptor>src/main/assembly/assembly.xml</descriptor>
+                                <descriptor>src/assembly/assembly.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </execution>

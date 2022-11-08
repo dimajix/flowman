@@ -37,7 +37,7 @@ import com.dimajix.flowman.types.ShortType
 import com.dimajix.flowman.types.StringType
 
 
-object PostgresDialect extends BaseDialect {
+class PostgresDialect extends BaseDialect {
     private object Statements extends PostgresStatements(this)
     private object Expressions extends PostgresExpressions(this)
     private object Commands extends PostgresCommands(this)
@@ -83,6 +83,7 @@ object PostgresDialect extends BaseDialect {
     override def expr : SqlExpressions = Expressions
     override def command : SqlCommands = Commands
 }
+object PostgresDialect extends PostgresDialect
 
 
 class PostgresExpressions(dialect: BaseDialect) extends BaseExpressions(dialect) {

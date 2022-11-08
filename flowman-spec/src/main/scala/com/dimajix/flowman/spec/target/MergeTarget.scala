@@ -36,6 +36,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.DeleteClause
+import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.execution.MigrationPolicy
@@ -234,8 +235,9 @@ case class MergeTarget(
 
         val rel = relation.value
         if (rel.loaded(executor) == No) {
-            logger.error(s"Verification of target '$identifier' failed - relation '${relation.identifier}' does not exist")
-            throw new VerificationFailedException(identifier)
+            val error = s"Verification of target '$identifier' failed - relation '${relation.identifier}' does not exist"
+            logger.error(error)
+            throw new VerificationFailedException(identifier, new ExecutionException(error))
         }
     }
 

@@ -25,7 +25,7 @@ import org.apache.spark.SparkConf
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.config.FlowmanConf
-import com.dimajix.flowman.hadoop.FileSystem
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.ConnectionIdentifier
 import com.dimajix.flowman.model.Job
@@ -153,13 +153,6 @@ final class RootContext private[execution](
       * @return
       */
     override def root : RootContext = this
-
-    /**
-     * Returns the list of active profile names
-     *
-     * @return
-     */
-    override def profiles: Set[String] = _profiles
 
     /**
       * Returns a fully qualified mapping from a project belonging to the namespace of this execution
@@ -335,7 +328,8 @@ final class RootContext private[execution](
 
     private def createProjectContext(project: Project) : Context = {
         val builder = ProjectContext.builder(this, project)
-        profiles.foreach { prof =>
+        // Apply all selected profiles defined in the project
+        _profiles.foreach { prof =>
                 project.profiles.get(prof).foreach { profile =>
                     builder.withProfile(profile)
                 }

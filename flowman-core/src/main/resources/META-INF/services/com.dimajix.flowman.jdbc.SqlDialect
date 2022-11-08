@@ -1,0 +1,8 @@
+com.dimajix.flowman.jdbc.DerbyDialect
+com.dimajix.flowman.jdbc.H2Dialect
+com.dimajix.flowman.jdbc.HiveDialect
+com.dimajix.flowman.jdbc.MariaDialect
+com.dimajix.flowman.jdbc.MySQLDialect
+com.dimajix.flowman.jdbc.OracleDialect
+com.dimajix.flowman.jdbc.PostgresDialect
+com.dimajix.flowman.jdbc.SqlServerDialect

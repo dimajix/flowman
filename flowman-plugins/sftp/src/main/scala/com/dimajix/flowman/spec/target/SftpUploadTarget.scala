@@ -174,7 +174,7 @@ case class SftpUploadTarget(
         }
     }
 
-    private def uploadSingleFile(client:SFTPv3Client, src:com.dimajix.flowman.hadoop.File, dst:Path) : Unit = {
+    private def uploadSingleFile(client:SFTPv3Client, src:com.dimajix.flowman.fs.File, dst:Path) : Unit = {
         logger.info(s"Uploading file '$src' to sftp remote destination '$dst'")
         ensureDirectory(client, dst.getParent)
         tryWith(src.open()) { input =>
@@ -186,7 +186,7 @@ case class SftpUploadTarget(
         }
     }
 
-    private def uploadMergedFile(client:SFTPv3Client, src:com.dimajix.flowman.hadoop.File, dst:Path, delimiter:Option[Array[Byte]]) : Unit = {
+    private def uploadMergedFile(client:SFTPv3Client, src:com.dimajix.flowman.fs.File, dst:Path, delimiter:Option[Array[Byte]]) : Unit = {
         logger.info(s"Uploading merged directory '$src' to sftp remote destination '$dst'")
         ensureDirectory(client, dst.getParent)
         val handle = client.createFile(dst.toString)
@@ -204,13 +204,13 @@ case class SftpUploadTarget(
         client.closeFile(handle)
     }
 
-    private def uploadDirectory(client:SFTPv3Client, src:com.dimajix.flowman.hadoop.File, dst:Path) : Unit = {
+    private def uploadDirectory(client:SFTPv3Client, src:com.dimajix.flowman.fs.File, dst:Path) : Unit = {
         logger.info(s"Uploading directory '$src' to sftp remote destination '$dst'")
         ensureDirectory(client, dst)
         src.list()
             .filter(_.isFile())
             .foreach(file => {
-                uploadSingleFile(client, file, new Path(dst, file.filename))
+                uploadSingleFile(client, file, new Path(dst, file.name))
             })
     }
 

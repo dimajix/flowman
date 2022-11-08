@@ -5,11 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>flowman-tools</artifactId>
     <name>Flowman CLI tools</name>
+    <description>Flowman command line tools</description>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.28.0</version>
+        <version>0.29.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -41,7 +42,7 @@
                             <pathSeparator>,</pathSeparator>
                             <prefix>lib</prefix>
                             <!-- Manually exclude shaded artifacts -->
-                            <excludeArtifactIds>json,org.everit.json.schema,velocity-engine-core</excludeArtifactIds>
+                            <excludeArtifactIds>json,org.everit.json.schema,velocity-engine-core,flowman-spark-dependencies</excludeArtifactIds>
                         </configuration>
                     </execution>
                 </executions>
@@ -99,37 +100,20 @@
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-spark-dependencies</artifactId>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spec</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-dsl</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-scalatest-compat</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-hive_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
         </dependency>
 
         <dependency>
@@ -137,7 +121,6 @@
             <artifactId>jline-terminal</artifactId>
             <version>3.21.0</version>
         </dependency>
-
         <dependency>
             <groupId>org.jline</groupId>
             <artifactId>jline-reader</artifactId>

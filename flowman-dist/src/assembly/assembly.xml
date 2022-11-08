@@ -46,6 +46,7 @@
             <excludes>
                 <!-- Manually exclude shaded artifacts -->
                 <exclude>org.apache.velocity:velocity-engine-core</exclude>
+                <exclude>com.dimajix.flowman:flowman-spark-dependencies</exclude>
             </excludes>
             <outputDirectory>lib</outputDirectory>
             <useTransitiveDependencies>true</useTransitiveDependencies>

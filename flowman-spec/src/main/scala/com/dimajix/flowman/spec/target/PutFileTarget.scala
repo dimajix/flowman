@@ -25,6 +25,7 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.model.BaseTarget
@@ -109,8 +110,9 @@ case class PutFileTarget(
 
         val file = executor.fs.file(target)
         if (!file.exists()) {
-            logger.error(s"Verification of target '$identifier' failed - file '$target' does not exist")
-            throw new VerificationFailedException(identifier)
+            val error = s"Verification of target '$identifier' failed - file '$target' does not exist"
+            logger.error(error)
+            throw new VerificationFailedException(identifier, new ExecutionException(error))
         }
     }
 
@@ -144,14 +146,14 @@ case class PutFileTarget(
 
 class PutFileTargetSpec extends TargetSpec {
     @JsonProperty(value = "source", required = true) private var source: String = ""
-    @JsonProperty(value = "tarPut", required = true) private var tarPut: String = ""
+    @JsonProperty(value = "target", required = true) private var target: String = ""
     @JsonProperty(value = "overwrite", required = false) private var overwrite: String = "true"
 
     override def instantiate(context: Context, properties:Option[Target.Properties] = None): PutFileTarget = {
         PutFileTarget(
             instanceProperties(context, properties),
             new Path(context.evaluate(source)),
-            new Path(context.evaluate(tarPut)),
+            new Path(context.evaluate(target)),
             context.evaluate(overwrite).toBoolean
         )
     }

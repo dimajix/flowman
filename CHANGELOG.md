@@ -1,4 +1,4 @@
-# Version 0.29.0
+# Version 0.29.0 - 2022-11-08
 
 * github-260: Remove hive-storage-api from several plugins and lib
 * github-261: Add descriptions to all pom.xml

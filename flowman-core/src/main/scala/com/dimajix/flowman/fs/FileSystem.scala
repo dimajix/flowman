@@ -31,6 +31,7 @@ import com.dimajix.flowman.fs.FileSystem.SEPARATOR
 
 object FileSystem {
     val SEPARATOR = "/"
+    val WINDOWS: Boolean = System.getProperty("os.name").startsWith("Windows")
 }
 
 

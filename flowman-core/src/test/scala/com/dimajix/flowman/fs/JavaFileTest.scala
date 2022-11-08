@@ -34,6 +34,7 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
         val dir = JavaFile(tempDir.toPath)
         dir.uri should be (tempDir.toURI)
         dir.path should be (new fs.Path(tempDir.toURI))
+        dir.toString should be ("file:" + tempDir.toString)
         dir.exists() should be (true)
         dir.isFile() should be (false)
         dir.isDirectory() should be (true)
@@ -44,6 +45,8 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
         val file = dir / "lala"
         file.name should be ("lala")
         file.uri should be (tempDir.toURI.resolve("lala"))
+        file.path should be (new Path(tempDir.toURI.resolve("lala")))
+        file.toString should be ("file:" + new java.io.File(tempDir, "lala").toString)
         file.exists() should be(false)
         file.isFile() should be(false)
         file.isDirectory() should be(false)
@@ -59,19 +62,22 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
         dir.name should be ("")
         dir.uri should be(new URI("file:/"))
         dir.path should be(new fs.Path("file:/"))
+        dir.toString should be ("file:/")
         dir.exists() should be(true)
         dir.isFile() should be(false)
         dir.isDirectory() should be(true)
         dir.isAbsolute() should be(true)
 
         val file = dir / "lala"
+        file.parent should be (dir)
         file.name should be ("lala")
+        file.uri should be(new URI("file:/lala"))
+        file.path should be(new fs.Path("file:/lala"))
         file.exists() should be(false)
         file.isFile() should be(false)
         file.isDirectory() should be(false)
         file.isAbsolute() should be(true)
         file.parent should be(dir)
-        file.name should be("lala")
         file.withName("lolo") should be(dir / "lolo")
     }
 

@@ -34,7 +34,7 @@ import org.apache.hadoop.io.IOUtils
   * @param fs
   * @param path
   */
-case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) extends File {
+final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) extends File {
     override def uri : URI = path.toUri
 
     /**

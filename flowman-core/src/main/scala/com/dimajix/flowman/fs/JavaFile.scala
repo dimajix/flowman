@@ -25,6 +25,7 @@ import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.util.Comparator
 import java.util.function.Consumer
+import java.util.regex.Pattern
 import java.util.stream.Collectors
 
 import scala.collection.JavaConverters._
@@ -32,8 +33,19 @@ import scala.collection.JavaConverters._
 import org.apache.hadoop.fs
 
 
-case class JavaFile(jpath:Path) extends File {
-    override def toString: String = "file:" + jpath.toString
+object JavaFile {
+    private val HAS_DRIVE_LETTER_SPECIFIER = Pattern.compile("^/?[a-zA-Z]:")
+    private def hasWindowsDrive(path: String) = FileSystem.WINDOWS && HAS_DRIVE_LETTER_SPECIFIER.matcher(path).find
+}
+
+final case class JavaFile(jpath:Path) extends File {
+    override def toString: String = {
+        val rawPath = jpath.toString
+        if (JavaFile.hasWindowsDrive(rawPath))
+            "file:/" + rawPath
+        else
+            "file:" + rawPath
+    }
 
     override def path: fs.Path = new fs.Path(uri)
 
@@ -105,7 +117,7 @@ case class JavaFile(jpath:Path) extends File {
         .collect(Collectors.toList[Path])
         .asScala
         .sortBy(_.toString)
-        .map(JavaFile)
+        .map(JavaFile.apply)
 
     override def glob(pattern: String): Seq[File] = {
         val stream = Files.newDirectoryStream(jpath, pattern)

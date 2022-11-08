@@ -35,7 +35,6 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         dir1.uri should be (tempDir.toURI)
         dir1.path should be (new Path(tempDir.toURI))
         dir1.toString should be ("file:" + tempDir.toString)
-        //dir1.path should be (new Path(tempDir.toURI.toString))
         dir1.exists() should be (true)
         dir1.isFile() should be (false)
         dir1.isDirectory() should be (true)
@@ -147,7 +146,13 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val fs = FileSystem(conf)
         val file = fs.local("/tmp/hourly/hour=2022-03-10 20:00:00")
         file.uri should be (new URI("file:/tmp/hourly/hour=2022-03-10%2020:00:00"))
+        file.path should be (new Path("file:/tmp/hourly/hour=2022-03-10 20:00:00"))
         file.toString should be ("file:/tmp/hourly/hour=2022-03-10 20:00:00")
+
+        val file2 = fs.local("/tmp/hourly/hour=2022-03-10%20:00:00")
+        file2.uri should be(new URI("file:/tmp/hourly/hour=2022-03-10%2520:00:00"))
+        file2.path should be (new Path("file:/tmp/hourly/hour=2022-03-10%20:00:00"))
+        file2.toString should be("file:/tmp/hourly/hour=2022-03-10%20:00:00")
     }
 
     it should "be usable with special characters and whitespaces (Path)" in {
@@ -155,7 +160,13 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val fs = FileSystem(conf)
         val file = fs.local(new Path("/tmp/hourly/hour=2022-03-10 20:00:00"))
         file.uri should be(new URI("file:/tmp/hourly/hour=2022-03-10%2020:00:00"))
+        file.path should be (new Path("file:/tmp/hourly/hour=2022-03-10 20:00:00"))
         file.toString should be("file:/tmp/hourly/hour=2022-03-10 20:00:00")
+
+        val file2 = fs.local(new Path("/tmp/hourly/hour=2022-03-10%20:00:00"))
+        file2.uri should be(new URI("file:/tmp/hourly/hour=2022-03-10%2520:00:00"))
+        file2.path should be (new Path("file:/tmp/hourly/hour=2022-03-10%20:00:00"))
+        file2.toString should be("file:/tmp/hourly/hour=2022-03-10%20:00:00")
     }
 
     it should "be usable with special characters and whitespaces (File)" in {
@@ -163,7 +174,13 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val fs = FileSystem(conf)
         val file = fs.local(new java.io.File("/tmp/hourly/hour=2022-03-10 20:00:00"))
         file.uri should be(new URI("file:/tmp/hourly/hour=2022-03-10%2020:00:00"))
+        file.path should be (new Path("file:/tmp/hourly/hour=2022-03-10 20:00:00"))
         file.toString should be("file:/tmp/hourly/hour=2022-03-10 20:00:00")
+
+        val file2 = fs.local(new java.io.File("/tmp/hourly/hour=2022-03-10%20:00:00"))
+        file2.uri should be(new URI("file:/tmp/hourly/hour=2022-03-10%2520:00:00"))
+        file2.path should be (new Path("file:/tmp/hourly/hour=2022-03-10%20:00:00"))
+        file2.toString should be("file:/tmp/hourly/hour=2022-03-10%20:00:00")
     }
 
     it should "be usable relative paths (String)" in {

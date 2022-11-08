@@ -191,7 +191,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
                 .toMap
         }
         else {
-            mapping.inputs
+            inputs
                 .map(id => id -> describe(context.getMapping(id.mapping), id.output))
                 .toMap
         }

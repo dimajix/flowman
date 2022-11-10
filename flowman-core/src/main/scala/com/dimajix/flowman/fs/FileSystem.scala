@@ -21,17 +21,50 @@ import java.nio.file.FileSystemNotFoundException
 import java.nio.file.NoSuchFileException
 import java.nio.file.Paths
 import java.util.Collections
+import java.util.regex.Pattern
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.common.Resources
 import com.dimajix.flowman.fs.FileSystem.SEPARATOR
+import com.dimajix.flowman.fs.FileSystem.stripProtocol
+import com.dimajix.flowman.fs.FileSystem.stripSlash
 
 
 object FileSystem {
     val SEPARATOR = "/"
     val WINDOWS: Boolean = System.getProperty("os.name").startsWith("Windows")
+
+    private val HAS_DRIVE_LETTER_SPECIFIER = Pattern.compile("^/?[a-zA-Z]:")
+
+    def hasWindowsDrive(path: String) = FileSystem.WINDOWS && HAS_DRIVE_LETTER_SPECIFIER.matcher(path).find
+
+    def stripSlash(str:String) : String = {
+        // Strip leading "/" before windows drive letter
+        if (str.length > 1 && str(0) == '/' && hasWindowsDrive(str.substring(1))) {
+            str.substring(1)
+        }
+        else {
+            str
+        }
+    }
+    def stripProtocol(str: String): String = {
+        val colon = str.indexOf(':')
+        val slash = str.indexOf('/')
+        if (colon != -1 && slash != -1 && colon < slash) {
+            if (hasWindowsDrive(str)) {
+                str
+            }
+            else {
+                val str2 = str.substring(colon+1)
+                stripSlash(str2)
+            }
+        }
+        else {
+            str
+        }
+    }
 }
 
 
@@ -76,11 +109,14 @@ case class FileSystem(conf:Configuration) {
     def file(path:URI) : File = file(new Path(path))
 
     def local(path:Path) : File = local(path.toUri)
-    def local(path:String) : File = JavaFile(Paths.get(path).normalize())
+    def local(path:String) : File = {
+        val rawPath = stripProtocol(path)
+        JavaFile(Paths.get(rawPath).normalize())
+    }
     def local(path:java.io.File) : File = JavaFile(path.toPath.normalize())
     def local(path:URI) : File = {
         if (path.getScheme == null) {
-            val file = Paths.get(path.getPath)
+            val file = Paths.get(stripSlash(path.getPath))
             if (!file.isAbsolute) {
                 JavaFile(file.normalize())
             }
@@ -125,6 +161,5 @@ case class FileSystem(conf:Configuration) {
         else {
             JavaFile(Paths.get(uri))
         }
-
     }
 }

@@ -24,22 +24,30 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.Resources
+import com.dimajix.flowman.fs.FileSystem.WINDOWS
 import com.dimajix.spark.testing.LocalSparkSession
 
 
 class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     "FileSystem.local" should "be usable with simple strings" in {
+        val prefix = if (FileSystem.WINDOWS) "file:/" else "file:"
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val dir1 = fs.local(tempDir.toString)
+        fs.local(dir1.toString) should be (dir1)
+        fs.local(dir1.path) should be(dir1)
+        fs.local(dir1.uri) should be(dir1)
         dir1.uri should be (tempDir.toURI)
         dir1.path should be (new Path(tempDir.toURI))
-        dir1.toString should be ("file:" + tempDir.toString)
+        dir1.toString should be (prefix + tempDir.toString.replace('\\', '/'))
         dir1.exists() should be (true)
         dir1.isFile() should be (false)
         dir1.isDirectory() should be (true)
 
         val dir2 = fs.local(tempDir.toString + "/lolo")
+        fs.local(dir2.toString) should be (dir2)
+        fs.local(dir2.path) should be (dir2)
+        fs.local(dir2.uri) should be (dir2)
         dir2.uri should be(tempDir.toURI.resolve("lolo"))
         dir2.path should be(new Path(tempDir.toURI.resolve("lolo")))
         dir2.path should be (new Path(tempDir.toURI.resolve("lolo").toString))
@@ -49,6 +57,9 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         dir2.isDirectory() should be(false)
 
         val dir3 = fs.local(tempDir.toString + "/lolo/")
+        fs.local(dir3.toString) should be(dir3)
+        fs.local(dir3.path) should be(dir3)
+        fs.local(dir3.uri) should be(dir3)
         dir3.uri should be(tempDir.toURI.resolve("lolo"))
         dir3.path should be(new Path(tempDir.toURI.resolve("lolo")))
         dir3.path should be(new Path(tempDir.toURI.resolve("lolo").toString))
@@ -90,12 +101,13 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     }
 
     it should "be usable with Paths" in {
+        val prefix = if (FileSystem.WINDOWS) "file:/" else "file:"
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val dir = fs.local(new Path(tempDir.toString))
         dir.path should be(new Path(tempDir.toURI))
         dir.uri should be(tempDir.toURI)
-        dir.toString should be ("file:" + tempDir.toString)
+        dir.toString should be (prefix + tempDir.toString.replace('\\', '/'))
         dir.exists() should be(true)
         dir.isFile() should be(false)
         dir.isDirectory() should be(true)
@@ -129,22 +141,26 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     }
 
     it should "be usable with Files" in {
+        val prefix = if (FileSystem.WINDOWS) "file:/" else "file:"
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val dir = fs.local(tempDir)
         dir.uri should be (tempDir.toURI)
         dir.path should be(new Path(tempDir.toURI))
-        dir.toString should be ("file:" + tempDir.toString)
+        dir.toString should be (prefix + tempDir.toString.replace('\\', '/'))
         //dir.path should be(new Path(tempDir.toURI.toString))
         dir.exists() should be (true)
         dir.isFile() should be (false)
         dir.isDirectory() should be (true)
     }
 
-    it should "be usable with special characters and whitespaces (String)" in {
+    if (!WINDOWS) it should "be usable with special characters and whitespaces (String)" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val file = fs.local("/tmp/hourly/hour=2022-03-10 20:00:00")
+        fs.local(file.toString) should be(file)
+        fs.local(file.path) should be(file)
+        fs.local(file.uri) should be(file)
         file.uri should be (new URI("file:/tmp/hourly/hour=2022-03-10%2020:00:00"))
         file.path should be (new Path("file:/tmp/hourly/hour=2022-03-10 20:00:00"))
         file.toString should be ("file:/tmp/hourly/hour=2022-03-10 20:00:00")
@@ -155,10 +171,13 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         file2.toString should be("file:/tmp/hourly/hour=2022-03-10%20:00:00")
     }
 
-    it should "be usable with special characters and whitespaces (Path)" in {
+    if (!WINDOWS) it should "be usable with special characters and whitespaces (Path)" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val file = fs.local(new Path("/tmp/hourly/hour=2022-03-10 20:00:00"))
+        fs.local(file.toString) should be(file)
+        fs.local(file.path) should be(file)
+        fs.local(file.uri) should be(file)
         file.uri should be(new URI("file:/tmp/hourly/hour=2022-03-10%2020:00:00"))
         file.path should be (new Path("file:/tmp/hourly/hour=2022-03-10 20:00:00"))
         file.toString should be("file:/tmp/hourly/hour=2022-03-10 20:00:00")
@@ -169,10 +188,13 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         file2.toString should be("file:/tmp/hourly/hour=2022-03-10%20:00:00")
     }
 
-    it should "be usable with special characters and whitespaces (File)" in {
+    if (!WINDOWS) it should "be usable with special characters and whitespaces (File)" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val file = fs.local(new java.io.File("/tmp/hourly/hour=2022-03-10 20:00:00"))
+        fs.local(file.toString) should be(file)
+        fs.local(file.path) should be(file)
+        fs.local(file.uri) should be(file)
         file.uri should be(new URI("file:/tmp/hourly/hour=2022-03-10%2020:00:00"))
         file.path should be (new Path("file:/tmp/hourly/hour=2022-03-10 20:00:00"))
         file.toString should be("file:/tmp/hourly/hour=2022-03-10 20:00:00")
@@ -252,7 +274,7 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     it should "resolve relative Paths in local(URI)" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
-        val file = fs.local(new URI(tempDir.toString + "/lala2/../lolo2"))
+        val file = fs.local(new URI(tempDir.toURI.toString + "/lala2/../lolo2"))
         //tmpFromUri.path should be (new Path("file:" + tempDir.toString + "/"))
         file.path should be(new Path(tempDir.toURI.toString + "/lolo2"))
         file.uri should be(tempDir.toURI.resolve("lolo2"))
@@ -327,27 +349,44 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     }
 
     "FileSystem.file" should "be usable with simple strings" in {
+        val prefix = if (FileSystem.WINDOWS) "file:/" else "file:"
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
-        val tmpFromString = fs.file(tempDir.toString)
-        tmpFromString.exists() should be(true)
-        tmpFromString.isFile() should be(false)
-        tmpFromString.isDirectory() should be(true)
+        val dir = fs.file(tempDir.toString)
+        fs.file(dir.toString) should be(dir)
+        fs.file(dir.path) should be(dir)
+        fs.file(dir.uri) should be(dir)
+        dir.uri should be(new Path(tempDir.toURI.toString).toUri)
+        dir.path should be(new Path(tempDir.toURI.toString))
+        dir.toString should be(prefix + tempDir.toString.replace('\\', '/'))
+        dir.exists() should be(true)
+        dir.isFile() should be(false)
+        dir.isDirectory() should be(true)
     }
 
     it should "be usable with URIs" in {
+        val prefix = if (FileSystem.WINDOWS) "file:/" else "file:"
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
-        val tmpFromUri = fs.file(tempDir.toURI)
-        tmpFromUri.exists() should be(true)
-        tmpFromUri.isFile() should be(false)
-        tmpFromUri.isDirectory() should be(true)
+        val dir = fs.file(tempDir.toURI)
+        //fs.file(dir.toString) should be(dir)
+        fs.file(dir.path) should be(dir)
+        fs.file(dir.uri) should be(dir)
+        dir.uri should be(tempDir.toURI)
+        dir.path should be(new Path(tempDir.toURI))
+        dir.toString should be(prefix + tempDir.toString.replace('\\', '/') + "/")
+        dir.exists() should be(true)
+        dir.isFile() should be(false)
+        dir.isDirectory() should be(true)
     }
 
     it should "be usable with special characters and whitespaces (String)" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val file = fs.file("/tmp/hourly/hour=2022-03-10 20:00:00")
+        fs.file(file.toString) should be(file)
+        fs.file(file.path) should be(file)
+        fs.file(file.uri) should be(file)
         file.uri should be(new URI("file:/tmp/hourly/hour=2022-03-10%2020:00:00"))
         file.toString should be("file:/tmp/hourly/hour=2022-03-10 20:00:00")
     }
@@ -356,6 +395,9 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val file = fs.file(new Path("/tmp/hourly/hour=2022-03-10 20:00:00"))
+        fs.file(file.toString) should be(file)
+        fs.file(file.path) should be(file)
+        fs.file(file.uri) should be(file)
         file.uri should be(new URI("file:/tmp/hourly/hour=2022-03-10%2020:00:00"))
         file.toString should be("file:/tmp/hourly/hour=2022-03-10 20:00:00")
     }
@@ -404,14 +446,13 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val file = fs.file(tempDir.toString + "/lala/../lolo")
-        //tmpFromUri.path should be (new Path("file:" + tempDir.toString + "/"))
         file.path should be(new Path(tempDir.toURI.toString + "/lolo"))
         file.uri should be(tempDir.toURI.resolve("lolo"))
         file.exists() should be(false)
         file.isFile() should be(false)
         file.isDirectory() should be(false)
 
-        file.create(true).close
+        file.create(true).close()
         file.exists() should be(true)
         file.isFile() should be(true)
         file.isDirectory() should be(false)
@@ -429,8 +470,7 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     it should "resolve relative Paths in file(URI)" in {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
-        val file = fs.file(new URI(tempDir.toString + "/lala/../lolo"))
-        //tmpFromUri.path should be (new Path("file:" + tempDir.toString + "/"))
+        val file = fs.file(new URI(tempDir.toURI.toString + "/lala/../lolo"))
         file.path should be(new Path(tempDir.toURI.toString + "/lolo"))
         file.uri should be(tempDir.toURI.resolve("lolo"))
         file.exists() should be(false)
@@ -505,6 +545,7 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val file = fs.resource("com/dimajix/flowman/flowman.properties")
+        fs.resource(file.uri) should be (file)
         file.exists() should be(true)
         file.isFile() should be(true)
         file.isAbsolute() should be(true)
@@ -523,6 +564,7 @@ class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val conf = spark.sparkContext.hadoopConfiguration
         val fs = FileSystem(conf)
         val file = fs.resource("org/apache/spark/SparkContext.class")
+        fs.resource(file.uri) should be (file)
         file.exists() should be(true)
         file.isFile() should be(true)
         file.isAbsolute() should be(true)

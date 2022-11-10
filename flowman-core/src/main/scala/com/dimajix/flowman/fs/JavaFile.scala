@@ -25,23 +25,23 @@ import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.util.Comparator
 import java.util.function.Consumer
-import java.util.regex.Pattern
 import java.util.stream.Collectors
-
 import scala.collection.JavaConverters._
 
 import org.apache.hadoop.fs
 
+import com.dimajix.flowman.fs.FileSystem.WINDOWS
 
-object JavaFile {
-    private val HAS_DRIVE_LETTER_SPECIFIER = Pattern.compile("^/?[a-zA-Z]:")
-    private def hasWindowsDrive(path: String) = FileSystem.WINDOWS && HAS_DRIVE_LETTER_SPECIFIER.matcher(path).find
-}
 
 final case class JavaFile(jpath:Path) extends File {
     override def toString: String = {
-        val rawPath = jpath.toString
-        if (JavaFile.hasWindowsDrive(rawPath))
+        val rawPath =
+            if (WINDOWS)
+                jpath.toString.replace('\\', '/')
+            else
+                jpath.toString
+
+        if (FileSystem.hasWindowsDrive(rawPath))
             "file:/" + rawPath
         else
             "file:" + rawPath
@@ -60,7 +60,7 @@ final case class JavaFile(jpath:Path) extends File {
     override def /(sub: String): File = {
         val uri = new URI(sub)
         if (uri.isAbsolute)
-            JavaFile(Paths.get(uri).normalize().toAbsolutePath)
+            JavaFile(Paths.get(uri).normalize())
         else
             JavaFile(jpath.resolve(sub))
     }

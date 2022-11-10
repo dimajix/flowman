@@ -35,6 +35,7 @@ import org.apache.hadoop.io.IOUtils
   * @param path
   */
 final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) extends File {
+    override def toString: String = if (path != null) path.toString else ""
     override def uri : URI = path.toUri
 
     /**

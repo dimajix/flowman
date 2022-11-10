@@ -35,8 +35,6 @@ object File {
   * @param path
   */
 abstract class File {
-    override def toString: String = if (path != null) path.toString else ""
-
     def path : Path
 
     def uri : URI

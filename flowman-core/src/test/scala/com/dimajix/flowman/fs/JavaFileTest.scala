@@ -31,22 +31,25 @@ import com.dimajix.spark.testing.LocalTempDir
 
 class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
     "The JavaFile" should "work" in {
+        val prefix = if (FileSystem.WINDOWS) "file:/" else "file:"
         val dir = JavaFile(tempDir.toPath)
         dir.uri should be (tempDir.toURI)
         dir.path should be (new fs.Path(tempDir.toURI))
-        dir.toString should be ("file:" + tempDir.toString)
+        dir.toString should be (prefix + tempDir.toString.replace('\\','/'))
         dir.exists() should be (true)
         dir.isFile() should be (false)
         dir.isDirectory() should be (true)
         dir.isAbsolute() should be (true)
 
-        (dir / dir.toString) should be (dir)
+        if (!FileSystem.WINDOWS) {
+            (dir / dir.toString) should be (dir)
+        }
 
         val file = dir / "lala"
         file.name should be ("lala")
         file.uri should be (tempDir.toURI.resolve("lala"))
         file.path should be (new Path(tempDir.toURI.resolve("lala")))
-        file.toString should be ("file:" + new java.io.File(tempDir, "lala").toString)
+        file.toString should be (new java.io.File(tempDir, "lala").toURI.toString)
         file.exists() should be(false)
         file.isFile() should be(false)
         file.isDirectory() should be(false)

@@ -16,20 +16,23 @@
 
 package com.dimajix.flowman.fs
 
-import java.io.{FileNotFoundException, StringWriter}
+import java.io.FileNotFoundException
+import java.io.StringWriter
 
 import scala.annotation.tailrec
+import scala.collection.parallel.ParIterable
+import scala.util.control.NonFatal
 
-import com.dimajix.flowman.catalog.PartitionSpec
-import com.dimajix.flowman.templating.Velocity
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileStatus, Path, FileSystem => HadoopFileSystem}
+import org.apache.hadoop.fs.FileStatus
+import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem}
 import org.apache.spark.sql.SparkSession
 import org.apache.velocity.VelocityContext
 import org.slf4j.LoggerFactory
-import scala.collection.parallel.ParIterable
-import scala.math.Ordering
-import scala.util.control.NonFatal
+
+import com.dimajix.flowman.catalog.PartitionSpec
+import com.dimajix.flowman.templating.Velocity
 
 
 object FileCollector {

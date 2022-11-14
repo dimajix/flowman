@@ -56,6 +56,9 @@ Configure the executor to use. The default `SimpleExecutor` will process all tar
 - `flowman.execution.executor.parallelism` *(type: int)* *(default: 4)* (since Flowman 0.16.0)
   The number of targets to be executed in parallel, when the `ParallelExecutor` is used.
 
+- `flowman.execution.check.parallelism` *(type: int)* *(default: 1)* (since Flowman 0.29.1)
+  The number of data quality checks to be executed in parallel.
+
 - `flowman.execution.mapping.parallelism` *(type: int)* *(default: 1)* (since Flowman 0.19.0)
 The number of mappings to be processed in parallel. Increasing this number may help in scenarios where many 
 relations are read from and their initial setup is slow (for example due to slow directory listings). With the

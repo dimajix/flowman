@@ -20,7 +20,6 @@ import java.util.ServiceLoader
 
 import scala.collection.JavaConverters._
 
-import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context

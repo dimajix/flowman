@@ -17,7 +17,6 @@
 package com.dimajix.flowman.tools.shell
 
 import java.io.File
-import java.net.URI
 
 import scala.collection.JavaConverters._
 import scala.util.Failure
@@ -26,7 +25,6 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 import dev.dirs.ProjectDirectories
-import org.apache.hadoop.fs.Path
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
 import org.jline.reader.UserInterruptException
@@ -44,8 +42,8 @@ import com.dimajix.flowman.SCALA_VERSION
 import com.dimajix.flowman.SPARK_BUILD_VERSION
 import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.common.Logging
-import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.common.ParserUtils.splitSettings
+import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.tools.StatefulTool
 import com.dimajix.flowman.util.ConsoleColors.yellow
 

@@ -14,6 +14,10 @@ The following gives an (incomplete) list of past releases of the last 12 months.
 changes over time.
 
 
+### Version 0.29.1
+* github-278: Parallelize execution of data quality checks
+
+
 ### Version 0.29.0 - 2022-11-08
 
 * github-260 Remove hive-storage-api from several plugins and lib

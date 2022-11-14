@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spec.storage
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context

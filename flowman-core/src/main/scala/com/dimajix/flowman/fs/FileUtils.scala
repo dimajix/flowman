@@ -18,8 +18,6 @@ package com.dimajix.flowman.fs
 
 import java.io.FileNotFoundException
 
-import scala.util.Try
-
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 

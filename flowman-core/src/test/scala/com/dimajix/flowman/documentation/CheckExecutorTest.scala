@@ -49,7 +49,7 @@ class CheckExecutorTest extends AnyFlatSpec with Matchers with MockFactory with 
         (mapping.cache _).expects().returns(StorageLevel.NONE)
         (mapping.execute _).expects(*,*).returns(Map("main" -> df))
 
-        val mappingDoc = MappingDoc(
+        val doc = MappingDoc(
             mapping = Some(mapping),
             outputs = Seq(
                 MappingOutputDoc(
@@ -69,8 +69,8 @@ class CheckExecutorTest extends AnyFlatSpec with Matchers with MockFactory with 
         )
 
         val checkExecutor = new CheckExecutor(execution)
-        val result = checkExecutor.executeTests(mapping, mappingDoc)
-        result.outputs.map(_.schema.get).flatMap(_.checks).flatMap(_.result).map(_.status) should be (Seq(
+        val checkResult = checkExecutor.executeTests(mapping, doc)
+        checkResult.outputs.map(_.schema.get).flatMap(_.checks).flatMap(_.result).map(_.status) should be (Seq(
             CheckStatus.SUCCESS,
             CheckStatus.SUCCESS,
             CheckStatus.ERROR,
@@ -97,7 +97,7 @@ class CheckExecutorTest extends AnyFlatSpec with Matchers with MockFactory with 
         (mapping.cache _).expects().returns(StorageLevel.NONE)
         (mapping.execute _).expects(*, *).returns(Map("main" -> df))
 
-        val mappingDoc = MappingDoc(
+        val doc = MappingDoc(
             mapping = Some(mapping),
             outputs = Seq(
                 MappingOutputDoc(
@@ -117,8 +117,8 @@ class CheckExecutorTest extends AnyFlatSpec with Matchers with MockFactory with 
         )
 
         val checkExecutor = new CheckExecutor(execution)
-        val result = checkExecutor.executeTests(mapping, mappingDoc)
-        result.outputs.map(_.schema.get).flatMap(_.checks).flatMap(_.result).map(_.status) should be(Seq(
+        val checkResult = checkExecutor.executeTests(mapping, doc)
+        checkResult.outputs.map(_.schema.get).flatMap(_.checks).flatMap(_.result).map(_.status) should be(Seq(
             CheckStatus.SUCCESS,
             CheckStatus.SUCCESS,
             CheckStatus.ERROR,

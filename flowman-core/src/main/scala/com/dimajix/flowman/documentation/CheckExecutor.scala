@@ -33,6 +33,8 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.spi.ColumnCheckExecutor
 import com.dimajix.flowman.spi.SchemaCheckExecutor
 import com.dimajix.flowman.util.ConsoleColors.yellow
+import com.dimajix.spark.SparkUtils
+import com.dimajix.spark.SparkUtils.withJobGroup
 
 
 class CheckExecutor(execution: Execution) {
@@ -126,6 +128,8 @@ class CheckExecutor(execution: Execution) {
         val parallelism = context.flowmanConf.getConf(FlowmanConf.EXECUTION_CHECK_PARALLELISM)
         val pool = if (parallelism > 1 ) ThreadUtils.newForkJoinPool("documenter", parallelism) else null
         implicit val ts = if (pool != null) new ForkJoinTaskSupport(pool) else null
+        // Get current JobGroup and JobDescription to pass to other threads
+        implicit val jobGroup = SparkUtils.getJobGroup(execution.spark.sparkContext)
 
         try {
             val columnChecks = runColumnChecks(context, df, schema.columns)
@@ -139,9 +143,11 @@ class CheckExecutor(execution: Execution) {
         }
     }
 
-    private def runSchemaChecks(context:Context, df:DataFrame, schema:SchemaDoc)(implicit taskSupport:TaskSupport) : SchemaDoc = {
-        val tests = ThreadUtils.parmap(schema.checks) {
-            test => runSchemaCheck(context, df, test)
+    private def runSchemaChecks(context:Context, df:DataFrame, schema:SchemaDoc)(implicit taskSupport:TaskSupport, jobGroup:(String,String)) : SchemaDoc = {
+        val tests = ThreadUtils.parmap(schema.checks) { test =>
+            withJobGroup(df.sparkSession.sparkContext, jobGroup._1, jobGroup._2) {
+                runSchemaCheck(context, df, test)
+            }
         }
         schema.copy(checks = tests)
     }
@@ -166,14 +172,21 @@ class CheckExecutor(execution: Execution) {
         test.withResult(result)
     }
 
-    private def runColumnChecks(context:Context, df:DataFrame, columns:Seq[ColumnDoc], path:String = "")(implicit taskSupport:TaskSupport) : Seq[ColumnDoc] = {
-        ThreadUtils.parmap(columns) {
-            col => runColumnChecks(context, df, col, path)
+    private def runColumnChecks(context:Context, df:DataFrame, columns:Seq[ColumnDoc], path:String = "")(implicit taskSupport:TaskSupport, jobGroup:(String,String)) : Seq[ColumnDoc] = {
+        ThreadUtils.parmap(columns) { col =>
+            withJobGroup(df.sparkSession.sparkContext, jobGroup._1, jobGroup._2) {
+                runColumnChecks(context, df, col, path)
+            }
         }
     }
-    private def runColumnChecks(context:Context, df:DataFrame, column:ColumnDoc, path:String)(implicit taskSupport:TaskSupport) : ColumnDoc = {
+    private def runColumnChecks(context:Context, df:DataFrame, column:ColumnDoc, path:String)(implicit taskSupport:TaskSupport, jobGroup:(String,String)) : ColumnDoc = {
         val columnPath = path + column.name
-        val tests = ThreadUtils.parmap(column.checks) { test => runColumnCheck(context, df, test, columnPath) }
+        val tests = ThreadUtils.parmap(column.checks) { test =>
+            withJobGroup(df.sparkSession.sparkContext, jobGroup._1, jobGroup._2) {
+                runColumnCheck(context, df, test, columnPath)
+            }
+        }
+
         val children = runColumnChecks(context, df, column.children, path + column.name + ".")
         column.copy(children=children, checks=tests)
     }

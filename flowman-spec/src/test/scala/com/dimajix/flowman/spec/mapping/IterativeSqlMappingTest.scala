@@ -29,6 +29,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.IntegerType
+import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.testing.LocalSparkSession
@@ -174,5 +175,15 @@ class IterativeSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkS
             Row("2000", "2000", null, "Company 2000")
         )
         DataFrameUtils.quickCompare(result.collect(), expected) should be (true)
+
+        val resultSchema = mapping.describe(executor, Map(MappingOutputIdentifier("organization_hierarchy_start") -> StructType.of(inputDf.schema)))
+        resultSchema should be(Map(
+            "main" -> StructType(Seq(
+                Field("tree_id", StringType, true),
+                Field("account_number", StringType, true),
+                Field("parent_account_number", StringType, true),
+                Field("company_name", StringType, true)
+            ))
+        ))
     }
 }

@@ -1,4 +1,5 @@
 # Version 0.29.1
+
 * github-278: Parallelize execution of data quality checks
 
 

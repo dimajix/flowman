@@ -617,7 +617,7 @@ abstract class JdbcTableRelationBase(
                     val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
                     if (migrations.exists(m => !dialect.supportsChange(tableIdentifier, m))) {
                         val unsupportedChanges = migrations.filter(m => !dialect.supportsChange(tableIdentifier, m))
-                        logger.error(s"Cannot migrate relation JDBC relation '$identifier' of table $tableIdentifier, since that would require unsupported changes.\n" +
+                        logger.error(s"Cannot migrate JDBC relation '$identifier' of table $tableIdentifier, since that would require unsupported changes.\n" +
                             s"Current schema:\n${currentTable.schema.treeString}" +
                             s"New schema:\n${targetTable.schema.treeString}" +
                             s"Unsupported changes:\n${unsupportedChanges.map(m => " - " + m.toString).mkString("\n")}"

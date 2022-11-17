@@ -39,20 +39,36 @@ case class CountRecordsExec(child: SparkPlan, counter:LongAccumulator) extends U
     override protected def doCanonicalize(): SparkPlan = copy(child=child.canonicalized)
 
     override protected def doExecuteColumnar(): RDD[ColumnarBatch] = {
-        val c = counter
-        child.executeColumnar().mapPartitions { iter =>
-            iter.map { batch =>
-                c.add(batch.numRows())
+        val collector = counter
+        child.executeColumnar().mapPartitions { batches =>
+            // Only publish the value of the accumulator when the task has completed. This is done by
+            // updating a task local accumulator ('updater') which will be merged with the actual
+            // accumulator as soon as the task completes. This avoids the following problems during the
+            // heartbeat:
+            // - Correctness issues due to partially completed/visible updates.
+            // - Performance issues due to excessive serialization.
+            val updater = new LongAccumulator
+            TaskContext.get().addTaskCompletionListener[Unit] { _ =>
+                collector.merge(updater)
+            }
+
+            batches.map { batch =>
+                updater.add(batch.numRows())
                 batch
             }
         }
     }
 
     override protected def doExecute(): RDD[InternalRow] = {
-        val c = counter
-        child.execute().mapPartitions { iter =>
-            iter.map { row =>
-                c.add(1)
+        val collector = counter
+        child.execute().mapPartitions { rows =>
+            val updater = new LongAccumulator
+            TaskContext.get().addTaskCompletionListener[Unit] { _ =>
+                collector.merge(updater)
+            }
+
+            rows.map { row =>
+                updater.add(1)
                 row
             }
         }

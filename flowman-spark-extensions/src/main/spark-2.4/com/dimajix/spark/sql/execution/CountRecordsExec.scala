@@ -36,10 +36,15 @@ case class CountRecordsExec(child: SparkPlan, counter:LongAccumulator) extends U
     override protected def doCanonicalize(): SparkPlan = copy(child=child.canonicalized)
 
     override protected def doExecute(): RDD[InternalRow] = {
-        val c = counter
-        child.execute().mapPartitions { iter =>
-            iter.map { row =>
-                c.add(1)
+        val collector = counter
+        child.execute().mapPartitions { rows =>
+            val updater = new LongAccumulator
+            TaskContext.get().addTaskCompletionListener[Unit] { _ =>
+                collector.merge(updater)
+            }
+
+            rows.map { row =>
+                updater.add(1)
                 row
             }
         }

@@ -19,14 +19,120 @@ package com.dimajix.flowman.fs
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.URI
+import java.net.URL
+import java.nio.file.FileSystemNotFoundException
+import java.nio.file.NoSuchFileException
+import java.nio.file.Paths
+import java.util.Collections
 
-import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
+
+import com.dimajix.common.Resources
+import com.dimajix.flowman.fs.FileSystem.SEPARATOR
+import com.dimajix.flowman.fs.FileSystem.stripProtocol
+import com.dimajix.flowman.fs.FileSystem.stripSlash
 
 
 object File {
     def empty = HadoopFile(null, null)
+
+    /**
+     * Static method for creating a [[File]] object for the local file system from a path
+     * @param path
+     * @return
+     */
+    def ofLocal(path: String): File = {
+        val rawPath = stripProtocol(path)
+        JavaFile(Paths.get(rawPath).normalize())
+    }
+
+    /**
+     * Static method for creating a [[File]] object for the local file system from a Java file
+     *
+     * @param path
+     * @return
+     */
+    def ofLocal(path: java.io.File): File = JavaFile(path.toPath.normalize())
+
+    /**
+     * Static method for creating a [[File]] object for the local file system from a [[URI]]
+     *
+     * @param path
+     * @return
+     */
+    def ofLocal(path: URI): File = {
+        if (path.getScheme == null) {
+            val file = Paths.get(stripSlash(path.getPath))
+            if (!file.isAbsolute) {
+                JavaFile(file.normalize())
+            }
+            else {
+                val uri = new URI("file", path.getUserInfo, path.getHost, path.getPort, path.getPath, path.getQuery, path.getFragment)
+                JavaFile(Paths.get(uri).normalize())
+            }
+        }
+        else {
+            JavaFile(Paths.get(path).normalize())
+        }
+    }
+
+    /**
+     * Static method for creating a [[File]] object for a resource identified by the given path
+     *
+     * @param path
+     * @return
+     */
+    def ofResource(path: String): File = {
+        val url = Resources.getURL(path)
+        if (url == null)
+            throw new NoSuchFileException(s"Resource '$path' not found")
+        ofResource(url.toURI)
+    }
+
+    /**
+     * Static method for creating a [[File]] object for a resource identified by the given [[URL]]
+     *
+     * @param path
+     * @return
+     */
+    def ofResource(url: URL): File = {
+        ofResource(url.toURI)
+    }
+
+    /**
+     * Static method for creating a [[File]] object for a resource identified by the given [[URI]]
+     *
+     * @param uri
+     * @return
+     */
+    def ofResource(uri: URI): File = {
+        if (uri.getScheme == "jar") {
+            // Ensure JAR is opened as a file system
+            try {
+                java.nio.file.FileSystems.getFileSystem(uri)
+            }
+            catch {
+                case _: FileSystemNotFoundException =>
+                    java.nio.file.FileSystems.newFileSystem(uri, Collections.emptyMap[String, String]())
+            }
+
+            // Remove trailing "/", this is only present in Java 1.8
+            val str = uri.toString
+            val lastEx = str.lastIndexOf("!")
+            val lastSep = str.lastIndexOf(SEPARATOR)
+            if (lastSep == str.length - 1 && lastSep > lastEx + 1 && lastEx > 0) {
+                JavaFile(Paths.get(new URI(str.dropRight(1))))
+            }
+            else {
+                JavaFile(Paths.get(uri))
+            }
+        }
+        else {
+            JavaFile(Paths.get(uri))
+        }
+    }
 }
+
 
 /**
   * The File class represents a file on a Hadoop filesystem. It contains a path and a filesystem and provides

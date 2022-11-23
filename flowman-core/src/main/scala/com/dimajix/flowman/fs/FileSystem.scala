@@ -110,56 +110,19 @@ case class FileSystem(conf:Configuration) {
 
     def local(path:Path) : File = local(path.toUri)
     def local(path:String) : File = {
-        val rawPath = stripProtocol(path)
-        JavaFile(Paths.get(rawPath).normalize())
+        File.ofLocal(path)
     }
-    def local(path:java.io.File) : File = JavaFile(path.toPath.normalize())
+    def local(path:java.io.File) : File = {
+        File.ofLocal(path)
+    }
     def local(path:URI) : File = {
-        if (path.getScheme == null) {
-            val file = Paths.get(stripSlash(path.getPath))
-            if (!file.isAbsolute) {
-                JavaFile(file.normalize())
-            }
-            else {
-                val uri = new URI("file", path.getUserInfo, path.getHost, path.getPort, path.getPath, path.getQuery, path.getFragment)
-                JavaFile(Paths.get(uri).normalize())
-            }
-        }
-        else {
-            JavaFile(Paths.get(path).normalize())
-        }
+        File.ofLocal(path)
     }
 
     def resource(path:String) : File = {
-        val url = Resources.getURL(path)
-        if (url == null)
-            throw new NoSuchFileException(s"Resource '$path' not found")
-        resource(url.toURI)
+        File.ofResource(path)
     }
     def resource(uri:URI) : File = {
-        if (uri.getScheme == "jar") {
-            // Ensure JAR is opened as a file system
-            try {
-                java.nio.file.FileSystems.getFileSystem(uri)
-            }
-            catch {
-                case _: FileSystemNotFoundException =>
-                    java.nio.file.FileSystems.newFileSystem(uri, Collections.emptyMap[String, String]())
-            }
-
-            // Remove trailing "/", this is only present in Java 1.8
-            val str = uri.toString
-            val lastEx = str.lastIndexOf("!")
-            val lastSep = str.lastIndexOf(SEPARATOR)
-            if (lastSep == str.length - 1 && lastSep > lastEx + 1 && lastEx > 0) {
-                JavaFile(Paths.get(new URI(str.dropRight(1))))
-            }
-            else {
-                JavaFile(Paths.get(uri))
-            }
-        }
-        else {
-            JavaFile(Paths.get(uri))
-        }
+        File.ofResource(uri)
     }
 }

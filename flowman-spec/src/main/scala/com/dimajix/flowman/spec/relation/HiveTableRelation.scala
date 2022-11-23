@@ -60,7 +60,7 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
-import com.dimajix.flowman.fs.FileUtils
+import com.dimajix.flowman.fs.HadoopUtils
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
@@ -197,7 +197,7 @@ case class HiveTableRelation(
             else {
                 val location = catalog.getTableLocation(table)
                 val fs = location.getFileSystem(execution.hadoopConf)
-                FileUtils.isValidHiveData(fs, location)
+                HadoopUtils.isValidHiveData(fs, location)
             }
         }
 
@@ -392,7 +392,7 @@ case class HiveTableRelation(
             if (catalog.tableExists(table)) {
                 val location = catalog.getTableLocation(table)
                 val fs = location.getFileSystem(execution.hadoopConf)
-                FileUtils.isValidHiveData(fs, location)
+                HadoopUtils.isValidHiveData(fs, location)
             }
             else {
                 No

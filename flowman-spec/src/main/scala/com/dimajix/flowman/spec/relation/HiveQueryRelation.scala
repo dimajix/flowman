@@ -16,13 +16,8 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.io.StringWriter
-import java.nio.charset.Charset
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonPropertyDescription
-import org.apache.commons.io.IOUtils
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
@@ -37,6 +32,8 @@ import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.fs.FileUtils
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionedRelation
@@ -54,7 +51,7 @@ case class HiveQueryRelation(
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq.empty,
     sql: Option[String] = None,
-    file: Option[Path] = None
+    file: Option[File] = None
 ) extends BaseRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[HiveQueryRelation])
 
@@ -202,16 +199,7 @@ case class HiveQueryRelation(
     private lazy val query : String = {
         sql
             .orElse(file.map { f =>
-                val fs = context.fs
-                val input = fs.file(f).open()
-                try {
-                    val writer = new StringWriter()
-                    IOUtils.copy(input, writer, Charset.forName("UTF-8"))
-                    writer.toString
-                }
-                finally {
-                    input.close()
-                }
+                FileUtils.toString(f)
             })
             .getOrElse(
                 throw new IllegalArgumentException("Require either 'sql' or 'file' property")
@@ -238,7 +226,7 @@ class HiveQueryRelationSpec extends RelationSpec with PartitionedRelationSpec wi
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
             context.evaluate(sql),
-            context.evaluate(file).map(p => new Path(p))
+            context.evaluate(file).map(p => context.fs.file(p))
         )
     }
 }

@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.model
 
-import java.io.File
 import java.net.URL
 import java.util.Locale
 import java.util.regex.Pattern
@@ -26,16 +25,25 @@ import scala.annotation.tailrec
 import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.fs.GlobPattern
 
 
 object ResourceIdentifier {
+    def ofFile(file:File): GlobbingResourceIdentifier =
+        GlobbingResourceIdentifier("file", file.toString)
     def ofFile(file:Path): GlobbingResourceIdentifier =
         GlobbingResourceIdentifier("file", file.toString)
-    def ofLocal(file:Path): GlobbingResourceIdentifier =
-        GlobbingResourceIdentifier("local", new Path(file.toUri.getPath).toString)
-    def ofLocal(file:File): GlobbingResourceIdentifier =
-        GlobbingResourceIdentifier("local", new Path(file.toURI.getPath).toString)
+    def ofLocal(file:Path): GlobbingResourceIdentifier = {
+        if (file.toUri.getScheme == null)
+            GlobbingResourceIdentifier("file", "file:" + file.toString)
+        else
+            GlobbingResourceIdentifier("file", file.toString)
+    }
+    def ofLocal(file:java.io.File): GlobbingResourceIdentifier = {
+        GlobbingResourceIdentifier("file", "file:" + file.toString)
+    }
+
     def ofHiveDatabase(database:String): RegexResourceIdentifier =
         RegexResourceIdentifier("hiveDatabase", database, caseSensitive=false)
     def ofHiveTable(table:TableIdentifier): RegexResourceIdentifier =

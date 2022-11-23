@@ -16,9 +16,6 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.io.StringWriter
-import java.nio.charset.Charset
-
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
 
@@ -28,8 +25,6 @@ import net.sf.jsqlparser.parser.CCJSqlParserUtil
 import net.sf.jsqlparser.statement.create.view.CreateView
 import net.sf.jsqlparser.statement.select.Select
 import net.sf.jsqlparser.util.TablesNamesFinder
-import org.apache.commons.io.IOUtils
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
@@ -45,6 +40,8 @@ import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.fs.FileUtils
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialects
 import com.dimajix.flowman.model.Connection
@@ -68,7 +65,7 @@ case class JdbcViewRelation(
     view: TableIdentifier,
     properties: Map[String,String] = Map.empty,
     sql: Option[String] = None,
-    file: Option[Path] = None
+    file: Option[File] = None
 ) extends JdbcRelation(
     connection,
     properties
@@ -352,16 +349,7 @@ case class JdbcViewRelation(
     private lazy val statement : String = {
         sql
             .orElse(file.map { f =>
-                val fs = context.fs
-                val input = fs.file(f).open()
-                try {
-                    val writer = new StringWriter()
-                    IOUtils.copy(input, writer, Charset.forName("UTF-8"))
-                    writer.toString
-                }
-                finally {
-                    input.close()
-                }
+                FileUtils.toString(f)
             })
             .getOrElse(
                 throw new IllegalArgumentException("JdbcView either requires explicit SQL SELECT statement or file")
@@ -413,7 +401,7 @@ class JdbcViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
             TableIdentifier(context.evaluate(view), context.evaluate(database)),
             context.evaluate(properties),
             context.evaluate(sql),
-            context.evaluate(file).map(p => new Path(p))
+            context.evaluate(file).map(p => context.fs.file(p))
         )
     }
 }

@@ -43,7 +43,7 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.fs.FileCollector
-import com.dimajix.flowman.fs.FileUtils
+import com.dimajix.flowman.fs.HadoopUtils
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
@@ -150,7 +150,7 @@ case class FileRelation(
             }
             else {
                 val fs = location.getFileSystem(execution.hadoopConf)
-                FileUtils.isPartitionedData(fs, location)
+                HadoopUtils.isPartitionedData(fs, location)
             }
         }
 
@@ -367,12 +367,12 @@ case class FileRelation(
 
         def checkPartition(path:Path) = {
             // streaming won't write a _SUCCESS file
-            FileUtils.isValidFileData(fs, path, requireSuccessFile=true) ||
-                FileUtils.isValidStreamData(fs, rootLocation)
+            HadoopUtils.isValidFileData(fs, path, requireSuccessFile=true) ||
+                HadoopUtils.isValidStreamData(fs, rootLocation)
         }
         def checkDirectory(path:Path) = {
             // dynamic partitioning writes a _SUCCESS file at the top level
-            FileUtils.isValidFileData(fs, path, requireSuccessFile=false)
+            HadoopUtils.isValidFileData(fs, path, requireSuccessFile=false)
         }
 
         if (this.partitions.nonEmpty) {

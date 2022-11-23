@@ -24,7 +24,7 @@ import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.model.Instance
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.AvroSchemaUtils
@@ -35,7 +35,7 @@ import com.dimajix.flowman.types.AvroSchemaUtils
   */
 case class AvroSchema(
     instanceProperties:Schema.Properties,
-    override val file: Option[Path],
+    override val file: Option[File],
     override val url: Option[URL],
     override val spec: Option[String],
     nullable: Boolean
@@ -70,7 +70,7 @@ class AvroSchemaSpec extends ExternalSchemaSpec {
     override def instantiate(context: Context, properties:Option[Schema.Properties] = None): AvroSchema = {
         AvroSchema(
             instanceProperties(context, ""),
-            file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
+            file.map(context.evaluate).filter(_.nonEmpty).map(p => context.fs.file(p)),
             url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)),
             context.evaluate(spec),
             context.evaluate(nullable).toBoolean

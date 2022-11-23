@@ -465,7 +465,7 @@ case class FileCollector(
     }
 
     private def deletePath(fs:HadoopFileSystem, path:Path) : Unit = {
-        if (!FileUtils.isGlobbingPattern(path)) {
+        if (!HadoopUtils.isGlobbingPattern(path)) {
           logger.info(s"Deleting directory '$path'")
           fs.delete(path, true)
         }
@@ -483,7 +483,7 @@ case class FileCollector(
 
 
     private def collectPath(fs:HadoopFileSystem, path:Path, performGlobbing:Boolean) : Seq[Path] = {
-        if (FileUtils.isGlobbingPattern(path)) {
+        if (HadoopUtils.isGlobbingPattern(path)) {
             if (performGlobbing) {
                 globPath(fs, path)
             }

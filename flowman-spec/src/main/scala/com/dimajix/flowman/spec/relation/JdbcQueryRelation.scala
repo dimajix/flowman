@@ -16,17 +16,12 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.io.StringWriter
-import java.nio.charset.Charset
-
 import scala.collection.JavaConverters._
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonPropertyDescription
 import net.sf.jsqlparser.parser.CCJSqlParserUtil
 import net.sf.jsqlparser.util.TablesNamesFinder
-import org.apache.commons.io.IOUtils
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
@@ -41,6 +36,8 @@ import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.fs.FileUtils
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.PartitionField
@@ -61,7 +58,7 @@ case class JdbcQueryRelation(
     override val partitions: Seq[PartitionField] = Seq.empty,
     connection: Reference[Connection],
     sql: Option[String] = None,
-    file: Option[Path] = None,
+    file: Option[File] = None,
     properties: Map[String,String] = Map.empty
 ) extends JdbcRelation(
     connection,
@@ -256,16 +253,7 @@ case class JdbcQueryRelation(
     private lazy val query: String = {
         sql
             .orElse(file.map { f =>
-                val fs = context.fs
-                val input = fs.file(f).open()
-                try {
-                    val writer = new StringWriter()
-                    IOUtils.copy(input, writer, Charset.forName("UTF-8"))
-                    writer.toString
-                }
-                finally {
-                    input.close()
-                }
+                FileUtils.toString(f)
             })
             .getOrElse(
                 throw new IllegalArgumentException("Require either 'sql' or 'file' property")
@@ -295,7 +283,7 @@ class JdbcQueryRelationSpec extends RelationSpec with PartitionedRelationSpec wi
             partitions.map(_.instantiate(context)),
             connection.instantiate(context),
             context.evaluate(sql),
-            context.evaluate(file).map(p => new Path(p)),
+            context.evaluate(file).map(p => context.fs.file(p)),
             context.evaluate(properties)
         )
     }

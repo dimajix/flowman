@@ -35,8 +35,29 @@ import org.apache.hadoop.io.IOUtils
   * @param path
   */
 final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) extends File {
-    override def toString: String = if (path != null) path.toString else ""
-    override def uri : URI = path.toUri
+    override def toString: String = {
+        if (path != null) {
+            val uri = path.toUri
+            if (uri.getScheme == null && path.isAbsolute) {
+                new Path(fs.getScheme, uri.getAuthority, uri.getPath).toString
+            }
+            else {
+                path.toString
+            }
+        }
+        else {
+            ""
+        }
+    }
+    override def uri : URI = {
+        val uri = path.toUri
+        if (uri.getScheme == null && path.isAbsolute) {
+            new URI(fs.getScheme, uri.getAuthority, uri.getPath, uri.getQuery, uri.getFragment)
+        }
+        else {
+            uri
+        }
+    }
 
     /**
       * Creates a new File object by attaching a child entry

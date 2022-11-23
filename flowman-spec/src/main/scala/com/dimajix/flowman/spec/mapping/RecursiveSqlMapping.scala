@@ -16,17 +16,13 @@
 
 package com.dimajix.flowman.spec.mapping
 
-import java.io.StringWriter
-import java.lang
 import java.net.URL
-import java.nio.charset.Charset
 import java.util.Locale
 
 import scala.annotation.tailrec
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.IOUtils
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
@@ -39,12 +35,13 @@ import org.apache.spark.sql.catalyst.plans.logical.Union
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.ExecutionException
+import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.fs.FileUtils
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.DataFrameBuilder
-import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.sql.DataFrameUtils.withTempView
 import com.dimajix.spark.sql.DataFrameUtils.withTempViews
 import com.dimajix.spark.sql.SqlParser
@@ -53,7 +50,7 @@ import com.dimajix.spark.sql.SqlParser
 case class RecursiveSqlMapping(
     instanceProperties:Mapping.Properties,
     sql:Option[String],
-    file:Option[Path] = None,
+    file:Option[File] = None,
     url:Option[URL] = None,
     maxIterations: Int = 99
 )
@@ -158,16 +155,7 @@ extends BaseMapping {
             sql.get
         }
         else if (file.nonEmpty) {
-            val fs = context.fs
-            val input = fs.file(file.get).open()
-            try {
-                val writer = new StringWriter()
-                IOUtils.copy(input, writer, Charset.forName("UTF-8"))
-                writer.toString
-            }
-            finally {
-                input.close()
-            }
+            FileUtils.toString(file.get)
         }
         else if (url.nonEmpty) {
             IOUtils.toString(url.get, "UTF-8")
@@ -194,7 +182,7 @@ class RecursiveSqlMappingSpec extends MappingSpec {
         RecursiveSqlMapping(
             instanceProperties(context, properties),
             context.evaluate(sql),
-            file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
+            file.map(context.evaluate).filter(_.nonEmpty).map(p => context.fs.file(p)),
             url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)),
             context.evaluate(maxIterations).toInt
         )

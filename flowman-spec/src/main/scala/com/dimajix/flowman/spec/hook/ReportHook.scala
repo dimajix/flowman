@@ -19,15 +19,12 @@ package com.dimajix.flowman.spec.hook
 import java.io.PrintStream
 import java.net.URL
 import java.nio.charset.Charset
-
 import scala.collection.JavaConverters._
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.common.io.Resources
 import org.apache.hadoop.fs.FileAlreadyExistsException
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
-
 import com.dimajix.flowman.execution.AssertionToken
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -38,6 +35,7 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.execution.Token
+import com.dimajix.flowman.fs.{File, FileUtils}
 import com.dimajix.flowman.metric.CollectingMetricSink
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricWrapper
@@ -75,14 +73,14 @@ object ReportHook {
     case class ReporterTargetToken(phase:Phase, output:Option[PrintStream]) extends TargetToken
     case class ReporterAssertionToken(output:Option[PrintStream]) extends AssertionToken
 
-    val defaultTemplate : URL = Resources.getResource(classOf[ReportHook], "/com/dimajix/flowman/report/text")
+    val defaultTemplate : File = File.ofResource("com/dimajix/flowman/report/text")
 }
 
 case class ReportHook(
     instanceProperties: Hook.Properties,
     location:Path,
     mode:OutputMode = OutputMode.OVERWRITE,
-    template:URL = defaultTemplate,
+    template:File = defaultTemplate,
     metrics:Option[MetricBoard] = None
 ) extends BaseHook {
     private val logger = LoggerFactory.getLogger(classOf[ReportHook])
@@ -119,13 +117,8 @@ case class ReportHook(
     }
 
     private def loadResource(name:String) : String = {
-        val path = template.getPath
-        val url =
-            if (path.endsWith("/"))
-                new URL(template.toString + name)
-            else
-                new URL(template.toString + "/" + name)
-        Resources.toString(url, Charset.forName("UTF-8"))
+        val url = template / name
+        FileUtils.toString(url)
     }
 
     private val assertionStartVtl = loadResource("assertion-start.vtl")
@@ -353,7 +346,7 @@ class ReportHookSpec extends HookSpec {
             instanceProperties(context, properties),
             new Path(context.evaluate(location)),
             OutputMode.ofString(context.evaluate(mode).getOrElse("overwrite")),
-            new URL(context.evaluate(template)),
+            context.fs.file(context.evaluate(template)),
             metrics.map(_.instantiate(context))
         )
     }

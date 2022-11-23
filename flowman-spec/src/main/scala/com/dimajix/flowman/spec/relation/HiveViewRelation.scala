@@ -16,13 +16,8 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.io.StringWriter
-import java.nio.charset.Charset
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonPropertyDescription
-import org.apache.commons.io.IOUtils
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
@@ -39,6 +34,8 @@ import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.fs.FileUtils
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
@@ -58,7 +55,7 @@ case class HiveViewRelation(
     override val partitions: Seq[PartitionField] = Seq(),
     sql: Option[String] = None,
     mapping: Option[MappingOutputIdentifier] = None,
-    file: Option[Path] = None
+    file: Option[File] = None
 ) extends HiveRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveViewRelation])
     private val resource = ResourceIdentifier.ofHiveTable(table)
@@ -272,16 +269,7 @@ case class HiveViewRelation(
     private lazy val statement : Option[String] = {
         sql
             .orElse(file.map { f =>
-                val fs = context.fs
-                val input = fs.file(f).open()
-                try {
-                    val writer = new StringWriter()
-                    IOUtils.copy(input, writer, Charset.forName("UTF-8"))
-                    writer.toString
-                }
-                finally {
-                    input.close()
-                }
+                FileUtils.toString(f)
             })
     }
 
@@ -325,7 +313,7 @@ class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
             partitions.map(_.instantiate(context)),
             context.evaluate(sql),
             context.evaluate(mapping).map(MappingOutputIdentifier.parse),
-            context.evaluate(file).map(p => new Path(p))
+            context.evaluate(file).map(p => context.fs.file(p))
         )
     }
 }

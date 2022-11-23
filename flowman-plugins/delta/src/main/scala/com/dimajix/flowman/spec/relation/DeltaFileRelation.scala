@@ -45,7 +45,7 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
-import com.dimajix.flowman.fs.FileUtils
+import com.dimajix.flowman.fs.HadoopUtils
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
@@ -327,7 +327,7 @@ case class DeltaFileRelation(
         }
         else {
             val fs = location.getFileSystem(execution.hadoopConf)
-            FileUtils.truncateLocation(fs, location)
+            HadoopUtils.truncateLocation(fs, location)
 
             // TODO: Pickup existing physical schema
             val sparkSchema = StructType(fields.map(_.catalogField))

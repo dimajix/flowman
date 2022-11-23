@@ -29,14 +29,12 @@ import java.time.Period
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.Temporal
-
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.fs.Path
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 import org.slf4j.LoggerFactory
-
-import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.fs.{File, FileUtils}
 import com.dimajix.flowman.templating.FileWrapper.logger
 import com.dimajix.flowman.util.UtcTimestamp
 
@@ -65,13 +63,7 @@ case class FileWrapper(file:File) {
 
     def read() : String = {
         try {
-            val input = file.open()
-            try {
-                IOUtils.toString(input, Charset.forName("UTF-8"))
-            }
-            finally {
-                input.close()
-            }
+            FileUtils.toString(file)
         }
         catch {
             case ex:IOException =>

@@ -32,6 +32,7 @@ class HadoopFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
 
     "The HadoopFile" should "work" in {
         val dir = HadoopFile(localFs, new fs.Path(tempDir.toURI))
+        dir.toString should be (tempDir.toURI.toString)
         dir.uri should be (tempDir.toURI)
         dir.path should be (new fs.Path(tempDir.toURI))
         dir.exists() should be (true)
@@ -42,6 +43,7 @@ class HadoopFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
         (dir / dir.toString) should be (dir)
 
         val file = dir / "lala"
+        file.toString should be (tempDir.toURI.toString + "lala")
         file.uri should be(tempDir.toURI.resolve("lala"))
         file.path should be(new Path(tempDir.toURI.resolve("lala")))
         file.path should be(new Path(tempDir.toURI.toString, "lala"))
@@ -56,6 +58,7 @@ class HadoopFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
 
     it should "work at root level" in {
         val dir = HadoopFile(localFs, new fs.Path("file:/"))
+        dir.toString should be ("file:/")
         dir.parent should be (dir)
         dir.uri should be (new URI("file:/"))
         dir.name should be ("")
@@ -66,12 +69,37 @@ class HadoopFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
         dir.isAbsolute() should be(true)
 
         val file = dir / "lala"
+        file.toString should be ("file:/lala")
         file.exists() should be(false)
         file.isFile() should be(false)
         file.isDirectory() should be(false)
         file.isAbsolute() should be(true)
         file.parent should be(dir)
         file.name should be("lala")
+        file.withName("lolo") should be(dir / "lolo")
+    }
+
+    it should "work at root level without scheme" in {
+        val dir = HadoopFile(localFs, new fs.Path("/"))
+        dir.toString should be("file:/")
+        dir.parent should be(dir)
+        dir.uri should be(new URI("file:/"))
+        dir.name should be("")
+        dir.path should be(new fs.Path("/"))
+        dir.exists() should be(true)
+        dir.isFile() should be(false)
+        dir.isDirectory() should be(true)
+        dir.isAbsolute() should be(true)
+
+        val file = dir / "lala"
+        file.toString should be("file:/lala")
+        file.exists() should be(false)
+        file.isFile() should be(false)
+        file.isDirectory() should be(false)
+        file.isAbsolute() should be(true)
+        file.parent should be(dir)
+        file.name should be("lala")
+        file.path should be(new fs.Path("/lala"))
         file.withName("lolo") should be(dir / "lolo")
     }
 

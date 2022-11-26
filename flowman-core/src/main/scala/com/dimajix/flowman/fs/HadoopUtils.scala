@@ -28,7 +28,11 @@ object HadoopUtils {
     private val logger = LoggerFactory.getLogger(classOf[HadoopUtils])
 
     def isGlobbingPattern(pattern: Path) : Boolean = {
-        pattern.toString.exists("{}[]*?\\".toSet.contains)
+        isGlobbingPattern(pattern.toString)
+    }
+
+    def isGlobbingPattern(pattern: String): Boolean = {
+        pattern.exists("{}[]*?\\".toSet.contains)
     }
 
     /**

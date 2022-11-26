@@ -82,7 +82,8 @@ final case class JavaFile(jpath:Path) extends File {
     }
 
     /**
-     * Returns the parent directory of the File
+     * Returns the parent directory of the File. If this is already a root path (i.e. no parent is available),
+     * this function returns null
      *
      * @return
      */
@@ -91,7 +92,7 @@ final case class JavaFile(jpath:Path) extends File {
         if (p != null)
             JavaFile(p)
         else
-            this
+            null
     }
 
     /**
@@ -122,9 +123,8 @@ final case class JavaFile(jpath:Path) extends File {
     override def glob(pattern: String): Seq[File] = {
         val stream = Files.newDirectoryStream(jpath, pattern)
         stream.asScala
+            .map(JavaFile.apply)
             .toSeq
-            .sortBy(_.toString)
-            .map(x => JavaFile(x))
     }
 
     /**

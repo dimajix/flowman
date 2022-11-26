@@ -82,19 +82,21 @@ final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) exten
     }
 
     /**
-      * Returns the parent directory of the File
-      * @return
-      */
+     * Returns the parent directory of the File. If this is already a root path (i.e. no parent is available),
+     * this function returns null
+     *
+     * @return
+     */
     override def parent : File = {
         val p = path.getParent
         if (p == null) {
-            this
+            null
         }
         else if (p.getName.isEmpty) {
             HadoopFile(fs, p)
         }
         else {
-            val uri = new URI(p.toUri.toString + "/")
+            val uri = new URI(p.toUri.toString)
             HadoopFile(fs, new Path(uri))
         }
     }
@@ -129,12 +131,14 @@ final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) exten
     }
 
     def glob(pattern:String) : Seq[File] = {
-        if (!isDirectory())
-            throw new IOException(s"File '$path' is not a directory - cannot list files")
-        fs.globStatus(new Path(path, pattern))
-            .map(item => (item.getPath.toString, HadoopFile(fs, item.getPath)))
-            .sortBy(_._1)
-            .map(_._2)
+        val files = fs.globStatus(new Path(path, pattern))
+        if (files != null) {
+            files.map(_.getPath.makeQualified(fs.getUri, fs.getWorkingDirectory))
+                .map(item => HadoopFile(fs, item))
+        }
+        else {
+            Seq.empty[File]
+        }
     }
 
     /**

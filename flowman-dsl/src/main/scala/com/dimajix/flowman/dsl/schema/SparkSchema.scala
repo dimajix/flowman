@@ -34,7 +34,7 @@ case class SparkSchema(
     override def instantiate(context:Context, properties:Option[Schema.Properties] = None) : schema.SparkSchema = {
         schema.SparkSchema(
             Schema.Properties(context),
-            file,
+            file.map(context.fs.file),
             url,
             spec
         )

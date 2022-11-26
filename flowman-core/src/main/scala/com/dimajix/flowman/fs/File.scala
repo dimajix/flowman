@@ -29,6 +29,7 @@ import org.apache.hadoop.fs.Path
 
 import com.dimajix.common.Resources
 import com.dimajix.flowman.fs.FileSystem.SEPARATOR
+import com.dimajix.flowman.fs.FileSystem.stripEndSlash
 import com.dimajix.flowman.fs.FileSystem.stripProtocol
 import com.dimajix.flowman.fs.FileSystem.stripSlash
 
@@ -42,7 +43,7 @@ object File {
      * @return
      */
     def ofLocal(path: String): File = {
-        val rawPath = stripProtocol(path)
+        val rawPath = stripEndSlash(stripProtocol(path))
         JavaFile(Paths.get(rawPath).normalize())
     }
 

@@ -82,7 +82,7 @@ class HiveQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val relation = HiveQueryRelation(
             Relation.Properties(context),
-            file = Some(new Path(basedir, "project/relation/some-view.sql"))
+            file = Some(context.fs.file(new Path(basedir, "project/relation/some-view.sql")))
         )
 
         relation.provides(Operation.CREATE) should be(Set.empty)

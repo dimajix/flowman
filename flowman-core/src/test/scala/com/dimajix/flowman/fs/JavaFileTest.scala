@@ -57,11 +57,24 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
         file.parent should be(dir)
         file.name should be("lala")
         file.withName("lolo") should be(dir / "lolo")
+
+        val file2 = dir / "lala/"
+        file2.toString should be(tempDir.toURI.toString + "lala")
+        file2.uri should be(tempDir.toURI.resolve("lala"))
+        file2.path should be(new Path(tempDir.toURI.resolve("lala")))
+        file2.path should be(new Path(tempDir.toURI.toString, "lala"))
+        file2.exists() should be(false)
+        file2.isFile() should be(false)
+        file2.isDirectory() should be(false)
+        file2.isAbsolute() should be(true)
+        file2.parent should be(dir)
+        file2.name should be("lala")
+        file2.withName("lolo") should be(dir / "lolo")
     }
 
     it should "work at root level" in {
         val dir = JavaFile(tempDir.toPath.getRoot)
-        dir.parent should be (dir)
+        dir.parent should be (null)
         dir.name should be ("")
         dir.uri should be(new URI("file:/"))
         dir.path should be(new fs.Path("file:/"))

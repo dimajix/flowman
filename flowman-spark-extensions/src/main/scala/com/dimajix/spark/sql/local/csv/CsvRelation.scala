@@ -39,7 +39,12 @@ class CsvRelation(context: SQLContext, files:Seq[File], options:CsvOptions, msch
     override def schema: StructType = mschema
 
     override def read(): DataFrame = {
-        val rows = files.flatMap(readFile)
+        val rows = files.flatMap { f =>
+            if (f.isDirectory)
+                readDirectory(f)
+            else
+                readFile(f)
+        }
         sqlContext.createDataFrame(rows.asJava, schema)
     }
 
@@ -83,6 +88,15 @@ class CsvRelation(context: SQLContext, files:Seq[File], options:CsvOptions, msch
         }
         finally {
             source.close()
+        }
+    }
+
+    private def readDirectory(file:File) : Seq[Row] = {
+        file.listFiles().toSeq.flatMap { f =>
+            if (f.isFile)
+                readFile(f)
+            else
+                Seq.empty[Row]
         }
     }
 }

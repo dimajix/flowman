@@ -31,10 +31,11 @@ class HadoopFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
     private val localFs = org.apache.hadoop.fs.FileSystem.getLocal(new Configuration())
 
     "The HadoopFile" should "work" in {
-        val dir = HadoopFile(localFs, new fs.Path(tempDir.toURI))
-        dir.toString should be (tempDir.toURI.toString)
-        dir.uri should be (tempDir.toURI)
-        dir.path should be (new fs.Path(tempDir.toURI))
+        val dir = HadoopFile(localFs, new fs.Path(tempDir.toURI.toString))
+        dir.toString should be ("file:" + tempDir.toString)
+        dir.uri should be (new URI(tempDir.toURI.toString.dropRight(1)))
+        dir.uri.toString + "/" should be (tempDir.toURI.toString)
+        dir.path should be (new fs.Path(tempDir.toURI.toString))
         dir.exists() should be (true)
         dir.isFile() should be (false)
         dir.isDirectory() should be (true)
@@ -54,12 +55,25 @@ class HadoopFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
         file.parent should be (dir)
         file.name should be ("lala")
         file.withName("lolo") should be (dir / "lolo")
+
+        val file2 = dir / "lala/"
+        file2.toString should be(tempDir.toURI.toString + "lala")
+        file2.uri should be(tempDir.toURI.resolve("lala"))
+        file2.path should be(new Path(tempDir.toURI.resolve("lala")))
+        file2.path should be(new Path(tempDir.toURI.toString, "lala"))
+        file2.exists() should be(false)
+        file2.isFile() should be(false)
+        file2.isDirectory() should be(false)
+        file2.isAbsolute() should be(true)
+        file2.parent should be(dir)
+        file2.name should be("lala")
+        file2.withName("lolo") should be(dir / "lolo")
     }
 
     it should "work at root level" in {
         val dir = HadoopFile(localFs, new fs.Path("file:/"))
         dir.toString should be ("file:/")
-        dir.parent should be (dir)
+        dir.parent should be (null)
         dir.uri should be (new URI("file:/"))
         dir.name should be ("")
         dir.path should be(new fs.Path("file:/"))
@@ -82,7 +96,7 @@ class HadoopFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
     it should "work at root level without scheme" in {
         val dir = HadoopFile(localFs, new fs.Path("/"))
         dir.toString should be("file:/")
-        dir.parent should be(dir)
+        dir.parent should be(null)
         dir.uri should be(new URI("file:/"))
         dir.name should be("")
         dir.path should be(new fs.Path("/"))

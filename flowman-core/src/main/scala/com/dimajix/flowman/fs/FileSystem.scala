@@ -65,6 +65,15 @@ object FileSystem {
             str
         }
     }
+
+    def stripEndSlash(str: String) : String = {
+        val colon = str.indexOf(':')
+        val slash = str.lastIndexOf('/')
+        if (slash == str.length - 1 && slash != colon + 1)
+            str.dropRight(1)
+        else
+            str
+    }
 }
 
 
@@ -75,12 +84,12 @@ object FileSystem {
 case class FileSystem(conf:Configuration) {
 
     def file(path:Path) : File = {
-        if (path.toUri.getScheme == "jar") {
-            resource(path.toUri)
+        val uri = path.toUri
+        if (uri.getScheme == "jar") {
+            resource(uri)
         }
         else {
             val fs = path.getFileSystem(conf)
-            val uri = path.toUri
             if (uri.getScheme == null && path.isAbsolute) {
                 val p = new Path(fs.getScheme, uri.getAuthority, uri.getPath)
                 HadoopFile(fs, p)
@@ -106,7 +115,22 @@ case class FileSystem(conf:Configuration) {
             file(new Path(path))
         }
     }
-    def file(path:URI) : File = file(new Path(path))
+    def file(uri:URI) : File = {
+        if (uri.getScheme == "jar") {
+            resource(uri)
+        }
+        else {
+            // Chop off trailing "/"
+            val path = uri.getPath
+            val uri2 = if (path.endsWith("/")) {
+                uri.resolve(path.dropRight(1))
+            }
+            else {
+                uri
+            }
+            file(new Path(uri2))
+        }
+    }
 
     def local(path:Path) : File = local(path.toUri)
     def local(path:String) : File = {

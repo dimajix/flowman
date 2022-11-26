@@ -20,6 +20,8 @@ import java.io.FileNotFoundException
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.FileSystemException
 
+import scala.util.control.NonFatal
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Column
@@ -42,6 +44,7 @@ import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.fs.FileCollector
 import com.dimajix.flowman.fs.HadoopUtils
 import com.dimajix.flowman.jdbc.HiveDialect
@@ -71,14 +74,14 @@ case class FileRelation(
     private val resource = ResourceIdentifier.ofFile(qualifiedLocation)
 
     private lazy val collector : FileCollector = {
-        FileCollector.builder(context.hadoopConf)
+        FileCollector.builder(context.fs)
             .path(location)
             .pattern(pattern)
             .partitionBy(partitions.map(_.name):_*)
             .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment.toMap)
             .build()
     }
-    lazy val qualifiedLocation:Path = collector.root
+    lazy val qualifiedLocation:File = collector.root
 
     /**
       * Returns the list of all resources which will be created by this relation.
@@ -94,7 +97,7 @@ case class FileRelation(
 
                 if (this.partitions.nonEmpty) {
                     val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-                    allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p))).toSet
+                    allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p).path)).toSet
                 }
                 else {
                     Set(resource)
@@ -115,7 +118,7 @@ case class FileRelation(
 
                 if (this.partitions.nonEmpty) {
                     val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-                    allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p))).toSet
+                    allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p).path)).toSet
                 }
                 else {
                     Set(resource)
@@ -207,7 +210,7 @@ case class FileRelation(
     }
     private def readSpark(execution:Execution, partitions:Map[String,FieldValue]) : DataFrame = {
         val reader = this.reader(execution, format, options)
-        val reader1 = if (execution.fs.file(qualifiedLocation).isDirectory()) reader.option("basePath", qualifiedLocation.toString) else reader
+        val reader1 = if (qualifiedLocation.isDirectory()) reader.option("basePath", qualifiedLocation.toString) else reader
         val df = reader1.load(qualifiedLocation.toString)
 
         // Filter partitions
@@ -272,10 +275,9 @@ case class FileRelation(
         // Manually add _SUCCESS file in case of OVERWRITE_DYNAMIC
         mode match {
             case OutputMode.OVERWRITE_DYNAMIC =>
-                val success = new Path(qualifiedLocation, "_SUCCESS")
-                val fs = collector.fs
-                if (!fs.exists(success)) {
-                    fs.create(success).close()
+                val success = qualifiedLocation / "_SUCCESS"
+                if (!success.exists()) {
+                    success.create().close()
                 }
             case _ =>
         }
@@ -292,15 +294,15 @@ case class FileRelation(
             // cases explicitly
             case OutputMode.IGNORE_IF_EXISTS =>
                 if (loaded(execution, partition) == No) {
-                    doWriteSinglePartition(execution, df, outputPath, OutputMode.OVERWRITE)
+                    doWriteSinglePartition(execution, df, outputPath.path, OutputMode.OVERWRITE)
                 }
             case OutputMode.ERROR_IF_EXISTS =>
                 if (loaded(execution, partition) == Yes) {
                     throw new FileAlreadyExistsException(outputPath.toString)
                 }
-                doWriteSinglePartition(execution, df, outputPath, OutputMode.OVERWRITE)
+                doWriteSinglePartition(execution, df, outputPath.path, OutputMode.OVERWRITE)
             case m => m.batchMode
-                doWriteSinglePartition(execution, df, outputPath, mode)
+                doWriteSinglePartition(execution, df, outputPath.path, mode)
         }
     }
     private def doWriteSinglePartition(execution:Execution, df:DataFrame, outputPath:Path, mode:OutputMode) : Unit = {
@@ -363,22 +365,22 @@ case class FileRelation(
         requireValidPartitionKeys(partition)
 
         val rootLocation = collector.root
-        val fs = collector.fs
+        val fs = rootLocation.path.getFileSystem(execution.hadoopConf)
 
-        def checkPartition(path:Path) = {
+        def checkPartition(path:File) = {
             // streaming won't write a _SUCCESS file
-            HadoopUtils.isValidFileData(fs, path, requireSuccessFile=true) ||
-                HadoopUtils.isValidStreamData(fs, rootLocation)
+            HadoopUtils.isValidFileData(fs, path.path, requireSuccessFile=true) ||
+                HadoopUtils.isValidStreamData(fs, rootLocation.path)
         }
-        def checkDirectory(path:Path) = {
+        def checkDirectory(path:File) = {
             // dynamic partitioning writes a _SUCCESS file at the top level
-            HadoopUtils.isValidFileData(fs, path, requireSuccessFile=false)
+            HadoopUtils.isValidFileData(fs, path.path, requireSuccessFile=false)
         }
 
         if (this.partitions.nonEmpty) {
             val partitionSpec = PartitionSchema(partitions).spec(partition)
             // Check if root location contains a _SUCCESS file, then it might be dynamic partitioning
-            if (collector.pattern.isEmpty && checkPartition(rootLocation)) {
+            if (pattern.isEmpty && checkPartition(rootLocation)) {
                 collector.glob(partitionSpec).exists(checkDirectory)
             }
             else {
@@ -426,10 +428,7 @@ case class FileRelation(
         }
         else {
             logger.info(s"Creating file relation '$identifier' at location '$qualifiedLocation'")
-            val fs = collector.fs
-            if (!fs.mkdirs(qualifiedLocation)) {
-                throw new FileSystemException(qualifiedLocation.toString, "", "Cannot create directory.")
-            }
+            qualifiedLocation.mkdirs()
         }
 
         execution.refreshResource(resource)
@@ -488,8 +487,7 @@ case class FileRelation(
         }
         else {
             logger.info(s"Destroying file relation '$identifier' by deleting directory '$qualifiedLocation'")
-            val fs = collector.fs
-            fs.delete(qualifiedLocation, true)
+            qualifiedLocation.delete(true)
         }
 
         execution.refreshResource(resource)
@@ -501,7 +499,7 @@ case class FileRelation(
       * @param partitions
       * @return
       */
-    protected def mapFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+    protected def mapFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[File]) => T) : Seq[T] = {
         require(partitions != null)
 
         if (this.partitions.nonEmpty) {

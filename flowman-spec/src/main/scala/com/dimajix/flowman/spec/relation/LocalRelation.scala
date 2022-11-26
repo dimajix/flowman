@@ -16,7 +16,6 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.io.File
 import java.nio.file.FileAlreadyExistsException
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -35,6 +34,7 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.fs.FileCollector
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
@@ -61,15 +61,15 @@ case class LocalRelation(
 extends BaseRelation with SchemaRelation with PartitionedRelation {
     private val logger = LoggerFactory.getLogger(classOf[LocalRelation])
     private lazy val collector : FileCollector = {
-        FileCollector.builder(context.hadoopConf)
+        FileCollector.builder(context.fs)
             .path(location)
             .pattern(pattern)
             .partitionBy(partitions.map(_.name):_*)
             .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment.toMap)
             .build()
     }
-    private lazy val qualifiedLocation:Path = collector.root
-    private lazy val resource = ResourceIdentifier.ofLocal(qualifiedLocation)
+    private lazy val qualifiedLocation = collector.root
+    private lazy val resource = ResourceIdentifier.ofFile(qualifiedLocation)
 
     /**
       * Returns the list of all resources which will be created by this relation.
@@ -86,7 +86,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
                 if (this.partitions.nonEmpty) {
                     val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-                    allPartitions.map(p => ResourceIdentifier.ofLocal(collector.resolve(p))).toSet
+                    allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p).file)).toSet
                 }
                 else {
                     Set(resource)
@@ -107,7 +107,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
                 if (this.partitions.nonEmpty) {
                     val allPartitions = PartitionSchema(this.partitions).interpolate(partitions)
-                    allPartitions.map(p => ResourceIdentifier.ofLocal(collector.resolve(p))).toSet
+                    allPartitions.map(p => ResourceIdentifier.ofFile(collector.resolve(p).file)).toSet
                 }
                 else {
                     Set(resource)
@@ -145,7 +145,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
             val df = reader
                 .format(format)
-                .load(paths.map(p => new File(p.toUri)):_*)
+                .load(paths.map(p => new java.io.File(p.uri)):_*)
 
             // Add partitions values as columns
             partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, toLit(p._2)))
@@ -174,7 +174,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         requireAllPartitionKeys(partition)
 
         val outputPath  = collector.resolve(partition.mapValues(_.value))
-        val outputFile = new File(outputPath.toUri)
+        val outputFile = new java.io.File(outputPath.uri)
 
         logger.info(s"Writing to local output location '$outputPath' (partition=$partition)")
 
@@ -227,7 +227,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
     override def exists(execution:Execution) : Trilean = {
         require(execution != null)
 
-        new File(localDirectory).exists()
+        localDirectory.exists()
     }
 
     /**
@@ -257,14 +257,13 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         requireValidPartitionKeys(partition)
 
         if(this.partitions.isEmpty) {
-            val outputPath  = collector.resolve()
-            val file = new File(outputPath.toUri)
-            file.exists()
+            val rootLocation = collector.resolve()
+            rootLocation.file.exists()
         }
         else {
             val partitionSpec = PartitionSchema(partitions).spec(partition)
-            collector.map(partitionSpec) { (fs,path) =>
-                Option(fs.globStatus(path)).exists(_.nonEmpty)
+            collector.map(partitionSpec) { f =>
+                f.glob().nonEmpty
             }
         }
     }
@@ -278,15 +277,14 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
     override def create(execution: Execution, ifNotExists:Boolean=false): Unit =  {
         require(execution != null)
 
-        val path = new File(localDirectory)
-        if (path.exists()) {
+        if (localDirectory.exists()) {
             if (!ifNotExists) {
                 throw new FileAlreadyExistsException(qualifiedLocation.toString)
             }
         }
         else {
             logger.info(s"Creating local directory '$localDirectory' for local file relation")
-            path.mkdirs()
+            localDirectory.mkdirs()
             execution.refreshResource(resource)
         }
     }
@@ -313,17 +311,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
         val dir = localDirectory
         logger.info(s"Removing local directory '$dir' of local file relation")
-        val root = new File(dir)
-
-        def delete(file:File): Unit = {
-            if (file.exists()) {
-                if (file.isDirectory)
-                    file.listFiles().foreach(delete)
-                file.delete()
-            }
-        }
-
-        delete(root)
+        dir.delete(true)
         execution.refreshResource(resource)
     }
 
@@ -333,7 +321,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
      * @param partitions
      * @return
      */
-    private def mapFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+    private def mapFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[File]) => T) : Seq[T] = {
         require(partitions != null)
 
         if (this.partitions.nonEmpty)
@@ -342,23 +330,23 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
             Seq(mapUnpartitionedFiles(fn))
     }
 
-    private def mapPartitionedFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[Path]) => T) : Seq[T] = {
+    private def mapPartitionedFiles[T](partitions:Map[String,FieldValue])(fn:(PartitionSpec,Seq[File]) => T) : Seq[T] = {
         require(partitions != null)
 
         val resolvedPartitions = PartitionSchema(this.partitions).interpolate(partitions)
         resolvedPartitions.map(p => fn(p, collector.glob(p))).toSeq
     }
 
-    private def mapUnpartitionedFiles[T](fn:(PartitionSpec,Seq[Path]) => T) : T = {
+    private def mapUnpartitionedFiles[T](fn:(PartitionSpec,Seq[File]) => T) : T = {
         fn(PartitionSpec(), collector.glob())
     }
 
     private def localDirectory = {
-        if (pattern != null && pattern.nonEmpty) {
-            qualifiedLocation.toUri.getPath
+        if (collector.pattern.nonEmpty) {
+            qualifiedLocation
         }
         else {
-            qualifiedLocation.getParent.toUri.getPath
+            qualifiedLocation.parent
         }
     }
 }

@@ -892,6 +892,9 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             val out = new PrintWriter(file)
             out.println(child)
             out.close()
+            // We require a _SUCCESS file
+            val success = s"p1=$p1/p2=$p2/_SUCCESS"
+            new File(outputPath.toFile, success).createNewFile()
         }
 
         mkPartitionFile("1","1","111.txt")
@@ -954,6 +957,16 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         // == Create =================================================================================================
         relation.create(execution, true)
         relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+
+        relation.exists(execution) should be(Yes)
+        //relation.loaded(execution) should be (Yes)
+        relation.loaded(execution, Map("p1" -> SingleValue("1"))) should be(Yes)
+        relation.loaded(execution, Map("p1" -> SingleValue("3"))) should be(No)
+        relation.loaded(execution, Map("p2" -> SingleValue("1"))) should be(Yes)
+        relation.loaded(execution, Map("p2" -> SingleValue("3"))) should be(No)
+        relation.loaded(execution, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1"))) should be(Yes)
+        relation.loaded(execution, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("3"))) should be(No)
+        relation.loaded(execution, Map("p1" -> SingleValue("3"), "p2" -> SingleValue("1"))) should be(No)
 
         // == Read ===================================================================================================
         val df1 = relation.read(execution, Map("p1" -> SingleValue("1"), "p2" -> SingleValue("1")))
@@ -1019,6 +1032,10 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             val out = new PrintWriter(file)
             out.println(child)
             out.close()
+
+            // We require a _SUCCESS file
+            val success = s"year=$year/month=$month/_SUCCESS"
+            new File(outputPath.toFile, success).createNewFile()
         }
 
         mkPartitionFile("2015","1","111.txt")
@@ -1070,6 +1087,10 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "year=2016/month=*"))
         ))
 
+        relation.exists(execution) should be (Yes)
+        //relation.loaded(execution) should be (Yes)
+        relation.loaded(execution, Map("month" -> SingleValue("1"))) should be (Yes)
+        relation.loaded(execution, Map("month" -> SingleValue("3"))) should be (No)
         relation.create(execution, true)
         relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
 
@@ -1254,7 +1275,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.write(execution, df, Map(), OutputMode.OVERWRITE_DYNAMIC)
 
         // == Read ==================================================================================================
-        relation.loaded(execution) should be(Yes)
+        //relation.loaded(execution) should be(Yes)
         relation.loaded(execution, Map("part1" -> SingleValue("1"))) should be(Yes)
         relation.loaded(execution, Map("part1" -> SingleValue("2"))) should be(Yes)
         relation.loaded(execution, Map("part1" -> SingleValue("3"))) should be(No)

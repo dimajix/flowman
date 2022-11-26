@@ -41,6 +41,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.assertion.AssertionSpec
+import com.dimajix.flowman.util.ConsoleColors.red
 
 
 case class ValidateTarget(
@@ -114,11 +115,11 @@ case class ValidateTarget(
         val status = Status.ofAll(result.map(_.status))
         if (!status.success) {
             if (errorMode != ErrorMode.FAIL_NEVER || result.exists(_.numExceptions > 0)) {
-                logger.error(s"Validation '$identifier' failed.")
+                logger.error(red(s"Validation '$identifier' failed."))
                 TargetResult(this, Phase.VALIDATE, result, new ValidationFailedException(identifier, result.flatMap(_.exception).headOption.orNull), startTime)
             }
             else {
-                logger.error(s"Validation '$identifier' failed - the result is marked as 'success with errors'.")
+                logger.error(red(s"Validation '$identifier' failed - the result is marked as 'success with errors'."))
                 TargetResult(this, Phase.VALIDATE, result, Status.SUCCESS_WITH_ERRORS, startTime)
             }
         }

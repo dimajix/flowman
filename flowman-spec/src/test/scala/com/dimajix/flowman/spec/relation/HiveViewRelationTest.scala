@@ -290,7 +290,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         val relation = HiveViewRelation(
             Relation.Properties(context),
             table = TableIdentifier("v0", Some("default")),
-            file = Some(new Path(basedir, "project/relation/some-view.sql"))
+            file = Some(context.fs.file(new Path(basedir, "project/relation/some-view.sql")))
         )
 
         relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))

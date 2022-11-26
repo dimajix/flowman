@@ -85,7 +85,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
     "The file collector" should "not glob all individual files with implicit pattern" in {
         val fs = new FileSystem(hadoopConf)
         val collector = FileCollector.builder(fs)
-            .path(new Path(workingDirectory, "data/2016/02/01"))
+            .location(new Path(workingDirectory, "data/2016/02/01"))
             .build()
 
         collector.exists() should be (true)
@@ -99,7 +99,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
     it should "not glob all individual files with explicit pattern" in {
         val fs = new FileSystem(hadoopConf)
         val collector = FileCollector.builder(fs)
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("data/2016/02/01")
             .build()
 
@@ -113,7 +113,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "glob only root directory without any pattern" in {
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(workingDirectory)
+            .location(workingDirectory)
             .build()
 
         collector.exists() should be(true)
@@ -126,7 +126,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "collect only the root directory without any pattern" in {
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(workingDirectory)
+            .location(workingDirectory)
             .build()
 
         collector.exists() should be(true)
@@ -139,7 +139,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "glob intermediate directories with implicit pattern" in {
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(new Path(workingDirectory, "data/2016/0*/0*"))
+            .location(new Path(workingDirectory, "data/2016/0*/0*"))
             .build()
 
         collector.exists() should be (true)
@@ -156,7 +156,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "glob root directory with explicit pattern" in {
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("data/2016/0*/0*")
             .build()
 
@@ -170,7 +170,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "not glob non-existing directories" in {
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(new Path(workingDirectory, "data/2016/1*/0*"))
+            .location(new Path(workingDirectory, "data/2016/1*/0*"))
             .build()
 
         collector.exists() should be (true)
@@ -181,7 +181,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "collect non-existing directories with implicit pattern" in {
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(new Path(workingDirectory, "data/2016/0*/0*"))
+            .location(new Path(workingDirectory, "data/2016/0*/0*"))
             .build()
 
         collector.exists() should be (true)
@@ -194,7 +194,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "collect root directory with explicit pattern" in {
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("data/2016/0*/0*")
             .build()
 
@@ -208,7 +208,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "not collect non-existing directories with implicit pattern" in {
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(new Path(workingDirectory, "data/2016/1*/0*"))
+            .location(new Path(workingDirectory, "data/2016/1*/0*"))
             .build()
 
         collector.exists() should be(true)
@@ -219,7 +219,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "collect root directory with non-existing explicit pattern" in {
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("data/2016/1*/0*")
             .build()
 
@@ -233,7 +233,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     it should "support default values" in {
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(new Path(workingDirectory, "data"))
+            .location(new Path(workingDirectory, "data"))
             .pattern("$year/$month/$day")
             .partitionBy("year","month","day")
             .defaults(Map("year" -> "*", "month" -> "*", "day" -> "*"))
@@ -276,7 +276,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("data/$ts.format('yyyy/MM/dd')")
             .partitionBy("ts")
             .build()
@@ -300,7 +300,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("data/$ts.format('yyyy/MM/dd')")
             .partitionBy("ts")
             .build()
@@ -321,7 +321,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("data/$ts.format('yyyy/MM/dd')")
             .partitionBy("ts")
             .build()
@@ -342,7 +342,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("data/$ts.format('yyyy/MM/dd')")
             .partitionBy("ts")
             .build()
@@ -364,7 +364,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("""$ts.format("'data/'yyyy/MM/dd")""")
             .partitionBy("ts")
             .build()
@@ -386,7 +386,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
         val partitions = days.map(p => PartitionSpec(Map("ts" -> p)))
 
         val collector = FileCollector.builder(new FileSystem(hadoopConf))
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd/HH'.seq'")""")
             .partitionBy("ts")
             .build()
@@ -408,7 +408,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
         val fs = new FileSystem(hadoopConf)
         val collector = FileCollector.builder(fs)
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd/HH'.seq'")""")
             .partitionBy("ts")
             .build()
@@ -432,7 +432,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
         val fs = new FileSystem(hadoopConf)
         val collector = FileCollector.builder(fs)
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd/HH'.seq'")""")
             .partitionBy("ts")
             .build()
@@ -455,7 +455,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
         val fs = new FileSystem(hadoopConf)
         val collector = FileCollector.builder(fs)
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
             .partitionBy("ts")
             .build()
@@ -481,7 +481,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
         val fs = new FileSystem(hadoopConf)
         val collector = FileCollector.builder(fs)
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
             .partitionBy("ts")
             .build()
@@ -509,7 +509,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
         val fs = new FileSystem(hadoopConf)
         val collector = FileCollector.builder(fs)
-            .path(workingDirectory)
+            .location(workingDirectory)
             .pattern("""data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
             .partitionBy("ts")
             .build()
@@ -529,7 +529,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
     it should "use Hive partition names when to pattern is specified" in {
         val fs = new FileSystem(hadoopConf)
         val collector = FileCollector.builder(fs)
-            .path(new Path(workingDirectory, "hive_data"))
+            .location(new Path(workingDirectory, "hive_data"))
             .partitionBy("year","month","day")
             .defaults(Map("year" -> "*", "month" -> "*", "day" -> "*"))
             .build()
@@ -566,7 +566,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
     it should "throw an exception if an unknown partition name is specified" in {
         val fs = new FileSystem(hadoopConf)
         val collector = FileCollector.builder(fs)
-            .path(new Path(workingDirectory, "hive_data"))
+            .location(new Path(workingDirectory, "hive_data"))
             .partitionBy("year","month","day")
             .defaults(Map("year" -> "*", "month" -> "*", "day" -> "*"))
             .build()
@@ -580,7 +580,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
     it should "check for existing location" in {
         val fs = new FileSystem(hadoopConf)
         val collector = FileCollector.builder(fs)
-            .path(new Path(workingDirectory, "no_such_dir"))
+            .location(new Path(workingDirectory, "no_such_dir"))
             .build()
 
         collector.exists() should be (false)
@@ -589,7 +589,7 @@ class FileCollectorTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
     it should "check for existing location even with globbing"  in {
         val fs = new FileSystem(hadoopConf)
         val collector = FileCollector.builder(fs)
-            .path(new Path(workingDirectory, "no_such_dir/*"))
+            .location(new Path(workingDirectory, "no_such_dir/*"))
             .build()
 
         collector.exists() should be (false)

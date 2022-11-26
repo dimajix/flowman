@@ -25,6 +25,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.common.ParserUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
@@ -62,7 +63,7 @@ class ShowCommand extends Command {
             case Success(s) =>
                 s
             case Failure(e) =>
-                logger.error(s"Caught exception while dumping relation '$relation'", e)
+                logger.error(s"Caught exception while dumping relation '$relation':\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

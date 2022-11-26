@@ -22,6 +22,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Session
@@ -56,7 +57,7 @@ class ExplainCommand extends Command {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Error explaining mapping '$mapping", e)
+                logger.error(s"Error explaining mapping '$mapping:\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

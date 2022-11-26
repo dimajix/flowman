@@ -73,7 +73,7 @@ class AssertionRunner(
         val description = result.description.getOrElse(result.name)
         result.exception match {
             case Some(ex) =>
-                logger.error(s" ✘ exception $description: ${ex.getMessage}")
+                logger.error(red(s" ✘ exception $description: ${ex.getMessage}"))
             case None if (!result.success) =>
                 logger.error(red(s" ✘ failed: $description"))
                 // If an error occured, walk through the children to find a possible exception or failure to display

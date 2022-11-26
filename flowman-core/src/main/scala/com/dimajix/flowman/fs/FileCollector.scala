@@ -39,7 +39,7 @@ object FileCollector {
     class Builder(fileSystem: FileSystem) {
         private var _partitions:Seq[String] = Seq()
         private var _pattern:Option[String] = None
-        private var _path:Path = _
+        private var _location:File = _
         private var _defaults:Map[String,Any] = Map()
         private var _context:VelocityContext = _
 
@@ -89,12 +89,12 @@ object FileCollector {
          * Sets the base directory which is used for retrieving the file system. The base location must not contain
          * any pattern variable
          *
-         * @param path
+         * @param location
          * @return
          */
-        def path(path:Path) : Builder = {
-            require(path != null)
-            this._path = path
+        def location(location:Path) : Builder = {
+            require(location != null)
+            this._location = fileSystem.file(location)
             this
         }
 
@@ -103,9 +103,9 @@ object FileCollector {
          * @return
          */
         def build() : FileCollector = {
-            require(_path != null)
+            require(_location != null)
             new FileCollector(
-                fileSystem.file(_path),
+                _location,
                 _partitions,
                 _pattern.orElse(Some(_partitions.map(p => s"$p=$$$p").mkString("/"))).filter(_.nonEmpty),
                 _defaults
@@ -123,7 +123,7 @@ object FileCollector {
   * @param hadoopConf
   */
 case class FileCollector(
-    path:File,
+    location:File,
     partitions:Seq[String],
     pattern:Option[String],
     defaults:Map[String,Any]
@@ -134,7 +134,7 @@ case class FileCollector(
 
     private val templateEngine = Velocity.newEngine()
     private val templateContext = Velocity.newContext()
-    private val qualifiedPath = path.absolute
+    private val qualifiedPath = location.absolute
     private val qualifiedGlob = FileGlob.parse(qualifiedPath)
 
     def root : File = qualifiedPath
@@ -465,14 +465,14 @@ case class FileCollector(
     }
 
     private def requirePathAndPattern() : Unit = {
-        if (path.toString.isEmpty)
+        if (location.toString.isEmpty)
             throw new IllegalArgumentException("path needs to be defined for collecting partitioned files")
         if (pattern.isEmpty)
             throw new IllegalArgumentException("pattern needs to be defined for collecting partitioned files")
     }
 
     private def requirePath() : Unit = {
-        if (path.toString.isEmpty)
+        if (location.toString.isEmpty)
             throw new IllegalArgumentException("path needs to be defined for collecting files")
     }
 }

@@ -75,7 +75,7 @@ case class FileRelation(
 
     private lazy val collector : FileCollector = {
         FileCollector.builder(context.fs)
-            .path(location)
+            .location(location)
             .pattern(pattern)
             .partitionBy(partitions.map(_.name):_*)
             .defaults(partitions.map(p => (p.name, "*")).toMap ++ context.environment.toMap)

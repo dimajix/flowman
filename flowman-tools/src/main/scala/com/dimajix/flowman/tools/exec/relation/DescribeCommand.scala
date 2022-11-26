@@ -22,6 +22,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.common.ParserUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchRelationException
@@ -64,7 +65,7 @@ class DescribeCommand extends Command {
                 logger.error(s"Cannot resolve relation '${ex.relation}'")
                 Status.FAILED
             case NonFatal(e) =>
-                logger.error(s"Error describing relation '$relation':", e)
+                logger.error(s"Error describing relation '$relation'::\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

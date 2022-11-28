@@ -177,7 +177,7 @@ final case class JavaFile(jpath:Path) extends File {
      * @return
      */
     override def open(): InputStream = {
-        Files.newInputStream(jpath)
+        Files.newInputStream(jpath, StandardOpenOption.READ)
     }
 
     /**

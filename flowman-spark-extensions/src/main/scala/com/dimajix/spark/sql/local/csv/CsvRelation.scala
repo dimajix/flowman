@@ -16,10 +16,12 @@
 
 package com.dimajix.spark.sql.local.csv
 
-import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStreamWriter
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
+import java.util.stream.Collectors
 
 import scala.collection.JavaConverters._
 import scala.io.Source
@@ -33,14 +35,14 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.spark.sql.local.BaseRelation
 
 
-class CsvRelation(context: SQLContext, files:Seq[File], options:CsvOptions, mschema:StructType) extends BaseRelation {
+class CsvRelation(context: SQLContext, files:Seq[Path], options:CsvOptions, mschema:StructType) extends BaseRelation {
     override def sqlContext: SQLContext = context
 
     override def schema: StructType = mschema
 
     override def read(): DataFrame = {
         val rows = files.flatMap { f =>
-            if (f.isDirectory)
+            if (Files.isDirectory(f))
                 readDirectory(f)
             else
                 readFile(f)
@@ -50,18 +52,19 @@ class CsvRelation(context: SQLContext, files:Seq[File], options:CsvOptions, msch
 
     override def write(df: DataFrame, mode: SaveMode): Unit = {
         val outputFile = files.head
-        mode match {
+        val outputStream = mode match {
             case SaveMode.Overwrite =>
-                outputFile.getParentFile.mkdirs()
-                outputFile.createNewFile
+                Files.createDirectories(outputFile.getParent)
+                Files.newOutputStream(outputFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)
             case SaveMode.ErrorIfExists =>
-                if (outputFile.exists())
+                if (Files.exists(outputFile))
                     throw new IOException(s"File '$outputFile' already exists")
-                outputFile.getParentFile.mkdirs()
-                outputFile.createNewFile
-            case _ =>
+                Files.createDirectories(outputFile.getParent)
+                Files.newOutputStream(outputFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)
+            case SaveMode.Append =>
+                Files.createDirectories(outputFile.getParent)
+                Files.newOutputStream(outputFile, StandardOpenOption.CREATE, StandardOpenOption.APPEND, StandardOpenOption.WRITE)
         }
-        val outputStream = new FileOutputStream(outputFile)
         val outputWriter = new OutputStreamWriter(outputStream, options.encoding)
 
         val writer = new UnivocityWriter(schema, outputWriter, options)
@@ -79,8 +82,8 @@ class CsvRelation(context: SQLContext, files:Seq[File], options:CsvOptions, msch
         }
     }
 
-    private def readFile(file:File) : Seq[Row] = {
-        val source = Source.fromFile(file, options.encoding)
+    private def readFile(file:Path) : Seq[Row] = {
+        val source = Source.fromInputStream(Files.newInputStream(file, StandardOpenOption.READ), options.encoding)
         try {
             val lines = source.getLines()
             val parser = new UnivocityReader(schema, options)
@@ -91,12 +94,15 @@ class CsvRelation(context: SQLContext, files:Seq[File], options:CsvOptions, msch
         }
     }
 
-    private def readDirectory(file:File) : Seq[Row] = {
-        file.listFiles().toSeq.flatMap { f =>
-            if (f.isFile)
-                readFile(f)
-            else
-                Seq.empty[Row]
-        }
+    private def readDirectory(file:Path) : Seq[Row] = {
+        Files.list(file)
+            .collect(Collectors.toList[Path])
+            .asScala
+            .flatMap { f =>
+                if (Files.isRegularFile(f))
+                    readFile(f)
+                else
+                    Seq.empty[Row]
+            }
     }
 }

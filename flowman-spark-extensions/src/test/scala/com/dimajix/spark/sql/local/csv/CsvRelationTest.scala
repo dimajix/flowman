@@ -51,7 +51,7 @@ class CsvRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             .format("csv")
             .option("encoding", "UTF-8")
             .option("header", true)
-            .save(new File(dataDir, "lala.csv"), SaveMode.Overwrite)
+            .save(new File(dataDir, "lala.csv").toPath, SaveMode.Overwrite)
     }
 
     it should "support reading CSV files" in {
@@ -68,7 +68,7 @@ class CsvRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             .schema(schema)
             .option("encoding", "UTF-8")
             .option("header", true)
-            .load(new File(dataDir, "lala.csv"))
+            .load(new File(dataDir, "lala.csv").toPath)
 
         result.schema should be (schema)
         result.count() should be (2)
@@ -81,7 +81,7 @@ class CsvRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             .format("csv")
             .option("encoding", "UTF-8")
             .option("header", true)
-            .save(new File(dataDir, "lala2.csv"), SaveMode.Overwrite)
+            .save(new File(dataDir, "lala2.csv").toPath, SaveMode.Overwrite)
     }
 
     it should "support reading whole directories" in {
@@ -98,7 +98,7 @@ class CsvRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             .schema(schema)
             .option("encoding", "UTF-8")
             .option("header", true)
-            .load(dataDir)
+            .load(dataDir.toPath)
 
         result.schema should be(schema)
         result.count() should be(4)
@@ -123,7 +123,7 @@ class CsvRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             .format("csv")
             .option("encoding", "UTF-8")
             .option("header", true)
-            .load(new File(dataDir, "lala2.csv"))
+            .load(new File(dataDir, "lala2.csv").toPath)
 
         result.schema should be (schema)
         result.count() should be (2)
@@ -146,7 +146,7 @@ class CsvRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             .format("csv")
             .option("encoding", "UTF-8")
             .option("header", false)
-            .load(new File(dataDir, "lala2.csv"))
+            .load(new File(dataDir, "lala2.csv").toPath)
 
         result.schema should be (schema)
         result.count() should be (3)

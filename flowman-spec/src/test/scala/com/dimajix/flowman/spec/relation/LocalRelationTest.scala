@@ -73,7 +73,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val relation = context.getRelation(RelationIdentifier("local"))
 
         val localRelation = relation.asInstanceOf[LocalRelation]
-        localRelation.location should be (new Path(outputPath.toUri))
+        localRelation.location should be (context.fs.file(outputPath.toUri))
         localRelation.pattern should be (Some("data.csv"))
         localRelation.requires(Operation.CREATE) should be (Set.empty)
         localRelation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofLocal(new Path(outputPath.toUri))))
@@ -145,7 +145,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val relation = context.getRelation(RelationIdentifier("local"))
 
         val localRelation = relation.asInstanceOf[LocalRelation]
-        localRelation.location should be (new Path(tempDir.toURI.toString + "/csv/test/data.csv"))
+        localRelation.location should be (context.fs.file(tempDir.toURI.toString + "/csv/test/data.csv"))
         localRelation.pattern should be (None)
         localRelation.requires(Operation.CREATE) should be (Set.empty)
         localRelation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofLocal(new Path(tempDir.toURI.toString + "/csv/test/data.csv"))))
@@ -212,7 +212,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val relation = context.getRelation(RelationIdentifier("local"))
 
         val localRelation = relation.asInstanceOf[LocalRelation]
-        localRelation.location should be (new Path(location.toString + "/csv/test"))
+        localRelation.location should be (context.fs.file(location.toString + "/csv/test"))
         localRelation.pattern should be (Some("data.csv"))
 
         relation.create(executor)
@@ -263,7 +263,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val relation = context.getRelation(RelationIdentifier("local"))
 
         val localRelation = relation.asInstanceOf[LocalRelation]
-        localRelation.location should be (new Path(location.toString + "/csv/test"))
+        localRelation.location should be (context.fs.file(location.toString + "/csv/test"))
         localRelation.pattern should be (Some("data.csv"))
 
         // ===== Create =============================================================================================

@@ -98,6 +98,12 @@ object FileCollector {
             this
         }
 
+        def location(location:File) : Builder = {
+            require(location != null)
+            this._location = location
+            this
+        }
+
         /**
          * Creates a FileCollector with the specified configuration
          * @return

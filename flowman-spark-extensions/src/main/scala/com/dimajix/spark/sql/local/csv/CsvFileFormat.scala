@@ -17,6 +17,9 @@
 package com.dimajix.spark.sql.local.csv
 
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 
 import scala.collection.immutable.Map
 import scala.io.Source
@@ -43,12 +46,12 @@ class CsvFileFormat extends RelationProvider {
       */
     override def inferSchema(sparkSession: SparkSession,
                              parameters: Map[String, String],
-                    files: Seq[File]): Option[StructType] = {
+                    files: Seq[Path]): Option[StructType] = {
         if (files.isEmpty)
             throw new IllegalArgumentException("Cannot infer schema from empty list of files")
 
         val options = new CsvOptions(parameters)
-        val source = Source.fromFile(files.head, options.encoding)
+        val source = Source.fromInputStream(Files.newInputStream(files.head, StandardOpenOption.READ), options.encoding)
         try {
             val lines = source.getLines()
             Some(UnivocityReader.inferSchema(lines, options))
@@ -67,7 +70,7 @@ class CsvFileFormat extends RelationProvider {
       */
     override def createRelation(spark: SparkSession,
                                 parameters: Map[String, String],
-                                files: Seq[File],
+                                files: Seq[Path],
                                 schema: StructType): BaseRelation = {
         val options = new CsvOptions(parameters)
         new CsvRelation(spark.sqlContext, files, options, schema)

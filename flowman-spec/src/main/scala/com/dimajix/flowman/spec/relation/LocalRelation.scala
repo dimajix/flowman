@@ -17,9 +17,10 @@
 package com.dimajix.flowman.spec.relation
 
 import java.nio.file.FileAlreadyExistsException
+import java.nio.file.Path
+import java.nio.file.Paths
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
@@ -53,7 +54,7 @@ case class LocalRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema],
     override val partitions: Seq[PartitionField],
-    location:Path,
+    location:File,
     pattern:Option[String],
     format:String = "csv",
     options:Map[String,String] = Map()
@@ -145,7 +146,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
 
             val df = reader
                 .format(format)
-                .load(paths.map(p => new java.io.File(p.uri)):_*)
+                .load(paths.map(p => Paths.get(p.uri)):_*)
 
             // Add partitions values as columns
             partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, toLit(p._2)))
@@ -174,7 +175,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
         requireAllPartitionKeys(partition)
 
         val outputPath  = collector.resolve(partition.mapValues(_.value))
-        val outputFile = new java.io.File(outputPath.uri)
+        val outputFile = Paths.get(outputPath.uri)
 
         logger.info(s"Writing to local output location '$outputPath' (partition=$partition)")
 
@@ -369,18 +370,10 @@ class LocalRelationSpec extends RelationSpec with SchemaRelationSpec with Partit
             instanceProperties(context, properties),
             schema.map(_.instantiate(context)),
             partitions.map(_.instantiate(context)),
-            makePath(context.evaluate(location)),
+            context.fs.file(context.evaluate(location)),
             pattern,
             context.evaluate(format),
             context.evaluate(options)
         )
-    }
-
-    private def makePath(location:String) : Path = {
-        val path = new Path(location)
-        if (path.isAbsoluteAndSchemeAuthorityNull)
-            new Path("file", null, path.toString)
-        else
-            path
     }
 }

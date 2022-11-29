@@ -35,16 +35,22 @@ import com.dimajix.flowman.fs.FileSystem.WINDOWS
 
 final case class JavaFile(jpath:Path) extends File {
     override def toString: String = {
-        val rawPath =
-            if (WINDOWS)
-                jpath.toString.replace('\\', '/')
-            else
-                jpath.toString
+        val scheme = jpath.getFileSystem.provider().getScheme
+        if (scheme == "jar") {
+            "jar:" + jpath.toUri.getSchemeSpecificPart.replace("file:///", "file:/")
+        }
+        else {
+            val rawPath =
+                if (WINDOWS)
+                    jpath.toString.replace('\\', '/')
+                else
+                    jpath.toString
 
-        if (FileSystem.hasWindowsDrive(rawPath))
-            "file:/" + rawPath
-        else
-            "file:" + rawPath
+            if (FileSystem.hasWindowsDrive(rawPath))
+                scheme + ":/" + rawPath
+            else
+                scheme + ":" + rawPath
+        }
     }
 
     override def path: fs.Path = new fs.Path(uri)

@@ -141,6 +141,11 @@ final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) exten
         }
     }
 
+    def exists(pattern: String): Boolean = {
+        val files = fs.globStatus(new Path(path, pattern))
+        files != null && files.nonEmpty
+    }
+
     /**
       * Renamed the file to a different name
       * @param dst

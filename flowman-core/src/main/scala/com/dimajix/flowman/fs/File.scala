@@ -118,15 +118,7 @@ object File {
             }
 
             // Remove trailing "/", this is only present in Java 1.8
-            val str = uri.toString
-            val lastEx = str.lastIndexOf("!")
-            val lastSep = str.lastIndexOf(SEPARATOR)
-            if (lastSep == str.length - 1 && lastSep > lastEx + 1 && lastEx > 0) {
-                JavaFile(Paths.get(new URI(str.dropRight(1))))
-            }
-            else {
-                JavaFile(Paths.get(uri))
-            }
+            JavaFile(uri)
         }
         else {
             JavaFile(Paths.get(uri))
@@ -184,6 +176,8 @@ abstract class File {
     def list() : Seq[File]
 
     def glob(pattern:String) : Seq[File]
+
+    def exists(pattern:String) : Boolean
 
     /**
       * Renamed the file to a different name

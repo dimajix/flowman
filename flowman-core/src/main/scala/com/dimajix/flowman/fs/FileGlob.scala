@@ -85,6 +85,9 @@ case class FileGlob(location:File, pattern:Option[String]) {
         !nonEmpty
     }
     def nonEmpty : Boolean = {
-        glob().nonEmpty
+        pattern match {
+            case Some(p) => location.exists(p)
+            case None => location.exists()
+        }
     }
 }

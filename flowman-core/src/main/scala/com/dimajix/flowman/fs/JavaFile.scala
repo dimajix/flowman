@@ -33,11 +33,33 @@ import org.apache.hadoop.fs
 import com.dimajix.flowman.fs.FileSystem.WINDOWS
 
 
+object JavaFile {
+    def apply(uri:URI) : JavaFile = {
+        val scheme = uri.getScheme
+        if (scheme == "jar") {
+            // Drop trailing "/"
+            val ssp = uri.getSchemeSpecificPart
+            val lastEx = ssp.lastIndexOf("!")
+            val lastSep = ssp.lastIndexOf(FileSystem.SEPARATOR)
+            if (lastSep == ssp.length - 1 && lastSep > lastEx + 1 && lastEx > 0) {
+                new JavaFile(Paths.get(new URI(scheme, ssp.dropRight(1), null)))
+            }
+            else {
+                new JavaFile(Paths.get(uri))
+            }
+        }
+        else {
+            new JavaFile(Paths.get(uri))
+        }
+    }
+}
+
 final case class JavaFile(jpath:Path) extends File {
-    override def toString: String = {
+    private lazy val _ssp = jpath.toUri.getSchemeSpecificPart.replace("file:///", "file:/")
+    private lazy val _str = {
         val scheme = jpath.getFileSystem.provider().getScheme
         if (scheme == "jar") {
-            "jar:" + jpath.toUri.getSchemeSpecificPart.replace("file:///", "file:/")
+            "jar:" + _ssp
         }
         else {
             val rawPath =
@@ -53,9 +75,11 @@ final case class JavaFile(jpath:Path) extends File {
         }
     }
 
+    override def toString: String = _str
+
     override def path: fs.Path = new fs.Path(uri)
 
-    override def uri : URI = new URI(jpath.toUri.toString.replace("file:///", "file:/"))
+    override def uri : URI = new URI(jpath.getFileSystem.provider().getScheme, _ssp, null)
 
     /**
      * Creates a new File object by attaching a child entry
@@ -66,9 +90,9 @@ final case class JavaFile(jpath:Path) extends File {
     override def /(sub: String): File = {
         val uri = new URI(sub)
         if (uri.isAbsolute)
-            JavaFile(Paths.get(uri).normalize())
+            new JavaFile(Paths.get(uri).normalize())
         else
-            JavaFile(jpath.resolve(sub))
+            new JavaFile(jpath.resolve(sub))
     }
 
     /**
@@ -124,13 +148,28 @@ final case class JavaFile(jpath:Path) extends File {
         .collect(Collectors.toList[Path])
         .asScala
         .sortBy(_.toString)
-        .map(JavaFile.apply)
+        .map(new JavaFile(_))
 
     override def glob(pattern: String): Seq[File] = {
         val stream = Files.newDirectoryStream(jpath, pattern)
-        stream.asScala
-            .map(JavaFile.apply)
-            .toSeq
+        try {
+            stream.asScala
+                .map(new JavaFile(_))
+                .toList
+        }
+        finally {
+            stream.close()
+        }
+    }
+
+    override def exists(pattern:String) : Boolean = {
+        val stream = Files.newDirectoryStream(jpath, pattern)
+        try {
+            stream.iterator().hasNext
+        }
+        finally {
+            stream.close()
+        }
     }
 
     /**
@@ -241,7 +280,7 @@ final case class JavaFile(jpath:Path) extends File {
      * @param suffix
      * @return
      */
-    override def withSuffix(suffix: String): File = JavaFile(jpath.getParent.resolve(jpath.getFileName + suffix))
+    override def withSuffix(suffix: String): File = new JavaFile(jpath.getParent.resolve(jpath.getFileName + suffix))
 
     override def withName(name: String): File = JavaFile(jpath.getParent.resolve(name))
 }

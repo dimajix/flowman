@@ -148,6 +148,7 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
 
         val res2 = Resources.getURL("com/dimajix/flowman/")
         val dir2 = JavaFile(Paths.get(res2.toURI))
+        dir2.toString + "/" should be (res2.toString)
         dir2.name should be ("flowman")
         dir2.uri should be (res2.toURI)
         dir2.path should be(new Path(res2.toURI))
@@ -186,18 +187,21 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
         dir1.isFile() should be(false)
         dir1.isAbsolute() should be(true)
         dir1.isDirectory() should be(true)
+        file.parent should be (dir1)
 
+        // drop trailing "/"
         val res2 = Resources.getURL("org/apache/spark/")
-        val dir2 = JavaFile(Paths.get(res2.toURI))
-        dir2.toString + "/" should be (res2.toString)
+        val dir2 = JavaFile(res2.toURI)
+        dir2.toString should be (res1.toString)
         dir2.uri.getScheme should be ("jar")
-        //dir2.uri should be(res2.toURI)
-        //dir2.path should be(new Path(res2.toURI))
+        dir2.uri should be(res1.toURI)
+        dir2.path should be(new Path(res1.toURI))
         dir2.name should be("spark")
         dir2.exists() should be(true)
         dir2.isFile() should be(false)
         dir2.isAbsolute() should be(true)
         dir2.isDirectory() should be(true)
+        file.parent should be (dir2)
 
         xyz.close()
     }

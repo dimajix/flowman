@@ -1,4 +1,4 @@
-# Version 0.29.1
+# Version 0.30.0
 
 * github-278: Parallelize execution of data quality checks
 * github-282: Improve implementation for counting records

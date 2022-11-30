@@ -65,7 +65,7 @@
             </build>
         </profile>
         <profile>
-            <id>EMR-6.8</id>
+            <id>EMR-6.9</id>
             <properties>
                 <delta.version>2.1.1</delta.version>
             </properties>

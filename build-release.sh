@@ -44,7 +44,7 @@ build_profile -Phadoop-3.3 -Pspark-3.2 -Dhadoop.version=3.3.1
 build_profile -Phadoop-2.7 -Pspark-3.3
 build_profile -Phadoop-3.3 -Pspark-3.3 -Dhadoop.version=3.3.2
 
-build_profile -PEMR-6.8
+build_profile -PEMR-6.9
 
 export JAVA_HOME=/usr/lib/jvm/java-1.8.0
 build_profile -PCDH-6.3

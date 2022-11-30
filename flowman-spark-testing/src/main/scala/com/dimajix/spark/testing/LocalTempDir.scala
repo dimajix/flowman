@@ -24,7 +24,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Suite
 
 
-trait LocalTempDir extends BeforeAndAfterAll {  this:Suite =>
+trait LocalTempDir extends Logging {  this:Suite =>
     private var _tempDir : Option[File] = None
     def tempDir: File = _tempDir.getOrElse(throw new IllegalStateException("No temp dir available"))
 

@@ -20,8 +20,10 @@ package com.dimajix.spark.sql
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.spark.testing.Logging
 
-class ExpressionParserTest extends AnyFlatSpec with Matchers {
+
+class ExpressionParserTest extends AnyFlatSpec with Matchers with Logging {
     "The ExpressionParser" should "retrieve all dependencies" in {
         val deps1 = ExpressionParser.resolveDependencies("x != y")
         deps1 should be (Set.empty)

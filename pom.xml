@@ -298,22 +298,22 @@
             </properties>
         </profile>
         <profile>
-            <id>EMR-6.8</id>
+            <id>EMR-6.9</id>
             <repositories>
                 <repository>
-                    <id>emr-6.8.0</id>
+                    <id>emr-6.9.0</id>
                     <releases>
                         <enabled>true</enabled>
                     </releases>
                     <snapshots>
                         <enabled>false</enabled>
                     </snapshots>
-                    <url>https://s3.eu-central-1.amazonaws.com/eu-central-1-emr-artifacts/emr-6.8.0/repos/maven/</url>
+                    <url>https://s3.eu-central-1.amazonaws.com/eu-central-1-emr-artifacts/emr-6.9.0/repos/maven/</url>
                 </repository>
             </repositories>
             <properties>
-                <hadoop.dist>emr6.8</hadoop.dist>
-                <emr.version>6.8.0</emr.version>
+                <hadoop.dist>emr6.9</hadoop.dist>
+                <emr.version>6.9.0</emr.version>
                 <java.version>11</java.version>
                 <scala.version>2.12.15</scala.version>
                 <scala.api_version>2.12</scala.api_version>
@@ -323,8 +323,8 @@
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <spark.version>3.3.0</spark.version>
                 <spark-api.version>3.3</spark-api.version>
-                <hadoop.version>3.2.1-amzn-8</hadoop.version>
-                <hadoop-api.version>3.2</hadoop-api.version>
+                <hadoop.version>3.3.3</hadoop.version>
+                <hadoop-api.version>3.3</hadoop-api.version>
                 <hive.version>2.3.9</hive.version>
                 <hive-storage-api.version>2.7.2</hive-storage-api.version>
                 <snappy.version>1.1.8.4</snappy.version>

@@ -231,7 +231,7 @@
         </profile>
 
         <profile>
-            <id>EMR-6.8</id>
+            <id>EMR-6.9</id>
             <properties>
                 <aws.version>1.12.170</aws.version>
             </properties>

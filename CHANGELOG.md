@@ -5,6 +5,7 @@
 * github-288: Support reading local CSV files from fatjar
 * github-290: Simplify specifying project name in fatjar
 * github-291: Simplify create/destroy Relation interface
+* github-292: Upgrade AWS EMR to 6.9
 
 
 # Version 0.29.0 - 2022-11-08

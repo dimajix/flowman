@@ -42,17 +42,18 @@ object Logging {
     private var level:String = null
 
     def init() : Unit = {
-        val log4j1Config = System.getProperty("log4j.configuration")
-        val log4j2Config = System.getProperty("log4j.configurationFile")
-        if (isLog4j2() && log4j2Config != null) {
+        val log4jConfig = System.getProperty("log4j.configuration")
+        val log4jConfigFile = System.getProperty("log4j.configurationFile")
+        val log4j2ConfigFile = System.getProperty("log4j2.configurationFile")
+        if (isLog4j2() && (log4jConfigFile != null || log4j2ConfigFile != null)) {
             // Do nothing, config is already correctly loaded
         }
-        else if (log4j1Config != null) {
+        else if (log4jConfig != null) {
             val url = try {
-                    new URL(log4j1Config)
+                    new URL(log4jConfig)
                 }
                 catch {
-                    case _: MalformedURLException => new File(log4j1Config).toURI.toURL
+                    case _: MalformedURLException => new File(log4jConfig).toURI.toURL
                 }
             initlog4j1(url)
         }
@@ -146,14 +147,5 @@ object Logging {
         // org.apache.logging.slf4j.Log4jLoggerFactory
         val binderClass = StaticLoggerBinder.getSingleton.getLoggerFactoryClassStr
         "org.apache.logging.slf4j.Log4jLoggerFactory".equals(binderClass)
-    }
-
-    private def isLog4j2DefaultConfigured(): Boolean = {
-        val rootLogger = LogManager.getRootLogger.asInstanceOf[Log4jLogger]
-        rootLogger.getAppenders.isEmpty ||
-            (rootLogger.getAppenders.size() == 1 &&
-                rootLogger.getLevel == Level.ERROR &&
-                LogManager.getContext.asInstanceOf[LoggerContext]
-                    .getConfiguration.isInstanceOf[DefaultConfiguration])
     }
 }

@@ -223,7 +223,7 @@ case class JdbcQueryRelation(
      *
      * @param execution
       */
-    override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
+    override def create(execution:Execution) : Unit = {
         throw new UnsupportedOperationException(s"Cannot create JDBC query relation '$identifier' which is defined by an SQL query")
     }
 
@@ -231,7 +231,7 @@ case class JdbcQueryRelation(
       * This method will physically destroy the corresponding relation in the target JDBC database.
       * @param execution
       */
-    override def destroy(execution:Execution, ifExists:Boolean=false) : Unit = {
+    override def destroy(execution:Execution) : Unit = {
         throw new UnsupportedOperationException(s"Cannot destroy JDBC query relation '$identifier' which is defined by an SQL query")
     }
 

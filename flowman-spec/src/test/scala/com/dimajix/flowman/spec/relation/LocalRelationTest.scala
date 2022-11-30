@@ -16,7 +16,9 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.io.{File, FileOutputStream, PrintWriter}
+import java.io.File
+import java.io.PrintWriter
+import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Paths
 
 import org.apache.hadoop.fs.Path
@@ -24,7 +26,6 @@ import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -36,10 +37,8 @@ import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.model.Module
-import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
-import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -67,7 +66,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("local"))
@@ -84,11 +83,12 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
         // ===== Create =============================================================================================
         outputPath.toFile.exists() should be (false)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
-        relation.create(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.create(execution)
+        a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
         outputPath.toFile.exists() should be (true)
         outputPath.resolve("data.csv").toFile.exists() should be (false)
 
@@ -100,22 +100,22 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
         outputPath.resolve("data.csv").toFile.exists() should be (false)
-        relation.write(executor, df, Map(), OutputMode.OVERWRITE)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (Yes)
+        relation.write(execution, df, Map(), OutputMode.OVERWRITE)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
         outputPath.resolve("data.csv").toFile.exists() should be (true)
 
         // ===== Truncate =============================================================================================
-        relation.truncate(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
+        relation.truncate(execution)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
         outputPath.resolve("data.csv").toFile.exists() should be (false)
         outputPath.toFile.exists() should be (true)
 
         // ===== Destroy =============================================================================================
-        relation.destroy(executor)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
         outputPath.toFile.exists() should be (false)
     }
 
@@ -139,7 +139,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("local"))
@@ -155,11 +155,12 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         localRelation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofLocal(new Path(tempDir.toURI.toString + "/csv/test/data.csv"))))
 
         // ===== Create =============================================================================================
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
-        relation.create(executor)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (No)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.create(execution)
+        a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
         new File(tempDir, "csv/test").exists() should be (true)
         new File(tempDir, "csv/test/data.csv").exists() should be (false)
 
@@ -171,15 +172,15 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
         new File(tempDir, "csv/test/data.csv").exists() should be (false)
-        relation.write(executor, df, Map(), OutputMode.OVERWRITE)
-        relation.exists(executor) should be (Yes)
-        relation.loaded(executor, Map()) should be (Yes)
+        relation.write(execution, df, Map(), OutputMode.OVERWRITE)
+        relation.exists(execution) should be (Yes)
+        relation.loaded(execution, Map()) should be (Yes)
         new File(tempDir, "csv/test/data.csv").exists() should be (true)
 
         // ===== Destroy =============================================================================================
-        relation.destroy(executor)
-        relation.exists(executor) should be (No)
-        relation.loaded(executor, Map()) should be (No)
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
         new File(tempDir, "csv/test").exists() should be (false)
     }
 
@@ -206,7 +207,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("local"))
@@ -215,7 +216,8 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         localRelation.location should be (context.fs.file(location.toString + "/csv/test"))
         localRelation.pattern should be (Some("data.csv"))
 
-        relation.create(executor)
+        relation.create(execution)
+        a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
         new File(tempDir, "csv/test").exists() should be (true)
         new File(tempDir, "csv/test/data.csv").exists() should be (false)
 
@@ -226,10 +228,10 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
         new File(tempDir, "csv/test/data.csv").exists() should be (false)
-        relation.write(executor, df, Map(), OutputMode.OVERWRITE)
+        relation.write(execution, df, Map(), OutputMode.OVERWRITE)
         new File(tempDir, "csv/test/data.csv").exists() should be (true)
 
-        relation.destroy(executor)
+        relation.destroy(execution)
         new File(tempDir, "csv/test").exists() should be (false)
     }
 
@@ -257,7 +259,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
         val project = Module.read.string(spec).toProject("project")
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         val relation = context.getRelation(RelationIdentifier("local"))
@@ -267,7 +269,8 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         localRelation.pattern should be (Some("data.csv"))
 
         // ===== Create =============================================================================================
-        relation.create(executor)
+        relation.create(execution)
+        a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
         new File(tempDir, "csv/test").exists() should be (true)
         new File(tempDir, "csv/test/data.csv").exists() should be (false)
 
@@ -279,11 +282,11 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
         new File(tempDir, "csv/test/data.csv").exists() should be (false)
-        relation.write(executor, df, Map(), OutputMode.OVERWRITE)
+        relation.write(execution, df, Map(), OutputMode.OVERWRITE)
         new File(tempDir, "csv/test/data.csv").exists() should be (true)
 
         // ===== Destroy =============================================================================================
-        relation.destroy(executor)
+        relation.destroy(execution)
         new File(tempDir, "csv/test").exists() should be (false)
     }
 
@@ -362,7 +365,8 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
         relation.loaded(execution, Map("p1" ->  SingleValue("1"))) should be (No)
-        relation.create(execution, true)
+        relation.create(execution)
+        a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
         relation.exists(execution) should be (Yes)
         relation.loaded(execution) should be (No)
         relation.loaded(execution, Map("p1" ->  SingleValue("1"))) should be (No)
@@ -542,7 +546,8 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         relation.exists(execution) should be(No)
         relation.loaded(execution) should be(No)
         relation.loaded(execution, Map("p1" -> SingleValue("1"))) should be(No)
-        relation.create(execution, true)
+        relation.create(execution)
+        a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
         relation.exists(execution) should be(Yes)
         relation.loaded(execution) should be(No)
         relation.loaded(execution, Map("p1" -> SingleValue("1"))) should be(No)

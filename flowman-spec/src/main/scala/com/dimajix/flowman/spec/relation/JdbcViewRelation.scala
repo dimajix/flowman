@@ -251,12 +251,10 @@ case class JdbcViewRelation(
      *
      * @param execution
      */
-    override def create(execution: Execution, ifNotExists: Boolean): Unit = {
+    override def create(execution: Execution): Unit = {
         withConnection{ (con,options) =>
-            if (!ifNotExists || !JdbcUtils.tableExists(con, view, options)) {
-                doCreate(con, options)
-                execution.refreshResource(resource)
-            }
+            doCreate(con, options)
+            execution.refreshResource(resource)
         }
     }
     protected def doCreate(con:java.sql.Connection, options:JDBCOptions): Unit = {
@@ -269,8 +267,8 @@ case class JdbcViewRelation(
      *
      * @param execution
      */
-    override def destroy(execution: Execution, ifExists: Boolean): Unit = {
-        dropTableOrView(execution, view, ifExists)
+    override def destroy(execution: Execution): Unit = {
+        dropTableOrView(execution, view)
     }
 
     /**

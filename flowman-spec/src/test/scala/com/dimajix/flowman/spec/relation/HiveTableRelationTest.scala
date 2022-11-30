@@ -135,7 +135,6 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // Try to create relation, although it already exists
         a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
-        relation.create(execution, true)
 
         // == Truncate ===================================================================
         relation.truncate(execution)
@@ -155,7 +154,6 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         session.catalog.tableExists(TableIdentifier("lala_0001", Some("default"))) should be (false)
 
         an[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
-        relation.destroy(execution, true)
     }
 
     it should "support external tables" in {
@@ -740,7 +738,6 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // Test 2nd destruction
         a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
-        relation.destroy(execution, true)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0010"))
     }}
@@ -823,7 +820,6 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // Test 2nd destruction
         a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
-        relation.destroy(execution, true)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0011"))
     }}
@@ -1022,7 +1018,6 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // Test 2nd destruction
         a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
-        relation.destroy(execution, true)
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
     }}
@@ -2308,15 +2303,13 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         view.exists(execution) should be (Yes)
 
         // == Create TABLE ============================================================================================
-        a[TableAlreadyExistsException] should be thrownBy (table.create(execution, ifNotExists = false))
-        table.create(execution, ifNotExists = true)
+        a[TableAlreadyExistsException] should be thrownBy (table.create(execution))
         view.exists(execution) should be (Yes)
         table.exists(execution) should be (Yes)
         session.catalog.getTable(TableIdentifier("table_or_view", Some("default"))).tableType should be (CatalogTableType.VIEW)
 
         // == Create VIEW ============================================================================================
-        a[TableAlreadyExistsException] should be thrownBy (view.create(execution, ifNotExists = false))
-        view.create(execution, ifNotExists = true)
+        a[TableAlreadyExistsException] should be thrownBy (view.create(execution))
         view.exists(execution) should be (Yes)
         table.exists(execution) should be (Yes)
         session.catalog.getTable(TableIdentifier("table_or_view", Some("default"))).tableType should be (CatalogTableType.VIEW)
@@ -2342,12 +2335,10 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         session.catalog.tableExists(TableIdentifier("table_or_view", Some("default"))) should be (false)
 
         // == Destroy VIEW ===========================================================================================
-        view.destroy(execution, ifExists = true)
-        a[NoSuchTableException] should be thrownBy(view.destroy(execution, ifExists = false))
+        a[NoSuchTableException] should be thrownBy(view.destroy(execution))
 
         // == Destroy TABLE ==========================================================================================
-        table.destroy(execution, ifExists = true)
-        a[NoSuchTableException] should be thrownBy(table.destroy(execution, ifExists = false))
+        a[NoSuchTableException] should be thrownBy(table.destroy(execution))
 
         context.getRelation(RelationIdentifier("t0")).destroy(execution)
     }

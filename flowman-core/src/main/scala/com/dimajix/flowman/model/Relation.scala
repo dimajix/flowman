@@ -260,14 +260,14 @@ trait Relation extends Instance {
       * relation will not contain any data, but all metadata will be processed
       * @param execution
       */
-    def create(execution:Execution, ifNotExists:Boolean=false) : Unit
+    def create(execution:Execution) : Unit
 
     /**
       * This will delete any physical representation of the relation. Depending on the type only some meta data like
       * a Hive table might be dropped or also the physical files might be deleted
       * @param execution
       */
-    def destroy(execution:Execution, ifExists:Boolean=false) : Unit
+    def destroy(execution:Execution) : Unit
 
     /**
       * This will update any existing relation to the specified metadata.

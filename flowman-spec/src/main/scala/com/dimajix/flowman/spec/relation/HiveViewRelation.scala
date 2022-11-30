@@ -174,14 +174,12 @@ case class HiveViewRelation(
      *
      * @param execution
      */
-    override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
+    override def create(execution:Execution) : Unit = {
+        logger.info(s"Creating Hive view relation '$identifier' with VIEW $table")
         val catalog = execution.catalog
-        if (!ifNotExists || !catalog.tableExists(table)) {
-            logger.info(s"Creating Hive view relation '$identifier' with VIEW $table")
-            val select = getSelect(execution)
-            catalog.createView(table, select, ifNotExists)
-            execution.refreshResource(resource)
-        }
+        val select = getSelect(execution)
+        catalog.createView(table, select, false)
+        execution.refreshResource(resource)
     }
 
     /**
@@ -243,13 +241,11 @@ case class HiveViewRelation(
      * This will drop the corresponding Hive view
      * @param execution
      */
-    override def destroy(execution:Execution, ifExists:Boolean=false) : Unit = {
+    override def destroy(execution:Execution) : Unit = {
+        logger.info(s"Destroying Hive view relation '$identifier' with VIEW $table")
         val catalog = execution.catalog
-        if (!ifExists || catalog.tableExists(table)) {
-            logger.info(s"Destroying Hive view relation '$identifier' with VIEW $table")
-            catalog.dropView(table)
-            execution.refreshResource(resource)
-        }
+        catalog.dropView(table)
+        execution.refreshResource(resource)
     }
 
     private def getSelect(executor: Execution) : String = {

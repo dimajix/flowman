@@ -138,13 +138,13 @@ class ProvidedRelation(
         exists(execution)
     }
 
-    override def create(execution: Execution, ifNotExists:Boolean=false): Unit = {
-        if (!ifNotExists && exists(execution) == No)
+    override def create(execution: Execution): Unit = {
+        if (exists(execution) == No)
             throw new UnsupportedOperationException(s"Cannot create provided table '$table' in relation '$identifier'")
     }
 
-    override def destroy(execution: Execution, ifExists:Boolean=false): Unit = {
-        if (!ifExists && exists(execution) == Yes)
+    override def destroy(execution: Execution): Unit = {
+        if (exists(execution) == Yes)
             throw new UnsupportedOperationException(s"Cannot destroy provided table '$table' in relation '$identifier'")
     }
 

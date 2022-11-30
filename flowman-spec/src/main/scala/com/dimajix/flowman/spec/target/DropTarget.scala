@@ -125,7 +125,7 @@ case class DropTarget(
 
         logger.info(s"Destroying relation '${relation.identifier}'")
         val rel = relation.value
-        rel.destroy(execution, true)
+        rel.destroy(execution)
     }
 
     /**
@@ -153,7 +153,7 @@ case class DropTarget(
 
         logger.info(s"Destroying relation '${relation.identifier}'")
         val rel = relation.value
-        rel.destroy(execution, true)
+        rel.destroy(execution)
     }
 }
 

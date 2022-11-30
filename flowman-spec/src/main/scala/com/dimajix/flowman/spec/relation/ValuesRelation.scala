@@ -156,8 +156,7 @@ case class ValuesRelation(
      *
      * @param execution
      */
-    override def create(execution: Execution, ifNotExists: Boolean): Unit = {
-    }
+    override def create(execution: Execution): Unit = {}
 
     /**
      * This will delete any physical representation of the relation. Depending on the type only some meta data like
@@ -165,7 +164,7 @@ case class ValuesRelation(
      *
      * @param execution
      */
-    override def destroy(execution: Execution, ifExists: Boolean): Unit = {}
+    override def destroy(execution: Execution): Unit = {}
 
     /**
      * This will update any existing relation to the specified metadata.

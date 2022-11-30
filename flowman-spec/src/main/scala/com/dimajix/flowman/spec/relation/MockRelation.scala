@@ -164,7 +164,7 @@ case class MockRelation(
      *
      * @param execution
      */
-    override def create(execution: Execution, ifNotExists: Boolean): Unit = {
+    override def create(execution: Execution): Unit = {
         _exists = true
     }
 
@@ -174,7 +174,7 @@ case class MockRelation(
      *
      * @param execution
      */
-    override def destroy(execution: Execution, ifExists: Boolean): Unit = {
+    override def destroy(execution: Execution): Unit = {
         _loaded = false
         _exists = false
     }

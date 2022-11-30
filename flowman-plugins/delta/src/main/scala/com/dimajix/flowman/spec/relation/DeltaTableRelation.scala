@@ -288,30 +288,28 @@ case class DeltaTableRelation(
      *
      * @param execution
      */
-    override def create(execution: Execution, ifNotExists: Boolean): Unit = {
-        val tableExists = exists(execution) == Yes
-        if (!ifNotExists || !tableExists) {
-            val sparkSchema = HiveCatalog.cleanupSchema(StructType(fields.map(_.catalogField)))
-            logger.info(s"Creating Delta table relation '$identifier' with table $table and schema\n${sparkSchema.treeString}")
-            if (schema.isEmpty) {
-                throw new UnspecifiedSchemaException(identifier)
-            }
-
-            if (tableExists)
-                throw new TableAlreadyExistsException(table.database.getOrElse(""), table.table)
-
-            DeltaUtils.createTable(
-                execution,
-                Some(table.toSpark),
-                location,
-                sparkSchema,
-                partitions,
-                properties,
-                description
-            )
-
-            execution.refreshResource(resource)
+    override def create(execution: Execution): Unit = {
+        val sparkSchema = HiveCatalog.cleanupSchema(StructType(fields.map(_.catalogField)))
+        logger.info(s"Creating Delta table relation '$identifier' with table $table and schema\n${sparkSchema.treeString}")
+        if (schema.isEmpty) {
+            throw new UnspecifiedSchemaException(identifier)
         }
+
+        val tableExists = exists(execution) == Yes
+        if (tableExists)
+            throw new TableAlreadyExistsException(table.database.getOrElse(""), table.table)
+
+        DeltaUtils.createTable(
+            execution,
+            Some(table.toSpark),
+            location,
+            sparkSchema,
+            partitions,
+            properties,
+            description
+        )
+
+        execution.refreshResource(resource)
     }
 
     /**
@@ -344,15 +342,13 @@ case class DeltaTableRelation(
      *
      * @param execution
      */
-    override def destroy(execution: Execution, ifExists: Boolean): Unit = {
+    override def destroy(execution: Execution): Unit = {
         require(execution != null)
 
+        logger.info(s"Destroying Delta table relation '$identifier' by dropping table $table")
         val catalog = execution.catalog
-        if (!ifExists || catalog.tableExists(table)) {
-            logger.info(s"Destroying Delta table relation '$identifier' by dropping table $table")
-            catalog.dropTable(table)
-            execution.refreshResource(resource)
-        }
+        catalog.dropTable(table)
+        execution.refreshResource(resource)
     }
 
     /**
@@ -376,7 +372,7 @@ case class DeltaTableRelation(
                     case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
                         logger.warn(s"TABLE target $this.table is currently a VIEW, dropping...")
                         catalog.dropView(this.table, false)
-                        create(execution, false)
+                        create(execution)
                 }
             }
             else if (schema.nonEmpty) {

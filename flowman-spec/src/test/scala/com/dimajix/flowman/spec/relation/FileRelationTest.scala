@@ -158,7 +158,6 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         outputPath.toFile.exists() should be (true)
 
         a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
-        relation.create(execution, true)
 
         // == Read ===================================================================================================
         relation.read(execution).count() should be (0)
@@ -208,7 +207,6 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         outputPath.toFile.exists() should be (false)
 
         a[FileNotFoundException] shouldBe thrownBy(relation.destroy(execution))
-        relation.destroy(execution, true)
     }
 
     it should "work without an explicit schema" in {
@@ -955,7 +953,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         ))
 
         // == Create =================================================================================================
-        relation.create(execution, true)
+        relation.exists(execution) should be(Yes)
+        a[FileAlreadyExistsException] should be thrownBy (relation.create(execution))
         relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
 
         relation.exists(execution) should be(Yes)
@@ -1017,6 +1016,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         // == Destroy ================================================================================================
         relation.destroy(execution)
+        a[FileNotFoundException] should be thrownBy(relation.destroy(execution))
     }
 
     it should "support using environment variables in pattern" in {
@@ -1087,11 +1087,13 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ResourceIdentifier.ofFile(new Path(outputPath.toUri.toString, "year=2016/month=*"))
         ))
 
-        relation.exists(execution) should be (Yes)
+        // == Create =================================================================================================
+        relation.exists(execution) should be(Yes)
+        a[FileAlreadyExistsException] should be thrownBy (relation.create(execution))
+
         //relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("month" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("month" -> SingleValue("3"))) should be (No)
-        relation.create(execution, true)
         relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
 
         val df1 = relation.read(execution, Map("month" -> SingleValue("1")))

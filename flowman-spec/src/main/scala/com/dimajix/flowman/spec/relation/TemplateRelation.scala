@@ -206,8 +206,8 @@ case class TemplateRelation(
       *
       * @param execution
       */
-    override def create(execution: Execution, ifNotExists: Boolean): Unit = {
-        relationInstance.create(execution, ifNotExists)
+    override def create(execution: Execution): Unit = {
+        relationInstance.create(execution)
     }
 
     /**
@@ -216,8 +216,8 @@ case class TemplateRelation(
       *
       * @param execution
       */
-    override def destroy(execution: Execution, ifExists: Boolean): Unit = {
-        relationInstance.destroy(execution, ifExists)
+    override def destroy(execution: Execution): Unit = {
+        relationInstance.destroy(execution)
     }
 
     /**

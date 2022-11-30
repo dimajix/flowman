@@ -247,8 +247,8 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
         def recreate() : Unit = {
             logger.info(s"Migrating Delta relation '$identifier' by dropping/recreating.")
             try {
-                destroy(execution, true)
-                create(execution, true)
+                destroy(execution)
+                create(execution)
             }
             catch {
                 case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)

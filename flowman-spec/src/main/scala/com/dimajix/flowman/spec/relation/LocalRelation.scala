@@ -275,13 +275,11 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       *
       * @param execution
       */
-    override def create(execution: Execution, ifNotExists:Boolean=false): Unit =  {
+    override def create(execution: Execution): Unit =  {
         require(execution != null)
 
         if (localDirectory.exists()) {
-            if (!ifNotExists) {
-                throw new FileAlreadyExistsException(qualifiedLocation.toString)
-            }
+            throw new FileAlreadyExistsException(qualifiedLocation.toString)
         }
         else {
             logger.info(s"Creating local directory '$localDirectory' for local file relation")
@@ -305,7 +303,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
       *
       * @param execution
       */
-    override def destroy(execution: Execution, ifExists:Boolean=false): Unit = {
+    override def destroy(execution: Execution): Unit = {
         require(execution != null)
 
         java.lang.System.gc() // In Windows, open files may block destruction

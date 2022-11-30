@@ -163,7 +163,7 @@ case class StreamTarget(
         }
         else {
             logger.info(s"Creating relation '${relation.identifier}'")
-            rel.create(execution, true)
+            rel.create(execution)
         }
     }
 
@@ -223,7 +223,7 @@ case class StreamTarget(
 
         logger.info(s"Destroying relation '${relation.identifier}'")
         val rel = relation.value
-        rel.destroy(execution, true)
+        rel.destroy(execution)
     }
 }
 

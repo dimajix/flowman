@@ -257,7 +257,7 @@ case class RelationTarget(
         }
         else {
             logger.info(s"Creating relation '${relation.identifier}'")
-            rel.create(execution, true)
+            rel.create(execution)
         }
     }
 
@@ -355,30 +355,30 @@ case class RelationTarget(
 
     /**
       * Cleans the target. This will remove any data in the target for the current partition
-      * @param executor
+      * @param execution
       */
-    override def truncate(executor: Execution): Unit = {
-        require(executor != null)
+    override def truncate(execution: Execution): Unit = {
+        require(execution != null)
 
         if (mapping.nonEmpty) {
             val partition = this.partition.mapValues(v => SingleValue(v))
 
             logger.info(s"Truncating partition $partition of relation '${relation.identifier}'")
             val rel = relation.value
-            rel.truncate(executor, partition)
+            rel.truncate(execution, partition)
         }
     }
 
     /**
       * Destroys both the logical relation and the physical data
-      * @param executor
+      * @param execution
       */
-    override def destroy(executor: Execution) : Unit = {
-        require(executor != null)
+    override def destroy(execution: Execution) : Unit = {
+        require(execution != null)
 
         logger.info(s"Destroying relation '${relation.identifier}'")
         val rel = relation.value
-        rel.destroy(executor, true)
+        rel.destroy(execution)
     }
 }
 

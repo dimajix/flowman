@@ -200,7 +200,6 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
 
         // Try to create relation, although it already exists
         a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
-        relation.create(execution, true)
 
         // == Migrate =================================================================================================
         relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
@@ -241,7 +240,6 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
 
         a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
-        relation.destroy(execution, true)
     })
 
     it should "cast compatible types" in (if (hiveSupported) {
@@ -269,12 +267,13 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val project = Module.read.string(spec).toProject("project")
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
         val context = session.getContext(project)
 
         // == Create ==================================================================================================
         val relation = context.getRelation(RelationIdentifier("t0"))
-        relation.create(executor)
+        relation.create(execution)
+        a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
 
         // == Write ===================================================================================================
         val rdd = spark.sparkContext.parallelize(Seq(
@@ -287,13 +286,13 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             StructField("varchar_col", StringType)
         ))
         val df = spark.createDataFrame(rdd, schema)
-        relation.write(executor, df, Map())
+        relation.write(execution, df, Map())
 
         // == Read ====================================================================================================
         val expected1 = Seq(
             Row("v1", 21, "true      ", "v4")
         )
-        checkAnswer(relation.read(executor), expected1)
+        checkAnswer(relation.read(execution), expected1)
 
         // == Write ===================================================================================================
         val rdd2 = spark.sparkContext.parallelize(Seq(
@@ -305,7 +304,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             StructField("varchar_col", StringType)
         ))
         val df2 = spark.createDataFrame(rdd2, schema2)
-        relation.write(executor, df2, Map())
+        relation.write(execution, df2, Map())
 
         // == Write ===================================================================================================
         val rdd3 = spark.sparkContext.parallelize(Seq(
@@ -317,17 +316,18 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         ))
         val incompatibleDf = spark.createDataFrame(rdd3, incompatibleSchema)
         //an[Exception] shouldBe thrownBy(relation.write(execution, incompatibleDf, Map()))
-        relation.write(executor, incompatibleDf, Map())
+        relation.write(execution, incompatibleDf, Map())
 
         // == Read ====================================================================================================
         val expected2 = Seq(
             Row(null, 21, null, null),
             Row(null, null, null, null)
         )
-        checkAnswer(relation.read(executor), expected2)
+        checkAnswer(relation.read(execution), expected2)
 
         // == Destroy =================================================================================================
-        relation.destroy(executor)
+        relation.destroy(execution)
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
     })
 
     it should "support partitions" in (if (hiveSupported) {
@@ -385,6 +385,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("partition_col" -> SingleValue("x"))) should be (No)
         relation.create(execution)
+        a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
         relation.exists(execution) should be (Yes)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
@@ -464,6 +465,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
 
         // == Destroy =================================================================================================
         relation.destroy(execution)
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
         relation.exists(execution) should be (No)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
@@ -553,6 +555,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
     })
@@ -674,6 +677,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
     })
@@ -750,6 +754,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
         relation_1.create(execution)
+        a[TableAlreadyExistsException] shouldBe thrownBy(relation_1.create(execution))
         relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
@@ -915,6 +920,8 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
 
         // == Destroy =================================================================================================
         relation_2.destroy(execution)
+        a[NoSuchTableException] shouldBe thrownBy(relation_2.destroy(execution))
+        a[NoSuchTableException] shouldBe thrownBy(relation_1.destroy(execution))
         relation_1.exists(execution) should be (No)
         relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation_1.conforms(execution, MigrationPolicy.STRICT) should be (No)
@@ -995,6 +1002,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
         relation_1.create(execution)
+        a[TableAlreadyExistsException] shouldBe thrownBy(relation_1.create(execution))
         relation_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
@@ -1128,6 +1136,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
+        a[NoSuchTableException] shouldBe thrownBy(relation_2.destroy(execution))
     })
 
     "The generated VIEWs" should "not be too complex" in (if (hiveSupported) {

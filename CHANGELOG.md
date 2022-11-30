@@ -4,6 +4,7 @@
 * github-282: Improve implementation for counting records
 * github-288: Support reading local CSV files from fatjar
 * github-290: Simplify specifying project name in fatjar
+* github-291: Simplify create/destroy Relation interface
 
 
 # Version 0.29.0 - 2022-11-08

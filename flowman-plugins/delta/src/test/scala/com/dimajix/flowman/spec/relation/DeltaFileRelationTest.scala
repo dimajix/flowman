@@ -124,7 +124,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
@@ -133,7 +133,6 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // Try to create relation, although it already exists
         a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
-        relation.create(execution, true)
 
         // == Read ====================================================================================================
         relation.read(execution, Map()).count() should be (0)
@@ -184,7 +183,6 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map()) should be (No)
 
         an[FileNotFoundException] shouldBe thrownBy(relation.destroy(execution))
-        relation.destroy(execution, true)
     }
 
     it should "support read/write static partitions" in {
@@ -225,7 +223,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
@@ -236,7 +234,6 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // Try to create relation, although it already exists
         a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
-        relation.create(execution, true)
 
         // == Read ===================================================================================================
         relation.read(execution, Map()).schema should be (StructType(Seq(
@@ -346,7 +343,6 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map()) should be (No)
 
         an[FileNotFoundException] shouldBe thrownBy(relation.destroy(execution))
-        relation.destroy(execution, true)
     }
 
     it should "support different output modes with dynamic partitions" in {
@@ -582,7 +578,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
@@ -665,7 +661,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Read ===================================================================================================
@@ -725,7 +721,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Read ===================================================================================================
@@ -833,7 +829,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation0.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation0.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation0.loaded(execution, Map()) should be (No)
-        relation0.create(execution, false)
+        relation0.create(execution)
         location.exists() should be (true)
         relation0.exists(execution) should be (Yes)
         relation0.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
@@ -989,7 +985,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Write ==================================================================================================
@@ -1067,7 +1063,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Read ===================================================================================================
@@ -1253,7 +1249,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Write ==================================================================================================

@@ -514,14 +514,12 @@ abstract class JdbcTableRelationBase(
      *
      * @param execution
       */
-    override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
+    override def create(execution:Execution) : Unit = {
         require(execution != null)
 
         withConnection{ (con,options) =>
-            if (!ifNotExists || !JdbcUtils.tableExists(con, tableIdentifier, options)) {
-                doCreate(con, options)
-                execution.refreshResource(resource)
-            }
+            doCreate(con, options)
+            execution.refreshResource(resource)
         }
     }
 
@@ -556,8 +554,8 @@ abstract class JdbcTableRelationBase(
       * This method will physically destroy the corresponding relation in the target JDBC database.
       * @param execution
       */
-    override def destroy(execution:Execution, ifExists:Boolean=false) : Unit = {
-        dropTableOrView(execution, table, ifExists)
+    override def destroy(execution:Execution) : Unit = {
+        dropTableOrView(execution, table)
     }
 
     override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {

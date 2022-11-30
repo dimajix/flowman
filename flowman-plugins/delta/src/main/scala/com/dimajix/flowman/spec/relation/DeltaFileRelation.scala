@@ -283,30 +283,28 @@ case class DeltaFileRelation(
      *
      * @param execution
      */
-    override def create(execution: Execution, ifNotExists: Boolean): Unit = {
-        val tableExists = exists(execution) == Yes
-        if (!ifNotExists || !tableExists) {
-            val sparkSchema = StructType(fields.map(_.catalogField))
-            logger.info(s"Creating Delta file relation '$identifier' at '$location' and schema\n${sparkSchema.treeString}")
-            if (schema.isEmpty) {
-                throw new UnspecifiedSchemaException(identifier)
-            }
-
-            if (tableExists)
-                throw new FileAlreadyExistsException(s"Delta file relation at at '$location' already exists")
-
-            DeltaUtils.createTable(
-                execution,
-                None,
-                Some(location),
-                sparkSchema,
-                partitions,
-                properties,
-                description
-            )
-
-            execution.refreshResource(resource)
+    override def create(execution: Execution): Unit = {
+        val sparkSchema = StructType(fields.map(_.catalogField))
+        logger.info(s"Creating Delta file relation '$identifier' at '$location' and schema\n${sparkSchema.treeString}")
+        if (schema.isEmpty) {
+            throw new UnspecifiedSchemaException(identifier)
         }
+
+        val tableExists = exists(execution) == Yes
+        if (tableExists)
+            throw new FileAlreadyExistsException(s"Delta file relation at at '$location' already exists")
+
+        DeltaUtils.createTable(
+            execution,
+            None,
+            Some(location),
+            sparkSchema,
+            partitions,
+            properties,
+            description
+        )
+
+        execution.refreshResource(resource)
     }
 
     /**
@@ -349,15 +347,13 @@ case class DeltaFileRelation(
      *
      * @param execution
      */
-    override def destroy(execution: Execution, ifExists: Boolean): Unit = {
+    override def destroy(execution: Execution): Unit = {
         require(execution != null)
 
         val location = this.location
         val fs = location.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
         if (!fs.exists(location)) {
-            if (!ifExists) {
-                throw new FileNotFoundException(location.toString)
-            }
+            throw new FileNotFoundException(location.toString)
         }
         else {
             logger.info(s"Destroying Delta file relation '$identifier' by deleting directory '$location'")

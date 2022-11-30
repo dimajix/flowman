@@ -96,7 +96,7 @@ class DropTargetTest extends AnyFlatSpec with Matchers with MockFactory with Loc
         (relation.exists _).expects(execution).returns(Yes)
         target.execute(execution, Phase.VERIFY).exception.get shouldBe a[VerificationFailedException]
 
-        (relation.destroy _).expects(execution, true)
+        (relation.destroy _).expects(execution)
         target.execute(execution, Phase.CREATE).status should be (Status.SUCCESS)
 
         (relation.exists _).expects(execution).returns(Yes)

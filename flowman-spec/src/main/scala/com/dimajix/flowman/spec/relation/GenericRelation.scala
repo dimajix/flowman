@@ -150,7 +150,7 @@ case class GenericRelation(
      *
      * @param execution
      */
-    override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {}
+    override def create(execution:Execution) : Unit = {}
 
     /**
      * This will update any existing relation to the specified metadata. Actually for this file based target, the
@@ -171,7 +171,7 @@ case class GenericRelation(
      * This method will remove the given directory as specified in "location"
      * @param execution
      */
-    override def destroy(execution:Execution, ifExists:Boolean) : Unit =  {}
+    override def destroy(execution:Execution) : Unit =  {}
 }
 
 

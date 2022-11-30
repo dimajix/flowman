@@ -419,23 +419,21 @@ case class HiveUnionTableRelation(
       *
       * @param execution
       */
-    override def create(execution: Execution, ifNotExists: Boolean): Unit = {
+    override def create(execution: Execution): Unit = {
         require(execution != null)
 
-        if (!ifNotExists || exists(execution) == No) {
-            logger.info(s"Creating Hive union relation '$identifier'")
-            if (schema.isEmpty) {
-                throw new UnspecifiedSchemaException(identifier)
-            }
-
-            // Create first table using current schema
-            val hiveTableRelation = tableRelation(1)
-            hiveTableRelation.create(execution, ifNotExists)
-
-            // Create initial view
-            val hiveViewRelation = viewRelationFromTables(execution, Seq(hiveTableRelation.table))
-            hiveViewRelation.create(execution, ifNotExists)
+        logger.info(s"Creating Hive union relation '$identifier'")
+        if (schema.isEmpty) {
+            throw new UnspecifiedSchemaException(identifier)
         }
+
+        // Create first table using current schema
+        val hiveTableRelation = tableRelation(1)
+        hiveTableRelation.create(execution)
+
+        // Create initial view
+        val hiveViewRelation = viewRelationFromTables(execution, Seq(hiveTableRelation.table))
+        hiveViewRelation.create(execution)
     }
 
     /**
@@ -444,23 +442,20 @@ case class HiveUnionTableRelation(
       *
       * @param execution
       */
-    override def destroy(execution: Execution, ifExists: Boolean): Unit = {
+    override def destroy(execution: Execution): Unit = {
         require(execution != null)
 
-        if (!ifExists || exists(execution) == Yes) {
-            val catalog = execution.catalog
+        // Destroy view
+        logger.info(s"Dropping Hive union relation '$identifier' UNION VIEW $viewIdentifier")
+        val catalog = execution.catalog
+        catalog.dropView(viewIdentifier, false)
 
-            // Destroy view
-            logger.info(s"Dropping Hive union relation '$identifier' UNION VIEW $viewIdentifier")
-            catalog.dropView(viewIdentifier, ifExists)
-
-            // Destroy tables
-            listTables(execution)
-                .foreach { table =>
-                    logger.info(s"Dropping Hive union relation '$identifier' backend table '$table'")
-                    catalog.dropTable(table, false)
-                }
-        }
+        // Destroy tables
+        listTables(execution)
+            .foreach { table =>
+                logger.info(s"Dropping Hive union relation '$identifier' backend table '$table'")
+                catalog.dropTable(table, false)
+            }
     }
 
     /**
@@ -545,7 +540,7 @@ case class HiveUnionTableRelation(
             val version = (1 to 100000).find(n => !tableSet.contains(tableIdentifier(n))).get
             logger.info(s"Migrating Hive Union Table relation '$identifier' by creating new Hive table ${tableIdentifier(version)}")
             val hiveTableRelation = tableRelation(version)
-            hiveTableRelation.create(execution, false)
+            hiveTableRelation.create(execution)
         }
     }
 }

@@ -141,15 +141,9 @@ case class EmptyRelation(
      */
     override def conforms(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED) : Trilean = true
 
-    override def create(execution: Execution, ifNotExists:Boolean=false): Unit = {
-        require(execution != null)
-    }
-    override def destroy(execution: Execution, ifExists:Boolean=false): Unit = {
-        require(execution != null)
-    }
-    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {
-        require(execution != null)
-    }
+    override def create(execution: Execution): Unit = {}
+    override def destroy(execution: Execution): Unit = {}
+    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {}
 
     /**
       * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from

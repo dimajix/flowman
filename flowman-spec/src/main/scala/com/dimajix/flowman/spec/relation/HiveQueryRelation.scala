@@ -180,11 +180,11 @@ case class HiveQueryRelation(
         Yes
     }
 
-    override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
+    override def create(execution:Execution) : Unit = {
         throw new UnsupportedOperationException(s"Cannot create Hive query relation '$identifier' which is defined by an SQL query")
     }
 
-    override def destroy(execution:Execution, ifExists:Boolean=false) : Unit = {
+    override def destroy(execution:Execution) : Unit = {
         throw new UnsupportedOperationException(s"Cannot destroy Hive query relation '$identifier' which is defined by an SQL query")
     }
 

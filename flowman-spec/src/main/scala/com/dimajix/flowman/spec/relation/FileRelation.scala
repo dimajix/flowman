@@ -418,13 +418,11 @@ case class FileRelation(
       * This method will create the given directory as specified in "location"
       * @param execution
       */
-    override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
+    override def create(execution:Execution) : Unit = {
         require(execution != null)
 
         if (collector.exists()) {
-            if (!ifNotExists) {
-                throw new FileAlreadyExistsException(qualifiedLocation.toString)
-            }
+            throw new FileAlreadyExistsException(qualifiedLocation.toString)
         }
         else {
             logger.info(s"Creating file relation '$identifier' at location '$qualifiedLocation'")
@@ -477,13 +475,11 @@ case class FileRelation(
       * This method will remove the given directory as specified in "location"
       * @param execution
       */
-    override def destroy(execution:Execution, ifExists:Boolean) : Unit =  {
+    override def destroy(execution:Execution) : Unit =  {
         require(execution != null)
 
         if (!collector.exists()) {
-            if (!ifExists) {
-                throw new FileNotFoundException(qualifiedLocation.toString)
-            }
+            throw new FileNotFoundException(qualifiedLocation.toString)
         }
         else {
             logger.info(s"Destroying file relation '$identifier' by deleting directory '$qualifiedLocation'")

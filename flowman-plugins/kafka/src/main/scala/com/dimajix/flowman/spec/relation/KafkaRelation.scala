@@ -253,7 +253,7 @@ case class KafkaRelation(
       *
       * @param execution
       */
-    override def create(execution: Execution, ignoreIfExsists: Boolean): Unit = ???
+    override def create(execution: Execution): Unit = ???
 
     /**
       * This will delete any physical representation of the relation. Depending on the type only some meta data like
@@ -261,7 +261,7 @@ case class KafkaRelation(
       *
       * @param execution
       */
-    override def destroy(execution: Execution, ignoreIfNotExists:Boolean): Unit = ???
+    override def destroy(execution: Execution): Unit = ???
 
     /**
       * This will update any existing relation to the specified metadata.

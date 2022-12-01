@@ -155,7 +155,7 @@ object HadoopUtils {
 
     private def doDelete(fs:org.apache.hadoop.fs.FileSystem, location:Path, recursive:Boolean) : Unit = {
         if (!fs.delete(location, recursive)) {
-            logger.warn(s"Cannot delete file or directory '$location'")
+            logger.warn(s"Failed to delete file or directory '$location'")
         }
     }
 }

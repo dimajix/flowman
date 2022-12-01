@@ -152,11 +152,11 @@ final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) exten
       */
     def rename(dst:Path) : Unit  = {
         if (fs.exists(dst) && !fs.delete(dst, false)) {
-            throw new IOException(s"Cannot rename '$path' to '$dst', because '$dst' already exists")
+            throw new IOException(s"Failed to rename '$path' to '$dst', because '$dst' already exists")
         }
 
         if (!fs.rename(path, dst)) {
-            throw new IOException(s"Cannot rename '$path' to '$dst'")
+            throw new IOException(s"Failed to rename '$path' to '$dst'")
         }
     }
 
@@ -167,7 +167,7 @@ final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) exten
       */
     def copy(dst:File, overwrite:Boolean) : Unit = {
         if (!overwrite && dst.isFile())
-            throw new IOException("Target $dst already exists")
+            throw new IOException(s"Failed to copy '$path' to '$dst', target already exists")
 
         // Append file name if relation is a directory
         val dstFile = if (dst.isDirectory())
@@ -211,7 +211,7 @@ final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) exten
       */
     def delete(recursive:Boolean = false) : Unit = {
         if (fs.exists(path) && !fs.delete(path, recursive)) {
-            throw new IOException(s"Cannot delete '$path'")
+            throw new IOException(s"Failed to delete '$path'")
         }
     }
 
@@ -225,7 +225,7 @@ final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) exten
 
     def mkdirs() : Unit = {
         if (!fs.mkdirs(path))
-            throw new IOException(s"Cannot create directory '$path'")
+            throw new IOException(s"Failed to create directory '$path'")
     }
 
     /**

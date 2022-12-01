@@ -32,7 +32,7 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.spi.ColumnCheckExecutor
 import com.dimajix.flowman.spi.SchemaCheckExecutor
-import com.dimajix.flowman.util.ConsoleColors.yellow
+import com.dimajix.flowman.common.ConsoleColors.yellow
 import com.dimajix.spark.SparkUtils
 import com.dimajix.spark.SparkUtils.withJobGroup
 

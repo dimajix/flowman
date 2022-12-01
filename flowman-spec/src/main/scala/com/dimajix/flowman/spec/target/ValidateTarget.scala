@@ -41,7 +41,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.assertion.AssertionSpec
-import com.dimajix.flowman.util.ConsoleColors.red
+import com.dimajix.flowman.common.ConsoleColors.red
 
 
 case class ValidateTarget(

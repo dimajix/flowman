@@ -6,6 +6,7 @@
 * github-290: Simplify specifying project name in fatjar
 * github-291: Simplify create/destroy Relation interface
 * github-292: Upgrade AWS EMR to 6.9
+* github-289: Color log output via log4j configuration (requires log4j 2.x)
 
 
 # Version 0.29.0 - 2022-11-08

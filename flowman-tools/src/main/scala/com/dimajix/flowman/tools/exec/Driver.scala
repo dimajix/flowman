@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.tools.exec
 
-import java.net.URI
-
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -32,13 +30,13 @@ import com.dimajix.flowman.JAVA_VERSION
 import com.dimajix.flowman.SCALA_VERSION
 import com.dimajix.flowman.SPARK_BUILD_VERSION
 import com.dimajix.flowman.SPARK_VERSION
+import com.dimajix.flowman.common.ConsoleColors
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.tools.Tool
-import com.dimajix.flowman.util.ConsoleColors
-import com.dimajix.flowman.util.ConsoleColors.yellow
+import ConsoleColors.yellow
 
 
 object Driver {
@@ -93,6 +91,10 @@ object Driver {
             }
             Logging.setSparkLogging(options.sparkLogging)
 
+            // Disable colors in batch mode
+            Logging.setColorEnabled(!options.batchMode)
+            ConsoleColors.setColorEnabled(!options.batchMode)
+
             val driver = new Driver(options)
             driver.run()
         }
@@ -108,9 +110,6 @@ class Driver(options:Arguments) extends Tool {
       * @return
       */
     def run() : Status = {
-        // Disable colors in batch mode
-        ConsoleColors.disabled = options.batchMode
-
         val command = options.command
         if (command.help) {
             command.printHelp(System.out)

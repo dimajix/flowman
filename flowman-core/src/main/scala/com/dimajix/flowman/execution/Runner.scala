@@ -56,7 +56,7 @@ import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.flowman.spi.LogFilter
-import com.dimajix.flowman.util.ConsoleColors._
+import com.dimajix.flowman.common.ConsoleColors._
 import com.dimajix.spark.SparkUtils.withJobGroup
 
 

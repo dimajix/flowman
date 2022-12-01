@@ -25,9 +25,9 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
-import com.dimajix.flowman.util.ConsoleColors.green
-import com.dimajix.flowman.util.ConsoleColors.red
-import com.dimajix.flowman.util.ConsoleColors.yellow
+import com.dimajix.flowman.common.ConsoleColors.green
+import com.dimajix.flowman.common.ConsoleColors.red
+import com.dimajix.flowman.common.ConsoleColors.yellow
 import com.dimajix.spark.sql.DataFrameUtils
 
 

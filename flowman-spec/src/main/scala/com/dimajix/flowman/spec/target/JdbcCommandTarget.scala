@@ -43,8 +43,8 @@ import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.target.JdbcCommandTarget.Action
 import com.dimajix.flowman.spec.target.JdbcCommandTargetSpec.ActionSpec
-import com.dimajix.flowman.util.ConsoleColors.red
-import com.dimajix.flowman.util.ConsoleColors.yellow
+import com.dimajix.flowman.common.ConsoleColors.red
+import com.dimajix.flowman.common.ConsoleColors.yellow
 
 object JdbcCommandTarget {
     case class Action(

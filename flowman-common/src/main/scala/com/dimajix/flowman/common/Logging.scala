@@ -29,6 +29,8 @@ import org.apache.log4j.PropertyConfigurator
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.LoggerContext
+import org.apache.logging.log4j.core.config.Configuration
+import org.apache.logging.log4j.core.config.properties.PropertiesConfigurationBuilder
 import org.slf4j.LoggerFactory
 import org.slf4j.impl.StaticLoggerBinder
 
@@ -38,12 +40,11 @@ object Logging {
     private lazy val logger = LoggerFactory.getLogger(classOf[Logging])
     private var log4j1Properties:Properties = null
     private var level:String = null
+    private var color:Boolean = true
 
     def init() : Unit = {
         val log4jConfig = System.getProperty("log4j.configuration")
-        val log4jConfigFile = System.getProperty("log4j.configurationFile")
-        val log4j2ConfigFile = System.getProperty("log4j2.configurationFile")
-        if (isLog4j2() && (log4jConfigFile != null || log4j2ConfigFile != null)) {
+        if (isCustomLog4j2()) {
             // Do nothing, config is already correctly loaded
         }
         else if (log4jConfig != null) {
@@ -56,15 +57,49 @@ object Logging {
             initlog4j1(url)
         }
         else {
-            initLog4jDefault()
+            initDefault()
         }
     }
-    private def initLog4jDefault() : Unit = {
-        val loader = Thread.currentThread.getContextClassLoader
-        val url = loader.getResource("com/dimajix/flowman/log4j-defaults.properties")
-        initlog4j1(url)
 
+    private def isCustomLog4j2() : Boolean = {
+        val log4jConfigFile = System.getProperty("log4j.configurationFile")
+        val log4j2ConfigFile = System.getProperty("log4j2.configurationFile")
+        isLog4j2() && (log4jConfigFile != null || log4j2ConfigFile != null)
     }
+
+    def setColorEnabled(enabled:Boolean) : Unit = {
+        color = enabled
+        if (isLog4j2() && !isCustomLog4j2()) {
+            initDefault()
+        }
+    }
+
+    private def initDefault() : Unit = {
+        val loader = Thread.currentThread.getContextClassLoader
+        if (isLog4j2()) {
+            val url = loader.getResource("com/dimajix/flowman/log4j2-defaults.properties")
+            val props = loadProperties(url)
+            // Disable ANSI magic by adding new entries to the log4j config
+            if (!color) {
+                props.keys().asScala.collect { case s: String => s }
+                    .foreach { k =>
+                        val parts = k.split('.')
+                        if (parts.length >= 3 && parts(0) == "appender" && parts(2) == "layout")
+                            props.setProperty("appender." + parts(1) + ".layout.disableAnsi", "true")
+                    }
+            }
+            val config = new PropertiesConfigurationBuilder()
+                .setRootProperties(props)
+                .build()
+            val context = LogManager.getContext(false).asInstanceOf[LoggerContext]
+            context.setConfiguration(config)
+        }
+        else {
+            val url = loader.getResource("com/dimajix/flowman/log4j-defaults.properties")
+            initlog4j1(url)
+        }
+    }
+
     private def initlog4j1(configUrl:URL) : Unit = {
         log4j1Properties = loadProperties(configUrl)
         reconfigureLogging()

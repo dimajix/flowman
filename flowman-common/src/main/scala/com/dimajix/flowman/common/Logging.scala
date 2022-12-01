@@ -191,7 +191,7 @@ object LoggingImplLog4j2 {
             .setRootProperties(props)
             .build()
         val context = LogManager.getContext(false).asInstanceOf[LoggerContext]
-        context.setConfiguration(config)
+        context.start(config)
     }
 
     def reconfigure(level:String) : Unit = {

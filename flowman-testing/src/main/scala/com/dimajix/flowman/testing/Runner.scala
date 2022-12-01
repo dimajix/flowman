@@ -18,7 +18,6 @@ package com.dimajix.flowman.testing
 
 import java.io.File
 import java.io.IOException
-import java.net.URI
 import java.net.URL
 import java.util.UUID
 
@@ -26,7 +25,6 @@ import scala.collection.JavaConverters._
 
 import org.apache.hadoop.conf.{Configuration => HadoopConfiguration}
 import org.apache.hadoop.hive.conf.HiveConf
-import org.apache.log4j.PropertyConfigurator
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.internal.SQLConf
 
@@ -44,18 +42,8 @@ import com.dimajix.spark.features
 
 
 object Runner {
-    private def setupLogging() : Unit = {
-        val log4j = System.getProperty("log4j.configuration")
-        if (log4j == null || log4j.isEmpty) {
-            val loader = Thread.currentThread.getContextClassLoader
-            val url = loader.getResource("com/dimajix/flowman/testing/log4j-defaults.properties")
-            PropertyConfigurator.configure(url)
-        }
-
-        Logging.setSparkLogging("WARN")
-    }
-
-    setupLogging()
+    Logging.init()
+    Logging.setSparkLogging("WARN")
 
     class Builder {
         private var namespace:Namespace = Namespace.read.default()

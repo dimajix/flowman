@@ -7,6 +7,8 @@
 * github-291: Simplify create/destroy Relation interface
 * github-292: Upgrade AWS EMR to 6.9
 * github-289: Color log output via log4j configuration (requires log4j 2.x)
+* Bump postgresql from 42.4.1 to 42.4.3 in /flowman-plugins/postgresql
+* Bump loader-utils from 1.4.0 to 1.4.2
 
 
 # Version 0.29.0 - 2022-11-08

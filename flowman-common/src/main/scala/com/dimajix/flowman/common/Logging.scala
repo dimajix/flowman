@@ -29,7 +29,6 @@ import org.apache.log4j.PropertyConfigurator
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.LoggerContext
-import org.apache.logging.log4j.core.config.Configuration
 import org.apache.logging.log4j.core.config.properties.PropertiesConfigurationBuilder
 import org.slf4j.LoggerFactory
 import org.slf4j.impl.StaticLoggerBinder
@@ -61,12 +60,6 @@ object Logging {
         }
     }
 
-    private def isCustomLog4j2() : Boolean = {
-        val log4jConfigFile = System.getProperty("log4j.configurationFile")
-        val log4j2ConfigFile = System.getProperty("log4j2.configurationFile")
-        isLog4j2() && (log4jConfigFile != null || log4j2ConfigFile != null)
-    }
-
     def setColorEnabled(enabled:Boolean) : Unit = {
         color = enabled
         if (isLog4j2() && !isCustomLog4j2()) {
@@ -78,21 +71,7 @@ object Logging {
         val loader = Thread.currentThread.getContextClassLoader
         if (isLog4j2()) {
             val url = loader.getResource("com/dimajix/flowman/log4j2-defaults.properties")
-            val props = loadProperties(url)
-            // Disable ANSI magic by adding new entries to the log4j config
-            if (!color) {
-                props.keys().asScala.collect { case s: String => s }
-                    .foreach { k =>
-                        val parts = k.split('.')
-                        if (parts.length >= 3 && parts(0) == "appender" && parts(2) == "layout")
-                            props.setProperty("appender." + parts(1) + ".layout.disableAnsi", "true")
-                    }
-            }
-            val config = new PropertiesConfigurationBuilder()
-                .setRootProperties(props)
-                .build()
-            val context = LogManager.getContext(false).asInstanceOf[LoggerContext]
-            context.setConfiguration(config)
+            LoggingImplLog4j2.init(url, color)
         }
         else {
             val url = loader.getResource("com/dimajix/flowman/log4j-defaults.properties")
@@ -106,7 +85,7 @@ object Logging {
         logger.debug(s"Loaded logging configuration from $configUrl")
     }
 
-    private def loadProperties(url:URL) : Properties = {
+    private[common] def loadProperties(url:URL) : Properties = {
         try {
             val urlConnection = url.openConnection
             urlConnection.setUseCaches(false)
@@ -147,24 +126,11 @@ object Logging {
     private def reconfigureLogging() : Unit = {
         // Create new logging properties with all levels being replaced
         if (log4j1Properties != null) {
-            val newProps = new Properties()
-            log4j1Properties.asScala.foreach { case (k, v) => newProps.setProperty(k, v) }
-            if (level != null) {
-                newProps.keys().asScala.collect { case s: String => s }
-                    .toList
-                    .filter(k => k.startsWith("log4j.logger."))
-                    .foreach(k => newProps.setProperty(k, level))
-            }
-            PropertyConfigurator.configure(newProps)
+            LoggingImplLog4j1.reconfigure(log4j1Properties, level)
         }
         else if (isLog4j2()) {
             if (level != null) {
-                val context = LogManager.getContext(false).asInstanceOf[LoggerContext]
-                val l = Level.getLevel(level)
-                val config = context.getConfiguration
-                config.getRootLogger.setLevel(l)
-                config.getLoggers.asScala.values.foreach(_.setLevel(l))
-                context.updateLoggers()
+                LoggingImplLog4j2.reconfigure(level)
             }
         }
 
@@ -180,5 +146,60 @@ object Logging {
         // org.apache.logging.slf4j.Log4jLoggerFactory
         val binderClass = StaticLoggerBinder.getSingleton.getLoggerFactoryClassStr
         "org.apache.logging.slf4j.Log4jLoggerFactory".equals(binderClass)
+    }
+
+    private def isCustomLog4j2(): Boolean = {
+        val log4jConfigFile = System.getProperty("log4j.configurationFile")
+        val log4j2ConfigFile = System.getProperty("log4j2.configurationFile")
+        isLog4j2() && (log4jConfigFile != null || log4j2ConfigFile != null)
+    }
+}
+
+
+object LoggingImplLog4j1 {
+    def reconfigure(props:Properties, level: String): Unit = {
+        val newProps = new Properties()
+        props.asScala.foreach { case (k, v) => newProps.setProperty(k, v) }
+        if (level != null) {
+            newProps.keys().asScala.collect { case s: String => s }
+                .toList
+                .filter(k => k.startsWith("log4j.logger."))
+                .foreach(k => newProps.setProperty(k, level))
+        }
+        PropertyConfigurator.configure(newProps)
+    }
+}
+
+
+/**
+ * Utility class for isolating log4j 2.x dependencies. Otherwise a ClassNotFoundException may be thrown if log4j 2.x
+ * is not on the classpath, even if the code is not executed.
+ */
+object LoggingImplLog4j2 {
+    def init(configUrl: URL, color:Boolean): Unit = {
+        val props = Logging.loadProperties(configUrl)
+        // Disable ANSI magic by adding new entries to the log4j config
+        if (!color) {
+            props.keys().asScala.collect { case s: String => s }
+                .foreach { k =>
+                    val parts = k.split('.')
+                    if (parts.length >= 3 && parts(0) == "appender" && parts(2) == "layout")
+                        props.setProperty("appender." + parts(1) + ".layout.disableAnsi", "true")
+                }
+        }
+        val config = new PropertiesConfigurationBuilder()
+            .setRootProperties(props)
+            .build()
+        val context = LogManager.getContext(false).asInstanceOf[LoggerContext]
+        context.setConfiguration(config)
+    }
+
+    def reconfigure(level:String) : Unit = {
+        val context = LogManager.getContext(false).asInstanceOf[LoggerContext]
+        val l = Level.getLevel(level)
+        val config = context.getConfiguration
+        config.getRootLogger.setLevel(l)
+        config.getLoggers.asScala.values.foreach(_.setLevel(l))
+        context.updateLoggers()
     }
 }

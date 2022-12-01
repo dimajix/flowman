@@ -239,7 +239,7 @@ case class FileCollector(
      * @param partitions
      * @return
      */
-    def collect(partitions:Iterable[PartitionSpec]) : Iterable[File] = {
+    def collect(partitions:Iterable[PartitionSpec]) : Seq[File] = {
         logger.debug(s"Collecting files in location ${qualifiedPath} for multiple partitions with pattern '${pattern.getOrElse("")}'")
         parFlatMap(partitions)(collectPath).toList
     }

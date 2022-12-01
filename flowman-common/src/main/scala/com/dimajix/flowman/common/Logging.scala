@@ -29,8 +29,6 @@ import org.apache.log4j.PropertyConfigurator
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.LoggerContext
-import org.apache.logging.log4j.core.config.DefaultConfiguration
-import org.apache.logging.log4j.core.{Logger => Log4jLogger}
 import org.slf4j.LoggerFactory
 import org.slf4j.impl.StaticLoggerBinder
 

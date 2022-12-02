@@ -9,6 +9,7 @@
 * github-289: Color log output via log4j configuration (requires log4j 2.x)
 * Bump postgresql from 42.4.1 to 42.4.3 in /flowman-plugins/postgresql
 * Bump loader-utils from 1.4.0 to 1.4.2
+* github-293: Fatal exceptions in parallel mapping instantiation cause deadlock
 
 
 # Version 0.29.0 - 2022-11-08

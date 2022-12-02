@@ -23,6 +23,8 @@ import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.concurrent.duration.Duration
+import scala.util.Failure
+import scala.util.Success
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -133,9 +135,18 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
             // Check if the returned future is the one we passed in. If that is the case, the current thread
             // is responsible for fulfilling the promise
             if (f eq p.future) {
-                val tables = Try(createTables(mapping))
-                p.complete(tables)
-                tables.get
+                // Do not use Scalas Try, since this will only catch NonFatal errors. This will lead to a dead-lock
+                // in case of Fatal errors
+                val tables = try {
+                    createTables(mapping)
+                }
+                catch {
+                    case ex:Throwable =>
+                        p.failure(ex)
+                        throw ex
+                }
+                p.success(tables)
+                tables
             }
             else {
                 // Other threads simply wait for the promise to be fulfilled.
@@ -161,9 +172,18 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
             // Check if the returned future is the one we passed in. If that is the case, the current thread
             // is responsible for fulfilling the promise
             if (f eq p.future) {
-                val tables = Try(describeMapping(mapping))
-                p.complete(tables)
-                tables.get
+                // Do not use Scalas Try, since this will only catch NonFatal errors. This will lead to a dead-lock
+                // in case of Fatal errors
+                val tables = try {
+                    describeMapping(mapping)
+                }
+                catch {
+                    case ex: Throwable =>
+                        p.failure(ex)
+                        throw ex
+                }
+                p.success(tables)
+                tables
             }
             else {
                 // Other threads simply wait for the promise to be fulfilled.
@@ -183,7 +203,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         val context = mapping.context
 
         val inputs = mapping.inputs.toSeq
-        val deps = if (inputs.size > 1 && parallelism > 1 ) {
+        val deps = if (inputs.size > 1 && parallelism > 1) {
             val parInputs = inputs.par
             parInputs.tasksupport = taskSupport
             parInputs.map(id => id -> describe(context.getMapping(id.mapping), id.output))
@@ -321,14 +341,14 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
     private def createTables(mapping:Mapping): Map[String,DataFrame] = {
         val context = mapping.context
 
-        def dep(dep:MappingOutputIdentifier) = {
-            require(dep.mapping.nonEmpty)
+        def dep(inputs:MappingOutputIdentifier) = {
+            require(inputs.mapping.nonEmpty)
 
-            val mapping = context.getMapping(dep.mapping)
-            if (!mapping.outputs.contains(dep.output))
-                throw new NoSuchMappingOutputException(mapping.identifier, dep.output)
+            val mapping = context.getMapping(inputs.mapping)
+            if (!mapping.outputs.contains(inputs.output))
+                throw new NoSuchMappingOutputException(mapping.identifier, inputs.output)
             val instances = instantiate(mapping)
-            (dep, instances(dep.output))
+            (inputs, instances(inputs.output))
         }
 
         val dependencies = {

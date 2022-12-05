@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,22 +63,33 @@ class ParallelExecutor extends Executor {
         val results = mutable.ListBuffer[TargetResult]()
         var error = false
 
-        def executeTarget(target:Target) : Future[TargetResult] = {
+        def executeTarget(target:Target) : Future[Option[TargetResult]] = {
             Future {
-                fn(execution, target, phase)
+                // Only execute target, if no error occurred
+                if (!error || keepGoing) {
+                    Some(fn(execution, target, phase))
+                }
+                else {
+                    None
+                }
             }.andThen { case result =>
                 // Inform scheduler that Target is built
-                scheduler.synchronized {
-                    scheduler.complete(target)
+                result match {
+                    case Success(Some(_))|Failure(_) =>
+                        scheduler.synchronized {
+                            scheduler.complete (target)
+                        }
+                    case _ =>
                 }
 
                 // Store result and evaluate status
                 statusLock.synchronized {
                     result match {
-                        case Success(r) =>
+                        case Success(Some(r)) =>
                             results += r
                             val status = r.status
                             error |= status.failure
+                        case Success(None) =>
                         case Failure(ex) =>
                             results += TargetResult(target, phase, ex, Instant.now())
                             error = true
@@ -87,8 +98,8 @@ class ParallelExecutor extends Executor {
             }
         }
 
-        def scheduleTargets(): Seq[Future[TargetResult]] = {
-            val tasks = mutable.ListBuffer[Future[TargetResult]]()
+        def scheduleTargets(): Seq[Future[Option[TargetResult]]] = {
+            val tasks = mutable.ListBuffer[Future[Option[TargetResult]]]()
             var noMoreWork = false
             while (!noMoreWork) {
                 scheduler.synchronized(scheduler.next()) match {
@@ -103,7 +114,7 @@ class ParallelExecutor extends Executor {
         }
 
         @tailrec
-        def wait(tasks:Seq[Future[TargetResult]]) : Unit = {
+        def wait(tasks:Seq[Future[Option[TargetResult]]]) : Unit = {
             val runningTasks = tasks.filter(!_.isCompleted)
             if (runningTasks.nonEmpty) {
                 val next = Future.firstCompletedOf(runningTasks)
@@ -113,7 +124,7 @@ class ParallelExecutor extends Executor {
         }
 
         @tailrec
-        def run(tasks:Seq[Future[TargetResult]] = Seq()) : Unit = {
+        def run(tasks:Seq[Future[Option[TargetResult]]] = Seq()) : Unit = {
             // First wait for tasks
             val (finishedTasks,runningTasks) = tasks.partition(_.isCompleted)
             if (finishedTasks.isEmpty && runningTasks.nonEmpty) {

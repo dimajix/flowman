@@ -29,6 +29,36 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class FileSystemTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    "FileSystem.stripSlash" should "work" in {
+        FileSystem.stripSlash("file:/") should be ("file:/")
+        FileSystem.stripSlash("file:/lala") should be ("file:/lala")
+        FileSystem.stripSlash("file:/lala/") should be ("file:/lala/")
+        FileSystem.stripSlash("/") should be("/")
+        FileSystem.stripSlash("/lala") should be("/lala")
+        FileSystem.stripSlash("/lala/") should be("/lala/")
+    }
+
+    "FileSystem.stripProtocol" should "work" in {
+        FileSystem.stripProtocol("file:/") should be("/")
+        FileSystem.stripProtocol("file:/lala") should be("/lala")
+        FileSystem.stripProtocol("file:/lala/") should be("/lala/")
+        FileSystem.stripProtocol("/") should be("/")
+        FileSystem.stripProtocol("/lala") should be("/lala")
+        FileSystem.stripProtocol("/lala/") should be("/lala/")
+    }
+
+    "FileSystem.getProtocol" should "work" in {
+        FileSystem.getProtocol("file:/") should be(Some("file"))
+        FileSystem.getProtocol("file:/lala") should be(Some("file"))
+        FileSystem.getProtocol("file:/lala/") should be(Some("file"))
+        FileSystem.getProtocol("jar:file:/") should be(Some("jar"))
+        FileSystem.getProtocol("jar:file:/lala") should be(Some("jar"))
+        FileSystem.getProtocol("jar:file:/lala/") should be(Some("jar"))
+        FileSystem.getProtocol("/") should be(None)
+        FileSystem.getProtocol("/lala") should be(None)
+        FileSystem.getProtocol("/lala/") should be(None)
+    }
+
     "FileSystem.local" should "be usable with simple strings" in {
         val prefix = if (FileSystem.WINDOWS) "file:/" else "file:"
         val conf = spark.sparkContext.hadoopConfiguration

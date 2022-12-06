@@ -84,9 +84,9 @@ class Tool {
         val fs = FileSystem(hadoopConfig)
 
         // Load Project. If no schema is specified, load from local file system
-        val uri = new URI(projectPath)
+        val protocol = FileSystem.getProtocol(projectPath)
         val file =
-            if (uri.getAuthority == null && uri.getScheme == null) {
+            if (protocol.isEmpty) {
                 // Try to load from resources folder in fat-jar
                 val url = Resources.getURL("META-INF/flowman/" + projectPath)
                 if (url != null)

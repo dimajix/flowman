@@ -83,7 +83,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>exec-flowman-schema</id>
+                        <id>exec-flowman-test</id>
                         <phase>test</phase>
                         <goals>
                             <goal>exec</goal>

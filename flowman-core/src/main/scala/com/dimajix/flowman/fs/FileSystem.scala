@@ -66,6 +66,22 @@ object FileSystem {
         }
     }
 
+    def getProtocol(str:String) : Option[String] = {
+        val colon = str.indexOf(':')
+        val slash = str.indexOf('/')
+        if (colon != -1 && slash != -1 && colon < slash) {
+            if (hasWindowsDrive(str)) {
+                None
+            }
+            else {
+                Some(str.substring(0, colon))
+            }
+        }
+        else {
+            None
+        }
+    }
+
     def stripEndSlash(str: String) : String = {
         val colon = str.indexOf(':')
         val slash = str.lastIndexOf('/')
@@ -109,7 +125,8 @@ case class FileSystem(conf:Configuration) {
         }
 
         if (scheme == "jar") {
-            resource(new URI(path))
+            val jar = path.substring(colon + 1)
+            resource(new URI("jar:" + Paths.get(jar).toUri.toString))
         }
         else {
             file(new Path(path))

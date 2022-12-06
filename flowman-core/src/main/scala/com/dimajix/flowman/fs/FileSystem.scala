@@ -28,6 +28,7 @@ import org.apache.hadoop.fs.Path
 
 import com.dimajix.common.Resources
 import com.dimajix.flowman.fs.FileSystem.SEPARATOR
+import com.dimajix.flowman.fs.FileSystem.getProtocol
 import com.dimajix.flowman.fs.FileSystem.stripProtocol
 import com.dimajix.flowman.fs.FileSystem.stripSlash
 
@@ -126,7 +127,9 @@ case class FileSystem(conf:Configuration) {
 
         if (scheme == "jar") {
             val jar = path.substring(colon + 1)
-            resource(new URI("jar:" + Paths.get(jar).toUri.toString))
+            val protocol = getProtocol(jar).filter(_ != "file").map(_ + ":").getOrElse("")
+            val jarPath = stripProtocol(jar)
+            resource(new URI("jar:" + Paths.get(protocol + jarPath).toUri.toString))
         }
         else {
             file(new Path(path))

@@ -12,6 +12,7 @@
 * github-293: Fatal exceptions in parallel mapping instantiation cause deadlock
 * github-273: Support projects contained in (fat) jar files 
 * github-294: Parallel execution should not execute more targets after errors
+* github-295: Create build profile for CDP 7.1 with Spark 3.2
 
 
 # Version 0.29.0 - 2022-11-08

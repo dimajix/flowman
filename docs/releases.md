@@ -14,10 +14,21 @@ The following gives an (incomplete) list of past releases of the last 12 months.
 changes over time.
 
 
-### Version 0.29.1
+### Version 0.30.0
 
 * github-278: Parallelize execution of data quality checks
 * github-282: Improve implementation for counting records
+* github-288: Support reading local CSV files from fatjar
+* github-290: Simplify specifying project name in fatjar
+* github-291: Simplify create/destroy Relation interface
+* github-292: Upgrade AWS EMR to 6.9
+* github-289: Color log output via log4j configuration (requires log4j 2.x)
+* Bump postgresql from 42.4.1 to 42.4.3 in /flowman-plugins/postgresql
+* Bump loader-utils from 1.4.0 to 1.4.2
+* github-293: Fatal exceptions in parallel mapping instantiation cause deadlock
+* github-273: Support projects contained in (fat) jar files
+* github-294: Parallel execution should not execute more targets after errors
+* github-295: Create build profile for CDP 7.1 with Spark 3.2
 
 
 ### Version 0.29.0 - 2022-11-08

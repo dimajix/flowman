@@ -18,14 +18,19 @@ package com.dimajix.flowman.execution
 
 import java.time.Instant
 
+import scala.concurrent.Await
+import scala.concurrent.Promise
+import scala.concurrent.duration.Duration
+import scala.util.Success
+
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetDigest
+import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -94,7 +99,7 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
 
     it should "stop on failures" in {
         val session = Session.builder()
-            .withConfig(FlowmanConf.EXECUTION_EXECUTOR_PARALLELISM.key, 2)
+            .withConfig(FlowmanConf.EXECUTION_EXECUTOR_PARALLELISM.key, 4)
             .disableSpark()
             .build()
         val context = session.context
@@ -110,14 +115,15 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         (t1.before _).expects().atLeastOnce().returns(Seq())
         (t1.after _).expects().atLeastOnce().returns(Seq())
         (t1.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
-        (t1.execute _).expects(*, Phase.BUILD).returns {
+        (t1.execute _).expects(*, Phase.BUILD).onCall { (_,_) =>
+            // This future should start only after t3 has been started. Otherwise tests will be flaky
             Thread.sleep(1000)
             TargetResult(t1, Phase.BUILD, Status.FAILED, start).copy(endTime = start)
         }
 
         val t2 = mock[Target]
         (t2.identifier _).expects().atLeastOnce().returns(TargetIdentifier("t2", "default"))
-        (t2.name _).expects().atLeastOnce().returns("t2")
+        //(t2.name _).expects().atLeastOnce().returns("t2")
         (t2.requires _).expects(*).atLeastOnce().returns(Set())
         (t2.provides _).expects(*).atLeastOnce().returns(Set())
         (t2.before _).expects().atLeastOnce().returns(Seq())
@@ -133,14 +139,14 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         (t3.before _).expects().atLeastOnce().returns(Seq())
         (t3.after _).expects().atLeastOnce().returns(Seq())
         (t3.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
-        (t3.execute _).expects(*, Phase.BUILD).returns {
+        (t3.execute _).expects(*, Phase.BUILD).onCall { (_,_) =>
             Thread.sleep(2000)
             TargetResult(t3, Phase.BUILD, Status.SUCCESS, start).copy(endTime = start)
         }
 
         val t4 = mock[Target]
         (t4.identifier _).expects().atLeastOnce().returns(TargetIdentifier("t4", "default"))
-        (t4.name _).expects().atLeastOnce().returns("t4")
+        //(t4.name _).expects().atLeastOnce().returns("t4")
         (t4.requires _).expects(*).atLeastOnce().returns(Set())
         (t4.provides _).expects(*).atLeastOnce().returns(Set())
         (t4.before _).expects().atLeastOnce().returns(Seq())
@@ -179,7 +185,7 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         (t1.before _).expects().atLeastOnce().returns(Seq())
         (t1.after _).expects().atLeastOnce().returns(Seq())
         (t1.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
-        (t1.execute _).expects(*, Phase.BUILD).returns {
+        (t1.execute _).expects(*, Phase.BUILD).onCall { (_,_) =>
             Thread.sleep(1000)
             TargetResult(t1, Phase.BUILD, Status.FAILED, start).copy(endTime = start)
         }
@@ -193,7 +199,7 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         (t2.before _).expects().atLeastOnce().returns(Seq())
         (t2.after _).expects().atLeastOnce().returns(Seq(TargetIdentifier("t1", "default")))
         (t2.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
-        (t2.execute _).expects(*, Phase.BUILD).returns {
+        (t2.execute _).expects(*, Phase.BUILD).onCall { (_,_) =>
             Thread.sleep(500)
             TargetResult(t2, Phase.BUILD, Status.SUCCESS, start).copy(endTime = start)
         }
@@ -207,7 +213,7 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         (t3.before _).expects().atLeastOnce().returns(Seq())
         (t3.after _).expects().atLeastOnce().returns(Seq())
         (t3.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
-        (t3.execute _).expects(*, Phase.BUILD).returns {
+        (t3.execute _).expects(*, Phase.BUILD).onCall { (_,_) =>
             Thread.sleep(2000)
             TargetResult(t3, Phase.BUILD, Status.SUCCESS, start).copy(endTime = start)
         }
@@ -221,7 +227,7 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         (t4.before _).expects().atLeastOnce().returns(Seq())
         (t4.after _).expects().atLeastOnce().returns(Seq())
         (t4.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
-        (t4.execute _).expects(*, Phase.BUILD).returns {
+        (t4.execute _).expects(*, Phase.BUILD).onCall { (_,_) =>
             Thread.sleep(500)
             TargetResult(t4, Phase.BUILD, Status.SUCCESS, start).copy(endTime = start)
         }

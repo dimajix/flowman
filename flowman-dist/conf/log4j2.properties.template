@@ -22,7 +22,7 @@ appender.console.type = Console
 appender.console.name = console
 appender.console.target = SYSTEM_ERR
 appender.console.layout.type = PatternLayout
-appender.console.layout.pattern = [%p] %m%n
+appender.console.layout.pattern = [%highlight{%p}{FATAL=bright red, ERROR=bright red, WARN=bright yellow, INFO=bright blue, DEBUG=blue, TRACE=blue}] %m%n
 
 # Flowman logging
 logger.flowman.name = com.dimajix.flowman

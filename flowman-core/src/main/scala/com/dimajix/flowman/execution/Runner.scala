@@ -231,6 +231,9 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         logger.info(separator)
         logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.name}'$prj $iso")
 
+        def targetFilter(target:Target) : Boolean = targets.exists(_.unapplySeq(target.name).nonEmpty)
+        def dirtyFilter(target:Target) : Boolean = dirtyTargets.exists(_.unapplySeq(target.name).nonEmpty)
+
         val startTime = Instant.now()
         runner.withExecution(isolated2) { execution =>
             runner.withJobContext(job, args, Some(execution), force, dryRun, isolated2) { (context, arguments) =>
@@ -245,7 +248,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                                 .filter(target => targets.exists(_.unapplySeq(target.name).nonEmpty))
                                 .exists { target =>
                                     // This might throw exceptions for non-existing targets. The same
-                                    // exception will be thrown and handeled properly in executeJobPhase
+                                    // exception will be thrown and handled properly in executeJobPhase
                                     try {
                                         context.getTarget(target).phases.contains(phase)
                                     } catch {
@@ -254,7 +257,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                                 }
 
                             if (isActive)
-                                Some(executeJobPhase(execution, context, job, phase, arguments, targets, dirtyTargets, force=force, keepGoing=keepGoing, dryRun=dryRun, ignoreHistory=ignoreHistory))
+                                Some(executeJobPhase(execution, context, job, phase, arguments, targetFilter, dirtyFilter, force=force, keepGoing=keepGoing, dryRun=dryRun, ignoreHistory=ignoreHistory))
                             else
                                 None
                         }
@@ -275,8 +278,8 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         jobContext:Context,
         job:Job, phase:Phase,
         arguments:Map[String,Any],
-        targets:Seq[Regex],
-        dirtyTargets:Seq[Regex],
+        targets:Target => Boolean,
+        dirtyTargets:Target => Boolean,
         force:Boolean,
         keepGoing:Boolean,
         dryRun:Boolean,
@@ -321,7 +324,16 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @param token
      * @return
      */
-    private def executeJobTargets(execution:Execution, context:Context, job:Job, phase:Phase, targets:Seq[Regex], dirtyTargets:Seq[Regex], force:Boolean, keepGoing:Boolean, dryRun:Boolean, ignoreHistory:Boolean) : Seq[TargetResult] = {
+    private def executeJobTargets(
+        execution:Execution,
+        context:Context,
+        job:Job, phase:Phase,
+        targets:Target => Boolean,
+        dirtyTargets:Target => Boolean,
+        force:Boolean,
+        keepGoing:Boolean,
+        dryRun:Boolean,
+        ignoreHistory:Boolean) : Seq[TargetResult] = {
         require(phase != null)
 
         // This will throw an exception if instantiation fails
@@ -331,13 +343,10 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         val ctor = clazz.getDeclaredConstructor()
         val executor = ctor.newInstance()
 
-        def targetFilter(target:Target) : Boolean =
-            target.phases.contains(phase) && targets.exists(_.unapplySeq(target.name).nonEmpty)
-
         val dirtyManager = new DirtyTargets(jobTargets, phase)
         dirtyManager.taint(dirtyTargets)
 
-        executor.execute(execution, context, phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
+        executor.execute(execution, context, phase, jobTargets, targets, keepGoing) { (execution, target, phase) =>
             val sc = execution.spark.sparkContext
             withJobGroup(sc, target.name, s"$phase target ${target.identifier}") {
                 val dirty = dirtyManager.isDirty(target)
@@ -543,10 +552,7 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
         val ctor = clazz.getDeclaredConstructor()
         val executor = ctor.newInstance()
 
-        def targetFilter(target:Target) : Boolean =
-            target.phases.contains(phase)
-
-        executor.execute(execution, context, phase, targets, targetFilter, keepGoing) { (execution, target, phase) =>
+        executor.execute(execution, context, phase, targets, _ => true, keepGoing) { (execution, target, phase) =>
             val sc = execution.spark.sparkContext
             withJobGroup(sc, target.name, s"$phase target ${target.identifier}") {
                 executeTestTargetPhase(execution, target, phase, dryRun)

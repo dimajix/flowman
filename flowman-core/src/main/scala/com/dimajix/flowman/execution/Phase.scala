@@ -83,3 +83,25 @@ object Lifecycle {
             .head
     }
 }
+
+
+
+sealed abstract class PhaseExecutionPolicy extends Product with Serializable {
+}
+
+object PhaseExecutionPolicy {
+    case object ALWAYS extends PhaseExecutionPolicy
+    case object NEVER extends PhaseExecutionPolicy
+    case object FIRST extends PhaseExecutionPolicy
+    case object LAST extends PhaseExecutionPolicy
+
+    def ofString(status: String): PhaseExecutionPolicy = {
+        status.toLowerCase(Locale.ROOT) match {
+            case "always" => ALWAYS
+            case "never" => NEVER
+            case "first" => FIRST
+            case "last" => LAST
+            case _ => throw new IllegalArgumentException(s"No phase execution policy defined for '$status'")
+        }
+    }
+}

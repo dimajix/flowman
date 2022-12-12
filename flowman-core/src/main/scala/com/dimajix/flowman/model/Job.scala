@@ -22,6 +22,7 @@ import scala.util.matching.Regex
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.PhaseExecutionPolicy
 import com.dimajix.flowman.execution.Runner
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history.NullStateStore
@@ -248,6 +249,10 @@ object Job {
         val parentMetrics = parents
             .flatMap(job => job.metrics)
             .headOption
+        val parentPhases = parents
+            .map(job => job.phases)
+            .filter(_.nonEmpty)
+            .headOption
 
         val allEnvironment = parentEnvironment ++ job.environment
 
@@ -259,13 +264,16 @@ object Job {
 
         val allMetrics = job.metrics.orElse(parentMetrics)
 
+        val allPhases = if (job.phases.isEmpty) parentPhases.getOrElse(job.phases) else job.phases
+
         Job(
             job.instanceProperties,
             allParameters.values.toSeq,
             allEnvironment,
             allTargets,
             allMetrics,
-            allHooks
+            allHooks,
+            allPhases
         )
     }
 }
@@ -277,7 +285,8 @@ final case class Job(
     environment:Map[String,String] = Map.empty,
     targets:Seq[TargetIdentifier] = Seq.empty,
     metrics:Option[Prototype[MetricBoard]] = None,
-    hooks:Seq[Prototype[Hook]] = Seq.empty
+    hooks:Seq[Prototype[Hook]] = Seq.empty,
+    phases:Map[Phase,PhaseExecutionPolicy] = Map.empty
 ) extends AbstractInstance {
     override type PropertiesType = Job.Properties
 

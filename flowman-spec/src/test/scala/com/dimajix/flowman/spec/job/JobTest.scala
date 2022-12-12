@@ -23,6 +23,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.PhaseExecutionPolicy
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.metric.MetricSink
@@ -398,6 +399,31 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
             "force" -> false,
             "dryRun" -> false)
         )
+    }
+
+    it should "support phases" in {
+        val spec =
+            """
+              |jobs:
+              |  main:
+              |    phases:
+              |      validate: first
+              |      create: always
+              |      build: last
+              |      verify: never
+              |""".stripMargin
+
+        val project  = Module.read.string(spec).toProject("default")
+        val session = Session.builder().disableSpark().build()
+        val context = session.getContext(project)
+
+        val job = project.jobs("main").instantiate(context)
+        job.phases should be (Map(
+            Phase.VALIDATE -> PhaseExecutionPolicy.FIRST,
+            Phase.CREATE -> PhaseExecutionPolicy.ALWAYS,
+            Phase.BUILD -> PhaseExecutionPolicy.LAST,
+            Phase.VERIFY -> PhaseExecutionPolicy.NEVER
+        ))
     }
 
     it should "support metrics" in {

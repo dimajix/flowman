@@ -22,6 +22,13 @@ jobs:
     hooks:
       - kind: web
         jobSuccess: http://0.0.0.0/success&startdate=$URL.encode($start_ts)&enddate=$URL.encode($end_ts)&period=$processing_duration&force=$force
+    phases:
+      validate: first
+      create: first
+      build: always
+      verify: last
+      truncate: always
+      destroy: last
     targets:
       - some_hive_table
       - some_files
@@ -54,6 +61,15 @@ notify external systems (or possibly plugins) about the current execution status
 * `metrics` **(optional)** *(type: list:hook)*:
 A list of metrics that should be published after job execution. See below for more details.
 
+* `phases` **(optional)** *(type: map)*:
+This section provides fine-grained control over when the individual phases are to be executed. This allows to reduce
+the amount of redundant work when a whole (date) range is used for a parameter. Within this section you can explicitly
+state when each phase should be executed:
+  * `always` - this phase will be executed for all parameter instances
+  * `never` - the corresponding phase will never be executed
+  * `first` - only to be executed for the first parameter instance
+  * `first` - only to be executed for the last parameter instance
+Please find more information about this option in the [Cookbook for Execution Phases](../../cookbook/execution-phases.md).
 
 ## Metrics
 

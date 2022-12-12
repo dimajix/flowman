@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.JobCoordinator
 import com.dimajix.flowman.execution.Lifecycle
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
@@ -70,34 +71,8 @@ sealed class PhaseCommand(phase:Phase) extends Command {
                 logger.error(s"Error instantiating job '$job':\n  ${reasons(e)}")
                 Status.FAILED
             case Success(job) =>
-                executeJob(session, job, job.parseArguments(args))
-        }
-    }
-
-    private def executeJob(session: Session, job:Job, args:Map[String,FieldValue]) : Status = {
-        val lifecycle =
-            if (noLifecycle)
-                Seq(phase)
-            else
-                Lifecycle.ofPhase(phase)
-
-        if (parallelism > 1)
-            executeParallel(session, job, args, lifecycle)
-        else
-            executeLinear(session, job, args, lifecycle)
-    }
-
-    private def executeLinear(session: Session, job:Job, args:Map[String,FieldValue], lifecycle: Seq[Phase]) : Status = {
-        Status.ofAll(job.interpolate(args), keepGoing=keepGoing) { args =>
-            val runner = session.runner
-            runner.executeJob(job, lifecycle, args, targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=true)
-        }
-    }
-
-    private def executeParallel(session: Session, job:Job, args:Map[String,FieldValue], lifecycle: Seq[Phase]) : Status = {
-        Status.parallelOfAll(job.interpolate(args).toSeq, parallelism, keepGoing=keepGoing, prefix="JobExecution") { args =>
-            val runner = session.runner
-            runner.executeJob(job, lifecycle, args, targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=true)
+                val coordinator = new JobCoordinator(session, noLifecycle, force, keepGoing, dryRun, parallelism)
+                coordinator.execute(job, phase, job.parseArguments(args), targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r))
         }
     }
 }

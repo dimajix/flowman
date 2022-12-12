@@ -958,7 +958,6 @@
                             <arg>-nobootcp</arg>
                             <arg>-unchecked</arg>
                             <arg>-deprecation</arg>
-                            <arg>-optimize</arg>
                             <arg>-feature</arg>
                             <arg>-explaintypes</arg>
                             <arg>-Yno-adapted-args</arg>

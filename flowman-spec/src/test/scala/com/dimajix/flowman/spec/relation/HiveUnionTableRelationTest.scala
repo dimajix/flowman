@@ -35,8 +35,10 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
+import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
@@ -59,6 +61,16 @@ import com.dimajix.spark.testing.QueryTest
 
 
 class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession with QueryTest {
+    implicit class HiveUnionTableRelationExt(rel: HiveUnionTableRelation) {
+        def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
+            rel.copy(migrationPolicy = Some(policy)).conforms(execution)
+        }
+        def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
+            rel.copy(migrationPolicy = Some(policy), migrationStrategy = Some(strategy)).migrate(execution)
+        }
+    }
+
+
     implicit class Unqoute(str:String) {
         def unqouted : String = str.replace("`", "")
     }
@@ -91,7 +103,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = context.getRelation(RelationIdentifier("t0")).asInstanceOf[HiveUnionTableRelation]
         relation.provides(Operation.CREATE) should be (Set(
             ResourceIdentifier.ofHiveTable("lala", Some("default")),
             ResourceIdentifier.ofHiveTable("lala_[0-9]+", Some("default"))
@@ -357,7 +369,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = context.getRelation(RelationIdentifier("t0")).asInstanceOf[HiveUnionTableRelation]
         relation.provides(Operation.CREATE) should be (Set(
             ResourceIdentifier.ofHiveTable("lala", Some("default")),
             ResourceIdentifier.ofHiveTable("lala_[0-9]+", Some("default"))
@@ -726,7 +738,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation_1 = context.getRelation(RelationIdentifier("t1"))
+        val relation_1 = context.getRelation(RelationIdentifier("t1")).asInstanceOf[HiveUnionTableRelation]
         relation_1.provides(Operation.CREATE) should be (Set(
             ResourceIdentifier.ofHiveTable("lala", Some("default")),
             ResourceIdentifier.ofHiveTable("lala_[0-9]+", Some("default"))
@@ -801,7 +813,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation_1.write(execution, df, Map("partition_col" -> SingleValue("part_1")))
 
         // == Migrate =================================================================================================
-        val relation_2 = context.getRelation(RelationIdentifier("t2"))
+        val relation_2 = context.getRelation(RelationIdentifier("t2")).asInstanceOf[HiveUnionTableRelation]
         relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
@@ -974,7 +986,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation_1 = context.getRelation(RelationIdentifier("t1"))
+        val relation_1 = context.getRelation(RelationIdentifier("t1")).asInstanceOf[HiveUnionTableRelation]
         relation_1.provides(Operation.CREATE) should be (Set(
             ResourceIdentifier.ofHiveTable("lala", Some("default")),
             ResourceIdentifier.ofHiveTable("lala_[0-9]+", Some("default"))
@@ -1049,7 +1061,7 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation_1.write(execution, df_1, Map("partition_col" -> SingleValue("part_1")))
 
         // == Migrate =================================================================================================
-        val relation_2 = context.getRelation(RelationIdentifier("t2"))
+        val relation_2 = context.getRelation(RelationIdentifier("t2")).asInstanceOf[HiveUnionTableRelation]
         relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)

@@ -30,10 +30,13 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
+import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
@@ -53,6 +56,25 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class H2JdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    implicit class JdbcViewRelationExt(rel: JdbcViewRelation) {
+        def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
+            rel.copy(migrationPolicy = Some(policy)).conforms(execution)
+        }
+        def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
+            rel.copy(migrationPolicy = Some(policy), migrationStrategy = Some(strategy)).migrate(execution)
+        }
+    }
+
+    implicit class JdbcTableRelationExt(rel: JdbcTableRelation) {
+        def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
+            rel.copy(migrationPolicy = Some(policy)).conforms(execution)
+        }
+        def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
+            rel.copy(migrationPolicy = Some(policy), migrationStrategy = Some(strategy)).migrate(execution)
+        }
+    }
+
+
     private def db: Path = tempDir.toPath.resolve("mydb")
     private def url : String = "jdbc:h2:" + db
     private def driver : String = "org.h2.Driver"

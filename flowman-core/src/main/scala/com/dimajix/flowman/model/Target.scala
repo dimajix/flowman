@@ -95,10 +95,10 @@ object Target {
     final case class Properties(
         context:Context,
         metadata:Metadata,
-        before: Seq[TargetIdentifier],
-        after: Seq[TargetIdentifier],
+        before:Seq[TargetIdentifier],
+        after:Seq[TargetIdentifier],
         description:Option[String],
-        documentation: Option[TargetDoc]
+        documentation:Option[TargetDoc]
     ) extends model.Properties[Properties] {
         require(metadata.category == Category.TARGET.lower)
         require(metadata.namespace == context.namespace.map(_.name))

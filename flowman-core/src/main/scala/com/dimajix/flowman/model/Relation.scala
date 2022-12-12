@@ -44,9 +44,9 @@ import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model
+import com.dimajix.flowman.transforms.CharVarcharPolicy
 import com.dimajix.flowman.transforms.ColumnMismatchPolicy
 import com.dimajix.flowman.transforms.SchemaEnforcer
-import com.dimajix.flowman.transforms.CharVarcharPolicy
 import com.dimajix.flowman.transforms.TypeMismatchPolicy
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
@@ -243,7 +243,7 @@ trait Relation extends Instance {
      * @param execution
      * @return
      */
-    def conforms(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED) : Trilean
+    def conforms(execution:Execution) : Trilean
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
@@ -273,7 +273,7 @@ trait Relation extends Instance {
       * This will update any existing relation to the specified metadata.
       * @param execution
       */
-    def migrate(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED, migrationStrategy:MigrationStrategy=MigrationStrategy.ALTER) : Unit
+    def migrate(execution:Execution) : Unit
 
     /**
      * Creates all known links for building a descriptive graph of the whole data flow
@@ -661,4 +661,16 @@ trait SchemaRelation { this: Relation =>
      * @return
      */
     override def schema : Option[Schema]
+}
+
+
+trait MigratableRelation { this: Relation =>
+    def migrationPolicy : Option[MigrationPolicy]
+    def migrationStrategy : Option[MigrationStrategy]
+
+    protected lazy val effectiveMigrationPolicy : MigrationPolicy =
+        migrationPolicy.getOrElse(MigrationPolicy.ofString(context.flowmanConf.getConf(FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY)))
+
+    protected lazy val effectiveMigrationStrategy: MigrationStrategy =
+        migrationStrategy.getOrElse(MigrationStrategy.ofString(context.flowmanConf.getConf(FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY)))
 }

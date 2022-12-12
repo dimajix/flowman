@@ -24,8 +24,6 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.MigrationPolicy
-import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
@@ -132,7 +130,7 @@ case class GenericRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = Unknown
+    override def conforms(execution: Execution): Trilean = Unknown
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
@@ -158,7 +156,7 @@ case class GenericRelation(
      *
      * @param execution
      */
-    override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {}
+    override def migrate(execution:Execution) : Unit = {}
 
     /**
      * Removes one or more partitions.

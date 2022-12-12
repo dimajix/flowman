@@ -25,8 +25,6 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.MigrationPolicy
-import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
@@ -42,8 +40,6 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.sql.DataFrameBuilder
-import com.dimajix.spark.sql.DataFrameUtils
-import com.dimajix.spark.sql.SchemaUtils
 
 
 case class MockRelation(
@@ -140,7 +136,7 @@ case class MockRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = true
+    override def conforms(execution: Execution): Trilean = true
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
@@ -184,7 +180,7 @@ case class MockRelation(
      *
      * @param execution
      */
-    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {}
+    override def migrate(execution: Execution): Unit = {}
 
     /**
      * Returns the schema of the relation, excluding partition columns

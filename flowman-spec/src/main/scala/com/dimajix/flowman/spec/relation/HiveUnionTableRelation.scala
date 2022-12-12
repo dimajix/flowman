@@ -28,7 +28,6 @@ import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
-import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
@@ -42,6 +41,7 @@ import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.fs.HadoopUtils
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
+import com.dimajix.flowman.model.MigratableRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.flowman.model.PartitionedRelation
@@ -49,8 +49,8 @@ import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.model.SchemaRelation
-import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.transforms.CharVarcharPolicy
+import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.transforms.UnionTransformer
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -75,19 +75,21 @@ object HiveUnionTableRelation {
 case class HiveUnionTableRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
-    override val partitions: Seq[PartitionField] = Seq(),
+    override val partitions: Seq[PartitionField] = Seq.empty,
     tablePrefix: TableIdentifier,
     locationPrefix: Option[Path] = None,
     view: TableIdentifier,
     external: Boolean = false,
     format: Option[String] = None,
-    options: Map[String,String] = Map(),
+    options: Map[String,String] = Map.empty,
     rowFormat: Option[String] = None,
     inputFormat: Option[String] = None,
     outputFormat: Option[String] = None,
-    properties: Map[String, String] = Map(),
-    serdeProperties: Map[String, String] = Map()
-)  extends BaseRelation with SchemaRelation with PartitionedRelation {
+    properties: Map[String, String] = Map.empty,
+    serdeProperties: Map[String, String] = Map.empty,
+    override val migrationPolicy: Option[MigrationPolicy] = None,
+    override val migrationStrategy: Option[MigrationStrategy] = None
+)  extends BaseRelation with SchemaRelation with PartitionedRelation with MigratableRelation {
     private val logger = LoggerFactory.getLogger(classOf[HiveUnionTableRelation])
 
     private lazy val tableRegex : TableIdentifier = {
@@ -142,8 +144,9 @@ case class HiveUnionTableRelation(
             instanceProperties,
             view,
             partitions,
-            Some(sql),
-            None
+            sql = Some(sql),
+            migrationStrategy = Some(MigrationStrategy.ALTER),
+            migrationPolicy = Some(MigrationPolicy.RELAXED)
         )
     }
 
@@ -358,7 +361,7 @@ case class HiveUnionTableRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+    override def conforms(execution: Execution): Trilean = {
         val catalog = execution.catalog
         if (catalog.tableExists(viewIdentifier)) {
             val catalog = execution.catalog
@@ -406,7 +409,7 @@ case class HiveUnionTableRelation(
             }
             else {
                 val hiveViewRelation = viewRelationFromTables(execution)
-                hiveViewRelation.conforms(execution, MigrationPolicy.RELAXED)
+                hiveViewRelation.conforms(execution)
             }
         } else {
             false
@@ -463,7 +466,7 @@ case class HiveUnionTableRelation(
       *
       * @param execution
       */
-    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {
+    override def migrate(execution: Execution): Unit = {
         require(execution != null)
 
         val catalog = execution.catalog
@@ -494,22 +497,22 @@ case class HiveUnionTableRelation(
 
                 val missingFields = sourceSchema.filterNot(f => targetFields.contains(f.name))
                 if (missingFields.nonEmpty) {
-                    doMigrateAlterTable(execution, table, missingFields, migrationStrategy)
+                    doMigrateAlterTable(execution, table, missingFields)
                 }
 
             case None =>
                 // 3. If not found:
                 //  3.2 Create new table
-                doMigrateNewTable(execution, allTables, migrationStrategy)
+                doMigrateNewTable(execution, allTables)
         }
 
         //  4 Always migrate union view, maybe SQL generator changed
         val hiveViewRelation = viewRelationFromTables(execution)
-        hiveViewRelation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        hiveViewRelation.migrate(execution)
     }
 
-    private def doMigrate(migrationStrategy:MigrationStrategy)(alter: => Unit) : Unit = {
-        migrationStrategy match {
+    private def doMigrate(execution:Execution)(alter: => Unit) : Unit = {
+        effectiveMigrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for HiveUnionTable relation '$identifier' of Hive union table $viewIdentifier, but migrations are disabled.")
             case MigrationStrategy.FAIL =>
@@ -523,8 +526,8 @@ case class HiveUnionTableRelation(
         }
     }
 
-    private def doMigrateAlterTable(execution:Execution, table:CatalogTable, missingFields:Seq[StructField], migrationStrategy:MigrationStrategy) : Unit = {
-        doMigrate(migrationStrategy) {
+    private def doMigrateAlterTable(execution:Execution, table:CatalogTable, missingFields:Seq[StructField]) : Unit = {
+        doMigrate(execution) {
             val catalog = execution.catalog
             val id = TableIdentifier.of(table.identifier)
             val targetSchema = table.dataSchema
@@ -534,8 +537,8 @@ case class HiveUnionTableRelation(
         }
     }
 
-    private def doMigrateNewTable(execution:Execution, allTables:Seq[TableIdentifier], migrationStrategy:MigrationStrategy) : Unit = {
-        doMigrate(migrationStrategy) {
+    private def doMigrateNewTable(execution:Execution, allTables:Seq[TableIdentifier]) : Unit = {
+        doMigrate(execution) {
             val tableSet = allTables.toSet
             val version = (1 to 100000).find(n => !tableSet.contains(tableIdentifier(n))).get
             logger.info(s"Migrating Hive Union Table relation '$identifier' by creating new Hive table ${tableIdentifier(version)}")
@@ -548,7 +551,7 @@ case class HiveUnionTableRelation(
 
 
 
-class HiveUnionTableRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
+class HiveUnionTableRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec with MigratableRelationSpec {
     @JsonProperty(value = "tableDatabase", required = false) private var tableDatabase: Option[String] = None
     @JsonProperty(value = "tablePrefix", required = true) private var tablePrefix: String = "zz"
     @JsonProperty(value = "locationPrefix", required = false) private var locationPrefix: Option[String] = None
@@ -583,7 +586,9 @@ class HiveUnionTableRelationSpec extends RelationSpec with SchemaRelationSpec wi
             context.evaluate(inputFormat),
             context.evaluate(outputFormat),
             context.evaluate(properties),
-            context.evaluate(serdeProperties)
+            context.evaluate(serdeProperties),
+            context.evaluate(migrationPolicy).map(MigrationPolicy.ofString),
+            context.evaluate(migrationStrategy).map(MigrationStrategy.ofString)
         )
     }
 }

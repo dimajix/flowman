@@ -52,6 +52,8 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableType
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -62,6 +64,7 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.fs.HadoopUtils
 import com.dimajix.flowman.jdbc.HiveDialect
+import com.dimajix.flowman.model.MigratableRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.flowman.model.Relation
@@ -83,19 +86,21 @@ object HiveTableRelation {
 case class HiveTableRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
-    override val partitions: Seq[PartitionField] = Seq(),
+    override val partitions: Seq[PartitionField] = Seq.empty,
     override val table: TableIdentifier,
     external: Boolean = false,
     location: Option[Path] = None,
     format: Option[String] = None,
-    options: Map[String,String] = Map(),
+    options: Map[String,String] = Map.empty,
     rowFormat: Option[String] = None,
     inputFormat: Option[String] = None,
     outputFormat: Option[String] = None,
-    properties: Map[String, String] = Map(),
-    serdeProperties: Map[String, String] = Map(),
-    writer: String = "hive"
-) extends HiveRelation with SchemaRelation {
+    properties: Map[String, String] = Map.empty,
+    serdeProperties: Map[String, String] = Map.empty,
+    writer: String = "hive",
+    override val migrationPolicy: Option[MigrationPolicy] = None,
+    override val migrationStrategy: Option[MigrationStrategy] = None
+) extends HiveRelation with SchemaRelation with MigratableRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
     private val resource = ResourceIdentifier.ofHiveTable(table)
 
@@ -336,7 +341,7 @@ case class HiveTableRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+    override def conforms(execution: Execution): Trilean = {
         val catalog = execution.catalog
         if (catalog.tableExists(table)) {
             fullSchema match {
@@ -355,7 +360,7 @@ case class HiveTableRelation(
                             partitionColumnNames = partitions.map(_.name)
                         )
 
-                        !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
+                        !TableChange.requiresMigration(sourceTable, targetTable, effectiveMigrationPolicy)
                     }
                 case None =>
                     true
@@ -504,7 +509,7 @@ case class HiveTableRelation(
       * Performs migration of a Hive table by adding new columns
       * @param execution
       */
-    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {
+    override def migrate(execution: Execution): Unit = {
         require(execution != null)
 
         val catalog = execution.catalog
@@ -512,16 +517,16 @@ case class HiveTableRelation(
             val curTable = catalog.getTable(table)
             // Check if current table is a VIEW or a TABLE
             if (curTable.tableType == CatalogTableType.VIEW) {
-                migrateFromView(execution, migrationStrategy)
+                migrateFromView(execution)
             }
             else {
-                migrateFromTable(execution, curTable, migrationPolicy, migrationStrategy)
+                migrateFromTable(execution, curTable)
             }
         }
     }
 
-    private def migrateFromView(execution:Execution, migrationStrategy:MigrationStrategy) : Unit = {
-        migrationStrategy match {
+    private def migrateFromView(execution:Execution) : Unit = {
+        effectiveMigrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for HiveTable relation '$identifier' from VIEW to a TABLE ${table}, but migrations are disabled.")
             case MigrationStrategy.FAIL =>
@@ -536,7 +541,7 @@ case class HiveTableRelation(
         }
     }
 
-    private def migrateFromTable(execution:Execution, curTable:CatalogTable, migrationPolicy:MigrationPolicy,  migrationStrategy:MigrationStrategy) : Unit = {
+    private def migrateFromTable(execution:Execution, curTable:CatalogTable) : Unit = {
         val sourceTable = TableDefinition.ofTable(curTable)
         val targetSchema =  com.dimajix.flowman.types.StructType(fullSchema.get.fields)
         val targetTable = TableDefinition(
@@ -546,21 +551,21 @@ case class HiveTableRelation(
             partitionColumnNames = partitions.map(_.name)
         )
 
-        val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
+        val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, effectiveMigrationPolicy)
         if (requiresMigration) {
-            doMigration(execution, sourceTable, targetTable, migrationPolicy, migrationStrategy)
+            doMigration(execution, sourceTable, targetTable)
         }
     }
 
-    private def doMigration(execution: Execution, currentTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
-        migrationStrategy match {
+    private def doMigration(execution: Execution, currentTable:TableDefinition, targetTable:TableDefinition) : Unit = {
+        effectiveMigrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for HiveTable relation '$identifier' of Hive table $table, but migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
             case MigrationStrategy.FAIL =>
                 logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $table, since migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                 throw new MigrationFailedException(identifier)
             case MigrationStrategy.ALTER =>
-                val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
+                val migrations = TableChange.migrate(currentTable, targetTable, effectiveMigrationPolicy)
                 if (migrations.exists(m => !supported(m))) {
                     val unsupportedChanges = migrations.filter(m => !supported(m))
                     logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $table, since that would require unsupported changes.\n" +
@@ -572,7 +577,7 @@ case class HiveTableRelation(
                 }
                 alter(migrations)
             case MigrationStrategy.ALTER_REPLACE =>
-                val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
+                val migrations = TableChange.migrate(currentTable, targetTable, effectiveMigrationPolicy)
                 if (migrations.forall(m => supported(m))) {
                     alter(migrations)
                 }
@@ -681,7 +686,7 @@ case class HiveTableRelation(
 
 
 
-class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
+class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec with MigratableRelationSpec {
     @JsonProperty(value = "database", required = false) private var database: Option[String] = None
     @JsonProperty(value = "table", required = true) private var table: String = ""
     @JsonProperty(value = "external", required = false) private var external: String = "false"
@@ -715,7 +720,9 @@ class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
             context.evaluate(outputFormat),
             context.evaluate(properties),
             context.evaluate(serdeProperties),
-            context.evaluate(writer).toLowerCase(Locale.ROOT)
+            context.evaluate(writer).toLowerCase(Locale.ROOT),
+            context.evaluate(migrationPolicy).map(MigrationPolicy.ofString),
+            context.evaluate(migrationStrategy).map(MigrationStrategy.ofString)
         )
     }
 }

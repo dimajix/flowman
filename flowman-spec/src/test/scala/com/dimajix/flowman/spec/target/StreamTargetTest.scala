@@ -162,7 +162,7 @@ class StreamTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         target.execute(execution, Phase.CREATE)
         output.exists(execution) should be (Yes)
         output.loaded(execution) should be (No)
-        target.dirty(execution, Phase.CREATE) should be (Unknown)
+        target.dirty(execution, Phase.CREATE) should be (No)
         output.read(execution).count() should be (0)
 
         // == Build ==================================================================================================

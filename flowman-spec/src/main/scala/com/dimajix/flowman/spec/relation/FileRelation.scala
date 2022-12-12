@@ -18,9 +18,6 @@ package com.dimajix.flowman.spec.relation
 
 import java.io.FileNotFoundException
 import java.nio.file.FileAlreadyExistsException
-import java.nio.file.FileSystemException
-
-import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
@@ -40,14 +37,11 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.MigrationPolicy
-import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.fs.FileCollector
 import com.dimajix.flowman.fs.HadoopUtils
-import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
@@ -410,7 +404,7 @@ case class FileRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+    override def conforms(execution: Execution): Trilean = {
         exists(execution)
     }
 
@@ -438,7 +432,7 @@ case class FileRelation(
       *
       * @param execution
       */
-    override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+    override def migrate(execution:Execution) : Unit = {
         // TODO: At least check partition changes
     }
 

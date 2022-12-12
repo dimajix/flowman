@@ -38,8 +38,10 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
+import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
@@ -65,6 +67,25 @@ import com.dimajix.spark.testing.QueryTest
 
 
 class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession with QueryTest {
+    implicit class HiveTableRelationExt(rel: HiveTableRelation) {
+        def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
+            rel.copy(migrationPolicy = Some(policy)).conforms(execution)
+        }
+        def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
+            rel.copy(migrationPolicy = Some(policy), migrationStrategy = Some(strategy)).migrate(execution)
+        }
+    }
+
+    implicit class HiveViewRelationExt(rel: HiveViewRelation) {
+        def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
+            rel.copy(migrationPolicy = Some(policy)).conforms(execution)
+        }
+        def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
+            rel.copy(migrationPolicy = Some(policy), migrationStrategy = Some(strategy)).migrate(execution)
+        }
+    }
+
+
     "The HiveTableRelation" should "support create" in {
         val spec =
             """
@@ -89,7 +110,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = context.getRelation(RelationIdentifier("t0")).asInstanceOf[HiveTableRelation]
         relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("lala_0001", Some("default"))))
         relation.requires(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
         relation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofHivePartition("lala_0001", Some("default"), Map())))
@@ -181,10 +202,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation = context.getRelation(RelationIdentifier("t0"))
-
-        val hiveRelation = relation.asInstanceOf[HiveTableRelation]
-        hiveRelation.location should be (Some(new Path(location.toURI)))
+        val relation = context.getRelation(RelationIdentifier("t0")).asInstanceOf[HiveTableRelation]
+        relation.location should be (Some(new Path(location.toURI)))
 
         // == Create ==================================================================================================
         location.exists() should be (false)
@@ -251,7 +270,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = context.getRelation(RelationIdentifier("t0")).asInstanceOf[HiveTableRelation]
         relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("lala_0003", Some("default"))))
         relation.requires(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveDatabase("default")))
         relation.provides(Operation.WRITE) should be (Set(ResourceIdentifier.ofHivePartition("lala_0003", Some("default"), Map())))
@@ -669,7 +688,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = context.getRelation(RelationIdentifier("t0")).asInstanceOf[HiveTableRelation]
 
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0010"))
@@ -767,7 +786,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = context.getRelation(RelationIdentifier("t0")).asInstanceOf[HiveTableRelation]
 
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0011"))
@@ -854,7 +873,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = context.getRelation(RelationIdentifier("t0")).asInstanceOf[HiveTableRelation]
 
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
@@ -1465,7 +1484,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation_1 = context.getRelation(RelationIdentifier("t1"))
+        val relation_1 = context.getRelation(RelationIdentifier("t1")).asInstanceOf[HiveTableRelation]
         relation_1.fields should be(Seq(
             Field("str_col", ftypes.StringType),
             Field("int_col", ftypes.IntegerType),
@@ -1496,7 +1515,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         table.partitionSchema should be (StructType(Nil))
 
         // == Write ===================================================================================================
-        val relation_2 = context.getRelation(RelationIdentifier("t2"))
+        val relation_2 = context.getRelation(RelationIdentifier("t2")).asInstanceOf[HiveTableRelation]
         relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation_2.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         val schema = StructType(Seq(
@@ -1663,7 +1682,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val execution = session.execution
         val context = session.getContext(project)
 
-        val relation_1 = context.getRelation(RelationIdentifier("t1"))
+        val relation_1 = context.getRelation(RelationIdentifier("t1")).asInstanceOf[HiveTableRelation]
         relation_1.fields should be(
             Field("str_col", ftypes.StringType) ::
             Field("int_col", ftypes.IntegerType) ::
@@ -1708,7 +1727,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation_1.write(execution, df, Map("partition_col" -> SingleValue("part_1")))
 
         // == Migrate =================================================================================================
-        val relation_2 = context.getRelation(RelationIdentifier("t2"))
+        val relation_2 = context.getRelation(RelationIdentifier("t2")).asInstanceOf[HiveTableRelation]
         relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation_2.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)

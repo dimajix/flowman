@@ -60,12 +60,14 @@ import com.dimajix.flowman.types.SingleValue
 case class DeltaTableRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
-    override val partitions: Seq[PartitionField] = Seq(),
+    override val partitions: Seq[PartitionField] = Seq.empty,
     table: TableIdentifier,
     location: Option[Path] = None,
-    options: Map[String,String] = Map(),
-    properties: Map[String, String] = Map(),
-    mergeKey: Seq[String] = Seq()
+    options: Map[String,String] = Map.empty,
+    properties: Map[String, String] = Map.empty,
+    mergeKey: Seq[String] = Seq.empty,
+    override val migrationPolicy: Option[MigrationPolicy] = None,
+    override val migrationStrategy: Option[MigrationStrategy] = None
 ) extends DeltaRelation(options, mergeKey) {
     private val logger = LoggerFactory.getLogger(classOf[DeltaTableRelation])
     protected val resource = ResourceIdentifier.ofHiveTable(table)
@@ -217,7 +219,7 @@ case class DeltaTableRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+    override def conforms(execution: Execution): Trilean = {
         val catalog = execution.catalog
         if (catalog.tableExists(table)) {
             fullSchema match {
@@ -242,7 +244,7 @@ case class DeltaTableRelation(
                             columns = targetSchema.fields,
                             partitionColumnNames = partitions.map(_.name)
                         )
-                        !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
+                        !TableChange.requiresMigration(sourceTable, targetTable, effectiveMigrationPolicy)
                     }
                 case None =>
                     true
@@ -356,14 +358,14 @@ case class DeltaTableRelation(
      *
      * @param execution
      */
-    override def migrate(execution: Execution, migrationPolicy: MigrationPolicy, migrationStrategy: MigrationStrategy): Unit = {
+    override def migrate(execution: Execution): Unit = {
         require(execution != null)
 
         val catalog = execution.catalog
         if (catalog.tableExists(table)) {
             val table = catalog.getTable(this.table)
             if (table.tableType == CatalogTableType.VIEW) {
-                migrationStrategy match {
+                effectiveMigrationStrategy match {
                     case MigrationStrategy.NEVER =>
                         logger.warn(s"Migration required for HiveTable relation '$identifier' from VIEW to a TABLE $this.table, but migrations are disabled.")
                     case MigrationStrategy.FAIL =>
@@ -376,7 +378,7 @@ case class DeltaTableRelation(
                 }
             }
             else if (schema.nonEmpty) {
-                migrateInternal(execution, migrationPolicy, migrationStrategy)
+                migrateInternal(execution)
             }
         }
     }

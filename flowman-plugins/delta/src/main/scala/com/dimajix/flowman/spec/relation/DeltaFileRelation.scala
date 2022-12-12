@@ -61,11 +61,13 @@ import com.dimajix.spark.sql.DataFrameUtils.withTempView
 case class DeltaFileRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
-    override val partitions: Seq[PartitionField] = Seq(),
+    override val partitions: Seq[PartitionField] = Seq.empty,
     location: Path,
-    options: Map[String,String] = Map(),
-    properties: Map[String, String] = Map(),
-    mergeKey: Seq[String] = Seq()
+    options: Map[String,String] = Map.empty,
+    properties: Map[String, String] = Map.empty,
+    mergeKey: Seq[String] = Seq.empty,
+    override val migrationPolicy: Option[MigrationPolicy] = None,
+    override val migrationStrategy: Option[MigrationStrategy] = None
 ) extends DeltaRelation(options, mergeKey) {
     protected val logger = LoggerFactory.getLogger(classOf[DeltaFileRelation])
     protected val resource = ResourceIdentifier.ofFile(location)
@@ -224,7 +226,7 @@ case class DeltaFileRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+    override def conforms(execution: Execution): Trilean = {
         if (exists(execution) == Yes) {
             fullSchema match {
                 case Some(fullSchema) =>
@@ -241,7 +243,7 @@ case class DeltaFileRelation(
                         columns = targetSchema.fields,
                         partitionColumnNames = partitions.map(_.name)
                     )
-                    !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
+                    !TableChange.requiresMigration(sourceTable, targetTable, effectiveMigrationPolicy)
                 case None => true
             }
         }
@@ -367,12 +369,12 @@ case class DeltaFileRelation(
      *
      * @param execution
      */
-    override def migrate(execution: Execution, migrationPolicy: MigrationPolicy, migrationStrategy: MigrationStrategy): Unit = {
+    override def migrate(execution: Execution): Unit = {
         require(execution != null)
 
         // Only perform migration when the schema is defined and when the relation actually exists
         if (schema.nonEmpty && exists(execution) == Yes) {
-            migrateInternal(execution, migrationPolicy, migrationStrategy)
+            migrateInternal(execution)
         }
     }
 

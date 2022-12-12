@@ -39,8 +39,6 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Yes
-import com.dimajix.flowman.execution.MigrationPolicy
-import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
@@ -147,13 +145,11 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         // == Create =================================================================================================
         outputPath.toFile.exists() should be (false)
         relation.exists(execution) should be (No)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation.conforms(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
         relation.create(execution)
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         outputPath.toFile.exists() should be (true)
 
@@ -188,8 +184,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map()) should be (Yes)
         relation.truncate(execution)
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         outputPath.toFile.exists() should be (true)
 
@@ -201,8 +196,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map()) should be (No)
         relation.destroy(execution)
         relation.exists(execution) should be (No)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation.conforms(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
         outputPath.toFile.exists() should be (false)
 
@@ -233,13 +227,11 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation.conforms(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
         relation.create(execution)
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
 
         // == Write ==================================================================================================
@@ -270,8 +262,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         // == Destroy ================================================================================================
         relation.destroy(execution)
         relation.exists(execution) should be (No)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation.conforms(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
     }
 
@@ -555,8 +546,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         relation.write(execution, df, Map("p_col" -> SingleValue("2")), OutputMode.OVERWRITE)
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (No)
@@ -610,8 +600,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         relation.write(execution, df, Map("p_col" -> SingleValue("3")), OutputMode.OVERWRITE)
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (Yes)
@@ -638,15 +627,13 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         // ===== Truncate =============================================================================================
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (Yes)
         relation.truncate(execution, Map("p_col" -> SingleValue("2")))
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (Yes)
@@ -659,8 +646,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         // ===== Truncate =============================================================================================
         relation.truncate(execution)
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (No)
@@ -677,8 +663,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         relation.destroy(execution)
         relation.exists(execution) should be (No)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation.conforms(execution) should be (No)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         outputPath.toFile.exists() should be (false)
     }
@@ -728,8 +713,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         relation.create(execution)
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         outputPath.toFile.exists() should be (true)
@@ -757,14 +741,12 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             .withColumnRenamed("_1", "str_col")
             .withColumnRenamed("_2", "int_col")
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         relation.write(execution, df, Map("p_col" -> SingleValue("2")), OutputMode.OVERWRITE)
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (No)
@@ -819,8 +801,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         relation.write(execution, df, Map("p_col" -> SingleValue("3")), OutputMode.OVERWRITE)
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (Yes)
@@ -832,15 +813,13 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         // ===== Truncate =============================================================================================
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (Yes)
         relation.truncate(execution, Map("p_col" -> SingleValue("2")))
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (Yes)
@@ -853,8 +832,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         // ===== Truncate =============================================================================================
         relation.truncate(execution)
         relation.exists(execution) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.conforms(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("p_col" -> SingleValue("3"))) should be (No)
@@ -871,8 +849,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         relation.destroy(execution)
         relation.exists(execution) should be (No)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation.conforms(execution) should be (No)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         outputPath.toFile.exists() should be (false)
     }
@@ -955,7 +932,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         // == Create =================================================================================================
         relation.exists(execution) should be(Yes)
         a[FileAlreadyExistsException] should be thrownBy (relation.create(execution))
-        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation.migrate(execution)
 
         relation.exists(execution) should be(Yes)
         //relation.loaded(execution) should be (Yes)
@@ -1094,7 +1071,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         //relation.loaded(execution) should be (Yes)
         relation.loaded(execution, Map("month" -> SingleValue("1"))) should be (Yes)
         relation.loaded(execution, Map("month" -> SingleValue("3"))) should be (No)
-        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation.migrate(execution)
 
         val df1 = relation.read(execution, Map("month" -> SingleValue("1")))
         df1.as[(String,Int)].collect().sorted should be (Seq(

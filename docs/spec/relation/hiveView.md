@@ -95,9 +95,17 @@ WHERE rank = 1
  Specifies the name of a mapping, which should be translated into SQL and stored in the Hive view. Cannot be used
  together with `sql` or `file`.
 
+* `migrationPolicy` **(optional)** *(string)* *(default: empty)*
+  Can be one of `RELAXED` or `STRICT`. If left empty, then the value of the Flowman configuration property
+  `flowman.default.relation.migrationPolicy` will be used instead.
+
+* `migrationStrategy` **(optional)** *(string)* *(default: empty)*
+  Can be one of `ALTER`, `ALTER_REPLACE`, `REPLACE`, `NEVER` or `FAIL`. If left empty, then the value of the Flowman
+  configuration property `flowman.default.relation.migrationStrategy` will be used instead.
+
 
 ## Automatic Migrations
-Flowman supports automatic migration of Hive views once the view definition changes. Then Flowman will simply recreate
+Flowman supports [automatic migrations](../../cookbook/migrations.md) of Hive views once the view definition changes. Then Flowman will simply recreate
 the Hive view with the new definition. Flowman also detects if the schema changes, which also requires a recreation
 of the view to update type information stored in the Hive meta store. If the [config](../../setup/config.md)
 variable `flowman.default.relation.migrationPolicy` is set to `STRICT`, then the view will also be recreated when

@@ -60,6 +60,7 @@ import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialects
 import com.dimajix.flowman.model.Connection
+import com.dimajix.flowman.model.MigratableRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.flowman.model.Reference
@@ -84,11 +85,13 @@ abstract class JdbcTableRelationBase(
     mergeKey: Seq[String] = Seq.empty,
     override val primaryKey: Seq[String] = Seq.empty,
     indexes: Seq[TableIndex] = Seq.empty,
-    sql: Seq[String] = Seq.empty
+    sql: Seq[String] = Seq.empty,
+    override val migrationPolicy: Option[MigrationPolicy] = None,
+    override val migrationStrategy: Option[MigrationStrategy] = None
 ) extends JdbcRelation(
     connection,
     properties
-) with SchemaRelation {
+) with SchemaRelation with MigratableRelation {
     protected val resource: ResourceIdentifier = ResourceIdentifier.ofJdbcTable(table)
     protected val tableIdentifier: TableIdentifier = table
     protected val stagingIdentifier: Option[TableIdentifier] = None
@@ -470,13 +473,13 @@ abstract class JdbcTableRelationBase(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+    override def conforms(execution: Execution): Trilean = {
         withConnection { (con, options) =>
             if (JdbcUtils.tableExists(con, tableIdentifier, options)) {
                 tableDefinition match {
                     case Some(targetTable) =>
                         val currentTable = JdbcUtils.getTableOrView(con, tableIdentifier, options)
-                        val requiresChange = TableChange.requiresMigration(currentTable, targetTable, migrationPolicy)
+                        val requiresChange = TableChange.requiresMigration(currentTable, targetTable, effectiveMigrationPolicy)
                         val wrongType = currentTable.tableType != TableType.UNKNOWN && currentTable.tableType != targetTable.tableType
                         !requiresChange && !wrongType
                     case None => true
@@ -558,7 +561,7 @@ abstract class JdbcTableRelationBase(
         dropTableOrView(execution, table)
     }
 
-    override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+    override def migrate(execution:Execution) : Unit = {
         // Only try migration if schema is explicitly specified
         tableDefinition.foreach { targetTable =>
             withConnection { (con, options) =>
@@ -568,10 +571,10 @@ abstract class JdbcTableRelationBase(
                     // Check if table type changes
                     if (currentTable.tableType != TableType.UNKNOWN && currentTable.tableType != targetTable.tableType) {
                         // Drop view, recreate table
-                        migrateFromView(migrationStrategy)
+                        migrateFromView()
                     }
-                    else if (TableChange.requiresMigration(currentTable, targetTable, migrationPolicy)) {
-                        migrateFromTable(currentTable, targetTable, migrationPolicy, migrationStrategy)
+                    else if (TableChange.requiresMigration(currentTable, targetTable, effectiveMigrationPolicy)) {
+                        migrateFromTable(currentTable, targetTable)
                         execution.refreshResource(resource)
                     }
                 }
@@ -579,8 +582,8 @@ abstract class JdbcTableRelationBase(
         }
     }
 
-    private def migrateFromView(migrationStrategy:MigrationStrategy) : Unit = {
-        migrationStrategy match {
+    private def migrateFromView() : Unit = {
+        effectiveMigrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for JdbcTable relation '$identifier' from VIEW to a TABLE $table, but migrations are disabled.")
             case MigrationStrategy.FAIL =>
@@ -602,9 +605,9 @@ abstract class JdbcTableRelationBase(
         }
     }
 
-    private def migrateFromTable(currentTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+    private def migrateFromTable(currentTable:TableDefinition, targetTable:TableDefinition) : Unit = {
         withConnection { (con, options) =>
-            migrationStrategy match {
+            effectiveMigrationStrategy match {
                 case MigrationStrategy.NEVER =>
                     logger.warn(s"Migration required for relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                 case MigrationStrategy.FAIL =>
@@ -612,7 +615,7 @@ abstract class JdbcTableRelationBase(
                     throw new MigrationFailedException(identifier)
                 case MigrationStrategy.ALTER =>
                     val dialect = SqlDialects.get(options.url)
-                    val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
+                    val migrations = TableChange.migrate(currentTable, targetTable, effectiveMigrationPolicy)
                     if (migrations.exists(m => !dialect.supportsChange(tableIdentifier, m))) {
                         val unsupportedChanges = migrations.filter(m => !dialect.supportsChange(tableIdentifier, m))
                         logger.error(s"Cannot migrate JDBC relation '$identifier' of table $tableIdentifier, since that would require unsupported changes.\n" +
@@ -630,7 +633,7 @@ abstract class JdbcTableRelationBase(
                     }
                 case MigrationStrategy.ALTER_REPLACE =>
                     val dialect = SqlDialects.get(options.url)
-                    val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
+                    val migrations = TableChange.migrate(currentTable, targetTable, effectiveMigrationPolicy)
                     if (migrations.forall(m => dialect.supportsChange(tableIdentifier, m))) {
                         try {
                             alter(migrations, con, options)
@@ -762,7 +765,9 @@ case class JdbcTableRelation(
     mergeKey: Seq[String] = Seq.empty,
     override val primaryKey: Seq[String] = Seq.empty,
     indexes: Seq[TableIndex] = Seq.empty,
-    sql: Seq[String] = Seq.empty
+    sql: Seq[String] = Seq.empty,
+    override val migrationPolicy: Option[MigrationPolicy] = None,
+    override val migrationStrategy: Option[MigrationStrategy] = None
 ) extends JdbcTableRelationBase(
     instanceProperties,
     schema,
@@ -773,13 +778,15 @@ case class JdbcTableRelation(
     mergeKey,
     primaryKey,
     indexes,
-    sql
+    sql,
+    migrationPolicy,
+    migrationStrategy
 ) {
     override protected val stagingIdentifier: Option[TableIdentifier] = stagingTable
 }
 
 
-class JdbcTableRelationSpec extends RelationSpec with PartitionedRelationSpec with SchemaRelationSpec with IndexedRelationSpec {
+class JdbcTableRelationSpec extends RelationSpec with PartitionedRelationSpec with SchemaRelationSpec with IndexedRelationSpec with MigratableRelationSpec {
     @JsonProperty(value = "connection", required = true) private var connection: ConnectionReferenceSpec = _
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map.empty
     @JsonProperty(value = "database", required = false) private var database: Option[String] = None
@@ -810,7 +817,9 @@ class JdbcTableRelationSpec extends RelationSpec with PartitionedRelationSpec wi
             mergeKey.map(context.evaluate),
             primaryKey.map(context.evaluate),
             indexes.map(_.instantiate(context)),
-            sql.map(context.evaluate)
+            sql.map(context.evaluate),
+            context.evaluate(migrationPolicy).map(MigrationPolicy.ofString),
+            context.evaluate(migrationStrategy).map(MigrationStrategy.ofString)
         )
     }
 }

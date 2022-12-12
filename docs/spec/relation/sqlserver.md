@@ -110,6 +110,14 @@ then Flowman will use a global temporary table.
  uses `ROWSTORE` as the default format. `COLUMNSTORE` will actually create a `CLUSTERED COLUMNSTORE INDEX` and is
  preferable for typical OLAP workloads.
 
+* `migrationPolicy` **(optional)** *(string)* *(default: empty)*
+  Can be one of `RELAXED` or `STRICT`. If left empty, then the value of the Flowman configuration property
+  `flowman.default.relation.migrationPolicy` will be used instead.
+
+* `migrationStrategy` **(optional)** *(string)* *(default: empty)*
+  Can be one of `ALTER`, `ALTER_REPLACE`, `REPLACE`, `NEVER` or `FAIL`. If left empty, then the value of the Flowman
+  configuration property `flowman.default.relation.migrationStrategy` will be used instead.
+
 
 ## Staging Tables
 When using the `sqlserver?`relation, Flowman will always use staging tables when writing to a SQL database. This
@@ -125,9 +133,9 @@ has finished (either successfully or with an error).
 
 
 ## Automatic Migrations
-Flowman supports some automatic migrations, specifically with the migration strategies `ALTER`, `ALTER_REPLACE`
-and `REPLACE` (those can be set via the global config variable `flowman.default.relation.migrationStrategy`,
-see [configuration](../../setup/config.md) for more details).
+Flowman supports some [automatic migrations](../../cookbook/migrations.md), specifically with the migration strategies 
+`ALTER`, `ALTER_REPLACE` and `REPLACE` (those can be set via the property `migrationStrategy` or the global config variable
+`flowman.default.relation.migrationStrategy`, see [configuration](../../setup/config.md) for more details).
 
 The migration strategy `ALTER` supports the following alterations for JDBC relations:
 * Changing nullability

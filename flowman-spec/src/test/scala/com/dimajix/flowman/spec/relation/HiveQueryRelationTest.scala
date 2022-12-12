@@ -102,8 +102,7 @@ class HiveQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         relation.exists(execution) should be(Yes)
         relation.loaded(execution, Map()) should be(Yes)
-        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
-        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+        relation.conforms(execution) should be(Yes)
         an[UnsupportedOperationException] should be thrownBy (relation.create(execution))
         an[UnsupportedOperationException] should be thrownBy (relation.migrate(execution))
         an[UnsupportedOperationException] should be thrownBy (relation.destroy(execution))

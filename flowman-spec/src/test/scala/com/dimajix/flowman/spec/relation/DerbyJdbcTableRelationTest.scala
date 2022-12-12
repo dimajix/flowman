@@ -37,6 +37,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
+import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableDefinition
@@ -44,6 +45,7 @@ import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.DeleteClause
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
@@ -80,6 +82,16 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    implicit class JdbcTableRelationExt(rel:JdbcTableRelation) {
+        def conforms(execution:Execution, policy:MigrationPolicy) : Trilean = {
+            rel.copy(migrationPolicy = Some(policy)).conforms(execution)
+        }
+        def migrate(execution:Execution, policy:MigrationPolicy, strategy:MigrationStrategy=MigrationStrategy.ALTER_REPLACE) : Unit = {
+            rel.copy(migrationPolicy = Some(policy), migrationStrategy = Some(strategy)).migrate(execution)
+        }
+    }
+
+
     def withDatabase[T](driverClass:String, url:String)(fn:(Statement) => T) : T = {
         DriverRegistry.register(driverClass)
         val driver: Driver = DriverManager.getDrivers.asScala.collectFirst {
@@ -583,7 +595,7 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             .build()
         val execution = session.execution
         val context = session.getContext(project)
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = context.getRelation(RelationIdentifier("t0")).asInstanceOf[JdbcTableRelation]
 
         val df = spark.createDataFrame(Seq(
                 ("lala", 1),
@@ -787,7 +799,7 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             .build()
         val execution = session.execution
         val context = session.getContext(project)
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = context.getRelation(RelationIdentifier("t0")).asInstanceOf[JdbcTableRelation]
 
         val df = spark.createDataFrame(Seq(
             ("lala", Some(1), 1),

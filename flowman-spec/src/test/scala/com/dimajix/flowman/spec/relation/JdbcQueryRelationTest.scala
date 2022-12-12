@@ -188,11 +188,9 @@ class JdbcQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create =================================================================================================
         relation_t0.create(execution)
         relation_t0.exists(execution) should be (Yes)
-        relation_t0.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation_t0.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation_t0.conforms(execution) should be (Yes)
         relation_t1.exists(execution) should be (Yes)
-        relation_t1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
-        relation_t1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation_t1.conforms(execution) should be (Yes)
 
         // == Write ==================================================================================================
         relation_t0.write(execution, df, mode=OutputMode.OVERWRITE)

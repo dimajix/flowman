@@ -28,8 +28,6 @@ import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
-import com.dimajix.flowman.execution.MigrationPolicy
-import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.fs.File
@@ -160,7 +158,7 @@ case class HiveQueryRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+    override def conforms(execution: Execution): Trilean = {
         true
     }
 
@@ -188,7 +186,7 @@ case class HiveQueryRelation(
         throw new UnsupportedOperationException(s"Cannot destroy Hive query relation '$identifier' which is defined by an SQL query")
     }
 
-    override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+    override def migrate(execution:Execution) : Unit = {
         throw new UnsupportedOperationException(s"Cannot migrate Hive query relation '$identifier' which is defined by an SQL query")
     }
 

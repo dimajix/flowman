@@ -36,11 +36,14 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
+import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.execution.DeleteClause
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
@@ -60,6 +63,15 @@ import com.dimajix.spark.testing.QueryTest
 
 
 class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession with QueryTest {
+    implicit class DeltaFileRelationExt(rel: DeltaFileRelation) {
+        def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
+            rel.copy(migrationPolicy = Some(policy)).conforms(execution)
+        }
+        def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
+            rel.copy(migrationPolicy = Some(policy), migrationStrategy = Some(strategy)).migrate(execution)
+        }
+    }
+
     override def configureSpark(builder: SparkSession.Builder): SparkSession.Builder = {
         builder.config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
             .withExtensions(new DeltaSparkSessionExtension)

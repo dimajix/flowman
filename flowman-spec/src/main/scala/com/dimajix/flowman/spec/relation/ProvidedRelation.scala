@@ -24,8 +24,6 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.MigrationPolicy
-import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
@@ -134,7 +132,7 @@ class ProvidedRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+    override def conforms(execution: Execution): Trilean = {
         exists(execution)
     }
 
@@ -148,7 +146,7 @@ class ProvidedRelation(
             throw new UnsupportedOperationException(s"Cannot destroy provided table '$table' in relation '$identifier'")
     }
 
-    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {}
+    override def migrate(execution: Execution): Unit = {}
 }
 
 

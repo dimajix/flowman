@@ -370,7 +370,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         relation.exists(execution) should be (Yes)
         relation.loaded(execution) should be (No)
         relation.loaded(execution, Map("p1" ->  SingleValue("1"))) should be (No)
-        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation.migrate(execution)
 
         // == Read =================================================================================================
         relation.read(execution, Map()).schema should be (StructType(Seq(
@@ -551,7 +551,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         relation.exists(execution) should be(Yes)
         relation.loaded(execution) should be(No)
         relation.loaded(execution, Map("p1" -> SingleValue("1"))) should be(No)
-        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation.migrate(execution)
 
         // == Read =================================================================================================
         relation.read(execution, Map()).schema should be(StructType(Seq(

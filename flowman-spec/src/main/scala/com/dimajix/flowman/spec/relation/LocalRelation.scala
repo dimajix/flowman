@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spec.relation
 
 import java.nio.file.FileAlreadyExistsException
-import java.nio.file.Path
 import java.nio.file.Paths
 
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -30,12 +29,10 @@ import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.MigrationPolicy
-import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
-import com.dimajix.flowman.fs.FileCollector
 import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.fs.FileCollector
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
@@ -238,7 +235,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+    override def conforms(execution: Execution): Trilean = {
         exists(execution)
     }
 
@@ -294,7 +291,7 @@ extends BaseRelation with SchemaRelation with PartitionedRelation {
      *
      * @param execution
      */
-    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {
+    override def migrate(execution: Execution): Unit = {
     }
 
     /**

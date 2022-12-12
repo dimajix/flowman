@@ -79,14 +79,22 @@ multiple places.
   The connection properties are applied first, then the relation properties. This means that
   a relation property can overwrite a connection property if it has the same name.
 
+* `migrationPolicy` **(optional)** *(string)* *(default: empty)*
+  Can be one of `RELAXED` or `STRICT`. If left empty, then the value of the Flowman configuration property
+  `flowman.default.relation.migrationPolicy` will be used instead.
+
+* `migrationStrategy` **(optional)** *(string)* *(default: empty)*
+  Can be one of `ALTER`, `ALTER_REPLACE`, `REPLACE`, `NEVER` or `FAIL`. If left empty, then the value of the Flowman
+  configuration property `flowman.default.relation.migrationStrategy` will be used instead.
+
 Note that either `sql` or `file` needs to be specified. If you want to access an existing view without managing it in
 Flowman, then simply use a [`jdbcTable` relation](jdbcTable.md) instead.
 
 
 ## Automatic Migrations
-Flowman supports some automatic migrations, specifically with the migration strategies `ALTER`, `ALTER_REPLACE`
-and `REPLACE` (those can be set via the global config variable `flowman.default.relation.migrationStrategy`,
-see [configuration](../../setup/config.md) for more details).
+Flowman supports [automatic migrations](../../cookbook/migrations.md), specifically with the migration strategies
+`ALTER`, `ALTER_REPLACE` and `REPLACE` (those can be set via the property `migrationStrategy` or the global config variable
+`flowman.default.relation.migrationStrategy`, see [configuration](../../setup/config.md) for more details).
 
 The migration strategy `ALTER`, `ALTER_REPLACE` and `REPLACE` supports the following alterations for JDBC relations:
 * Migrating from a TABLE to a VIEW

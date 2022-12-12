@@ -26,8 +26,6 @@ import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
-import com.dimajix.flowman.execution.MigrationPolicy
-import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
@@ -139,11 +137,11 @@ case class EmptyRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED) : Trilean = true
+    override def conforms(execution:Execution) : Trilean = true
 
     override def create(execution: Execution): Unit = {}
     override def destroy(execution: Execution): Unit = {}
-    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {}
+    override def migrate(execution: Execution): Unit = {}
 
     /**
       * Returns the schema of the relation, either from an explicitly specified schema or by schema inference from

@@ -26,8 +26,6 @@ import com.dimajix.flowman.documentation.RelationDoc
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
-import com.dimajix.flowman.execution.MigrationPolicy
-import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.ScopeContext
@@ -196,8 +194,8 @@ case class TemplateRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED) : Trilean = {
-        relationInstance.conforms(execution, migrationPolicy)
+    override def conforms(execution:Execution) : Trilean = {
+        relationInstance.conforms(execution)
     }
 
     /**
@@ -225,8 +223,8 @@ case class TemplateRelation(
       *
       * @param execution
       */
-    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {
-        relationInstance.migrate(execution, migrationPolicy, migrationStrategy)
+    override def migrate(execution: Execution): Unit = {
+        relationInstance.migrate(execution)
     }
 
     /**

@@ -25,8 +25,10 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
+import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
@@ -44,7 +46,25 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-  "A HiveViewRelation" should "be creatable from a mapping" in {
+    implicit class HiveViewRelationExt(rel: HiveViewRelation) {
+        def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
+            rel.copy(migrationPolicy = Some(policy)).conforms(execution)
+        }
+        def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
+            rel.copy(migrationPolicy = Some(policy), migrationStrategy = Some(strategy)).migrate(execution)
+        }
+    }
+    implicit class HiveTableRelationExt(rel: HiveTableRelation) {
+        def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
+            rel.copy(migrationPolicy = Some(policy)).conforms(execution)
+        }
+        def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
+            rel.copy(migrationPolicy = Some(policy), migrationStrategy = Some(strategy)).migrate(execution)
+        }
+    }
+
+
+    "A HiveViewRelation" should "be creatable from a mapping" in {
     val spec =
       """
         |relations:

@@ -81,7 +81,7 @@ final class JobSpec extends NamedSpec[Job] {
             targets.map(context.evaluate).map(TargetIdentifier.parse),
             metrics,
             hooks,
-            phases.toSeq.map(kv => Phase.ofString(kv._1) -> PhaseExecutionPolicy.ofString(kv._2)).toMap
+            phases.toSeq.map(kv => Phase.ofString(kv._1) -> PhaseExecutionPolicy.ofString(context.evaluate(kv._2))).toMap
         )
 
         Job.merge(job, parents)

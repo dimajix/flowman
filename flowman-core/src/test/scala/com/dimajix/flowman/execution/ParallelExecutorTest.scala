@@ -151,7 +151,7 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         (t4.provides _).expects(*).atLeastOnce().returns(Set())
         (t4.before _).expects().atLeastOnce().returns(Seq())
         (t4.after _).expects().atLeastOnce().returns(Seq(TargetIdentifier("t3", "default")))
-        (t4.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
+        (t4.phases _).expects().anyNumberOfTimes().returns(Set(Phase.CREATE, Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
 
         val targets = Seq(t1, t2, t3, t4)
 

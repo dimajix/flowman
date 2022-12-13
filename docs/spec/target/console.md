@@ -28,3 +28,7 @@ Specified the number of records to be displayed
 * `BUILD` - The target will only be executed in the *build* phase
 
 Read more about [execution phases](../../concepts/lifecycle.md).
+
+
+## Dirty Condition
+A `console` target is always dirty for the `BUILD` execution phase.

@@ -59,3 +59,7 @@ subdirectory `generated-documentation` within the projects base directory.
 * `VERIFY` - This will generate the documentation
 
 Read more about [execution phases](../../concepts/lifecycle.md).
+
+
+## Dirty Condition
+A `document` target is always dirty, thereby overwriting any existing documentation with the newest information.

@@ -43,9 +43,13 @@ targets:
 
 
 ## Supported Execution Phases
-* `VERIDY` - The specified assertions will be run in the `VERIFY` phase after the `CREATE` and `BUILD` phases.
+* `VERIFY` - The specified assertions will be run in the `VERIFY` phase after the `CREATE` and `BUILD` phases.
 
 Read more about [execution phases](../../concepts/lifecycle.md).
+
+
+## Dirty Condition
+A `verify` target is always dirty for the `VERIFY` execution phase.
 
 
 ## Remarks

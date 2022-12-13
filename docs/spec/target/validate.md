@@ -46,6 +46,10 @@ targets:
 Read more about [execution phases](../../concepts/lifecycle.md).
 
 
+## Dirty Condition
+A `validate` target is always dirty for the `VALIDATE` execution phase.
+
+
 ## Remarks
 
 This build target works very similar to the [`verify`](verify.md) target, except that it is only active during the

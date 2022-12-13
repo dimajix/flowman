@@ -91,7 +91,7 @@ relations:
 
 
 ## Automatic Migrations
-Flowman supports some [automatic migrations](../../cookbook/migrations.md), specifically with the migration strategies 
+Flowman supports some [automatic migrations](../../concepts/migrations.md), specifically with the migration strategies 
 `ALTER`, `ALTER_REPLACE` and `REPLACE` (those can be set via the property `migrationStrategy` or the global config 
 variable `flowman.default.relation.migrationStrategy`, see [configuration](../../setup/config.md) for more details).
 

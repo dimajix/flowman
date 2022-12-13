@@ -125,3 +125,9 @@ not all DDL commands might be supported inside a transaction by all database ser
 * `DESTROY` - The action specified in `destroy` will be executed.
 
 Read more about [execution phases](../../concepts/lifecycle.md).
+
+
+## Dirty Condition
+Flowman will apply some logic to find out if a stream target is to be considered being *dirty* for a specific execution
+phase, which means that it needs to participate in that phase. The `jdbcCommand` target is considered being dirty
+whenever the optional `condition` holds true (when it is specified), or when no condition is specified at all.

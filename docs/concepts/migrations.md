@@ -63,6 +63,6 @@ Since recreating a table may lead to a data loss, the default value of the Flowm
 
 ## Time of Migration
 
-Flowman will perform all migrations during the [`CREATE` execution phase](../concepts/lifecycle.md), before the target
+Flowman will perform all migrations during the [`CREATE` execution phase](lifecycle.md), before the target
 relations are populated with new records. Pending migrations are performed for all relations used in
 [build targets](../spec/target/index.md) which are listed in a [job](../spec/job/index.md).

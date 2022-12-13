@@ -82,4 +82,5 @@ built together. When executing a lifecycle for a job, Flowman will apply the fol
 
 1. Iterate over all execution phases of the lifecycle (i.e. VALIDATE, CREATE, BUILD, VERIFY)
 2. Perform dependency analysis of all targets within the job, which are active for the current execution phase
-3. Execute all targets within the current phase
+3. Check each target if it is *dirty* (i.e. it requires an execution) the current phase
+4. Execute all active and dirty targets in the correct order

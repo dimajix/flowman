@@ -19,8 +19,31 @@ All Targets support the following common fields:
 * `labels` **(optional)** *(type: map)*: Optional list of labels.
 
 
+## Execution Model
+
+Normally, targets are executed within the scope of a [job](../job/index.md). Each target listed in a job can be
+active during some phases of the [lifecycle](../../concepts/lifecycle.md). For example when you execute the
+`VERIFY` lifecycle, the following phases are actually executed by Flowman:
+* `VALIDATE` - perform some optional pre-execution checks
+* `CREATE` - create and/or migrate target data models
+* `BUILD` - populate target data models with fresh data
+* `VERIFY` - perform some optional post-execution checks
+
+Depending on the *kind*, each target may contribute some work to each execution phase. Moreover, Flowman also checks
+the state of each target. Only *dirty* targets will be rebuilt (except when you forcibly want to execute all targets
+with the `--force` [command line switch](../../cli/flowexec/job.md)). 
+
+A target is considered *dirty* for the current execution phase, when it needs some work to be performed. For example,
+a JDBC table is considered dirty in the `CREATE` phase, when it does not exist yet or when its current schema 
+(i.e. columns and data types) does not match the desired schema. Then Flowman will take care of creating and/or
+[migrating](../../concepts/migrations.md) the JDBC table.
+
+Typically, a target is considered dirty during the `BUILD` phase, when it does not contain any data (possibly only 
+within the desired partition, see [relation target](relation.md) for more information).
+
+
 ## Target Types
-Flowman supports different target types, each used for a different kind of a physical entity or build recipe.
+Flowman supports different target types, each used for a different kind of physical entity or build recipe.
 
 ```eval_rst
 .. toctree::

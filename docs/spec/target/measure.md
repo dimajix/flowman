@@ -37,3 +37,7 @@ All metrics defined as named columns are exported with the following labels:
 * `VERIFY` - The evaluation of all measures will only be performed in the `VERIFY` phase
 
 Read more about [execution phases](../../concepts/lifecycle.md).
+
+
+## Dirty Condition
+A `measure` target is always dirty for the `VERIFY` execution phase.

@@ -74,3 +74,8 @@ targets:
 * `TRUNCATE` - This will truncate the specified relation.
 
 Read more about [execution phases](../../concepts/lifecycle.md).
+
+
+## Dirty Condition
+A `truncate` target is considered being dirty for the `BUILD` and `TRUNCATE` execution phases, whenever it contains
+data to be truncated.

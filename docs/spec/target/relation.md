@@ -126,6 +126,18 @@ relation targets with a mapping.
 Read more about [execution phases](../../concepts/lifecycle.md).
 
 
+## Dirty Condition
+Flowman will apply some logic to find out if a relation target is to be considered being *dirty* for a specific execution
+phase, which means that it needs to participate in that phase. The logic depends on the execution phase as follows:
+* `CREATE` - A relation target is considered to be dirty, when the relation physically does not exist, or when its
+schema is not up-to-date. Then Flowman will either create the relation or perform a 
+[migration](../../concepts/migrations.md).
+* `BUILD` - A relation target is dirty in the `BUILD` phase when it does not contain any records.
+* `VERIFY` - A relation target is always dirty during the `VERIFY` phase.
+* `TRUNCATE` - A relation target is dirty in the `TRUNCATE` phase when it contains some records, which need to be removed.
+* `DESTROY` - A relation target is dirty in the `TRUNCATE` phase when it physically exists and needs to be dropped.
+
+
 ## Provided Metrics
 The relation target also provides some metric containing the number of records written:
 

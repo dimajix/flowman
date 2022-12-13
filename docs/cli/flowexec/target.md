@@ -24,7 +24,7 @@ This will execute an individual target by executing the desired lifecycle for th
   `verify`. If this is not what you want, then use the option `-nl`
 
 
-## `inspect` - Retrieving general information
+## `inspect` - Retrieving General Information
 The `target inspect` commands provides some general information on an individual target, for example the active
 execution phases and the resource dependencies.
 

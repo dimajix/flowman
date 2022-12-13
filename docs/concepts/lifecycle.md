@@ -64,3 +64,13 @@ executed during the `VERIFY` phase.
 Of course when a specific target participates in multiple execution phases, it will perform different actions in each
 of the phases. The documentation of each target will contain the details of the supported phases and what action is
 performed in each of them.
+
+
+## Jobs & Lifecycles
+
+A [job](../spec/job/index.md) groups multiple [targets](../spec/target/index.md) to a logical bundle, which should be
+built together. When executing a lifecycle for a job, Flowman will apply the following logic:
+
+1. Iterate over all execution phases of the lifecycle (i.e. VALIDATE, CREATE, BUILD, VERIFY)
+2. Perform dependency analysis of all targets within the job, which are active for the current execution phase
+3. Execute all targets within the current phase

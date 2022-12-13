@@ -5,13 +5,14 @@ implicitly reference a `main` job, which must be defined within the project
 
 
 ## `verify|create|build|verify|truncate|destroy` - Lifecycle Commands
-The most important command group is for executing a specific lifecycle or an individual phase for the whole project.
+The most important command group is for executing a specific [lifecycle](../../concepts/lifecycle.md) or an individual 
+phase for the whole project.
 ```shell
 flowexec project <verify|create|build|verify|truncate|destroy> <args>
 ```
-This will execute the whole job by executing the desired lifecycle for the `main` job. The `<args>` parameter
-refers to the parameters as defined in the `main` job. For example the following job defines one parameter 
-`processing_date` which needs to be specified on the command line.
+This will execute the whole job by executing the desired [lifecycle](../../concepts/lifecycle.md) for the `main` job. 
+The `<args>` parameter refers to the parameters as defined in the `main` job. For example the following job defines one
+parameter `processing_date` which needs to be specified on the command line.
 ```yaml
 jobs:
   main:
@@ -48,13 +49,23 @@ flowexec -f examples/weather project build year=2018
 ```
 
 If you only want to execute the `BUILD` phase and skip the first two other phases, then you need to add the
-command line option `-nl` to skip the lifecycle:
+command line option `-nl` or `--no-lifecycle` to skip the lifecycle:
 
 ```shell
 flowexec -f examples/weather project build year=2018 -nl
 ```
 
-## `inspect` - Retrieving general information
+### Executing Parameter Ranges
+The following example will only execute the `BUILD` phase of the project, which defines a parameter
+`processing_datetime` with type datetime. The job will be executed for the whole date range from 2021-06-01 until
+2021-08-10 with a step size of one day. Flowman will execute up to four jobs in parallel (`-j 4`).
+
+```shell
+flowexec project build processing_datetime:start=2021-06-01T00:00 processing_datetime:end=2021-08-10T00:00 processing_datetime:step=P1D --target parquet_lineitem --no-lifecycle -j 4
+```
+
+
+## `inspect` - Retrieving General Information
 The `project inspect` commands provides some general information, like a list of all jobs, targets, relations and
 mappings and environment variables.
 

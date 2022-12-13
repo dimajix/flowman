@@ -1,11 +1,11 @@
 # Schema Migrations
 
 The topic *schema migration* refers to the process to modify an existing database schema (i.e. a collection of tables)
-from their current state (in the sense of column names, data types, indexes etc) to a desired scheme. This is a very
+from their current state (in the sense of column names, data types, indexes etc.) to a desired scheme. This is a very
 important topic, since it would be naive to assume that your data schema will never change. Every project eventually
 will face the challenge of modifying the existing schema due to new business requirements.
 
-Their are different approaches to this topic, a very common is to use frameworks like LiquiBase or Alembic, which
+There are different approaches to this topic, a very common is to use frameworks like LiquiBase or Alembic, which
 would execute SQL scripts provided by developers to perform schema migrations. Flowman on the other hand offers
 automatic schema migrations, where the current schema is compared with the desired schema (as specified in the
 [relations](../spec/relation/index.md) of a Flowman project) and infers the required changes automatically. 
@@ -13,7 +13,7 @@ automatic schema migrations, where the current schema is compared with the desir
 The clear advantage of Flowmans approach is its simplicity from a developers point of view. The clear disadvantage
 is that Flowman conceptually cannot capture all desired changes. For example, Flowman cannot detect the intention
 of renaming an existing column, instead Flowman will drop the existing column and add a new one with the new name.
-Nevertheless Flowmans approach already turns out to be a good solution for many scenarios, where backward compatibility
+Nevertheless, Flowmans approach already turns out to be a good solution for many scenarios, where backward compatibility
 of the data schema is an important thing. This is true for Data Lakes, Data Meshes and other shared databases.
 
 Automatic migrations are not supported by all relation types, since not all really support changing an existing
@@ -59,3 +59,10 @@ of the corresponding data.
 
 Since recreating a table may lead to a data loss, the default value of the Flowman configuration property
 `flowman.default.relation.migrationStrategy` is set to `ALTER`.
+
+
+## Time of Migration
+
+Flowman will perform all migrations during the [`CREATE` execution phase](../concepts/lifecycle.md), before the target
+relations are populated with new records. Pending migrations are performed for all relations used in
+[build targets](../spec/target/index.md) which are listed in a [job](../spec/job/index.md).

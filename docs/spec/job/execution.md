@@ -56,7 +56,7 @@ order. You need nothing to do to take advantage of this feature.
 In addition to automatic dependency management, you can also specify explicit dependencies between targets. This can
 be done by adding `before` and `after` tags to the targets. 
 
-### Example
+#### Example
 ```yaml
 targets:
   target_a:
@@ -73,3 +73,13 @@ targets:
 
   ...
 ```
+
+
+## Full Execution Model
+
+A [job](../job/index.md) groups multiple [targets](../target/index.md) to a logical bundle, which should be
+built together. When executing a lifecycle for a job, Flowman will apply the following logic:
+
+1. Iterate over all execution phases of the lifecycle (i.e. VALIDATE, CREATE, BUILD, VERIFY)
+2. Perform dependency analysis of all targets within the job, which are active for the current execution phase
+3. Execute all targets within the current phase

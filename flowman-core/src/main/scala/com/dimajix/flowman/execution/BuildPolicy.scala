@@ -28,13 +28,15 @@ object BuildPolicy {
     case object ALWAYS extends BuildPolicy
     case object IF_EMPTY extends BuildPolicy
     case object SMART extends BuildPolicy
+    case object COMPAT extends BuildPolicy
 
     def ofString(policy:String) : BuildPolicy = {
         policy.toLowerCase(Locale.ROOT) match {
             case "always" => ALWAYS
             case "if_empty"|"ifempty" => IF_EMPTY
             case "smart" => SMART
-            case _ => throw new IllegalArgumentException(s"Unknown build policy: '$policy'. Accepted policies are 'always', 'smart', 'ifempty'.")
+            case "compat" => COMPAT
+            case _ => throw new IllegalArgumentException(s"Unknown build policy: '$policy'. Accepted policies are 'always', 'smart', 'ifempty', 'compat'.")
         }
     }
 }

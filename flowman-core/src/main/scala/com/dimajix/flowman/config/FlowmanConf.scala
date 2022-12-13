@@ -163,6 +163,10 @@ object FlowmanConf {
         .doc("Default output mode of targets")
         .stringConf
         .createWithDefault(OutputMode.OVERWRITE.toString)
+    val DEFAULT_TARGET_BUILD_POLICY = buildConf("flowman.default.target.buildPolicy")
+        .doc("Build policy for write operations")
+        .stringConf
+        .createWithDefault("COMPAT")
     val DEFAULT_TARGET_REBALANCE = buildConf("flowman.default.target.rebalance")
         .doc("Rebalances all outputs before writing")
         .booleanConf

@@ -34,6 +34,7 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_BUILD_POLICY
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
@@ -76,7 +77,8 @@ object RelationTarget {
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
-            conf.getConf(DEFAULT_TARGET_REBALANCE)
+            conf.getConf(DEFAULT_TARGET_REBALANCE),
+            BuildPolicy.ofString(conf.getConf(DEFAULT_TARGET_BUILD_POLICY))
         )
     }
     def apply(context: Context, relation: RelationIdentifier, mapping: MappingOutputIdentifier) : RelationTarget = {
@@ -88,7 +90,8 @@ object RelationTarget {
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
-            conf.getConf(DEFAULT_TARGET_REBALANCE)
+            conf.getConf(DEFAULT_TARGET_REBALANCE),
+            BuildPolicy.ofString(conf.getConf(DEFAULT_TARGET_BUILD_POLICY))
         )
     }
     def apply(props:Target.Properties, relation: RelationIdentifier, mapping: MappingOutputIdentifier, partition: Map[String,String]) : RelationTarget = {
@@ -101,7 +104,8 @@ object RelationTarget {
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             partition,
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
-            conf.getConf(DEFAULT_TARGET_REBALANCE)
+            conf.getConf(DEFAULT_TARGET_REBALANCE),
+            BuildPolicy.ofString(conf.getConf(DEFAULT_TARGET_BUILD_POLICY))
         )
     }
 }
@@ -205,10 +209,21 @@ case class RelationTarget(
             case Phase.CREATE =>
                 !rel.conforms(execution)
             case Phase.BUILD if mapping.nonEmpty =>
-                if (mode == OutputMode.APPEND) {
-                    Yes
-                } else {
-                    !rel.loaded(execution, partition)
+                buildPolicy match {
+                    case BuildPolicy.ALWAYS =>
+                        Yes
+                    case BuildPolicy.IF_EMPTY =>
+                        !rel.loaded(execution, partition)
+                    case BuildPolicy.SMART =>
+                        if (mode == OutputMode.APPEND || partition.isEmpty)
+                            Yes
+                        else
+                            !rel.loaded(execution, partition)
+                    case BuildPolicy.COMPAT =>
+                        if (mode == OutputMode.APPEND)
+                            Yes
+                        else
+                            !rel.loaded(execution, partition)
                 }
             case Phase.BUILD => No
             case Phase.VERIFY => Yes
@@ -413,7 +428,7 @@ class RelationTargetSpec extends TargetSpec {
             context.evaluate(partition),
             context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),
             context.evaluate(rebalance).map(_.toBoolean).getOrElse(conf.getConf(DEFAULT_TARGET_REBALANCE)),
-            context.evaluate(buildPolicy).map(BuildPolicy.ofString).getOrElse(BuildPolicy.SMART)
+            BuildPolicy.ofString(context.evaluate(buildPolicy).getOrElse(conf.getConf(DEFAULT_TARGET_BUILD_POLICY)))
         )
     }
 }

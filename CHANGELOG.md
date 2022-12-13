@@ -16,6 +16,7 @@
 * github-296: Update npm dependencies (vuetify & co)
 * github-297: Parametrize when to execute a specific phase
 * github-299: Move migrationPolicy and migrationStrategy from target into relation
+* github-115: Implement additional build policy in relation target for forcing dirty
 
 
 # Version 0.29.0 - 2022-11-08

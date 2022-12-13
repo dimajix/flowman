@@ -66,8 +66,8 @@ case class DeltaTableRelation(
     options: Map[String,String] = Map.empty,
     properties: Map[String, String] = Map.empty,
     mergeKey: Seq[String] = Seq.empty,
-    override val migrationPolicy: Option[MigrationPolicy] = None,
-    override val migrationStrategy: Option[MigrationStrategy] = None
+    override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
+    override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
 ) extends DeltaRelation(options, mergeKey) {
     private val logger = LoggerFactory.getLogger(classOf[DeltaTableRelation])
     protected val resource = ResourceIdentifier.ofHiveTable(table)
@@ -244,7 +244,7 @@ case class DeltaTableRelation(
                             columns = targetSchema.fields,
                             partitionColumnNames = partitions.map(_.name)
                         )
-                        !TableChange.requiresMigration(sourceTable, targetTable, effectiveMigrationPolicy)
+                        !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
                     }
                 case None =>
                     true
@@ -365,7 +365,7 @@ case class DeltaTableRelation(
         if (catalog.tableExists(table)) {
             val table = catalog.getTable(this.table)
             if (table.tableType == CatalogTableType.VIEW) {
-                effectiveMigrationStrategy match {
+                migrationStrategy match {
                     case MigrationStrategy.NEVER =>
                         logger.warn(s"Migration required for HiveTable relation '$identifier' from VIEW to a TABLE $this.table, but migrations are disabled.")
                     case MigrationStrategy.FAIL =>
@@ -402,7 +402,7 @@ case class DeltaTableRelation(
 
 
 @RelationType(kind="deltaTable")
-class DeltaTableRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
+class DeltaTableRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec with MigratableRelationSpec {
     @JsonProperty(value = "database", required = false) private var database: Option[String] = Some("default")
     @JsonProperty(value = "table", required = true) private var table: String = ""
     @JsonProperty(value = "location", required = false) private var location: Option[String] = None
@@ -419,7 +419,9 @@ class DeltaTableRelationSpec extends RelationSpec with SchemaRelationSpec with P
             context.evaluate(location).map(p => new Path(p)),
             context.evaluate(options),
             context.evaluate(properties),
-            mergeKey.map(context.evaluate)
+            mergeKey.map(context.evaluate),
+            evalMigrationPolicy(context),
+            evalMigrationStrategy(context)
         )
     }
 }

@@ -57,18 +57,18 @@ import com.dimajix.spark.testing.LocalSparkSession
 class DerbyJdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     implicit class JdbcViewRelationExt(rel: JdbcViewRelation) {
         def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
-            rel.copy(migrationPolicy = Some(policy)).conforms(execution)
+            rel.copy(migrationPolicy = policy).conforms(execution)
         }
         def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
-            rel.copy(migrationPolicy = Some(policy), migrationStrategy = Some(strategy)).migrate(execution)
+            rel.copy(migrationPolicy = policy, migrationStrategy = strategy).migrate(execution)
         }
     }
     implicit class JdbcTableRelationExt(rel: JdbcTableRelation) {
         def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
-            rel.copy(migrationPolicy = Some(policy)).conforms(execution)
+            rel.copy(migrationPolicy = policy).conforms(execution)
         }
         def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
-            rel.copy(migrationPolicy = Some(policy), migrationStrategy = Some(strategy)).migrate(execution)
+            rel.copy(migrationPolicy = policy, migrationStrategy = strategy).migrate(execution)
         }
     }
 

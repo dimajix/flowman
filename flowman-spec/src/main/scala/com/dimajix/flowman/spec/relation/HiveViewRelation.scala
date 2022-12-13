@@ -57,8 +57,8 @@ case class HiveViewRelation(
     sql: Option[String] = None,
     mapping: Option[MappingOutputIdentifier] = None,
     file: Option[File] = None,
-    override val migrationPolicy: Option[MigrationPolicy] = None,
-    override val migrationStrategy: Option[MigrationStrategy] = None
+    override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
+    override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
 ) extends HiveRelation with MigratableRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveViewRelation])
     private val resource = ResourceIdentifier.ofHiveTable(table)
@@ -146,8 +146,8 @@ case class HiveViewRelation(
             // Check if current table is a VIEW or a table
             if (curTable.tableType == CatalogTableType.VIEW) {
                 // Check that both SQL and schema are correct
-                lazy val curSchema = normalizeSchema(curTable.schema, effectiveMigrationPolicy)
-                lazy val newSchema = normalizeSchema(execution.spark.sql(newSelect).schema, effectiveMigrationPolicy)
+                lazy val curSchema = normalizeSchema(curTable.schema, migrationPolicy)
+                lazy val newSchema = normalizeSchema(execution.spark.sql(newSelect).schema, migrationPolicy)
                 curTable.viewText.contains(newSelect) && curSchema == newSchema
             }
             else {
@@ -206,10 +206,10 @@ case class HiveViewRelation(
     }
 
     private def migrateFromView(execution:Execution, curTable:CatalogTable, newSelect:String) : Unit = {
-        lazy val curSchema = normalizeSchema(curTable.schema, effectiveMigrationPolicy)
-        lazy val newSchema = normalizeSchema(execution.spark.sql(newSelect).schema, effectiveMigrationPolicy)
+        lazy val curSchema = normalizeSchema(curTable.schema, migrationPolicy)
+        lazy val newSchema = normalizeSchema(execution.spark.sql(newSelect).schema, migrationPolicy)
         if (!curTable.viewText.contains(newSelect) || curSchema != newSchema) {
-            effectiveMigrationStrategy match {
+            migrationStrategy match {
                 case MigrationStrategy.NEVER =>
                     logger.warn(s"Migration required for HiveView relation '$identifier' of Hive view $table, but migrations are disabled.")
                 case MigrationStrategy.FAIL =>
@@ -225,7 +225,7 @@ case class HiveViewRelation(
     }
 
     private def migrateFromTable(execution:Execution, newSelect:String) : Unit = {
-        effectiveMigrationStrategy match {
+        migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for HiveView relation '$identifier' from TABLE to a VIEW $table, but migrations are disabled.")
             case MigrationStrategy.FAIL =>
@@ -313,8 +313,8 @@ class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec wit
             context.evaluate(sql),
             context.evaluate(mapping).map(MappingOutputIdentifier.parse),
             context.evaluate(file).map(p => context.fs.file(p)),
-            context.evaluate(migrationPolicy).map(MigrationPolicy.ofString),
-            context.evaluate(migrationStrategy).map(MigrationStrategy.ofString)
+            evalMigrationPolicy(context),
+            evalMigrationStrategy(context)
         )
     }
 }

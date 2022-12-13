@@ -98,8 +98,8 @@ case class HiveTableRelation(
     properties: Map[String, String] = Map.empty,
     serdeProperties: Map[String, String] = Map.empty,
     writer: String = "hive",
-    override val migrationPolicy: Option[MigrationPolicy] = None,
-    override val migrationStrategy: Option[MigrationStrategy] = None
+    override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
+    override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
 ) extends HiveRelation with SchemaRelation with MigratableRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
     private val resource = ResourceIdentifier.ofHiveTable(table)
@@ -360,7 +360,7 @@ case class HiveTableRelation(
                             partitionColumnNames = partitions.map(_.name)
                         )
 
-                        !TableChange.requiresMigration(sourceTable, targetTable, effectiveMigrationPolicy)
+                        !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
                     }
                 case None =>
                     true
@@ -526,7 +526,7 @@ case class HiveTableRelation(
     }
 
     private def migrateFromView(execution:Execution) : Unit = {
-        effectiveMigrationStrategy match {
+        migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for HiveTable relation '$identifier' from VIEW to a TABLE ${table}, but migrations are disabled.")
             case MigrationStrategy.FAIL =>
@@ -551,21 +551,21 @@ case class HiveTableRelation(
             partitionColumnNames = partitions.map(_.name)
         )
 
-        val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, effectiveMigrationPolicy)
+        val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
         if (requiresMigration) {
             doMigration(execution, sourceTable, targetTable)
         }
     }
 
     private def doMigration(execution: Execution, currentTable:TableDefinition, targetTable:TableDefinition) : Unit = {
-        effectiveMigrationStrategy match {
+        migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for HiveTable relation '$identifier' of Hive table $table, but migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
             case MigrationStrategy.FAIL =>
                 logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $table, since migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                 throw new MigrationFailedException(identifier)
             case MigrationStrategy.ALTER =>
-                val migrations = TableChange.migrate(currentTable, targetTable, effectiveMigrationPolicy)
+                val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
                 if (migrations.exists(m => !supported(m))) {
                     val unsupportedChanges = migrations.filter(m => !supported(m))
                     logger.error(s"Cannot migrate relation HiveTable '$identifier' of Hive table $table, since that would require unsupported changes.\n" +
@@ -577,7 +577,7 @@ case class HiveTableRelation(
                 }
                 alter(migrations)
             case MigrationStrategy.ALTER_REPLACE =>
-                val migrations = TableChange.migrate(currentTable, targetTable, effectiveMigrationPolicy)
+                val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
                 if (migrations.forall(m => supported(m))) {
                     alter(migrations)
                 }
@@ -721,8 +721,8 @@ class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
             context.evaluate(properties),
             context.evaluate(serdeProperties),
             context.evaluate(writer).toLowerCase(Locale.ROOT),
-            context.evaluate(migrationPolicy).map(MigrationPolicy.ofString),
-            context.evaluate(migrationStrategy).map(MigrationStrategy.ofString)
+            evalMigrationPolicy(context),
+            evalMigrationStrategy(context)
         )
     }
 }

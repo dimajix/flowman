@@ -665,12 +665,6 @@ trait SchemaRelation { this: Relation =>
 
 
 trait MigratableRelation { this: Relation =>
-    def migrationPolicy : Option[MigrationPolicy]
-    def migrationStrategy : Option[MigrationStrategy]
-
-    protected lazy val effectiveMigrationPolicy : MigrationPolicy =
-        migrationPolicy.getOrElse(MigrationPolicy.ofString(context.flowmanConf.getConf(FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY)))
-
-    protected lazy val effectiveMigrationStrategy: MigrationStrategy =
-        migrationStrategy.getOrElse(MigrationStrategy.ofString(context.flowmanConf.getConf(FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY)))
+    def migrationPolicy : MigrationPolicy
+    def migrationStrategy : MigrationStrategy
 }

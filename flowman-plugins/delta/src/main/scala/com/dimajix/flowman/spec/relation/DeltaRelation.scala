@@ -160,7 +160,7 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
             partitionColumnNames = partitions.map(_.name)
         )
 
-        val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, effectiveMigrationPolicy)
+        val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
 
         if (requiresMigration) {
             doMigration(execution, table, sourceTable, targetTable)
@@ -168,21 +168,21 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
         }
     }
     private def doMigration(execution: Execution, table:DeltaTableV2, currentTable:TableDefinition, targetTable:TableDefinition) : Unit = {
-        effectiveMigrationStrategy match {
+        migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for Delta relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
             case MigrationStrategy.FAIL =>
                 logger.error(s"Cannot migrate Delta relation '$identifier', since migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                 throw new MigrationFailedException(identifier)
             case MigrationStrategy.ALTER =>
-                val migrations = TableChange.migrate(currentTable, targetTable, effectiveMigrationPolicy)
+                val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
                 if (migrations.exists(m => !supported(m))) {
                     logger.error(s"Cannot migrate Delta relation '$identifier', since that would require unsupported changes.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
                     throw new MigrationFailedException(identifier)
                 }
                 alter(migrations)
             case MigrationStrategy.ALTER_REPLACE =>
-                val migrations = TableChange.migrate(currentTable, targetTable, effectiveMigrationPolicy)
+                val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
                 if (migrations.forall(m => supported(m))) {
                     alter(migrations)
                 }

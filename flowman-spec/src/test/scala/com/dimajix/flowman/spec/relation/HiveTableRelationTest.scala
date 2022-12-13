@@ -69,19 +69,19 @@ import com.dimajix.spark.testing.QueryTest
 class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession with QueryTest {
     implicit class HiveTableRelationExt(rel: HiveTableRelation) {
         def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
-            rel.copy(migrationPolicy = Some(policy)).conforms(execution)
+            rel.copy(migrationPolicy = policy).conforms(execution)
         }
         def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
-            rel.copy(migrationPolicy = Some(policy), migrationStrategy = Some(strategy)).migrate(execution)
+            rel.copy(migrationPolicy = policy, migrationStrategy = strategy).migrate(execution)
         }
     }
 
     implicit class HiveViewRelationExt(rel: HiveViewRelation) {
         def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
-            rel.copy(migrationPolicy = Some(policy)).conforms(execution)
+            rel.copy(migrationPolicy = policy).conforms(execution)
         }
         def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
-            rel.copy(migrationPolicy = Some(policy), migrationStrategy = Some(strategy)).migrate(execution)
+            rel.copy(migrationPolicy = policy, migrationStrategy = strategy).migrate(execution)
         }
     }
 

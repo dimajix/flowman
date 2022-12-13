@@ -67,8 +67,8 @@ case class JdbcViewRelation(
     properties: Map[String,String] = Map.empty,
     sql: Option[String] = None,
     file: Option[File] = None,
-    override val migrationPolicy: Option[MigrationPolicy] = None,
-    override val migrationStrategy: Option[MigrationStrategy] = None
+    override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
+    override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
 ) extends JdbcRelation(
     connection,
     properties
@@ -312,7 +312,7 @@ case class JdbcViewRelation(
             }
 
             if (requiresMigration) {
-                effectiveMigrationStrategy match {
+                migrationStrategy match {
                     case MigrationStrategy.NEVER =>
                         logger.warn(s"Migration required for JdbcView relation '$identifier' of VIEW $view, but migrations are disabled.")
                     case MigrationStrategy.FAIL =>
@@ -327,7 +327,7 @@ case class JdbcViewRelation(
     }
 
     private def migrateFromTable(connection:java.sql.Connection, options:JDBCOptions) : Unit = {
-        effectiveMigrationStrategy match {
+        migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for JdbcView relation '$identifier' from TABLE to a VIEW $view, but migrations are disabled.")
             case MigrationStrategy.FAIL =>
@@ -403,8 +403,8 @@ class JdbcViewRelationSpec extends RelationSpec with PartitionedRelationSpec wit
             context.evaluate(properties),
             context.evaluate(sql),
             context.evaluate(file).map(p => context.fs.file(p)),
-            context.evaluate(migrationPolicy).map(MigrationPolicy.ofString),
-            context.evaluate(migrationStrategy).map(MigrationStrategy.ofString)
+            evalMigrationPolicy(context),
+            evalMigrationStrategy(context)
         )
     }
 }

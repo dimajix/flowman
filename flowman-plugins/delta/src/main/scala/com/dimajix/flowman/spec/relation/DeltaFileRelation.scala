@@ -66,8 +66,8 @@ case class DeltaFileRelation(
     options: Map[String,String] = Map.empty,
     properties: Map[String, String] = Map.empty,
     mergeKey: Seq[String] = Seq.empty,
-    override val migrationPolicy: Option[MigrationPolicy] = None,
-    override val migrationStrategy: Option[MigrationStrategy] = None
+    override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
+    override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
 ) extends DeltaRelation(options, mergeKey) {
     protected val logger = LoggerFactory.getLogger(classOf[DeltaFileRelation])
     protected val resource = ResourceIdentifier.ofFile(location)
@@ -243,7 +243,7 @@ case class DeltaFileRelation(
                         columns = targetSchema.fields,
                         partitionColumnNames = partitions.map(_.name)
                     )
-                    !TableChange.requiresMigration(sourceTable, targetTable, effectiveMigrationPolicy)
+                    !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
                 case None => true
             }
         }
@@ -390,7 +390,7 @@ case class DeltaFileRelation(
 
 
 @RelationType(kind="deltaFile")
-class DeltaFileRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
+class DeltaFileRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec with MigratableRelationSpec {
     @JsonProperty(value = "location", required = false) private var location: String = ""
     @JsonProperty(value = "options", required=false) private var options:Map[String,String] = Map()
     @JsonProperty(value = "properties", required = false) private var properties: Map[String, String] = Map()
@@ -404,7 +404,9 @@ class DeltaFileRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
             new Path(context.evaluate(location)),
             context.evaluate(options),
             context.evaluate(properties),
-            mergeKey.map(context.evaluate)
+            mergeKey.map(context.evaluate),
+            evalMigrationPolicy(context),
+            evalMigrationStrategy(context)
         )
     }
 }

@@ -150,12 +150,12 @@ Sets the default target output mode. Possible values are
   - *`ERROR_IF_EXISTS`*: Throws an error if the output already exists
 Note that you can still explicitly specify a different output mode in each target.
 
-- `flowman.default.target.buildPolicy` *(type: string)* *(default:`COMPAT`)*
+- `flowman.default.target.buildPolicy` *(type: string)* *(default:`SMART`)*
 Sets the default target build policy, which takes effect in the `BUILD` phase. Possible values are
-  - *`IF_EMPTY`*: A target is considered to be dirty, when it is empty.
+  - *`IF_EMPTY`*: A target is considered to be dirty, if the specified target partition does not exist (or is empty).
   - *`ALWAYS`*: A target is always considered to be dirty.
-  - *`SMART`*: A target is considered to be dirty, when the target partition is empty, or when the output mode is set to `APPEND` or when no partition is specified (full overwrite)
-  - *`COMPAT`*: A target is considered to be dirty, when the target is empty, or when the output mode is set to `APPEND`.
+  - *`SMART`*: A target is considered to be dirty, if the target partition is empty, or when the output mode is set to `APPEND` or when no partition is specified (full overwrite)
+  - *`COMPAT`*: A target is considered to be dirty, if the target is empty, or when the output mode is set to `APPEND`. This setting provides the same behaviour as Flowman before version 0.30.0.
     
 - `flowman.default.target.rebalance` *(type: boolean)* *(default:false)* (since Flowman 0.15.0)
 If set to `true`, Flowman will try to write a similar records per each output file. Rebelancing might be an expensive

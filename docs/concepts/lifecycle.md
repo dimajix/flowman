@@ -75,3 +75,19 @@ built together. When executing a lifecycle for a job, Flowman will apply the fol
 2. Perform dependency analysis of all targets within the job, which are active for the current execution phase
 3. Check each target if it is *dirty* (i.e. it requires an execution) the current phase
 4. Execute all active and dirty targets in the correct order
+
+
+## Dirtiness
+
+Before executing a target, Flowman checks if the target is actually *dirty*, i.e. if it is outdated. Typical examples
+are a schema change in the `CREATE` phase, or a new data partition in the `BUILD` phase. Some details of this logic
+can be influenced via the `buildPolicy` setting in the [`relation` target](../spec/target/relation.md)
+or via the [Flowman config](../setup/config.md) `flowman.default.target.buildPolicy`.  Possible values are
+* `IF_EMPTY`: The target is considered to be dirty, if the specified target partition does not exist (or is empty).
+* `ALWAYS`: The target is always considered to be dirty.
+* `SMART`: The target is considered to be dirty, if the target partition is empty, or when the output mode is set to `APPEND` or when no partition is specified (full overwrite)
+* `COMPAT`: The target is considered to be dirty, if the target is empty, or when the output mode is set to `APPEND`. This setting provides the same behaviour as Flowman before version 0.30.0.
+The exact details always depend on the specific type of the [target](../spec/target/index.md).
+
+Note that Flowman also cascades dirtiness during the execution. This means that if target B depends on target A, and
+target A is dirty (because data is overwritten), then target B also becomes implicitly dirty via its dependency.

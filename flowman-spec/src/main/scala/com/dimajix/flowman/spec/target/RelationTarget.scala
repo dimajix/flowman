@@ -37,6 +37,7 @@ import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEG
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
+import com.dimajix.flowman.execution.BuildPolicy
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.ExecutionException
@@ -109,9 +110,10 @@ case class RelationTarget(
     relation: Reference[Relation],
     mapping: MappingOutputIdentifier,
     mode: OutputMode = OutputMode.OVERWRITE,
-    partition: Map[String,String] = Map(),
+    partition: Map[String,String] = Map.empty,
     parallelism: Int = 16,
-    rebalance: Boolean = false
+    rebalance: Boolean = false,
+    buildPolicy: BuildPolicy = BuildPolicy.SMART
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[RelationTarget])
 
@@ -394,11 +396,12 @@ class RelationTargetSpec extends TargetSpec {
     @JsonProperty(value="mapping", required=true) private var mapping:String = ""
     @JsonProperty(value="relation", required=true) private var relation:RelationReferenceSpec = _
     @JsonProperty(value="mode", required=false) private var mode:Option[String] = None
-    @JsonProperty(value="partition", required=false) private var partition:Map[String,String] = Map()
+    @JsonProperty(value="partition", required=false) private var partition:Map[String,String] = Map.empty
     @JsonSchemaInject(json="""{"type": [ "integer", "string" ]}""")
     @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
     @JsonSchemaInject(json="""{"type": [ "boolean", "string" ]}""")
     @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
+    @JsonProperty(value="buildPolicy", required=false) private var buildPolicy:Option[String] = None
 
     override def instantiate(context: Context, properties:Option[Target.Properties] = None): RelationTarget = {
         val conf = context.flowmanConf
@@ -409,7 +412,8 @@ class RelationTargetSpec extends TargetSpec {
             OutputMode.ofString(context.evaluate(mode).getOrElse(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE))),
             context.evaluate(partition),
             context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),
-            context.evaluate(rebalance).map(_.toBoolean).getOrElse(conf.getConf(DEFAULT_TARGET_REBALANCE))
+            context.evaluate(rebalance).map(_.toBoolean).getOrElse(conf.getConf(DEFAULT_TARGET_REBALANCE)),
+            context.evaluate(buildPolicy).map(BuildPolicy.ofString).getOrElse(BuildPolicy.SMART)
         )
     }
 }

@@ -98,7 +98,7 @@ phase, which means that it needs to participate in that phase. The logic depends
 * `CREATE` - A stream target is considered to be dirty, when the relation physically does not exist, or when its
   schema is not up-to-date. Then Flowman will either create the relation or perform a
   [migration](../../concepts/migrations.md).
-* `BUILD` - A stream target is dirty in the `BUILD` phase when it does not contain any records.
+* `BUILD` - A stream target is always dirty in the `BUILD` phase.
 * `VERIFY` - A stream target is always dirty during the `VERIFY` phase.
 * `TRUNCATE` - A stream target is dirty in the `TRUNCATE` phase when it contains some records, which need to be removed.
 * `DESTROY` - A stream target is dirty in the `TRUNCATE` phase when it physically exists and needs to be dropped.

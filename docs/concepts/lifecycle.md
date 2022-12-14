@@ -71,10 +71,14 @@ performed in each of them.
 A [job](../spec/job/index.md) groups multiple [targets](../spec/target/index.md) to a logical bundle, which should be
 built together. When executing a lifecycle for a job, Flowman will apply the following logic:
 
-1. Iterate over all execution phases of the lifecycle (i.e. VALIDATE, CREATE, BUILD, VERIFY)
-2. Perform dependency analysis of all targets within the job, which are active for the current execution phase
-3. Check each target if it is *dirty* (i.e. it requires an execution) the current phase
-4. Execute all active and dirty targets in the correct order
+1. Interpolate any given parameter given on the command line, for example
+   `flowexec job daily verify processing_date:start=2022-11-01 processing_date:end=2022-11-10`
+   would execute the job `daily` for 10 consecutive days.
+2. Iterate over all execution phases of the lifecycle (i.e. VALIDATE, CREATE, BUILD, VERIFY).
+3. Perform dependency analysis of all targets within the job, which are active for the current execution phase
+4. Identify all active targets in the current phase (possibly accordingly to the jobs `executions` section)
+5. Check each target if it is *dirty* (i.e. it requires an execution) the current phase
+6. Execute all active and dirty targets in the correct order
 
 
 ## Dirtiness

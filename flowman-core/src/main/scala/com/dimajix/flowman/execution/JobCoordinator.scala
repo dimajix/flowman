@@ -19,19 +19,11 @@ package com.dimajix.flowman.execution
 import scala.util.matching.Regex
 
 import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.types.FieldValue
 
 
 class JobCoordinator(session:Session, force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, parallelism:Int= -1) {
-    private val defaultPhases = Map(
-        Phase.VALIDATE -> PhaseExecutionPolicy.ALWAYS,
-        Phase.CREATE -> PhaseExecutionPolicy.ALWAYS,
-        Phase.BUILD -> PhaseExecutionPolicy.ALWAYS,
-        Phase.VERIFY -> PhaseExecutionPolicy.ALWAYS,
-        Phase.TRUNCATE -> PhaseExecutionPolicy.ALWAYS,
-        Phase.DESTROY -> PhaseExecutionPolicy.ALWAYS
-    )
-
     def execute(job: Job, lifecycle: Seq[Phase], args: Map[String, FieldValue]=Map.empty, targets: Seq[Regex]=Seq(".*".r), dirtyTargets: Seq[Regex]=Seq.empty): Status = {
         if (parallelism > 1)
             executeParallel(job, args, lifecycle, targets, dirtyTargets)
@@ -55,18 +47,37 @@ class JobCoordinator(session:Session, force:Boolean=false, keepGoing:Boolean=fal
 
     private def executeInstance(job:Job, args:Map[String,Any], lifecycle: Seq[Phase], targets:Seq[Regex], dirtyTargets:Seq[Regex], first:Boolean, last:Boolean) : Status = {
         val runner = session.runner
-        val phases = lifecycle.flatMap { p =>
-            val policy = job.phases.get(p)
-                .orElse(defaultPhases.get(p))
-                .getOrElse(PhaseExecutionPolicy.ALWAYS)
-            policy match {
-                case PhaseExecutionPolicy.ALWAYS => Some(p)
-                case PhaseExecutionPolicy.FIRST if first => Some(p)
-                case PhaseExecutionPolicy.LAST if last => Some(p)
-                case _ => None
-            }
+        val phaseTargets = lifecycle.map { p =>
+            val executions0 = job.executions
+                .filter(_.phase == p)
+            // Fall back to default execution if phase not found
+            val executions = if (executions0.nonEmpty) executions0 else Seq(Job.Execution(p, PhaseExecutionPolicy.ALWAYS, Seq(".*".r)))
+            // Collect all target regexes within the current Job.Execution
+            val activeTargets = executions.flatMap { e =>
+                    e.sequence match {
+                        case PhaseExecutionPolicy.ALWAYS => e.targets
+                        case PhaseExecutionPolicy.FIRST if first => e.targets
+                        case PhaseExecutionPolicy.LAST if last => e.targets
+                        case _ => Seq.empty
+                    }
+                }
+            p -> activeTargets
+        }.filter(_._2.nonEmpty)
+
+        // This will destroy the ordering of the phases!
+        val phaseTargetsMap = phaseTargets.toMap
+
+        // Create predicate to select active target according the the executions
+        def targetPredicate(phase: Phase, target: TargetIdentifier): Boolean = {
+            phaseTargetsMap.get(phase).exists(_.exists(_.unapplySeq(target.name).nonEmpty)) &&
+                targets.exists(_.unapplySeq(target.name).nonEmpty)
         }
-        runner.executeJob(job, phases, args, targets, dirtyTargets = dirtyTargets, force = force, keepGoing = keepGoing, dryRun = dryRun, isolated = true)
+        def dirtyPredicate(phase: Phase, target: TargetIdentifier): Boolean = {
+            dirtyTargets.exists(_.unapplySeq(target.name).nonEmpty)
+        }
+
+        val phases = phaseTargets.map(_._1)
+        runner.executeJob(job, phases, args, targetPredicate _, dirtyPredicate _, force = force, keepGoing = keepGoing, dryRun = dryRun, ignoreHistory = false, isolated = true)
     }
 
     private def interpolate(job:Job, args:Map[String, FieldValue]) = {

@@ -50,7 +50,7 @@ flowexec job daily verify processing_date=2022-11-10
 ```
 This will run the corresponding lifecycle with the phases `VALIDATE`, `CREATE`, `BUILD` and `VERIFY`.
 
-But what happens in the case of an incident where some days have not been processed correctly? Of course you could
+But what happens in the case of an incident where some days have not been processed correctly? Of course, you could
 simply restart `flowexec` with the corresponding parameters. But you can also instruct Flowman to run a whole date
 range with a single invocation:
 ```shell
@@ -65,9 +65,10 @@ executed:
 * `CREATE` - create or migrate all target tables
 * `BUILD` - populate all target tables with meaningful data
 * `VERIFY` - verify the result
-Maybe that is just too much, especially you probably don't want the `CREATE` phase to be executed over and over again.
+Maybe that is just too much of work being done, especially you probably don't want the `CREATE` phase to be executed 
+over and over again for every date in the range of the parameter `processing_date` in the example above.
 
-Luckily, Flowman allows you to specify when which phase is to be execuetd:
+Luckily, Flowman allows you to specify when which phase is to be executed:
 
 ```yaml
 jobs:
@@ -76,17 +77,53 @@ jobs:
       - name: processing_date
         type: date
         description: "Specifies the datetime in yyyy-MM-dd for which the result will be generated"
-    phases:
-      validate: always
-      create: first
-      build: always
-      verify: last
+
     targets:
       - invoices_daily
       - transactions_daily
+      - customers_full
+      - documentation
+
+    executions:
+      # The CREATE phase should only be executed once at the beginning
+      - phase: create
+        sequence: first
+        # You can also omit the targets, if you want to have all of them
+        targets: .*
+      # You are allowed to specify a single phase more than once
+      - phase: build
+        sequence: always
+        targets:
+          # The following regular expressions matches all targets ending with "_daily"
+          - .*_daily
+      - phase: build
+        sequence: last
+        targets:
+          # The following regular expressions matches all targets ending with "_full"
+          - .*_full
+      # Documentation should only be generated for the last entry in the execution sequence
+      - phase: verify
+        sequence: last
+        targets: documentation
 ```
-The `phases` section now described, when each execution phase should be executed for the given range:
-* `VALIDATE` - will be executed for every date of `processing_date`
-* `CREATE` - will be executed only for the first date of `processing_date`
-* `BUILD` - will be executed for every date of `processing_date`
-* `VERIFY` - will be executed only for the last date of `processing_date`
+The `executions` section now described, when each phase should be executed for the given parameter range and which
+targets should be executed. Each entry of the list has three attributes
+* `phase` **(required)** *(type: string)* - the execution phase to be configured. You can have multiple entries
+  per phase, these will be logically merged during execution.
+* `sequence` **(optional)** *(type: string)* *(default: `always`)* - specifies when this block is active when
+  executing a whole range of job parameters via command line. Possible values are:
+  * `always` - this phase will be executed for all parameter instances
+  * `never` - the corresponding phase will never be executed
+  * `first` - only to be executed for the first parameter instance
+  * `last` - only to be executed for the last parameter instance
+* `targets` **(optional)** *(type: regex)* *(default: `.*`)* - list of regular expressions to match build targets which
+  should be executed in the given phase. Note that you still need to specify all targets in the jobs `targets` main 
+  list. This list in the `executions` sections acts as a filter on top of the jobs  main target list. Defaults to `.*`, 
+  which simply selects all job targets for execution.
+
+This means that the example above will eventually change the execution of the job as follows:
+* `VALIDATE` (not listed) - will be executed for every date of `processing_date`, with all targets
+* `CREATE` - will be executed only for the first date of `processing_date`, but again for all targets
+* `BUILD` - will be executed for every date of `processing_date` for all targets ending with "_full". Moreover
+during the last execution, all targets ending with "_daily" will be processed in addition.
+* `VERIFY` - will be executed only for the last date of `processing_date` and only for the `documentation` target.

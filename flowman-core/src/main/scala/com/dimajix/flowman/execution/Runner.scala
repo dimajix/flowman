@@ -217,7 +217,18 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
      * @param phases
      * @return
      */
-    def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map.empty, targets:Seq[Regex]=Seq(".*".r), dirtyTargets:Seq[Regex]=Seq.empty, force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, ignoreHistory:Boolean=false, isolated:Boolean=true) : LifecycleResult = {
+    def executeJob(
+        job:Job,
+        phases:Seq[Phase],
+        args:Map[String,Any]=Map.empty,
+        targets:(Phase,TargetIdentifier) => Boolean,
+        dirtyTargets:(Phase,TargetIdentifier) => Boolean,
+        force:Boolean=false,
+        keepGoing:Boolean=false,
+        dryRun:Boolean=false,
+        ignoreHistory:Boolean=false,
+        isolated:Boolean=true
+    ) : LifecycleResult = {
         require(args != null)
         require(phases != null)
         require(args != null)
@@ -231,9 +242,6 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         logger.info(separator)
         logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.name}'$prj $iso")
 
-        def targetFilter(target:Target) : Boolean = targets.exists(_.unapplySeq(target.name).nonEmpty)
-        def dirtyFilter(target:Target) : Boolean = dirtyTargets.exists(_.unapplySeq(target.name).nonEmpty)
-
         val startTime = Instant.now()
         runner.withExecution(isolated2) { execution =>
             runner.withJobContext(job, args, Some(execution), force, dryRun, isolated2) { (context, arguments) =>
@@ -245,7 +253,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                             // Check if build phase really contains any active target. Otherwise we skip this phase and mark it
                             // as SUCCESS (an empty list is always executed as SUCCESS)
                             val isActive = job.targets
-                                .filter(target => targets.exists(_.unapplySeq(target.name).nonEmpty))
+                                .filter(t => targets(phase,t))
                                 .exists { target =>
                                     // This might throw exceptions for non-existing targets. The same
                                     // exception will be thrown and handled properly in executeJobPhase
@@ -257,7 +265,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                                 }
 
                             if (isActive)
-                                Some(executeJobPhase(execution, context, job, phase, arguments, targetFilter, dirtyFilter, force=force, keepGoing=keepGoing, dryRun=dryRun, ignoreHistory=ignoreHistory))
+                                Some(executeJobPhase(execution, context, job, phase, arguments, targets, dirtyTargets, force=force, keepGoing=keepGoing, dryRun=dryRun, ignoreHistory=ignoreHistory))
                             else
                                 None
                         }
@@ -278,8 +286,8 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         jobContext:Context,
         job:Job, phase:Phase,
         arguments:Map[String,Any],
-        targets:Target => Boolean,
-        dirtyTargets:Target => Boolean,
+        targets:(Phase,TargetIdentifier) => Boolean,
+        dirtyTargets:(Phase,TargetIdentifier) => Boolean,
         force:Boolean,
         keepGoing:Boolean,
         dryRun:Boolean,
@@ -327,14 +335,19 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
     private def executeJobTargets(
         execution:Execution,
         context:Context,
-        job:Job, phase:Phase,
-        targets:Target => Boolean,
-        dirtyTargets:Target => Boolean,
+        job:Job,
+        phase:Phase,
+        targets:(Phase,TargetIdentifier) => Boolean,
+        dirtyTargets:(Phase,TargetIdentifier) => Boolean,
         force:Boolean,
         keepGoing:Boolean,
         dryRun:Boolean,
-        ignoreHistory:Boolean) : Seq[TargetResult] = {
+        ignoreHistory:Boolean
+    ) : Seq[TargetResult] = {
         require(phase != null)
+
+        def targetFilter(target: Target): Boolean = targets(phase, target.identifier)
+        def dirtyFilter(target: Target): Boolean = dirtyTargets(phase, target.identifier)
 
         // This will throw an exception if instantiation fails
         val jobTargets = job.targets.map(t => context.getTarget(t))
@@ -344,9 +357,9 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         val executor = ctor.newInstance()
 
         val dirtyManager = new DirtyTargets(jobTargets, phase)
-        dirtyManager.taint(dirtyTargets)
+        dirtyManager.taint(dirtyFilter _)
 
-        executor.execute(execution, context, phase, jobTargets, targets, keepGoing) { (execution, target, phase) =>
+        executor.execute(execution, context, phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
             val sc = execution.spark.sparkContext
             withJobGroup(sc, target.name, s"$phase target ${target.identifier}") {
                 val dirty = dirtyManager.isDirty(target)
@@ -607,6 +620,16 @@ final class Runner(
       * @return
       */
     def executeJob(job:Job, phases:Seq[Phase], args:Map[String,Any]=Map.empty, targets:Seq[Regex]=Seq(".*".r), dirtyTargets:Seq[Regex]=Seq.empty, force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, ignoreHistory:Boolean=false, isolated:Boolean=true) : Status = {
+        require(args != null)
+        require(phases != null)
+        require(args != null)
+
+        def targetFilter(phase: Phase, target: TargetIdentifier): Boolean = targets.exists(_.unapplySeq(target.name).nonEmpty)
+        def dirtyFilter(phase: Phase, target: TargetIdentifier): Boolean = dirtyTargets.exists(_.unapplySeq(target.name).nonEmpty)
+        executeJob(job, phases, args, targetFilter _, dirtyFilter _, force, keepGoing, dryRun, ignoreHistory, isolated)
+    }
+
+    def executeJob(job: Job, phases: Seq[Phase], args: Map[String, Any], targets:(Phase,TargetIdentifier) => Boolean, dirtyTargets: (Phase,TargetIdentifier) => Boolean, force: Boolean, keepGoing: Boolean, dryRun: Boolean, ignoreHistory: Boolean, isolated: Boolean): Status = {
         require(args != null)
         require(phases != null)
         require(args != null)

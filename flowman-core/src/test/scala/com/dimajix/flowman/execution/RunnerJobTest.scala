@@ -209,7 +209,6 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
         def genTarget(name:String, toBeExecuted:Boolean) : Prototype[Target] = Prototype.of {
             val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = mock[Target]
-            (target.name _).expects().atLeastOnce().returns(name)
             (target.before _).expects().atLeastOnce().returns(Seq())
             (target.after _).expects().atLeastOnce().returns(Seq())
             (target.phases _).expects().atLeastOnce().returns(Lifecycle.ALL.toSet)
@@ -217,6 +216,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             (target.provides _).expects(*).atLeastOnce().returns(Set())
             (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
             if (toBeExecuted) {
+                (target.name _).expects().atLeastOnce().returns(name)
                 (target.digest _).expects(Phase.CREATE).atLeastOnce().returns(instance)
                 (target.dirty _).expects(*, Phase.CREATE).returns(Yes)
                 (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))
@@ -291,7 +291,6 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
         def genTarget(name:String, throwsException:Boolean, toBeExecuted:Boolean, before:Seq[String]=Seq(), after:Seq[String]=Seq()) : Prototype[Target] = Prototype.of {
             val instance = TargetDigest("default", "default", name, Phase.CREATE)
             val target = mock[Target]
-            (target.name _).expects().atLeastOnce().returns(name)
             (target.before _).expects().atLeastOnce().returns(before.map(TargetIdentifier(_)))
             (target.after _).expects().atLeastOnce().returns(after.map(TargetIdentifier(_)))
             (target.phases _).expects().atLeastOnce().returns(Lifecycle.ALL.toSet)
@@ -300,6 +299,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             (target.project _).expects().anyNumberOfTimes().returns(None)
             (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier(name))
             if (toBeExecuted) {
+                (target.name _).expects().atLeastOnce().returns(name)
                 (target.digest _).expects(Phase.CREATE).atLeastOnce().returns(instance)
                 (target.dirty _).expects(*, Phase.CREATE).atLeastOnce().returns(Yes)
                 (target.metadata _).expects().atLeastOnce().returns(Metadata(name=name, kind="target", category="target"))

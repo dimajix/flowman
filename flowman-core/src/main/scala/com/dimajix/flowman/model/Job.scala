@@ -104,6 +104,12 @@ object Job {
         }
     }
 
+    final case class Execution(
+        phase:Phase,
+        sequence:PhaseExecutionPolicy = PhaseExecutionPolicy.ALWAYS,
+        targets:Seq[Regex] = Seq(".*".r)
+    )
+
     object Properties {
         def apply(context:Context, name:String="") : Properties = {
             require(context != null)
@@ -239,20 +245,14 @@ object Job {
             .reduceOption((envs, elems) => envs ++ elems)
             .getOrElse(Map.empty)
         val parentTargets = parents
-            .map(job => job.targets)
-            .reduceOption((targets, elems) => targets ++ elems)
-            .getOrElse(Seq.empty)
+            .flatMap(job => job.targets)
         val parentHooks = parents
-            .map(job => job.hooks)
-            .reduceOption((hooks, elems) => hooks ++ elems)
-            .getOrElse(Seq.empty)
+            .flatMap(job => job.hooks)
         val parentMetrics = parents
             .flatMap(job => job.metrics)
             .headOption
-        val parentPhases = parents
-            .map(job => job.phases)
-            .filter(_.nonEmpty)
-            .headOption
+        val parentExecutions = parents
+            .flatMap(job => job.executions)
 
         val allEnvironment = parentEnvironment ++ job.environment
 
@@ -264,7 +264,7 @@ object Job {
 
         val allMetrics = job.metrics.orElse(parentMetrics)
 
-        val allPhases = if (job.phases.isEmpty) parentPhases.getOrElse(job.phases) else job.phases
+        val allExecutions = parentExecutions ++ job.executions
 
         Job(
             job.instanceProperties,
@@ -273,7 +273,7 @@ object Job {
             allTargets,
             allMetrics,
             allHooks,
-            allPhases
+            allExecutions
         )
     }
 }
@@ -286,7 +286,7 @@ final case class Job(
     targets:Seq[TargetIdentifier] = Seq.empty,
     metrics:Option[Prototype[MetricBoard]] = None,
     hooks:Seq[Prototype[Hook]] = Seq.empty,
-    phases:Map[Phase,PhaseExecutionPolicy] = Map.empty
+    executions:Seq[Job.Execution] = Seq.empty
 ) extends AbstractInstance {
     override type PropertiesType = Job.Properties
 

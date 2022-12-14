@@ -34,11 +34,9 @@ import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.NamespaceWrapper
 import com.dimajix.flowman.model.ProjectWrapper
-import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.annotation.TargetType
-import com.dimajix.flowman.spec.relation.MockRelation
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
@@ -89,6 +87,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         job.identifier should be (JobIdentifier("project/job"))
         job.description should be (Some("Some Job"))
         job.targets should be (Seq(TargetIdentifier("grabenv")))
+        job.executions should be (Seq.empty)
     }
 
     it should "support parameters" in {
@@ -401,16 +400,25 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         )
     }
 
-    it should "support phases" in {
+    it should "support executions" in {
         val spec =
             """
               |jobs:
               |  main:
-              |    phases:
-              |      validate: first
-              |      create: always
-              |      build: last
-              |      verify: never
+              |    executions:
+              |      - phase: create
+              |        sequence: first
+              |      - phase: build
+              |        sequence: always
+              |        targets:
+              |          - .*_daily
+              |      - phase: build
+              |        sequence: last
+              |        targets:
+              |          - .*_full
+              |      - phase: verify
+              |        sequence: last
+              |        targets: documentation
               |""".stripMargin
 
         val project  = Module.read.string(spec).toProject("default")
@@ -418,11 +426,11 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         val context = session.getContext(project)
 
         val job = project.jobs("main").instantiate(context)
-        job.phases should be (Map(
-            Phase.VALIDATE -> PhaseExecutionPolicy.FIRST,
-            Phase.CREATE -> PhaseExecutionPolicy.ALWAYS,
-            Phase.BUILD -> PhaseExecutionPolicy.LAST,
-            Phase.VERIFY -> PhaseExecutionPolicy.NEVER
+        job.executions.map(e => (e.phase, e.sequence, e.targets.map(_.toString()))) should be(Seq(
+            (Phase.CREATE, PhaseExecutionPolicy.FIRST, Seq(".*")),
+            (Phase.BUILD, PhaseExecutionPolicy.ALWAYS, Seq(".*_daily")),
+            (Phase.BUILD, PhaseExecutionPolicy.LAST, Seq(".*_full")),
+            (Phase.VERIFY, PhaseExecutionPolicy.LAST, Seq("documentation"))
         ))
     }
 

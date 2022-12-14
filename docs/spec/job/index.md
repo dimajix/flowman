@@ -22,16 +22,36 @@ jobs:
     hooks:
       - kind: web
         jobSuccess: http://0.0.0.0/success&startdate=$URL.encode($start_ts)&enddate=$URL.encode($end_ts)&period=$processing_duration&force=$force
-    phases:
-      validate: first
-      create: first
-      build: always
-      verify: last
-      truncate: always
-      destroy: last
+
     targets:
-      - some_hive_table
-      - some_files
+      - invoices_daily
+      - transactions_daily
+      - customers_full
+      - documentation
+
+    # The executions block allows fine-grained control over which targets should participate in which execution phase.
+    # This helps to reduce the total amount of work, especially when executing parameter ranges.
+    executions:
+      # The CREATE phase should only be executed once at the beginning of each parameter range
+      - phase: create
+        sequence: first
+        # You can also omit the targets, if you want to have all of them
+        targets: .*
+      # You are allowed to specify a single phase more than once
+      - phase: build
+        sequence: always
+        targets:
+          # The following regular expressions matches all targets ending with "_daily"
+          - .*_daily
+      - phase: build
+        sequence: last
+        targets:
+          # The following regular expressions matches all targets ending with "_full"
+          - .*_full
+      # Documentation should only be generated for the last entry in the execution sequence
+      - phase: verify
+        sequence: last
+        targets: documentation
 ```
 
 ## Fields
@@ -52,7 +72,7 @@ You can also access the job parameters in the environment definition for derivin
  
 * `parameters` **(optional)** *(type: list:parameter)*:
 A list of job parameters. Values for job parameters have to be specified for each job execution, be it either directly 
-via the command line or via setting an environment vatiable in a derived job.
+via the command line or via setting an environment variable in a derived job.
  
 * `hooks` **(optional)** *(type: list:hook)*:
 A list of [hooks](../hooks/index.md) which will be called before and after each job and target is executed. Hooks provide some ways to
@@ -61,15 +81,27 @@ notify external systems (or possibly plugins) about the current execution status
 * `metrics` **(optional)** *(type: list:hook)*:
 A list of metrics that should be published after job execution. See below for more details.
 
-* `phases` **(optional)** *(type: map)*:
-This section provides fine-grained control over when the individual phases are to be executed. This allows to reduce
-the amount of redundant work when a whole (date) range is used for a parameter. Within this section you can explicitly
-state when each phase should be executed:
-  * `always` - this phase will be executed for all parameter instances
-  * `never` - the corresponding phase will never be executed
-  * `first` - only to be executed for the first parameter instance
-  * `first` - only to be executed for the last parameter instance
+* `executions` **(optional)** *(type: list[execution])*:
+This **optional** section provides fine-grained control over when the individual phases are to be executed. This allows 
+to reduce the amount of redundant work when a whole (date) range is used for a parameter. Within this section you can 
+explicitly state when each phase should be executed. Each entry of the list has three attributes
+  * `phase` **(required)** *(type: string)* - the execution phase to be configured. You can have multiple entries
+    per phase, these will be logically merged during execution.
+  * `sequence` **(optional)** *(type: string)* *(default: `always`)* - specifies when this block is active when
+    executing a whole range of job parameters via command line. Possible values are:
+    * `always` - this phase will be executed for all parameter instances
+    * `never` - the corresponding phase will never be executed
+    * `first` - only to be executed for the first parameter instance
+    * `last` - only to be executed for the last parameter instance
+  * `targets` **(optional)** *(type: regex)* *(default: `.*`)* - list of regular expressions to match build targets.
+    Note that you still need to specify all targets in the jobs `targets` main
+    list. This list in the `executions` sections acts as a filter on top of the jobs  main target list. Defaults to `.*`,
+    which simply selects all job targets for execution.
+
 Please find more information about this option in the [Cookbook for Execution Phases](../../cookbook/execution-phases.md).
+When this section is omitted, then all targets will participate in all execution phases, and all phases will be
+executed for the full parameter range (if specified on the command line).
+
 
 ## Metrics
 
@@ -84,17 +116,21 @@ For each job Flowman provides the following execution metrics:
 
 ## Job Parameters
 
-A Job optionally can have parameters, which play a special role. First they have to be
-specified when a job is run from the command line (via `flowexec job run param=value`).
+A Job optionally can have parameters, which play a special role. First they have to be specified when a job is run from 
+the command line (via `flowexec job run param=value`).
 
-Second flowman can be conifgured such that every run of a job is logged into a database. The
-log entry includes the job's name and also all values for all parameters. This way it is 
-possible to identify individual runs of a job.
+Second flowman can be configured such that every run of a job is logged into a database. The log entry includes the 
+job's name and also all values for all parameters. This way it is possible to identify individual runs of a job.
 
-With these explanations in mind, you should only declare job parameters which have a influence
-on the data processing result (for example the processing date range). Other settings like
-credentials should not be provided as job parameters, but as normal environment variables
-instead.
+With these explanations in mind, you should only declare job parameters which have an influence on the data processing 
+result (for example the processing date range). Other settings like credentials should not be provided as job 
+parameters, but as normal environment variables instead.
+
+Note that you can also execute a whole range of values for a given parameter as follows:
+```shell
+flowexec job build daily processing_datetime:start=2021-06-01T00:00 processing_datetime:end=2021-08-10T00:00 processing_datetime:step=P1D --target parquet_lineitem --no-lifecycle -j 4
+```
+This would assume that the job parameter `processing_datetime` is of type `date`.
 
 
 ## Job Isolation

@@ -50,7 +50,6 @@ in most cases, you do not need to manually specify dependencies yourself (althou
 Flowman tries to detect any dependencies between targets automatically, such that all targets are built in the correct
 order. You need nothing to do to take advantage of this feature.
 
-
 ### Manual Dependencies
 
 In addition to automatic dependency management, you can also specify explicit dependencies between targets. This can
@@ -80,10 +79,14 @@ targets:
 A [job](../job/index.md) groups multiple [targets](../target/index.md) to a logical bundle, which should be
 built together. When executing a lifecycle for a job, Flowman will apply the following logic:
 
-1. Iterate over all execution phases of the lifecycle (i.e. VALIDATE, CREATE, BUILD, VERIFY)
-2. Perform dependency analysis of all targets within the job, which are active for the current execution phase
-3. Check each target if it is *dirty* (i.e. it requires an execution) the current phase
-4. Execute all active and dirty targets in the correct order
+1. Interpolate any given parameter given on the command line, for example
+  `flowexec job daily verify processing_date:start=2022-11-01 processing_date:end=2022-11-10`
+  would execute the job `daily` for 10 consecutive days.
+2. Iterate over all execution phases of the lifecycle (i.e. VALIDATE, CREATE, BUILD, VERIFY).
+3. Perform dependency analysis of all targets within the job, which are active for the current execution phase
+4. Identify all active targets in the current phase (possibly accordingly to the jobs `executions` section)
+5. Check each target if it is *dirty* (i.e. it requires an execution) the current phase
+6. Execute all active and dirty targets in the correct order
 
 Note that Flowman also cascades dirtiness during the execution. This means that if target B depends on target A, and
 target A is dirty (because data is overwritten), then target B also becomes implicitly dirty via its dependency.

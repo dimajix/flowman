@@ -17,6 +17,7 @@
 * github-297: Parametrize when to execute a specific phase
 * github-299: Move migrationPolicy and migrationStrategy from target into relation
 * github-115: Implement additional build policy in relation target for forcing dirty
+* github-298: Support fine-grained control when to execute each target of a job
 
 
 # Version 0.29.0 - 2022-11-08

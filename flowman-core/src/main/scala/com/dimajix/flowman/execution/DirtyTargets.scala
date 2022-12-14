@@ -85,8 +85,8 @@ final class DirtyTargets(targets: Seq[Target], phase:Phase) {
      * Taint possibly multiple targets as being dirty
      * @param targets
      */
-    def taint(targets:Target => Boolean) : Unit = {
-        val dirtyTargets = dependencies.keys.filter(targets)
+    def taint(predicate:Target => Boolean) : Unit = {
+        val dirtyTargets = dependencies.keys.filter(predicate)
         if (dirtyTargets.nonEmpty)
             logger.info(s"Explicitly taint targets as dirty: ${dirtyTargets.map(_.identifier.toString).mkString(",")}")
         dirtyTargets.foreach(taint)

@@ -29,7 +29,6 @@ import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.NamedSpec
-import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.hook.HookSpec
 import com.dimajix.flowman.spec.metric.MetricBoardSpec
 import com.dimajix.flowman.types.FieldType
@@ -58,6 +57,22 @@ object JobSpec extends TypeRegistry[JobSpec] {
             )
         }
     }
+
+    final class Execution {
+        @JsonProperty(value = "phase") private var phase: String = _
+        @JsonProperty(value = "sequence", required = false) private var sequence: String = "always"
+        @JsonProperty(value = "targets", required = false) private var targets: Seq[String] = Seq(".*")
+
+        def instantiate(context: Context): Job.Execution = {
+            require(context != null)
+
+            Job.Execution(
+                Phase.ofString(context.evaluate(phase)),
+                PhaseExecutionPolicy.ofString(context.evaluate(sequence)),
+                targets.map(context.evaluate).map(_.r)
+            )
+        }
+    }
 }
 
 final class JobSpec extends NamedSpec[Job] {
@@ -68,7 +83,7 @@ final class JobSpec extends NamedSpec[Job] {
     @JsonProperty(value="targets") private var targets: Seq[String] = Seq.empty
     @JsonProperty(value="metrics") private var metrics:Option[MetricBoardSpec] = None
     @JsonProperty(value="hooks") private var hooks: Seq[HookSpec] = Seq.empty
-    @JsonProperty(value="phases") private var phases: Map[String,String] = Map.empty
+    @JsonProperty(value="executions") private var executions: Seq[JobSpec.Execution] = Seq.empty
 
     override def instantiate(context: Context, properties:Option[Job.Properties] = None): Job = {
         require(context != null)
@@ -81,7 +96,7 @@ final class JobSpec extends NamedSpec[Job] {
             targets.map(context.evaluate).map(TargetIdentifier.parse),
             metrics,
             hooks,
-            phases.toSeq.map(kv => Phase.ofString(kv._1) -> PhaseExecutionPolicy.ofString(context.evaluate(kv._2))).toMap
+            executions.map(_.instantiate(context))
         )
 
         Job.merge(job, parents)

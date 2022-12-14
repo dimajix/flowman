@@ -22,7 +22,7 @@ import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.types.FieldValue
 
 
-class JobCoordinator(session:Session, noLifecycle:Boolean=false, force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, parallelism:Int= -1) {
+class JobCoordinator(session:Session, force:Boolean=false, keepGoing:Boolean=false, dryRun:Boolean=false, parallelism:Int= -1) {
     private val defaultPhases = Map(
         Phase.VALIDATE -> PhaseExecutionPolicy.ALWAYS,
         Phase.CREATE -> PhaseExecutionPolicy.ALWAYS,
@@ -32,17 +32,7 @@ class JobCoordinator(session:Session, noLifecycle:Boolean=false, force:Boolean=f
         Phase.DESTROY -> PhaseExecutionPolicy.ALWAYS
     )
 
-    def execute(job:Job, phase:Phase, args:Map[String,FieldValue]=Map.empty, targets:Seq[Regex]=Seq(".*".r), dirtyTargets:Seq[Regex]=Seq.empty) : Status = {
-        val lifecycle =
-            if (noLifecycle)
-                Seq(phase)
-            else
-                Lifecycle.ofPhase(phase)
-
-        execute(job, lifecycle, args, targets, dirtyTargets)
-    }
-
-    def execute(job: Job, lifecycle: Seq[Phase], args: Map[String, FieldValue], targets: Seq[Regex], dirtyTargets: Seq[Regex]): Status = {
+    def execute(job: Job, lifecycle: Seq[Phase], args: Map[String, FieldValue]=Map.empty, targets: Seq[Regex]=Seq(".*".r), dirtyTargets: Seq[Regex]=Seq.empty): Status = {
         if (parallelism > 1)
             executeParallel(job, args, lifecycle, targets, dirtyTargets)
         else

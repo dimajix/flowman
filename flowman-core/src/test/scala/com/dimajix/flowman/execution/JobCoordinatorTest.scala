@@ -69,7 +69,7 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
         (target.execute _).expects(*, Phase.BUILD).returning(TargetResult(target, Phase.BUILD, Status.SUCCESS, Instant.now()))
 
         val coord = new JobCoordinator(session)
-        coord.execute(job, Phase.BUILD) should be (Status.SUCCESS)
+        coord.execute(job, Lifecycle.ofPhase(Phase.BUILD)) should be (Status.SUCCESS)
     }
 
     it should "support parallel execution" in {
@@ -114,7 +114,7 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
         (target.execute _).expects(*, Phase.BUILD).repeated(8).returning(TargetResult(target, Phase.BUILD, Status.SUCCESS, Instant.now()))
 
         val coord = new JobCoordinator(session, parallelism = 3)
-        coord.execute(job, Phase.VERIFY, job.parseArguments(Map("pdate:start" -> "2022-11-01", "pdate:end" -> "2022-11-09"))) should be(Status.SUCCESS)
+        coord.execute(job, Lifecycle.ofPhase(Phase.VERIFY), job.parseArguments(Map("pdate:start" -> "2022-11-01", "pdate:end" -> "2022-11-09"))) should be(Status.SUCCESS)
     }
 
     it should "use explicit phase configuration" in {
@@ -198,6 +198,6 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
         (lastTarget.execute _).expects(*, Phase.VERIFY) returning (TargetResult(lastTarget, Phase.VERIFY, Status.SUCCESS, Instant.now()))
 
         val coord = new JobCoordinator(session)
-        coord.execute(job, Phase.VERIFY, job.parseArguments(Map("pdate:start" -> "2022-11-01", "pdate:end" -> "2022-11-11"))) should be(Status.SUCCESS)
+        coord.execute(job, Lifecycle.ofPhase(Phase.VERIFY), job.parseArguments(Map("pdate:start" -> "2022-11-01", "pdate:end" -> "2022-11-11"))) should be(Status.SUCCESS)
     }
 }

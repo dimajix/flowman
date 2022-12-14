@@ -71,8 +71,14 @@ sealed class PhaseCommand(phase:Phase) extends Command {
                 logger.error(s"Error instantiating job '$job':\n  ${reasons(e)}")
                 Status.FAILED
             case Success(job) =>
-                val coordinator = new JobCoordinator(session, noLifecycle, force, keepGoing, dryRun, parallelism)
-                coordinator.execute(job, phase, job.parseArguments(args), targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r))
+                val lifecycle =
+                    if (noLifecycle)
+                        Seq(phase)
+                    else
+                        Lifecycle.ofPhase(phase)
+
+                val coordinator = new JobCoordinator(session, force, keepGoing, dryRun, parallelism)
+                coordinator.execute(job, lifecycle, job.parseArguments(args), targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r))
         }
     }
 }

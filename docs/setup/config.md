@@ -152,8 +152,9 @@ Note that you can still explicitly specify a different output mode in each targe
 
 - `flowman.default.target.buildPolicy` *(type: string)* *(default:`SMART`)*
 Sets the default target build policy, which takes effect in the `BUILD` phase. Possible values are
-  - *`IF_EMPTY`*: A target is considered to be dirty, if the specified target partition does not exist (or is empty).
   - *`ALWAYS`*: A target is always considered to be dirty.
+  - *`IF_EMPTY`*: A target is considered to be dirty, if the specified target partition does not exist (or is empty).
+  - *`IF_TAINTED`*: A target is considered to be dirty, only if it is tainted by a dirty dependency.
   - *`SMART`*: A target is considered to be dirty, if the target partition is empty, or when the output mode is set to `APPEND` or when no partition is specified (full overwrite)
   - *`COMPAT`*: A target is considered to be dirty, if the target is empty, or when the output mode is set to `APPEND`. This setting provides the same behaviour as Flowman before version 0.30.0.
     

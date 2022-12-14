@@ -109,8 +109,9 @@ Flowman [config variable](../../setup/config.md) `floman.default.target.rebalanc
 * `buildPolicy` **(optional)** *(type: string)* *(default=empty)*:
 Specifies a build policy, which determines when the target is considered to be dirty. If no value is provided, then
 Flowman will fall back to the [config variable](../../setup/config.md) `flowman.default.target.buildPolicy`. Possible values are
-  - `IF_EMPTY`: The target is considered to be dirty, if the specified partition does not exist (or is empty). If no partition is specified, then the target is dirty if the whole relation is empty.
   - `ALWAYS`: The target is always considered to be dirty.
+  - `IF_EMPTY`: The target is considered to be dirty, if the specified partition does not exist (or is empty). If no partition is specified, then the target is dirty if the whole relation is empty.
+  - `IF_TAINTED`: The target is considered to be dirty, only if it is tainted by a dirty dependency.
   - `SMART`: The target is considered to be dirty, if the target partition is empty, or when the output mode is set to `APPEND` or when no partition is specified (full overwrite)
   - `COMPAT`: The target is considered to be dirty, if the target is empty, or when the output mode is set to `APPEND`. This setting provides the same behaviour as Flowman before version 0.30.0.
 

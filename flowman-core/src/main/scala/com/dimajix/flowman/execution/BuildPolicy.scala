@@ -27,6 +27,7 @@ sealed abstract class BuildPolicy extends Product with Serializable {
 object BuildPolicy {
     case object ALWAYS extends BuildPolicy
     case object IF_EMPTY extends BuildPolicy
+    case object IF_TAINTED extends BuildPolicy
     case object SMART extends BuildPolicy
     case object COMPAT extends BuildPolicy
 
@@ -34,9 +35,10 @@ object BuildPolicy {
         policy.toLowerCase(Locale.ROOT) match {
             case "always" => ALWAYS
             case "if_empty"|"ifempty" => IF_EMPTY
+            case "if_tainted"|"iftainted" => IF_TAINTED
             case "smart" => SMART
             case "compat" => COMPAT
-            case _ => throw new IllegalArgumentException(s"Unknown build policy: '$policy'. Accepted policies are 'always', 'smart', 'ifempty', 'compat'.")
+            case _ => throw new IllegalArgumentException(s"Unknown build policy: '$policy'. Accepted policies are 'always', 'smart', 'if_empty', 'if_tainted', 'compat'.")
         }
     }
 }

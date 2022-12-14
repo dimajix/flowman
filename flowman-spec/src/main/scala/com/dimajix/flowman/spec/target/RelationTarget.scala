@@ -212,6 +212,8 @@ case class RelationTarget(
                 buildPolicy match {
                     case BuildPolicy.ALWAYS =>
                         Yes
+                    case BuildPolicy.IF_TAINTED =>
+                        No
                     case BuildPolicy.IF_EMPTY =>
                         !rel.loaded(execution, partition)
                     case BuildPolicy.SMART =>

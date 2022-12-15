@@ -81,7 +81,8 @@ built together. When executing a lifecycle for a job, Flowman will apply the fol
 
 1. Interpolate any given parameter given on the command line, for example
   `flowexec job daily verify processing_date:start=2022-11-01 processing_date:end=2022-11-10`
-  would execute the job `daily` for 10 consecutive days.
+  would cycle through 10 consecutive days and execute the job `daily` with the parameter `processing_date` set 
+  accordingly.
 2. Iterate over all execution phases of the lifecycle (i.e. VALIDATE, CREATE, BUILD, VERIFY).
 3. Perform dependency analysis of all targets within the job, which are active for the current execution phase
 4. Identify all active targets in the current phase (possibly accordingly to the jobs `executions` section)

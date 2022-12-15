@@ -22,7 +22,7 @@ import scala.util.matching.Regex
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.PhaseExecutionPolicy
+import com.dimajix.flowman.execution.CyclePolicy
 import com.dimajix.flowman.execution.Runner
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history.NullStateStore
@@ -106,7 +106,7 @@ object Job {
 
     final case class Execution(
         phase:Phase,
-        sequence:PhaseExecutionPolicy = PhaseExecutionPolicy.ALWAYS,
+        cycle:CyclePolicy = CyclePolicy.ALWAYS,
         targets:Seq[Regex] = Seq(".*".r)
     )
 

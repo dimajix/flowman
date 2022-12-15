@@ -32,25 +32,28 @@ jobs:
     # The executions block allows fine-grained control over which targets should participate in which execution phase.
     # This helps to reduce the total amount of work, especially when executing parameter ranges.
     executions:
+      # The following entry completely disables the VALIDATE phase
+      - phase: validate
+        cycle: never
       # The CREATE phase should only be executed once at the beginning of each parameter range
       - phase: create
-        sequence: first
-        # You can also omit the targets, if you want to have all of them
+        cycle: first
+        # You can also omit the targets altogether, if you want to execute all of them. 
         targets: .*
       # You are allowed to specify a single phase more than once
       - phase: build
-        sequence: always
+        cycle: always
         targets:
           # The following regular expressions matches all targets ending with "_daily"
           - .*_daily
       - phase: build
-        sequence: last
+        cycle: last
         targets:
           # The following regular expressions matches all targets ending with "_full"
           - .*_full
       # Documentation should only be generated for the last entry in the execution sequence
       - phase: verify
-        sequence: last
+        cycle: last
         targets: documentation
 ```
 
@@ -81,13 +84,13 @@ notify external systems (or possibly plugins) about the current execution status
 * `metrics` **(optional)** *(type: list:hook)*:
 A list of metrics that should be published after job execution. See below for more details.
 
-* `executions` **(optional)** *(type: list[execution])*:
+* `executions` **(optional)** *(type: list:execution)* (since Flowman 0.30.0):
 This **optional** section provides fine-grained control over when the individual phases are to be executed. This allows 
 to reduce the amount of redundant work when a whole (date) range is used for a parameter. Within this section you can 
 explicitly state when each phase should be executed. Each entry of the list has three attributes
   * `phase` **(required)** *(type: string)* - the execution phase to be configured. You can have multiple entries
     per phase, these will be logically merged during execution.
-  * `sequence` **(optional)** *(type: string)* *(default: `always`)* - specifies when this block is active when
+  * `cycle` **(optional)** *(type: string)* *(default: `always`)* - specifies when this block is active when
     executing a whole range of job parameters via command line. Possible values are:
     * `always` - this phase will be executed for all parameter instances
     * `never` - the corresponding phase will never be executed

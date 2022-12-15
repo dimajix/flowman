@@ -88,10 +88,10 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
                 Job.Parameter("pdate", DateType)
             ),
             executions = Seq(
-                Job.Execution(Phase.VALIDATE, PhaseExecutionPolicy.FIRST),
-                Job.Execution(Phase.CREATE, PhaseExecutionPolicy.NEVER),
-                Job.Execution(Phase.BUILD, PhaseExecutionPolicy.ALWAYS),
-                Job.Execution(Phase.VERIFY, PhaseExecutionPolicy.LAST)
+                Job.Execution(Phase.VALIDATE, CyclePolicy.FIRST),
+                Job.Execution(Phase.CREATE, CyclePolicy.NEVER),
+                Job.Execution(Phase.BUILD, CyclePolicy.ALWAYS),
+                Job.Execution(Phase.VERIFY, CyclePolicy.LAST)
             )
         )
 
@@ -135,10 +135,10 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
                 Job.Parameter("pdate", DateType)
             ),
             executions = Seq(
-                Job.Execution(Phase.VALIDATE, PhaseExecutionPolicy.FIRST),
-                Job.Execution(Phase.CREATE, PhaseExecutionPolicy.NEVER),
-                Job.Execution(Phase.BUILD, PhaseExecutionPolicy.ALWAYS),
-                Job.Execution(Phase.VERIFY, PhaseExecutionPolicy.LAST)
+                Job.Execution(Phase.VALIDATE, CyclePolicy.FIRST),
+                Job.Execution(Phase.CREATE, CyclePolicy.NEVER),
+                Job.Execution(Phase.BUILD, CyclePolicy.ALWAYS),
+                Job.Execution(Phase.VERIFY, CyclePolicy.LAST)
             )
         )
 

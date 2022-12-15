@@ -51,13 +51,13 @@ class JobCoordinator(session:Session, force:Boolean=false, keepGoing:Boolean=fal
             val executions0 = job.executions
                 .filter(_.phase == p)
             // Fall back to default execution if phase not found
-            val executions = if (executions0.nonEmpty) executions0 else Seq(Job.Execution(p, PhaseExecutionPolicy.ALWAYS, Seq(".*".r)))
+            val executions = if (executions0.nonEmpty) executions0 else Seq(Job.Execution(p, CyclePolicy.ALWAYS, Seq(".*".r)))
             // Collect all target regexes within the current Job.Execution
             val activeTargets = executions.flatMap { e =>
-                    e.sequence match {
-                        case PhaseExecutionPolicy.ALWAYS => e.targets
-                        case PhaseExecutionPolicy.FIRST if first => e.targets
-                        case PhaseExecutionPolicy.LAST if last => e.targets
+                    e.cycle match {
+                        case CyclePolicy.ALWAYS => e.targets
+                        case CyclePolicy.FIRST if first => e.targets
+                        case CyclePolicy.LAST if last => e.targets
                         case _ => Seq.empty
                     }
                 }

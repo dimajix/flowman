@@ -23,7 +23,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.PhaseExecutionPolicy
+import com.dimajix.flowman.execution.CyclePolicy
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.metric.MetricSink
@@ -407,17 +407,17 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
               |  main:
               |    executions:
               |      - phase: create
-              |        sequence: first
+              |        cycle: first
               |      - phase: build
-              |        sequence: always
+              |        cycle: always
               |        targets:
               |          - .*_daily
               |      - phase: build
-              |        sequence: last
+              |        cycle: last
               |        targets:
               |          - .*_full
               |      - phase: verify
-              |        sequence: last
+              |        cycle: last
               |        targets: documentation
               |""".stripMargin
 
@@ -426,11 +426,11 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         val context = session.getContext(project)
 
         val job = project.jobs("main").instantiate(context)
-        job.executions.map(e => (e.phase, e.sequence, e.targets.map(_.toString()))) should be(Seq(
-            (Phase.CREATE, PhaseExecutionPolicy.FIRST, Seq(".*")),
-            (Phase.BUILD, PhaseExecutionPolicy.ALWAYS, Seq(".*_daily")),
-            (Phase.BUILD, PhaseExecutionPolicy.LAST, Seq(".*_full")),
-            (Phase.VERIFY, PhaseExecutionPolicy.LAST, Seq("documentation"))
+        job.executions.map(e => (e.phase, e.cycle, e.targets.map(_.toString()))) should be(Seq(
+            (Phase.CREATE, CyclePolicy.FIRST, Seq(".*")),
+            (Phase.BUILD, CyclePolicy.ALWAYS, Seq(".*_daily")),
+            (Phase.BUILD, CyclePolicy.LAST, Seq(".*_full")),
+            (Phase.VERIFY, CyclePolicy.LAST, Seq("documentation"))
         ))
     }
 

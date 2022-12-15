@@ -22,7 +22,7 @@ import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.PhaseExecutionPolicy
+import com.dimajix.flowman.execution.CyclePolicy
 import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
@@ -60,7 +60,7 @@ object JobSpec extends TypeRegistry[JobSpec] {
 
     final class Execution {
         @JsonProperty(value = "phase") private var phase: String = _
-        @JsonProperty(value = "sequence", required = false) private var sequence: String = "always"
+        @JsonProperty(value = "cycle", required = false) private var cycle: String = "always"
         @JsonProperty(value = "targets", required = false) private var targets: Seq[String] = Seq(".*")
 
         def instantiate(context: Context): Job.Execution = {
@@ -68,7 +68,7 @@ object JobSpec extends TypeRegistry[JobSpec] {
 
             Job.Execution(
                 Phase.ofString(context.evaluate(phase)),
-                PhaseExecutionPolicy.ofString(context.evaluate(sequence)),
+                CyclePolicy.ofString(context.evaluate(cycle)),
                 targets.map(context.evaluate).map(_.r)
             )
         }

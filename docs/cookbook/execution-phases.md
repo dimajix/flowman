@@ -85,33 +85,36 @@ jobs:
       - documentation
 
     executions:
+      # Never execute VALIDATE phase
+      - phase: validate
+        cycle: never
       # The CREATE phase should only be executed once at the beginning
       - phase: create
-        sequence: first
+        cycle: first
         # You can also omit the targets, if you want to have all of them
         targets: .*
       # You are allowed to specify a single phase more than once
       - phase: build
-        sequence: always
+        cycle: always
         targets:
           # The following regular expressions matches all targets ending with "_daily"
           - .*_daily
       - phase: build
-        sequence: last
+        cycle: last
         targets:
           # The following regular expressions matches all targets ending with "_full"
           - .*_full
       # Documentation should only be generated for the last entry in the execution sequence
       - phase: verify
-        sequence: last
+        cycle: last
         targets: documentation
 ```
 The `executions` section now described, when each phase should be executed for the given parameter range and which
 targets should be executed. Each entry of the list has three attributes
 * `phase` **(required)** *(type: string)* - the execution phase to be configured. You can have multiple entries
   per phase, these will be logically merged during execution.
-* `sequence` **(optional)** *(type: string)* *(default: `always`)* - specifies when this block is active when
-  executing a whole range of job parameters via command line. Possible values are:
+* `cycle` **(optional)** *(type: string)* *(default: `always`)* - specifies when this block is active when
+  cycling through a whole range of job parameters via command line. Possible values are:
   * `always` - this phase will be executed for all parameter instances
   * `never` - the corresponding phase will never be executed
   * `first` - only to be executed for the first parameter instance
@@ -122,8 +125,23 @@ targets should be executed. Each entry of the list has three attributes
   which simply selects all job targets for execution.
 
 This means that the example above will eventually change the execution of the job as follows:
-* `VALIDATE` (not listed) - will be executed for every date of `processing_date`, with all targets
+* `VALIDATE` (not listed) - will never be executed
 * `CREATE` - will be executed only for the first date of `processing_date`, but again for all targets
 * `BUILD` - will be executed for every date of `processing_date` for all targets ending with "_full". Moreover
 during the last execution, all targets ending with "_daily" will be processed in addition.
 * `VERIFY` - will be executed only for the last date of `processing_date` and only for the `documentation` target.
+
+For example, if you start Flowman via
+```shell
+flowexec job daily verify processing_date:start=2022-11-01 processing_date:end=2022-11-05
+```
+then the whole execution plan will look as follows:
+
+| processing_date | phase    | targets                                                           |
+|-----------------|----------|-------------------------------------------------------------------|
+| 2022-11-01      | CREATE   | invoices_daily, transactions_daily, customers_full, documentation |
+| 2022-11-01      | BUILD    | invoices_daily, transactions_daily                                |
+| 2022-11-02      | BUILD    | invoices_daily, transactions_daily                                |
+| 2022-11-03      | BUILD    | invoices_daily, transactions_daily                                |
+| 2022-11-04      | BUILD    | invoices_daily, transactions_daily, customers_full, documentation |
+| 2022-11-04      | VERIFY   | documentation                                                     |      

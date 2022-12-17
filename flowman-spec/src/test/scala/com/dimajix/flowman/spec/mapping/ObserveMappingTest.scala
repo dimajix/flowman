@@ -25,6 +25,10 @@ import com.dimajix.flowman.metric.Selector
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.LongType
+import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -92,6 +96,24 @@ class ObserveMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
     }
 
     it should "describe its output" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val execution = session.execution
 
+        val mapping = ObserveMapping(
+            Mapping.Properties(context, "observe", "mapping"),
+            MappingOutputIdentifier("some_input"),
+            Map("min" -> "min(_2)", "count" -> "count(*)")
+        )
+
+        val expectedSchema = StructType(Seq(
+            Field("second", LongType, false),
+            Field("first", StringType, true)
+        ))
+
+        val result = mapping.describe(execution, Map(MappingOutputIdentifier("some_input") -> expectedSchema))
+        result should be (Map("main" -> expectedSchema))
+
+        session.shutdown()
     }
 }

@@ -32,5 +32,7 @@ class ExampleSpec extends AnyFlatSpec with Matchers with LocalSparkSession {
         val job = context.getJob(JobIdentifier("test"))
 
         runner.executeJob(job, Lifecycle.ALL) should be (Status.SUCCESS)
+
+        session.shutdown()
     })
 }

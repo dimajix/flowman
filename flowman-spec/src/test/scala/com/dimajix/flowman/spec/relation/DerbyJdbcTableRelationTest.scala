@@ -176,6 +176,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation.connection.name should be ("some_connection")
         relation.indexes should be (Seq(TableIndex("idx0", Seq("str_col", "int_col"))))
         relation.primaryKey should be (Seq("str_col"))
+
+        session.shutdown()
     }
 
     it should "support the full lifecycle" in {
@@ -330,6 +332,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM LALA_001"""))
         }
+
+        session.shutdown()
     }
 
     it should "support the full lifecycle with a staging table" in {
@@ -455,6 +459,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM LALA_001"""))
         }
+
+        session.shutdown()
     }
 
     it should "support the full lifecycle with explicit SQL" in {
@@ -557,6 +563,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM LALA_001"""))
         }
+
+        session.shutdown()
     }
 
     it should "support partitioned tables" in {
@@ -761,6 +769,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_002"))
         }
+
+        session.shutdown()
     }
 
     it should "support dynamically writing to partitioned tables" in {
@@ -911,6 +921,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_003"))
         }
+
+        session.shutdown()
     }
 
     it should "support merge operations with complex clauses and staging tables" in {
@@ -1032,6 +1044,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support upsert operations with staging table" in {
@@ -1129,6 +1143,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support migrations" in {
@@ -1238,6 +1254,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         rel1.exists(execution) should be (No)
         rel1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         rel1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+
+        session.shutdown()
     }
 
     it should "support a primary key" in {
@@ -1302,6 +1320,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         rel0.exists(execution) should be (Yes)
         rel0.destroy(execution)
         rel0.exists(execution) should be (No)
+
+        session.shutdown()
     }
 
     it should "support indexes" in {
@@ -1366,6 +1386,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         rel0.exists(execution) should be (Yes)
         rel0.destroy(execution)
         rel0.exists(execution) should be (No)
+
+        session.shutdown()
     }
 
     private def withConnection[T](url:String, table:String)(fn:(Connection,JDBCOptions) => T) : T = {

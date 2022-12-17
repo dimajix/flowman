@@ -93,5 +93,7 @@ class MappingUtilsTest extends AnyFlatSpec with Matchers {
         )
         MappingUtils.requires(mapping) should be (expected)
         MappingUtils.requires(context, MappingIdentifier("m4")) should be (expected)
+
+        session.shutdown()
     }
 }

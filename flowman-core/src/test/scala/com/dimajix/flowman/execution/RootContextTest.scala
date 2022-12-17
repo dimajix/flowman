@@ -105,6 +105,8 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
         a[NoSuchConnectionException] should be thrownBy (rootContext.getConnection(ConnectionIdentifier("my_project/con_namespace")))
         a[NoSuchConnectionException] should be thrownBy (rootContext.getConnection(ConnectionIdentifier("my_project/con_namespace_profile")))
         rootContext.getConnection(ConnectionIdentifier("my_project/con_project_profile")) should be (projectProfileConnection)
+
+        session.shutdown()
     }
 
     it should "support override mappings" in {
@@ -158,6 +160,8 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
         rootContext.getMapping(MappingIdentifier("my_project/m1"), false) should be (projectMapping1)
         rootContext.getMapping(MappingIdentifier("my_project/m2")) should be (overrideMapping)
         rootContext.getMapping(MappingIdentifier("my_project/m2"), false) should be (projectMapping2)
+
+        session.shutdown()
     }
 
     it should "support override relations" in {
@@ -211,6 +215,8 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
         rootContext.getRelation(RelationIdentifier("my_project/m1"), false) should be (projectRelation1)
         rootContext.getRelation(RelationIdentifier("my_project/m2")) should be (overrideRelation)
         rootContext.getRelation(RelationIdentifier("my_project/m2"), false) should be (projectRelation2)
+
+        session.shutdown()
     }
 
     it should "support importing projects" in {
@@ -259,5 +265,7 @@ class RootContextTest extends AnyFlatSpec with Matchers with MockFactory {
         project4Ctx.evaluate("$project") should be ("project4")
         project4Ctx.evaluate("$arg1") should be ("val1")
         project4Ctx.evaluate("$arg2") should be ("default")
+
+        session.shutdown()
     }
 }

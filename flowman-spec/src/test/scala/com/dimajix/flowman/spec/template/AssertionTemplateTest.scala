@@ -96,6 +96,8 @@ class AssertionTemplateTest extends AnyFlatSpec with Matchers {
         an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("t2")))
         context.getTarget(TargetIdentifier("t3"))
         an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("t4")))
+
+        session.shutdown()
     }
 
     it should "throw an error on unknown templates" in {
@@ -115,5 +117,7 @@ class AssertionTemplateTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
 
         an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("t1")))
+
+        session.shutdown()
     }
 }

@@ -132,6 +132,8 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
                 "namespace" -> NamespaceWrapper(None)
             ))
         }
+
+        session.shutdown()
     }
 
     it should "work" in {
@@ -145,6 +147,8 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
         val runner = session.runner
         runner.executeJob(job, Seq(Phase.BUILD)) should be (Status.SUCCESS)
         runner.executeJob(job, Seq(Phase.BUILD)) should be (Status.SUCCESS)
+
+        session.shutdown()
     }
 
     it should "throw exceptions on missing parameters" in {
@@ -158,6 +162,8 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
 
         val runner = session.runner
         an[IllegalArgumentException] shouldBe thrownBy(runner.executeJob(job, Seq(Phase.BUILD)))
+
+        session.shutdown()
     }
 
     it should "fail on missing targets" in {
@@ -171,6 +177,8 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
 
         val runner = session.runner
         runner.executeJob(job, Seq(Phase.BUILD)) should be (Status.FAILED)
+
+        session.shutdown()
     }
 
     it should "catch exceptions during execution" in {
@@ -203,6 +211,8 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
 
         val runner = session.runner
         runner.executeJob(job, Seq(Phase.BUILD)) should be (Status.FAILED)
+
+        session.shutdown()
     }
 
     it should "only execute specified targets" in {
@@ -248,6 +258,8 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             val job = genJob(session, project)
             val runner = session.runner
             runner.executeJob(job, Seq(Phase.CREATE), targets=Seq("a.*".r)) should be(Status.SUCCESS)
+
+            session.shutdown()
         }
     }
 
@@ -285,6 +297,8 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
 
         val runner = session.runner
         runner.executeJob(job, Seq(Phase.CREATE), dryRun = true) should be(Status.SUCCESS)
+
+        session.shutdown()
     }
 
     it should "stop execution in case of an exception" in {
@@ -332,6 +346,8 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             .build()
         val runner = session.runner
         runner.executeJob(job, Seq(Phase.CREATE)) should be(Status.FAILED)
+
+        session.shutdown()
     }
 
     it should "continue execution in case of an exception with keep-going enabled" in {
@@ -375,6 +391,8 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             .build()
         val runner = session.runner
         runner.executeJob(job, Seq(Phase.CREATE), keepGoing =true) should be(Status.FAILED)
+
+        session.shutdown()
     }
 
     it should "execute dependent targets of dirty targets" in {
@@ -416,6 +434,8 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             .build()
         val runner = session.runner
         runner.executeJob(job, Seq(Phase.CREATE), keepGoing =true) should be(Status.SUCCESS)
+
+        session.shutdown()
     }
 
     it should "invoke all hooks (in jobs and namespaces)" in {
@@ -462,5 +482,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
 
         val runner = session.runner
         runner.executeJob(job, Seq(Phase.BUILD), Map("p1" -> "v1")) should be (Status.SUCCESS)
+
+        session.shutdown()
     }
 }

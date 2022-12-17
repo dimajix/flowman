@@ -80,6 +80,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         val rt = instance.asInstanceOf[RelationTarget]
         rt.relation.name should be ("abc")
         rt.relation.identifier should be (RelationIdentifier("abc"))
+
+        session.shutdown()
     }
 
     it should "provide correct dependencies" in {
@@ -121,6 +123,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         target.provides(Phase.VERIFY) should be (Set())
         target.provides(Phase.TRUNCATE) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
+
+        session.shutdown()
     }
 
     it should "work without a mapping" in {
@@ -156,6 +160,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         target.provides(Phase.VERIFY) should be (Set())
         target.provides(Phase.TRUNCATE) should be (Set())
         target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
+
+        session.shutdown()
     }
 
     it should "support the whole lifecycle" in {
@@ -273,6 +279,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         output.exists(execution) should be (No)
         output.loaded(execution) should be (No)
         target.dirty(execution, Phase.DESTROY) should be (No)
+
+        session.shutdown()
     }
 
     it should "support the whole lifecycle without a mapping" in {
@@ -350,6 +358,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         output.exists(execution) should be(No)
         output.loaded(execution) should be(No)
         target.dirty(execution, Phase.DESTROY) should be(No)
+
+        session.shutdown()
     }
 
     it should "count the number of records" in {
@@ -398,6 +408,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
 
         target.execute(executor, Phase.BUILD)
         metric.value should be (4)
+
+        session.shutdown()
     }
 
     it should "behave correctly with VerifyPolicy=EMPTY_AS_FAILURE" in {
@@ -431,6 +443,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
 
         (relation.loaded _).expects(*,*).returns(No)
         target.execute(executor, Phase.VERIFY).status should be(Status.FAILED)
+
+        session.shutdown()
     }
 
     it should "behave correctly with VerifyPolicy=EMPTY_AS_SUCCESS" in {
@@ -473,6 +487,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         (relation.loaded _).expects(*,*).returns(No)
         (relation.exists _).expects(*).returns(No)
         target.execute(executor, Phase.VERIFY).status should be(Status.FAILED)
+
+        session.shutdown()
     }
 
     it should "behave correctly with VerifyPolicy=EMPTY_AS_SUCCESS_WITH_ERRORS" in {
@@ -515,6 +531,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         (relation.loaded _).expects(*,*).returns(No)
         (relation.exists _).expects(*).returns(No)
         target.execute(executor, Phase.VERIFY).status should be(Status.FAILED)
+
+        session.shutdown()
     }
 
     it should "support buildPolicy ALWAYS" in {
@@ -554,6 +572,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         target2.dirty(executor, Phase.BUILD) should be(Yes)
         target2.dirty(executor, Phase.BUILD) should be(Yes)
         target2.dirty(executor, Phase.BUILD) should be(Yes)
+
+        session.shutdown()
     }
 
     it should "support buildPolicy COMPAT" in {
@@ -611,6 +631,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         target3.dirty(executor, Phase.BUILD) should be(Yes)
         target3.dirty(executor, Phase.BUILD) should be(Yes)
         target3.dirty(executor, Phase.BUILD) should be(Yes)
+
+        session.shutdown()
     }
 
     it should "support buildPolicy IF_EMPTY" in {
@@ -658,6 +680,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         target2.dirty(executor, Phase.BUILD) should be(Yes)
         (relation.loaded _).expects(*, *).returns(Unknown)
         target2.dirty(executor, Phase.BUILD) should be(Unknown)
+
+        session.shutdown()
     }
 
     it should "support buildPolicy IF_TAINTED" in {
@@ -695,6 +719,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         )
 
         target2.dirty(executor, Phase.BUILD) should be(No)
+
+        session.shutdown()
     }
 
     it should "support buildPolicy SMART" in {
@@ -749,5 +775,7 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         target3.dirty(executor, Phase.BUILD) should be(Yes)
         target3.dirty(executor, Phase.BUILD) should be(Yes)
         target3.dirty(executor, Phase.BUILD) should be(Yes)
+
+        session.shutdown()
     }
 }

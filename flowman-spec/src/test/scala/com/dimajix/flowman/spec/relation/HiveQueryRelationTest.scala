@@ -116,5 +116,7 @@ class HiveQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ================================================================================================
         context.getRelation(RelationIdentifier("t0")).destroy(execution)
+
+        session.shutdown()
     }
 }

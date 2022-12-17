@@ -56,6 +56,8 @@ class SimpleReportHookTest extends AnyFlatSpec with Matchers with MockFactory wi
         val hook = hookSpec.instantiate(session.context).asInstanceOf[SimpleReportHook]
         hook.location should be (new Path("file:///tmp/some-report.txt"))
         hook.mode should be (OutputMode.OVERWRITE)
+
+        session.shutdown()
     }
 
     it should "work" in {
@@ -104,5 +106,7 @@ class SimpleReportHookTest extends AnyFlatSpec with Matchers with MockFactory wi
         hook.finishJob(execution, jobTokenVERIFY, JobResult(job, job.digest(Phase.VERIFY, Map()), Status.SUCCESS, Instant.now()))
 
         hook.finishLifecycle(execution, lifecycleToken, LifecycleResult(job, job.lifecycle(lifecycle, Map()), Status.SUCCESS, Instant.now()))
+
+        session.shutdown()
     }
 }

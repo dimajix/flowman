@@ -47,8 +47,15 @@ import com.dimajix.spark.sql.execution.ExtraStrategies
 
 
 object Session {
-    class Builder private[execution](parent:Option[Session]) {
-        private var sparkSession:SparkSession.Builder => SparkSession = null
+    private val logger = LoggerFactory.getLogger(classOf[Session])
+    private def stopSparkSession(spark:SparkSession) : Unit = {
+        logger.info("Stopping Spark session")
+        spark.stop()
+    }
+
+    final class Builder private[execution](parent:Option[Session]) {
+        private var createSparkSession:SparkSession.Builder => SparkSession = null
+        private var stopSparkSession:SparkSession => Unit = null
         private var sparkMaster:Option[String] = None
         private var sparkName:Option[String] = None
         private var config = Map[String,String]()
@@ -61,20 +68,29 @@ object Session {
         private var listeners = Seq[ExecutionListener]()
 
         /**
-         * Injects an existing Spark session. If no session is provided, Flowman will create its own Spark session
+         * Injects a builder for a Spark session. The builder will be lazily called, when required. Note that
+         * [[Session.shutdown()]] will also stop the constructed session.
          * @param session
          * @return
          */
         def withSparkSession(session:SparkSession.Builder => SparkSession) : Builder = {
             require(session != null)
             requireNoParent()
-            sparkSession = session
+            createSparkSession = session
+            stopSparkSession = Session.stopSparkSession
             this
         }
+        /**
+         * Injects an existing Spark session, which will also not be stopped by Flowman. That means a call to
+         * [[Session.shutdown()]] will NOT stop the provided Spark session.
+         * @param session
+         * @return
+         */
         def withSparkSession(session:SparkSession) : Builder = {
             require(session != null)
             requireNoParent()
-            sparkSession = _ => session
+            createSparkSession = _ => session
+            stopSparkSession = _ => Unit
             this
         }
         def withSparkName(name:String) : Builder = {
@@ -205,15 +221,26 @@ object Session {
             this
         }
 
+        /**
+         * Disables Spark in this Flowman session. Only useful for some limited unittests.
+         * @return
+         */
         def disableSpark() : Builder = {
             requireNoParent()
-            sparkSession = _ => throw new IllegalStateException("Spark session disable in Flowman session")
+            createSparkSession = _ => throw new IllegalStateException("Spark session disable in Flowman session")
+            stopSparkSession = _ => throw new IllegalStateException("Spark session disable in Flowman session")
             this
         }
 
+        /**
+         * Enables Spark in this Flowman session. The session itself will take over responsibility of creating and
+         * shutting down the Spark session.
+         * @return
+         */
         def enableSpark() : Builder = {
             requireNoParent()
-            sparkSession = _ => null
+            createSparkSession = builder => builder.getOrCreate()
+            stopSparkSession = Session.stopSparkSession
             this
         }
 
@@ -227,14 +254,15 @@ object Session {
          * @return
          */
         def build() : Session = {
-            if (sparkSession == null && parent.isEmpty)
+            if (createSparkSession == null && parent.isEmpty)
                 throw new IllegalArgumentException("You need to either enable or disable Spark before creating a Flowman Session.")
 
             new Session(
                 namespace.orElse(parent.flatMap(_._namespace)),
                 project,
                 store,
-                parent.map(p => (_:SparkSession.Builder) => p.spark.newSession()).getOrElse(sparkSession),
+                parent.map(p => (_:SparkSession.Builder) => p.spark.newSession()).getOrElse(createSparkSession),
+                if (parent.nonEmpty) ((_:SparkSession) => Unit) else stopSparkSession,
                 parent.map(_._sparkMaster).getOrElse(sparkMaster),
                 parent.map(_._sparkName).getOrElse(sparkName),
                 parent.map(_._config).getOrElse(Map()) ++ config,
@@ -262,7 +290,7 @@ object Session {
   *
   * @param _namespace
   * @param _project
-  * @param _sparkSession
+  * @param _createSparkSession
   * @param _sparkMaster
   * @param _sparkName
   * @param _config
@@ -270,11 +298,12 @@ object Session {
   * @param _profiles
   * @param _jars
   */
-class Session private[execution](
+final class Session private[execution](
     private[execution] val _namespace:Option[Namespace],
     private[execution] val _project:Option[Project],
     private[execution] val _store:Option[Store],
-    private[execution] val _sparkSession:SparkSession.Builder => SparkSession,
+    private[execution] val _createSparkSession:SparkSession.Builder => SparkSession,
+    private[execution] val _stopSparkSession:SparkSession => Unit,
     private[execution] val _sparkMaster:Option[String],
     private[execution] val _sparkName:Option[String],
     private[execution] val _config:Map[String,String],
@@ -283,14 +312,6 @@ class Session private[execution](
     private[execution] val _jars:Set[String],
     private[execution] val _listeners:Seq[(ExecutionListener,Option[Token])]
 ) {
-    require(_jars != null)
-    require(_environment != null)
-    require(_profiles != null)
-    require(_sparkSession != null)
-    require(_sparkMaster != null)
-    require(_sparkName != null)
-    require(_config != null)
-
     private val logger = LoggerFactory.getLogger(classOf[Session])
 
     private def sparkJars : Seq[String] = {
@@ -298,13 +319,12 @@ class Session private[execution](
     }
     private def sparkMaster : String = {
         // How should priorities look like?
-        //   1. Spark master from Flowman config.
-        //   2. Spark master from application code / session builder
+        //   1. Spark master from application code / session builder
+        //   2. Spark master from Flowman config.
         //   3. Spark master from spark-submit. This is to be found in SparkConf
         //   4. Default master
-        config.toMap.get("spark.master")
-            .filter(_.nonEmpty)
-            .orElse(_sparkMaster)
+        _sparkMaster.filter(_.nonEmpty)
+            .orElse(config.getOption("spark.master"))
             .filter(_.nonEmpty)
             .orElse(sparkConf.getOption("spark.master"))
             .filter(_.nonEmpty)
@@ -312,14 +332,14 @@ class Session private[execution](
     }
     private def sparkName : String = {
         // How should priorities look like?
-        //   1. Spark app name from Flowman config.
-        //   2. Spark app name from application code
+        //   1. Spark app name from application code
+        //   2. Spark app name from Flowman config.
         //   3. Spark app name from spark-submit / command-line
         //   4. Spark app name from Flowman project
         //   5. Default Spark app name
-        config.toMap.get("spark.app.name")
+        _sparkName
             .filter(_.nonEmpty)
-            .orElse(_sparkName)
+            .orElse(config.getOption("spark.app.name"))
             .filter(_.nonEmpty)
             .orElse(_project.map(_.name).filter(_.nonEmpty).map("Flowman - " + _))
             .orElse(sparkConf.getOption("spark.app.name"))
@@ -328,42 +348,31 @@ class Session private[execution](
     }
 
     /**
-      * Creates a new Spark Session for this DataFlow session
+      * Creates a new Spark Session for this Flowman session
       *
       * @return
       */
-    private def createOrReuseSession() : SparkSession = {
+    private def createSession() : SparkSession = {
+        logger.info("Creating new Spark session")
         val sessionBuilder = SparkSession.builder()
             .config(sparkConf)
             .appName(sparkName)
             .master(sparkMaster)
+        if (flowmanConf.sparkEnableHive) {
+            logger.info("Enabling Spark Hive support")
+            sessionBuilder.enableHiveSupport()
+        }
 
         // Apply all session extensions to builder
-        SparkExtension.extensions.foldLeft(sessionBuilder)((builder,ext) => ext.register(builder, config))
+        SparkExtension.extensions.foldLeft(sessionBuilder)((builder, ext) => ext.register(builder, config))
 
-        val spark = _sparkSession(sessionBuilder)
-        if (spark != null) {
-            logger.info("Creating Spark session using provided builder")
-            // Set all session properties that can be changed in an existing session
-            sparkConf.getAll.foreach { case (key, value) =>
-                if (!SparkShim.isStaticConf(key)) {
-                    spark.conf.set(key, value)
-                }
+        val spark = _createSparkSession(sessionBuilder)
+        // Set all session properties that can be changed in an existing session
+        sparkConf.getAll.foreach { case (key, value) =>
+            if (!SparkShim.isStaticConf(key)) {
+                spark.conf.set(key, value)
             }
-            spark
         }
-        else {
-            logger.info("Creating new Spark session")
-            if (flowmanConf.sparkEnableHive) {
-                logger.info("Enabling Spark Hive support")
-                sessionBuilder.enableHiveSupport()
-            }
-            // Create Spark session
-            sessionBuilder.getOrCreate()
-        }
-    }
-    private def createSession() : SparkSession = {
-        val spark = createOrReuseSession()
 
         // Set checkpoint directory if not already specified
         if (spark.sparkContext.getCheckpointDir.isEmpty) {
@@ -402,6 +411,8 @@ class Session private[execution](
         spark
     }
     private var sparkSession:SparkSession = null
+
+    private var sessionCleaner:SessionCleaner = null
 
     private val rootExecution : RootExecution = new RootExecution(this)
     private val operationsManager = new ActivityManager
@@ -539,6 +550,22 @@ class Session private[execution](
     }
 
     /**
+     * Returns the [[SessionCleaner]] associated with this session
+     * @return
+     */
+    def cleaner : SessionCleaner = {
+        if (sessionCleaner == null) {
+            synchronized {
+                if (sessionCleaner == null) {
+                    sessionCleaner = new SessionCleaner(this)
+                    sessionCleaner.start()
+                }
+            }
+        }
+        sessionCleaner
+    }
+
+    /**
       * Returns the Spark session tied to this Flowman session. The Spark session will either be created by the
       * Flowman session, or was provided in the builder.
       * @return
@@ -646,8 +673,12 @@ class Session private[execution](
     }
 
     def shutdown() : Unit = {
+        if (sessionCleaner != null) {
+            sessionCleaner.stop()
+            sessionCleaner = null
+        }
         if (sparkSession != null) {
-            sparkSession.stop()
+            _stopSparkSession(sparkSession)
             sparkSession = null
         }
     }

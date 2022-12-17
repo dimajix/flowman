@@ -39,6 +39,8 @@ class ProjectContextTest extends AnyFlatSpec with Matchers {
         context.evaluate("${project.filename}") should be ("")
         context.evaluate("${project.name}") should be ("my_project")
         context.evaluate("${project.version}") should be ("1.0")
+
+        session.shutdown()
     }
 
     it should "correctly interpolate project variables" in {
@@ -61,5 +63,7 @@ class ProjectContextTest extends AnyFlatSpec with Matchers {
         context.evaluate("${project.basedir.parent}") should be (file.absolute.parent.parent.toString)
         context.evaluate("${project.filename}") should be (file.absolute.toString)
         context.evaluate("${project.filename.withSuffix('lala')}") should be (file.absolute.withSuffix("lala").toString)
+
+        session.shutdown()
     }
 }

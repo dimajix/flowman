@@ -188,6 +188,8 @@ class H2JdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         viewRelation.loaded(execution, Map()) should be (No)
 
         tableRelation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support migrations" in {
@@ -258,6 +260,8 @@ class H2JdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         view1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         view1.conforms(execution, MigrationPolicy.STRICT) should be (No)
         view1.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support migrating from a table to a view and vice versa" in {
@@ -344,5 +348,7 @@ class H2JdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         view.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         view.conforms(execution, MigrationPolicy.STRICT) should be (No)
         view.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 }

@@ -51,6 +51,8 @@ class EmptyRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         instance shouldBe a[EmptyRelation]
         instance.name should be ("abc")
         instance.identifier should be (TargetIdentifier("abc"))
+
+        session.shutdown()
     }
 
     it should "support the full lifecycle" in {
@@ -94,5 +96,7 @@ class EmptyRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         relation.destroy(executor)
         relation.exists(executor) should be (Yes)
         relation.loaded(executor, Map()) should be (Unknown)
+
+        session.shutdown()
     }
 }

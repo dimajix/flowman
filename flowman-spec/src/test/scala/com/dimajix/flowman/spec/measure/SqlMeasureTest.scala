@@ -78,5 +78,7 @@ class SqlMeasureTest extends AnyFlatSpec with Matchers with LocalSparkSession {
                 )
             ).withoutTime
         )
+
+        session.shutdown()
     }
 }

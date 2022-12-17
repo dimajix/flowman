@@ -70,6 +70,8 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
 
         val coord = new JobCoordinator(session)
         coord.execute(job, Lifecycle.ofPhase(Phase.BUILD)) should be(Status.SUCCESS)
+
+        session.shutdown()
     }
 
     it should "support parallel execution" in {
@@ -115,6 +117,8 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
 
         val coord = new JobCoordinator(session, parallelism = 3)
         coord.execute(job, Lifecycle.ofPhase(Phase.VERIFY), job.parseArguments(Map("pdate:start" -> "2022-11-01", "pdate:end" -> "2022-11-09"))) should be(Status.SUCCESS)
+
+        session.shutdown()
     }
 
     it should "support different phase execution policies" in {
@@ -199,6 +203,8 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
 
         val coord = new JobCoordinator(session)
         coord.execute(job, Lifecycle.ofPhase(Phase.VERIFY), job.parseArguments(Map("pdate:start" -> "2022-11-01", "pdate:end" -> "2022-11-11"))) should be(Status.SUCCESS)
+
+        session.shutdown()
     }
 
     it should "support target lists per execution phase" in {
@@ -286,6 +292,8 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
 
         val coord = new JobCoordinator(session)
         coord.execute(job, Lifecycle.ofPhase(Phase.VERIFY)) should be(Status.SUCCESS)
+
+        session.shutdown()
     }
 
     it should "only execute selected targets" in {
@@ -363,5 +371,7 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
 
         val coord = new JobCoordinator(session)
         coord.execute(job, Lifecycle.ofPhase(Phase.VERIFY), targets=Seq(".*1".r)) should be(Status.SUCCESS)
+
+        session.shutdown()
     }
 }

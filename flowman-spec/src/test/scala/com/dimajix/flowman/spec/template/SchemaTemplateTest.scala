@@ -102,6 +102,8 @@ class SchemaTemplateTest extends AnyFlatSpec with Matchers {
         rel_3 shouldBe a[ValuesRelation]
 
         an[InstantiateRelationFailedException] should be thrownBy(context.getRelation(RelationIdentifier("rel_4")))
+
+        session.shutdown()
     }
 
     it should "throw an error on unknown templates" in {
@@ -120,5 +122,7 @@ class SchemaTemplateTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
 
         an[InstantiateRelationFailedException] should be thrownBy(context.getRelation(RelationIdentifier("rel_1")))
+
+        session.shutdown()
     }
 }

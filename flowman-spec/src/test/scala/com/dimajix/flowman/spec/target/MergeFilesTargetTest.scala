@@ -87,6 +87,8 @@ class MergeFilesTargetTest extends AnyFlatSpec with Matchers with LocalSparkSess
         target.dirty(executor, Phase.DESTROY) should be (No)
         target.execute(executor, Phase.DESTROY)
         target.dirty(executor, Phase.DESTROY) should be (No)
+
+        session.shutdown()
     }
 
     it should "support delimiters" in {
@@ -127,5 +129,7 @@ class MergeFilesTargetTest extends AnyFlatSpec with Matchers with LocalSparkSess
         in.close()
 
         new String(buffer, "UTF-8") should be ("This is a test\nThe second line\n")
+
+        session.shutdown()
     }
 }

@@ -91,6 +91,8 @@ class ValidateTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         result.numSuccesses should be (1)
         result.numExceptions should be (0)
         result.children.size should be (1)
+
+        session.shutdown()
     }
 
     it should "return success on an empty list of assertions" in {
@@ -118,6 +120,8 @@ class ValidateTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         result.numSuccesses should be (0)
         result.numExceptions should be (0)
         result.children.size should be (0)
+
+        session.shutdown()
     }
 
     it should "return a wrapped exception when an assertion fails" in {
@@ -171,6 +175,8 @@ class ValidateTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         result.numSuccesses should be (1)
         result.numExceptions should be (1)
         result.children.size should be (2)
+
+        session.shutdown()
     }
 
     it should "execute all exception if fail_at_end is used" in {
@@ -229,6 +235,8 @@ class ValidateTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         result.numSuccesses should be (1)
         result.numExceptions should be (1)
         result.children.size should be (2)
+
+        session.shutdown()
     }
 
     it should "not throw an exception if fail_never is used" in {
@@ -287,6 +295,8 @@ class ValidateTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         result.numSuccesses should be (1)
         result.numExceptions should be (0)
         result.children.size should be (2)
+
+        session.shutdown()
     }
 
     it should "throw an exception if fail_never is used, but an exception is thrown inside an assertion" in {
@@ -343,5 +353,7 @@ class ValidateTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         result.numSuccesses should be (1)
         result.numExceptions should be (2)
         result.children.size should be (2)
+
+        session.shutdown()
     }
 }

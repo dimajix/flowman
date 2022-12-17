@@ -99,6 +99,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 Nil
         ))
         df.collect()
+
+        session.shutdown()
     }
 
     it should "be able to create local directories" in {
@@ -201,6 +203,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         outputPath.toFile.exists() should be (false)
 
         a[FileNotFoundException] shouldBe thrownBy(relation.destroy(execution))
+
+        session.shutdown()
     }
 
     it should "work without an explicit schema" in {
@@ -264,6 +268,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.exists(execution) should be (No)
         relation.conforms(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "correctly detect dirty/non-dirty unpartitioned directories" in {
@@ -315,6 +321,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.exists(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (Yes)
         relation.read(execution).count() should be (0)
+
+        session.shutdown()
     }
 
     it should "correctly detect dirty/non-dirty partitioned directories with an explicit pattern" in {
@@ -387,6 +395,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("p_col" -> SingleValue("123"))) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("456"))) should be (No)
         relation.read(execution).count() should be (0)
+
+        session.shutdown()
     }
 
     it should "correctly detect dirty/non-dirty partitioned directories without an explicit pattern" in {
@@ -458,6 +468,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("p_col" -> SingleValue("123"))) should be (Yes)
         relation.loaded(execution, Map("p_col" -> SingleValue("456"))) should be (No)
         relation.read(execution).count() should be (0)
+
+        session.shutdown()
     }
 
     it should "support partitions" in {
@@ -666,6 +678,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.conforms(execution) should be (No)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         outputPath.toFile.exists() should be (false)
+
+        session.shutdown()
     }
 
     it should "support partitions without explicit pattern" in {
@@ -852,6 +866,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.conforms(execution) should be (No)
         relation.loaded(execution, Map("p_col" -> SingleValue("2"))) should be (No)
         outputPath.toFile.exists() should be (false)
+
+        session.shutdown()
     }
 
     it should "support using wildcards for unspecified partitions" in {
@@ -994,6 +1010,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         // == Destroy ================================================================================================
         relation.destroy(execution)
         a[FileNotFoundException] should be thrownBy(relation.destroy(execution))
+
+        session.shutdown()
     }
 
     it should "support using environment variables in pattern" in {
@@ -1088,6 +1106,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         ))
 
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support different output modes with dynamic partitions" in {
@@ -1209,6 +1229,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+
+        session.shutdown()
     }
 
     it should "support more than one partition columns" in {
@@ -1292,6 +1314,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("part2" -> SingleValue("a"))) should be(No)
         relation.loaded(execution, Map("part2" -> SingleValue("b"))) should be(No)
         relation.loaded(execution, Map("part2" -> SingleValue("c"))) should be(No)
+
+        session.shutdown()
     }
 
     it should "support partition columns already present in the schema" in {
@@ -1386,6 +1410,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
+
+        session.shutdown()
     }
 
     it should "support different output modes with unpartitioned tables" in {
@@ -1470,6 +1496,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
+
+        session.shutdown()
     }
 
     it should "support different output modes with partitioned tables" in {
@@ -1592,6 +1620,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
+
+        session.shutdown()
     }
 
     it should "invalidate any file caches when writing" in {
@@ -1644,6 +1674,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
+
+        session.shutdown()
     }
 
     it should "support mapping schemas" in {
@@ -1687,6 +1719,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Field("int_col", ftypes.IntegerType),
             Field("p_col", ftypes.IntegerType, false)
         )))
+
+        session.shutdown()
     }
 
     it should "support stream reading" in {
@@ -1740,6 +1774,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support stream reading with partitions" in {
@@ -1799,6 +1835,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support stream writing" in {
@@ -1861,6 +1899,8 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
+
+        session.shutdown()
     }
 
     it should "support stream writing with partitions" in {
@@ -1940,5 +1980,7 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+
+        session.shutdown()
     }
 }

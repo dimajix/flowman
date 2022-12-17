@@ -88,6 +88,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         job.description should be (Some("Some Job"))
         job.targets should be (Seq(TargetIdentifier("grabenv")))
         job.executions should be (Seq.empty)
+
+        session.shutdown()
     }
 
     it should "support parameters" in {
@@ -143,6 +145,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
             "force" -> false,
             "dryRun" -> false)
         )
+
+        session.shutdown()
     }
 
     it should "support overriding global parameters" in {
@@ -181,6 +185,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
             "force" -> false,
             "dryRun" -> false)
         )
+
+        session.shutdown()
     }
 
     it should "support typed parameters" in {
@@ -218,6 +224,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
             "force" -> false,
             "dryRun" -> false)
         )
+
+        session.shutdown()
     }
 
     it should "fail on undefined parameters" in {
@@ -237,6 +245,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         job should not be (null)
         job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Phase.BUILD, Map("p2" -> "v1")))
+
+        session.shutdown()
     }
 
     it should "fail on undefined parameters, even if they are in the environment" in {
@@ -258,6 +268,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         job should not be (null)
         job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Phase.BUILD, Map("p2" -> "v1")))
+
+        session.shutdown()
     }
 
     it should "fail on missing parameters" in {
@@ -277,6 +289,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         job should not be (null)
         job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Phase.BUILD, Map()))
+
+        session.shutdown()
     }
 
     it should "return correct arguments" in {
@@ -302,6 +316,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         job.arguments(Map("p1" -> "lala")) should be (Map("p1" -> "lala", "p2" -> "v2", "p3" -> 7))
         job.arguments(Map("p1" -> "xyz", "p2" -> "lala")) should be (Map("p1" -> "xyz", "p2" -> "lala", "p3" -> 7))
         an[IllegalArgumentException] should be thrownBy(job.arguments(Map("p1" -> "xyz", "p4" -> "lala")))
+
+        session.shutdown()
     }
 
     it should "support environment" in {
@@ -343,6 +359,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
             "force" -> false,
             "dryRun" -> false)
         )
+
+        session.shutdown()
     }
 
     it should "support extending other jobs" in {
@@ -398,6 +416,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
             "force" -> false,
             "dryRun" -> false)
         )
+
+        session.shutdown()
     }
 
     it should "support executions" in {
@@ -432,6 +452,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
             (Phase.BUILD, CyclePolicy.LAST, Seq(".*_full")),
             (Phase.VERIFY, CyclePolicy.LAST, Seq("documentation"))
         ))
+
+        session.shutdown()
     }
 
     it should "support metrics" in {
@@ -480,5 +502,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         job.metadata.labels should be (Map("job_label" -> "xyz"))
 
         session.runner.executeJob(job, Seq(Phase.BUILD), Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
+
+        session.shutdown()
     }
 }

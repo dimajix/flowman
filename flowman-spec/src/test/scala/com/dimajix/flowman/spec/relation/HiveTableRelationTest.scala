@@ -175,6 +175,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         session.catalog.tableExists(TableIdentifier("lala_0001", Some("default"))) should be (false)
 
         an[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
+
+        session.shutdown()
     }
 
     it should "support external tables" in {
@@ -240,6 +242,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
         session.catalog.tableExists(TableIdentifier("lala_0002", Some("default"))) should be (false)
+
+        session.shutdown()
     }
 
     it should "support single partition columns" in {
@@ -323,6 +327,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map("spart" -> SingleValue("1"))) should be (No)
+
+        session.shutdown()
     }
 
     it should "support multiple partition columns" in {
@@ -389,6 +395,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map("spart" -> SingleValue("1"), "ip" -> SingleValue("2"))) should be (No)
+
+        session.shutdown()
     }
 
     it should "support TBLPROPERTIES" in {
@@ -440,6 +448,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support parquet format" in {
@@ -483,6 +493,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ================================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support avro format" in {
@@ -525,6 +537,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support csv format" in (if (hiveSupported) {
@@ -573,6 +587,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     })
 
     it should "support a row format" in {
@@ -615,6 +631,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support input and output format" in {
@@ -660,6 +678,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
 
@@ -759,6 +779,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0010"))
+
+        session.shutdown()
     }}
 
     it should "support external tables for create, clean and destroy without partitions" in { if (hiveSupported) {
@@ -841,6 +863,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0011"))
+
+        session.shutdown()
     }}
 
     it should "support create, clean and destroy with partitions" in { if (hiveSupported) {
@@ -1039,6 +1063,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
         location.exists() should be (false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
+
+        session.shutdown()
     }}
 
     it should "support different output modes with unpartitioned tables" in (if (hiveSupported) {
@@ -1122,6 +1148,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
+
+        session.shutdown()
     })
 
     it should "support different output modes with partitioned tables" in (if (hiveSupported) {
@@ -1242,6 +1270,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
+
+        session.shutdown()
     })
 
     it should "support different output modes with dynamic partitions" in (if (hiveSupported) {
@@ -1349,6 +1379,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+
+        session.shutdown()
     })
 
     it should "support partition columns already present in the schema" in (if (hiveSupported) {
@@ -1444,6 +1476,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
+
+        session.shutdown()
     })
 
     it should "support different column orders" in (if (hiveSupported) {
@@ -1542,6 +1576,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
+
+        session.shutdown()
     })
 
     it should "support char/varchar columns" in (if (hiveSupported) {
@@ -1638,6 +1674,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (true)
         relation.destroy(execution)
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
+
+        session.shutdown()
     })
 
     it should "support migration by adding new columns" in (if (hiveSupported) {
@@ -1835,6 +1873,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
+
+        session.shutdown()
     })
 
     it should "support relaxed migrations" in {
@@ -1947,6 +1987,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
+
+        session.shutdown()
     }
 
     it should "support adding partitions in migrations" in {
@@ -2135,6 +2177,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation_2.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
         session.catalog.tableExists(TableIdentifier("some_table", Some("default"))) should be (false)
+
+        session.shutdown()
     }
 
     it should "provide its schema to mappings" in {
@@ -2259,6 +2303,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
             ResourceIdentifier.ofHiveTable("lala_0004", Some("default")),
             ResourceIdentifier.ofHiveDatabase("default")
         ))
+
+        session.shutdown()
     }
 
     it should "replace an existing Hive view with a Hive table" in {
@@ -2360,5 +2406,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         a[NoSuchTableException] should be thrownBy(table.destroy(execution))
 
         context.getRelation(RelationIdentifier("t0")).destroy(execution)
+
+        session.shutdown()
     }
 }

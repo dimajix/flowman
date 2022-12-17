@@ -16,6 +16,13 @@
 
 package com.dimajix.flowman.execution
 
+import java.time.Instant
+
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+import scala.util.control.NonFatal
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.RuntimeConfig
@@ -119,6 +126,12 @@ abstract class Execution {
     def activities: ActivityManager
 
     /**
+     * Returns the [[SessionCleaner]] provided by the [[Session]]
+     * @return
+     */
+    def cleaner : SessionCleaner
+
+    /**
       * Creates an instance of a mapping, or retrieves it from cache
       *
       * @param mapping
@@ -139,17 +152,41 @@ abstract class Execution {
     }
 
     /**
+     * Executes a specific phase of a target, will also catch (non-fatal) exceptions
+     * @param target
+     * @param phase
+     * @return
+     */
+    def execute(target:Target, phase:Phase) : TargetResult = {
+        val startTime = Instant.now()
+        // Normally, targets should not throw any exception, but instead wrap any error inside the TargetResult.
+        // But since we never know, we add a try/catch block
+        try {
+            target.execute(this, phase)
+        }
+        catch {
+            case NonFatal(e) => TargetResult(target, phase, e, startTime)
+        }
+    }
+
+    /**
      * Executes an [[Assertion]] from a TestSuite. This method ensures that all inputs are instantiated correctly
      * @param assertion
      * @return
      */
     def assert(assertion:Assertion) : AssertionResult = {
-        val context = assertion.context
-        val inputs = assertion.inputs
-            .map(id => id -> instantiate(context.getMapping(id.mapping), id.output))
-            .toMap
+        val startTime = Instant.now()
+        try {
+            val context = assertion.context
+            val inputs = assertion.inputs
+                .map(id => id -> instantiate(context.getMapping(id.mapping), id.output))
+                .toMap
 
-        assertion.execute(this, inputs)
+            assertion.execute(this, inputs)
+        }
+        catch {
+            case NonFatal(ex) => AssertionResult(assertion, ex, startTime)
+        }
     }
 
     /**

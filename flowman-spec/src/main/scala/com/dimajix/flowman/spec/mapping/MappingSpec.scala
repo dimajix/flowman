@@ -70,6 +70,7 @@ object MappingSpec extends TypeRegistry[MappingSpec] {
     new JsonSubTypes.Type(name = "join", value = classOf[JoinMappingSpec]),
     new JsonSubTypes.Type(name = "latest", value = classOf[LatestMappingSpec]),
     new JsonSubTypes.Type(name = "mock", value = classOf[MockMappingSpec]),
+    new JsonSubTypes.Type(name = "observe", value = classOf[ObserveMappingSpec]),
     new JsonSubTypes.Type(name = "project", value = classOf[ProjectMappingSpec]),
     new JsonSubTypes.Type(name = "provided", value = classOf[ProvidedMappingSpec]),
     new JsonSubTypes.Type(name = "relation", value = classOf[RelationMappingSpec]),

@@ -97,6 +97,8 @@ class HistorizeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
             Row(mutable.WrappedArray.make(Array(12,4)), 12, "UPDATE", 134, 134, null),
             Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123, 123, null)
         ))
+
+        session.shutdown()
     }
 
     it should "support adding new columns at the beginning" in {
@@ -146,6 +148,8 @@ class HistorizeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
         val rows = result.orderBy("id", "ts").collect()
         rows.size should be (1)
         rows(0) should be (Row(123, null, 12, 123))
+
+        session.shutdown()
     }
 
     it should "support versionColumns" in  {
@@ -200,6 +204,7 @@ class HistorizeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
             Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123, 1, 1, 123, null)
         ))
 
+        session.shutdown()
     }
 
     it should "be convertible to SQL" in (if (hiveSupported) {
@@ -246,5 +251,7 @@ class HistorizeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
         noException shouldBe thrownBy(spark.sql(sql))
 
         spark.sql("DROP TABLE some_table")
+
+        session.shutdown()
     })
 }

@@ -76,6 +76,8 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
             ArrayRecord("cat","","7"),
             ArrayRecord("dog",null,"8")
         ))
+
+        session.shutdown()
     }
 
     it should "create empty DataFrames" in {
@@ -139,6 +141,8 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val dfError = executor.instantiate(mapping, "error")
         dfError.columns should contain("error")
         dfError.count() should be (0)
+
+        session.shutdown()
     }
 
     it should "work nicely as an override" in {
@@ -192,6 +196,8 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         dfOther.columns should contain("str_col")
         dfOther.columns should contain("int_col")
         dfOther.count() should be (0)
+
+        session.shutdown()
     }
 
     it should "work with specified records" in {
@@ -243,5 +249,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
             Row("lolo", 13),
             Row(null,null)
         ))
+
+        session.shutdown()
     }
 }

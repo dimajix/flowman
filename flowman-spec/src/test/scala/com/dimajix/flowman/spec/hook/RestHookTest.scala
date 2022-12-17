@@ -108,6 +108,8 @@ class RestHookTest extends AnyFlatSpec with Matchers with LocalSparkSession with
         val restHook = hook.asInstanceOf[RestHook]
         restHook.condition.mapValues(_.map(_.regex)) should be (Map("phase" -> Seq("BUILD", "VERIFY"), "category" -> Seq("job")))
         restHook.url should be ("http://${lala}")
+
+        session.shutdown()
     }
 
     it should "work inside a namespace and job" in {
@@ -158,5 +160,7 @@ class RestHookTest extends AnyFlatSpec with Matchers with LocalSparkSession with
             "/phase=BUILD&category=job&status=SUCCESS&job=some_job",
             "/category=lifecycle&status=SUCCESS&job=some_job"
         ))
+
+        session.shutdown()
     }
 }

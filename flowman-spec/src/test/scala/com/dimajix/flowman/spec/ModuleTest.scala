@@ -94,6 +94,8 @@ class ModuleTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         job.category should be (Category.JOB)
         job.kind should be ("job")
         runner.executeJob(job, Seq(Phase.BUILD)) should be (Status.SUCCESS)
+
+        session.shutdown()
     }
 
     it should "set the names of all jobs" in {

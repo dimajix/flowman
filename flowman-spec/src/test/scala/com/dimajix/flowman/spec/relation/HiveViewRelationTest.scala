@@ -160,6 +160,8 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (false)
 
     context.getRelation(RelationIdentifier("t0")).destroy(execution)
+
+    session.shutdown()
   }
 
   it should "work with non-trivial mappings" in {
@@ -278,6 +280,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
 
     context.getRelation(RelationIdentifier("t0")).destroy(execution)
     context.getRelation(RelationIdentifier("t1")).destroy(execution)
+    session.shutdown()
   }
 
     it should "work with an external file" in {
@@ -366,6 +369,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (false)
 
         context.getRelation(RelationIdentifier("t0")).destroy(execution)
+        session.shutdown()
     }
 
     it should "replace an existing Hive table with a Hive view" in {
@@ -477,6 +481,8 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         a[NoSuchTableException] should be thrownBy(table.destroy(execution))
 
         context.getRelation(RelationIdentifier("t0")).destroy(execution)
+
+        session.shutdown()
     }
 
     it should "migrate a view if the schema changes" in {
@@ -576,6 +582,8 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         table.destroy(execution)
         view.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         view.conforms(execution, MigrationPolicy.STRICT) should be (No)
+
+        session.shutdown()
     }
 
     it should "migrate a view if a column comment changes" in {
@@ -731,5 +739,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         table.destroy(execution)
         view.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         view.conforms(execution, MigrationPolicy.STRICT) should be (No)
+
+        session.shutdown()
     }
 }

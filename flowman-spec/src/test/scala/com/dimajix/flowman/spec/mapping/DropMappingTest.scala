@@ -52,6 +52,8 @@ class DropMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val context = session.getContext(project)
         val instance = context.getMapping(MappingIdentifier("drop"))
         instance shouldBe an[DropMapping]
+
+        session.shutdown()
     }
 
     it should "drop known columns" in {
@@ -80,6 +82,8 @@ class DropMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
+
+        session.shutdown()
     }
 
     it should "ignore non-existing columns" in {
@@ -108,5 +112,7 @@ class DropMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
+
+        session.shutdown()
     }
 }

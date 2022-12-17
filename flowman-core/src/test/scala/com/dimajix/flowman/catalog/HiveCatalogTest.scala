@@ -41,6 +41,8 @@ class HiveCatalogTest extends AnyFlatSpec with Matchers with MockFactory with Lo
 
         (externalCatalog.createView _).expects(*)
         session.catalog.createView(TableIdentifier("testview_2"), "SELECT 1", ignoreIfExists = false)
+
+        session.shutdown()
     }
 
     it should "not propagate errors of external catalogs" in {
@@ -59,6 +61,8 @@ class HiveCatalogTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         (externalCatalog.name _).expects().returns("catalog")
         (externalCatalog.kind _).expects().returns("my_catalog")
         session.catalog.createView(TableIdentifier("testview_3"), "SELECT 1", ignoreIfExists = false)
+
+        session.shutdown()
     }
 
     it should "propagate errors of external catalogs" in {
@@ -75,5 +79,7 @@ class HiveCatalogTest extends AnyFlatSpec with Matchers with MockFactory with Lo
 
         (externalCatalog.createView _).expects(*).throws(new RuntimeException("error"))
         a[RuntimeException] should be thrownBy(session.catalog.createView(TableIdentifier("testview_1"), "SELECT 1", ignoreIfExists = false))
+
+        session.shutdown()
     }
 }

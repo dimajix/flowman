@@ -52,6 +52,8 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val test2 = PrimaryKeySchemaCheck(None, columns=Seq("_1","_2"))
         val result2 = testExecutor.execute(execution, context, df, test2)
         result2 should be (Some(CheckResult(Some(test1.reference), CheckStatus.FAILED, description=Some("1 keys are unique, 1 keys are non-unique"))))
+
+        session.shutdown()
     }
 
     "An ExpressionSchemaCheck" should "work" in {
@@ -74,6 +76,8 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val test2 = ExpressionSchemaCheck(None, expression="_2 < _3")
         val result2 = testExecutor.execute(execution, context, df, test2)
         result2 should be (Some(CheckResult(Some(test1.reference), CheckStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
+
+        session.shutdown()
     }
 
     it should "support filter conditions" in {
@@ -113,6 +117,8 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val test1 = ExpressionSchemaCheck(None, expression="_2 > _3", filter=Some("_2 NOT IN (SELECT _1 FROM excludes)"))
         val result1 = testExecutor.execute(execution, context, df, test1)
         result1 should be (Some(CheckResult(Some(test1.reference), CheckStatus.SUCCESS, description=Some("1 records passed, 0 records failed"))))
+
+        session.shutdown()
     }
 
     it should "work with null values" in {
@@ -135,6 +141,8 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val test2 = ExpressionSchemaCheck(None, expression = "_1 < _2")
         val result2 = testExecutor.execute(execution, context, df, test2)
         result2 should be(Some(CheckResult(Some(test1.reference), CheckStatus.FAILED, description = Some("1 records passed, 1 records failed"))))
+
+        session.shutdown()
     }
 
     "A ForeignKeySchemaCheck" should "work" in {
@@ -188,6 +196,8 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
 
         val test4 = ForeignKeySchemaCheck(None, mapping=Some(MappingOutputIdentifier("mapping")), columns=Seq("_2"), references=Seq("_3"))
         an[Exception] should be thrownBy(testExecutor.execute(execution, context, df, test4))
+
+        session.shutdown()
     }
 
     "An SqlSchemaCheck" should "work with grouped counts" in {
@@ -210,6 +220,8 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val test2 = SqlSchemaCheck(None, query="SELECT _2 < _3, 1 FROM __THIS__")
         val result2 = testExecutor.execute(execution, context, df, test2)
         result2 should be (Some(CheckResult(Some(test1.reference), CheckStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
+
+        session.shutdown()
     }
 
     it should "work with one-line results" in {
@@ -242,6 +254,8 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
               | (SELECT SUM(_1) FROM __this__) = (SELECT SUM(_3) FROM __this__) AS success""".stripMargin)
         val result2 = testExecutor.execute(execution, context, df, test2)
         result2 should be (Some(CheckResult(Some(test1.reference), CheckStatus.SUCCESS, description=Some("sum_1=3, sum_3=3"))))
+
+        session.shutdown()
     }
 
     it should "throw an exception for unsupported queries" in {
@@ -262,5 +276,7 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
 
         val test2 = SqlSchemaCheck(None, query = "SELECT _2 > _3, TRUE, FALSE FROM __this__")
         an[IllegalArgumentException] should be thrownBy (testExecutor.execute(execution, context, df, test2))
+
+        session.shutdown()
     }
 }

@@ -117,6 +117,8 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
         outputPath.toFile.exists() should be (false)
+
+        session.shutdown()
     }
 
     it should "work without a pattern" in {
@@ -182,6 +184,8 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
         new File(tempDir, "csv/test").exists() should be (false)
+
+        session.shutdown()
     }
 
     it should "also support URI schema with (empty) authority" in {
@@ -233,6 +237,8 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
         relation.destroy(execution)
         new File(tempDir, "csv/test").exists() should be (false)
+
+        session.shutdown()
     }
 
     it should "also support URI schema without authority" in {
@@ -288,6 +294,8 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         // ===== Destroy =============================================================================================
         relation.destroy(execution)
         new File(tempDir, "csv/test").exists() should be (false)
+
+        session.shutdown()
     }
 
     it should "support using wildcards for unspecified partitions" in {
@@ -469,6 +477,8 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("p2" -> SingleValue("2"))) should be (No)
+
+        session.shutdown()
     }
 
     it should "support using partitions without a pattern" in {
@@ -650,5 +660,7 @@ class LocalRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession
         relation.exists(execution) should be(No)
         relation.loaded(execution, Map()) should be(No)
         relation.loaded(execution, Map("p2" -> SingleValue("2"))) should be(No)
+
+        session.shutdown()
     }
 }

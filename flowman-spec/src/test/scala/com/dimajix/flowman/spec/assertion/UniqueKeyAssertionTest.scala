@@ -100,6 +100,8 @@ class UniqueKeyAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSe
                 )
             ).withoutTime
         )
+
+        session.shutdown()
     }
 
     it should "return an error" in {
@@ -128,5 +130,7 @@ class UniqueKeyAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSe
                 )
             ).withoutTime
         )
+
+        session.shutdown()
     }
 }

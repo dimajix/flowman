@@ -46,6 +46,13 @@ object FileGlob {
     }
 }
 case class FileGlob(location:File, pattern:Option[String]) {
+    override def toString: String = {
+        pattern match {
+            case Some(p) => (location / p).toString
+            case None => location.toString
+        }
+    }
+
     def path : Path = {
         pattern match {
             case Some(p) => new Path(location.path, p)

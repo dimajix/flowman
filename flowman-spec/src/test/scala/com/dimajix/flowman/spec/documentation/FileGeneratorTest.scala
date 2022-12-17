@@ -40,5 +40,7 @@ class FileGeneratorTest extends AnyFlatSpec with Matchers with LocalTempDir {
         val hookSpec = ObjectMapper.parse[GeneratorSpec](spec)
         val hook = hookSpec.instantiate(session.context).asInstanceOf[FileGenerator]
         hook.location should be(new Path("file:///tmp/flowman-doc"))
+
+        session.shutdown()
     }
 }

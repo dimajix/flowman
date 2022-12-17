@@ -34,6 +34,7 @@ changes over time.
 * github-299: Move migrationPolicy and migrationStrategy from target into relation
 * github-115: Implement additional build policy in relation target for forcing dirty
 * github-298: Support fine grained control when to execute each target of a job
+* github-300: Implement new 'observe' mapping
 
 
 ### Version 0.29.0 - 2022-11-08

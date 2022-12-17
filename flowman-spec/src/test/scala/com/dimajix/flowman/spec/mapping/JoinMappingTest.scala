@@ -84,6 +84,8 @@ class JoinMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession{
         )).map {case(k,v) => k -> v.sparkType } should be (Map(
             "main" -> resultDf.schema
         ))
+
+        session.shutdown()
     }
 
     it should "support joining with an condition" in {
@@ -136,6 +138,8 @@ class JoinMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession{
         )).map {case(k,v) => k -> v.sparkType } should be (Map(
             "main" -> resultDf.schema
         ))
+
+        session.shutdown()
     }
 
     it should "be parseable" in {
@@ -154,5 +158,7 @@ class JoinMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession{
         val join = mapping.instantiate(session.context).asInstanceOf[JoinMapping]
         join.inputs should be (Set(MappingOutputIdentifier("df1"), MappingOutputIdentifier("df2")))
         join.condition should be ("df1.key = df2.key")
+
+        session.shutdown()
     }
 }

@@ -50,6 +50,8 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         }
 
         result should be (Seq())
+
+        session.shutdown()
     }
 
     it should "work" in {
@@ -95,6 +97,8 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
             TargetResult(t1, t1.digest(Phase.BUILD), Seq(), Status.SUCCESS, None, start, start).copy(endTime=start),
             TargetResult(t2, t2.digest(Phase.BUILD), Seq(), Status.SUCCESS, None, start, start).copy(endTime=start)
         ))
+
+        session.shutdown()
     }
 
     it should "stop on failures" in {
@@ -165,6 +169,8 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
             TargetResult(t1, t1.digest(Phase.BUILD), Seq(), Status.FAILED, None, start, start).copy(endTime = start),
             TargetResult(t3, t3.digest(Phase.BUILD), Seq(), Status.SUCCESS, None, start, start).copy(endTime = start)
         ))
+
+        session.shutdown()
     }
 
     it should "ignore failures if keep-going" in {
@@ -246,5 +252,7 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
             TargetResult(t3, t3.digest(Phase.BUILD), Seq(), Status.SUCCESS, None, start, start).copy(endTime = start),
             TargetResult(t4, t4.digest(Phase.BUILD), Seq(), Status.SUCCESS, None, start, start).copy(endTime = start)
         ))
+
+        session.shutdown()
     }
 }

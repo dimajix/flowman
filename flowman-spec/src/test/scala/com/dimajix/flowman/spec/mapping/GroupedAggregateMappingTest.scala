@@ -139,6 +139,8 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
             Row("c1_v2", "c3_v4", 1l, 1l)
         ))
         result("cache").count() should be (9)
+
+        session.shutdown()
     }
 
     it should "support pre-aggregate filtering" in {
@@ -217,6 +219,8 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
             Row("c1_v2", "c3_v3", 1l, 1l)
         ))
         result("cache").count() should be (8)
+
+        session.shutdown()
     }
 
     it should "support post-aggregate filtering" in {
@@ -277,6 +281,8 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
         ))
 
         result("cache").count() should be (5)
+
+        session.shutdown()
     }
 
     it should "work with more than 32 dimensions" in {
@@ -343,6 +349,8 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
         )
 
         result("cache").count() should be (30)
+
+        session.shutdown()
     }
 
     it should "work with more than 32 dimensions and pre-aggregate filtering" in {
@@ -412,5 +420,7 @@ class GroupedAggregateMappingTest extends AnyFlatSpec with Matchers with LocalSp
         )
 
         result("cache").count() should be (3)
+
+        session.shutdown()
     }
 }

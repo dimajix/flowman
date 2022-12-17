@@ -76,6 +76,8 @@ class CheckExecutorTest extends AnyFlatSpec with Matchers with MockFactory with 
             CheckStatus.ERROR,
             CheckStatus.SUCCESS
         ))
+
+        session.shutdown()
     }
 
     it should "work in parallel mode" in {
@@ -124,5 +126,7 @@ class CheckExecutorTest extends AnyFlatSpec with Matchers with MockFactory with 
             CheckStatus.ERROR,
             CheckStatus.SUCCESS
         ))
+
+        session.shutdown()
     }
 }

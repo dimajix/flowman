@@ -69,6 +69,8 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Field("spart", StringType, false)
         ))
         schema.requires should be (Set())
+
+        session.shutdown()
     }
 
     it should "work with non-trivial schema inference" in {
@@ -96,6 +98,8 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Field("int_col", IntegerType, nullable=false)
         ))
         schema.requires should be (Set())
+
+        session.shutdown()
     }
 
     it should "work as a schema of a relations" in {
@@ -144,5 +148,7 @@ class MappingSchemaTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Field("spart", StringType, false)
         ))
         schema.requires should be (Set(ResourceIdentifier.ofHiveTable("lala", Some("some_db"))))
+
+        session.shutdown()
     }
 }

@@ -41,5 +41,7 @@ class SftpUploadTargetTest extends AnyFlatSpec with Matchers {
 
         val instance = targetSpec.instantiate(context)
         instance shouldBe a[SftpUploadTarget]
+
+        session.shutdown()
     }
 }

@@ -117,5 +117,7 @@ class ManualSchedulerTest extends AnyFlatSpec with Matchers with MockFactory wit
         }
         val runner = session.runner
         runner.executeJob(job, Seq(Phase.BUILD)) should be(Status.SUCCESS)
+
+        session.shutdown()
     }
 }

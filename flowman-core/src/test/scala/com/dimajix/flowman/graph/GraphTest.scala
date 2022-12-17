@@ -163,5 +163,7 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
         graph.mapping(mapping1) should be (m1)
         graph.target(TargetIdentifier("t")) should be (t)
         graph.target(target) should be (t)
+
+        session.shutdown()
     }
 }

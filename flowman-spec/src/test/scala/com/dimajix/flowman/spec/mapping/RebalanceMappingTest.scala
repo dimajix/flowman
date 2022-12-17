@@ -53,6 +53,8 @@ class RebalanceMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
         typedInstance.input should be (MappingOutputIdentifier("some_mapping"))
         typedInstance.outputs should be (Set("main"))
         typedInstance.partitions should be (2)
+
+        session.shutdown()
     }
 
     it should "work" in {
@@ -73,5 +75,7 @@ class RebalanceMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("input") -> input))("main")
         result.rdd.partitions.size should be (1)
         result.count() should be (100)
+
+        session.shutdown()
     }
 }

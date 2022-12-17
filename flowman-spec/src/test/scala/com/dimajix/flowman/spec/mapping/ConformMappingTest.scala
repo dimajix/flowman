@@ -91,6 +91,8 @@ class ConformMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val context = session.getContext(project)
         val instance = context.getMapping(MappingIdentifier("my_structure"))
         instance shouldBe an[ConformMapping]
+
+        session.shutdown()
     }
 
     it should "support changing types in DataFrames" in {
@@ -124,6 +126,8 @@ class ConformMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
+
+        session.shutdown()
     }
 
     it should "throw an error for arrays" in {
@@ -139,6 +143,8 @@ class ConformMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         )
 
         an[UnsupportedOperationException] shouldBe thrownBy(mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf)))
+
+        session.shutdown()
     }
 
     it should "support renaming fields" in {
@@ -170,6 +176,8 @@ class ConformMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
+
+        session.shutdown()
     }
 
     it should "support flattening nested structures" in {
@@ -200,5 +208,7 @@ class ConformMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
+
+        session.shutdown()
     }
 }

@@ -100,6 +100,8 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
         tgt_3.description should be (Some("No description"))
 
         an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("rel_4")))
+
+        session.shutdown()
     }
 
     it should "throw an error on unknown templates" in {
@@ -116,6 +118,8 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
 
         an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("rel_1")))
+
+        session.shutdown()
     }
 
     it should "forward before and after" in {
@@ -156,5 +160,7 @@ class TargetTemplateTest extends AnyFlatSpec with Matchers {
         tgt.kind should be ("blackhole")
         tgt.before should be (Seq(TargetIdentifier("x"), TargetIdentifier("a")))
         tgt.after should be (Seq(TargetIdentifier("y"), TargetIdentifier("c"), TargetIdentifier("d")))
+
+        session.shutdown()
     }
 }

@@ -62,6 +62,8 @@ class TemplateTargetTest extends AnyFlatSpec with Matchers {
         instance.project should be (Some(project))
         instance.before should be (Seq(TargetIdentifier("x"), TargetIdentifier("a")))
         instance.after should be (Seq(TargetIdentifier("y"), TargetIdentifier("b")))
+
+        session.shutdown()
     }
 
     it should "provide own documentation" in {
@@ -87,6 +89,8 @@ class TemplateTargetTest extends AnyFlatSpec with Matchers {
         doc.target should be (Some(target))
         doc.inputs should be (Seq.empty)
         doc.description should be (Some("This is the template"))
+
+        session.shutdown()
     }
 
     it should "provide templated documentation" in {
@@ -112,6 +116,8 @@ class TemplateTargetTest extends AnyFlatSpec with Matchers {
         doc.target should be (Some(target))
         doc.inputs should be (Seq.empty)
         doc.description should be (Some("This is the original target"))
+
+        session.shutdown()
     }
 
     it should "provide merged documentation" in {
@@ -139,5 +145,7 @@ class TemplateTargetTest extends AnyFlatSpec with Matchers {
         doc.target should be (Some(target))
         doc.inputs should be (Seq.empty)
         doc.description should be (Some("This is the template"))
+
+        session.shutdown()
     }
 }

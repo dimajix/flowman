@@ -61,6 +61,8 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val token = hook.startJob(execution, job, instance, None)
         hook.finishJob(execution, token, JobResult(job, instance, Status.SUCCESS, Instant.now()))
+
+        session.shutdown()
     }
 
     it should "provide a working target API" in {
@@ -80,6 +82,8 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val token = hook.startTarget(execution, target, instance, None)
         hook.finishTarget(execution, token, TargetResult(target, instance, Seq(), Status.SUCCESS, None, Instant.now(), Instant.now()))
+
+        session.shutdown()
     }
 
     it should "be deserializable in a namespace" in {
@@ -114,6 +118,8 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         hook.targetSuccess should be (Some("target_success/$job/$target"))
         hook.targetSkip should be (Some("target_skip/$job/$target"))
         hook.targetFailure should be (Some("target_failure/$job/$target"))
+
+        session.shutdown()
     }
 
     it should "be deserializable in a job" in {
@@ -153,6 +159,8 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         hook.targetSuccess should be(Some("target_success/$job/$target"))
         hook.targetSkip should be(Some("target_skip/$job/$target"))
         hook.targetFailure should be(Some("target_failure/$job/$target"))
+
+        session.shutdown()
     }
 
     it should "work inside a namespace and job" in {
@@ -198,5 +206,7 @@ class WebHookTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         val runner = session.runner
         runner.executeJob(job, Seq(Phase.CREATE), Map("arg1" -> "some_arg"), force=true) should be (Status.SUCCESS)
+
+        session.shutdown()
     }
 }

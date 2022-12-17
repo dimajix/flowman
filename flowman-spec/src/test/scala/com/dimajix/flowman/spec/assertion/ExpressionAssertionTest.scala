@@ -83,5 +83,7 @@ class ExpressionAssertionTest extends AnyFlatSpec with Matchers with LocalSparkS
                 )
             ).withoutTime
         )
+
+        session.shutdown()
     }
 }

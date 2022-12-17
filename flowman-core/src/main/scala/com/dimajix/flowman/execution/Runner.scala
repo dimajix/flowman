@@ -64,22 +64,14 @@ private[execution] sealed class RunnerImpl {
     protected val logger = LoggerFactory.getLogger(classOf[Runner])
     protected val logFilters = LogFilter.filters
 
-    def resultOf(target:Target, phase:Phase, dryRun:Boolean)(fn: => TargetResult) : TargetResult = {
-        val startTime = Instant.now()
-        // Normally, targets should not throw any exception, but instead wrap any error inside the TargetResult.
-        // But since we never know, we add a try/catch block
-        val result = Try {
+    def executeTarget(execution:Execution, target:Target, phase:Phase, dryRun:Boolean) : TargetResult = {
+        val result =
             if (!dryRun) {
-                fn
+                execution.execute(target, phase)
             }
             else {
                 TargetResult(target, phase, Status.SUCCESS)
             }
-        }
-        match {
-            case Success(r) => r
-            case Failure(e) => TargetResult(target, phase, e, startTime)
-        }
 
         val duration = result.duration
         result.status match {
@@ -414,9 +406,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
                 TargetResult(target, phase, Status.SKIPPED, startTime)
             }
             else {
-                resultOf(target, phase, dryRun) {
-                    target.execute(execution, phase)
-                }
+                executeTarget(execution, target, phase, dryRun)
             }
         }
     }
@@ -568,17 +558,9 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
         executor.execute(execution, context, phase, targets, _ => true, keepGoing) { (execution, target, phase) =>
             val sc = execution.spark.sparkContext
             withJobGroup(sc, target.name, s"$phase target ${target.identifier}") {
-                executeTestTargetPhase(execution, target, phase, dryRun)
+                logSubtitle(s"$phase target '${target.identifier}'")
+                executeTarget(execution, target, phase, dryRun)
             }
-        }
-    }
-
-    private def executeTestTargetPhase(execution: Execution, target:Target, phase:Phase, dryRun:Boolean) : TargetResult = {
-        logSubtitle(s"$phase target '${target.identifier}'")
-
-        // First checkJob if execution is really required
-        resultOf(target, phase, dryRun) {
-            target.execute(execution, phase)
         }
     }
 }

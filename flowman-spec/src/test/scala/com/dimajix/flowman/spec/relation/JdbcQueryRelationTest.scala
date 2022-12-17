@@ -132,6 +132,8 @@ class JdbcQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.connection.identifier should be (ConnectionIdentifier("some_connection"))
         relation.connection.name should be ("some_connection")
         relation.primaryKey should be (Seq.empty)
+
+        session.shutdown()
     }
 
     it should "support SQL queries" in {
@@ -204,5 +206,7 @@ class JdbcQueryRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ================================================================================================
         relation_t0.destroy(execution)
+
+        session.shutdown()
     }
 }

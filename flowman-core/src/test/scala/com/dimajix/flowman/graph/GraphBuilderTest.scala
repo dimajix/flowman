@@ -96,5 +96,7 @@ class GraphBuilderTest extends AnyFlatSpec with Matchers with MockFactory {
         ref2.outputs.head.outgoing should be (Seq(
             InputMapping(out2main, ref1)
         ))
+
+        session.shutdown()
     }
 }

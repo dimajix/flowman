@@ -68,6 +68,8 @@ class TruncateTargetTest extends AnyFlatSpec with Matchers with MockFactory with
             "p1" -> SingleValue("1234"),
             "p2" -> RangeValue("a", "x")
         ))
+
+        session.shutdown()
     }
 
     it should "work with partitioned data" in {
@@ -149,6 +151,8 @@ class TruncateTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         (relation.loaded _).expects(execution, Map("p1" -> SingleValue("1234"),"p2" -> SingleValue("1"))).returns(No)
         (relation.loaded _).expects(execution, Map("p1" -> SingleValue("1234"),"p2" -> SingleValue("2"))).returns(No)
         target.dirty(execution, Phase.BUILD) should be (No)
+
+        session.shutdown()
     }
 
     it should "work with unpartitioned data" in {
@@ -207,5 +211,7 @@ class TruncateTargetTest extends AnyFlatSpec with Matchers with MockFactory with
 
         (relation.loaded _).expects(execution, Map.empty[String,SingleValue]).returns(No)
         target.dirty(execution, Phase.TRUNCATE) should be (No)
+
+        session.shutdown()
     }
 }

@@ -61,5 +61,7 @@ class BlackholeTargetTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         // == TRUNCATE ===================================================================
         output.dirty(executor, Phase.TRUNCATE) should be (No)
         output.execute(executor, Phase.TRUNCATE)
+
+        session.shutdown()
     }
 }

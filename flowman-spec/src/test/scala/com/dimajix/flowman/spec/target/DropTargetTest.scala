@@ -51,6 +51,8 @@ class DropTargetTest extends AnyFlatSpec with Matchers with MockFactory with Loc
         val target = targetSpec.instantiate(context).asInstanceOf[DropTarget]
 
         target.relation should be (IdentifierRelationReference(context, "some_relation"))
+
+        session.shutdown()
     }
 
     it should "work" in {
@@ -110,5 +112,7 @@ class DropTargetTest extends AnyFlatSpec with Matchers with MockFactory with Loc
 
         (relation.exists _).expects(execution).returns(No)
         target.dirty(execution, Phase.DESTROY) should be (No)
+
+        session.shutdown()
     }
 }

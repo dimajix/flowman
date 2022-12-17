@@ -52,7 +52,13 @@ class AssertionRunner(
                 val startTime = Instant.now()
                 execution.monitorAssertion(assertion) { execution =>
                     if (!error || keepGoing) {
-                        val result = executeAssertion(execution, assertion, dryRun)
+                        val result =
+                            if (!dryRun) {
+                                execution.assert(assertion)
+                            }
+                            else {
+                                AssertionResult(assertion, Instant.now())
+                            }
                         error |= !result.success
 
                         logResult(result)
@@ -87,22 +93,6 @@ class AssertionRunner(
                 }
             case None =>
                 logger.info(green(s" ✓ passed: $description"))
-        }
-    }
-
-    private def executeAssertion(execution:Execution, assertion: Assertion, dryRun:Boolean) : AssertionResult = {
-        val startTime = Instant.now()
-        try {
-            if (!dryRun) {
-                execution.assert(assertion)
-            }
-            else {
-                AssertionResult(assertion, startTime)
-            }
-        }
-        catch {
-            case NonFatal(ex) =>
-                AssertionResult(assertion, ex, startTime)
         }
     }
 }

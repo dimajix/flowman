@@ -54,6 +54,8 @@ class RelationMappingTest extends AnyFlatSpec with Matchers {
         rrm.relation should be (IdentifierRelationReference(context, RelationIdentifier("some_relation")))
         rrm.filter should be (Some("landing_date > 123"))
         rrm.partitions should be (Map("p0" -> SingleValue("12")))
+
+        session.shutdown()
     }
 
     it should "support embedded relations" in {
@@ -99,6 +101,8 @@ class RelationMappingTest extends AnyFlatSpec with Matchers {
         val mapNode = graph.mappings.head
         mapNode.mapping should be (rrm)
         mapNode.parent should be (None)
+
+        session.shutdown()
     }
 
     it should "support create an appropriate graph" in {
@@ -143,5 +147,7 @@ class RelationMappingTest extends AnyFlatSpec with Matchers {
         val mapNode = graph.mappings.head
         mapNode.mapping should be (mapping)
         mapNode.parent should be (None)
+
+        session.shutdown()
     }
 }

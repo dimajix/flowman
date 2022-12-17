@@ -90,5 +90,7 @@ class ConsoleTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
         target.dirty(execution, Phase.BUILD) should be (Yes)
         target.execute(execution, Phase.BUILD)
+
+        session.shutdown()
     }
 }

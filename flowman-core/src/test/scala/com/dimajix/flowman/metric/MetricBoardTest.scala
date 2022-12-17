@@ -51,5 +51,7 @@ class MetricBoardTest extends AnyFlatSpec with Matchers {
         board.metrics(registry, Status.RUNNING) should be (
             Seq(FixedGaugeMetric("m1", Map("board_label" -> "board1", "rl" -> "raw_value", "sl" -> "a", "ev" -> "env_value", "status" -> "RUNNING"), 1l))
         )
+
+        session.shutdown()
     }
 }

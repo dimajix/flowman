@@ -58,6 +58,8 @@ class TemplateRelationTest extends AnyFlatSpec with Matchers {
         instance.kind should be ("values")
         instance.identifier should be (RelationIdentifier("project/template"))
         instance.project should be (Some(project))
+
+        session.shutdown()
     }
 
     it should "provide own documentation" in {
@@ -85,6 +87,8 @@ class TemplateRelationTest extends AnyFlatSpec with Matchers {
         doc.relation should be (Some(relation))
         doc.inputs should be (Seq.empty)
         doc.description should be (Some("This is the template"))
+
+        session.shutdown()
     }
 
     it should "provide templated documentation" in {
@@ -112,6 +116,8 @@ class TemplateRelationTest extends AnyFlatSpec with Matchers {
         doc.relation should be (Some(relation))
         doc.inputs should be (Seq.empty)
         doc.description should be (Some("This is the original relation"))
+
+        session.shutdown()
     }
 
     it should "provide merged documentation" in {
@@ -155,5 +161,7 @@ class TemplateRelationTest extends AnyFlatSpec with Matchers {
         outputSchema.columns(1).name should be ("col_2")
         outputSchema.columns(1).index should be (-1)
         outputSchema.columns(1).description should be (Some("This is col_2"))
+
+        session.shutdown()
     }
 }

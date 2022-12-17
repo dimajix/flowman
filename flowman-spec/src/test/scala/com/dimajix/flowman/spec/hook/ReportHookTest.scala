@@ -59,6 +59,8 @@ class ReportHookTest extends AnyFlatSpec with Matchers with MockFactory with Loc
         val hook = hookSpec.instantiate(session.context).asInstanceOf[ReportHook]
         hook.location should be (new Path("file:///tmp/some-report.txt"))
         hook.mode should be (OutputMode.OVERWRITE)
+
+        session.shutdown()
     }
 
     it should "work" in {
@@ -110,5 +112,7 @@ class ReportHookTest extends AnyFlatSpec with Matchers with MockFactory with Loc
         hook.finishJob(execution, jobTokenVERIFY, JobResult(job, job.digest(Phase.VERIFY, Map()), Status.SUCCESS, Instant.now()))
 
         hook.finishLifecycle(execution, lifecycleToken, LifecycleResult(job, job.lifecycle(lifecycle, Map()), Status.SUCCESS, Instant.now()))
+
+        session.shutdown()
     }
 }

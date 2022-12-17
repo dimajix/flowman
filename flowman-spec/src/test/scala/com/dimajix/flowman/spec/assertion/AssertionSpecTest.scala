@@ -50,5 +50,7 @@ class AssertionSpecTest extends AnyFlatSpec with Matchers {
 
         val test = context.getTest(TestIdentifier("main"))
         test.assertions("custom") shouldBe a[AnnotationAssertionSpec]
+
+        session.shutdown()
     }
 }

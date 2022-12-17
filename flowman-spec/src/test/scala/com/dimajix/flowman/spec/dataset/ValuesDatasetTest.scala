@@ -61,6 +61,8 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
             ArrayRecord("a","1"),
             ArrayRecord("b", "2")
         ))
+
+        session.shutdown()
     }
 
     it should "be parseable with a schema" in {
@@ -95,6 +97,8 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
             ArrayRecord("cat","","7"),
             ArrayRecord("dog",null,"8")
         ))
+
+        session.shutdown()
     }
 
     it should "work with specified records and schema" in {
@@ -134,6 +138,8 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Row("lolo", 13),
             Row(null,null)
         ))
+
+        session.shutdown()
     }
 
     it should "work with specified records and columns" in {
@@ -170,5 +176,7 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Row("lolo", 13),
             Row(null,null)
         ))
+
+        session.shutdown()
     }
 }

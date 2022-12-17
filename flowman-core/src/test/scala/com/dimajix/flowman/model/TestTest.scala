@@ -59,5 +59,7 @@ class TestTest extends AnyFlatSpec with Matchers with MockFactory {
             "env4" -> "parent_val_4",
             "p2" -> "17"
         ))
+
+        session.shutdown()
     }
 }

@@ -89,6 +89,15 @@ final class AnalyzingExecution(context: Context) extends CachingExecution(None, 
     override def catalog: HiveCatalog = throw new UnsupportedOperationException
 
     /**
+     * Executes a specific phase of a target, will also catch (non-fatal) exceptions
+     *
+     * @param target
+     * @param phase
+     * @return
+     */
+    override def execute(target: Target, phase: Phase): TargetResult = throw new UnsupportedOperationException
+
+    /**
      * Executes an assertion from a TestSuite. This method ensures that all inputs are instantiated correctly
      *
      * @param assertion
@@ -97,11 +106,21 @@ final class AnalyzingExecution(context: Context) extends CachingExecution(None, 
     override def assert(assertion: Assertion): AssertionResult = throw new UnsupportedOperationException
 
     /**
+     * Executes a [[Measure]]. This method ensures that all inputs are instantiated correctly.
+     *
+     * @param measure
+     * @return
+     */
+    override def measure(measure: Measure): MeasureResult = throw new UnsupportedOperationException
+
+    /**
      * Returns the [[ActivityManager]] of this execution, which should be the instance created by the [[Session]]
      *
      * @return
      */
     override def activities: ActivityManager = throw new UnsupportedOperationException
+
+    override def cleaner : SessionCleaner = throw new UnsupportedOperationException
 
     override def withListeners[T](listeners: Seq[ExecutionListener])(fn: Execution => T): T = throw new UnsupportedOperationException
 

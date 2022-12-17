@@ -60,6 +60,8 @@ class UpsertMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Row("id-125", "will_be_updated"),
             Row("id-126", "will_be_added")
         ))
+
+        session.shutdown()
     }
 
     it should "reorder columns correctly" in {
@@ -95,6 +97,8 @@ class UpsertMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Row("CREATE", "id-125", "will_remain"),
             Row("CREATE", "id-126", "will_be_added")
         ))
+
+        session.shutdown()
     }
 
     it should "add missing columns from updates" in {
@@ -129,6 +133,8 @@ class UpsertMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Row("id-125", "will_be_updated", null),
             Row("id-126", "will_be_added", null)
         ))
+
+        session.shutdown()
     }
 
     it should "remove entries with duplicate keys" in {
@@ -176,6 +182,8 @@ class UpsertMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Row("id-126", "subid-0", "will_be_added", "v1"),
             Row("id-126", "subid-1", "will_be_added", "v1")
         ))
+
+        session.shutdown()
     }
 
     "An appropriate Dataflow" should "be readable from YML" in {
@@ -206,5 +214,7 @@ class UpsertMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         updateMapping.updates should be (MappingOutputIdentifier("t1"))
         updateMapping.keyColumns should be (Seq("id"))
         updateMapping.filter should be (Some("operation != 'DELETE'"))
+
+        session.shutdown()
     }
 }

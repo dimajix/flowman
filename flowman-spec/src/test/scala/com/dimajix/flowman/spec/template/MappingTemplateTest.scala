@@ -114,6 +114,8 @@ class MappingTemplateTest extends AnyFlatSpec with Matchers {
         map_3.cache should be (StorageLevel.MEMORY_AND_DISK)
 
         an[InstantiateMappingFailedException] should be thrownBy(context.getMapping(MappingIdentifier("rel_4")))
+
+        session.shutdown()
     }
 
     it should "respect broadcast & cache" in {
@@ -189,6 +191,8 @@ class MappingTemplateTest extends AnyFlatSpec with Matchers {
         map_3.broadcast should be(false)
         map_3.checkpoint should be(false)
         map_3.cache should be(StorageLevel.MEMORY_AND_DISK)
+
+        session.shutdown()
     }
 
     it should "throw an error on unknown templates" in {
@@ -205,5 +209,7 @@ class MappingTemplateTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
 
         an[InstantiateMappingFailedException] should be thrownBy(context.getMapping(MappingIdentifier("rel_1")))
+
+        session.shutdown()
     }
 }

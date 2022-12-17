@@ -104,6 +104,8 @@ class RootExecutionTest extends AnyFlatSpec with MockFactory with Matchers with 
         schema should be (StructType(Seq(
             Field("id", LongType, false)
         )))
+
+        session.shutdown()
     }
 
     it should "describe mappings in parallel" in {
@@ -136,5 +138,7 @@ class RootExecutionTest extends AnyFlatSpec with MockFactory with Matchers with 
         schema should be (StructType(Seq(
             Field("id", LongType, false)
         )))
+
+        session.shutdown()
     }
 }

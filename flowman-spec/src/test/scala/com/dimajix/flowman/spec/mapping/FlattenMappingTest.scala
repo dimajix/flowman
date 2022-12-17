@@ -50,6 +50,8 @@ class FlattenMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         val context = session.getContext(project)
         val instance = context.getMapping(MappingIdentifier("my_structure"))
         instance shouldBe an[FlattenMapping]
+
+        session.shutdown()
     }
 
     it should "flatten nested structures" in {
@@ -90,5 +92,7 @@ class FlattenMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
+
+        session.shutdown()
     }
 }

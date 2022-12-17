@@ -87,6 +87,8 @@ class AvroRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.destroy(executor)
         relation.exists(executor) should be (No)
         relation.loaded(executor, Map()) should be (No)
+
+        session.shutdown()
     })
 
     "Avro files" should "be writeable" in {
@@ -147,5 +149,7 @@ class AvroRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.destroy(executor)
         relation.exists(executor) should be (No)
         relation.loaded(executor, Map()) should be (No)
+
+        session.shutdown()
     }
 }

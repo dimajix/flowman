@@ -68,5 +68,7 @@ class TestSpecTest extends AnyFlatSpec with Matchers {
         test.fixtures.keySet should be (Set("dummy_fixture"))
         test.overrideMappings.keySet should be (Set("some_mapping"))
         test.overrideRelations.keySet should be (Set("some_relation"))
+
+        session.shutdown()
     }
 }

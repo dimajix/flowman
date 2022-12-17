@@ -252,6 +252,8 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
 
         a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
+
+        session.shutdown()
     })
 
     it should "cast compatible types" in (if (hiveSupported) {
@@ -340,6 +342,8 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         // == Destroy =================================================================================================
         relation.destroy(execution)
         a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
+
+        session.shutdown()
     })
 
     it should "support partitions" in (if (hiveSupported) {
@@ -485,6 +489,8 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation.loaded(execution, Map("partition_col" -> SingleValue("part_1"))) should be (No)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
+
+        session.shutdown()
     })
 
     it should "support different output modes with unpartitioned tables" in (if (hiveSupported) {
@@ -570,6 +576,8 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
+
+        session.shutdown()
     })
 
     it should "support different output modes with partitioned tables" in (if (hiveSupported) {
@@ -692,6 +700,8 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
+
+        session.shutdown()
     })
 
     it should "support migration by adding new columns" in (if (hiveSupported) {
@@ -942,6 +952,8 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation_2.conforms(execution, MigrationPolicy.STRICT) should be (No)
         session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
+
+        session.shutdown()
     })
 
     it should "support migration by creating new tables" in (if (hiveSupported) {
@@ -1149,6 +1161,8 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
         session.catalog.tableExists(TableIdentifier("lala_2", Some("default"))) should be (false)
         a[NoSuchTableException] shouldBe thrownBy(relation_2.destroy(execution))
+
+        session.shutdown()
     })
 
     "The generated VIEWs" should "not be too complex" in (if (hiveSupported) {

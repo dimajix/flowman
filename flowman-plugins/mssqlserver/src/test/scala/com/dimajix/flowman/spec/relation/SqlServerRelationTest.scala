@@ -81,5 +81,7 @@ class SqlServerRelationTest extends AnyFlatSpec with Matchers {
         relation.connection.identifier should be (ConnectionIdentifier("some_connection"))
         relation.connection.name should be ("some_connection")
         relation.primaryKey should be (Seq("str_col"))
+
+        session.shutdown()
     }
 }

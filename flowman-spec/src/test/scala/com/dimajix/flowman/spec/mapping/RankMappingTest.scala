@@ -82,6 +82,8 @@ class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         rows(1) should be (Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123))
         rows(2) should be (Row(mutable.WrappedArray.make(Array(14,3)), 14, "UPDATE", 124))
         rows(3) should be (Row(mutable.WrappedArray.make(Array(15,2)), 15, "CREATE", 127))
+
+        session.shutdown()
     }
 
     it should "extract the earliest version" in {
@@ -122,6 +124,8 @@ class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         rows(0) should be (Row(mutable.WrappedArray.make(Array(12,2)), 12, "CREATE", 123))
         rows(1) should be (Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123))
         rows(2) should be (Row(mutable.WrappedArray.make(Array(14,2)), 14, "CREATE", 123))
+
+        session.shutdown()
     }
 
     it should "support the same version number multiple times" in {
@@ -154,6 +158,8 @@ class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         rows.size should be (2)
         rows(0) should be (Row(mutable.WrappedArray.make(Array(12,3)), 12, "UPDATE", 133))
         rows(1) should be (Row(mutable.WrappedArray.make(Array(13,2)), 13, "CREATE", 123))
+
+        session.shutdown()
     }
 
     it should "support nested columns" in {
@@ -186,6 +192,8 @@ class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         rows should be (Seq(
             Record(("ts_0", 123), ("id_0", 7), "lala")
         ))
+
+        session.shutdown()
     }
 
     it should "be parseable as 'latest' mapping" in {
@@ -206,6 +214,8 @@ class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         latest.input should be (MappingOutputIdentifier("df1"))
         latest.keyColumns should be (Seq("id"))
         latest.versionColumns should be (Seq("v"))
+
+        session.shutdown()
     }
 
     it should "be parseable as 'earliest' mapping" in {
@@ -226,6 +236,8 @@ class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         latest.input should be (MappingOutputIdentifier("df1"))
         latest.keyColumns should be (Seq("id"))
         latest.versionColumns should be (Seq("v"))
+
+        session.shutdown()
     }
 
     it should "be convertible to SQL" in (if (hiveSupported) {
@@ -270,5 +282,7 @@ class RankMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         noException shouldBe thrownBy(spark.sql(sql))
 
         spark.sql("DROP TABLE some_table")
+
+        session.shutdown()
     })
 }

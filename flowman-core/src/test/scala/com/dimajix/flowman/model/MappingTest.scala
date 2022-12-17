@@ -78,6 +78,8 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
             "",
             Map()
         ))
+
+        session.shutdown()
     }
 
     "Mapping.output" should "return a MappingOutputIdentifier with a project" in {
@@ -93,6 +95,8 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
         )(_ => ???)
         mapping.output("main") should be (MappingOutputIdentifier("project/m1:main"))
         an[NoSuchMappingOutputException] should be thrownBy(mapping.output("no_such_output"))
+
+        session.shutdown()
     }
 
     it should "return a MappingOutputIdentifier without a project" in {
@@ -105,6 +109,8 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
         )(_ => ???)
         mapping.output("main") should be (MappingOutputIdentifier("m1:main"))
         an[NoSuchMappingOutputException] should be thrownBy(mapping.output("no_such_output"))
+
+        session.shutdown()
     }
 
     "Mapping.describe default implementation" should "return meaningful results" in {
@@ -128,6 +134,8 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
             Field("id", VarcharType(20), description=Some("some id")),
             Field("sum(val)", LongType)
         )))
+
+        session.shutdown()
     }
 
     it should "keep Char(n)/Varchar(n) in case of transformations" in {
@@ -162,6 +170,8 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
             Field("substr2", VarcharType(3)),
             Field("substr3", VarcharType(1))
         )))
+
+        session.shutdown()
     }
 
     it should "support various functions" in {
@@ -189,6 +199,8 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
             Field("coalesce1", StringType, description=Some("some id")),
             Field("coalesce2", StringType, description=Some("some id"))
         )))
+
+        session.shutdown()
     }
 
     "Mapping.link default implementation" should "work" in {
@@ -234,5 +246,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
         ref2.outputs.head.outgoing should be (Seq(
             InputMapping(out21, ref1)
         ))
+
+        session.shutdown()
     }
 }

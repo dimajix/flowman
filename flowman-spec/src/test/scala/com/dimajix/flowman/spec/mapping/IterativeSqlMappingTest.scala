@@ -59,6 +59,8 @@ class IterativeSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkS
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t1"))
         mapping shouldBe a[IterativeSqlMapping]
+
+        session.shutdown()
     }
 
     it should "calculate factorials" in {
@@ -92,6 +94,8 @@ class IterativeSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkS
                 Field("n", IntegerType, false)
             ))
         ))
+
+        session.shutdown()
     }
 
     it should "throw an exception on too many iterations" in {
@@ -123,6 +127,8 @@ class IterativeSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkS
                 Field("n", IntegerType, false)
             ))
         ))
+
+        session.shutdown()
     }
 
     it should "support complex hierarchical lookups" in {
@@ -185,5 +191,7 @@ class IterativeSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkS
                 Field("company_name", StringType, true)
             ))
         ))
+
+        session.shutdown()
     }
 }

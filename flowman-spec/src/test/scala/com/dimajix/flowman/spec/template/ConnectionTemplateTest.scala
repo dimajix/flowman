@@ -92,6 +92,8 @@ class ConnectionTemplateTest extends AnyFlatSpec with Matchers {
         rel_3 shouldBe a[JdbcConnection]
 
         an[InstantiateConnectionFailedException] should be thrownBy(context.getConnection(ConnectionIdentifier("rel_4")))
+
+        session.shutdown()
     }
 
     it should "throw an error on unknown templates" in {
@@ -108,5 +110,7 @@ class ConnectionTemplateTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
 
         an[InstantiateConnectionFailedException] should be thrownBy(context.getConnection(ConnectionIdentifier("rel_1")))
+
+        session.shutdown()
     }
 }

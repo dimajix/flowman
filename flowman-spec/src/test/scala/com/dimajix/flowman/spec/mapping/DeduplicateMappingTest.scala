@@ -58,6 +58,8 @@ class DeduplicateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
         val instance = context.getMapping(MappingIdentifier("dedup"))
         instance should not be null
         instance shouldBe a[DeduplicateMapping]
+
+        session.shutdown()
     }
 
     it should "work without list of columns" in {
@@ -92,6 +94,8 @@ class DeduplicateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
             Field("c2", IntegerType, nullable = true)
         ))
         mapping.describe(executor, Map(MappingOutputIdentifier("input") -> inputSchema)) should be (Map("main" -> inputSchema))
+
+        session.shutdown()
     }
 
     it should "work with an explicit column list" in {
@@ -118,6 +122,8 @@ class DeduplicateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
         result.schema should be(input.schema)
         val rows = result.as[Record].collect()
         rows.size should be(1)
+
+        session.shutdown()
     }
 
     it should "work with nested columns" in {
@@ -144,5 +150,7 @@ class DeduplicateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
         result.schema should be(input.schema)
         val rows = result.collect()
         rows.size should be(2)
+
+        session.shutdown()
     }
 }

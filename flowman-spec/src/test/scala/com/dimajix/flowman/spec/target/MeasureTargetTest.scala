@@ -109,5 +109,7 @@ class MeasureTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         metrics.findMetric(Selector("m1")).size should be (1)
         val gauges = metrics.findMetric(Selector("m1", Map("name" -> "a1", "category" -> "measure", "kind" -> "sql", "phase" -> "VERIFY")))
         gauges.head.asInstanceOf[GaugeMetric].value should be (23.0)
+
+        session.shutdown()
     }
 }

@@ -95,6 +95,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.location should be (new Path("hdfs://ns/some/path"))
         relation.options should be (Map())
         relation.properties should be (Map())
+
+        session.shutdown()
     }
 
     it should "support create/write/read/truncate/destroy with location" in {
@@ -195,6 +197,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map()) should be (No)
 
         an[FileNotFoundException] shouldBe thrownBy(relation.destroy(execution))
+
+        session.shutdown()
     }
 
     it should "support read/write static partitions" in {
@@ -355,6 +359,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map()) should be (No)
 
         an[FileNotFoundException] shouldBe thrownBy(relation.destroy(execution))
+
+        session.shutdown()
     }
 
     it should "support different output modes with dynamic partitions" in {
@@ -466,6 +472,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+
+        session.shutdown()
     }
 
     it should "support more than one partition columns" in { if (SPARK_VERSION >= "3.1.0") {
@@ -548,6 +556,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part2" -> SingleValue("a"))) should be(No)
         relation.loaded(execution, Map("part2" -> SingleValue("b"))) should be(No)
         relation.loaded(execution, Map("part2" -> SingleValue("c"))) should be(No)
+
+        session.shutdown()
     }}
 
     it should "support partition columns already present in the schema" in {
@@ -650,6 +660,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support append for unpartitioned tables" in {
@@ -707,6 +719,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support append for partitioned tables" in {
@@ -812,6 +826,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support read/write without schema" in {
@@ -972,6 +988,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support update output mode without partitions" in {
@@ -1047,6 +1065,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support update output mode with partitions" in {
@@ -1236,6 +1256,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support merging without partitions" in {
@@ -1316,6 +1338,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support stream writing" in {
@@ -1377,6 +1401,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
+
+        session.shutdown()
     }
 
     it should "support stream writing with partitions" in {
@@ -1455,5 +1481,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+
+        session.shutdown()
     }
 }

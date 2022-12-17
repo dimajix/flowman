@@ -103,5 +103,7 @@ class ColumnsAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSess
                 ts
             )
         )
+
+        session.shutdown()
     }
 }

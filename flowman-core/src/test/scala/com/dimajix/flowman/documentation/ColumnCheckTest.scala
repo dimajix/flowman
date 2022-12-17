@@ -47,6 +47,8 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val result2 = testExecutor.execute(execution, context, df, "_2", test)
         result2 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
         an[Exception] should be thrownBy(testExecutor.execute(execution, context, df, "_3", test))
+
+        session.shutdown()
     }
 
     "A UniqueColumnCheck" should "be executable" in {
@@ -71,6 +73,8 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val result3 = testExecutor.execute(execution, context, df, "_3", test)
         result3 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("3 values are unique, 0 values are non-unique"))))
         an[Exception] should be thrownBy(testExecutor.execute(execution, context, df, "_4", test))
+
+        session.shutdown()
     }
 
     it should "support filter conditions" in {
@@ -116,6 +120,8 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val result3 = testExecutor.execute(execution, context, df, "_3", test)
         result3 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("1 values are unique, 0 values are non-unique"))))
         an[Exception] should be thrownBy(testExecutor.execute(execution, context, df, "_4", test))
+
+        session.shutdown()
     }
 
     "A ValuesColumnCheck" should "be executable" in {
@@ -139,6 +145,8 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val result3 = testExecutor.execute(execution, context, df, "_3", test)
         result3 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
         an[Exception] should be thrownBy(testExecutor.execute(execution, context, df, "_4", test))
+
+        session.shutdown()
     }
 
     it should "use correct data types" in {
@@ -162,6 +170,8 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val result3 = testExecutor.execute(execution, context, df, "_3", test)
         result3 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
         an[Exception] should be thrownBy(testExecutor.execute(execution, context, df, "_4", test))
+
+        session.shutdown()
     }
 
     "A RangeColumnCheck" should "be executable" in {
@@ -185,6 +195,8 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val result3 = testExecutor.execute(execution, context, df, "_3", test)
         result3 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
         an[Exception] should be thrownBy(testExecutor.execute(execution, context, df, "_4", test))
+
+        session.shutdown()
     }
 
     it should "use correct data types" in {
@@ -207,6 +219,8 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         result2 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("1 records passed, 1 records failed"))))
         val result3 = testExecutor.execute(execution, context, df, "_3", test)
         result3 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
+
+        session.shutdown()
     }
 
     "A LengthColumnCheck" should "work with upper and lower bound" in {
@@ -233,6 +247,8 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         result4 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
         val result5 = testExecutor.execute(execution, context, df, "_5", test)
         result5 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
+
+        session.shutdown()
     }
 
     it should "work with lower bound" in {
@@ -259,6 +275,8 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         result4 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
         val result5 = testExecutor.execute(execution, context, df, "_5", test)
         result5 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
+
+        session.shutdown()
     }
 
     it should "work with upper bound" in {
@@ -285,6 +303,8 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         result4 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
         val result5 = testExecutor.execute(execution, context, df, "_5", test)
         result5 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
+
+        session.shutdown()
     }
 
 
@@ -308,6 +328,8 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         result2 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
         val result4 = testExecutor.execute(execution, context, df, "_4", test)
         result4 should be (Some(CheckResult(Some(test.reference), CheckStatus.SUCCESS, description=Some("2 records passed, 0 records failed"))))
+
+        session.shutdown()
     }
 
     it should "fail" in {
@@ -330,6 +352,8 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         result2 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
         val result4 = testExecutor.execute(execution, context, df, "_4", test)
         result4 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("0 records passed, 2 records failed"))))
+
+        session.shutdown()
     }
 
     it should "work with NULLs" in {
@@ -354,6 +378,8 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         result2 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("1 records passed, 3 records failed"))))
         val result4 = testExecutor.execute(execution, context, df, "_4", test)
         result4 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("1 records passed, 3 records failed"))))
+
+        session.shutdown()
     }
 
     "A ForeignKeyColumnCheck" should "work" in {
@@ -399,5 +425,7 @@ class ColumnCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         val result3 = testExecutor.execute(execution, context, df, "_3", test)
         result3 should be (Some(CheckResult(Some(test.reference), CheckStatus.FAILED, description=Some("1 records passed, 1 records failed"))))
         an[Exception] should be thrownBy(testExecutor.execute(execution, context, df, "_4", test))
+
+        session.shutdown()
     }
 }

@@ -161,6 +161,9 @@ abstract class AbstractExecution extends Execution {
             JobResult(job, instance, Status.FAILED, startTime)
         }
 
+        // Reset all metrics
+        metricSystem.resetMetrics()
+
         // Note that some hooks might reset all metrics (for example the StateStoreAdaptorListener)
         val tokens = start(instance)
         withShutdownHook(finish(tokens, failure())) {

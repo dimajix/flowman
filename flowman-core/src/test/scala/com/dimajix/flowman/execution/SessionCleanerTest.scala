@@ -36,14 +36,17 @@ class SessionCleanerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         // Execute a query
         (listener.onSuccess _).expects(*,*,*)
         spark.sql("SELECT 1").count()
+        Thread.sleep(200)
 
         {
-            val owner = new Object
+            var owner = new Object
             session.cleaner.registerQueryExecutionListener(owner, listener)
 
             // Execute a query, such that the listener is invoked
             (listener.onSuccess _).expects(*,*,*)
             spark.sql("SELECT 1").count()
+            Thread.sleep(200)
+            owner = null
         }
 
         // Force garbage collection
@@ -51,6 +54,7 @@ class SessionCleanerTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         // Execute a query - the listener should now be removed
         spark.sql("SELECT 1").count()
+        Thread.sleep(200)
 
         session.shutdown()
     }

@@ -3,6 +3,10 @@
 The `measure` target will perform some measurements which then are provided as execution metrics. These measurements
 are used to assess data quality. The measures to be taken are specified as [measure](../measure/index.md) instances.
 
+Since a measure target needs to be explicitly executed, it will increase your overall job execution time. Since
+version 0.30.0, Flowman offers an alternative [`observe` mapping](../mapping/observe.md), which offers similar (but
+more limited) capabilities and is much cheaper from an execution time point of view.
+
 ## Example
 
 ```yaml
@@ -14,7 +18,7 @@ targets:
         kind: sql
         query: "
           SELECT
-            COUNT(*) AS record_count 
+            COUNT(*) AS record_count,
             SUM(column IS NULL)  AS column_sum
           FROM some_mapping"
 ```

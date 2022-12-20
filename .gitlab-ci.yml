@@ -52,8 +52,6 @@ build-site:
 build-default:
   stage: build
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -Ddockerfile.skip'
-  except:
-    - pushes
   artifacts:
     name: "flowman-dist-default"
     paths:

@@ -95,7 +95,9 @@ case class DocumentTarget(
                 Documenter(collectors, generators)
             }
 
-        documenter.execute(context, execution, project)
+        execution.monitorDocumenter(documenter) { execution =>
+            documenter.execute(context, execution, project)
+        }
     }
 }
 

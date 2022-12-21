@@ -23,11 +23,13 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.FlowmanConf
+import com.dimajix.flowman.documentation.Documenter
 import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.DocumenterResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
@@ -135,4 +137,6 @@ final class AnalyzingExecution(context: Context) extends CachingExecution(None, 
     override def monitorAssertion(assertion: Assertion)(fn: Execution => AssertionResult): AssertionResult = throw new UnsupportedOperationException
 
     override def monitorMeasure(measure:Measure)(fn:Execution => MeasureResult) : MeasureResult = throw new UnsupportedOperationException
+
+    override def monitorDocumenter(documenter:Documenter)(fn: Execution => DocumenterResult): DocumenterResult = throw new UnsupportedOperationException
 }

@@ -16,8 +16,10 @@
 
 package com.dimajix.flowman.model
 
+import com.dimajix.flowman.documentation.Documenter
 import com.dimajix.flowman.execution.AssertionToken
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.DocumenterToken
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.ExecutionListener
 import com.dimajix.flowman.execution.JobToken
@@ -157,6 +159,8 @@ abstract class BaseHook extends AbstractInstance with Hook {
     override def finishAssertion(execution:Execution, token: AssertionToken, result:AssertionResult): Unit = {}
     override def startMeasure(execution:Execution, measure:Measure, parent:Option[Token]) : MeasureToken = new MeasureToken {}
     override def finishMeasure(execution:Execution, token:MeasureToken, result:MeasureResult) : Unit = {}
+    override def startDocumenter(execution: Execution, documenter: Documenter, parent: Option[Token]): DocumenterToken = new DocumenterToken {}
+    override def finishDocumenter(execution: Execution, token: DocumenterToken, result: DocumenterResult): Unit = {}
     override def instantiateMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit = {}
     override def describeMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit = {}
     override def describeRelation(execution: Execution, relation:Relation, parent:Option[Token]) : Unit = {}

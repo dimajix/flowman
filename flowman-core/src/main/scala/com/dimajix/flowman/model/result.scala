@@ -25,6 +25,8 @@ import scala.util.Try
 
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.documentation.Documenter
+import com.dimajix.flowman.documentation.ProjectDoc
 import com.dimajix.flowman.execution.AssertionRunner
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
@@ -119,7 +121,7 @@ object LifecycleResult {
         LifecycleResult(
             job,
             lifecycle,
-            Seq(),
+            Seq.empty,
             status,
             startTime=startTime,
             endTime=Instant.now()
@@ -137,7 +139,7 @@ object LifecycleResult {
         LifecycleResult(
             job,
             lifecycle,
-            Seq(),
+            Seq.empty,
             Status.FAILED,
             Some(exception),
             startTime=startTime,
@@ -167,7 +169,7 @@ object JobResult {
         JobResult(
             job,
             instance,
-            Seq(),
+            Seq.empty,
             status,
             startTime=Instant.now(),
             endTime=Instant.now()
@@ -176,7 +178,7 @@ object JobResult {
         JobResult(
             job,
             instance,
-            Seq(),
+            Seq.empty,
             status,
             startTime=startTime,
             endTime=Instant.now()
@@ -194,7 +196,7 @@ object JobResult {
         JobResult(
             job,
             instance,
-            Seq(),
+            Seq.empty,
             Status.FAILED,
             Some(exception),
             startTime=startTime,
@@ -225,7 +227,7 @@ object TargetResult {
         TargetResult(
             target,
             target.digest(phase),
-            Seq(),
+            Seq.empty,
             status,
             startTime=Instant.now(),
             endTime=Instant.now()
@@ -234,7 +236,7 @@ object TargetResult {
         TargetResult(
             target,
             target.digest(phase),
-            Seq(),
+            Seq.empty,
             status,
             startTime=startTime,
             endTime=Instant.now()
@@ -271,7 +273,7 @@ object TargetResult {
         TargetResult(
             target,
             target.digest(phase),
-            Seq(),
+            Seq.empty,
             Status.FAILED,
             Some(exception),
             startTime=startTime,
@@ -320,7 +322,7 @@ object TestResult {
         TestResult(
             test,
             test.instance,
-            Seq(),
+            Seq.empty,
             status,
             startTime=startTime,
             endTime=Instant.now()
@@ -329,7 +331,7 @@ object TestResult {
         TestResult(
             test,
             test.instance,
-            Seq(),
+            Seq.empty,
             Status.FAILED,
             Some(exception),
             startTime=startTime,
@@ -359,7 +361,7 @@ object AssertionResult {
     def apply(assertion: Assertion, exception:Throwable, startTime:Instant) : AssertionResult =
         AssertionResult(
             assertion,
-            Seq(),
+            Seq.empty,
             Some(exception),
             startTime=startTime,
             endTime=Instant.now()
@@ -383,7 +385,7 @@ object AssertionResult {
     def apply(assertion: Assertion, startTime:Instant) : AssertionResult =
         AssertionResult(
             assertion,
-            Seq(),
+            Seq.empty,
             None,
             startTime=startTime,
             endTime=Instant.now()
@@ -396,7 +398,7 @@ object AssertionResult {
                 AssertionResult(assertion, results, None, startTime, Instant.now())
             case Failure(exception) =>
                 logger.error(s"Caught exception while executing assertion '${assertion.name}': ", exception)
-                AssertionResult(assertion, Seq(), Some(exception), startTime, Instant.now())
+                AssertionResult(assertion, Seq.empty, Some(exception), startTime, Instant.now())
         }
     }
 }
@@ -474,7 +476,7 @@ final case class AssertionTestResult(
     override def identifier : EmptyIdentifier = EmptyIdentifier.empty
     override def category: Category = Category.ASSERTION_TEST
     override def kind: String = ""
-    override def children: Seq[Result[_]] = Seq()
+    override def children: Seq[Result[_]] = Seq.empty
     override def status : Status = {
         if (success)
             Status.SUCCESS
@@ -511,7 +513,7 @@ object MeasureResult {
                 MeasureResult(measure, results, None, startTime, Instant.now())
             case Failure(exception) =>
                 logger.error(s"Caught exception while executing measure '${measure.name}': ", exception)
-                MeasureResult(measure, Seq(), Some(exception), startTime, Instant.now())
+                MeasureResult(measure, Seq.empty, Some(exception), startTime, Instant.now())
         }
     }
 }
@@ -526,7 +528,7 @@ final case class MeasureResult(
     override def name : String = measure.name
     override def category : Category = measure.category
     override def kind : String = measure.kind
-    override def children : Seq[Result[_]] = Seq()
+    override def children : Seq[Result[_]] = Seq.empty
     override def description: Option[String] = measure.description
 
     def withoutTime : MeasureResult = {
@@ -538,9 +540,63 @@ final case class MeasureResult(
     }
 }
 
-
 final case class Measurement(
     name:String,
     labels:Map[String,String],
     value:Double
 )
+
+
+object DocumenterResult {
+    private val logger = LoggerFactory.getLogger(classOf[DocumenterResult])
+
+    def apply(documenter: Documenter, startTime:Instant) : DocumenterResult =
+        DocumenterResult(
+            documenter,
+            None,
+            None,
+            startTime=startTime,
+            endTime=Instant.now()
+        )
+    def apply(documenter: Documenter, doc : ProjectDoc, startTime:Instant) : DocumenterResult =
+        DocumenterResult(
+            documenter,
+            Some(doc),
+            None,
+            startTime=startTime,
+            endTime=Instant.now()
+        )
+
+    def of(documenter: Documenter)(fn: => ProjectDoc) : DocumenterResult = {
+        val startTime = Instant.now()
+        Try(fn) match {
+            case Success(result) =>
+                DocumenterResult(documenter, Some(result), None, startTime, Instant.now())
+            case Failure(exception) =>
+                logger.error(s"Caught exception while executing Documenter '${documenter.name}': ", exception)
+                DocumenterResult(documenter, None, Some(exception), startTime, Instant.now())
+        }
+    }
+}
+final case class DocumenterResult(
+    documenter: Documenter,
+    documentation: Option[ProjectDoc],
+    override val exception: Option[Throwable] = None,
+    override val startTime : Instant,
+    override val endTime : Instant
+) extends Result[DocumenterResult] {
+    override def identifier : Identifier[_] = Identifier.empty
+    override def name : String = documenter.name
+    override def category : Category = documenter.category
+    override def kind : String = documenter.kind
+    override def children : Seq[Result[_]] = Seq.empty
+    override def description: Option[String] = None
+
+    def withoutTime : DocumenterResult = {
+        val ts = Instant.ofEpochSecond(0)
+        copy(
+            startTime=ts,
+            endTime=ts
+        )
+    }
+}

@@ -22,10 +22,12 @@ import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.documentation.Documenter
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.withWallTime
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.DocumenterResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobLifecycle
@@ -77,9 +79,9 @@ abstract class AbstractExecution extends Execution {
      */
     override def monitorLifecycle(job: Job, arguments: Map[String, Any], lifecycle: Seq[Phase])(fn: Execution => LifecycleResult): LifecycleResult = {
         def start(instance:JobLifecycle) : Seq[(ExecutionListener, LifecycleToken)] = {
-            listeners.flatMap { case(hook,parent) =>
+            listeners.flatMap { case(listener,parent) =>
                 try {
-                    Some((hook, hook.startLifecycle(this, job, instance)))
+                    Some((listener, listener.startLifecycle(this, job, instance)))
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on startLifecycle: ${ex.toString}.")
@@ -133,9 +135,9 @@ abstract class AbstractExecution extends Execution {
      */
     override def monitorJob(job: Job, arguments: Map[String, Any], phase: Phase)(fn: Execution => JobResult): JobResult = {
         def start(instance:JobDigest) : Seq[(ExecutionListener, JobToken)] = {
-            listeners.flatMap { case(hook,parent) =>
+            listeners.flatMap { case(listener,parent) =>
                 try {
-                    Some((hook, hook.startJob(this, job, instance, parent)))
+                    Some((listener, listener.startJob(this, job, instance, parent)))
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on startJob: ${ex.toString}.")
@@ -197,9 +199,9 @@ abstract class AbstractExecution extends Execution {
      */
     override def monitorTarget(target: Target, phase: Phase)(fn: Execution => TargetResult): TargetResult = {
         def start() : Seq[(ExecutionListener, TargetToken)] = {
-            listeners.flatMap { case(hook,parent) =>
+            listeners.flatMap { case(listener,parent) =>
                 try {
-                    Some((hook, hook.startTarget(this, target, target.digest(phase), parent)))
+                    Some((listener, listener.startTarget(this, target, target.digest(phase), parent)))
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on startTarget: ${ex.toString}.")
@@ -252,9 +254,9 @@ abstract class AbstractExecution extends Execution {
      */
     override def monitorAssertion(assertion: Assertion)(fn: Execution => AssertionResult): AssertionResult = {
         def start() : Seq[(ExecutionListener, AssertionToken)] = {
-            listeners.flatMap { case(hook,parent) =>
+            listeners.flatMap { case(listener,parent) =>
                 try {
-                    Some((hook, hook.startAssertion(this, assertion, parent)))
+                    Some((listener, listener.startAssertion(this, assertion, parent)))
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on startAssertion: ${ex.toString}.")
@@ -277,7 +279,7 @@ abstract class AbstractExecution extends Execution {
         val startTime = Instant.now()
         def failure() : AssertionResult = {
             // TODO: On shutdown, the assertion should be in FAILED state
-            AssertionResult(assertion, Seq(), startTime)
+            AssertionResult(assertion, Seq.empty, startTime)
         }
 
         val tokens = start()
@@ -306,9 +308,9 @@ abstract class AbstractExecution extends Execution {
      */
     override def monitorMeasure(measure: Measure)(fn: Execution => MeasureResult): MeasureResult = {
         def start() : Seq[(ExecutionListener, MeasureToken)] = {
-            listeners.flatMap { case(hook,parent) =>
+            listeners.flatMap { case(listener,parent) =>
                 try {
-                    Some((hook, hook.startMeasure(this, measure, parent)))
+                    Some((listener, listener.startMeasure(this, measure, parent)))
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(s"Execution listener threw exception on startMeasure: ${ex.toString}.")
@@ -331,7 +333,62 @@ abstract class AbstractExecution extends Execution {
         val startTime = Instant.now()
         def failure() : MeasureResult = {
             // TODO: On shutdown, the measure should be in FAILED state
-            MeasureResult(measure, Seq(), startTime)
+            MeasureResult(measure, Seq.empty, startTime)
+        }
+
+        val tokens = start()
+        withShutdownHook(finish(tokens, failure())) {
+            withTokens(tokens) { execution =>
+                val result = try {
+                    fn(execution)
+                } catch {
+                    case NonFatal(ex) =>
+                        finish(tokens, failure())
+                        throw ex
+                }
+                finish(tokens, result)
+                result
+            }
+        }
+    }
+
+    /**
+     * Monitors the execution of an documenter by calling appropriate listeners at the start and end.
+     *
+     * @param documenter
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    override def monitorDocumenter(documenter: Documenter)(fn: Execution => DocumenterResult): DocumenterResult = {
+        def start(): Seq[(ExecutionListener, DocumenterToken)] = {
+            listeners.flatMap { case (listener, parent) =>
+                try {
+                    Some((listener, listener.startDocumenter(this, documenter, parent)))
+                } catch {
+                    case NonFatal(ex) =>
+                        logger.warn(s"Execution listener threw exception on startDocumenter: ${ex.toString}.")
+                        None
+                }
+            }
+        }
+
+        def finish(tokens: Seq[(ExecutionListener, DocumenterToken)], result: DocumenterResult): Unit = {
+            tokens.foreach { case (listener, token) =>
+                try {
+                    listener.finishDocumenter(this, token, result)
+                } catch {
+                    case NonFatal(ex) =>
+                        logger.warn(s"Execution listener threw exception on finishDocumenter: ${ex.toString}.")
+                }
+            }
+        }
+
+        val startTime = Instant.now()
+
+        def failure(): DocumenterResult = {
+            // TODO: On shutdown, the documenter should be in FAILED state
+            DocumenterResult(documenter, startTime)
         }
 
         val tokens = start()

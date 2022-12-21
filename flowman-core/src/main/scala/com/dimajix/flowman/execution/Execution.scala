@@ -18,9 +18,6 @@ package com.dimajix.flowman.execution
 
 import java.time.Instant
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 import scala.util.control.NonFatal
 
 import org.apache.hadoop.conf.Configuration
@@ -30,11 +27,13 @@ import org.apache.spark.sql.SparkSession
 
 import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.FlowmanConf
+import com.dimajix.flowman.documentation.Documenter
 import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.DocumenterResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
@@ -324,4 +323,14 @@ abstract class Execution {
      * @return
      */
     def monitorMeasure(measure:Measure)(fn:Execution => MeasureResult) : MeasureResult
+
+    /**
+     * Monitors the generation of documentation by calling appropriate listeners at the start and end.
+     *
+     * @param assertion
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def monitorDocumenter(documenter:Documenter)(fn: Execution => DocumenterResult): DocumenterResult
 }

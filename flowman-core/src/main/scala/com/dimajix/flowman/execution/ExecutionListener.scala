@@ -16,8 +16,10 @@
 
 package com.dimajix.flowman.execution
 
+import com.dimajix.flowman.documentation.Documenter
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.DocumenterResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobLifecycle
@@ -39,6 +41,7 @@ abstract class TargetToken extends Token
 abstract class TestToken extends Token
 abstract class AssertionToken extends Token
 abstract class MeasureToken extends Token
+abstract class DocumenterToken extends Token
 
 
 trait ExecutionListener {
@@ -113,6 +116,22 @@ trait ExecutionListener {
     def finishMeasure(execution:Execution, token:MeasureToken, result:MeasureResult) : Unit
 
     /**
+     * Starts the documenter and returns a token, which can be anything
+     *
+     * @param documenter
+     * @return
+     */
+    def startDocumenter(execution: Execution, documenter: Documenter, parent: Option[Token]): DocumenterToken
+
+    /**
+     * Sets the status of a documenter after it has been started
+     *
+     * @param token The token returned by startJob
+     * @param result
+     */
+    def finishDocumenter(execution: Execution, token: DocumenterToken, result: DocumenterResult): Unit
+
+    /**
      * Informs the listener that a specific mapping is about to be instantiated
      * @param execution
      * @param mapping
@@ -149,6 +168,8 @@ abstract class AbstractExecutionListener extends ExecutionListener {
     override def finishAssertion(execution:Execution, token: AssertionToken, result: AssertionResult): Unit = {}
     override def startMeasure(execution:Execution, measure: Measure, parent: Option[Token]): MeasureToken = new MeasureToken {}
     override def finishMeasure(execution:Execution, token: MeasureToken, result: MeasureResult): Unit = {}
+    override def startDocumenter(execution: Execution, documenter: Documenter, parent: Option[Token]): DocumenterToken = new DocumenterToken {}
+    override def finishDocumenter(execution: Execution, token: DocumenterToken, result: DocumenterResult): Unit = {}
     override def instantiateMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit = {}
     override def describeMapping(execution: Execution, mapping:Mapping, parent:Option[Token]) : Unit = {}
     override def describeRelation(execution: Execution, relation:Relation, parent:Option[Token]) : Unit = {}

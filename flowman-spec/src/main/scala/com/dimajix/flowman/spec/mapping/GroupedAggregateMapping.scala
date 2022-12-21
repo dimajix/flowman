@@ -118,8 +118,11 @@ case class GroupedAggregateMapping(
 
         // This is a workaround for newer Spark version, which apparently use a different mechanism to derive
         // grouping-ids than Spark up until 3.1.x. It was changed back in Spark 3.3.1
+        val legacyMode = input.sparkSession.conf.getOption("spark.sql.legacy.groupingIdWithAppendedUserGroupBy")
+            .map(_.toBoolean)
+            .getOrElse(org.apache.spark.SPARK_VERSION >= "3.2" && org.apache.spark.SPARK_VERSION < "3.3.1")
         val dimensionIndices2 = {
-            if (org.apache.spark.SPARK_VERSION >= "3.2" && org.apache.spark.SPARK_VERSION < "3.3.1")
+            if (legacyMode)
                 groups.values.flatMap(g => g.dimensions ++ g.filter.map(f => filterNames(filterIndices(f)))).toSeq.distinct.zipWithIndex.toMap
             else
                 dimensionIndices

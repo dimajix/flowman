@@ -703,7 +703,9 @@ class SqlBuilder private(
         // Remove aliases
         RemoveRedundantAliases,
         // Remove redundant casts
-        SimplifyCasts
+        SimplifyCasts,
+        // Remove redundant aliases
+        EliminateAlias
       )
     )
 
@@ -744,6 +746,18 @@ class SqlBuilder private(
 
         // Pull up project, this will be optimized further by PushDownPredicate
         //case f @ Filter(_, a @ SubqueryAlias(_, p @ Project(_, c))) => f.copy(child = p.copy(child = a.copy(child=c)))
+      }
+    }
+  }
+
+  object EliminateAlias extends Rule[LogicalPlan] {
+    override def apply(tree: LogicalPlan): LogicalPlan = {
+      tree transformAllExpressions {
+        case a: Alias =>
+          a.child match {
+            case n:NamedExpression if n.name == a.name => n
+            case _ => a
+          }
       }
     }
   }

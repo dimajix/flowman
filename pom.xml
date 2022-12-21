@@ -575,7 +575,7 @@
                 <scalatest-api.version>3.2</scalatest-api.version>
                 <scala-xml.version>1.2.0</scala-xml.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
-                <spark.version>3.2.2</spark.version>
+                <spark.version>3.2.3</spark.version>
                 <spark-api.version>3.2</spark-api.version>
                 <hive.version>2.3.9</hive.version>
                 <hive-storage-api.version>2.7.2</hive-storage-api.version>

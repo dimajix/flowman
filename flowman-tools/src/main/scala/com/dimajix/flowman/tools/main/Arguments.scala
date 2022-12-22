@@ -48,7 +48,7 @@ class Arguments(args:Array[String]) {
     @Option(name = "--spark-logging", usage = "set the log level for Spark", metaVar = "<spark_logging>")
     var sparkLogging: String = "WARN"
     @Option(name = "--spark-name", usage = "set the Spark job name", metaVar = "<job_name>")
-    var sparkName: String = "flowman"
+    var sparkName: String = ""
 
     @Argument(index=0, required=false, usage="the command to execute", metaVar="command")
     var phase:String = ""

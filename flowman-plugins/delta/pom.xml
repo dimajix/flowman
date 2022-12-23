@@ -18,7 +18,7 @@
         <plugin.name>flowman-delta</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <delta.version>2.1.1</delta.version>
+        <delta.version>2.2.0</delta.version>
     </properties>
 
     <profiles>
@@ -133,7 +133,7 @@
         <profile>
             <id>spark-3.3</id>
             <properties>
-                <delta.version>2.1.1</delta.version>
+                <delta.version>2.2.0</delta.version>
             </properties>
         </profile>
     </profiles>

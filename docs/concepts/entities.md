@@ -1,4 +1,4 @@
-# Core Entities
+# Main Entities
 
 Flowman is a *data build tool* which uses a declarative syntax to specify, what needs to be built. The main difference
 to classical build tools like `make`, `maven` is that Flowman builds *data* instead of *applications* or *libraries*.

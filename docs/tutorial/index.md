@@ -29,14 +29,3 @@ docker-compose run --rm flowman bash
 
 cd /opt/flowman
 ```
-
-
-## Lessons
-
-```eval_rst
-.. toctree::
-   :maxdepth: 1
-   :glob:
-
-   *
-```

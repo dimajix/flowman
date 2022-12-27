@@ -16,7 +16,7 @@ is needed for calculating the desired end result. For example when writing to a 
 automatically determines and recursively resolves all required upstream mappings to provide the
 final result to be written. You do not need to explicitly specify any execution order of 
 mappings, Flowman takes care of this dependency management under the hood.
- 
+
 
 ## Mapping Syntax
 
@@ -85,6 +85,7 @@ values are
 
 Flowman supports different kinds of operations, the following list gives you an exhaustive
 overview of all mappings implemented by Flowman
+
 
 ```eval_rst
 .. toctree::

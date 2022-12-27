@@ -26,11 +26,9 @@ mvn archetype:generate \
 
 This will create a new directory `<your-artifact-id>`, which looks as follows:
 ```
-├── assembly.xml
 ├── conf
 │   ├── default-namespace.yml
 │   └── flowman-env.sh
-├── deps.txt
 ├── flow
 │   ├── config
 │   │   ├── aws.yml
@@ -53,6 +51,7 @@ This will create a new directory `<your-artifact-id>`, which looks as follows:
 │   │   └── measurements.yml
 │   └── test
 │       └── test-measurements.yml
+├── assembly.xml
 ├── pom.xml
 └── README.md
 ```

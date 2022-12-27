@@ -570,6 +570,7 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <!-- Set scope to compile, since this is not part of Spark distribution -->
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-avro_${scala.api_version}</artifactId>

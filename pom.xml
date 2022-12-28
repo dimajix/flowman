@@ -1387,6 +1387,10 @@
                 <scope>provided</scope>
                 <exclusions>
                     <exclusion>
+                        <groupId>org.spark-project.spark</groupId>
+                        <artifactId>unused</artifactId>
+                    </exclusion>
+                    <exclusion>
                         <groupId>org.apache.hive</groupId>
                         <artifactId>hive-common</artifactId>
                     </exclusion>
@@ -1424,18 +1428,36 @@
                 <artifactId>spark-tags_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
                 <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.spark-project.spark</groupId>
+                        <artifactId>unused</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-sql_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
                 <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.spark-project.spark</groupId>
+                        <artifactId>unused</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-catalyst_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
                 <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.spark-project.spark</groupId>
+                        <artifactId>unused</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
@@ -1443,6 +1465,10 @@
                 <version>${spark.version}</version>
                 <scope>provided</scope>
                 <exclusions>
+                    <exclusion>
+                        <groupId>org.spark-project.spark</groupId>
+                        <artifactId>unused</artifactId>
+                    </exclusion>
                     <exclusion>
                         <groupId>org.apache.velocity</groupId>
                         <artifactId>velocity</artifactId>
@@ -1467,6 +1493,32 @@
                 <artifactId>spark-avro_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
                 <scope>compile</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.spark-project.spark</groupId>
+                        <artifactId>unused</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-sql-kafka-0-10_${scala.api_version}</artifactId>
+                <version>${spark.version}</version>
+                <scope>compile</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.spark-project.spark</groupId>
+                        <artifactId>unused</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-client-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-client-runtime</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
@@ -1493,25 +1545,13 @@
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-sql-kafka-0-10_${scala.api_version}</artifactId>
                 <version>${spark.version}</version>
-                <scope>compile</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.hadoop</groupId>
-                        <artifactId>hadoop-client-api</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.hadoop</groupId>
-                        <artifactId>hadoop-client-runtime</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.spark</groupId>
-                <artifactId>spark-sql-kafka-0-10_${scala.api_version}</artifactId>
-                <version>${spark.version}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
                 <exclusions>
+                    <exclusion>
+                        <groupId>org.spark-project.spark</groupId>
+                        <artifactId>unused</artifactId>
+                    </exclusion>
                     <exclusion>
                         <groupId>org.apache.hadoop</groupId>
                         <artifactId>hadoop-client-api</artifactId>

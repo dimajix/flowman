@@ -1,6 +1,7 @@
 # Version 0.30.0
 
-* github-278: Parallelize execution of data quality checks
+* github-278: Parallelize execution of data quality checks. This also introduces a new configuration property
+  `flowman.execution.check.parallelism` (default `1`)
 * github-282: Improve implementation for counting records
 * github-288: Support reading local CSV files from fatjar
 * github-290: Simplify specifying project name in fatjar
@@ -16,11 +17,14 @@
 * github-296: Update npm dependencies (vuetify & co)
 * github-297: Parametrize when to execute a specific phase
 * github-299: Move migrationPolicy and migrationStrategy from target into relation
-* github-115: Implement additional build policy in relation target for forcing dirty
+* github-115: Implement additional build policy in relation target for forcing dirty. This also introduces a new
+  configuration property `flowman.default.target.buildPolicy` (default `COMPAT`).
 * github-298: Support fine-grained control when to execute each target of a job
 * github-300: Implement new 'observe' mapping
 * github-301: Upgrade Spark to 3.2.3
 * github-302: Upgrade DeltaLake to 2.2.0
+
+This version is fully backwards compatible until and including version 0.27.0.
 
 
 # Version 0.29.0 - 2022-11-08
@@ -39,6 +43,8 @@
 * github-273: Refactor file abstraction
 * github-274: Print Flowman configuration to console
 
+This version is fully backwards compatible until and including version 0.27.0.
+
 
 # Version 0.28.0 - 2022-10-07
 
@@ -46,14 +52,16 @@
 * github-245: Bump ejs, @vue/cli-plugin-babel, @vue/cli-plugin-eslint and @vue/cli-service in /flowman-studio-ui
 * github-246: Bump ejs, @vue/cli-plugin-babel, @vue/cli-plugin-eslint and @vue/cli-service in /flowman-server-ui
 * github-247: Automatically generate YAML schemas as part of build process
-* github-248: Bump scss-tokenizer and node-sass in /flowman-server-u
+* github-248: Bump scss-tokenizer and node-sass in /flowman-server-ui
 * github-249: Add new options -X and -XX to increase logging
 * github-251: Support for log4j2 Configuration
-* github-252: Move sftp target into separate plugin
+* github-252: Move `sftp` target into separate plugin
 * github-253: SQL Server relation should support explicit staging table
 * github-254: Use DATETIME2 for timestamps in MS SQL Server
 * github-256: Provide Maven archetype for simple Flowman projects
 * github-258: Support clustered indexes in MS SQL Server
+
+This version is fully backwards compatible until and including version 0.27.0.
 
 
 # Version 0.27.0 - 2022-09-09
@@ -63,15 +71,25 @@
 * github-235: Implement new `rest` hook with fine control
 * github-229: A build target should not fail if Impala "COMPUTE STATS" fails
 * github-236: 'copy' target should not apply output schema
-* github-237: jdbcQuery relation should use fields "sql" and "file" instead of "query"
+* github-237: `jdbcQuery` relation should use fields "sql" and "file" instead of "query"
 * github-239: Allow optional SQL statement for creating jdbcTable
-* github-238: Implement new 'jdbcCommand' target
+* github-238: Implement new `jdbcCommand` target
 * github-240: [BUG] Data quality checks in documentation should not fail on NULL values
 * github-241: Throw an error on duplicate entity definitions
 * github-220: Upgrade Delta-Lake to 2.0 / 2.1
 * github-242: Switch to Spark 3.3 as default
 * github-243: Use alternative Spark MS SQL Connector for Spark 3.3
 * github-244: Generate project HTML documentation with optional external CSS file
+* github-228: Change default of config `flowman.default.relation.input.charVarcharPolicy` to `IGNORE`
+
+This version breaks full backwards compatibility with older versions! See more details below.
+
+## Breaking changes
+
+In order to provide more flexibility and to increase consistency, the properties of `jdbcQuery` have changed. Before
+this version, you needed to specify the SQL query in the `query` field. Now you have to specify the SQL query either
+in the `sql` field or provide an external file and provide the file name in the `file` field. This new syntax is more 
+consistent with `jdbcView` and `hiveView` relations.
 
 
 # Version 0.26.1 - 2022-08-03
@@ -79,6 +97,8 @@
 * github-226: Upgrade to Spark 3.2.2
 * github-227: [BUG] Flowman should not fail with field names containing "-", "/" etc
 * github-228: Padding and truncation of CHAR(n)/VARCHAR(n) should be configurable
+
+This version is fully backwards compatible until and including version 0.26.0.
 
 
 # Version 0.26.0 - 2022-07-27
@@ -105,6 +125,8 @@
 * github-205: Initial support Oracle DB via JDBC
 * github-225: [BUG] Staging schema should not have comments
 
+This version breaks full backwards compatibility with older versions! See more details below.
+
 ## Breaking changes
 
 We take backward compatibility very seriously. But sometimes a breaking change is needed to clean up code and to
@@ -126,6 +148,8 @@ described in the following table:
 * github-195: [BUG] Metric "target_records" is not reset correctly after an execution phase is finished
 * github-197: [BUG] Impala REFRESH METADATA should not fail when dropping views
 
+This version is fully backwards compatible until and including version 0.24.0.
+
 
 # Version 0.25.0 - 2022-05-31
 
@@ -139,6 +163,8 @@ described in the following table:
 * github-191: Add user provided description to quality checks
 * github-192: Provide example queries for JDBC metric sink
 
+This version is fully backwards compatible until and including version 0.24.0.
+
 
 # Version 0.24.1 - 2022-04-28
 
@@ -146,6 +172,8 @@ described in the following table:
 * github-176: start-/end-date in report should not be the same
 * github-177: Implement generic SQL schema check
 * github-179: Update DeltaLake dependency to 1.2.1
+
+This version is fully backwards compatible until and including version 0.24.0.
 
 
 # Version 0.24.0 - 2022-04-05
@@ -156,6 +184,8 @@ described in the following table:
 * github-172: Update CDP7 profile to the latest patch level
 * github-153: Use non-privileged user in Docker image
 * github-174: Provide application for generating YAML schema
+
+This version breaks full backwards compatibility with older versions! See more details below.
 
 ## Breaking changes
 
@@ -191,6 +221,8 @@ table:
 * github-162: ExpressionColumnCheck does not work when results contain NULL values
 * github-163: Implement new column length quality check
 
+This version is fully backwards compatible until and including version 0.18.0.
+
 
 # Version 0.23.0 - 2022-03-18
 
@@ -200,6 +232,8 @@ table:
 * github-151: Implement column level lineage in documentation
 * github-121: Correctly apply documentation, before/after and other common attributes to templates
 * github-152: Implement new 'cast' mapping
+
+This version is fully backwards compatible until and including version 0.18.0.
 
 
 # Version 0.22.0 - 2022-03-01
@@ -215,15 +249,21 @@ table:
 * Add new config variable `flowman.default.target.verifyPolicy` to ignore empty tables during VERIFY phase
 * Implement initial support for indexes in JDBC relations
 
+This version is fully backwards compatible until and including version 0.18.0.
+
 
 # Version 0.21.2 - 2022-02-14
 
 * Fix importing projects
 
+This version is fully backwards compatible until and including version 0.18.0.
+
 
 # Version 0.21.1 - 2022-01-28
 
 * flowexec now returns different exit codes depending on the processing result
+
+This version is fully backwards compatible until and including version 0.18.0.
 
 
 # Version 0.21.0 - 2022-01-26
@@ -233,10 +273,14 @@ table:
 * Implement new `stack` mapping
 * Improve error messages of local CSV parser
 
+This version is fully backwards compatible until and including version 0.18.0.
+
 
 # Version 0.20.1 - 2022-01-06
 
 * Implement detection of dependencies introduced by schema
+
+This version is fully backwards compatible until and including version 0.18.0.
 
 
 # Version 0.20.0 - 2022-01-05
@@ -254,6 +298,8 @@ table:
 * Change the semantics of config variable `flowman.execution.target.forceDirty` (default is `false`)
 * Add new `-d` / `--dirty` option for explicitly marking individual targets as dirty
 
+This version is fully backwards compatible until and including version 0.18.0.
+
 
 # Version 0.19.0 - 2021-12-13
 
@@ -268,6 +314,8 @@ table:
 * Implement more `template` types for `connection`, `schema`, `dataset`, `assertion` and `measure`
 * Implement new `measure` target for creating custom metrics for measuring data quality
 * Add new config option `flowman.execution.mapping.parallelism`
+
+This version is fully backwards compatible until and including version 0.18.0.
 
 
 # Version 0.18.0 - 2021-10-13
@@ -542,12 +590,12 @@ parameter `spark.sql.sources.commitProtocolClass`
 * Add support for checkpoint directory
 
 
-# Verison 0.6.4 - 2019-06-20
+# Version 0.6.4 - 2019-06-20
 
 * Implement column renaming in projections
 
 
-# Verison 0.6.3 - 2019-06-17
+# Version 0.6.3 - 2019-06-17
 
 * CopyRelationTask also performs projection
 

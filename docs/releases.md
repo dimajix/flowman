@@ -14,7 +14,7 @@ The following gives an (incomplete) list of past releases of the last 12 months.
 changes over time.
 
 
-### Version 0.30.0
+### Version 0.30.0 - upcoming
 
 * github-278: Parallelize execution of data quality checks
 * github-282: Improve implementation for counting records
@@ -37,6 +37,7 @@ changes over time.
 * github-300: Implement new 'observe' mapping
 * github-301: Upgrade Spark to 3.2.3
 * github-302: Upgrade DeltaLake to 2.2.0
+* github-303: Use multi-stage build for Docker image
 
 
 ### Version 0.29.0 - 2022-11-08

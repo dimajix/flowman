@@ -23,6 +23,7 @@
 * github-300: Implement new 'observe' mapping
 * github-301: Upgrade Spark to 3.2.3
 * github-302: Upgrade DeltaLake to 2.2.0
+* github-303: Use multi-stage build for Docker image
 
 This version is fully backwards compatible until and including version 0.27.0.
 

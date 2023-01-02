@@ -34,7 +34,7 @@ You can also deploy to a different repository by setting the following propertie
 * `deployment.repository.id` - contains the ID of the repository. This should match any entry in your settings.xml for authentication
 * `deployment.repository.snapshot-id` - contains the ID of the repository. This should match any entry in your settings.xml for authentication
 * `deployment.repository.server` - the url of the server as used by the nexus-staging-maven-plugin
-* `deployment.repository.url` - the url of the default release repsotiory
+* `deployment.repository.url` - the url of the default release repository
 * `deployment.repository.snapshot-url` - the url of the snapshot repository
 
 Per default, Flowman uses the staging mechanism provided by the nexus-staging-maven-plugin. This this is not what you
@@ -43,8 +43,7 @@ want, you can simply disable the Plugin via `skipTests`
 With these settings you can deploy to a different (local) repository, for example
 
     mvn deploy \
-        -Pspark-2.3 \
-        -PCDH-5.15 \
+        -PCDP-7.1 \
         -Ddeployment.repository.snapshot-url=https://nexus-snapshots.my-company.net/repository/snapshots \
         -Ddeployment.repository.snapshot-id=nexus-snapshots \
         -DskipStaging \

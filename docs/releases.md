@@ -38,6 +38,7 @@ changes over time.
 * github-301: Upgrade Spark to 3.2.3
 * github-302: Upgrade DeltaLake to 2.2.0
 * github-303: Use multi-stage build for Docker image
+* github-304: Upgrade Cloudera profile to CDP 7.1.8
 
 
 ### Version 0.29.0 - 2022-11-08

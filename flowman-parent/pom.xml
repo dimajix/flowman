@@ -1022,7 +1022,7 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
-                <groupId>commons-compiler</groupId>
+                <groupId>org.codehaus.janino</groupId>
                 <artifactId>commons-compiler</artifactId>
                 <version>${commons-compiler.version}</version>
                 <scope>provided</scope>

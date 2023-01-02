@@ -74,6 +74,11 @@
             <artifactId>commons-logging</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>commons-compiler</artifactId>
+            <scope>compile</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.hadoop</groupId>

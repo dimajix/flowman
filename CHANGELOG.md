@@ -1,4 +1,4 @@
-# Version 0.30.0
+# Version 0.30.0 - 2023-01-03
 
 * github-278: Parallelize execution of data quality checks. This also introduces a new configuration property
   `flowman.execution.check.parallelism` (default `1`)
@@ -10,6 +10,7 @@
 * github-289: Color log output via log4j configuration (requires log4j 2.x)
 * Bump postgresql from 42.4.1 to 42.4.3 in /flowman-plugins/postgresql
 * Bump loader-utils from 1.4.0 to 1.4.2
+* Bump json5 from 2.2.1 to 2.2.3
 * github-293: [BUG] Fatal exceptions in parallel mapping instantiation cause deadlock
 * github-273: Support projects contained in (fat) jar files 
 * github-294: [BUG] Parallel execution should not execute more targets after errors

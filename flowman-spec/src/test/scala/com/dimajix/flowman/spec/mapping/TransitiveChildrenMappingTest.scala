@@ -103,5 +103,7 @@ class TransitiveChildrenMappingTest extends AnyFlatSpec with Matchers with Local
 
         val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
+
+        session.shutdown()
     }
 }

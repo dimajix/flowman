@@ -25,9 +25,9 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
-import com.dimajix.flowman.util.ConsoleColors.green
-import com.dimajix.flowman.util.ConsoleColors.red
-import com.dimajix.flowman.util.ConsoleColors.yellow
+import com.dimajix.flowman.common.ConsoleColors.green
+import com.dimajix.flowman.common.ConsoleColors.red
+import com.dimajix.flowman.common.ConsoleColors.yellow
 import com.dimajix.spark.sql.DataFrameUtils
 
 
@@ -52,7 +52,13 @@ class AssertionRunner(
                 val startTime = Instant.now()
                 execution.monitorAssertion(assertion) { execution =>
                     if (!error || keepGoing) {
-                        val result = executeAssertion(execution, assertion, dryRun)
+                        val result =
+                            if (!dryRun) {
+                                execution.assert(assertion)
+                            }
+                            else {
+                                AssertionResult(assertion, Instant.now())
+                            }
                         error |= !result.success
 
                         logResult(result)
@@ -73,7 +79,7 @@ class AssertionRunner(
         val description = result.description.getOrElse(result.name)
         result.exception match {
             case Some(ex) =>
-                logger.error(s" ✘ exception $description: ${ex.getMessage}")
+                logger.error(red(s" ✘ exception $description: ${ex.getMessage}"))
             case None if (!result.success) =>
                 logger.error(red(s" ✘ failed: $description"))
                 // If an error occured, walk through the children to find a possible exception or failure to display
@@ -87,22 +93,6 @@ class AssertionRunner(
                 }
             case None =>
                 logger.info(green(s" ✓ passed: $description"))
-        }
-    }
-
-    private def executeAssertion(execution:Execution, assertion: Assertion, dryRun:Boolean) : AssertionResult = {
-        val startTime = Instant.now()
-        try {
-            if (!dryRun) {
-                execution.assert(assertion)
-            }
-            else {
-                AssertionResult(assertion, startTime)
-            }
-        }
-        catch {
-            case NonFatal(ex) =>
-                AssertionResult(assertion, ex, startTime)
         }
     }
 }

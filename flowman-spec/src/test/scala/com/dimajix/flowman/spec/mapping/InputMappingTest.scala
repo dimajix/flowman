@@ -71,6 +71,8 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Field("str_col", StringType),
             Field("int_col", IntegerType)
         )))
+
+        session.shutdown()
     }
 
     it should "support embedded schema" in {
@@ -110,6 +112,8 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Field("str_col", StringType),
             Field("int_col", IntegerType)
         )))
+
+        session.shutdown()
     }
 
     it should "support reading from partitions with explicit columns" in {
@@ -155,6 +159,8 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Field("str_col", StringType),
             Field("int_col", IntegerType)
         )))
+
+        session.shutdown()
     }
 
     it should "support reading from partitions without specification" in {
@@ -199,6 +205,8 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             Field("int_col", IntegerType),
             Field("spart", StringType, false)
         )))
+
+        session.shutdown()
     }
 
     it should "support reading from partitions with specification" in {
@@ -239,5 +247,7 @@ class InputMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         df.columns should contain("str_col")
         df.columns should contain("int_col")
         df.columns should contain("spart")
+
+        session.shutdown()
     }
 }

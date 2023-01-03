@@ -17,10 +17,16 @@
 package com.dimajix.flowman.model
 
 import java.io.File
+import java.nio.file.Paths
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import com.dimajix.flowman.fs.HadoopFile
+import com.dimajix.flowman.fs.JavaFile
 
 
 class ResourceIdentifierTest extends AnyFlatSpec with Matchers {
@@ -60,6 +66,7 @@ class ResourceIdentifierTest extends AnyFlatSpec with Matchers {
     }
 
     it should "support files" in {
+        val fs = FileSystem.get(new Configuration())
         val id = ResourceIdentifier.ofFile(new Path("/path/?/with/wildcard"))
         id should be (GlobbingResourceIdentifier("file", "/path/?/with/wildcard"))
         id.isEmpty should be (false)
@@ -69,18 +76,22 @@ class ResourceIdentifierTest extends AnyFlatSpec with Matchers {
         id.partition should be (Map())
 
         ResourceIdentifier.ofFile(new Path("file:/path/?/with/wildcard"))  should be (GlobbingResourceIdentifier("file", "file:/path/?/with/wildcard"))
+        ResourceIdentifier.ofFile(HadoopFile(fs, new Path("file:/path/?/with/wildcard")))  should be (GlobbingResourceIdentifier("file", "file:/path/?/with/wildcard"))
+        ResourceIdentifier.ofFile(HadoopFile(fs, new Path("/path/?/with/wildcard")))  should be (GlobbingResourceIdentifier("file", "file:/path/?/with/wildcard"))
+        //ResourceIdentifier.ofFile(JavaFile(Paths.get("file:/path/?/with/wildcard")))  should be (GlobbingResourceIdentifier("file", "file:/path/?/with/wildcard"))
+        ResourceIdentifier.ofFile(JavaFile(Paths.get("/path/?/with/wildcard")))  should be (GlobbingResourceIdentifier("file", "file:/path/?/with/wildcard"))
     }
 
     it should "support local files" in {
         if (System.getProperty("os.name").startsWith("Windows")) {
-            ResourceIdentifier.ofLocal(new Path("C:/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("local", "/C:/path/?/with/wildcard"))
-            ResourceIdentifier.ofLocal(new Path("file:/C:/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("local", "/C:/path/?/with/wildcard"))
-            ResourceIdentifier.ofLocal(new File("/C:/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("local", "/C:/path/?/with/wildcard"))
+            ResourceIdentifier.ofLocal(new Path("C:/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("file", "file:/C:/path/?/with/wildcard"))
+            ResourceIdentifier.ofLocal(new Path("file:/C:/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("file", "file:/C:/path/?/with/wildcard"))
+            ResourceIdentifier.ofLocal(new File("/C:/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("file", "file:/C:/path/?/with/wildcard"))
         }
         else {
-            ResourceIdentifier.ofLocal(new Path("/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
-            ResourceIdentifier.ofLocal(new Path("file:/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
-            ResourceIdentifier.ofLocal(new File("/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("local", "/path/?/with/wildcard"))
+            ResourceIdentifier.ofLocal(new Path("/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("file", "file:/path/?/with/wildcard"))
+            ResourceIdentifier.ofLocal(new Path("file:/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("file", "file:/path/?/with/wildcard"))
+            ResourceIdentifier.ofLocal(new File("/path/?/with/wildcard")) should be(GlobbingResourceIdentifier("file", "file:/path/?/with/wildcard"))
         }
     }
 

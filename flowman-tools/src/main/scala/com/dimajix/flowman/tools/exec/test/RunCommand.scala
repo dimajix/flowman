@@ -27,7 +27,7 @@ import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.tools.exec.Command
-import com.dimajix.flowman.util.ConsoleColors.red
+import com.dimajix.flowman.common.ConsoleColors.red
 
 
 class RunCommand extends Command {

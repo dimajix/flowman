@@ -38,10 +38,15 @@ import com.dimajix.spark.testing.LocalSparkSession
 class ManualSchedulerTest extends AnyFlatSpec with Matchers with MockFactory with LocalSparkSession {
     "The ManualScheduler" should "work" in {
         val t1 = mock[Target]
+        (t1.phases _).expects().atLeastOnce().returns(Set(Phase.BUILD))
         val t2 = mock[Target]
+        (t2.phases _).expects().atLeastOnce().returns(Set(Phase.BUILD))
         val t3 = mock[Target]
+        (t3.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE))
         val t4 = mock[Target]
+        (t4.phases _).expects().atLeastOnce().returns(Set(Phase.CREATE, Phase.BUILD))
         val t5 = mock[Target]
+        (t5.phases _).expects().atLeastOnce().returns(Set(Phase.BUILD))
         val targets = Seq(t1,t2,t3,t4,t5)
 
         val scheduler = new ManualScheduler()
@@ -51,8 +56,6 @@ class ManualSchedulerTest extends AnyFlatSpec with Matchers with MockFactory wit
         scheduler.next() should be (Some(t1))
         scheduler.hasNext() should be (true)
         scheduler.next() should be (Some(t2))
-        scheduler.hasNext() should be (true)
-        scheduler.next() should be (Some(t3))
         scheduler.hasNext() should be (true)
         scheduler.next() should be (Some(t4))
         scheduler.hasNext() should be (true)
@@ -114,5 +117,7 @@ class ManualSchedulerTest extends AnyFlatSpec with Matchers with MockFactory wit
         }
         val runner = session.runner
         runner.executeJob(job, Seq(Phase.BUILD)) should be(Status.SUCCESS)
+
+        session.shutdown()
     }
 }

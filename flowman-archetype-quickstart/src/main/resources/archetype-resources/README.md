@@ -11,11 +11,9 @@ The project provides a skeleton structure with the following entities:
 * A small test suite in the `flow/test` directory
 * Some configuration options in the `flow/config` directory
 ```
-├── assembly.xml
 ├── conf
 │   ├── default-namespace.yml
 │   └── flowman-env.sh
-├── deps.txt
 ├── flow
 │   ├── config
 │   │   ├── aws.yml
@@ -38,6 +36,7 @@ The project provides a skeleton structure with the following entities:
 │   │   └── measurements.yml
 │   └── test
 │       └── test-measurements.yml
+├── assembly.xml
 ├── pom.xml
 └── README.md
 ```
@@ -48,7 +47,7 @@ This should give you a starting point to create your own data flow with all requ
 ## 1. Developing
 
 For doing local development, it is recommended to either locally install Flowman (a good solution on a Linux PC)
-or use a Docker image.
+or use a Docker image (the preferred way on a Windows PC).
 
 ### Local Installation
 For a lcoal installation of Flowman, please follow the steps at https://docs.flowman.io/en/latest/setup/installation.html .
@@ -58,7 +57,7 @@ Flowman provides complete Docker images on Docker Hub, which can be readily used
 mounting the source directory as a volume into the Docker container, you can still use the editor of your choice,
 and then use the Flowman Shell for interactive development.
 ```shell
-docker run --rm -ti --mount type=bind,source=./flow,target=/opt/flowman/project dimajix/flowman:0.27.0-oss-spark3.3-hadoop3.3 bash
+docker run --rm -ti --mount type=bind,source=./flow,target=/opt/flowman/project dimajix/flowman:0.30.0 bash
 ```
 
 

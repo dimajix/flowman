@@ -18,7 +18,6 @@ package com.dimajix.flowman.tools.shell.project
 
 import scala.util.control.NonFatal
 
-import org.apache.hadoop.fs.Path
 import org.kohsuke.args4j.Argument
 import org.slf4j.LoggerFactory
 

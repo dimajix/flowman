@@ -92,6 +92,8 @@ class SwaggerSchemaTest extends AnyFlatSpec with Matchers  {
         fields(2).name should be ("id")
         fields(2).description should be (Some("The Pets ID"))
         fields(2).ftype should be (LongType)
+
+        session.shutdown()
     }
 
     it should "support allOf" in {
@@ -161,6 +163,8 @@ class SwaggerSchemaTest extends AnyFlatSpec with Matchers  {
         fields(2).name should be ("id")
         fields(2).description should be (Some("The Pets ID"))
         fields(2).ftype should be (LongType)
+
+        session.shutdown()
     }
 
     it should "support nested allOf" in {
@@ -240,6 +244,8 @@ class SwaggerSchemaTest extends AnyFlatSpec with Matchers  {
         struct.fields(2).nullable should be (false)
         struct.fields(2).name should be ("num")
         struct.fields(2).ftype should be (IntegerType)
+
+        session.shutdown()
     }
 
     it should "support integers, floats, doubles and decimals" in {
@@ -306,5 +312,7 @@ class SwaggerSchemaTest extends AnyFlatSpec with Matchers  {
         fields(5).nullable should be (true)
         fields(5).name should be ("decimal")
         fields(5).ftype should be (DecimalType(10,2))
+
+        session.shutdown()
     }
 }

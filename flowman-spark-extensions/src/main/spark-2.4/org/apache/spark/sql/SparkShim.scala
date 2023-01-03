@@ -128,6 +128,13 @@ object SparkShim {
         Column(Alias(col.expr, alias)(explicitMetadata = Some(metadata)))
     }
 
+    def observe[T](ds: Dataset[T], name: String, expr: Column, exprs: Column*): Dataset[T] = {
+        ds
+    }
+    def observedMetrics(qe: QueryExecution): Map[String, Row] = {
+        Map.empty
+    }
+
     val LocalTempView : ViewType = org.apache.spark.sql.execution.command.LocalTempView
     val GlobalTempView : ViewType = org.apache.spark.sql.execution.command.GlobalTempView
     val PersistedView : ViewType = org.apache.spark.sql.execution.command.PersistedView

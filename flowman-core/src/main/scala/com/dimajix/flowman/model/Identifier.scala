@@ -33,6 +33,10 @@ class IdentifierFactory[T] {
         }
     }
 }
+
+object Identifier {
+    def empty[T] : Identifier[T] = new IdentifierFactory[T].empty
+}
 final case class Identifier[T](name:String, project:Option[String]) {
     def isEmpty : Boolean = name.isEmpty
     def nonEmpty : Boolean = name.nonEmpty

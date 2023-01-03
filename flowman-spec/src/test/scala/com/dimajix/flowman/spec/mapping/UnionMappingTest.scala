@@ -80,6 +80,8 @@ class UnionMappingTest  extends AnyFlatSpec with Matchers with MockFactory with 
             (2,3),
             (3,4)
         ))
+
+        session.shutdown()
     }
 
     it should "support distinct" in {
@@ -108,6 +110,8 @@ class UnionMappingTest  extends AnyFlatSpec with Matchers with MockFactory with 
             (2,3),
             (3,4)
         ))
+
+        session.shutdown()
     }
 
     it should "support describe" in {
@@ -136,6 +140,8 @@ class UnionMappingTest  extends AnyFlatSpec with Matchers with MockFactory with 
             Field("_1", IntegerType),
             Field("_2", StringType)
         )))
+
+        session.shutdown()
     }
 
     it should "support linking" in {
@@ -187,5 +193,7 @@ class UnionMappingTest  extends AnyFlatSpec with Matchers with MockFactory with 
         col2.incoming.map(_.input.fqName) should be (Seq("[m1:main].col2"))
         val col3 = mapCols.find(_.name == "col3").get
         col3.incoming.map(_.input.fqName) should be (Seq("[m2:main].col3"))
+
+        session.shutdown()
     }
 }

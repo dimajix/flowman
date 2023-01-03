@@ -103,6 +103,8 @@ class StackMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         val resultSchema = mapping.describe(execution, Map(MappingOutputIdentifier("input:main") -> ftypes.StructType.of(df.schema)))
         resultSchema should be (Map("main" -> ftypes.StructType.of(expectedSchema)))
+
+        session.shutdown()
     }
 
     it should "support dropNulls" in {
@@ -144,6 +146,8 @@ class StackMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         val resultSchema = mapping.describe(execution, Map(MappingOutputIdentifier("input:main") -> ftypes.StructType.of(df.schema)))
         resultSchema should be (Map("main" -> ftypes.StructType.of(expectedSchema)))
+
+        session.shutdown()
     }
 
     it should "support keepColumns" in {
@@ -185,6 +189,8 @@ class StackMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         val resultSchema = mapping.describe(execution, Map(MappingOutputIdentifier("input:main") -> ftypes.StructType.of(df.schema)))
         resultSchema should be (Map("main" -> ftypes.StructType.of(expectedSchema)))
+
+        session.shutdown()
     }
 
     it should "support dropColumns" in {
@@ -227,5 +233,7 @@ class StackMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         val resultSchema = mapping.describe(execution, Map(MappingOutputIdentifier("input:main") -> ftypes.StructType.of(df.schema)))
         resultSchema should be (Map("main" -> ftypes.StructType.of(expectedSchema)))
+
+        session.shutdown()
     }
 }

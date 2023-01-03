@@ -1,15 +1,14 @@
-FROM openjdk:11
+FROM openjdk:11 AS build
 MAINTAINER k.kupferschmidt@dimajix.de
 
 ARG DIST_FILE
 ARG BUILD_SPARK_VERSION
 ARG BUILD_HADOOP_VERSION
 
-USER root
-
 ENV FLOWMAN_HOME=/opt/flowman
 ENV SPARK_HOME=/opt/spark
-ENV PATH=$PATH:$SPARK_HOME/bin:$FLOWMAN_HOME/bin
+
+USER root
 
 # Download and install Spark
 RUN curl -sL --retry 3 "https://archive.apache.org/dist/spark/spark-${BUILD_SPARK_VERSION}/spark-${BUILD_SPARK_VERSION}-bin-hadoop${BUILD_HADOOP_VERSION}.tgz" \
@@ -21,9 +20,6 @@ RUN curl -sL --retry 3 "https://archive.apache.org/dist/spark/spark-${BUILD_SPAR
 COPY bin/ /opt/docker/bin/
 COPY libexec/ /opt/docker/libexec/
 
-# Update OS
-RUN apt-get update && apt-get upgrade --yes && apt clean
-
 # Copy and install Repository
 COPY $DIST_FILE /tmp/repo/flowman-dist.tar.gz
 COPY conf/ /tmp/repo/conf
@@ -32,7 +28,6 @@ RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/flowman-dist.tar.gz \
     && ln -s /opt/flowman* ${FLOWMAN_HOME} \
     # Copy configuration
     && cp -a /tmp/repo/conf/* ${FLOWMAN_HOME}/conf \
-    && rm -rf /tmp/repo \
     # Fix permissions for copied resources
     && chmod a+r ${FLOWMAN_HOME}/conf/* \
     && chmod a+rx /opt/docker/bin/* /opt/docker/libexec/* \
@@ -49,6 +44,26 @@ RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/flowman-dist.tar.gz \
     && ${FLOWMAN_HOME}/bin/install-hadoop-dependencies \
     && rm -rf ~/.m2 \
     && chown -R root:root $SPARK_HOME/jars
+
+
+FROM openjdk:11 AS final
+
+ENV FLOWMAN_HOME=/opt/flowman
+ENV SPARK_HOME=/opt/spark
+ENV PATH=$PATH:$SPARK_HOME/bin:$FLOWMAN_HOME/bin
+
+USER root
+
+# Update OS
+RUN apt-get update && apt-get upgrade --yes && apt clean
+
+RUN groupadd -g 1000 flowman \
+    && useradd -m -u 1000 -g 1000 -s /bin/bash flowman
+
+COPY --from=build $SPARK_HOME $SPARK_HOME
+COPY --from=build /opt/docker /opt/docker
+COPY --from=build $FLOWMAN_HOME $FLOWMAN_HOME
+COPY --from=build /home/flowman /home/flowman
 
 USER flowman
 WORKDIR /home/flowman

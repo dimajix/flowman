@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package com.dimajix.spark.sql.local
 
-import java.io.File
+import java.nio.file.Path
 import java.util.Locale
 
 import scala.collection.JavaConverters._
@@ -90,13 +90,13 @@ class DataFrameWriter(df:DataFrame) {
         this
     }
 
-    def save(path: File): Unit = {
+    def save(path: Path): Unit = {
         save(path, mode)
     }
 
     /**
       */
-    def save(path: File, mode:SaveMode): Unit = {
+    def save(path: Path, mode:SaveMode): Unit = {
         DataSource.apply(
             df.sparkSession,
             format,

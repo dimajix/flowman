@@ -209,6 +209,8 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Seq(AssertionTestResult("schema for 'df:main'", None, false))
             ).withoutTime
         )
+
+        session.shutdown()
     }
 
     it should "compare schema ignoring ordering" in {
@@ -328,6 +330,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
             ).withoutTime
         )
 
+        session.shutdown()
     }
 
     it should "compare schema ignoring case" in {
@@ -386,6 +389,8 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Seq(AssertionTestResult("schema for 'df:main'", None, false))
             ).withoutTime
         )
+
+        session.shutdown()
     }
 
     it should "compare schema ignoring nullability" in {
@@ -444,6 +449,8 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Seq(AssertionTestResult("schema for 'df:main'", None, false))
             ).withoutTime
         )
+
+        session.shutdown()
     }
 
     it should "compare schema with nullability" in {
@@ -502,6 +509,8 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Seq(AssertionTestResult("schema for 'df:main'", None, true))
             ).withoutTime
         )
+
+        session.shutdown()
     }
 
     it should "compare schema ignoring types" in {
@@ -620,5 +629,7 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Seq(AssertionTestResult("schema for 'df:main'", None, false))
             ).withoutTime
         )
+
+        session.shutdown()
     }
 }

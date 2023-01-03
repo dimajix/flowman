@@ -50,6 +50,7 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.BaseRelation
+import com.dimajix.flowman.model.MigratableRelation
 import com.dimajix.flowman.model.PartitionedRelation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.SchemaRelation
@@ -57,7 +58,7 @@ import com.dimajix.flowman.spark.sql.delta.AlterTableChangeColumnDeltaCommand
 import com.dimajix.flowman.spark.sql.delta.QualifiedColumn
 
 
-abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String]) extends BaseRelation with PartitionedRelation with SchemaRelation {
+abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String]) extends BaseRelation with PartitionedRelation with SchemaRelation with MigratableRelation {
     private val logger = LoggerFactory.getLogger(classOf[DeltaRelation])
     protected val resource : ResourceIdentifier
 
@@ -144,7 +145,7 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
      * @param migrationPolicy
      * @param migrationStrategy
      */
-    protected def migrateInternal(execution: Execution, migrationPolicy: MigrationPolicy, migrationStrategy: MigrationStrategy): Unit = {
+    protected def migrateInternal(execution: Execution): Unit = {
         val table = deltaCatalogTable(execution)
         val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
         val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
@@ -162,11 +163,11 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
         val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
 
         if (requiresMigration) {
-            doMigration(execution, table, sourceTable, targetTable, migrationPolicy, migrationStrategy)
+            doMigration(execution, table, sourceTable, targetTable)
             execution.refreshResource(resource)
         }
     }
-    private def doMigration(execution: Execution, table:DeltaTableV2, currentTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+    private def doMigration(execution: Execution, table:DeltaTableV2, currentTable:TableDefinition, targetTable:TableDefinition) : Unit = {
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for Delta relation '$identifier', but migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
@@ -247,8 +248,8 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
         def recreate() : Unit = {
             logger.info(s"Migrating Delta relation '$identifier' by dropping/recreating.")
             try {
-                destroy(execution, true)
-                create(execution, true)
+                destroy(execution)
+                create(execution)
             }
             catch {
                 case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)

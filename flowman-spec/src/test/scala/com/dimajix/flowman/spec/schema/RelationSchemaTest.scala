@@ -56,6 +56,8 @@ class RelationSchemaTest extends AnyFlatSpec with Matchers {
             Field("int_col", IntegerType),
             Field("spart", StringType, false)
         ))
+
+        session.shutdown()
     }
 
     it should "work as a schema of a relations" in {
@@ -92,5 +94,7 @@ class RelationSchemaTest extends AnyFlatSpec with Matchers {
             Field("int_col", IntegerType),
             Field("spart", StringType, false)
         ))
+
+        session.shutdown()
     }
 }

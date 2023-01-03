@@ -20,13 +20,24 @@ import org.apache.spark.SparkContext
 
 
 object SparkUtils {
-    def withJobGroup[T](sc:SparkContext, jobGroupId:String, description:String)(fn: => T) : T = {
-        sc.setJobGroup(jobGroupId, description)
+    val SPARK_JOB_DESCRIPTION = "spark.job.description"
+    val SPARK_JOB_GROUP_ID = "spark.jobGroup.id"
+    val SPARK_JOB_INTERRUPT_ON_CANCEL = "spark.job.interruptOnCancel"
+
+    def withJobGroup[T](sc:SparkContext, jobGroupId:String, jobDescription:String)(fn: => T) : T = {
+        val (prevJobGroup, prevJobDescription) = getJobGroup(sc)
+        sc.setJobGroup(jobGroupId, jobDescription)
         try {
             fn
         }
         finally {
-            sc.clearJobGroup()
+            sc.setJobGroup(prevJobGroup, prevJobDescription)
         }
+    }
+
+    def getJobGroup(sc:SparkContext) : (String,String) = {
+        val jobGroupId = sc.getLocalProperty(SPARK_JOB_GROUP_ID)
+        val jobDescription = sc.getLocalProperty(SPARK_JOB_DESCRIPTION)
+        (jobGroupId, jobDescription)
     }
 }

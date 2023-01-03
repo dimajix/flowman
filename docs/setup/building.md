@@ -107,8 +107,10 @@ using the correct version. The following profiles are available:
 * hadoop-3.1
 * hadoop-3.2
 * hadoop-3.3
+* EMR-6.9
 * CDH-6.3
 * CDP-7.1
+* CDP-7.1-spark-3.2
 
 With these profiles it is easy to build Flowman to match your environment. 
 
@@ -169,6 +171,14 @@ The Maven project also contains preconfigured profiles for Cloudera CDH 6.3 and 
 
     mvn clean install -PCDH-6.3 -DskipTests
     mvn clean install -PCDP-7.1 -DskipTests
+    mvn clean install -PCDP-7.1-spark-3.2 -DskipTests
+
+
+### Building for AWS EMR
+
+The Maven project also contains preconfigured profiles for AWS EMR 6.9.
+
+    mvn clean install -PEMR-6.9 -DskipTests
 
 
 ## Coverage Analysis

@@ -105,5 +105,7 @@ class RelationDatasetTest extends AnyFlatSpec with Matchers with MockFactory wit
         (relation.identifier _).expects().returns(RelationIdentifier("relation"))
         (relation.describe _).expects(executor, *).returns(new StructType())
         dataset.describe(executor) should be (Some(new StructType()))
+
+        session.shutdown()
     }
 }

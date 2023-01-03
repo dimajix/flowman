@@ -36,7 +36,7 @@ class ExtendMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         ))
 
         val session = Session.builder().withSparkSession(spark).build()
-        val executor = session.execution
+        val execution = session.execution
 
         val xfs = ExtendMapping(
             Mapping.Properties(session.context),
@@ -47,11 +47,13 @@ class ExtendMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         xfs.inputs should be (Set(MappingOutputIdentifier("myview")))
         xfs.columns should be (Map("new_f" -> "2*_2"))
 
-        val result = xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> df))("main")
+        val result = xfs.execute(execution, Map(MappingOutputIdentifier("myview") -> df))("main")
             .orderBy("_1").collect()
         result.size should be (2)
         result(0) should be (Row("col1", 12, 24))
         result(1) should be (Row("col2", 23, 46))
+
+        session.shutdown()
     }
 
     it should "correctly interpolate dependencies" in {
@@ -86,6 +88,8 @@ class ExtendMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         rows.size should be (2)
         rows(0) should be (Row("col1", 12, 24, 48, 96, 2*96+48))
         rows(1) should be (Row("col2", 23, 46, 92, 184, 2*184+92))
+
+        session.shutdown()
     }
 
     it should "replace existing fields" in {
@@ -115,6 +119,8 @@ class ExtendMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         rows.size should be (2)
         rows(0) should be (Row("col1", 24, 48))
         rows(1) should be (Row("col2", 46, 92))
+
+        session.shutdown()
     }
 
     it should "detect dependency cycles" in {
@@ -133,6 +139,8 @@ class ExtendMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         )
 
         a[RuntimeException] should be thrownBy xfs.execute(executor, Map(MappingOutputIdentifier("myview") -> spark.emptyDataFrame))
+
+        session.shutdown()
     }
 
     "An appropriate Dataflow" should "be readable from YML" in {
@@ -173,5 +181,7 @@ class ExtendMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
 
         val df2 = executor.instantiate(mapping, "main").orderBy("_1", "_2")
         df2 should not be (null)
+
+        session.shutdown()
     }
 }

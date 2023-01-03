@@ -85,4 +85,11 @@ final class ScopedExecution(parent:Execution, isolated:Boolean=true) extends Cac
      * @return
      */
     override def activities: ActivityManager = operationsManager
+
+    /**
+     * Returns the [[SessionCleaner]] provided by the [[Session]]
+     *
+     * @return
+     */
+    override def cleaner: SessionCleaner = parent.cleaner
 }

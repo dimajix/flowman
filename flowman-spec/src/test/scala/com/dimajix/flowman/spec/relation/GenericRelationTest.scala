@@ -65,6 +65,8 @@ class GenericRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         val fileRelation = relation.asInstanceOf[GenericRelation]
         fileRelation.format should be ("csv")
         fileRelation.options should be (Map("path" -> "test/data/data_1.csv"))
+
+        session.shutdown()
     }
 
     it should "read data" in {
@@ -100,5 +102,7 @@ class GenericRelationTest extends AnyFlatSpec with Matchers with LocalSparkSessi
                 Nil
         ))
         df.collect()
+
+        session.shutdown()
     }
 }

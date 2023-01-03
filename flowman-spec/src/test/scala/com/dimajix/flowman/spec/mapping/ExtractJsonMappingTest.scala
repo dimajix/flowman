@@ -137,6 +137,8 @@ class ExtractJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
             "main" -> ftypes.StructType.of(expectedSchema),
             "error" -> ftypes.StructType.of(errorSchema)
         ))
+
+        session.shutdown()
     }
 
     it should "work without an explicit schema" in {
@@ -188,6 +190,8 @@ class ExtractJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
             "error" -> com.dimajix.flowman.types.StructType.of(errorSchema),
             "main" -> com.dimajix.flowman.types.StructType(Seq())
         ))
+
+        session.shutdown()
     }
 
     it should "work with invalid data" in {
@@ -230,6 +234,8 @@ class ExtractJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
         val errors = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("error")
         errors.count() should be (1)
         errors.schema should be (errorSchema)
+
+        session.shutdown()
     }
 
     it should "work with invalid data with explicit schema" in {
@@ -275,6 +281,8 @@ class ExtractJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
         val errors = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("error")
         errors.count() should be (1)
         errors.schema should be (errorSchema)
+
+        session.shutdown()
     }
 
     it should "ignore records with invalid data" in {
@@ -318,6 +326,8 @@ class ExtractJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
         val errors = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("error")
         errors.count() should be (0)
         errors.schema should be (errorSchema)
+
+        session.shutdown()
     }
 
     it should "ignore records with invalid data and explicit schema" in {
@@ -364,6 +374,8 @@ class ExtractJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
         val errors = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("error")
         errors.count() should be (0)
         errors.schema should be (errorSchema)
+
+        session.shutdown()
     }
 
     it should "fail on invalid data" in {
@@ -389,6 +401,8 @@ class ExtractJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         val mapping = context.getMapping(MappingIdentifier("m0"))
         an[Exception] shouldBe thrownBy(mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input)))
+
+        session.shutdown()
     }
 
     it should "fail on invalid data with an explicit schema" in {
@@ -421,5 +435,7 @@ class ExtractJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
         val mapping = context.getMapping(MappingIdentifier("m0"))
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("p0") -> input))("main")
         an[Exception] shouldBe thrownBy(result.count())
+
+        session.shutdown()
     }
 }

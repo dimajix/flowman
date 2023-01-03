@@ -60,6 +60,8 @@ class ReadHiveMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         val rrm = mapping.asInstanceOf[ReadHiveMapping]
         rrm.table should be (TableIdentifier("t0", Some("default")))
         rrm.filter should be (Some("landing_date > 123"))
+
+        session.shutdown()
     }
 
     it should "work without columns" in (if (hiveSupported) {
@@ -104,6 +106,8 @@ class ReadHiveMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         )))
 
         relation.destroy(execution)
+
+        session.shutdown()
     })
 
     it should "work with columns" in (if (hiveSupported) {
@@ -149,5 +153,7 @@ class ReadHiveMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         )))
 
         relation.destroy(execution)
+
+        session.shutdown()
     })
 }

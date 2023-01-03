@@ -52,6 +52,8 @@ class RecursiveSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkS
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t1"))
         mapping shouldBe a[RecursiveSqlMapping]
+
+        session.shutdown()
     }
 
     it should "calculate factorials" in {
@@ -100,6 +102,8 @@ class RecursiveSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkS
                 Field("fact", IntegerType, false)
             ))
         ))
+
+        session.shutdown()
     }
 
     it should "support UNION DISTINCT" in {
@@ -148,6 +152,8 @@ class RecursiveSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkS
                 Field("fact", IntegerType, false)
             ))
         ))
+
+        session.shutdown()
     }
 
     it should "throw an exception on unsupported query structure" in {
@@ -173,6 +179,8 @@ class RecursiveSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkS
 
         an[IllegalArgumentException] should be thrownBy (mapping.execute(executor, Map())("main"))
         an[IllegalArgumentException] should be thrownBy (mapping.describe(executor, Map()))
+
+        session.shutdown()
     }
 
     it should "throw an exception on too many iterations" in {
@@ -211,5 +219,7 @@ class RecursiveSqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkS
                 Field("fact", IntegerType, false)
             ))
         ))
+
+        session.shutdown()
     }
 }

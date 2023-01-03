@@ -37,7 +37,7 @@ case class SwaggerSchema(
     override def instantiate(context: Context, properties:Option[Schema.Properties] = None): schema.SwaggerSchema = {
         schema.SwaggerSchema(
             Schema.Properties(context),
-            file,
+            file.map(context.fs.file),
             url,
             spec,
             entity,

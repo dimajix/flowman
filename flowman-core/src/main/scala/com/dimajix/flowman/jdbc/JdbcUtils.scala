@@ -492,16 +492,14 @@ object JdbcUtils {
         dialect.command.dropView(statement, table)
     }
 
-    def dropTableOrView(conn:Connection, table:TableIdentifier, options: JDBCOptions, ifExists:Boolean=false) : Unit = {
+    def dropTableOrView(conn:Connection, table:TableIdentifier, options: JDBCOptions) : Unit = {
         withStatement(conn, options) { statement =>
-            if (!ifExists || tableExists(conn, table, options)) {
-                val meta = conn.getMetaData
-                val (_,realType) = resolveTable(meta, table)
-                if (realType == TableType.VIEW)
-                    dropView(statement, table, options)
-                else
-                    dropTable(statement, table, options)
-            }
+            val meta = conn.getMetaData
+            val (_,realType) = resolveTable(meta, table)
+            if (realType == TableType.VIEW)
+                dropView(statement, table, options)
+            else
+                dropTable(statement, table, options)
         }
     }
 

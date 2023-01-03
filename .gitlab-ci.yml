@@ -52,8 +52,6 @@ build-site:
 build-default:
   stage: build
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -Ddockerfile.skip'
-  except:
-    - pushes
   artifacts:
     name: "flowman-dist-default"
     paths:
@@ -182,11 +180,20 @@ build-cdp7.1:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days
 
-build-emr6.8:
+build-cdp7.1-spark3.2:
   stage: build
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -PEMR-6.8 -Ddockerfile.skip'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -PCDP-7.1-spark-3.2 -Ddockerfile.skip'
   artifacts:
-    name: "flowman-dist-emr6.8"
+    name: "flowman-dist-cdp7.1-spark-3.2"
+    paths:
+      - flowman-dist/target/flowman-dist-*-bin.tar.gz
+    expire_in: 5 days
+
+build-emr6.9:
+  stage: build
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -PEMR-6.9 -Ddockerfile.skip'
+  artifacts:
+    name: "flowman-dist-emr6.9"
     paths:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days

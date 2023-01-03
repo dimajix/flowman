@@ -74,6 +74,8 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Field("_3", ftypes.StringType),
             Field("_4", ftypes.StringType)
         ))
+
+        session.shutdown()
     }
 
     it should "work" in {
@@ -116,6 +118,8 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
         resultSchema should be (com.dimajix.flowman.types.StructType(Seq(
             Field("_2", FieldType.of("int"), nullable=false)
         )))
+
+        session.shutdown()
     }
 
     it should "add NULL columns for missing columns" in {
@@ -152,6 +156,8 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Row(12, null),
             Row(23, null)
         ))
+
+        session.shutdown()
     }
 
     it should "correctly process extended string types" in {
@@ -215,6 +221,8 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Field("_2", FieldType.of("char(2)")),
             Field("_3", FieldType.of("int"))
         )))
+
+        session.shutdown()
     }
 
     it should "correctly process column descriptions" in {
@@ -269,6 +277,8 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Field("_2", FieldType.of("int"), nullable=false, description=Some("This is _2")),
             Field("_3", FieldType.of("int"), nullable=true, description=Some("This is _3"))
         )))
+
+        session.shutdown()
     }
 
     it should "correctly process collations" in {
@@ -328,5 +338,7 @@ class SchemaMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession
             Field("_3", FieldType.of("string"), collation=None),
             Field("_4", FieldType.of("string"), collation=Some("_4"))
         )))
+
+        session.shutdown()
     }
 }

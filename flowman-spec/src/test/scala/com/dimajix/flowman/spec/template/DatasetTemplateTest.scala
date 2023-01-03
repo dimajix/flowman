@@ -110,6 +110,8 @@ class DatasetTemplateTest extends AnyFlatSpec with Matchers {
         rel_3.asInstanceOf[ConsoleTarget].dataset shouldBe a[ValuesDataset]
 
         an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("rel_4")))
+
+        session.shutdown()
     }
 
     it should "throw an error on unknown templates" in {
@@ -128,5 +130,7 @@ class DatasetTemplateTest extends AnyFlatSpec with Matchers {
         val context = session.getContext(project)
 
         an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("rel_1")))
+
+        session.shutdown()
     }
 }

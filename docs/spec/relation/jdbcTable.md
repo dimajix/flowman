@@ -140,6 +140,14 @@ the real JDBC table and the temporary table will be dropped.
 (default=`false`) and `clustered` (default=`false`). Note that `clustered` indexes are currently only supported by MS 
 Flowman for SQL Server and Azure SQL.
 
+* `migrationPolicy` **(optional)** *(string)* *(default: empty)*
+  Can be one of `RELAXED` or `STRICT`. If left empty, then the value of the Flowman configuration property
+  `flowman.default.relation.migrationPolicy` will be used instead.
+
+* `migrationStrategy` **(optional)** *(string)* *(default: empty)*
+  Can be one of `ALTER`, `ALTER_REPLACE`, `REPLACE`, `NEVER` or `FAIL`. If left empty, then the value of the Flowman
+  configuration property `flowman.default.relation.migrationStrategy` will be used instead.
+
 
 ## Staging Tables
 Flowman supports using temporary staging tables when writing to a SQL database. In this mode, Flowman will first
@@ -151,7 +159,7 @@ which may lead to timeouts or other failures during the parallel write process t
 
 
 ## Automatic Migrations
-Flowman supports some automatic migrations, specifically with the migration strategies `ALTER`, `ALTER_REPLACE`
+Flowman supports some [automatic migrations](../../concepts/migrations.md), specifically with the migration strategies `ALTER`, `ALTER_REPLACE`
 and `REPLACE` (those can be set via the global config variable `flowman.default.relation.migrationStrategy`,
 see [configuration](../../setup/config.md) for more details).
 

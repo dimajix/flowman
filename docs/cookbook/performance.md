@@ -25,6 +25,10 @@ config:
   - spark.executor.instances=2
   # Memory overhead as safety margin
   - spark.executor.memoryOverhead=1G
+  # The following setting helps to reuse Hive partition cache instead of re-querying Hive Metastore over and over 
+  # again. This will mainly help in cases when the same Hive table is used multiple times AND all partitions need to
+  # be retrieved.
+  - spark.sql.hive.manageFilesourcePartitions=false
 ```
 
 Often it is a good idea to make these properties easily configurable via system environment variables as follows:
@@ -52,4 +56,6 @@ config:
   - flowman.execution.executor.parallelism=4
   # Instantiate up to 16 mappings in parallel
   - flowman.execution.mapping.parallelism=16
+  # Process up to 8 quality checks in parallel
+  - flowman.execution.check.parallelism=8
 ```

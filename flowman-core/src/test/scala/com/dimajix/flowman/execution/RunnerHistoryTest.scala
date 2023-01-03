@@ -89,6 +89,8 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
         runner.executeJob(job, Seq(Phase.CREATE), force=false) should be (Status.SUCCESS)
         runner.executeJob(job, Seq(Phase.CREATE), force=false) should be (Status.SUCCESS)
         runner.executeJob(job, Seq(Phase.CREATE), force=true) should be (Status.SUCCESS)
+
+        session.shutdown()
     }
 
     it should "be used in a Session" in {
@@ -112,6 +114,8 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
         runner.executeJob(job, Seq(Phase.CREATE), force=false) should be (Status.SUCCESS)
         runner.executeJob(job, Seq(Phase.CREATE), force=false) should be (Status.SUCCESS)
         runner.executeJob(job, Seq(Phase.CREATE), force=true) should be (Status.SUCCESS)
+
+        session.shutdown()
     }
 
     it should "work with non-empty jobs" in {
@@ -141,6 +145,8 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
         runner.executeJob(job, Seq(Phase.CREATE)) should be (Status.SUCCESS)
         runner.executeJob(job, Seq(Phase.CREATE), force=false) should be (Status.SKIPPED)
         runner.executeJob(job, Seq(Phase.CREATE), force=true) should be (Status.SUCCESS)
+
+        session.shutdown()
     }
 
     it should "correctly handle non-dirty targets" in {
@@ -200,6 +206,8 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
             runner.executeJob(genJob(session, "dirty0"), Seq(Phase.CREATE)) should be(Status.SUCCESS)
             runner.executeJob(genJob(session, "dirty0"), Seq(Phase.CREATE)) should be(Status.SKIPPED)
             runner.executeJob(genJob(session, "dirty0"), Seq(Phase.CREATE), force=true) should be(Status.SUCCESS)
+
+            session.shutdown()
         }
         {
             val session = Session.builder()
@@ -216,6 +224,8 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
             runner.executeJob(genJob(session, "dirty1"), Seq(Phase.CREATE)) should be(Status.SUCCESS)
             runner.executeJob(genJob(session, "dirty1"), Seq(Phase.CREATE)) should be(Status.SUCCESS)
             runner.executeJob(genJob(session, "dirty1"), Seq(Phase.CREATE), force=true) should be(Status.SUCCESS)
+
+            session.shutdown()
         }
     }
 
@@ -238,6 +248,8 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
         val runner = session.runner
         runner.executeJob(batch, Seq(Phase.BUILD)) should be (Status.FAILED)
         runner.executeJob(batch, Seq(Phase.BUILD)) should be (Status.FAILED)
+
+        session.shutdown()
     }
 
     it should "support parameters in targets" in {
@@ -268,5 +280,7 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
         runner.executeJob(job, Seq(Phase.BUILD), Map("p1" -> "v1")) should be (Status.SKIPPED)
         runner.executeJob(job, Seq(Phase.BUILD), Map("p1" -> "v2")) should be (Status.SUCCESS)
         runner.executeJob(job, Seq(Phase.BUILD), Map("p1" -> "v2"), force=true) should be (Status.SUCCESS)
+
+        session.shutdown()
     }
 }

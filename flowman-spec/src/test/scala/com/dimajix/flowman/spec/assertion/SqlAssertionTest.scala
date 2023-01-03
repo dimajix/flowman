@@ -164,6 +164,8 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 )
             ).withoutTime
         )
+
+        session.shutdown()
     }
 
     it should "fail on too many columns" in {
@@ -195,6 +197,8 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 )
             ).withoutTime
         )
+
+        session.shutdown()
     }
 
     it should "fail on too few columns" in {
@@ -224,6 +228,8 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 Seq(AssertionTestResult("SELECT COUNT(*),SUM(id) FROM mx", None, false))
             ).withoutTime
         )
+
+        session.shutdown()
     }
 
     it should "fail on wrong column types" in {
@@ -255,5 +261,7 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 )
             ).withoutTime
         )
+
+        session.shutdown()
     }
 }

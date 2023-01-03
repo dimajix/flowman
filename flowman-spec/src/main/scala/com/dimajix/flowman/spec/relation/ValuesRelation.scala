@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spec.relation
 
 import scala.collection.immutable.ListMap
-import scala.collection.mutable
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
@@ -31,8 +30,6 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.MigrationPolicy
-import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
@@ -50,8 +47,6 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.Record
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.sql.DataFrameBuilder
-import com.dimajix.spark.sql.DataFrameUtils
-import com.dimajix.spark.sql.SchemaUtils
 
 
 case class ValuesRelation(
@@ -137,7 +132,7 @@ case class ValuesRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = true
+    override def conforms(execution: Execution): Trilean = true
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
@@ -156,8 +151,7 @@ case class ValuesRelation(
      *
      * @param execution
      */
-    override def create(execution: Execution, ifNotExists: Boolean): Unit = {
-    }
+    override def create(execution: Execution): Unit = {}
 
     /**
      * This will delete any physical representation of the relation. Depending on the type only some meta data like
@@ -165,14 +159,14 @@ case class ValuesRelation(
      *
      * @param execution
      */
-    override def destroy(execution: Execution, ifExists: Boolean): Unit = {}
+    override def destroy(execution: Execution): Unit = {}
 
     /**
      * This will update any existing relation to the specified metadata.
      *
      * @param execution
      */
-    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {}
+    override def migrate(execution: Execution): Unit = {}
 
     /**
      * Returns the schema of the relation, excluding partition columns

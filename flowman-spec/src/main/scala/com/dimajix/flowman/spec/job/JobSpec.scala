@@ -21,13 +21,14 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.dimajix.common.TypeRegistry
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.CyclePolicy
 import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.NamedSpec
-import com.dimajix.flowman.spec.Spec
 import com.dimajix.flowman.spec.hook.HookSpec
 import com.dimajix.flowman.spec.metric.MetricBoardSpec
 import com.dimajix.flowman.types.FieldType
@@ -56,16 +57,33 @@ object JobSpec extends TypeRegistry[JobSpec] {
             )
         }
     }
+
+    final class Execution {
+        @JsonProperty(value = "phase") private var phase: String = _
+        @JsonProperty(value = "cycle", required = false) private var cycle: String = "always"
+        @JsonProperty(value = "targets", required = false) private var targets: Seq[String] = Seq(".*")
+
+        def instantiate(context: Context): Job.Execution = {
+            require(context != null)
+
+            Job.Execution(
+                Phase.ofString(context.evaluate(phase)),
+                CyclePolicy.ofString(context.evaluate(cycle)),
+                targets.map(context.evaluate).map(_.r)
+            )
+        }
+    }
 }
 
 final class JobSpec extends NamedSpec[Job] {
-    @JsonProperty(value="extends") private var parents:Seq[String] = Seq()
+    @JsonProperty(value="extends") private var parents:Seq[String] = Seq.empty
     @JsonProperty(value="description") private var description:Option[String] = None
-    @JsonProperty(value="parameters") private var parameters:Seq[JobSpec.Parameter] = Seq()
-    @JsonProperty(value="environment") private var environment: Seq[String] = Seq()
-    @JsonProperty(value="targets") private var targets: Seq[String] = Seq()
+    @JsonProperty(value="parameters") private var parameters:Seq[JobSpec.Parameter] = Seq.empty
+    @JsonProperty(value="environment") private var environment: Seq[String] = Seq.empty
+    @JsonProperty(value="targets") private var targets: Seq[String] = Seq.empty
     @JsonProperty(value="metrics") private var metrics:Option[MetricBoardSpec] = None
-    @JsonProperty(value="hooks") private var hooks: Seq[HookSpec] = Seq()
+    @JsonProperty(value="hooks") private var hooks: Seq[HookSpec] = Seq.empty
+    @JsonProperty(value="executions") private var executions: Seq[JobSpec.Execution] = Seq.empty
 
     override def instantiate(context: Context, properties:Option[Job.Properties] = None): Job = {
         require(context != null)
@@ -77,7 +95,8 @@ final class JobSpec extends NamedSpec[Job] {
             splitSettings(environment).toMap,
             targets.map(context.evaluate).map(TargetIdentifier.parse),
             metrics,
-            hooks
+            hooks,
+            executions.map(_.instantiate(context))
         )
 
         Job.merge(job, parents)

@@ -10,7 +10,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.29.0</version>
+        <version>0.30.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -18,7 +18,7 @@
         <plugin.name>flowman-delta</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <delta.version>2.1.1</delta.version>
+        <delta.version>2.2.0</delta.version>
     </properties>
 
     <profiles>
@@ -65,7 +65,28 @@
             </build>
         </profile>
         <profile>
-            <id>EMR-6.8</id>
+            <id>CDP-7.1-spark-3.2</id>
+            <properties>
+                <delta.version>2.0.0</delta.version>
+            </properties>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <!-- Disable compilation -->
+                        <plugin>
+                            <groupId>net.alchim31.maven</groupId>
+                            <artifactId>scala-maven-plugin</artifactId>
+                            <configuration>
+                                <sourceDir>no-source</sourceDir>
+                                <testSourceDir>no-test-source</testSourceDir>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+        <profile>
+            <id>EMR-6.9</id>
             <properties>
                 <delta.version>2.1.1</delta.version>
             </properties>
@@ -112,7 +133,7 @@
         <profile>
             <id>spark-3.3</id>
             <properties>
-                <delta.version>2.1.1</delta.version>
+                <delta.version>2.2.0</delta.version>
             </properties>
         </profile>
     </profiles>

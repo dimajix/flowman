@@ -29,8 +29,6 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.MigrationPolicy
-import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.BaseRelation
@@ -239,7 +237,7 @@ case class KafkaRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = Unknown
+    override def conforms(execution: Execution): Trilean = Unknown
 
     /**
      * Verify if the corresponding physical backend of this relation already exists
@@ -253,7 +251,7 @@ case class KafkaRelation(
       *
       * @param execution
       */
-    override def create(execution: Execution, ignoreIfExsists: Boolean): Unit = ???
+    override def create(execution: Execution): Unit = ???
 
     /**
       * This will delete any physical representation of the relation. Depending on the type only some meta data like
@@ -261,14 +259,14 @@ case class KafkaRelation(
       *
       * @param execution
       */
-    override def destroy(execution: Execution, ignoreIfNotExists:Boolean): Unit = ???
+    override def destroy(execution: Execution): Unit = ???
 
     /**
       * This will update any existing relation to the specified metadata.
       *
       * @param execution
       */
-    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {}
+    override def migrate(execution: Execution): Unit = {}
 
     /**
       * Returns empty schema, so we read in all columns from Kafka

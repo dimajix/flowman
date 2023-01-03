@@ -23,11 +23,13 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.FlowmanConf
+import com.dimajix.flowman.documentation.Documenter
 import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.DocumenterResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
@@ -89,6 +91,15 @@ final class AnalyzingExecution(context: Context) extends CachingExecution(None, 
     override def catalog: HiveCatalog = throw new UnsupportedOperationException
 
     /**
+     * Executes a specific phase of a target, will also catch (non-fatal) exceptions
+     *
+     * @param target
+     * @param phase
+     * @return
+     */
+    override def execute(target: Target, phase: Phase): TargetResult = throw new UnsupportedOperationException
+
+    /**
      * Executes an assertion from a TestSuite. This method ensures that all inputs are instantiated correctly
      *
      * @param assertion
@@ -97,11 +108,21 @@ final class AnalyzingExecution(context: Context) extends CachingExecution(None, 
     override def assert(assertion: Assertion): AssertionResult = throw new UnsupportedOperationException
 
     /**
+     * Executes a [[Measure]]. This method ensures that all inputs are instantiated correctly.
+     *
+     * @param measure
+     * @return
+     */
+    override def measure(measure: Measure): MeasureResult = throw new UnsupportedOperationException
+
+    /**
      * Returns the [[ActivityManager]] of this execution, which should be the instance created by the [[Session]]
      *
      * @return
      */
     override def activities: ActivityManager = throw new UnsupportedOperationException
+
+    override def cleaner : SessionCleaner = throw new UnsupportedOperationException
 
     override def withListeners[T](listeners: Seq[ExecutionListener])(fn: Execution => T): T = throw new UnsupportedOperationException
 
@@ -116,4 +137,6 @@ final class AnalyzingExecution(context: Context) extends CachingExecution(None, 
     override def monitorAssertion(assertion: Assertion)(fn: Execution => AssertionResult): AssertionResult = throw new UnsupportedOperationException
 
     override def monitorMeasure(measure:Measure)(fn:Execution => MeasureResult) : MeasureResult = throw new UnsupportedOperationException
+
+    override def monitorDocumenter(documenter:Documenter)(fn: Execution => DocumenterResult): DocumenterResult = throw new UnsupportedOperationException
 }

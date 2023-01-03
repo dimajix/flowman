@@ -96,6 +96,8 @@ class UnitMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         df1.collect() should be (inputDf1.collect())
         val schema1 = executor.describe(instance1, "input")
         schema1 should be (StructType(Seq(Field("_1", IntegerType, false), Field("_2", StringType, true))))
+
+        session.shutdown()
     }
 
     it should "work with internal and external references" in {
@@ -138,6 +140,8 @@ class UnitMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         df_outside.collect() should be (inputDf0.union(inputDf0).collect())
         val schema_outside = executor.describe(unit, "output")
         schema_outside should be (StructType(Seq(Field("_1", IntegerType, false), Field("_2", StringType, true))))
+
+        session.shutdown()
     }
 
     it should "work nicely with alias" in {
@@ -167,6 +171,8 @@ class UnitMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         instance0.outputs should be (Set("main"))
         val df0 = executor.instantiate(instance0, "main")
         df0.collect() should be (inputDf0.collect())
+
+        session.shutdown()
     }
 
     it should "work with complex schema inference" in {
@@ -221,5 +227,7 @@ class UnitMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         df_conformed.collect() should be (inputDf0.collect())
         val schema_conformed = executor.describe(unit, "conformed")
         schema_conformed should be (StructType(Seq(Field("_1", IntegerType, false), Field("_2", StringType, true))))
+
+        session.shutdown()
     }
 }

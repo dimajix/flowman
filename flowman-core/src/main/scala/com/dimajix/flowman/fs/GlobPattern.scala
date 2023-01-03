@@ -21,8 +21,6 @@ package com.dimajix.flowman.fs
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
-import org.apache.hadoop.fs.Path
-
 
 /**
   * A class for POSIX glob pattern with brace expansions.

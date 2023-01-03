@@ -129,6 +129,8 @@ class ExplodeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
+
+        session.shutdown()
     }
 
     it should "select specified columns" in {
@@ -166,6 +168,8 @@ class ExplodeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
+
+        session.shutdown()
     }
 
     it should "support renaming columns" in {
@@ -204,6 +208,8 @@ class ExplodeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
+
+        session.shutdown()
     }
 
     it should "explode simple arrays" in {
@@ -239,5 +245,7 @@ class ExplodeMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
+
+        session.shutdown()
     }
 }

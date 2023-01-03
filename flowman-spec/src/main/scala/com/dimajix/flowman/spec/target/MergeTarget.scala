@@ -138,8 +138,7 @@ case class MergeTarget(
         phase match {
             case Phase.VALIDATE => No
             case Phase.CREATE =>
-                val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
-                !rel.conforms(execution, migrationPolicy)
+                !rel.conforms(execution)
             case Phase.BUILD =>
                 Unknown
             case Phase.VERIFY => Yes
@@ -179,16 +178,14 @@ case class MergeTarget(
 
         val rel = relation.value
         if (rel.exists(execution) == Yes) {
-            val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
-            if (rel.conforms(execution, migrationPolicy) != Yes) {
+            if (rel.conforms(execution) != Yes) {
                 logger.info(s"Migrating existing relation '${relation.identifier}'")
-                val migrationStrategy = MigrationStrategy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_STRATEGY))
-                rel.migrate(execution, migrationPolicy, migrationStrategy)
+                rel.migrate(execution)
             }
         }
         else {
             logger.info(s"Creating relation '${relation.identifier}'")
-            rel.create(execution, true)
+            rel.create(execution)
         }
     }
 
@@ -262,7 +259,7 @@ case class MergeTarget(
 
         logger.info(s"Destroying relation '${relation.identifier}''")
         val rel = relation.value
-        rel.destroy(executor, true)
+        rel.destroy(executor)
     }
 }
 

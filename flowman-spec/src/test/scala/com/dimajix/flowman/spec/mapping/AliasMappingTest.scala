@@ -46,6 +46,8 @@ class AliasMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         val context = session.getContext(project)
         val instance = context.getMapping(MappingIdentifier("my_alias"))
         instance shouldBe an[AliasMapping]
+
+        session.shutdown()
     }
 
     it should "support different outputs" in {
@@ -64,5 +66,7 @@ class AliasMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("input_df:output_2") -> inputDf))("main")
         result.count() should be (0)
+
+        session.shutdown()
     }
 }

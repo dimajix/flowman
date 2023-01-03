@@ -173,5 +173,7 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
     tgtRelNode.outgoing should be(Seq.empty)
     tgtRelNode.incoming.head.input should be(tgtNode)
     tgtRelNode.incoming.head.output should be(tgtRelNode)
+
+    session.shutdown()
   }
 }

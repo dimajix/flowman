@@ -116,6 +116,8 @@ class DependencySchedulerTest extends AnyFlatSpec with Matchers {
 
         sort(Seq(t1,t2,t3,t4), Phase.BUILD).map(_.name) should be (Seq("t1","t2","t3","t4"))
         sort(Seq(t1,t2,t3,t4), Phase.DESTROY).map(_.name) should be (Seq("t4","t3","t2","t1"))
+
+        session.shutdown()
     }
 
     it should "work with partitions" in {
@@ -160,6 +162,8 @@ class DependencySchedulerTest extends AnyFlatSpec with Matchers {
 
         sort(Seq(t1,t2,t3,t4), Phase.BUILD).map(_.name) should be (Seq("t1","t2","t3","t4"))
         sort(Seq(t1,t2,t3,t4), Phase.DESTROY).map(_.name) should be (Seq("t4","t3","t2","t1"))
+
+        session.shutdown()
     }
 
     it should "work with wildcards" in {
@@ -209,6 +213,8 @@ class DependencySchedulerTest extends AnyFlatSpec with Matchers {
 
         sort(Seq(t1,t2,t3,t4), Phase.BUILD).map(_.name) should be (Seq("t1","t2","t3","t4"))
         sort(Seq(t1,t2,t3,t4), Phase.DESTROY).map(_.name) should be (Seq("t4","t3","t2","t1"))
+
+        session.shutdown()
     }
 
     it should "work with Windows paths" in {
@@ -231,6 +237,8 @@ class DependencySchedulerTest extends AnyFlatSpec with Matchers {
 
         sort(Seq(t1,t2), Phase.BUILD).map(_.name) should be (Seq("t1","t2"))
         sort(Seq(t2,t1), Phase.BUILD).map(_.name) should be (Seq("t1","t2"))
+
+        session.shutdown()
     }
 
     it should "work with before and after" in {
@@ -264,6 +272,8 @@ class DependencySchedulerTest extends AnyFlatSpec with Matchers {
         (order3("t1") > order3("t2")) should be (true)
         (order3("t2") < order3("t3")) should be (true)
         (order3("t3") < order3("t4")) should be (true)
+
+        session.shutdown()
     }
 
     it should "work with filters" in {
@@ -284,6 +294,8 @@ class DependencySchedulerTest extends AnyFlatSpec with Matchers {
         sort(Seq(t1,t2,t3), Phase.BUILD, filter).map(_.name) should be (Seq("t1", "t3"))
         sort(Seq(t3,t2,t1), Phase.BUILD, filter).map(_.name) should be (Seq("t1", "t3"))
         sort(Seq(t1,t2,t3), Phase.DESTROY, filter).map(_.name) should be (Seq("t3", "t1"))
+
+        session.shutdown()
     }
 
     it should "error on cyclic dependencies" in {
@@ -300,5 +312,7 @@ class DependencySchedulerTest extends AnyFlatSpec with Matchers {
         )
 
         a[RuntimeException] should be thrownBy (sort(Seq(t1,t2), Phase.BUILD))
+
+        session.shutdown()
     }
 }

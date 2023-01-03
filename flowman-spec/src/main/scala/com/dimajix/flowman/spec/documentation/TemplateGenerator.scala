@@ -16,30 +16,21 @@
 
 package com.dimajix.flowman.spec.documentation
 
-import java.net.URL
-import java.nio.charset.Charset
-
 import scala.util.matching.Regex
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.google.common.io.Resources
 
 import com.dimajix.flowman.documentation.AbstractGenerator
-import com.dimajix.flowman.documentation.MappingDoc
-import com.dimajix.flowman.documentation.MappingDocWrapper
 import com.dimajix.flowman.documentation.ProjectDoc
 import com.dimajix.flowman.documentation.ProjectDocWrapper
-import com.dimajix.flowman.documentation.RelationDoc
-import com.dimajix.flowman.documentation.RelationDocWrapper
-import com.dimajix.flowman.documentation.TargetDoc
-import com.dimajix.flowman.documentation.TargetDocWrapper
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.fs.{File, FileUtils}
 import com.dimajix.flowman.model.Identifier
 
 
 abstract class TemplateGenerator(
-    template:URL,
+    template:File,
     includeRelations:Seq[Regex] = Seq(".*".r),
     excludeRelations:Seq[Regex] = Seq.empty,
     includeMappings:Seq[Regex] = Seq(".*".r),
@@ -81,13 +72,8 @@ abstract class TemplateGenerator(
     }
 
     protected def loadResource(name: String): String = {
-        val path = template.getPath
-        val url =
-            if (path.endsWith("/"))
-                new URL(template.toString + name)
-            else
-                new URL(template.toString + "/" + name)
-        Resources.toString(url, Charset.forName("UTF-8"))
+        val url = template / name
+        FileUtils.toString(url)
     }
 }
 
@@ -101,12 +87,12 @@ abstract class TemplateGeneratorSpec extends GeneratorSpec {
     @JsonProperty(value="includeTargets", required=false) protected var includeTargets:Seq[String] = Seq(".*")
     @JsonProperty(value="excludeTargets", required=false) protected var excludeTargets:Seq[String] = Seq.empty
 
-    protected def getTemplateUrl(context: Context): URL = {
+    protected def getTemplateUrl(context: Context): File = {
         context.evaluate(template) match {
             case "text" => FileGenerator.textTemplate
             case "html" => FileGenerator.htmlTemplate
             case "html+css" => FileGenerator.htmlCssTemplate
-            case str => new URL(str)
+            case str => context.fs.file(str)
         }
     }
 }

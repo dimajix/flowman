@@ -114,6 +114,8 @@ class SqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         )).map {case(k,v) => k -> v.sparkType } should be (Map(
             "main" -> result.schema
         ))
+
+        session.shutdown()
     }
 
     it should "pass through descriptions" in {
@@ -140,6 +142,8 @@ class SqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             ftypes.Field("y", ftypes.StringType, description=Some("This is x")),
             ftypes.Field("y2", ftypes.DateType, description=Some("This is x"))
         )))
+
+        session.shutdown()
     }
 
     "Dependencies" should "be correct" in {
@@ -162,6 +166,8 @@ class SqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t1"))
         mapping.inputs should be (Set(MappingOutputIdentifier("t0")))
+
+        session.shutdown()
     }
 
     it should "also be correct with subqueries" in {
@@ -207,5 +213,7 @@ class SqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val context = session.getContext(project)
         val mapping = context.getMapping(MappingIdentifier("t1"))
         mapping.inputs.map(_.name) should be (Set("other_table", "some_table", "some_table_archive"))
+
+        session.shutdown()
     }
 }

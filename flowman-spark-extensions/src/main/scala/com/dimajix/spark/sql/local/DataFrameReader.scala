@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package com.dimajix.spark.sql.local
 
-import java.io.File
+import java.nio.file.Path
 
 import scala.collection.JavaConverters._
 
@@ -95,14 +95,14 @@ class DataFrameReader(spark:SparkSession) {
       * Loads input in as a `DataFrame`, for data sources that require a path (e.g. data backed by
       * a local or distributed file system).
       */
-    def load(path: File): DataFrame = {
+    def load(path: Path): DataFrame = {
         load(Seq(path):_*) // force invocation of `load(...varargs...)`
     }
 
     /**
       * Loads input in as a `DataFrame`, for data sources that support multiple paths.
       */
-    def load(paths: File*): DataFrame = {
+    def load(paths: Path*): DataFrame = {
             DataSource.apply(
                 spark,
                 format,

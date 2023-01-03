@@ -89,6 +89,8 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         result.numSuccesses should be (1)
         result.numExceptions should be (0)
         result.children.size should be (1)
+
+        session.shutdown()
     }
 
     it should "return success on an empty list of assertions" in {
@@ -116,6 +118,8 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         result.numSuccesses should be (0)
         result.numExceptions should be (0)
         result.children.size should be (0)
+
+        session.shutdown()
     }
 
     it should "return a wrapped exception when an assertion fails" in {
@@ -178,6 +182,8 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         result.numSuccesses should be (1)
         result.numExceptions should be (1)
         result.children.size should be (2)
+
+        session.shutdown()
     }
 
     it should "execute all exception if fail_fast is used" in {
@@ -232,6 +238,8 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         result.numSuccesses should be (1)
         result.numExceptions should be (1)
         result.children.size should be (2)
+
+        session.shutdown()
     }
 
     it should "not throw an exception if fail_never is used" in {
@@ -293,5 +301,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         result.numSuccesses should be (1)
         result.numExceptions should be (0)
         result.children.size should be (2)
+
+        session.shutdown()
     }
 }

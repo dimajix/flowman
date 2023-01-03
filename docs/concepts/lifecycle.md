@@ -64,3 +64,36 @@ executed during the `VERIFY` phase.
 Of course when a specific target participates in multiple execution phases, it will perform different actions in each
 of the phases. The documentation of each target will contain the details of the supported phases and what action is
 performed in each of them.
+
+
+## Jobs & Lifecycles
+
+A [job](../spec/job/index.md) groups multiple [targets](../spec/target/index.md) to a logical bundle, which should be
+built together. When executing a lifecycle for a job, Flowman will apply the following logic:
+
+1. Interpolate any given parameter given on the command line, for example
+   `flowexec job daily verify processing_date:start=2022-11-01 processing_date:end=2022-11-10`
+  would cycle through 10 consecutive days and execute the job `daily` with the parameter `processing_date` set
+  accordingly.
+2. Iterate over all execution phases of the lifecycle (i.e. VALIDATE, CREATE, BUILD, VERIFY).
+3. Perform dependency analysis of all targets within the job, which are active for the current execution phase
+4. Identify all active targets in the current phase (possibly accordingly to the jobs `executions` section)
+5. Check each target if it is *dirty* (i.e. it requires an execution) the current phase
+6. Execute all active and dirty targets in the correct order
+
+
+## Dirtiness
+
+Before executing a target, Flowman checks if the target is actually *dirty*, i.e. if it is outdated. Typical examples
+are a schema change in the `CREATE` phase, or a new data partition in the `BUILD` phase. Some details of this logic
+can be influenced via the `buildPolicy` setting in the [`relation` target](../spec/target/relation.md)
+or via the [Flowman config](../setup/config.md) `flowman.default.target.buildPolicy`. Possible values are
+* `ALWAYS`: The target is always considered to be dirty.
+* `IF_EMPTY`: The target is considered to be dirty, if the specified target partition does not exist (or is empty).
+* `IF_TAINTED`: The target is considered to be dirty, only if it is tainted by a dirty dependency.
+* `SMART`: The target is considered to be dirty, if the target partition is empty, or when the output mode is set to `APPEND` or when no partition is specified (full overwrite)
+* `COMPAT`: The target is considered to be dirty, if the target is empty, or when the output mode is set to `APPEND`. This setting provides the same behaviour as Flowman before version 0.30.0.
+The exact details always depend on the specific type of the [target](../spec/target/index.md).
+
+Note that Flowman also cascades dirtiness during the execution. This means that if target B depends on target A, and
+target A is dirty (because data is overwritten), then target B also becomes implicitly dirty via its dependency.

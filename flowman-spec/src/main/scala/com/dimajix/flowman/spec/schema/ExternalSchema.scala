@@ -17,13 +17,13 @@
 package com.dimajix.flowman.spec.schema
 
 import java.net.URL
-import java.nio.charset.Charset
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.IOUtils
-import org.apache.hadoop.fs.Path
 import org.slf4j.Logger
 
+import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.fs.FileUtils
 import com.dimajix.flowman.model.BaseSchema
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
@@ -43,7 +43,7 @@ object ExternalSchema {
   */
 abstract class ExternalSchema extends BaseSchema {
     protected val logger: Logger
-    protected val file: Option[Path]
+    protected val file: Option[File]
     protected val url: Option[URL]
     protected val spec: Option[String]
     private lazy val cache : CachedSchema = loadSchema
@@ -90,14 +90,7 @@ abstract class ExternalSchema extends BaseSchema {
     protected def loadSchemaSpec : String = {
         if (file.nonEmpty) {
             logger.info(s"Loading schema from file ${file.get}")
-            val fs = context.fs
-            val input = fs.file(file.get).open()
-            try {
-                IOUtils.toString(input, Charset.forName("UTF-8"))
-            }
-            finally {
-                input.close()
-            }
+            FileUtils.toString(file.get)
         }
         else if (url.nonEmpty) {
             logger.info(s"Loading schema from url ${url.get}")

@@ -52,7 +52,8 @@ targets:
         - name: year
           type: integer
           granularity: 1
-    mode: overwrite
+    mode: OVERWRITE
+    buildPolicy: IF_EMPTY
     parallelism: 32
     rebalance: true
     partition:
@@ -64,26 +65,27 @@ targets:
 * `kind` **(mandatory)** *(type: string)*: `relation`
 
 * `description` **(optional)** *(type: string)*:
-  Optional descriptive text of the build target
+  Optional descriptive text of the build target.
 
 * `mapping` **(optional)** *(type: string)*: 
-Specifies the name of the input mapping to be written
+Specifies the name of the input mapping to be written. When no mapping is specified, then the target will only
+create or destroy the corresponding relation, but not populate it with data.
 
 * `relation` **(mandatory)** *(type: string)*: 
 Specifies the name of the relation to write to, or alternatively directly embeds the relation.
 
 * `mode` **(optional)** *(type: string)* *(default=overwrite)*: 
 Specifies the behavior when data or table or partition already exists. Options include:
-  * `overwrite`: overwrite the existing data. If dynamically writing to a partitioned table, all partitions will be 
+  * `OVERWRITE`: overwrite the existing data. If dynamically writing to a partitioned table, all partitions will be 
     removed first.
-  * `overwrite_dynamic`: overwrite the existing data. If dynamically writing to a partitioned table, only those 
+  * `OVERWRITE_DYNAMIC` or `DYNAMIC_OVERWRITE`: overwrite the existing data. If dynamically writing to a partitioned table, only those 
     partitions with new records will be replaced
-  * `append`: append the data.
-  * `update`: perform upserts - not all relations support this ([JDBC](../relation/jdbcTable.md) and 
+  * `APPEND`: append the data to already existing data.
+  * `UPDATE` or `UPSERT`: perform upserts - not all relations support this ([JDBC](../relation/jdbcTable.md) and 
     [Delta Lake](../relation/deltaTable.md) are two examples supporting upserts).
-  * `ignore`: ignore the operation (i.e. no-op).
-  * `error` or `errorifexists`: throw an exception at runtime . 
-The default value is controlled by the Flowman config variable `flowman.default.target.outputMode`.
+  * `IGNORE` or `IGNORE_IF_EXISTS`: ignore the operation (i.e. no-op).
+  * `ERROR` or `ERROR_IF_EXISTS`: throw an exception at runtime . 
+The default value is controlled by the Flowman [config variable](../../setup/config.md) `flowman.default.target.outputMode`.
 
 * `partition` **(optional)** *(type: map:string)* *(default=empty)*:
 Specifies the partition to be written to. When the target relation has defined partitions, Flowman always supports
@@ -97,12 +99,21 @@ This specifies the parallelism to be used when writing data. The parallelism equ
 of files being generated in HDFS output and also equals the maximum number of threads that are used in total in all 
 Spark executors to produce the output. If `parallelism` is set to zero or to a negative number, Flowman will not 
 coalesce any partitions and generate as many files as Spark partitions. The default value is controlled by the
-Flowman config variable `floman.default.target.parallelism`.
+Flowman [config variable](../../setup/config.md) `floman.default.target.parallelism`.
 
 * `rebalance` **(optional)** *(type: bool)* *(default=false)*:
 Enables rebalancing the size of all partitions by introducing an additional internal shuffle operation. Each partition 
 and output file will contain approximately the same number of records. The default value is controlled by the
-Flowman config variable `floman.default.target.rebalance`.
+Flowman [config variable](../../setup/config.md) `floman.default.target.rebalance`.
+
+* `buildPolicy` **(optional)** *(type: string)* *(default=empty)*:
+Specifies a build policy, which determines when the target is considered to be dirty. If no value is provided, then
+Flowman will fall back to the [config variable](../../setup/config.md) `flowman.default.target.buildPolicy`. Possible values are
+  - `ALWAYS`: The target is always considered to be dirty.
+  - `IF_EMPTY`: The target is considered to be dirty, if the specified partition does not exist (or is empty). If no partition is specified, then the target is dirty if the whole relation is empty.
+  - `IF_TAINTED`: The target is considered to be dirty, only if it is tainted by a dirty dependency.
+  - `SMART`: The target is considered to be dirty, if the target partition is empty, or when the output mode is set to `APPEND` or when no partition is specified (full overwrite)
+  - `COMPAT`: The target is considered to be dirty, if the target is empty, or when the output mode is set to `APPEND`. This setting provides the same behaviour as Flowman before version 0.30.0.
 
 
 ## Description
@@ -124,6 +135,18 @@ relation targets with a mapping.
 * `DESTROY` - This drops the relation itself and all its content.
 
 Read more about [execution phases](../../concepts/lifecycle.md).
+
+
+## Dirty Condition
+Flowman will apply some logic to find out if a relation target is to be considered being *dirty* for a specific execution
+phase, which means that it needs to participate in that phase. The logic depends on the execution phase as follows:
+* `CREATE` - A relation target is considered to be dirty, when the relation physically does not exist, or when its
+schema is not up-to-date. Then Flowman will either create the relation or perform a 
+[migration](../../concepts/migrations.md).
+* `BUILD` - A relation target is dirty in the `BUILD` according to the build policy.
+* `VERIFY` - A relation target is always dirty during the `VERIFY` phase.
+* `TRUNCATE` - A relation target is dirty in the `TRUNCATE` phase when it contains some records, which need to be removed.
+* `DESTROY` - A relation target is dirty in the `TRUNCATE` phase when it physically exists and needs to be dropped.
 
 
 ## Provided Metrics

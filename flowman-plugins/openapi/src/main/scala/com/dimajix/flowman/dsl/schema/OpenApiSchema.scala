@@ -37,7 +37,7 @@ extends SchemaGen {
     override def instantiate(context: Context, properties:Option[Schema.Properties] = None): schema.OpenApiSchema = {
         schema.OpenApiSchema(
             Schema.Properties(context),
-            file,
+            file.map(context.fs.file),
             url,
             spec,
             entity,

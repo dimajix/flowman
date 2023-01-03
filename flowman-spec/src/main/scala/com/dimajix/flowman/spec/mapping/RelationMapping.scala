@@ -83,7 +83,7 @@ case class RelationMapping(
         require(input != null)
 
         val schema = if (columns.nonEmpty) Some(spark.sql.types.StructType(columns.map(_.sparkField))) else None
-        logger.info(s"Reading from relation '${relation.identifier}' with partitions ${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")} and filter '${filter.getOrElse("")}'")
+        logger.info(s"Reading from relation '${relation.identifier}' with partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}) and filter '${filter.getOrElse("")}'")
 
         // Read relation
         val rel = relation.value

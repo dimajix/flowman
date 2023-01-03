@@ -63,6 +63,8 @@ class CastMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         typedInstance.inputs should be (Set(MappingOutputIdentifier("some_mapping")))
         typedInstance.outputs should be (Set("main"))
         typedInstance.columns should be (Map("id" -> VarcharType(10), "amount" -> DecimalType(16,3)))
+
+        session.shutdown()
     }
 
     it should "work" in {
@@ -91,5 +93,7 @@ class CastMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val input = DataFrameBuilder.ofSchema(execution.spark, inputSchema.sparkType)
         val result = mapping.execute(execution, Map(MappingOutputIdentifier("input") -> input))("main")
         SchemaUtils.normalize(result.schema) should be (SchemaUtils.normalize(outputSchema.sparkType))
+
+        session.shutdown()
     }
 }

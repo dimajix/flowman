@@ -72,6 +72,8 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val instance = targetSpec.instantiate(context)
         instance shouldBe a[DeltaVacuumTarget]
+
+        session.shutdown()
     }
 
     it should "support an embedded DeltaRelation" in {
@@ -92,6 +94,8 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         val instance = targetSpec.instantiate(context)
         instance shouldBe a[DeltaVacuumTarget]
+
+        session.shutdown()
     }
 
     it should "work with a DeltaFileRelation" in {
@@ -147,6 +151,8 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+
+        session.shutdown()
     }
 
     it should "work with a DeltaTableRelation" in {
@@ -204,6 +210,8 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+
+        session.shutdown()
     }
 
     it should "support compaction without partition columns" in {
@@ -259,6 +267,8 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+
+        session.shutdown()
     }
 
     it should "support compaction with partition columns" in {
@@ -318,5 +328,7 @@ class DeltaVacuumTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         location.exists() should be (false)
         relation.exists(execution) should be (No)
+
+        session.shutdown()
     }
 }

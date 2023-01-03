@@ -100,6 +100,8 @@ class MergeTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
                 Some(expr("update.type = 'DELETE'"))
             )
         ))
+
+        session.shutdown()
     }
 
     it should "provide correct dependencies" in {
@@ -141,6 +143,8 @@ class MergeTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         target.provides(Phase.VERIFY) should be (Set())
         target.provides(Phase.TRUNCATE) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
+
+        session.shutdown()
     }
 
     it should "count the number of records" in {
@@ -191,5 +195,7 @@ class MergeTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         target.execute(executor, Phase.BUILD)
         metric.value should be (4)
+
+        session.shutdown()
     }
 }

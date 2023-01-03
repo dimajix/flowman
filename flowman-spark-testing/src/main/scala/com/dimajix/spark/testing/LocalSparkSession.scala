@@ -17,15 +17,11 @@
 package com.dimajix.spark.testing
 
 import java.io.File
-import java.io.IOException
-import java.net.URL
-import java.util.Properties
 
 import scala.util.control.NonFatal
 
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hive.common.util.HiveVersionInfo
-import org.apache.log4j.PropertyConfigurator
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
@@ -37,7 +33,7 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
     private var _spark: Option[SparkSession] = None
     private var _sc: Option[SparkContext] = None
 
-    val conf = new SparkConf(false)
+    lazy val conf = new SparkConf(false)
     def spark : SparkSession = _spark.getOrElse(throw new IllegalStateException("No active Spark session"))
     def sc : SparkContext = _sc.getOrElse(throw new IllegalStateException("No active Spark session"))
 
@@ -57,8 +53,6 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
 
     override def beforeAll() : Unit = {
         super.beforeAll()
-
-        setupLogging()
 
         val builder = SparkSession.builder()
             .master("local[4]")
@@ -147,18 +141,5 @@ trait LocalSparkSession extends LocalTempDir { this:Suite =>
         }
 
         super.afterAll()
-    }
-
-    protected def setupLogging(): Unit = {
-        val loader = Thread.currentThread.getContextClassLoader
-        val configUrl = loader.getResource("com/dimajix/spark/testing/log4j.properties")
-        setupLogging(configUrl)
-    }
-
-    protected def setupLogging(url: URL): Unit = {
-        val log4j = System.getProperty("log4j.configuration")
-        if (log4j == null || log4j.isEmpty) {
-            PropertyConfigurator.configure(url)
-        }
     }
 }

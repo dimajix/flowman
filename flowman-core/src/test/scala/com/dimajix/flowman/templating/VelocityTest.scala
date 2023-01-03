@@ -28,9 +28,7 @@ class VelocityTest extends AnyFlatSpec with Matchers {
     private val context = Velocity.newContext()
 
     private def evaluate(text:String) : String = {
-        val output = new StringWriter()
-        engine.evaluate(context, output, "test", text)
-        output.toString
+        engine.evaluate(context, "test", text)
     }
 
     "The Velocity Engine" should "throw an exception on unknown references" in {

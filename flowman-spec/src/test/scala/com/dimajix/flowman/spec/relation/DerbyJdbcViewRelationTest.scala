@@ -29,10 +29,13 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
+import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
@@ -52,6 +55,24 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class DerbyJdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    implicit class JdbcViewRelationExt(rel: JdbcViewRelation) {
+        def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
+            rel.copy(migrationPolicy = policy).conforms(execution)
+        }
+        def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
+            rel.copy(migrationPolicy = policy, migrationStrategy = strategy).migrate(execution)
+        }
+    }
+    implicit class JdbcTableRelationExt(rel: JdbcTableRelation) {
+        def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
+            rel.copy(migrationPolicy = policy).conforms(execution)
+        }
+        def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
+            rel.copy(migrationPolicy = policy, migrationStrategy = strategy).migrate(execution)
+        }
+    }
+
+
     private def db = tempDir.toPath.resolve("mydb")
     private def url = "jdbc:derby:" + db + ";create=true"
     private def driver = "org.apache.derby.jdbc.EmbeddedDriver"
@@ -166,6 +187,8 @@ class DerbyJdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSpar
         viewRelation.loaded(execution, Map()) should be (No)
 
         tableRelation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support migrations" in {
@@ -236,6 +259,8 @@ class DerbyJdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSpar
         view1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         view1.conforms(execution, MigrationPolicy.STRICT) should be (No)
         view1.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support migrating from a table to a view and vice versa" in {
@@ -322,5 +347,7 @@ class DerbyJdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSpar
         view.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         view.conforms(execution, MigrationPolicy.STRICT) should be (No)
         view.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 }

@@ -42,7 +42,7 @@ class InfoCommand extends Command {
         println(s"    name: ${project.name}")
         println(s"    version: ${project.version.getOrElse("")}")
         println(s"    description: ${project.description.getOrElse("")}")
-        println(s"    basedir: ${project.basedir.getOrElse("")}")
+        println(s"    basedir: ${project.basedir.map(_.toString).getOrElse("")}")
         println(s"    filename: ${project.filename.map(_.toString).getOrElse("")}")
 
         println("Environment:")

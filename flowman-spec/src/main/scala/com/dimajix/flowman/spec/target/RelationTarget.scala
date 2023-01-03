@@ -34,9 +34,11 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_BUILD_POLICY
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
+import com.dimajix.flowman.execution.BuildPolicy
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.ExecutionException
@@ -75,7 +77,8 @@ object RelationTarget {
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
-            conf.getConf(DEFAULT_TARGET_REBALANCE)
+            conf.getConf(DEFAULT_TARGET_REBALANCE),
+            BuildPolicy.ofString(conf.getConf(DEFAULT_TARGET_BUILD_POLICY))
         )
     }
     def apply(context: Context, relation: RelationIdentifier, mapping: MappingOutputIdentifier) : RelationTarget = {
@@ -87,7 +90,8 @@ object RelationTarget {
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             Map(),
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
-            conf.getConf(DEFAULT_TARGET_REBALANCE)
+            conf.getConf(DEFAULT_TARGET_REBALANCE),
+            BuildPolicy.ofString(conf.getConf(DEFAULT_TARGET_BUILD_POLICY))
         )
     }
     def apply(props:Target.Properties, relation: RelationIdentifier, mapping: MappingOutputIdentifier, partition: Map[String,String]) : RelationTarget = {
@@ -100,7 +104,8 @@ object RelationTarget {
             OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
             partition,
             conf.getConf(DEFAULT_TARGET_PARALLELISM),
-            conf.getConf(DEFAULT_TARGET_REBALANCE)
+            conf.getConf(DEFAULT_TARGET_REBALANCE),
+            BuildPolicy.ofString(conf.getConf(DEFAULT_TARGET_BUILD_POLICY))
         )
     }
 }
@@ -109,9 +114,10 @@ case class RelationTarget(
     relation: Reference[Relation],
     mapping: MappingOutputIdentifier,
     mode: OutputMode = OutputMode.OVERWRITE,
-    partition: Map[String,String] = Map(),
+    partition: Map[String,String] = Map.empty,
     parallelism: Int = 16,
-    rebalance: Boolean = false
+    rebalance: Boolean = false,
+    buildPolicy: BuildPolicy = BuildPolicy.SMART
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[RelationTarget])
 
@@ -201,13 +207,25 @@ case class RelationTarget(
         phase match {
             case Phase.VALIDATE => No
             case Phase.CREATE =>
-                val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
-                !rel.conforms(execution, migrationPolicy)
+                !rel.conforms(execution)
             case Phase.BUILD if mapping.nonEmpty =>
-                if (mode == OutputMode.APPEND) {
-                    Yes
-                } else {
-                    !rel.loaded(execution, partition)
+                buildPolicy match {
+                    case BuildPolicy.ALWAYS =>
+                        Yes
+                    case BuildPolicy.IF_TAINTED =>
+                        No
+                    case BuildPolicy.IF_EMPTY =>
+                        !rel.loaded(execution, partition)
+                    case BuildPolicy.SMART =>
+                        if (mode == OutputMode.APPEND || partition.isEmpty)
+                            Yes
+                        else
+                            !rel.loaded(execution, partition)
+                    case BuildPolicy.COMPAT =>
+                        if (mode == OutputMode.APPEND)
+                            Yes
+                        else
+                            !rel.loaded(execution, partition)
                 }
             case Phase.BUILD => No
             case Phase.VERIFY => Yes
@@ -248,16 +266,14 @@ case class RelationTarget(
 
         val rel = relation.value
         if (rel.exists(execution) == Yes) {
-            val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
-            if (rel.conforms(execution, migrationPolicy) != Yes) {
+            if (rel.conforms(execution) != Yes) {
                 logger.info(s"Migrating existing relation '${relation.identifier}'")
-                val migrationStrategy = MigrationStrategy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_STRATEGY))
-                rel.migrate(execution, migrationPolicy, migrationStrategy)
+                rel.migrate(execution)
             }
         }
         else {
             logger.info(s"Creating relation '${relation.identifier}'")
-            rel.create(execution, true)
+            rel.create(execution)
         }
     }
 
@@ -355,30 +371,30 @@ case class RelationTarget(
 
     /**
       * Cleans the target. This will remove any data in the target for the current partition
-      * @param executor
+      * @param execution
       */
-    override def truncate(executor: Execution): Unit = {
-        require(executor != null)
+    override def truncate(execution: Execution): Unit = {
+        require(execution != null)
 
         if (mapping.nonEmpty) {
             val partition = this.partition.mapValues(v => SingleValue(v))
 
             logger.info(s"Truncating partition $partition of relation '${relation.identifier}'")
             val rel = relation.value
-            rel.truncate(executor, partition)
+            rel.truncate(execution, partition)
         }
     }
 
     /**
       * Destroys both the logical relation and the physical data
-      * @param executor
+      * @param execution
       */
-    override def destroy(executor: Execution) : Unit = {
-        require(executor != null)
+    override def destroy(execution: Execution) : Unit = {
+        require(execution != null)
 
         logger.info(s"Destroying relation '${relation.identifier}'")
         val rel = relation.value
-        rel.destroy(executor, true)
+        rel.destroy(execution)
     }
 }
 
@@ -397,11 +413,12 @@ class RelationTargetSpec extends TargetSpec {
     @JsonProperty(value="mapping", required=true) private var mapping:String = ""
     @JsonProperty(value="relation", required=true) private var relation:RelationReferenceSpec = _
     @JsonProperty(value="mode", required=false) private var mode:Option[String] = None
-    @JsonProperty(value="partition", required=false) private var partition:Map[String,String] = Map()
+    @JsonProperty(value="partition", required=false) private var partition:Map[String,String] = Map.empty
     @JsonSchemaInject(json="""{"type": [ "integer", "string" ]}""")
     @JsonProperty(value="parallelism", required=false) private var parallelism:Option[String] = None
     @JsonSchemaInject(json="""{"type": [ "boolean", "string" ]}""")
     @JsonProperty(value="rebalance", required=false) private var rebalance:Option[String] = None
+    @JsonProperty(value="buildPolicy", required=false) private var buildPolicy:Option[String] = None
 
     override def instantiate(context: Context, properties:Option[Target.Properties] = None): RelationTarget = {
         val conf = context.flowmanConf
@@ -412,7 +429,8 @@ class RelationTargetSpec extends TargetSpec {
             OutputMode.ofString(context.evaluate(mode).getOrElse(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE))),
             context.evaluate(partition),
             context.evaluate(parallelism).map(_.toInt).getOrElse(conf.getConf(DEFAULT_TARGET_PARALLELISM)),
-            context.evaluate(rebalance).map(_.toBoolean).getOrElse(conf.getConf(DEFAULT_TARGET_REBALANCE))
+            context.evaluate(rebalance).map(_.toBoolean).getOrElse(conf.getConf(DEFAULT_TARGET_REBALANCE)),
+            BuildPolicy.ofString(context.evaluate(buildPolicy).getOrElse(conf.getConf(DEFAULT_TARGET_BUILD_POLICY)))
         )
     }
 }

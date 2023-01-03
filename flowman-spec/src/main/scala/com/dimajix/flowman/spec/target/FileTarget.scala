@@ -33,7 +33,7 @@ import com.dimajix.flowman.execution.MappingUtils
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.VerificationFailedException
-import com.dimajix.flowman.fs.FileUtils
+import com.dimajix.flowman.fs.HadoopUtils
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
@@ -129,7 +129,7 @@ case class FileTarget(
                 !fs.getFileStatus(qualifiedLocation).isDirectory
             case Phase.BUILD =>
                 val fs = qualifiedLocation.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
-                !FileUtils.isValidFileData(fs, qualifiedLocation)
+                !HadoopUtils.isValidFileData(fs, qualifiedLocation)
             case Phase.VERIFY => Yes
             case Phase.TRUNCATE =>
                 val fs = qualifiedLocation.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)

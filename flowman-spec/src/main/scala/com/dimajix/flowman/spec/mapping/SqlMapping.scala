@@ -28,6 +28,8 @@ import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.fs.FileUtils
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -36,10 +38,10 @@ import com.dimajix.spark.sql.SqlParser
 
 
 case class SqlMapping(
-     instanceProperties:Mapping.Properties,
-     sql:Option[String] = None,
-     file:Option[Path] = None,
-     url:Option[URL] = None
+    instanceProperties:Mapping.Properties,
+    sql:Option[String] = None,
+    file:Option[File] = None,
+    url:Option[URL] = None
 )
 extends BaseMapping {
     /**
@@ -71,16 +73,7 @@ extends BaseMapping {
     private lazy val statement : String = {
         sql
             .orElse(file.map { f =>
-                val fs = context.fs
-                val input = fs.file(f).open()
-                try {
-                    val writer = new StringWriter()
-                    IOUtils.copy(input, writer, Charset.forName("UTF-8"))
-                    writer.toString
-                }
-                finally {
-                    input.close()
-                }
+                FileUtils.toString(file.get)
             })
             .orElse(url.map { url =>
                 IOUtils.toString(url, "UTF-8")
@@ -110,7 +103,7 @@ class SqlMappingSpec extends MappingSpec {
         SqlMapping(
             instanceProperties(context, properties),
             context.evaluate(sql),
-            context.evaluate(file).map(p => new Path(p)),
+            context.evaluate(file).map(p => context.fs.file(p)),
             context.evaluate(url).map(u => new URL(u))
         )
     }

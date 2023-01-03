@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package com.dimajix.spark.sql.local
 
-import java.io.File
+import java.nio.file.Path
 import java.util.ServiceLoader
 
 import scala.collection.JavaConverters._
@@ -36,14 +36,14 @@ case class DataSource(spark:SparkSession,
     private val logger = LoggerFactory.getLogger(classOf[DataSource])
     private lazy val providingClass: Class[_ <: RelationProvider] = lookupDataSource(format)
 
-    def read(files:Seq[File]) : DataFrame = {
+    def read(files:Seq[Path]) : DataFrame = {
         val provider = providingClass.getDeclaredConstructor().newInstance()
         val dataSchema = schema.getOrElse(provider.inferSchema(spark, options, files).get)
         val relation = provider.createRelation(spark, options, files, dataSchema)
         relation.read()
     }
 
-    def write(file:File, df:DataFrame, mode:SaveMode) : Unit = {
+    def write(file:Path, df:DataFrame, mode:SaveMode) : Unit = {
         val files = Seq(file)
         val provider = providingClass.getDeclaredConstructor().newInstance()
         val dataSchema = schema.getOrElse(df.schema)

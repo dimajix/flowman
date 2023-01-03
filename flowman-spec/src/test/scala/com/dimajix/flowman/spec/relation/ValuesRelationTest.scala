@@ -87,6 +87,8 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
             ArrayRecord("cat","","7"),
             ArrayRecord("dog",null,"8")
         ))
+
+        session.shutdown()
     }
 
     it should "be parseable with columns" in {
@@ -142,6 +144,8 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
             ArrayRecord("cat","","7"),
             ArrayRecord("dog",null,"8")
         ))
+
+        session.shutdown()
     }
 
     it should "work with specified records and schema" in {
@@ -198,6 +202,8 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
             Row("lolo", 13),
             Row(null,null)
         ))
+
+        session.shutdown()
     }
 
     it should "work with specified records and columns" in {
@@ -251,6 +257,8 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
             Row("lolo", 13),
             Row(null,null)
         ))
+
+        session.shutdown()
     }
 
     it should "support some lifecycle methods" in {
@@ -304,5 +312,7 @@ class ValuesRelationTest extends AnyFlatSpec with Matchers with MockFactory with
         relation.destroy(executor)
         relation.exists(executor) should be (Yes)
         relation.loaded(executor) should be (Yes)
+
+        session.shutdown()
     }
 }

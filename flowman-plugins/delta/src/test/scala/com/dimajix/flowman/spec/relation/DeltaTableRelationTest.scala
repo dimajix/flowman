@@ -38,9 +38,11 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
+import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.DeleteClause
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
@@ -64,6 +66,16 @@ import com.dimajix.spark.testing.QueryTest
 
 
 class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession with QueryTest {
+    implicit class DeltaTableRelationExt(rel: DeltaTableRelation) {
+        def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
+            rel.copy(migrationPolicy = policy).conforms(execution)
+        }
+        def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
+            rel.copy(migrationPolicy = policy, migrationStrategy = strategy).migrate(execution)
+        }
+    }
+
+
     override def configureSpark(builder: SparkSession.Builder): SparkSession.Builder = {
         builder.config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
             .withExtensions(new DeltaSparkSessionExtension)
@@ -90,6 +102,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.location should be (Some(new Path("hdfs://ns/some/path")))
         relation.options should be (Map())
         relation.properties should be (Map())
+
+        session.shutdown()
     }
 
     it should "support create/write/read/truncate/destroy" in {
@@ -132,7 +146,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
@@ -141,7 +155,6 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // Try to create relation, although it already exists
         a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
-        relation.create(execution, true)
 
         // == Read ===================================================================================================
         relation.read(execution, Map()).schema should be (StructType(Seq(
@@ -215,7 +228,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (false)
 
         an[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
-        relation.destroy(execution, true)
+
+        session.shutdown()
     }
 
 
@@ -256,7 +270,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         location.exists() should be (false)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
@@ -265,7 +279,6 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // Try to create relation, although it already exists
         a[TableAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
-        relation.create(execution, true)
 
         // Inspect Hive table
         val table_1 = session.catalog.getTable(TableIdentifier("delta_table2", Some("default")))
@@ -378,7 +391,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map()) should be (No)
 
         an[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
-        relation.destroy(execution, true)
+
+        session.shutdown()
     }
 
     it should "support different output modes with dynamic partitions" in {
@@ -483,6 +497,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+
+        session.shutdown()
     }
 
     it should "support partition columns already present in the schema" in {
@@ -523,7 +539,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         location.exists() should be (false)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
         relation.loaded(execution, Map()) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("p0"))) should be (No)
@@ -579,6 +595,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         location.exists() should be (false)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support append for unpartitioned tables" in {
@@ -601,7 +619,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Read ===================================================================================================
@@ -635,6 +653,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support append for partitioned tables" in {
@@ -660,7 +680,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Read ===================================================================================================
@@ -739,6 +759,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support read/write without schema" in {
@@ -766,7 +788,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation0.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation0.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation0.loaded(execution, Map()) should be (No)
-        relation0.create(execution, false)
+        relation0.create(execution)
         relation0.exists(execution) should be (Yes)
         relation0.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation0.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
@@ -892,6 +914,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support update output mode without partitions" in {
@@ -916,7 +940,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Write ==================================================================================================
@@ -966,6 +990,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support update output mode with partitions" in {
@@ -993,7 +1019,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Read ===================================================================================================
@@ -1154,6 +1180,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support merging without partitions" in {
@@ -1179,7 +1207,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Write ==================================================================================================
@@ -1234,6 +1262,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
 
@@ -1270,7 +1300,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Create =================================================================================================
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (false)
-        rel_1.create(execution, false)
+        rel_1.create(execution)
         rel_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         rel_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (true)
@@ -1347,6 +1377,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Destroy ================================================================================================
         rel_1.destroy(execution)
         session.catalog.tableExists(TableIdentifier("lala", Some("delta_table"))) should be (false)
+
+        session.shutdown()
     }
 
     it should "support migrations by updating nullability" in {
@@ -1381,7 +1413,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Create =================================================================================================
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (false)
-        rel_1.create(execution, false)
+        rel_1.create(execution)
         rel_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         rel_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (true)
@@ -1438,6 +1470,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Destroy ================================================================================================
         rel_1.destroy(execution)
         session.catalog.tableExists(TableIdentifier("lala", Some("delta_table"))) should be (false)
+
+        session.shutdown()
     }
 
     it should "support migrations by changing data types" in {
@@ -1472,7 +1506,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
 
         // == Create =================================================================================================
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (false)
-        rel_1.create(execution, false)
+        rel_1.create(execution)
         rel_1.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         rel_1.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
         session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be (true)
@@ -1538,6 +1572,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         // == Destroy ================================================================================================
         rel_1.destroy(execution)
         session.catalog.tableExists(TableIdentifier("lala", Some("delta_table"))) should be (false)
+
+        session.shutdown()
     }
 
     it should "support stream writing" in {
@@ -1598,6 +1634,8 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
+
+        session.shutdown()
     }
 
     it should "support stream writing with partitions" in {
@@ -1675,5 +1713,7 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+
+        session.shutdown()
     }
 }

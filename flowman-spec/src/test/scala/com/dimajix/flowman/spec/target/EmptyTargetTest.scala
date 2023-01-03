@@ -62,5 +62,7 @@ class EmptyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         target.dirty(execution, Phase.BUILD) should be (No)
         target.execute(execution, Phase.BUILD)
+
+        session.shutdown()
     }
 }

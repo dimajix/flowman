@@ -64,6 +64,8 @@ class CopyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         target.source should be (RelationDataset(context, RelationIdentifier("local_file"), Map("spc" -> SingleValue("part_value"))))
         target.target should be (RelationDataset(context, RelationIdentifier("some_hive_table"), Map("tpc" -> SingleValue("p2"))))
         target.mode should be (OutputMode.APPEND)
+
+        session.shutdown()
     }
 
     it should "work" in {
@@ -153,5 +155,7 @@ class CopyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         target.dirty(executor, Phase.DESTROY) should be (No)
         target.execute(executor, Phase.DESTROY)
         target.dirty(executor, Phase.DESTROY) should be (No)
+
+        session.shutdown()
     }
 }

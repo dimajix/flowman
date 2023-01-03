@@ -117,11 +117,7 @@ case class StreamTarget(
         phase match {
             case Phase.VALIDATE => No
             case Phase.CREATE =>
-                // Since an existing relation might need a migration, we return "unknown"
-                if (rel.exists(execution) == Yes)
-                    Unknown
-                else
-                    Yes
+                !rel.conforms(execution)
             case Phase.BUILD => Yes
             case Phase.VERIFY => No
             case Phase.TRUNCATE =>
@@ -156,14 +152,14 @@ case class StreamTarget(
 
         val rel = relation.value
         if (rel.exists(execution) == Yes) {
-            logger.info(s"Migrating existing relation '${relation.identifier}'")
-            val migrationPolicy = MigrationPolicy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_POLICY))
-            val migrationStrategy = MigrationStrategy.ofString(execution.flowmanConf.getConf(DEFAULT_RELATION_MIGRATION_STRATEGY))
-            rel.migrate(execution, migrationPolicy, migrationStrategy)
+            if (rel.conforms(execution) != Yes) {
+                logger.info(s"Migrating existing relation '${relation.identifier}'")
+                rel.migrate(execution)
+            }
         }
         else {
             logger.info(s"Creating relation '${relation.identifier}'")
-            rel.create(execution, true)
+            rel.create(execution)
         }
     }
 
@@ -223,7 +219,7 @@ case class StreamTarget(
 
         logger.info(s"Destroying relation '${relation.identifier}'")
         val rel = relation.value
-        rel.destroy(execution, true)
+        rel.destroy(execution)
     }
 }
 

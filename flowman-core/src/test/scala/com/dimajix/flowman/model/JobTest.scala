@@ -78,6 +78,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "job",
             Map()
         ))
+
+        session.shutdown()
     }
 
     "Job.arguments" should "parse arguments" in {
@@ -97,6 +99,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "p2" -> "lala",
             "p3" -> "default"
         ))
+
+        session.shutdown()
     }
 
     it should "throw an error on missing arguments" in {
@@ -110,6 +114,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
         an[IllegalArgumentException] should be thrownBy(job.arguments(Map(
             "p1" -> "17"
         )))
+
+        session.shutdown()
     }
 
     it should "throw an error on unknown arguments" in {
@@ -124,6 +130,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "p1" -> "17",
             "p3" -> "28"
         )))
+
+        session.shutdown()
     }
 
     "Job.parseArguments" should "parse arguments" in {
@@ -142,6 +150,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "p1" -> RangeValue("17", "27"),
             "p2" -> SingleValue("lala")
         ))
+
+        session.shutdown()
     }
 
     it should "throw an exception for unknown parameters" in {
@@ -155,6 +165,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
         an[IllegalArgumentException] should be thrownBy (job.parseArguments(Map(
             "p3" -> "lala"
         )))
+
+        session.shutdown()
     }
 
     "Job.interpolate" should "interpolate arguments" in {
@@ -179,6 +191,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             Map("p1" -> 4, "p2" -> "z"),
             Map("p1" -> 6, "p2" -> "z")
         ))
+
+        session.shutdown()
     }
 
     it should "work with simple arguments" in {
@@ -197,6 +211,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
         args.toSet should be (Set(
             Map("p1" -> 2, "p2" -> "x")
         ))
+
+        session.shutdown()
     }
 
     it should "support granularity" in {
@@ -224,6 +240,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
         )).toSet  should be (Set(
             Map("p1" -> 6)
         ))
+
+        session.shutdown()
     }
 
     "Job.merge" should "correctly merge Jobs" in {
@@ -269,5 +287,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory {
             "env4" -> "parent_val_4",
             "p2" -> "17"
         ))
+
+        session.shutdown()
     }
 }

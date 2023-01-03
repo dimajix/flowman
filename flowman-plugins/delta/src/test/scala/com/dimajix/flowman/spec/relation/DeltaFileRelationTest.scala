@@ -36,11 +36,14 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
+import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.execution.DeleteClause
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MigrationPolicy
+import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Session
@@ -60,6 +63,15 @@ import com.dimajix.spark.testing.QueryTest
 
 
 class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession with QueryTest {
+    implicit class DeltaFileRelationExt(rel: DeltaFileRelation) {
+        def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
+            rel.copy(migrationPolicy = policy).conforms(execution)
+        }
+        def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
+            rel.copy(migrationPolicy = policy, migrationStrategy = strategy).migrate(execution)
+        }
+    }
+
     override def configureSpark(builder: SparkSession.Builder): SparkSession.Builder = {
         builder.config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
             .withExtensions(new DeltaSparkSessionExtension)
@@ -83,6 +95,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.location should be (new Path("hdfs://ns/some/path"))
         relation.options should be (Map())
         relation.properties should be (Map())
+
+        session.shutdown()
     }
 
     it should "support create/write/read/truncate/destroy with location" in {
@@ -124,7 +138,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
@@ -133,7 +147,6 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // Try to create relation, although it already exists
         a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
-        relation.create(execution, true)
 
         // == Read ====================================================================================================
         relation.read(execution, Map()).count() should be (0)
@@ -184,7 +197,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map()) should be (No)
 
         an[FileNotFoundException] shouldBe thrownBy(relation.destroy(execution))
-        relation.destroy(execution, true)
+
+        session.shutdown()
     }
 
     it should "support read/write static partitions" in {
@@ -225,7 +239,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         location.exists() should be (true)
         relation.exists(execution) should be (Yes)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
@@ -236,7 +250,6 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // Try to create relation, although it already exists
         a[FileAlreadyExistsException] shouldBe thrownBy(relation.create(execution))
-        relation.create(execution, true)
 
         // == Read ===================================================================================================
         relation.read(execution, Map()).schema should be (StructType(Seq(
@@ -346,7 +359,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map()) should be (No)
 
         an[FileNotFoundException] shouldBe thrownBy(relation.destroy(execution))
-        relation.destroy(execution, true)
+
+        session.shutdown()
     }
 
     it should "support different output modes with dynamic partitions" in {
@@ -458,6 +472,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+
+        session.shutdown()
     }
 
     it should "support more than one partition columns" in { if (SPARK_VERSION >= "3.1.0") {
@@ -540,6 +556,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part2" -> SingleValue("a"))) should be(No)
         relation.loaded(execution, Map("part2" -> SingleValue("b"))) should be(No)
         relation.loaded(execution, Map("part2" -> SingleValue("c"))) should be(No)
+
+        session.shutdown()
     }}
 
     it should "support partition columns already present in the schema" in {
@@ -582,7 +600,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
@@ -642,6 +660,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support append for unpartitioned tables" in {
@@ -665,7 +685,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Read ===================================================================================================
@@ -699,6 +719,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support append for partitioned tables" in {
@@ -725,7 +747,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Read ===================================================================================================
@@ -804,6 +826,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support read/write without schema" in {
@@ -833,7 +857,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation0.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation0.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation0.loaded(execution, Map()) should be (No)
-        relation0.create(execution, false)
+        relation0.create(execution)
         location.exists() should be (true)
         relation0.exists(execution) should be (Yes)
         relation0.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
@@ -964,6 +988,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support update output mode without partitions" in {
@@ -989,7 +1015,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Write ==================================================================================================
@@ -1039,6 +1065,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support update output mode with partitions" in {
@@ -1067,7 +1095,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Read ===================================================================================================
@@ -1228,6 +1256,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support merging without partitions" in {
@@ -1253,7 +1283,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // == Create =================================================================================================
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
-        relation.create(execution, false)
+        relation.create(execution)
         relation.exists(execution) should be (Yes)
 
         // == Write ==================================================================================================
@@ -1308,6 +1338,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+
+        session.shutdown()
     }
 
     it should "support stream writing" in {
@@ -1369,6 +1401,8 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution) should be (No)
+
+        session.shutdown()
     }
 
     it should "support stream writing with partitions" in {
@@ -1447,5 +1481,7 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+
+        session.shutdown()
     }
 }

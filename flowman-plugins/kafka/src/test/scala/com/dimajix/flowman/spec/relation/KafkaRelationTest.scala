@@ -76,6 +76,8 @@ class KafkaRelationTest extends AnyFlatSpec with Matchers with QueryTest with Lo
         fields(4).name should be ("offset")
         fields(5).name should be ("timestamp")
         fields(6).name should be ("timestampType")
+
+        session.shutdown()
     }
 
     it should "support batch reading" in {
@@ -103,6 +105,8 @@ class KafkaRelationTest extends AnyFlatSpec with Matchers with QueryTest with Lo
         val df = relation.read(executor, Map()).select(expr("CAST(value AS STRING)"))
         df.count() should be (21)
         checkAnswer(df, (0 to 20).map(_.toString).toDF)
+
+        session.shutdown()
     }
 
     it should "support batch writing only values" in {
@@ -130,6 +134,8 @@ class KafkaRelationTest extends AnyFlatSpec with Matchers with QueryTest with Lo
         val df = relation.read(executor, Map()).select(expr("CAST(value AS STRING)"))
         df.count() should be (21)
         checkAnswer(df, (0 to 20).map(_.toString).toDF)
+
+        session.shutdown()
     }
 
     it should "support batch writing keys and values" in {
@@ -160,6 +166,8 @@ class KafkaRelationTest extends AnyFlatSpec with Matchers with QueryTest with Lo
         val df = relation.read(executor, Map()).select(expr("CONCAT(CAST(key AS STRING),'_',CAST(value AS STRING))"))
         df.count() should be (21)
         checkAnswer(df, (0 to 20).map(k => (k*2).toString + "_" + k.toString).toDF)
+
+        session.shutdown()
     }
 
     it should "support stream reading" in {
@@ -202,6 +210,8 @@ class KafkaRelationTest extends AnyFlatSpec with Matchers with QueryTest with Lo
             query.stop()
             session.spark.streams.awaitAnyTermination()
         }
+
+        session.shutdown()
     }
 
     it should "support stream writing" in {

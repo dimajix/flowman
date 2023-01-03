@@ -55,6 +55,8 @@ class ProvidedRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
 
         val df = executor.instantiate(mapping, "main")
         df.count should be (0)
+
+        session.shutdown()
     }
 
 }

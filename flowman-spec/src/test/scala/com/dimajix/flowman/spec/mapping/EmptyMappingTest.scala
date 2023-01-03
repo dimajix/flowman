@@ -73,6 +73,8 @@ class EmptyMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         mapping1.output should be (MappingOutputIdentifier("project/empty1:main"))
         mapping1.outputs should be (Set("main"))
         mapping1.inputs should be (Set.empty)
+
+        session.shutdown()
     }
 
     it should "create empty DataFrames with specified columns" in {
@@ -105,6 +107,8 @@ class EmptyMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         df.columns should contain("str_col")
         df.columns should contain("int_col")
         df.count() should be (0)
+
+        session.shutdown()
     }
 
     it should "create empty DataFrames with specified schema" in {
@@ -140,6 +144,8 @@ class EmptyMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         df.columns should contain("str_col")
         df.columns should contain("int_col")
         df.count() should be (0)
+
+        session.shutdown()
     }
 
     it should "raise an error on wrong construction" in {
@@ -166,5 +172,7 @@ class EmptyMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 )
             ))
         ))
+
+        session.shutdown()
     }
 }

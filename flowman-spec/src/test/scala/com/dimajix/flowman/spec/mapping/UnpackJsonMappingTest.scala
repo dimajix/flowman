@@ -116,6 +116,8 @@ class UnpackJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSes
             StructField("_2", IntegerType, false) ::
             Nil
         ))
+
+        session.shutdown()
     }
 
     it should "support column renames" in {
@@ -160,6 +162,8 @@ class UnpackJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSes
             )) ::
             Nil
         ))
+
+        session.shutdown()
     }
 
     it should "nullify invalid record" in {
@@ -204,5 +208,7 @@ class UnpackJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSes
             )) ::
             Nil
         ))
+
+        session.shutdown()
     }
 }

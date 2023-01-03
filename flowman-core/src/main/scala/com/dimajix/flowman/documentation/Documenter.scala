@@ -20,7 +20,6 @@ import java.util.ServiceLoader
 
 import scala.collection.JavaConverters._
 
-import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -31,6 +30,7 @@ import com.dimajix.flowman.graph.Graph
 import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model
 import com.dimajix.flowman.model.AbstractInstance
+import com.dimajix.flowman.model.DocumenterResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Metadata
 import com.dimajix.flowman.model.Namespace
@@ -121,7 +121,7 @@ final case class Documenter(
      */
     override def category: model.Category = model.Category.DOCUMENTER
 
-    def execute(session:Session, job:Job, args:Map[String,Any]) : Unit = {
+    def execute(session:Session, job:Job, args:Map[String,Any]) : DocumenterResult = {
         val runner = session.runner
         runner.withExecution(isolated=true) { execution =>
             runner.withJobContext(job, args, Some(execution), isolated=true) { (context, arguments) =>
@@ -129,7 +129,7 @@ final case class Documenter(
             }
         }
     }
-    def execute(context:Context, execution: Execution, project:Project) : Unit = {
+    def execute(context:Context, execution: Execution, project:Project) : DocumenterResult = {
         // 1. Get Project documentation
         val projectDoc = ProjectDoc(
             project.name,
@@ -137,13 +137,17 @@ final case class Documenter(
             description = project.description
         )
 
-        // 2. Apply all other collectors
-        val graph = Graph.ofProject(context, project, Phase.BUILD)
-        val finalDoc = collectors.foldLeft(projectDoc)((doc, collector) => collector.collect(execution, graph, doc))
+        DocumenterResult.of(this) {
+            // 2. Apply all other collectors
+            val graph = Graph.ofProject(context, project, Phase.BUILD)
+            val finalDoc = collectors.foldLeft(projectDoc)((doc, collector) => collector.collect(execution, graph, doc))
 
-        // 3. Generate documentation
-        generators.foreach { gen =>
-            gen.generate(context, execution, finalDoc)
+            // 3. Generate documentation
+            generators.foreach { gen =>
+                gen.generate(context, execution, finalDoc)
+            }
+
+            finalDoc
         }
     }
 }

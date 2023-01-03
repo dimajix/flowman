@@ -16,19 +16,25 @@
 
 package com.dimajix.flowman.documentation
 
+import scala.collection.parallel.ForkJoinTaskSupport
+import scala.collection.parallel.TaskSupport
 import scala.util.control.NonFatal
 
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
+import com.dimajix.flowman.common.ThreadUtils
+import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.spi.ColumnCheckExecutor
 import com.dimajix.flowman.spi.SchemaCheckExecutor
-import com.dimajix.flowman.util.ConsoleColors.yellow
+import com.dimajix.flowman.common.ConsoleColors.yellow
+import com.dimajix.spark.SparkUtils
+import com.dimajix.spark.SparkUtils.withJobGroup
 
 
 class CheckExecutor(execution: Execution) {
@@ -44,15 +50,15 @@ class CheckExecutor(execution: Execution) {
      */
     def executeTests(relation:Relation, doc:RelationDoc) : RelationDoc = {
         val schemaDoc = doc.schema.map { schema =>
-            if (containsTests(schema)) {
+            if (containsChecks(schema)) {
                 logger.info(s"Conducting checks on relation '${relation.identifier}'")
                 try {
                     val df = relation.read(execution, doc.partitions)
-                    runSchemaTests(relation.context, df, schema)
+                    runAllChecks(relation.context, df, schema)
                 } catch {
                     case NonFatal(ex) =>
                         logger.warn(yellow(s"Error executing checks for relation '${relation.identifier}':\n  ${reasons(ex)}"))
-                        failSchemaTests(schema)
+                        failAllChecks(schema)
                 }
             }
             else {
@@ -71,15 +77,15 @@ class CheckExecutor(execution: Execution) {
     def executeTests(mapping:Mapping, doc:MappingDoc) : MappingDoc = {
         val outputs = doc.outputs.map { output =>
             val schema = output.schema.map { schema =>
-                if (containsTests(schema)) {
+                if (containsChecks(schema)) {
                     logger.info(s"Conducting checks on mapping '${mapping.identifier}'")
                     try {
                         val df = execution.instantiate(mapping, output.name)
-                        runSchemaTests(mapping.context, df, schema)
+                        runAllChecks(mapping.context, df, schema)
                     } catch {
                         case NonFatal(ex) =>
                             logger.warn(yellow(s"Error executing checks for mapping '${mapping.identifier}':\n  ${reasons(ex)}"))
-                            failSchemaTests(schema)
+                            failAllChecks(schema)
                     }
                 }
                 else {
@@ -91,84 +97,117 @@ class CheckExecutor(execution: Execution) {
         doc.copy(outputs=outputs)
     }
 
-    private def containsTests(doc:SchemaDoc) : Boolean = {
-        doc.checks.nonEmpty || containsTests(doc.columns)
+    private def containsChecks(doc:SchemaDoc) : Boolean = {
+        doc.checks.nonEmpty || containsChecks(doc.columns)
     }
-    private def containsTests(docs:Seq[ColumnDoc]) : Boolean = {
-        docs.exists(col => col.checks.nonEmpty || containsTests(col.children))
+    private def containsChecks(docs:Seq[ColumnDoc]) : Boolean = {
+        docs.exists(col => col.checks.nonEmpty || containsChecks(col.children))
     }
 
-    private def failSchemaTests(schema:SchemaDoc) : SchemaDoc = {
-        val columns = failColumnTests(schema.columns)
+    private def failAllChecks(schema:SchemaDoc) : SchemaDoc = {
+        val columns = failColumnChecks(schema.columns)
         val tests = schema.checks.map { test =>
             val result = CheckResult(Some(test.reference), status = CheckStatus.ERROR)
             test.withResult(result)
         }
         schema.copy(columns=columns, checks=tests)
     }
-    private def failColumnTests(columns:Seq[ColumnDoc]) : Seq[ColumnDoc] = {
-        columns.map(col => failColumnTests(col))
+    private def failColumnChecks(columns:Seq[ColumnDoc]) : Seq[ColumnDoc] = {
+        columns.map(col => failColumnChecks(col))
     }
-    private def failColumnTests(column:ColumnDoc) : ColumnDoc = {
+    private def failColumnChecks(column:ColumnDoc) : ColumnDoc = {
         val tests = column.checks.map { test =>
             val result = CheckResult(Some(test.reference), status = CheckStatus.ERROR)
             test.withResult(result)
         }
-        val children = failColumnTests(column.children)
+        val children = failColumnChecks(column.children)
         column.copy(children=children, checks=tests)
     }
 
-    private def runSchemaTests(context:Context, df:DataFrame, schema:SchemaDoc) : SchemaDoc = {
-        val columns = runColumnTests(context, df, schema.columns)
-        val tests = schema.checks.map { test =>
-            logger.info(s" - Executing schema test '${test.name}'")
-            val result =
-                try {
-                    val result = schemaTestExecutors.flatMap(_.execute(execution, context, df, test)).headOption
-                    result match {
-                        case None =>
-                            logger.warn(yellow(s"Could not find appropriate test executor for testing schema"))
-                            CheckResult(Some(test.reference), status = CheckStatus.NOT_RUN)
-                        case Some(result) =>
-                            result.reparent(test.reference)
-                    }
-                } catch {
-                    case NonFatal(ex) =>
-                        logger.warn(yellow(s"Error executing schema test:\n  ${reasons(ex)}"))
-                        CheckResult(Some(test.reference), status = CheckStatus.ERROR)
+    private def runAllChecks(context:Context, df:DataFrame, schema:SchemaDoc) : SchemaDoc = {
+        val parallelism = context.flowmanConf.getConf(FlowmanConf.EXECUTION_CHECK_PARALLELISM)
+        val pool = if (parallelism > 1 ) ThreadUtils.newForkJoinPool("documenter", parallelism) else null
+        implicit val ts = if (pool != null) new ForkJoinTaskSupport(pool) else null
+        // Get current JobGroup and JobDescription to pass to other threads
+        implicit val jobGroup = SparkUtils.getJobGroup(execution.spark.sparkContext)
 
-                }
-            test.withResult(result)
+        try {
+            val columnChecks = runColumnChecks(context, df, schema.columns)
+            val schemaChecks = runSchemaChecks(context, df, schema)
+            schemaChecks.copy(columns = columnChecks)
         }
+        finally {
+            if (pool != null) {
+                pool.shutdown()
+            }
+        }
+    }
 
-        schema.copy(columns=columns, checks=tests)
+    private def runSchemaChecks(context:Context, df:DataFrame, schema:SchemaDoc)(implicit taskSupport:TaskSupport, jobGroup:(String,String)) : SchemaDoc = {
+        val tests = ThreadUtils.parmap(schema.checks) { test =>
+            withJobGroup(df.sparkSession.sparkContext, jobGroup._1, jobGroup._2) {
+                runSchemaCheck(context, df, test)
+            }
+        }
+        schema.copy(checks = tests)
     }
-    private def runColumnTests(context:Context, df:DataFrame, columns:Seq[ColumnDoc], path:String = "") : Seq[ColumnDoc] = {
-        columns.map(col => runColumnTests(context, df, col, path))
+    private def runSchemaCheck(context: Context, df: DataFrame, test: SchemaCheck) : SchemaCheck = {
+        logger.info(s" - Executing schema test '${test.name}'")
+        val result =
+            try {
+                val result = schemaTestExecutors.flatMap(_.execute(execution, context, df, test)).headOption
+                result match {
+                    case None =>
+                        logger.warn(yellow(s"Could not find appropriate test executor for testing schema"))
+                        CheckResult(Some(test.reference), status = CheckStatus.NOT_RUN)
+                    case Some(result) =>
+                        result.reparent(test.reference)
+                }
+            } catch {
+                case NonFatal(ex) =>
+                    logger.warn(yellow(s"Error executing schema test:\n  ${reasons(ex)}"))
+                    CheckResult(Some(test.reference), status = CheckStatus.ERROR)
+
+            }
+        test.withResult(result)
     }
-    private def runColumnTests(context:Context, df:DataFrame, column:ColumnDoc, path:String) : ColumnDoc = {
+
+    private def runColumnChecks(context:Context, df:DataFrame, columns:Seq[ColumnDoc], path:String = "")(implicit taskSupport:TaskSupport, jobGroup:(String,String)) : Seq[ColumnDoc] = {
+        ThreadUtils.parmap(columns) { col =>
+            withJobGroup(df.sparkSession.sparkContext, jobGroup._1, jobGroup._2) {
+                runColumnChecks(context, df, col, path)
+            }
+        }
+    }
+    private def runColumnChecks(context:Context, df:DataFrame, column:ColumnDoc, path:String)(implicit taskSupport:TaskSupport, jobGroup:(String,String)) : ColumnDoc = {
         val columnPath = path + column.name
-        val tests = column.checks.map { test =>
-            logger.info(s" - Executing test '${test.name}' on column ${columnPath}")
-            val result =
-                try {
-                    val result = columnTestExecutors.flatMap(_.execute(execution, context, df, columnPath, test)).headOption
-                    result match {
-                        case None =>
-                            logger.warn(yellow(s"Could not find appropriate test executor for testing column $columnPath"))
-                            CheckResult(Some(test.reference), status = CheckStatus.NOT_RUN)
-                        case Some(result) =>
-                            result.reparent(test.reference)
-                    }
-                } catch {
-                    case NonFatal(ex) =>
-                        logger.warn(yellow(s"Error executing column test:\n  ${reasons(ex)}"))
-                        CheckResult(Some(test.reference), status = CheckStatus.ERROR)
-
-                }
-            test.withResult(result)
+        val tests = ThreadUtils.parmap(column.checks) { test =>
+            withJobGroup(df.sparkSession.sparkContext, jobGroup._1, jobGroup._2) {
+                runColumnCheck(context, df, test, columnPath)
+            }
         }
-        val children = runColumnTests(context, df, column.children, path + column.name + ".")
+
+        val children = runColumnChecks(context, df, column.children, path + column.name + ".")
         column.copy(children=children, checks=tests)
+    }
+    private def runColumnCheck(context:Context, df:DataFrame, test:ColumnCheck, columnPath:String) : ColumnCheck = {
+        logger.info(s" - Executing test '${test.name}' on column ${columnPath}")
+        val result =
+            try {
+                val result = columnTestExecutors.flatMap(_.execute(execution, context, df, columnPath, test)).headOption
+                result match {
+                    case None =>
+                        logger.warn(yellow(s"Could not find appropriate test executor for testing column $columnPath"))
+                        CheckResult(Some(test.reference), status = CheckStatus.NOT_RUN)
+                    case Some(result) =>
+                        result.reparent(test.reference)
+                }
+            } catch {
+                case NonFatal(ex) =>
+                    logger.warn(yellow(s"Error executing column test:\n  ${reasons(ex)}"))
+                    CheckResult(Some(test.reference), status = CheckStatus.ERROR)
+
+            }
+        test.withResult(result)
     }
 }

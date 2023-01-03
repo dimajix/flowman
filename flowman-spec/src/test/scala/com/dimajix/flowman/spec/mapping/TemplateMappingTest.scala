@@ -69,6 +69,8 @@ class TemplateMappingTest extends AnyFlatSpec with Matchers {
         instance.kind should be ("schema")
         instance.identifier should be (MappingIdentifier("project/template"))
         instance.project should be (Some(project))
+
+        session.shutdown()
     }
 
     it should "provide own documentation" in {
@@ -98,6 +100,8 @@ class TemplateMappingTest extends AnyFlatSpec with Matchers {
         doc.inputs should be (Seq.empty)
         doc.description should be (Some("This is the template"))
         doc.outputs should be (Seq.empty)
+
+        session.shutdown()
     }
 
     it should "provide templated documentation" in {
@@ -127,6 +131,8 @@ class TemplateMappingTest extends AnyFlatSpec with Matchers {
         doc.inputs should be (Seq.empty)
         doc.description should be (Some("This is the original mapping"))
         doc.outputs should be (Seq.empty)
+
+        session.shutdown()
     }
 
     it should "provide merged documentation" in {
@@ -172,5 +178,7 @@ class TemplateMappingTest extends AnyFlatSpec with Matchers {
         outputSchema.columns(1).name should be ("col_2")
         outputSchema.columns(1).index should be (-1)
         outputSchema.columns(1).description should be (Some("This is col_2"))
+
+        session.shutdown()
     }
 }

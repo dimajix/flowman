@@ -108,6 +108,10 @@ object FlowmanConf {
         .doc("Parallelism of mapping instantiation")
         .intConf
         .createWithDefault(1)
+    val EXECUTION_CHECK_PARALLELISM = buildConf("flowman.execution.check.parallelism")
+        .doc("Parallelism of data quality check execution")
+        .intConf
+        .createWithDefault(1)
     val EXECUTION_MAPPING_SCHEMA_CACHE = buildConf("flowman.execution.mapping.schemaCache")
         .doc("Cache schema information of mapping instances")
         .booleanConf
@@ -159,6 +163,10 @@ object FlowmanConf {
         .doc("Default output mode of targets")
         .stringConf
         .createWithDefault(OutputMode.OVERWRITE.toString)
+    val DEFAULT_TARGET_BUILD_POLICY = buildConf("flowman.default.target.buildPolicy")
+        .doc("Build policy for write operations")
+        .stringConf
+        .createWithDefault("COMPAT")
     val DEFAULT_TARGET_REBALANCE = buildConf("flowman.default.target.rebalance")
         .doc("Rebalances all outputs before writing")
         .booleanConf

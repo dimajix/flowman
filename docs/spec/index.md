@@ -14,39 +14,3 @@ can be executed independently.
 All specification files are written as declarations in YAML syntax, which provides easy 
 readability. These YAML files are read in by Flowman executables and data flows are 
 executed as specified on the command line (more on that in [Flowman CLI](../cli/flowexec/index.md))
-
-
-Flowman has a couple of different main entities, which are documented separately:
-
-```eval_rst
-.. toctree::
-   :maxdepth: 1
-
-   namespace
-   project
-   module
-
-   mapping/index
-   relation/index
-   target/index
-   job/index
-   dataset/index
-   schema/index
-   connection/index
-   test/index
-   assertion/index
-   measure/index
-   template/index
-   metric/index
-   hooks/index
-```
-
-Additional Topics
-```eval_rst
-.. toctree::
-   :maxdepth: 1
-
-   fields
-   expressions
-   profiles
-```

@@ -49,6 +49,8 @@ class ImpalaExternalCatalogTest extends AnyFlatSpec with Matchers {
 
         val catalogs = namespace.catalogs.head.instantiate(session.context)
         catalogs shouldBe an[ImpalaExternalCatalog]
+
+        session.shutdown()
     }
 
     it should "support an embedded connection" in {
@@ -72,5 +74,7 @@ class ImpalaExternalCatalogTest extends AnyFlatSpec with Matchers {
 
         val catalogs = namespace.catalogs.head.instantiate(session.context)
         catalogs shouldBe an[ImpalaExternalCatalog]
+
+        session.shutdown()
     }
 }

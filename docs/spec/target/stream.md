@@ -78,4 +78,27 @@ targets:
   Enables rebalancing the size of all partitions by introducing an additional internal shuffle operation. Each partition
   and output file will contain approximately the same number of records. The default value is controlled by the
   Flowman config variable `floman.default.target.rebalance`.
-  
+
+
+## Supported Execution Phases
+* `CREATE` - This will create the target relation or migrate it to the newest schema (if possible).
+* `BUILD` - This will write the output of the specified mapping into the relation. If no mapping is specified, nothing
+  will be done.
+* `VERIFY` - This will verify that the relation (and any specified partition) actually contains data.
+* `TRUNCATE` - This removes the contents of the specified relation. The relation itself will not be removed (for example
+  if the relation refers to a Hive table)
+* `DESTROY` - This drops the relation itself and all its content.
+
+Read more about [execution phases](../../concepts/lifecycle.md).
+
+
+## Dirty Condition
+Flowman will apply some logic to find out if a stream target is to be considered being *dirty* for a specific execution
+phase, which means that it needs to participate in that phase. The logic depends on the execution phase as follows:
+* `CREATE` - A stream target is considered to be dirty, when the relation physically does not exist, or when its
+  schema is not up-to-date. Then Flowman will either create the relation or perform a
+  [migration](../../concepts/migrations.md).
+* `BUILD` - A stream target is always dirty in the `BUILD` phase.
+* `VERIFY` - A stream target is always dirty during the `VERIFY` phase.
+* `TRUNCATE` - A stream target is dirty in the `TRUNCATE` phase when it contains some records, which need to be removed.
+* `DESTROY` - A stream target is dirty in the `TRUNCATE` phase when it physically exists and needs to be dropped.

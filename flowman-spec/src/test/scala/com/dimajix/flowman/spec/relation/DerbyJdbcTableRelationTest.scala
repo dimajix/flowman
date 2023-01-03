@@ -37,6 +37,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
+import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableDefinition
@@ -44,6 +45,7 @@ import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.DeleteClause
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.MigrationFailedException
 import com.dimajix.flowman.execution.MigrationPolicy
@@ -80,6 +82,16 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+    implicit class JdbcTableRelationExt(rel:JdbcTableRelation) {
+        def conforms(execution:Execution, policy:MigrationPolicy) : Trilean = {
+            rel.copy(migrationPolicy = policy).conforms(execution)
+        }
+        def migrate(execution:Execution, policy:MigrationPolicy, strategy:MigrationStrategy=MigrationStrategy.ALTER_REPLACE) : Unit = {
+            rel.copy(migrationPolicy = policy, migrationStrategy = strategy).migrate(execution)
+        }
+    }
+
+
     def withDatabase[T](driverClass:String, url:String)(fn:(Statement) => T) : T = {
         DriverRegistry.register(driverClass)
         val driver: Driver = DriverManager.getDrivers.asScala.collectFirst {
@@ -164,6 +176,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation.connection.name should be ("some_connection")
         relation.indexes should be (Seq(TableIndex("idx0", Seq("str_col", "int_col"))))
         relation.primaryKey should be (Seq("str_col"))
+
+        session.shutdown()
     }
 
     it should "support the full lifecycle" in {
@@ -318,6 +332,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM LALA_001"""))
         }
+
+        session.shutdown()
     }
 
     it should "support the full lifecycle with a staging table" in {
@@ -443,6 +459,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM LALA_001"""))
         }
+
+        session.shutdown()
     }
 
     it should "support the full lifecycle with explicit SQL" in {
@@ -545,6 +563,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("""SELECT * FROM LALA_001"""))
         }
+
+        session.shutdown()
     }
 
     it should "support partitioned tables" in {
@@ -583,7 +603,7 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             .build()
         val execution = session.execution
         val context = session.getContext(project)
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = context.getRelation(RelationIdentifier("t0")).asInstanceOf[JdbcTableRelation]
 
         val df = spark.createDataFrame(Seq(
                 ("lala", 1),
@@ -749,6 +769,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_002"))
         }
+
+        session.shutdown()
     }
 
     it should "support dynamically writing to partitioned tables" in {
@@ -787,7 +809,7 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
             .build()
         val execution = session.execution
         val context = session.getContext(project)
-        val relation = context.getRelation(RelationIdentifier("t0"))
+        val relation = context.getRelation(RelationIdentifier("t0")).asInstanceOf[JdbcTableRelation]
 
         val df = spark.createDataFrame(Seq(
             ("lala", Some(1), 1),
@@ -899,6 +921,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         withDatabase(driver, url) { statement =>
             an[Exception] shouldBe thrownBy(statement.executeQuery("SELECT * FROM lala_003"))
         }
+
+        session.shutdown()
     }
 
     it should "support merge operations with complex clauses and staging tables" in {
@@ -1020,6 +1044,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support upsert operations with staging table" in {
@@ -1117,6 +1143,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         relation.destroy(execution)
         relation.exists(execution) should be (No)
         relation.loaded(execution, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "support migrations" in {
@@ -1226,6 +1254,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         rel1.exists(execution) should be (No)
         rel1.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         rel1.conforms(execution, MigrationPolicy.STRICT) should be (No)
+
+        session.shutdown()
     }
 
     it should "support a primary key" in {
@@ -1290,6 +1320,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         rel0.exists(execution) should be (Yes)
         rel0.destroy(execution)
         rel0.exists(execution) should be (No)
+
+        session.shutdown()
     }
 
     it should "support indexes" in {
@@ -1354,6 +1386,8 @@ class DerbyJdbcTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         rel0.exists(execution) should be (Yes)
         rel0.destroy(execution)
         rel0.exists(execution) should be (No)
+
+        session.shutdown()
     }
 
     private def withConnection[T](url:String, table:String)(fn:(Connection,JDBCOptions) => T) : T = {

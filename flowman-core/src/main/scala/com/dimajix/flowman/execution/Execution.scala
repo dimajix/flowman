@@ -16,6 +16,10 @@
 
 package com.dimajix.flowman.execution
 
+import java.time.Instant
+
+import scala.util.control.NonFatal
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.RuntimeConfig
@@ -23,11 +27,13 @@ import org.apache.spark.sql.SparkSession
 
 import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.FlowmanConf
+import com.dimajix.flowman.documentation.Documenter
 import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Assertion
 import com.dimajix.flowman.model.AssertionResult
+import com.dimajix.flowman.model.DocumenterResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.LifecycleResult
@@ -119,6 +125,12 @@ abstract class Execution {
     def activities: ActivityManager
 
     /**
+     * Returns the [[SessionCleaner]] provided by the [[Session]]
+     * @return
+     */
+    def cleaner : SessionCleaner
+
+    /**
       * Creates an instance of a mapping, or retrieves it from cache
       *
       * @param mapping
@@ -139,17 +151,41 @@ abstract class Execution {
     }
 
     /**
+     * Executes a specific phase of a target, will also catch (non-fatal) exceptions
+     * @param target
+     * @param phase
+     * @return
+     */
+    def execute(target:Target, phase:Phase) : TargetResult = {
+        val startTime = Instant.now()
+        // Normally, targets should not throw any exception, but instead wrap any error inside the TargetResult.
+        // But since we never know, we add a try/catch block
+        try {
+            target.execute(this, phase)
+        }
+        catch {
+            case NonFatal(e) => TargetResult(target, phase, e, startTime)
+        }
+    }
+
+    /**
      * Executes an [[Assertion]] from a TestSuite. This method ensures that all inputs are instantiated correctly
      * @param assertion
      * @return
      */
     def assert(assertion:Assertion) : AssertionResult = {
-        val context = assertion.context
-        val inputs = assertion.inputs
-            .map(id => id -> instantiate(context.getMapping(id.mapping), id.output))
-            .toMap
+        val startTime = Instant.now()
+        try {
+            val context = assertion.context
+            val inputs = assertion.inputs
+                .map(id => id -> instantiate(context.getMapping(id.mapping), id.output))
+                .toMap
 
-        assertion.execute(this, inputs)
+            assertion.execute(this, inputs)
+        }
+        catch {
+            case NonFatal(ex) => AssertionResult(assertion, ex, startTime)
+        }
     }
 
     /**
@@ -287,4 +323,14 @@ abstract class Execution {
      * @return
      */
     def monitorMeasure(measure:Measure)(fn:Execution => MeasureResult) : MeasureResult
+
+    /**
+     * Monitors the generation of documentation by calling appropriate listeners at the start and end.
+     *
+     * @param assertion
+     * @param fn
+     * @tparam T
+     * @return
+     */
+    def monitorDocumenter(documenter:Documenter)(fn: Execution => DocumenterResult): DocumenterResult
 }

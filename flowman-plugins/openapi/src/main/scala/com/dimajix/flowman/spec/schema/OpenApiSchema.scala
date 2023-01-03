@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.annotation.SchemaType
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
@@ -34,7 +35,7 @@ import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
   */
 case class OpenApiSchema(
     instanceProperties:Schema.Properties,
-    override val file: Option[Path],
+    override val file: Option[File],
     override val url: Option[URL],
     override val spec: Option[String],
     entity: Option[String],
@@ -71,7 +72,7 @@ class OpenApiSchemaSpec extends ExternalSchemaSpec {
     override def instantiate(context: Context, properties:Option[Schema.Properties]): OpenApiSchema = {
         OpenApiSchema(
             instanceProperties(context, file.getOrElse("")),
-            file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
+            file.map(context.evaluate).filter(_.nonEmpty).map(p => context.fs.file(p)),
             url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)),
             context.evaluate(spec),
             entity.map(context.evaluate),

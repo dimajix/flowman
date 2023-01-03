@@ -19,13 +19,8 @@ package com.dimajix.flowman.templating
 import scala.collection.mutable
 import scala.util.control.NonFatal
 
-import org.apache.velocity.VelocityContext
-import org.apache.velocity.app.VelocityEngine
-import org.apache.velocity.runtime.RuntimeConstants
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.annotation.TemplateObject
-import com.dimajix.flowman.spi.ClassAnnotationHandler
 import com.dimajix.flowman.spi.ClassAnnotationScanner
 
 
@@ -99,14 +94,7 @@ object Velocity {
       */
     def newEngine() : VelocityEngine = singletonEngine
 
-    private lazy val singletonEngine = {
-        val ve = new VelocityEngine()
-        ve.setProperty(RuntimeConstants.VM_ARGUMENTS_STRICT, "true")
-        ve.setProperty(RuntimeConstants.RUNTIME_REFERENCES_STRICT, "true")
-        ve.setProperty(RuntimeConstants.RUNTIME_REFERENCES_STRICT_ESCAPE, "true")
-        ve.init()
-        ve
-    }
+    private lazy val singletonEngine = new VelocityEngine()
 }
 
 

@@ -22,6 +22,7 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
+import scala.collection.parallel.TaskSupport
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -98,16 +99,41 @@ object ThreadUtils {
      *         applying the lambda function `f`.
      */
     def parmap[I, O](in: Seq[I], prefix: String, maxThreads: Int)(f: I => O): Seq[O] = {
-        val pool = newExecutor(prefix, maxThreads)
-        try {
-            implicit val ec = ExecutionContext.fromExecutor(pool)
+        if (maxThreads > 1) {
+            val pool = newExecutor(prefix, maxThreads)
+            try {
+                implicit val ec = ExecutionContext.fromExecutor(pool)
 
-            val futures = in.map(x => Future(f(x)))
-            val futureSeq = Future.sequence(futures)
+                val futures = in.map(x => Future(f(x)))
+                val futureSeq = Future.sequence(futures)
 
-            Await.result(futureSeq, Duration.Inf)
-        } finally {
-            pool.shutdownNow()
+                Await.result(futureSeq, Duration.Inf)
+            } finally {
+                pool.shutdownNow()
+            }
+        }
+        else {
+            in.map(f)
+        }
+    }
+
+    /**
+     * Performs a parallel `map` operation by using Scala parallel collections.
+     * @param seq
+     * @param f
+     * @param taskSupport
+     * @tparam S
+     * @tparam T
+     * @return
+     */
+    def parmap[S, T](seq: Seq[S])(f: S => T)(implicit taskSupport: TaskSupport): Seq[T] = {
+        if (taskSupport != null && seq.length > 1) {
+            val pseq = seq.par
+            pseq.tasksupport = taskSupport
+            pseq.map(f).seq
+        }
+        else {
+            seq.map(f)
         }
     }
 }

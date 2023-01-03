@@ -83,6 +83,7 @@ class LocalTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         output.dirty(executor, Phase.DESTROY) should be (No)
         output.execute(executor, Phase.DESTROY)
         output.dirty(executor, Phase.DESTROY) should be (No)
-    }
 
+        session.shutdown()
+    }
 }

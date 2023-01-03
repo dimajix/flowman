@@ -84,6 +84,13 @@ final class MonitorExecution(parent:Execution, override val listeners:Seq[(Execu
     override def activities: ActivityManager = parent.activities
 
     /**
+     * Returns the [[SessionCleaner]] provided by the [[Session]]
+     *
+     * @return
+     */
+    override def cleaner: SessionCleaner = parent.cleaner
+
+    /**
      * Creates an instance of a mapping, or retrieves it from cache
      *
      * @param mapping

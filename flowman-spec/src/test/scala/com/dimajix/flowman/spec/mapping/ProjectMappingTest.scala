@@ -66,6 +66,8 @@ class ProjectMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
                 Field("_2", IntegerType, false, description=Some("Some description"))
             ))
         )
+
+        session.shutdown()
     }
 
     "An appropriate Dataflow" should "be readable from YML" in {
@@ -104,6 +106,8 @@ class ProjectMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         val schema = mapping.describe(executor, Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
         schema("main") should be (expectedSchema)
+
+        session.shutdown()
     }
 
     it should "support renaming and retyping" in {
@@ -141,6 +145,8 @@ class ProjectMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         val schema = mapping.describe(executor, Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
         schema("main") should be (expectedSchema)
+
+        session.shutdown()
     }
 
     it should "support nested columns" in {
@@ -180,5 +186,7 @@ class ProjectMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessio
 
         val schema = mapping.describe(executor, Map(MappingOutputIdentifier("t0") -> StructType.of(df.schema)))
         schema("main") should be (expectedSchema)
+
+        session.shutdown()
     }
 }

@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
-import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_OUTPUT_MODE
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
@@ -38,10 +37,6 @@ import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.spec.dataset.DatasetSpec
-import com.dimajix.flowman.transforms.ColumnMismatchPolicy
-import com.dimajix.flowman.transforms.SchemaEnforcer
-import com.dimajix.flowman.transforms.CharVarcharPolicy
-import com.dimajix.flowman.transforms.TypeMismatchPolicy
 import com.dimajix.flowman.types.SchemaWriter
 import com.dimajix.flowman.types.StructType
 

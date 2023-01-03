@@ -196,6 +196,8 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
 
         outputDf.count should be (1)
         outputDf.schema should be (expectedSchema)
+
+        session.shutdown()
     }
 
     it should "provide a correct output schema" in {
@@ -243,6 +245,8 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
 
         val outputSchema = mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main")
         outputSchema.sparkType should be (expectedSchema)
+
+        session.shutdown()
     }
 
     it should "support explodes of complex types with rename" in {
@@ -272,6 +276,8 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.schema should be (expectedSchema)
         outputDf.count() should be (2)
+
+        session.shutdown()
     }
 
     it should "throw an exception on missing fields in 'keep'" in {
@@ -294,6 +300,8 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
 
         an[AnalysisException] shouldBe thrownBy(mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf)))
         an[AnalysisException] shouldBe thrownBy(mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema)))("main"))
+
+        session.shutdown()
     }
 
     it should "support explodes of complex types without rename" in {
@@ -323,6 +331,8 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.schema should be (expectedSchema)
         outputDf.count() should be (2)
+
+        session.shutdown()
     }
 
     it should "support explodes of simple types" in {
@@ -347,6 +357,8 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.schema should be (expectedSchema)
         outputDf.count() should be (2)
+
+        session.shutdown()
     }
 
     it should "throw exceptions on explodes of non-existing paths" in {
@@ -362,6 +374,8 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         )
 
         an[IllegalArgumentException] shouldBe thrownBy(mapping.describe(executor, Map(MappingOutputIdentifier("input_df") -> ftypes.StructType.of(inputDf.schema))))
+
+        session.shutdown()
     }
 
     it should "support rename activities" in {
@@ -388,6 +402,8 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.schema should be (expectedSchema)
         outputDf.count() should be (1)
+
+        session.shutdown()
     }
 
     it should "not throw an exception on renames of non-existing fields" in {
@@ -413,5 +429,7 @@ class AssembleMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         val outputDf = mapping.execute(executor, Map(MappingOutputIdentifier("input_df") -> inputDf))("main")
         outputDf.schema should be (expectedSchema)
         outputDf.count() should be (1)
+
+        session.shutdown()
     }
 }

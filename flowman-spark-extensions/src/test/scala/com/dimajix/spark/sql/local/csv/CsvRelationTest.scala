@@ -40,6 +40,7 @@ import com.dimajix.spark.testing.LocalSparkSession
 class CsvRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     private def ts(str:String) : Timestamp = new Timestamp(Instant.parse(str).toEpochMilli)
 
+    private lazy val dataDir = new File(tempDir, "csv-test")
 
     "The local CSV relation" should "support writing CSV files" in {
         val df = spark.createDataFrame(Seq(
@@ -50,7 +51,7 @@ class CsvRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             .format("csv")
             .option("encoding", "UTF-8")
             .option("header", true)
-            .save(new File(tempDir, "lala.csv"), SaveMode.Overwrite)
+            .save(new File(dataDir, "lala.csv").toPath, SaveMode.Overwrite)
     }
 
     it should "support reading CSV files" in {
@@ -67,7 +68,7 @@ class CsvRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             .schema(schema)
             .option("encoding", "UTF-8")
             .option("header", true)
-            .load(new File(tempDir, "lala.csv"))
+            .load(new File(dataDir, "lala.csv").toPath)
 
         result.schema should be (schema)
         result.count() should be (2)
@@ -80,7 +81,33 @@ class CsvRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             .format("csv")
             .option("encoding", "UTF-8")
             .option("header", true)
-            .save(new File(tempDir, "lala2.csv"), SaveMode.Overwrite)
+            .save(new File(dataDir, "lala2.csv").toPath, SaveMode.Overwrite)
+    }
+
+    it should "support reading whole directories" in {
+        val schema = StructType(
+            StructField("int_field", IntegerType) ::
+                StructField("str_field", StringType) ::
+                StructField("double_field", DoubleType) ::
+                StructField("timestamp_field", TimestampType) ::
+                StructField("date_field", DateType) ::
+                Nil
+        )
+        val result = spark.readLocal
+            .format("csv")
+            .schema(schema)
+            .option("encoding", "UTF-8")
+            .option("header", true)
+            .load(dataDir.toPath)
+
+        result.schema should be(schema)
+        result.count() should be(4)
+        result.collect() should be(Seq(
+            Row(1, "lala", 1.2, ts("2020-01-02T23:12:31.0Z"), Date.valueOf("2020-01-02")),
+            Row(2, "lolo", 2.3, ts("2021-03-02T21:12:31.0Z"), Date.valueOf("2020-02-02")),
+            Row(1, "lala", 1.2, ts("2020-01-02T23:12:31.0Z"), Date.valueOf("2020-01-02")),
+            Row(2, "lolo", 2.3, ts("2021-03-02T21:12:31.0Z"), Date.valueOf("2020-02-02"))
+        ))
     }
 
     it should "support schema inference with header" in {
@@ -96,7 +123,7 @@ class CsvRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             .format("csv")
             .option("encoding", "UTF-8")
             .option("header", true)
-            .load(new File(tempDir, "lala2.csv"))
+            .load(new File(dataDir, "lala2.csv").toPath)
 
         result.schema should be (schema)
         result.count() should be (2)
@@ -119,7 +146,7 @@ class CsvRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             .format("csv")
             .option("encoding", "UTF-8")
             .option("header", false)
-            .load(new File(tempDir, "lala2.csv"))
+            .load(new File(dataDir, "lala2.csv").toPath)
 
         result.schema should be (schema)
         result.count() should be (3)

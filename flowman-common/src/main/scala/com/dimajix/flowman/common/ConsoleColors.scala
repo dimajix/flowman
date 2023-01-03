@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2020-2022 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.util
+package com.dimajix.flowman.common
+
 
 object ConsoleColors {
-    var disabled = false
+    private var disabled = false
+    def setColorEnabled(enabled:Boolean) : Unit = {
+        disabled = !enabled
+    }
 
     val NORMAL = Console.RESET
     val CYAN = Console.CYAN

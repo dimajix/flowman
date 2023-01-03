@@ -54,6 +54,8 @@ class CoalesceMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         typedInstance.inputs should be (Set(MappingOutputIdentifier("some_mapping")))
         typedInstance.outputs should be (Set("main"))
         typedInstance.partitions should be (1)
+
+        session.shutdown()
     }
 
     it should "work" in {
@@ -74,5 +76,7 @@ class CoalesceMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("input") -> input))("main")
         result.rdd.partitions.size should be (1)
         result.count() should be (100)
+
+        session.shutdown()
     }
 }

@@ -6,12 +6,7 @@ Flowman provides a small set of command line interface (CLI) executables for wor
 to execute projects as batch jobs, to investigate intermediate results of mappings etc. Moreover the Flowman History
 Server will provide you a powerful Web UI for keeping track of past runs.
 
-```eval_rst
-.. toctree::
-   :maxdepth: 1
-   :glob:
-
-   flowexec/index
-   flowshell/index
-   *
-```
+* [Flowman Executor (`flowexec`)](flowexec/index.md)
+* [Flowman Shell (`flowshell`)](flowshell/index.md)
+* [Flowman History Server](history-server.md)
+* [Flowman Schema Generator](schema.md)

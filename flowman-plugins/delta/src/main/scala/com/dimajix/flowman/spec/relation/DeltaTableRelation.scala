@@ -60,12 +60,14 @@ import com.dimajix.flowman.types.SingleValue
 case class DeltaTableRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
-    override val partitions: Seq[PartitionField] = Seq(),
+    override val partitions: Seq[PartitionField] = Seq.empty,
     table: TableIdentifier,
     location: Option[Path] = None,
-    options: Map[String,String] = Map(),
-    properties: Map[String, String] = Map(),
-    mergeKey: Seq[String] = Seq()
+    options: Map[String,String] = Map.empty,
+    properties: Map[String, String] = Map.empty,
+    mergeKey: Seq[String] = Seq.empty,
+    override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
+    override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
 ) extends DeltaRelation(options, mergeKey) {
     private val logger = LoggerFactory.getLogger(classOf[DeltaTableRelation])
     protected val resource = ResourceIdentifier.ofHiveTable(table)
@@ -217,7 +219,7 @@ case class DeltaTableRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+    override def conforms(execution: Execution): Trilean = {
         val catalog = execution.catalog
         if (catalog.tableExists(table)) {
             fullSchema match {
@@ -288,30 +290,28 @@ case class DeltaTableRelation(
      *
      * @param execution
      */
-    override def create(execution: Execution, ifNotExists: Boolean): Unit = {
-        val tableExists = exists(execution) == Yes
-        if (!ifNotExists || !tableExists) {
-            val sparkSchema = HiveCatalog.cleanupSchema(StructType(fields.map(_.catalogField)))
-            logger.info(s"Creating Delta table relation '$identifier' with table $table and schema\n${sparkSchema.treeString}")
-            if (schema.isEmpty) {
-                throw new UnspecifiedSchemaException(identifier)
-            }
-
-            if (tableExists)
-                throw new TableAlreadyExistsException(table.database.getOrElse(""), table.table)
-
-            DeltaUtils.createTable(
-                execution,
-                Some(table.toSpark),
-                location,
-                sparkSchema,
-                partitions,
-                properties,
-                description
-            )
-
-            execution.refreshResource(resource)
+    override def create(execution: Execution): Unit = {
+        val sparkSchema = HiveCatalog.cleanupSchema(StructType(fields.map(_.catalogField)))
+        logger.info(s"Creating Delta table relation '$identifier' with table $table and schema\n${sparkSchema.treeString}")
+        if (schema.isEmpty) {
+            throw new UnspecifiedSchemaException(identifier)
         }
+
+        val tableExists = exists(execution) == Yes
+        if (tableExists)
+            throw new TableAlreadyExistsException(table.database.getOrElse(""), table.table)
+
+        DeltaUtils.createTable(
+            execution,
+            Some(table.toSpark),
+            location,
+            sparkSchema,
+            partitions,
+            properties,
+            description
+        )
+
+        execution.refreshResource(resource)
     }
 
     /**
@@ -344,15 +344,13 @@ case class DeltaTableRelation(
      *
      * @param execution
      */
-    override def destroy(execution: Execution, ifExists: Boolean): Unit = {
+    override def destroy(execution: Execution): Unit = {
         require(execution != null)
 
+        logger.info(s"Destroying Delta table relation '$identifier' by dropping table $table")
         val catalog = execution.catalog
-        if (!ifExists || catalog.tableExists(table)) {
-            logger.info(s"Destroying Delta table relation '$identifier' by dropping table $table")
-            catalog.dropTable(table)
-            execution.refreshResource(resource)
-        }
+        catalog.dropTable(table)
+        execution.refreshResource(resource)
     }
 
     /**
@@ -360,7 +358,7 @@ case class DeltaTableRelation(
      *
      * @param execution
      */
-    override def migrate(execution: Execution, migrationPolicy: MigrationPolicy, migrationStrategy: MigrationStrategy): Unit = {
+    override def migrate(execution: Execution): Unit = {
         require(execution != null)
 
         val catalog = execution.catalog
@@ -376,11 +374,11 @@ case class DeltaTableRelation(
                     case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
                         logger.warn(s"TABLE target $this.table is currently a VIEW, dropping...")
                         catalog.dropView(this.table, false)
-                        create(execution, false)
+                        create(execution)
                 }
             }
             else if (schema.nonEmpty) {
-                migrateInternal(execution, migrationPolicy, migrationStrategy)
+                migrateInternal(execution)
             }
         }
     }
@@ -404,7 +402,7 @@ case class DeltaTableRelation(
 
 
 @RelationType(kind="deltaTable")
-class DeltaTableRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
+class DeltaTableRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec with MigratableRelationSpec {
     @JsonProperty(value = "database", required = false) private var database: Option[String] = Some("default")
     @JsonProperty(value = "table", required = true) private var table: String = ""
     @JsonProperty(value = "location", required = false) private var location: Option[String] = None
@@ -421,7 +419,9 @@ class DeltaTableRelationSpec extends RelationSpec with SchemaRelationSpec with P
             context.evaluate(location).map(p => new Path(p)),
             context.evaluate(options),
             context.evaluate(properties),
-            mergeKey.map(context.evaluate)
+            mergeKey.map(context.evaluate),
+            evalMigrationPolicy(context),
+            evalMigrationStrategy(context)
         )
     }
 }

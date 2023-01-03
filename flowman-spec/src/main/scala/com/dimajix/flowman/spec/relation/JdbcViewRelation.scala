@@ -16,9 +16,6 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.io.StringWriter
-import java.nio.charset.Charset
-
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
 
@@ -28,8 +25,6 @@ import net.sf.jsqlparser.parser.CCJSqlParserUtil
 import net.sf.jsqlparser.statement.create.view.CreateView
 import net.sf.jsqlparser.statement.select.Select
 import net.sf.jsqlparser.util.TablesNamesFinder
-import org.apache.commons.io.IOUtils
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
@@ -45,9 +40,12 @@ import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.fs.FileUtils
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.jdbc.SqlDialects
 import com.dimajix.flowman.model.Connection
+import com.dimajix.flowman.model.MigratableRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.flowman.model.PartitionedRelation
@@ -68,11 +66,13 @@ case class JdbcViewRelation(
     view: TableIdentifier,
     properties: Map[String,String] = Map.empty,
     sql: Option[String] = None,
-    file: Option[Path] = None
+    file: Option[File] = None,
+    override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
+    override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
 ) extends JdbcRelation(
     connection,
     properties
-) with PartitionedRelation {
+) with PartitionedRelation with MigratableRelation {
     protected val resource: ResourceIdentifier = ResourceIdentifier.ofJdbcTable(view)
     /**
      * Returns the list of all resources which will be created by this relation. This method mainly refers to the
@@ -204,7 +204,7 @@ case class JdbcViewRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+    override def conforms(execution: Execution): Trilean = {
         withConnection { (con, options) =>
             val dialect = SqlDialects.get(options.url)
             if (JdbcUtils.tableExists(con, view, options)) {
@@ -254,12 +254,10 @@ case class JdbcViewRelation(
      *
      * @param execution
      */
-    override def create(execution: Execution, ifNotExists: Boolean): Unit = {
+    override def create(execution: Execution): Unit = {
         withConnection{ (con,options) =>
-            if (!ifNotExists || !JdbcUtils.tableExists(con, view, options)) {
-                doCreate(con, options)
-                execution.refreshResource(resource)
-            }
+            doCreate(con, options)
+            execution.refreshResource(resource)
         }
     }
     protected def doCreate(con:java.sql.Connection, options:JDBCOptions): Unit = {
@@ -272,8 +270,8 @@ case class JdbcViewRelation(
      *
      * @param execution
      */
-    override def destroy(execution: Execution, ifExists: Boolean): Unit = {
-        dropTableOrView(execution, view, ifExists)
+    override def destroy(execution: Execution): Unit = {
+        dropTableOrView(execution, view)
     }
 
     /**
@@ -281,7 +279,7 @@ case class JdbcViewRelation(
      *
      * @param execution
      */
-    override def migrate(execution: Execution, migrationPolicy: MigrationPolicy, migrationStrategy: MigrationStrategy): Unit = {
+    override def migrate(execution: Execution): Unit = {
         // Only try migration if schema is explicitly specified
         withConnection { (con, options) =>
             if (JdbcUtils.tableExists(con, view, options)) {
@@ -290,16 +288,16 @@ case class JdbcViewRelation(
                 // Check if table type changes
                 if (currentTable.tableType != TableType.UNKNOWN && currentTable.tableType != TableType.VIEW) {
                     // Drop view, recreate table
-                    migrateFromTable(con, options, migrationStrategy)
+                    migrateFromTable(con, options)
                 }
                 else {
-                    migrateFromView(con, options, migrationStrategy)
+                    migrateFromView(con, options)
                 }
             }
         }
     }
 
-    private def migrateFromView(connection:java.sql.Connection, options:JDBCOptions, migrationStrategy:MigrationStrategy) : Unit = {
+    private def migrateFromView(connection:java.sql.Connection, options:JDBCOptions) : Unit = {
         withConnection { (con, options) =>
             val dialect = SqlDialects.get(options.url)
             val requiresMigration = if (!dialect.supportsExactViewRetrieval) {
@@ -328,7 +326,7 @@ case class JdbcViewRelation(
         }
     }
 
-    private def migrateFromTable(connection:java.sql.Connection, options:JDBCOptions, migrationStrategy:MigrationStrategy) : Unit = {
+    private def migrateFromTable(connection:java.sql.Connection, options:JDBCOptions) : Unit = {
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for JdbcView relation '$identifier' from TABLE to a VIEW $view, but migrations are disabled.")
@@ -352,16 +350,7 @@ case class JdbcViewRelation(
     private lazy val statement : String = {
         sql
             .orElse(file.map { f =>
-                val fs = context.fs
-                val input = fs.file(f).open()
-                try {
-                    val writer = new StringWriter()
-                    IOUtils.copy(input, writer, Charset.forName("UTF-8"))
-                    writer.toString
-                }
-                finally {
-                    input.close()
-                }
+                FileUtils.toString(f)
             })
             .getOrElse(
                 throw new IllegalArgumentException("JdbcView either requires explicit SQL SELECT statement or file")
@@ -389,7 +378,7 @@ case class JdbcViewRelation(
 
 
 
-class JdbcViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
+class JdbcViewRelationSpec extends RelationSpec with PartitionedRelationSpec with MigratableRelationSpec {
     @JsonProperty(value="connection", required = true) private var connection: ConnectionReferenceSpec = _
     @JsonProperty(value="properties", required = false) private var properties: Map[String, String] = Map.empty
     @JsonProperty(value="database", required = false) private var database: Option[String] = None
@@ -413,7 +402,9 @@ class JdbcViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
             TableIdentifier(context.evaluate(view), context.evaluate(database)),
             context.evaluate(properties),
             context.evaluate(sql),
-            context.evaluate(file).map(p => new Path(p))
+            context.evaluate(file).map(p => context.fs.file(p)),
+            evalMigrationPolicy(context),
+            evalMigrationStrategy(context)
         )
     }
 }

@@ -73,6 +73,8 @@ class AvroSchemaTest extends AnyFlatSpec with Matchers {
         fields(1).name should be ("Event")
         fields(1).description should be (Some("Event as a string"))
         fields(1).ftype should be (StringType)
+
+        session.shutdown()
     }
 
     it should "support nullable fields" in {
@@ -110,6 +112,8 @@ class AvroSchemaTest extends AnyFlatSpec with Matchers {
         fields(0).name should be ("AccessDateTime")
         fields(0).description should be (Some("AccessDateTime as a string"))
         fields(0).ftype should be (StringType)
+
+        session.shutdown()
     }
 
     it should "support forced nullablility" in {
@@ -148,6 +152,8 @@ class AvroSchemaTest extends AnyFlatSpec with Matchers {
         fields(0).name should be ("AccessDateTime")
         fields(0).description should be (Some("AccessDateTime as a string"))
         fields(0).ftype should be (StringType)
+
+        session.shutdown()
     }
 
     it should "be readable from an external file" in {
@@ -172,5 +178,7 @@ class AvroSchemaTest extends AnyFlatSpec with Matchers {
         fields(0).name should be ("AccessDateTime")
         fields(0).description should be (Some("AccessDateTime as a string"))
         fields(0).ftype should be (StringType)
+
+        session.shutdown()
     }
 }

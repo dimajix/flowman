@@ -45,5 +45,7 @@ class InlineSchemaTest extends AnyFlatSpec with Matchers {
         result.fields.size should be (2)
         result.fields(0).name should be ("str_col")
         result.fields(1).name should be ("int_col")
+
+        session.shutdown()
     }
 }

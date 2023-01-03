@@ -35,7 +35,29 @@ import org.apache.hadoop.io.IOUtils
   * @param path
   */
 final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) extends File {
-    override def uri : URI = path.toUri
+    override def toString: String = {
+        if (path != null) {
+            val uri = path.toUri
+            if (uri.getScheme == null && path.isAbsolute) {
+                new Path(fs.getScheme, uri.getAuthority, uri.getPath).toString
+            }
+            else {
+                path.toString
+            }
+        }
+        else {
+            ""
+        }
+    }
+    override def uri : URI = {
+        val uri = path.toUri
+        if (uri.getScheme == null && path.isAbsolute) {
+            new URI(fs.getScheme, uri.getAuthority, uri.getPath, uri.getQuery, uri.getFragment)
+        }
+        else {
+            uri
+        }
+    }
 
     /**
       * Creates a new File object by attaching a child entry
@@ -60,19 +82,21 @@ final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) exten
     }
 
     /**
-      * Returns the parent directory of the File
-      * @return
-      */
+     * Returns the parent directory of the File. If this is already a root path (i.e. no parent is available),
+     * this function returns null
+     *
+     * @return
+     */
     override def parent : File = {
         val p = path.getParent
         if (p == null) {
-            this
+            null
         }
         else if (p.getName.isEmpty) {
             HadoopFile(fs, p)
         }
         else {
-            val uri = new URI(p.toUri.toString + "/")
+            val uri = new URI(p.toUri.toString)
             HadoopFile(fs, new Path(uri))
         }
     }
@@ -107,12 +131,19 @@ final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) exten
     }
 
     def glob(pattern:String) : Seq[File] = {
-        if (!isDirectory())
-            throw new IOException(s"File '$path' is not a directory - cannot list files")
-        fs.globStatus(new Path(path, pattern))
-            .map(item => (item.getPath.toString, HadoopFile(fs, item.getPath)))
-            .sortBy(_._1)
-            .map(_._2)
+        val files = fs.globStatus(new Path(path, pattern))
+        if (files != null) {
+            files.map(_.getPath.makeQualified(fs.getUri, fs.getWorkingDirectory))
+                .map(item => HadoopFile(fs, item))
+        }
+        else {
+            Seq.empty[File]
+        }
+    }
+
+    def exists(pattern: String): Boolean = {
+        val files = fs.globStatus(new Path(path, pattern))
+        files != null && files.nonEmpty
     }
 
     /**
@@ -121,11 +152,11 @@ final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) exten
       */
     def rename(dst:Path) : Unit  = {
         if (fs.exists(dst) && !fs.delete(dst, false)) {
-            throw new IOException(s"Cannot rename '$path' to '$dst', because '$dst' already exists")
+            throw new IOException(s"Failed to rename '$path' to '$dst', because '$dst' already exists")
         }
 
         if (!fs.rename(path, dst)) {
-            throw new IOException(s"Cannot rename '$path' to '$dst'")
+            throw new IOException(s"Failed to rename '$path' to '$dst'")
         }
     }
 
@@ -136,7 +167,7 @@ final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) exten
       */
     def copy(dst:File, overwrite:Boolean) : Unit = {
         if (!overwrite && dst.isFile())
-            throw new IOException("Target $dst already exists")
+            throw new IOException(s"Failed to copy '$path' to '$dst', target already exists")
 
         // Append file name if relation is a directory
         val dstFile = if (dst.isDirectory())
@@ -180,7 +211,7 @@ final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) exten
       */
     def delete(recursive:Boolean = false) : Unit = {
         if (fs.exists(path) && !fs.delete(path, recursive)) {
-            throw new IOException(s"Cannot delete '$path'")
+            throw new IOException(s"Failed to delete '$path'")
         }
     }
 
@@ -194,7 +225,7 @@ final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) exten
 
     def mkdirs() : Unit = {
         if (!fs.mkdirs(path))
-            throw new IOException(s"Cannot create directory '$path'")
+            throw new IOException(s"Failed to create directory '$path'")
     }
 
     /**

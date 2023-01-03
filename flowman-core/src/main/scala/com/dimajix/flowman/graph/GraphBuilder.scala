@@ -36,7 +36,7 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.MapType
 import com.dimajix.flowman.types.StructType
-import com.dimajix.flowman.util.ConsoleColors.yellow
+import com.dimajix.flowman.common.ConsoleColors.yellow
 
 
 final class GraphBuilder(context:Context, phase:Phase) {

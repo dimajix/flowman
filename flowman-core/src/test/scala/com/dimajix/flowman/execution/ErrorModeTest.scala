@@ -44,5 +44,4 @@ class ErrorModeTest extends AnyFlatSpec with Matchers {
         ErrorMode.ofString(ErrorMode.FAIL_NEVER.toString) should be (ErrorMode.FAIL_NEVER)
         ErrorMode.ofString(ErrorMode.FAIL_AT_END.toString) should be (ErrorMode.FAIL_AT_END)
     }
-
 }

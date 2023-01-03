@@ -43,6 +43,8 @@ import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.target.JdbcCommandTarget.Action
 import com.dimajix.flowman.spec.target.JdbcCommandTargetSpec.ActionSpec
+import com.dimajix.flowman.common.ConsoleColors.red
+import com.dimajix.flowman.common.ConsoleColors.yellow
 
 object JdbcCommandTarget {
     case class Action(
@@ -142,7 +144,7 @@ case class JdbcCommandTarget (
                 }
                 catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Cannot determine dirty status of target '$identifier' in phase $phase because of exception during query execution:\n  ${reasons(ex)}")
+                        logger.warn(yellow(s"Cannot determine dirty status of target '$identifier' in phase $phase because of exception during query execution:\n  ${reasons(ex)}"))
                         Unknown
                 }
             }
@@ -224,7 +226,7 @@ case class JdbcCommandTarget (
                         }
                         catch {
                             case NonFatal(ex) =>
-                                logger.error(s"Error executing phase $phase for jdbcCommand '$identifier', because of failing SQL:\n$sql")
+                                logger.error(red(s"Error executing phase $phase for jdbcCommand '$identifier', because of failing SQL:\n$sql"))
                                 throw ex
                         }
                     }

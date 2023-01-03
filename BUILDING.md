@@ -102,8 +102,10 @@ using the correct version. The following profiles are available:
 * hadoop-3.1
 * hadoop-3.2
 * hadoop-3.3
+* EMR-6.9
 * CDH-6.3
 * CDP-7.1
+* CDP-7.1-spark-3.2
 
 With these profiles it is easy to build Flowman to match your environment. 
 
@@ -204,6 +206,10 @@ mvn clean install -PCDH-6.3 -DskipTests
 
 ```shell
 mvn clean install -PCDP-7.1 -DskipTests
+```
+
+```shell
+mvn clean install -PCDP-7.1-spark-3.2 -DskipTests
 ```
 
 

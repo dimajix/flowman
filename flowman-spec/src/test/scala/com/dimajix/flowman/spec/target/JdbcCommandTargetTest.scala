@@ -198,6 +198,8 @@ class JdbcCommandTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val result_destroy2 = target.execute(execution, Phase.DESTROY)
         result_destroy2.status should be(Status.FAILED)
         result_destroy2.exception.get shouldBe a[SQLException]
+
+        session.shutdown()
     }
 
     it should "work in transactional mode" in {
@@ -295,5 +297,7 @@ class JdbcCommandTargetTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val result_destroy2 = target.execute(execution, Phase.DESTROY)
         result_destroy2.status should be(Status.FAILED)
         result_destroy2.exception.get shouldBe a[SQLException]
+
+        session.shutdown()
     }
 }

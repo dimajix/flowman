@@ -56,6 +56,8 @@ class RunnerTargetTest extends AnyFlatSpec with MockFactory with Matchers with L
         val runner = session.runner
         runner.executeTargets(Seq(target), Seq(Phase.BUILD), jobName="cli-tools", force=true, isolated=false) should be(Status.SUCCESS)
         //runner.executeTargets(Seq(target), Seq(Phase.BUILD), jobName="cli-tools", force=true, isolated=true) should be(Status.SUCCESS)
+
+        session.shutdown()
     }
 
     it should "execute known targets in shared and isolated mode" in {
@@ -86,5 +88,7 @@ class RunnerTargetTest extends AnyFlatSpec with MockFactory with Matchers with L
         val runner = session.runner
         runner.executeTargets(Seq(target), Seq(Phase.BUILD), jobName = "cli-tools", force = true, isolated = false) should be(Status.SUCCESS)
         runner.executeTargets(Seq(target), Seq(Phase.BUILD), jobName = "cli-tools", force = true, isolated = true) should be(Status.SUCCESS)
+
+        session.shutdown()
     }
 }

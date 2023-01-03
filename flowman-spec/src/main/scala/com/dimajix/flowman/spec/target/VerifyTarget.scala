@@ -41,6 +41,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.assertion.AssertionSpec
+import com.dimajix.flowman.common.ConsoleColors.red
 
 
 case class VerifyTarget(
@@ -113,11 +114,11 @@ case class VerifyTarget(
         val status = Status.ofAll(result.map(_.status))
         if (!status.success) {
             if (errorMode != ErrorMode.FAIL_NEVER || result.exists(_.numExceptions > 0)) {
-                logger.error(s"Verification '$identifier' failed.")
+                logger.error(red(s"Verification '$identifier' failed."))
                 TargetResult(this, Phase.VERIFY, result, new VerificationFailedException(identifier, result.flatMap(_.exception).headOption.orNull), startTime)
             }
             else {
-                logger.error(s"Verification '$identifier' failed - the result is marked as 'success with errors'.")
+                logger.error(red(s"Verification '$identifier' failed - the result is marked as 'success with errors'."))
                 TargetResult(this, Phase.VERIFY, result, Status.SUCCESS_WITH_ERRORS, startTime)
             }
         }

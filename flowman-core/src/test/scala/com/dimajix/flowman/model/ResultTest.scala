@@ -78,6 +78,8 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r4.numFailures should be (0)
         r4.numSuccesses should be (0)
         r4.numExceptions should be (1)
+
+        session.shutdown()
     }
 
     it should "count correctly with children" in {
@@ -130,6 +132,8 @@ class ResultTest extends AnyFlatSpec with Matchers with MockFactory {
         r3.numFailures should be (1)
         r3.numSuccesses should be (1)
         r3.numExceptions should be (1)
+
+        session.shutdown()
     }
 
     "The TargetResult" should "count correctly without children" in {

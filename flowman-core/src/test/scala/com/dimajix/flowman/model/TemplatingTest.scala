@@ -53,6 +53,8 @@ class TemplatingTest extends AnyFlatSpec with Matchers with MockFactory {
     context.evaluate("${job.parameters}", Map("job" -> wrapper)) should be("[p1, p2, p3]")
     context.evaluate("${job.targets}", Map("job" -> wrapper)) should be("[]")
     context.evaluate("${job.environment}", Map("job" -> wrapper)) should be("{env1=eval_1, env2=eval_2}")
+
+    session.shutdown()
   }
 
   "The JobResultWrapper" should "work" in {
@@ -90,6 +92,8 @@ class TemplatingTest extends AnyFlatSpec with Matchers with MockFactory {
     context.evaluate("${result.startTime}", Map("result" -> wrapper)) should be(result.startTime.toString)
     context.evaluate("${result.endTime}", Map("result" -> wrapper)) should be(result.endTime.toString)
     context.evaluate("#foreach ($child in $result.children)${child.phase}:${child.status} #end", Map("result" -> wrapper)) should be("")
+
+    session.shutdown()
   }
 
   "The LifecycleResultWrapper" should "work" in {
@@ -130,5 +134,7 @@ class TemplatingTest extends AnyFlatSpec with Matchers with MockFactory {
     context.evaluate("${result.startTime}", Map("result" -> wrapper)) should be(result.startTime.toString)
     context.evaluate("${result.endTime}", Map("result" -> wrapper)) should be(result.endTime.toString)
     context.evaluate("#foreach ($child in $result.children)${child.phase}:${child.status} #end", Map("result" -> wrapper)) should be("VALIDATE:SUCCESS CREATE:SUCCESS BUILD:SUCCESS ")
+
+    session.shutdown()
   }
 }

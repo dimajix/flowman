@@ -65,7 +65,7 @@ class Arguments(args:Array[String]) {
     @Option(name = "--spark-logging", usage = "set the log level for Spark", metaVar = "<spark_logging>")
     var sparkLogging: String = "WARN"
     @Option(name = "--spark-name", usage = "set the Spark application name", metaVar = "<spark_application_name>")
-    var sparkName: String = "Flowman Exec"
+    var sparkName: String = ""
 
     @Argument(required=false,index=0,metaVar="<command-group>",usage="the object to work with",handler=classOf[SubCommandHandler])
     @SubCommands(Array(

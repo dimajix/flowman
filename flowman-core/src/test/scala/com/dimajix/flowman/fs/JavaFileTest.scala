@@ -31,22 +31,25 @@ import com.dimajix.spark.testing.LocalTempDir
 
 class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
     "The JavaFile" should "work" in {
+        val prefix = if (FileSystem.WINDOWS) "file:/" else "file:"
         val dir = JavaFile(tempDir.toPath)
         dir.uri should be (tempDir.toURI)
         dir.path should be (new fs.Path(tempDir.toURI))
-        dir.toString should be ("file:" + tempDir.toString)
+        dir.toString should be (prefix + tempDir.toString.replace('\\','/'))
         dir.exists() should be (true)
         dir.isFile() should be (false)
         dir.isDirectory() should be (true)
         dir.isAbsolute() should be (true)
 
-        (dir / dir.toString) should be (dir)
+        if (!FileSystem.WINDOWS) {
+            (dir / dir.toString) should be (dir)
+        }
 
         val file = dir / "lala"
         file.name should be ("lala")
         file.uri should be (tempDir.toURI.resolve("lala"))
         file.path should be (new Path(tempDir.toURI.resolve("lala")))
-        file.toString should be ("file:" + new java.io.File(tempDir, "lala").toString)
+        file.toString should be (new java.io.File(tempDir, "lala").toURI.toString)
         file.exists() should be(false)
         file.isFile() should be(false)
         file.isDirectory() should be(false)
@@ -54,11 +57,24 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
         file.parent should be(dir)
         file.name should be("lala")
         file.withName("lolo") should be(dir / "lolo")
+
+        val file2 = dir / "lala/"
+        file2.toString should be(tempDir.toURI.toString + "lala")
+        file2.uri should be(tempDir.toURI.resolve("lala"))
+        file2.path should be(new Path(tempDir.toURI.resolve("lala")))
+        file2.path should be(new Path(tempDir.toURI.toString, "lala"))
+        file2.exists() should be(false)
+        file2.isFile() should be(false)
+        file2.isDirectory() should be(false)
+        file2.isAbsolute() should be(true)
+        file2.parent should be(dir)
+        file2.name should be("lala")
+        file2.withName("lolo") should be(dir / "lolo")
     }
 
     it should "work at root level" in {
         val dir = JavaFile(tempDir.toPath.getRoot)
-        dir.parent should be (dir)
+        dir.parent should be (null)
         dir.name should be ("")
         dir.uri should be(new URI("file:/"))
         dir.path should be(new fs.Path("file:/"))
@@ -107,10 +123,12 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
     it should "support resources somewhere" in {
         val res = Resources.getURL("com/dimajix/flowman/flowman.properties")
         val file = JavaFile(Paths.get(res.toURI))
+        file.toString should be (res.toString)
         file.name should be ("flowman.properties")
         file.uri should be (res.toURI)
         file.path.toUri should be (res.toURI)
         file.path should be (new Path(res.toURI))
+        file.absolute should be (file)
         file.exists() should be (true)
         file.isFile() should be (true)
         file.isAbsolute() should be (true)
@@ -118,9 +136,11 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
 
         val res1 = Resources.getURL("com/dimajix/flowman")
         val dir1 = JavaFile(Paths.get(res1.toURI))
+        dir1.toString should be (res1.toString)
         dir1.name should be ("flowman")
         //dir1.uri should be (res1.toURI)
         dir1.path.toString should be (res1.toURI.toString + "/")
+        dir1.absolute should be (dir1)
         dir1.exists() should be(true)
         dir1.isFile() should be(false)
         dir1.isAbsolute() should be(true)
@@ -128,6 +148,7 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
 
         val res2 = Resources.getURL("com/dimajix/flowman/")
         val dir2 = JavaFile(Paths.get(res2.toURI))
+        dir2.toString + "/" should be (res2.toString)
         dir2.name should be ("flowman")
         dir2.uri should be (res2.toURI)
         dir2.path should be(new Path(res2.toURI))
@@ -142,10 +163,13 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
         val res = Resources.getURL("org/apache/spark/SparkContext.class")
         val xyz = java.nio.file.FileSystems.newFileSystem(res.toURI, Collections.emptyMap[String,String]())
         val file = JavaFile(Paths.get(res.toURI))
+        file.toString should be (res.toString)
         file.uri should be (res.toURI)
+        file.uri.getScheme should be ("jar")
         file.path.toUri should be (res.toURI)
         file.path should be (new Path(res.toURI))
         file.name should be ("SparkContext.class")
+        file.absolute should be (file)
         file.exists() should be(true)
         file.isFile() should be(true)
         file.isAbsolute() should be(true)
@@ -153,23 +177,31 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
 
         val res1 = Resources.getURL("org/apache/spark")
         val dir1 = JavaFile(Paths.get(res1.toURI))
+        dir1.toString should be (res1.toString)
         dir1.uri should be (res1.toURI)
+        dir1.uri.getScheme should be ("jar")
         dir1.path should be (new Path(res1.toURI))
         dir1.name should be ("spark")
+        dir1.absolute should be (dir1)
         dir1.exists() should be(true)
         dir1.isFile() should be(false)
         dir1.isAbsolute() should be(true)
         dir1.isDirectory() should be(true)
+        file.parent should be (dir1)
 
+        // drop trailing "/"
         val res2 = Resources.getURL("org/apache/spark/")
-        val dir2 = JavaFile(Paths.get(res2.toURI))
-        //dir2.uri should be(res2.toURI)
-        //dir2.path should be(new Path(res2.toURI))
+        val dir2 = JavaFile(res2.toURI)
+        dir2.toString should be (res1.toString)
+        dir2.uri.getScheme should be ("jar")
+        dir2.uri should be(res1.toURI)
+        dir2.path should be(new Path(res1.toURI))
         dir2.name should be("spark")
         dir2.exists() should be(true)
         dir2.isFile() should be(false)
         dir2.isAbsolute() should be(true)
         dir2.isDirectory() should be(true)
+        file.parent should be (dir2)
 
         xyz.close()
     }

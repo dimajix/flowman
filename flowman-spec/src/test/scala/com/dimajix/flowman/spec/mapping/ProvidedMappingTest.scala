@@ -48,6 +48,8 @@ class ProvidedMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
 
         val df = executor.instantiate(mapping, "main")
         df.count should be(0)
+
+        session.shutdown()
     }
 
 }

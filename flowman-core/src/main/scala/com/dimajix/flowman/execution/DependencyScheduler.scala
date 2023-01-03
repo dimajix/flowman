@@ -47,10 +47,12 @@ class DependencyScheduler extends Scheduler {
      * @param filter Specifies a filter
      */
     override def initialize(targets: Seq[Target], phase:Phase, filter:Target => Boolean) : Unit = {
-        targets.foreach { t =>
-            logger.debug(s"Analyzing build phase '$phase' of target '${t.identifier}'")
-            t.requires(phase).foreach(r => logger.debug(s"  requires $r"))
-            t.provides(phase).foreach(r => logger.debug(s"  provides $r"))
+        if (logger.isDebugEnabled) {
+            targets.foreach { t =>
+                logger.debug(s"Analyzing build phase '$phase' of target '${t.identifier}'")
+                t.requires(phase).foreach(r => logger.debug(s"  requires $r"))
+                t.provides(phase).foreach(r => logger.debug(s"  provides $r"))
+            }
         }
 
         // Initialize dependencies map with targets as keys

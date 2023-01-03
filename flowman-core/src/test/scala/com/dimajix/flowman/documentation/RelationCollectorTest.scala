@@ -149,5 +149,7 @@ class RelationCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
             inputs = Seq(MappingOutputReference(Some(MappingReference(Some(ProjectReference("project")), "m1")), "main")),
             partitions = Map("outcol" -> SingleValue("part1"))
         )))
+
+        session.shutdown()
     }
 }

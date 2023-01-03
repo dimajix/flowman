@@ -99,6 +99,8 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
                 "namespace" -> NamespaceWrapper(None)
             ))
         }
+
+        session.shutdown()
     }
 
     it should "correctly build targets and fixtures and check assertions" in {
@@ -203,6 +205,8 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (overrideMapping.execute _).expects(*,*).returns(Map("main" -> spark.emptyDataFrame))
 
         runner.executeTest(test) should be (Status.SUCCESS)
+
+        session.shutdown()
     }
 
     it should "not execute assertions in dry run mode" in {
@@ -230,6 +234,8 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (assertion.description _).expects().atLeastOnce().returns(None)
 
         runner.executeTest(test, dryRun = true) should be (Status.SUCCESS)
+
+        session.shutdown()
     }
 
     it should "ignore errors if told so" in {
@@ -322,6 +328,8 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (mapping.execute _).expects(*,*).returns(Map("main" -> spark.emptyDataFrame))
 
         runner.executeTest(test, keepGoing = true) should be (Status.FAILED)
+
+        session.shutdown()
     }
 
     it should "stop processing on the first exception" in {
@@ -375,6 +383,8 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (fixture.phases _).expects().atLeastOnce().returns(Set(Phase.BUILD, Phase.VERIFY, Phase.TRUNCATE, Phase.DESTROY))
 
         runner.executeTest(test, keepGoing = false) should be (Status.FAILED)
+
+        session.shutdown()
     }
 
     it should "ignore exceptions in assertions if told so" in {
@@ -414,6 +424,8 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (assertion2.execute _).expects(*,*).returns(AssertionResult(assertion2, Instant.now()))
 
         runner.executeTest(test, keepGoing = true) should be (Status.FAILED)
+
+        session.shutdown()
     }
 
     it should "stop on the first exceptions in assertions if told so" in {
@@ -451,5 +463,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (assertion2.inputs _).expects().returns(Seq())
 
         runner.executeTest(test, keepGoing = false) should be (Status.FAILED)
+
+        session.shutdown()
     }
 }

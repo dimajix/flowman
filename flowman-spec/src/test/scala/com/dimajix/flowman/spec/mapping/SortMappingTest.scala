@@ -60,6 +60,8 @@ class SortMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             "c1" -> SortOrder(Ascending, NullsFirst),
             "c2" -> SortOrder(Descending, NullsFirst)
         ))
+
+        session.shutdown()
     }
 
     it should "work" in {
@@ -98,5 +100,7 @@ class SortMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             (5,2,5),
             (2,2,2)
         ))
+
+        session.shutdown()
     }
 }

@@ -32,6 +32,8 @@ class FileStoreTest extends AnyFlatSpec with Matchers {
         val store = new FileStore(root)
 
         val result = store.listProjects()
-        println(result)
+        //println(result)
+
+        session.shutdown()
     }
 }

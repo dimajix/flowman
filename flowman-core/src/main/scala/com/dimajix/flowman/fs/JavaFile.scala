@@ -25,31 +25,61 @@ import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.util.Comparator
 import java.util.function.Consumer
-import java.util.regex.Pattern
 import java.util.stream.Collectors
-
 import scala.collection.JavaConverters._
 
 import org.apache.hadoop.fs
 
+import com.dimajix.flowman.fs.FileSystem.WINDOWS
+
 
 object JavaFile {
-    private val HAS_DRIVE_LETTER_SPECIFIER = Pattern.compile("^/?[a-zA-Z]:")
-    private def hasWindowsDrive(path: String) = FileSystem.WINDOWS && HAS_DRIVE_LETTER_SPECIFIER.matcher(path).find
+    def apply(uri:URI) : JavaFile = {
+        val scheme = uri.getScheme
+        if (scheme == "jar") {
+            // Drop trailing "/"
+            val ssp = uri.getSchemeSpecificPart
+            val lastEx = ssp.lastIndexOf("!")
+            val lastSep = ssp.lastIndexOf(FileSystem.SEPARATOR)
+            if (lastSep == ssp.length - 1 && lastSep > lastEx + 1 && lastEx > 0) {
+                new JavaFile(Paths.get(new URI(scheme, ssp.dropRight(1), null)))
+            }
+            else {
+                new JavaFile(Paths.get(uri))
+            }
+        }
+        else {
+            new JavaFile(Paths.get(uri))
+        }
+    }
 }
 
 final case class JavaFile(jpath:Path) extends File {
-    override def toString: String = {
-        val rawPath = jpath.toString
-        if (JavaFile.hasWindowsDrive(rawPath))
-            "file:/" + rawPath
-        else
-            "file:" + rawPath
+    private lazy val _ssp = jpath.toUri.getSchemeSpecificPart.replace("file:///", "file:/")
+    private lazy val _str = {
+        val scheme = jpath.getFileSystem.provider().getScheme
+        if (scheme == "jar") {
+            "jar:" + _ssp
+        }
+        else {
+            val rawPath =
+                if (WINDOWS)
+                    jpath.toString.replace('\\', '/')
+                else
+                    jpath.toString
+
+            if (FileSystem.hasWindowsDrive(rawPath))
+                scheme + ":/" + rawPath
+            else
+                scheme + ":" + rawPath
+        }
     }
+
+    override def toString: String = _str
 
     override def path: fs.Path = new fs.Path(uri)
 
-    override def uri : URI = new URI(jpath.toUri.toString.replace("file:///", "file:/"))
+    override def uri : URI = new URI(jpath.getFileSystem.provider().getScheme, _ssp, null)
 
     /**
      * Creates a new File object by attaching a child entry
@@ -60,9 +90,9 @@ final case class JavaFile(jpath:Path) extends File {
     override def /(sub: String): File = {
         val uri = new URI(sub)
         if (uri.isAbsolute)
-            JavaFile(Paths.get(uri).normalize().toAbsolutePath)
+            new JavaFile(Paths.get(uri).normalize())
         else
-            JavaFile(jpath.resolve(sub))
+            new JavaFile(jpath.resolve(sub))
     }
 
     /**
@@ -82,7 +112,8 @@ final case class JavaFile(jpath:Path) extends File {
     }
 
     /**
-     * Returns the parent directory of the File
+     * Returns the parent directory of the File. If this is already a root path (i.e. no parent is available),
+     * this function returns null
      *
      * @return
      */
@@ -91,7 +122,7 @@ final case class JavaFile(jpath:Path) extends File {
         if (p != null)
             JavaFile(p)
         else
-            this
+            null
     }
 
     /**
@@ -117,14 +148,28 @@ final case class JavaFile(jpath:Path) extends File {
         .collect(Collectors.toList[Path])
         .asScala
         .sortBy(_.toString)
-        .map(JavaFile.apply)
+        .map(new JavaFile(_))
 
     override def glob(pattern: String): Seq[File] = {
         val stream = Files.newDirectoryStream(jpath, pattern)
-        stream.asScala
-            .toSeq
-            .sortBy(_.toString)
-            .map(x => JavaFile(x))
+        try {
+            stream.asScala
+                .map(new JavaFile(_))
+                .toList
+        }
+        finally {
+            stream.close()
+        }
+    }
+
+    override def exists(pattern:String) : Boolean = {
+        val stream = Files.newDirectoryStream(jpath, pattern)
+        try {
+            stream.iterator().hasNext
+        }
+        finally {
+            stream.close()
+        }
     }
 
     /**
@@ -177,7 +222,7 @@ final case class JavaFile(jpath:Path) extends File {
      * @return
      */
     override def open(): InputStream = {
-        Files.newInputStream(jpath)
+        Files.newInputStream(jpath, StandardOpenOption.READ)
     }
 
     /**
@@ -235,7 +280,7 @@ final case class JavaFile(jpath:Path) extends File {
      * @param suffix
      * @return
      */
-    override def withSuffix(suffix: String): File = JavaFile(jpath.getParent.resolve(jpath.getFileName + suffix))
+    override def withSuffix(suffix: String): File = new JavaFile(jpath.getParent.resolve(jpath.getFileName + suffix))
 
     override def withName(name: String): File = JavaFile(jpath.getParent.resolve(name))
 }

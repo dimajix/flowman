@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.JobCoordinator
 import com.dimajix.flowman.execution.Lifecycle
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
@@ -55,6 +56,8 @@ sealed class PhaseCommand(phase:Phase) extends Command {
     var dryRun: Boolean = false
     @Option(name = "-nl", aliases=Array("--no-lifecycle"), usage = "only executes the specific phase and not the whole lifecycle")
     var noLifecycle: Boolean = false
+    @Option(name = "-j", aliases = Array("--jobs"), usage = "number of jobs to run in parallel")
+    var parallelism: Int = 1
 
     override def execute(session: Session, project: Project, context:Context) : Status = {
         val args = splitSettings(this.args).toMap
@@ -67,24 +70,14 @@ sealed class PhaseCommand(phase:Phase) extends Command {
                 logger.error(s"Error instantiating job '$job':\n  ${reasons(e)}")
                 Status.FAILED
             case Success(job) =>
-                executeJob(session, job, job.parseArguments(args))
-        }
-    }
+                val lifecycle =
+                    if (noLifecycle)
+                        Seq(phase)
+                    else
+                        Lifecycle.ofPhase(phase)
 
-    private def executeJob(session: Session, job:Job, args:Map[String,FieldValue]) : Status = {
-        val lifecycle =
-            if (noLifecycle)
-                Seq(phase)
-            else
-                Lifecycle.ofPhase(phase)
-
-        val jobDescription = job.description.map("(" + _ + ")").getOrElse("")
-        val jobArgs = args.map(kv => kv._1 + "=" + kv._2).mkString(", ")
-        logger.info(s"Executing job '${job.name}' $jobDescription with args $jobArgs")
-
-        Status.ofAll(job.interpolate(args), keepGoing=keepGoing) { args =>
-            val runner = session.runner
-            runner.executeJob(job, lifecycle, args, targets.map(_.r), dirtyTargets=dirtyTargets.map(_.r), force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=true)
+                val coordinator = new JobCoordinator(session, force, keepGoing, dryRun, parallelism)
+                coordinator.execute(job, lifecycle, job.parseArguments(args), targets.map(_.r), dirtyTargets = dirtyTargets.map(_.r))
         }
     }
 }

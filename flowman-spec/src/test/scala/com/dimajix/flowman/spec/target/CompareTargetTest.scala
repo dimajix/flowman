@@ -80,6 +80,8 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         result.numSuccesses should be (0)
         result.numExceptions should be (0)
         result.children.size should be (0)
+
+        session.shutdown()
     }
 
     it should "fail on non existing actual file" in {
@@ -112,6 +114,8 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         result.numSuccesses should be (0)
         result.numExceptions should be (1)
         result.children.size should be (0)
+
+        session.shutdown()
     }
 
     it should "throw an exception on an non existing expected file" in {
@@ -135,6 +139,8 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         result.numSuccesses should be (0)
         result.numExceptions should be (1)
         result.children.size should be (0)
+
+        session.shutdown()
     }
 
     it should "work with a directory as expected" in {
@@ -158,6 +164,8 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         result.numSuccesses should be (0)
         result.numExceptions should be (0)
         result.children.size should be (0)
+
+        session.shutdown()
     }
 
     it should "work with a directory as actual" in {
@@ -181,6 +189,8 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         result.numSuccesses should be (0)
         result.numExceptions should be (0)
         result.children.size should be (0)
+
+        session.shutdown()
     }
 
     it should "work with a directory as expected and actual" in {
@@ -204,5 +214,7 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         result.numSuccesses should be (0)
         result.numExceptions should be (0)
         result.children.size should be (0)
+
+        session.shutdown()
     }
 }

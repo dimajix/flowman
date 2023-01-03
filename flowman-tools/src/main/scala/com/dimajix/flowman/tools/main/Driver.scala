@@ -20,8 +20,6 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import org.apache.hadoop.fs.Path
-
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.tools.Tool

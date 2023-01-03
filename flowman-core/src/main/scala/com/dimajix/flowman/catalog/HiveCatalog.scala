@@ -57,7 +57,7 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
-import com.dimajix.flowman.fs.FileUtils
+import com.dimajix.flowman.fs.HadoopUtils
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.spark.features.hiveVarcharSupported
@@ -211,7 +211,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             table.storage.locationUri.foreach { uri =>
                 val location = new Path(uri)
                 val fs = location.getFileSystem(hadoopConf)
-                FileUtils.createLocation(fs, location)
+                HadoopUtils.createLocation(fs, location)
             }
 
             // Publish table to external catalog
@@ -308,7 +308,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
                 catalog.listPartitions(table.toSpark).foreach { p =>
                     val location = new Path(p.location)
                     val fs = location.getFileSystem(hadoopConf)
-                    FileUtils.deleteLocation(fs, location)
+                    HadoopUtils.deleteLocation(fs, location)
                 }
             }
 
@@ -319,7 +319,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             // Delete location to cleanup any remaining files
             val location = new Path(catalogTable.location)
             val fs = location.getFileSystem(hadoopConf)
-            FileUtils.deleteLocation(fs, location)
+            HadoopUtils.deleteLocation(fs, location)
 
             // Remove table from external catalog
             callExternalCatalogs(s"DROP TABLE $table")(_.dropTable(catalogTable))
@@ -347,7 +347,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         // Then cleanup directory from any remainders
         val location = new Path(catalogTable.location)
         val fs = location.getFileSystem(hadoopConf)
-        FileUtils.truncateLocation(fs, location)
+        HadoopUtils.truncateLocation(fs, location)
 
         spark.catalog.refreshTable(table.quotedString)
         callExternalCatalogs(s"TRUNCATE TABLE $table")(_.truncateTable(catalogTable))
@@ -587,7 +587,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         logger.info(s"Truncating partition ${partition.spec} of Hive table $table")
         val location = getPartitionLocation(table, partition)
         val fs = location.getFileSystem(hadoopConf)
-        FileUtils.truncateLocation(fs, location)
+        HadoopUtils.truncateLocation(fs, location)
 
         callExternalCatalogs(s"TRUNCATE PARTITION $table") { ec =>
             val sparkPartition = partition.mapValues(_.toString).toMap
@@ -637,7 +637,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         catalogPartitions.foreach { partition =>
             val location = new Path(partition.location)
             val fs = location.getFileSystem(hadoopConf)
-            FileUtils.deleteLocation(fs, location)
+            HadoopUtils.deleteLocation(fs, location)
         }
 
         // Note that "purge" is not supported with Hive < 1.2

@@ -29,8 +29,11 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
 import com.dimajix.common.Unknown
+import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
+import com.dimajix.flowman.execution.BuildPolicy
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
@@ -77,6 +80,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         val rt = instance.asInstanceOf[RelationTarget]
         rt.relation.name should be ("abc")
         rt.relation.identifier should be (RelationIdentifier("abc"))
+
+        session.shutdown()
     }
 
     it should "provide correct dependencies" in {
@@ -118,6 +123,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         target.provides(Phase.VERIFY) should be (Set())
         target.provides(Phase.TRUNCATE) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
+
+        session.shutdown()
     }
 
     it should "work without a mapping" in {
@@ -153,6 +160,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         target.provides(Phase.VERIFY) should be (Set())
         target.provides(Phase.TRUNCATE) should be (Set())
         target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
+
+        session.shutdown()
     }
 
     it should "support the whole lifecycle" in {
@@ -270,6 +279,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         output.exists(execution) should be (No)
         output.loaded(execution) should be (No)
         target.dirty(execution, Phase.DESTROY) should be (No)
+
+        session.shutdown()
     }
 
     it should "support the whole lifecycle without a mapping" in {
@@ -347,6 +358,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         output.exists(execution) should be(No)
         output.loaded(execution) should be(No)
         target.dirty(execution, Phase.DESTROY) should be(No)
+
+        session.shutdown()
     }
 
     it should "count the number of records" in {
@@ -395,6 +408,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
 
         target.execute(executor, Phase.BUILD)
         metric.value should be (4)
+
+        session.shutdown()
     }
 
     it should "behave correctly with VerifyPolicy=EMPTY_AS_FAILURE" in {
@@ -428,6 +443,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
 
         (relation.loaded _).expects(*,*).returns(No)
         target.execute(executor, Phase.VERIFY).status should be(Status.FAILED)
+
+        session.shutdown()
     }
 
     it should "behave correctly with VerifyPolicy=EMPTY_AS_SUCCESS" in {
@@ -470,6 +487,8 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         (relation.loaded _).expects(*,*).returns(No)
         (relation.exists _).expects(*).returns(No)
         target.execute(executor, Phase.VERIFY).status should be(Status.FAILED)
+
+        session.shutdown()
     }
 
     it should "behave correctly with VerifyPolicy=EMPTY_AS_SUCCESS_WITH_ERRORS" in {
@@ -512,5 +531,251 @@ class RelationTargetTest extends AnyFlatSpec with Matchers with MockFactory with
         (relation.loaded _).expects(*,*).returns(No)
         (relation.exists _).expects(*).returns(No)
         target.execute(executor, Phase.VERIFY).status should be(Status.FAILED)
+
+        session.shutdown()
+    }
+
+    it should "support buildPolicy ALWAYS" in {
+        val relationGen = mock[Prototype[Relation]]
+        val relation = mock[Relation]
+        val project = Project(
+            name = "test",
+            relations = Map("relation" -> relationGen)
+        )
+
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .withConfig("flowman.default.target.verifyPolicy", "EMPTY_AS_SUCCESS_WITH_ERRORS")
+            .build()
+        val executor = session.execution
+        val context = session.getContext(project)
+        (relationGen.instantiate _).expects(context, None).returns(relation)
+
+        val target1 = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        ).copy(buildPolicy = BuildPolicy.ALWAYS)
+        target1.dirty(executor, Phase.BUILD) should be (Yes)
+        target1.dirty(executor, Phase.BUILD) should be(Yes)
+        target1.dirty(executor, Phase.BUILD) should be(Yes)
+
+        val target2 = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        ).copy(
+            buildPolicy = BuildPolicy.ALWAYS,
+            partition = Map("part" -> "0")
+        )
+        target2.dirty(executor, Phase.BUILD) should be(Yes)
+        target2.dirty(executor, Phase.BUILD) should be(Yes)
+        target2.dirty(executor, Phase.BUILD) should be(Yes)
+
+        session.shutdown()
+    }
+
+    it should "support buildPolicy COMPAT" in {
+        val relationGen = mock[Prototype[Relation]]
+        val relation = mock[Relation]
+        val project = Project(
+            name = "test",
+            relations = Map("relation" -> relationGen)
+        )
+
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .withConfig("flowman.default.target.verifyPolicy", "EMPTY_AS_SUCCESS_WITH_ERRORS")
+            .build()
+        val executor = session.execution
+        val context = session.getContext(project)
+        (relationGen.instantiate _).expects(context, None).returns(relation)
+
+        val target1 = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        ).copy(buildPolicy = BuildPolicy.COMPAT)
+
+        (relation.loaded _).expects(*, *).returns(Yes)
+        target1.dirty(executor, Phase.BUILD) should be(No)
+        (relation.loaded _).expects(*, *).returns(No)
+        target1.dirty(executor, Phase.BUILD) should be(Yes)
+        (relation.loaded _).expects(*, *).returns(Unknown)
+        target1.dirty(executor, Phase.BUILD) should be(Unknown)
+
+        val target2 = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        ).copy(
+            buildPolicy = BuildPolicy.COMPAT,
+            partition = Map("part" -> "0")
+        )
+
+        (relation.loaded _).expects(*, *).returns(Yes)
+        target2.dirty(executor, Phase.BUILD) should be(No)
+        (relation.loaded _).expects(*, *).returns(No)
+        target2.dirty(executor, Phase.BUILD) should be(Yes)
+        (relation.loaded _).expects(*, *).returns(Unknown)
+        target2.dirty(executor, Phase.BUILD) should be(Unknown)
+
+        val target3 = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        ).copy(mode = OutputMode.APPEND)
+
+        target3.dirty(executor, Phase.BUILD) should be(Yes)
+        target3.dirty(executor, Phase.BUILD) should be(Yes)
+        target3.dirty(executor, Phase.BUILD) should be(Yes)
+
+        session.shutdown()
+    }
+
+    it should "support buildPolicy IF_EMPTY" in {
+        val relationGen = mock[Prototype[Relation]]
+        val relation = mock[Relation]
+        val project = Project(
+            name = "test",
+            relations = Map("relation" -> relationGen)
+        )
+
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .withConfig("flowman.default.target.verifyPolicy", "EMPTY_AS_SUCCESS_WITH_ERRORS")
+            .build()
+        val executor = session.execution
+        val context = session.getContext(project)
+        (relationGen.instantiate _).expects(context, None).returns(relation)
+
+        val target1 = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        ).copy(buildPolicy = BuildPolicy.IF_EMPTY)
+
+        (relation.loaded _).expects(*, *).returns(Yes)
+        target1.dirty(executor, Phase.BUILD) should be(No)
+        (relation.loaded _).expects(*, *).returns(No)
+        target1.dirty(executor, Phase.BUILD) should be(Yes)
+        (relation.loaded _).expects(*, *).returns(Unknown)
+        target1.dirty(executor, Phase.BUILD) should be(Unknown)
+
+        val target2 = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        ).copy(
+            buildPolicy = BuildPolicy.IF_EMPTY,
+            partition = Map("part" -> "0")
+        )
+
+        (relation.loaded _).expects(*, *).returns(Yes)
+        target2.dirty(executor, Phase.BUILD) should be(No)
+        (relation.loaded _).expects(*, *).returns(No)
+        target2.dirty(executor, Phase.BUILD) should be(Yes)
+        (relation.loaded _).expects(*, *).returns(Unknown)
+        target2.dirty(executor, Phase.BUILD) should be(Unknown)
+
+        session.shutdown()
+    }
+
+    it should "support buildPolicy IF_TAINTED" in {
+        val relationGen = mock[Prototype[Relation]]
+        val relation = mock[Relation]
+        val project = Project(
+            name = "test",
+            relations = Map("relation" -> relationGen)
+        )
+
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .withConfig("flowman.default.target.verifyPolicy", "EMPTY_AS_SUCCESS_WITH_ERRORS")
+            .build()
+        val executor = session.execution
+        val context = session.getContext(project)
+        (relationGen.instantiate _).expects(context, None).returns(relation)
+
+        val target1 = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        ).copy(buildPolicy = BuildPolicy.IF_TAINTED)
+
+        target1.dirty(executor, Phase.BUILD) should be(No)
+
+        val target2 = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        ).copy(
+            buildPolicy = BuildPolicy.IF_TAINTED,
+            partition = Map("part" -> "0")
+        )
+
+        target2.dirty(executor, Phase.BUILD) should be(No)
+
+        session.shutdown()
+    }
+
+    it should "support buildPolicy SMART" in {
+        val relationGen = mock[Prototype[Relation]]
+        val relation = mock[Relation]
+        val project = Project(
+            name = "test",
+            relations = Map("relation" -> relationGen)
+        )
+
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .withProject(project)
+            .withConfig("flowman.default.target.verifyPolicy", "EMPTY_AS_SUCCESS_WITH_ERRORS")
+            .build()
+        val executor = session.execution
+        val context = session.getContext(project)
+        (relationGen.instantiate _).expects(context, None).returns(relation)
+
+        val target1 = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        ).copy(buildPolicy = BuildPolicy.SMART)
+
+        target1.dirty(executor, Phase.BUILD) should be(Yes)
+        target1.dirty(executor, Phase.BUILD) should be(Yes)
+        target1.dirty(executor, Phase.BUILD) should be(Yes)
+
+        val target2 = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        ).copy(
+            buildPolicy = BuildPolicy.SMART,
+            partition = Map("part" -> "0")
+        )
+
+        (relation.loaded _).expects(*, *).returns(Yes)
+        target2.dirty(executor, Phase.BUILD) should be(No)
+        (relation.loaded _).expects(*, *).returns(No)
+        target2.dirty(executor, Phase.BUILD) should be(Yes)
+        (relation.loaded _).expects(*, *).returns(Unknown)
+        target2.dirty(executor, Phase.BUILD) should be(Unknown)
+
+        val target3 = RelationTarget(
+            context,
+            RelationIdentifier("relation"),
+            MappingOutputIdentifier("mapping")
+        ).copy(mode = OutputMode.APPEND)
+
+        target3.dirty(executor, Phase.BUILD) should be(Yes)
+        target3.dirty(executor, Phase.BUILD) should be(Yes)
+        target3.dirty(executor, Phase.BUILD) should be(Yes)
+
+        session.shutdown()
     }
 }

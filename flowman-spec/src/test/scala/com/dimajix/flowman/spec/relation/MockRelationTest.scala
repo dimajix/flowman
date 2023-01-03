@@ -81,6 +81,8 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
             ArrayRecord("cat","","7"),
             ArrayRecord("dog",null,"8")
         ))
+
+        session.shutdown()
     }
 
     it should "support create, write and destroy" in {
@@ -139,6 +141,8 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
         relation.destroy(executor)
         relation.exists(executor) should be (No)
         relation.loaded(executor, Map()) should be (No)
+
+        session.shutdown()
     }
 
     it should "read empty DataFrames" in {
@@ -187,6 +191,8 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
         val df1 = relation.read(executor, Map())
         df1.schema should be (new StructType(schema.fields).sparkType)
         df1.count() should be (0)
+
+        session.shutdown()
     }
 
     it should "work nicely with overrides" in {
@@ -235,6 +241,8 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
         (baseRelation.fields _).expects().atLeastOnce().returns(schema.fields)
         relation.fields should be (schema.fields)
         relation.describe(executor) should be (new StructType(schema.fields))
+
+        session.shutdown()
     }
 
     it should "return provided records as a DataFrame" in {
@@ -284,5 +292,7 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
             Row("lolo", 13),
             Row(null,null)
         ))
+
+        session.shutdown()
     }
 }

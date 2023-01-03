@@ -85,6 +85,8 @@ class AggregateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
         result(0) should be (Row("c1_v1", "c2_v1", 25l, 41.0, 41.0, 41.0, 41.0))
         result(1) should be (Row("c1_v2", "c2_v1", 118l, 123.0, 123.0, 123.0, 123.0))
         result(2) should be (Row("c1_v2", "c2_v2", 113l, 118.0, 118.0, 118.0, 118.0))
+
+        session.shutdown()
     }
 
     it should "support expressions in dimensions" in {
@@ -127,6 +129,8 @@ class AggregateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
         result(0) should be (Row("c1_v1", "C2_V1", 25l))
         result(1) should be (Row("c1_v2", "C2_V1", 118l))
         result(2) should be (Row("c1_v2", "C2_V2", 113l))
+
+        session.shutdown()
     }
 
     it should "provide an appropriate description" in {
@@ -161,6 +165,8 @@ class AggregateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
             ft.Field("avg_gross_amount", ft.DoubleType, description=Some("The gross amount (AVG)")),
             ft.Field("min_gross_amount", ft.IntegerType, description=Some("The gross amount (MIN)"))
         ))))
+
+        session.shutdown()
     }
 
     "An appropriate project" should "be readable from YML" in {
@@ -217,5 +223,7 @@ class AggregateMappingTest extends AnyFlatSpec with Matchers with LocalSparkSess
         result(0) should be (Row("c1_v1", "c2_v1", 25l, 41.0))
         result(1) should be (Row("c1_v2", "c2_v1", 118l, 123.0))
         result(2) should be (Row("c1_v2", "c2_v2", 113l, 118.0))
+
+        session.shutdown()
     }
 }

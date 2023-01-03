@@ -25,8 +25,10 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.common.No
+import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
 import com.dimajix.flowman.catalog.TableIdentifier
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
@@ -44,7 +46,25 @@ import com.dimajix.spark.testing.LocalSparkSession
 
 
 class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession {
-  "A HiveViewRelation" should "be creatable from a mapping" in {
+    implicit class HiveViewRelationExt(rel: HiveViewRelation) {
+        def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
+            rel.copy(migrationPolicy = policy).conforms(execution)
+        }
+        def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
+            rel.copy(migrationPolicy = policy, migrationStrategy = strategy).migrate(execution)
+        }
+    }
+    implicit class HiveTableRelationExt(rel: HiveTableRelation) {
+        def conforms(execution: Execution, policy: MigrationPolicy): Trilean = {
+            rel.copy(migrationPolicy = policy).conforms(execution)
+        }
+        def migrate(execution: Execution, policy: MigrationPolicy, strategy: MigrationStrategy = MigrationStrategy.ALTER_REPLACE): Unit = {
+            rel.copy(migrationPolicy = policy, migrationStrategy = strategy).migrate(execution)
+        }
+    }
+
+
+    "A HiveViewRelation" should "be creatable from a mapping" in {
     val spec =
       """
         |relations:
@@ -140,6 +160,8 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
     session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (false)
 
     context.getRelation(RelationIdentifier("t0")).destroy(execution)
+
+    session.shutdown()
   }
 
   it should "work with non-trivial mappings" in {
@@ -258,6 +280,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
 
     context.getRelation(RelationIdentifier("t0")).destroy(execution)
     context.getRelation(RelationIdentifier("t1")).destroy(execution)
+    session.shutdown()
   }
 
     it should "work with an external file" in {
@@ -290,7 +313,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         val relation = HiveViewRelation(
             Relation.Properties(context),
             table = TableIdentifier("v0", Some("default")),
-            file = Some(new Path(basedir, "project/relation/some-view.sql"))
+            file = Some(context.fs.file(new Path(basedir, "project/relation/some-view.sql")))
         )
 
         relation.provides(Operation.CREATE) should be (Set(ResourceIdentifier.ofHiveTable("v0", Some("default"))))
@@ -346,6 +369,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         session.catalog.tableExists(TableIdentifier("v0", Some("default"))) should be (false)
 
         context.getRelation(RelationIdentifier("t0")).destroy(execution)
+        session.shutdown()
     }
 
     it should "replace an existing Hive table with a Hive view" in {
@@ -411,8 +435,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         view.conforms(execution, MigrationPolicy.STRICT) should be (No)
 
         // == Create VIEW ============================================================================================
-        a[TableAlreadyExistsException] should be thrownBy (view.create(execution, ifNotExists = false))
-        table.create(execution, ifNotExists = true)
+        a[TableAlreadyExistsException] should be thrownBy (view.create(execution))
         view.exists(execution) should be (Yes)
         view.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         view.conforms(execution, MigrationPolicy.STRICT) should be (No)
@@ -422,8 +445,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         session.catalog.getTable(TableIdentifier("table_or_view", Some("default"))).tableType should be (CatalogTableType.MANAGED)
 
         // == Create TABLE ============================================================================================
-        a[TableAlreadyExistsException] should be thrownBy (table.create(execution, ifNotExists = false))
-        table.create(execution, ifNotExists = true)
+        a[TableAlreadyExistsException] should be thrownBy (table.create(execution))
         view.exists(execution) should be (Yes)
         view.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         view.conforms(execution, MigrationPolicy.STRICT) should be (No)
@@ -453,14 +475,14 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         session.catalog.tableExists(TableIdentifier("table_or_view", Some("default"))) should be (false)
 
         // == Destroy VIEW ==========================================================================================
-        view.destroy(execution, ifExists = true)
-        a[NoSuchTableException] should be thrownBy(view.destroy(execution, ifExists = false))
+        a[NoSuchTableException] should be thrownBy(view.destroy(execution))
 
         // == Destroy TABLE ===========================================================================================
-        table.destroy(execution, ifExists = true)
-        a[NoSuchTableException] should be thrownBy(table.destroy(execution, ifExists = false))
+        a[NoSuchTableException] should be thrownBy(table.destroy(execution))
 
         context.getRelation(RelationIdentifier("t0")).destroy(execution)
+
+        session.shutdown()
     }
 
     it should "migrate a view if the schema changes" in {
@@ -524,7 +546,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table.schema.get.sparkSchema)
 
         // == Replace TABLE ===========================================================================================
-        table.destroy(execution, ifExists = true)
+        table.destroy(execution)
         table2.create(execution)
         table2.exists(execution) should be (Yes)
         table.conforms(execution, MigrationPolicy.RELAXED) should be (No)
@@ -556,10 +578,12 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table2.schema.get.sparkSchema)
 
         // == Destroy TABLE ===========================================================================================
-        view.destroy(execution, ifExists = true)
-        table.destroy(execution, ifExists = true)
+        view.destroy(execution)
+        table.destroy(execution)
         view.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         view.conforms(execution, MigrationPolicy.STRICT) should be (No)
+
+        session.shutdown()
     }
 
     it should "migrate a view if a column comment changes" in {
@@ -635,7 +659,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table.schema.get.sparkSchema)
 
         // == Replace TABLE ===========================================================================================
-        table.destroy(execution, ifExists = true)
+        table.destroy(execution)
         table2.create(execution)
         table2.exists(execution) should be (Yes)
         table.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
@@ -673,7 +697,7 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table2.schema.get.sparkSchema)
 
         // == Replace TABLE ===========================================================================================
-        table2.destroy(execution, ifExists = true)
+        table2.destroy(execution)
         table3.create(execution)
         table3.exists(execution) should be (Yes)
         table.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
@@ -711,9 +735,11 @@ class HiveViewRelationTest extends AnyFlatSpec with Matchers with LocalSparkSess
         session.catalog.getTable(TableIdentifier("view", Some("default"))).schema should be (table3.schema.get.sparkSchema)
 
         // == Destroy TABLE ===========================================================================================
-        view.destroy(execution, ifExists = true)
-        table.destroy(execution, ifExists = true)
+        view.destroy(execution)
+        table.destroy(execution)
         view.conforms(execution, MigrationPolicy.RELAXED) should be (No)
         view.conforms(execution, MigrationPolicy.STRICT) should be (No)
+
+        session.shutdown()
     }
 }

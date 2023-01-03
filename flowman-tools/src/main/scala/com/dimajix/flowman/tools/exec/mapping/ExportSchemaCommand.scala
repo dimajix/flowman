@@ -24,6 +24,7 @@ import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.Option
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.NoSuchMappingException
 import com.dimajix.flowman.execution.Session
@@ -73,7 +74,7 @@ class ExportSchemaCommand extends Command {
                 logger.error(s"Cannot resolve mapping '${ex.mapping}'")
                 Status.FAILED
             case Failure(e) =>
-                logger.error(s"Caught exception while save the schema of mapping '$mapping'", e)
+                logger.error(s"Caught exception while save the schema of mapping '$mapping':\n  ${reasons(e)}")
                 Status.FAILED
         }
     }

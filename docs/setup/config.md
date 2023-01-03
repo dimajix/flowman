@@ -56,6 +56,9 @@ Configure the executor to use. The default `SimpleExecutor` will process all tar
 - `flowman.execution.executor.parallelism` *(type: int)* *(default: 4)* (since Flowman 0.16.0)
   The number of targets to be executed in parallel, when the `ParallelExecutor` is used.
 
+- `flowman.execution.check.parallelism` *(type: int)* *(default: 1)* (since Flowman 0.29.1)
+  The number of data quality checks to be executed in parallel.
+
 - `flowman.execution.mapping.parallelism` *(type: int)* *(default: 1)* (since Flowman 0.19.0)
 The number of mappings to be processed in parallel. Increasing this number may help in scenarios where many 
 relations are read from and their initial setup is slow (for example due to slow directory listings). With the
@@ -146,6 +149,14 @@ Sets the default target output mode. Possible values are
   - *`IGNORE_IF_EXISTS`*: Silently skips the output if it already exists.
   - *`ERROR_IF_EXISTS`*: Throws an error if the output already exists
 Note that you can still explicitly specify a different output mode in each target.
+
+- `flowman.default.target.buildPolicy` *(type: string)* *(default:`SMART`)*
+Sets the default target build policy, which takes effect in the `BUILD` phase. Possible values are
+  - *`ALWAYS`*: A target is always considered to be dirty.
+  - *`IF_EMPTY`*: A target is considered to be dirty, if the specified target partition does not exist (or is empty).
+  - *`IF_TAINTED`*: A target is considered to be dirty, only if it is tainted by a dirty dependency.
+  - *`SMART`*: A target is considered to be dirty, if the target partition is empty, or when the output mode is set to `APPEND` or when no partition is specified (full overwrite)
+  - *`COMPAT`*: A target is considered to be dirty, if the target is empty, or when the output mode is set to `APPEND`. This setting provides the same behaviour as Flowman before version 0.30.0.
     
 - `flowman.default.target.rebalance` *(type: boolean)* *(default:false)* (since Flowman 0.15.0)
 If set to `true`, Flowman will try to write a similar records per each output file. Rebelancing might be an expensive

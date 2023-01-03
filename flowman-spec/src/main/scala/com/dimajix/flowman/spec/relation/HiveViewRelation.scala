@@ -16,13 +16,8 @@
 
 package com.dimajix.flowman.spec.relation
 
-import java.io.StringWriter
-import java.nio.charset.Charset
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonPropertyDescription
-import org.apache.commons.io.IOUtils
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
@@ -39,7 +34,10 @@ import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.fs.FileUtils
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.model.MigratableRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.flowman.model.RegexResourceIdentifier
@@ -55,11 +53,13 @@ import com.dimajix.spark.sql.catalyst.SqlBuilder
 case class HiveViewRelation(
     override val instanceProperties:Relation.Properties,
     override val table: TableIdentifier,
-    override val partitions: Seq[PartitionField] = Seq(),
+    override val partitions: Seq[PartitionField] = Seq.empty,
     sql: Option[String] = None,
     mapping: Option[MappingOutputIdentifier] = None,
-    file: Option[Path] = None
-) extends HiveRelation {
+    file: Option[File] = None,
+    override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
+    override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
+) extends HiveRelation with MigratableRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveViewRelation])
     private val resource = ResourceIdentifier.ofHiveTable(table)
 
@@ -138,7 +138,7 @@ case class HiveViewRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+    override def conforms(execution: Execution): Trilean = {
         val catalog = execution.catalog
         if (catalog.tableExists(table)) {
             val newSelect = getSelect(execution)
@@ -177,14 +177,12 @@ case class HiveViewRelation(
      *
      * @param execution
      */
-    override def create(execution:Execution, ifNotExists:Boolean=false) : Unit = {
+    override def create(execution:Execution) : Unit = {
+        logger.info(s"Creating Hive view relation '$identifier' with VIEW $table")
         val catalog = execution.catalog
-        if (!ifNotExists || !catalog.tableExists(table)) {
-            logger.info(s"Creating Hive view relation '$identifier' with VIEW $table")
-            val select = getSelect(execution)
-            catalog.createView(table, select, ifNotExists)
-            execution.refreshResource(resource)
-        }
+        val select = getSelect(execution)
+        catalog.createView(table, select, false)
+        execution.refreshResource(resource)
     }
 
     /**
@@ -192,22 +190,22 @@ case class HiveViewRelation(
      * definition actually changed.
      * @param execution
      */
-    override def migrate(execution:Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+    override def migrate(execution:Execution) : Unit = {
         val catalog = execution.catalog
         if (catalog.tableExists(table)) {
             val newSelect = getSelect(execution)
             val curTable = catalog.getTable(table)
             // Check if current table is a VIEW or a TABLE
             if (curTable.tableType == CatalogTableType.VIEW) {
-                migrateFromView(execution, curTable, newSelect, migrationPolicy, migrationStrategy)
+                migrateFromView(execution, curTable, newSelect)
             }
             else {
-                migrateFromTable(execution, newSelect, migrationStrategy)
+                migrateFromTable(execution, newSelect)
             }
         }
     }
 
-    private def migrateFromView(execution:Execution, curTable:CatalogTable, newSelect:String, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+    private def migrateFromView(execution:Execution, curTable:CatalogTable, newSelect:String) : Unit = {
         lazy val curSchema = normalizeSchema(curTable.schema, migrationPolicy)
         lazy val newSchema = normalizeSchema(execution.spark.sql(newSelect).schema, migrationPolicy)
         if (!curTable.viewText.contains(newSelect) || curSchema != newSchema) {
@@ -226,7 +224,7 @@ case class HiveViewRelation(
         }
     }
 
-    private def migrateFromTable(execution:Execution, newSelect:String, migrationStrategy:MigrationStrategy) : Unit = {
+    private def migrateFromTable(execution:Execution, newSelect:String) : Unit = {
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for HiveView relation '$identifier' from TABLE to a VIEW $table, but migrations are disabled.")
@@ -246,13 +244,11 @@ case class HiveViewRelation(
      * This will drop the corresponding Hive view
      * @param execution
      */
-    override def destroy(execution:Execution, ifExists:Boolean=false) : Unit = {
+    override def destroy(execution:Execution) : Unit = {
+        logger.info(s"Destroying Hive view relation '$identifier' with VIEW $table")
         val catalog = execution.catalog
-        if (!ifExists || catalog.tableExists(table)) {
-            logger.info(s"Destroying Hive view relation '$identifier' with VIEW $table")
-            catalog.dropView(table)
-            execution.refreshResource(resource)
-        }
+        catalog.dropView(table)
+        execution.refreshResource(resource)
     }
 
     private def getSelect(executor: Execution) : String = {
@@ -272,16 +268,7 @@ case class HiveViewRelation(
     private lazy val statement : Option[String] = {
         sql
             .orElse(file.map { f =>
-                val fs = context.fs
-                val input = fs.file(f).open()
-                try {
-                    val writer = new StringWriter()
-                    IOUtils.copy(input, writer, Charset.forName("UTF-8"))
-                    writer.toString
-                }
-                finally {
-                    input.close()
-                }
+                FileUtils.toString(f)
             })
     }
 
@@ -302,7 +289,7 @@ case class HiveViewRelation(
 
 
 
-class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
+class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec with MigratableRelationSpec {
     @JsonPropertyDescription("Name of the Hive database")
     @JsonProperty(value="database", required = false) private var database: Option[String] = None
     @JsonPropertyDescription("Name of the Hive view")
@@ -325,7 +312,9 @@ class HiveViewRelationSpec extends RelationSpec with PartitionedRelationSpec{
             partitions.map(_.instantiate(context)),
             context.evaluate(sql),
             context.evaluate(mapping).map(MappingOutputIdentifier.parse),
-            context.evaluate(file).map(p => new Path(p))
+            context.evaluate(file).map(p => context.fs.file(p)),
+            evalMigrationPolicy(context),
+            evalMigrationStrategy(context)
         )
     }
 }

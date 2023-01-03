@@ -62,3 +62,8 @@ during the `DESTROY` phase.
 * `DESTROY` - This will also drop the relation itself and all its content.
 
 Read more about [execution phases](../../concepts/lifecycle.md).
+
+
+## Dirty Condition
+A `drop` target is considered being dirty during the `CREATE` and `DESTROY` phase as long as the target relation
+physically exists.

@@ -18,11 +18,11 @@ package com.dimajix.flowman.spec.schema
 
 import java.net.URL
 
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.types.DataType
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
 import com.dimajix.flowman.types.Field
@@ -30,7 +30,7 @@ import com.dimajix.flowman.types.Field
 
 case class SparkSchema(
     instanceProperties:Schema.Properties,
-    override val file: Option[Path],
+    override val file: Option[File],
     override val url: Option[URL],
     override val spec: Option[String]
 ) extends ExternalSchema {
@@ -62,7 +62,7 @@ class SparkSchemaSpec extends ExternalSchemaSpec {
     override def instantiate(context: Context, properties:Option[Schema.Properties] = None): SparkSchema = {
         SparkSchema(
             instanceProperties(context, ""),
-            file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
+            file.map(context.evaluate).filter(_.nonEmpty).map(p => context.fs.file(p)),
             url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)),
             context.evaluate(spec)
         )

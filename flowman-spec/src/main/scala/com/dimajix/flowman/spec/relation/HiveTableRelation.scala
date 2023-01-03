@@ -52,6 +52,8 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableType
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY
+import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -60,8 +62,9 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
-import com.dimajix.flowman.fs.FileUtils
+import com.dimajix.flowman.fs.HadoopUtils
 import com.dimajix.flowman.jdbc.HiveDialect
+import com.dimajix.flowman.model.MigratableRelation
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.flowman.model.Relation
@@ -83,19 +86,21 @@ object HiveTableRelation {
 case class HiveTableRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
-    override val partitions: Seq[PartitionField] = Seq(),
+    override val partitions: Seq[PartitionField] = Seq.empty,
     override val table: TableIdentifier,
     external: Boolean = false,
     location: Option[Path] = None,
     format: Option[String] = None,
-    options: Map[String,String] = Map(),
+    options: Map[String,String] = Map.empty,
     rowFormat: Option[String] = None,
     inputFormat: Option[String] = None,
     outputFormat: Option[String] = None,
-    properties: Map[String, String] = Map(),
-    serdeProperties: Map[String, String] = Map(),
-    writer: String = "hive"
-) extends HiveRelation with SchemaRelation {
+    properties: Map[String, String] = Map.empty,
+    serdeProperties: Map[String, String] = Map.empty,
+    writer: String = "hive",
+    override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
+    override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
+) extends HiveRelation with SchemaRelation with MigratableRelation {
     protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
     private val resource = ResourceIdentifier.ofHiveTable(table)
 
@@ -197,7 +202,7 @@ case class HiveTableRelation(
             else {
                 val location = catalog.getTableLocation(table)
                 val fs = location.getFileSystem(execution.hadoopConf)
-                FileUtils.isValidHiveData(fs, location)
+                HadoopUtils.isValidHiveData(fs, location)
             }
         }
 
@@ -336,7 +341,7 @@ case class HiveTableRelation(
      * @param execution
      * @return
      */
-    override def conforms(execution: Execution, migrationPolicy: MigrationPolicy): Trilean = {
+    override def conforms(execution: Execution): Trilean = {
         val catalog = execution.catalog
         if (catalog.tableExists(table)) {
             fullSchema match {
@@ -392,7 +397,7 @@ case class HiveTableRelation(
             if (catalog.tableExists(table)) {
                 val location = catalog.getTableLocation(table)
                 val fs = location.getFileSystem(execution.hadoopConf)
-                FileUtils.isValidHiveData(fs, location)
+                HadoopUtils.isValidHiveData(fs, location)
             }
             else {
                 No
@@ -405,87 +410,85 @@ case class HiveTableRelation(
       *
       * @param execution
       */
-    override def create(execution: Execution, ifNotExists:Boolean=false): Unit = {
+    override def create(execution: Execution): Unit = {
         require(execution != null)
 
-        if (!ifNotExists || exists(execution) == No) {
-            val catalogSchema = StructType(fields.map(_.catalogField))
-            logger.info(s"Creating Hive table relation '$identifier' with table $table and schema\n${catalogSchema.treeString}")
-            if (schema.isEmpty) {
-                throw new UnspecifiedSchemaException(identifier)
-            }
-
-            // Create and save Avro schema
-            import HiveTableRelation._
-            if (properties.contains(AVRO_SCHEMA_URL)) {
-                val avroSchemaUrl = properties(AVRO_SCHEMA_URL)
-                logger.info(s"Storing Avro schema at location $avroSchemaUrl")
-                new SchemaWriter(schema.toSeq.flatMap(_.fields))
-                    .format("avro")
-                    .save(execution.fs.file(avroSchemaUrl))
-            }
-
-            val defaultStorage = HiveSerDe.getDefaultStorage(execution.spark.sessionState.conf)
-            val fileStorage: CatalogStorageFormat = if (format.exists(_.nonEmpty)) {
-                HiveSerDe.sourceToSerDe(format.get) match {
-                    case Some(s) =>
-                        CatalogStorageFormat.empty.copy(
-                            inputFormat = s.inputFormat,
-                            outputFormat = s.outputFormat,
-                            serde = s.serde)
-                    case None =>
-                        throw new IllegalArgumentException(s"File format '$format' not supported in Hive relation '$identifier' while creating hive table $table")
-                }
-            }
-            else {
-                CatalogStorageFormat.empty
-            }
-
-            // Selection rule:
-            //  1. use explicitly specified format
-            //  2. use format from file storage
-            //  3. use default format
-            val inputFormat = this.inputFormat
-                .filter(_.nonEmpty)
-                .orElse(fileStorage.inputFormat)
-                .orElse(defaultStorage.inputFormat)
-            val outputFormat = this.outputFormat
-                .filter(_.nonEmpty)
-                .orElse(fileStorage.outputFormat)
-                .orElse(defaultStorage.outputFormat)
-            val rowFormat = this.rowFormat
-                .filter(_.nonEmpty)
-                .orElse(fileStorage.serde)
-                .orElse(defaultStorage.serde)
-
-            // Configure catalog table by assembling all options
-            val catalogTable = CatalogTable(
-                identifier = table.toSpark,
-                tableType =
-                    if (external)
-                        CatalogTableType.EXTERNAL
-                    else
-                        CatalogTableType.MANAGED,
-                storage = CatalogStorageFormat(
-                    locationUri = location.map(_.toUri),
-                    inputFormat = inputFormat,
-                    outputFormat = outputFormat,
-                    serde = rowFormat,
-                    compressed = false,
-                    properties = fileStorage.properties ++ serdeProperties
-                ),
-                provider = Some("hive"),
-                schema = catalogSchema,
-                partitionColumnNames = partitions.map(_.name),
-                properties = properties,
-                comment = description
-            )
-
-            // Create table
-            val catalog = execution.catalog
-            catalog.createTable(catalogTable, false)
-            execution.refreshResource(resource)
+        val catalogSchema = StructType(fields.map(_.catalogField))
+        logger.info(s"Creating Hive table relation '$identifier' with table $table and schema\n${catalogSchema.treeString}")
+        if (schema.isEmpty) {
+            throw new UnspecifiedSchemaException(identifier)
         }
+
+        // Create and save Avro schema
+        import HiveTableRelation._
+        if (properties.contains(AVRO_SCHEMA_URL)) {
+            val avroSchemaUrl = properties(AVRO_SCHEMA_URL)
+            logger.info(s"Storing Avro schema at location $avroSchemaUrl")
+            new SchemaWriter(schema.toSeq.flatMap(_.fields))
+                .format("avro")
+                .save(execution.fs.file(avroSchemaUrl))
+        }
+
+        val defaultStorage = HiveSerDe.getDefaultStorage(execution.spark.sessionState.conf)
+        val fileStorage: CatalogStorageFormat = if (format.exists(_.nonEmpty)) {
+            HiveSerDe.sourceToSerDe(format.get) match {
+                case Some(s) =>
+                    CatalogStorageFormat.empty.copy(
+                        inputFormat = s.inputFormat,
+                        outputFormat = s.outputFormat,
+                        serde = s.serde)
+                case None =>
+                    throw new IllegalArgumentException(s"File format '$format' not supported in Hive relation '$identifier' while creating hive table $table")
+            }
+        }
+        else {
+            CatalogStorageFormat.empty
+        }
+
+        // Selection rule:
+        //  1. use explicitly specified format
+        //  2. use format from file storage
+        //  3. use default format
+        val inputFormat = this.inputFormat
+            .filter(_.nonEmpty)
+            .orElse(fileStorage.inputFormat)
+            .orElse(defaultStorage.inputFormat)
+        val outputFormat = this.outputFormat
+            .filter(_.nonEmpty)
+            .orElse(fileStorage.outputFormat)
+            .orElse(defaultStorage.outputFormat)
+        val rowFormat = this.rowFormat
+            .filter(_.nonEmpty)
+            .orElse(fileStorage.serde)
+            .orElse(defaultStorage.serde)
+
+        // Configure catalog table by assembling all options
+        val catalogTable = CatalogTable(
+            identifier = table.toSpark,
+            tableType =
+                if (external)
+                    CatalogTableType.EXTERNAL
+                else
+                    CatalogTableType.MANAGED,
+            storage = CatalogStorageFormat(
+                locationUri = location.map(_.toUri),
+                inputFormat = inputFormat,
+                outputFormat = outputFormat,
+                serde = rowFormat,
+                compressed = false,
+                properties = fileStorage.properties ++ serdeProperties
+            ),
+            provider = Some("hive"),
+            schema = catalogSchema,
+            partitionColumnNames = partitions.map(_.name),
+            properties = properties,
+            comment = description
+        )
+
+        // Create table
+        val catalog = execution.catalog
+        catalog.createTable(catalogTable, false)
+        execution.refreshResource(resource)
     }
 
     /**
@@ -493,22 +496,20 @@ case class HiveTableRelation(
       *
       * @param execution
       */
-    override def destroy(execution: Execution, ifExists:Boolean): Unit = {
+    override def destroy(execution: Execution): Unit = {
         require(execution != null)
 
         val catalog = execution.catalog
-        if (!ifExists || catalog.tableExists(table)) {
-            logger.info(s"Destroying Hive table relation '$identifier' by dropping table $table")
-            catalog.dropTable(table)
-            execution.refreshResource(resource)
-        }
+        logger.info(s"Destroying Hive table relation '$identifier' by dropping table $table")
+        catalog.dropTable(table)
+        execution.refreshResource(resource)
     }
 
     /**
       * Performs migration of a Hive table by adding new columns
       * @param execution
       */
-    override def migrate(execution: Execution, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy): Unit = {
+    override def migrate(execution: Execution): Unit = {
         require(execution != null)
 
         val catalog = execution.catalog
@@ -516,15 +517,15 @@ case class HiveTableRelation(
             val curTable = catalog.getTable(table)
             // Check if current table is a VIEW or a TABLE
             if (curTable.tableType == CatalogTableType.VIEW) {
-                migrateFromView(execution, migrationStrategy)
+                migrateFromView(execution)
             }
             else {
-                migrateFromTable(execution, curTable, migrationPolicy, migrationStrategy)
+                migrateFromTable(execution, curTable)
             }
         }
     }
 
-    private def migrateFromView(execution:Execution, migrationStrategy:MigrationStrategy) : Unit = {
+    private def migrateFromView(execution:Execution) : Unit = {
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for HiveTable relation '$identifier' from VIEW to a TABLE ${table}, but migrations are disabled.")
@@ -535,12 +536,12 @@ case class HiveTableRelation(
                 logger.warn(s"TABLE target ${table} is currently a VIEW, dropping...")
                 val catalog = execution.catalog
                 catalog.dropView(table, false)
-                create(execution, false)
+                create(execution)
                 execution.refreshResource(resource)
         }
     }
 
-    private def migrateFromTable(execution:Execution, curTable:CatalogTable, migrationPolicy:MigrationPolicy,  migrationStrategy:MigrationStrategy) : Unit = {
+    private def migrateFromTable(execution:Execution, curTable:CatalogTable) : Unit = {
         val sourceTable = TableDefinition.ofTable(curTable)
         val targetSchema =  com.dimajix.flowman.types.StructType(fullSchema.get.fields)
         val targetTable = TableDefinition(
@@ -552,11 +553,11 @@ case class HiveTableRelation(
 
         val requiresMigration = TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
         if (requiresMigration) {
-            doMigration(execution, sourceTable, targetTable, migrationPolicy, migrationStrategy)
+            doMigration(execution, sourceTable, targetTable)
         }
     }
 
-    private def doMigration(execution: Execution, currentTable:TableDefinition, targetTable:TableDefinition, migrationPolicy:MigrationPolicy, migrationStrategy:MigrationStrategy) : Unit = {
+    private def doMigration(execution: Execution, currentTable:TableDefinition, targetTable:TableDefinition) : Unit = {
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for HiveTable relation '$identifier' of Hive table $table, but migrations are disabled.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
@@ -606,8 +607,8 @@ case class HiveTableRelation(
         def recreate() : Unit = {
             logger.info(s"Migrating HiveTable relation '$identifier', this will drop/create the Hive table $table.")
             try {
-                destroy(execution, true)
-                create(execution, true)
+                destroy(execution)
+                create(execution)
             }
             catch {
                 case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
@@ -685,7 +686,7 @@ case class HiveTableRelation(
 
 
 
-class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec {
+class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with PartitionedRelationSpec with MigratableRelationSpec {
     @JsonProperty(value = "database", required = false) private var database: Option[String] = None
     @JsonProperty(value = "table", required = true) private var table: String = ""
     @JsonProperty(value = "external", required = false) private var external: String = "false"
@@ -719,7 +720,9 @@ class HiveTableRelationSpec extends RelationSpec with SchemaRelationSpec with Pa
             context.evaluate(outputFormat),
             context.evaluate(properties),
             context.evaluate(serdeProperties),
-            context.evaluate(writer).toLowerCase(Locale.ROOT)
+            context.evaluate(writer).toLowerCase(Locale.ROOT),
+            evalMigrationPolicy(context),
+            evalMigrationStrategy(context)
         )
     }
 }

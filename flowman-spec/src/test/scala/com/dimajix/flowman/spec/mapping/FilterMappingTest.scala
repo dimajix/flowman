@@ -60,6 +60,8 @@ class FilterMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
         filter.inputs should be (Set(MappingOutputIdentifier("some_mapping")))
         filter.outputs should be (Set("main"))
         filter.condition should be ("value < 50")
+
+        session.shutdown()
     }
 
     it should "work" in {
@@ -80,6 +82,8 @@ class FilterMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("input") -> input))("main")
         result.count() should be (50)
+
+        session.shutdown()
     }
 
     it should "work with nested queries" in {
@@ -103,5 +107,7 @@ class FilterMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
 
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("input") -> input, MappingOutputIdentifier("filter_values") -> values))("main")
         result.count() should be (8)
+
+        session.shutdown()
     }
 }

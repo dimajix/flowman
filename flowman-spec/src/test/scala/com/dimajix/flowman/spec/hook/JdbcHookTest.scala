@@ -113,6 +113,8 @@ class JdbcHookTest extends AnyFlatSpec with Matchers with LocalTempDir {
         hook.targetSuccess should be (Some("target_success/$job/$target"))
         hook.targetSkip should be (Some("target_skip/$job/$target"))
         hook.targetFailure should be (Some("target_failure/$job/$target"))
+
+        session.shutdown()
     }
 
     it should "provide a working job API" in {
@@ -182,6 +184,8 @@ class JdbcHookTest extends AnyFlatSpec with Matchers with LocalTempDir {
             result.next() should be (false)
             result.close()
         }
+
+        session.shutdown()
     }
 
     it should "provide a working target API" in {
@@ -251,5 +255,7 @@ class JdbcHookTest extends AnyFlatSpec with Matchers with LocalTempDir {
             result.next() should be (false)
             result.close()
         }
+
+        session.shutdown()
     }
 }

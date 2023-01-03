@@ -23,6 +23,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.CyclePolicy
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.metric.MetricSink
@@ -33,11 +34,9 @@ import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.NamespaceWrapper
 import com.dimajix.flowman.model.ProjectWrapper
-import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.annotation.TargetType
-import com.dimajix.flowman.spec.relation.MockRelation
 import com.dimajix.flowman.spec.target.TargetSpec
 import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
@@ -88,6 +87,9 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         job.identifier should be (JobIdentifier("project/job"))
         job.description should be (Some("Some Job"))
         job.targets should be (Seq(TargetIdentifier("grabenv")))
+        job.executions should be (Seq.empty)
+
+        session.shutdown()
     }
 
     it should "support parameters" in {
@@ -143,6 +145,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
             "force" -> false,
             "dryRun" -> false)
         )
+
+        session.shutdown()
     }
 
     it should "support overriding global parameters" in {
@@ -181,6 +185,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
             "force" -> false,
             "dryRun" -> false)
         )
+
+        session.shutdown()
     }
 
     it should "support typed parameters" in {
@@ -218,6 +224,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
             "force" -> false,
             "dryRun" -> false)
         )
+
+        session.shutdown()
     }
 
     it should "fail on undefined parameters" in {
@@ -237,6 +245,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         job should not be (null)
         job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Phase.BUILD, Map("p2" -> "v1")))
+
+        session.shutdown()
     }
 
     it should "fail on undefined parameters, even if they are in the environment" in {
@@ -258,6 +268,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         job should not be (null)
         job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Phase.BUILD, Map("p2" -> "v1")))
+
+        session.shutdown()
     }
 
     it should "fail on missing parameters" in {
@@ -277,6 +289,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         job should not be (null)
         job.execute(executor, Phase.BUILD, Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
         a[IllegalArgumentException] shouldBe thrownBy(job.execute(executor, Phase.BUILD, Map()))
+
+        session.shutdown()
     }
 
     it should "return correct arguments" in {
@@ -302,6 +316,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         job.arguments(Map("p1" -> "lala")) should be (Map("p1" -> "lala", "p2" -> "v2", "p3" -> 7))
         job.arguments(Map("p1" -> "xyz", "p2" -> "lala")) should be (Map("p1" -> "xyz", "p2" -> "lala", "p3" -> 7))
         an[IllegalArgumentException] should be thrownBy(job.arguments(Map("p1" -> "xyz", "p4" -> "lala")))
+
+        session.shutdown()
     }
 
     it should "support environment" in {
@@ -343,6 +359,8 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
             "force" -> false,
             "dryRun" -> false)
         )
+
+        session.shutdown()
     }
 
     it should "support extending other jobs" in {
@@ -398,6 +416,44 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
             "force" -> false,
             "dryRun" -> false)
         )
+
+        session.shutdown()
+    }
+
+    it should "support executions" in {
+        val spec =
+            """
+              |jobs:
+              |  main:
+              |    executions:
+              |      - phase: create
+              |        cycle: first
+              |      - phase: build
+              |        cycle: always
+              |        targets:
+              |          - .*_daily
+              |      - phase: build
+              |        cycle: last
+              |        targets:
+              |          - .*_full
+              |      - phase: verify
+              |        cycle: last
+              |        targets: documentation
+              |""".stripMargin
+
+        val project  = Module.read.string(spec).toProject("default")
+        val session = Session.builder().disableSpark().build()
+        val context = session.getContext(project)
+
+        val job = project.jobs("main").instantiate(context)
+        job.executions.map(e => (e.phase, e.cycle, e.targets.map(_.toString()))) should be(Seq(
+            (Phase.CREATE, CyclePolicy.FIRST, Seq(".*")),
+            (Phase.BUILD, CyclePolicy.ALWAYS, Seq(".*_daily")),
+            (Phase.BUILD, CyclePolicy.LAST, Seq(".*_full")),
+            (Phase.VERIFY, CyclePolicy.LAST, Seq("documentation"))
+        ))
+
+        session.shutdown()
     }
 
     it should "support metrics" in {
@@ -446,5 +502,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         job.metadata.labels should be (Map("job_label" -> "xyz"))
 
         session.runner.executeJob(job, Seq(Phase.BUILD), Map("p1" -> "v1")) shouldBe (Status.SUCCESS)
+
+        session.shutdown()
     }
 }

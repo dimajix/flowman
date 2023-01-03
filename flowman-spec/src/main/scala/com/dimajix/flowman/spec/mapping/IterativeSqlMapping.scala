@@ -16,33 +16,20 @@
 
 package com.dimajix.flowman.spec.mapping
 
-import java.io.StringWriter
-import java.lang
 import java.net.URL
-import java.nio.charset.Charset
 import java.util.Locale
 
 import scala.annotation.tailrec
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.IOUtils
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.catalyst.encoders.RowEncoder
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.catalyst.plans.logical.UnaryNode
-import org.apache.spark.sql.catalyst.plans.logical.Union
-import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.functions.count
-import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.functions.not
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.ExecutionException
+import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.fs.FileUtils
 import com.dimajix.flowman.model.BaseMapping
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -58,7 +45,7 @@ case class IterativeSqlMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     sql:Option[String],
-    file:Option[Path] = None,
+    file:Option[File] = None,
     url:Option[URL] = None,
     maxIterations:Int = 99
 )
@@ -149,16 +136,7 @@ extends BaseMapping {
             sql.get
         }
         else if (file.nonEmpty) {
-            val fs = context.fs
-            val input = fs.file(file.get).open()
-            try {
-                val writer = new StringWriter()
-                IOUtils.copy(input, writer, Charset.forName("UTF-8"))
-                writer.toString
-            }
-            finally {
-                input.close()
-            }
+            FileUtils.toString(file.get)
         }
         else if (url.nonEmpty) {
             IOUtils.toString(url.get, "UTF-8")
@@ -187,7 +165,7 @@ class IterativeSqlMappingSpec extends MappingSpec {
             instanceProperties(context, properties),
             MappingOutputIdentifier(context.evaluate(input)),
             context.evaluate(sql),
-            file.map(context.evaluate).filter(_.nonEmpty).map(p => new Path(p)),
+            file.map(context.evaluate).filter(_.nonEmpty).map(p => context.fs.file(p)),
             url.map(context.evaluate).filter(_.nonEmpty).map(u => new URL(u)),
             context.evaluate(maxIterations).toInt
         )

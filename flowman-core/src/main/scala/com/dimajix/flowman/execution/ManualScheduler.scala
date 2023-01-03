@@ -34,8 +34,8 @@ class ManualScheduler extends Scheduler {
     override def initialize(targets: Seq[Target], phase: Phase, filter: Target => Boolean): Unit = {
         this.targets =
             phase match {
-                case Phase.DESTROY | Phase.TRUNCATE => targets.filter(filter).reverse
-                case _ => targets.filter(filter)
+                case Phase.DESTROY | Phase.TRUNCATE => targets.filter(t => t.phases.contains(phase) && filter(t)).reverse
+                case _ => targets.filter(t => t.phases.contains(phase) && filter(t))
             }
     }
 

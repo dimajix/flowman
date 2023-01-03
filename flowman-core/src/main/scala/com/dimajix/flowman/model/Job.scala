@@ -22,6 +22,7 @@ import scala.util.matching.Regex
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.CyclePolicy
 import com.dimajix.flowman.execution.Runner
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history.NullStateStore
@@ -102,6 +103,12 @@ object Job {
             ftype.parse(value)
         }
     }
+
+    final case class Execution(
+        phase:Phase,
+        cycle:CyclePolicy = CyclePolicy.ALWAYS,
+        targets:Seq[Regex] = Seq(".*".r)
+    )
 
     object Properties {
         def apply(context:Context, name:String="") : Properties = {
@@ -238,16 +245,14 @@ object Job {
             .reduceOption((envs, elems) => envs ++ elems)
             .getOrElse(Map.empty)
         val parentTargets = parents
-            .map(job => job.targets)
-            .reduceOption((targets, elems) => targets ++ elems)
-            .getOrElse(Seq.empty)
+            .flatMap(job => job.targets)
         val parentHooks = parents
-            .map(job => job.hooks)
-            .reduceOption((hooks, elems) => hooks ++ elems)
-            .getOrElse(Seq.empty)
+            .flatMap(job => job.hooks)
         val parentMetrics = parents
             .flatMap(job => job.metrics)
             .headOption
+        val parentExecutions = parents
+            .flatMap(job => job.executions)
 
         val allEnvironment = parentEnvironment ++ job.environment
 
@@ -259,13 +264,16 @@ object Job {
 
         val allMetrics = job.metrics.orElse(parentMetrics)
 
+        val allExecutions = parentExecutions ++ job.executions
+
         Job(
             job.instanceProperties,
             allParameters.values.toSeq,
             allEnvironment,
             allTargets,
             allMetrics,
-            allHooks
+            allHooks,
+            allExecutions
         )
     }
 }
@@ -277,7 +285,8 @@ final case class Job(
     environment:Map[String,String] = Map.empty,
     targets:Seq[TargetIdentifier] = Seq.empty,
     metrics:Option[Prototype[MetricBoard]] = None,
-    hooks:Seq[Prototype[Hook]] = Seq.empty
+    hooks:Seq[Prototype[Hook]] = Seq.empty,
+    executions:Seq[Job.Execution] = Seq.empty
 ) extends AbstractInstance {
     override type PropertiesType = Job.Properties
 

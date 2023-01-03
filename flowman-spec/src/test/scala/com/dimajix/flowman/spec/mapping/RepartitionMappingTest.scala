@@ -61,6 +61,8 @@ class RepartitionMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
         typedInstance.partitions should be (2)
         typedInstance.columns should be (Seq("col_1", "col_2"))
         typedInstance.sort should be (true)
+
+        session.shutdown()
     }
 
     it should "work" in {
@@ -83,6 +85,8 @@ class RepartitionMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("input") -> input))("main")
         result.rdd.partitions.size should be (1)
         result.count() should be (100)
+
+        session.shutdown()
     }
 
     it should "support sorting" in {
@@ -105,6 +109,8 @@ class RepartitionMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("input") -> input))("main")
         result.rdd.partitions.size should be (1)
         result.count() should be (100)
+
+        session.shutdown()
     }
 
     it should "support explicit columns" in {
@@ -127,5 +133,7 @@ class RepartitionMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("input") -> input))("main")
         result.rdd.partitions.size should be (1)
         result.count() should be (100)
+
+        session.shutdown()
     }
 }

@@ -48,6 +48,8 @@ class DistinctMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
 
         val instance = context.getMapping(MappingIdentifier("dedup"))
         instance shouldBe a[DistinctMapping]
+
+        session.shutdown()
     }
 
     it should "work" in {
@@ -73,6 +75,8 @@ class DistinctMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         result.schema should be(input.schema)
         val rows = result.as[Record].collect()
         rows.size should be(2)
+
+        session.shutdown()
     }
 
     it should "work with nested columns" in {
@@ -100,5 +104,7 @@ class DistinctMappingTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         val result = mapping.execute(executor, Map(MappingOutputIdentifier("input") -> input))("main")
         result.schema should be(input.schema)
         result.count should be(2)
+
+        session.shutdown()
     }
 }

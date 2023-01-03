@@ -77,6 +77,8 @@ class StreamTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         target.provides(Phase.VERIFY) should be (Set())
         target.provides(Phase.TRUNCATE) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
         target.provides(Phase.DESTROY) should be (Set(ResourceIdentifier.ofFile(new Path(new File("test/data/data_1.csv").getAbsoluteFile.toURI))))
+
+        session.shutdown()
     }
 
     it should "support the whole lifecycle" in {
@@ -162,7 +164,7 @@ class StreamTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         target.execute(execution, Phase.CREATE)
         output.exists(execution) should be (Yes)
         output.loaded(execution) should be (No)
-        target.dirty(execution, Phase.CREATE) should be (Unknown)
+        target.dirty(execution, Phase.CREATE) should be (No)
         output.read(execution).count() should be (0)
 
         // == Build ==================================================================================================
@@ -193,6 +195,8 @@ class StreamTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         output.exists(execution) should be (No)
         output.loaded(execution) should be (No)
         target.dirty(execution, Phase.DESTROY) should be (No)
+
+        session.shutdown()
     }
 
     it should "support trigger-once" in {
@@ -285,5 +289,7 @@ class StreamTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession 
 
         // == Destroy ================================================================================================
         target.execute(execution, Phase.DESTROY)
+
+        session.shutdown()
     }
 }

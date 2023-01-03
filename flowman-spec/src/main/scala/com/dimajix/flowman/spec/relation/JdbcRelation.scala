@@ -47,12 +47,12 @@ abstract class JdbcRelation(
     protected val logger: Logger = LoggerFactory.getLogger(getClass)
     protected val resource: ResourceIdentifier
 
-    protected def dropTableOrView(execution: Execution, table:TableIdentifier, ifExists: Boolean) : Unit = {
+    protected def dropTableOrView(execution: Execution, table:TableIdentifier) : Unit = {
         require(execution != null)
 
         logger.info(s"Destroying JDBC relation '$identifier', this will drop JDBC table/view $table")
         withConnection{ (con,options) =>
-            JdbcUtils.dropTableOrView(con, table, options, ifExists)
+            JdbcUtils.dropTableOrView(con, table, options)
             execution.refreshResource(resource)
         }
     }

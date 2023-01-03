@@ -44,9 +44,9 @@ import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model
+import com.dimajix.flowman.transforms.CharVarcharPolicy
 import com.dimajix.flowman.transforms.ColumnMismatchPolicy
 import com.dimajix.flowman.transforms.SchemaEnforcer
-import com.dimajix.flowman.transforms.CharVarcharPolicy
 import com.dimajix.flowman.transforms.TypeMismatchPolicy
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
@@ -243,7 +243,7 @@ trait Relation extends Instance {
      * @param execution
      * @return
      */
-    def conforms(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED) : Trilean
+    def conforms(execution:Execution) : Trilean
 
     /**
      * Returns true if the target partition exists and contains valid data. Absence of a partition indicates that a
@@ -260,20 +260,20 @@ trait Relation extends Instance {
       * relation will not contain any data, but all metadata will be processed
       * @param execution
       */
-    def create(execution:Execution, ifNotExists:Boolean=false) : Unit
+    def create(execution:Execution) : Unit
 
     /**
       * This will delete any physical representation of the relation. Depending on the type only some meta data like
       * a Hive table might be dropped or also the physical files might be deleted
       * @param execution
       */
-    def destroy(execution:Execution, ifExists:Boolean=false) : Unit
+    def destroy(execution:Execution) : Unit
 
     /**
       * This will update any existing relation to the specified metadata.
       * @param execution
       */
-    def migrate(execution:Execution, migrationPolicy:MigrationPolicy=MigrationPolicy.RELAXED, migrationStrategy:MigrationStrategy=MigrationStrategy.ALTER) : Unit
+    def migrate(execution:Execution) : Unit
 
     /**
      * Creates all known links for building a descriptive graph of the whole data flow
@@ -661,4 +661,10 @@ trait SchemaRelation { this: Relation =>
      * @return
      */
     override def schema : Option[Schema]
+}
+
+
+trait MigratableRelation { this: Relation =>
+    def migrationPolicy : MigrationPolicy
+    def migrationStrategy : MigrationStrategy
 }

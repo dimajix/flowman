@@ -50,6 +50,8 @@ class CaseMappingTest extends AnyFlatSpec with Matchers {
         val instance = context.getMapping(MappingIdentifier("switch")).asInstanceOf[AliasMapping]
         instance shouldBe an[AliasMapping]
         instance.input should be (MappingOutputIdentifier("default"))
+
+        session.shutdown()
     }
 
     it should "select the first valid case" in {
@@ -61,5 +63,6 @@ class CaseMappingTest extends AnyFlatSpec with Matchers {
         instance shouldBe an[AliasMapping]
         instance.input should be (MappingOutputIdentifier("in_2"))
 
+        session.shutdown()
     }
 }

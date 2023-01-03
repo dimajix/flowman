@@ -124,5 +124,7 @@ class MappingCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
                     ))
                 ))
         )))
+
+        session.shutdown()
     }
 }

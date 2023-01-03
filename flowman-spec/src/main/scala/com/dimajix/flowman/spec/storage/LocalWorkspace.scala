@@ -20,7 +20,6 @@ import scala.collection.mutable
 import scala.util.Try
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.execution.NoSuchProjectException
 import com.dimajix.flowman.fs.File

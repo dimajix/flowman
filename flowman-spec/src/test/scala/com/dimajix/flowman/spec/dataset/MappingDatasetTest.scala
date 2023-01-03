@@ -94,5 +94,7 @@ class MappingDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSessio
         dataset.read(executor).count() should be (0)
         an[UnsupportedOperationException] should be thrownBy(dataset.write(executor, null, OutputMode.APPEND))
         dataset.describe(executor) should be (Some(new StructType()))
+
+        session.shutdown()
     }
 }

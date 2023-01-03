@@ -35,7 +35,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 
 
-final class RootExecution(session:Session) extends CachingExecution(None, true) {
+final class RootExecution(val session:Session) extends CachingExecution(None, true) {
     override protected val logger = LoggerFactory.getLogger(classOf[RootExecution])
 
     /**
@@ -94,6 +94,13 @@ final class RootExecution(session:Session) extends CachingExecution(None, true) 
      * @return
      */
     override def activities: ActivityManager = session.activities
+
+    /**
+     * Returns the [[SessionCleaner]] provided by the [[Session]]
+     *
+     * @return
+     */
+    def cleaner : SessionCleaner = session.cleaner
 
     /**
      * Releases any temporary tables

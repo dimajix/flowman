@@ -1,7 +1,6 @@
 # [![Flowman Logo](docs/images/flowman-favicon.png) Flowman](https://flowman.io)
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Build Status](https://travis-ci.org/dimajix/flowman.svg?branch=develop)](https://travis-ci.org/dimajix/flowman)
 [![Documentation](https://readthedocs.org/projects/flowman/badge/?version=latest)](https://flowman.readthedocs.io/en/latest/)
 
 Flowman is a Spark based *data build tool* that simplifies the act of writing data transformations as part of ETL
@@ -14,7 +13,7 @@ In addition to writing and executing data transformations, Flowman can also be u
 i.e. Hive or JDBC tables. Flowman can create such tables from a specification with the correct schema. This helps to 
 keep all aspects (like transformations and schema information) in a single place managed by a single program.
 
-[![Flowman Logo](docs/images/flowman-overview.png)](https://flowman.io)
+[![Flowman Diagram](docs/images/flowman-overview.png)](https://flowman.io)
 
 
 ### Noteable Features

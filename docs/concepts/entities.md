@@ -1,4 +1,4 @@
-# Core Entities
+# Main Entities
 
 Flowman is a *data build tool* which uses a declarative syntax to specify, what needs to be built. The main difference
 to classical build tools like `make`, `maven` is that Flowman builds *data* instead of *applications* or *libraries*.
@@ -220,5 +220,5 @@ overview of all entity types in the [project specification documentation](../spe
 Flowman sees data as artifacts with a common lifecycle, from creation until deletion. The lifecycle itself consists of
 multiple different *build phases*, each of them representing one stage of the whole lifecycle. Each target supports
 at least one of these build phases, which means that the target is performing some action during that phase. The
-specific phases depend on the target type. Read on on [lifecycles and phases](lifecycle.md) for more detailed 
+specific phases depend on the target type. Read on about [lifecycles and phases](lifecycle.md) for more detailed 
 information.

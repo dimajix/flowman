@@ -45,9 +45,7 @@ class TemplatingTest extends AnyFlatSpec with Matchers with LocalTempDir {
     private val context = Velocity.newContext()
 
     private def evaluate(text:String) : String = {
-        val output = new StringWriter()
-        engine.evaluate(context, output, "test", text)
-        output.toString
+        engine.evaluate(context, "test", text)
     }
 
     "Integers" should "be parseable" in {
@@ -93,9 +91,8 @@ class TemplatingTest extends AnyFlatSpec with Matchers with LocalTempDir {
     they should "support arithmetics" in {
         context.put("a", 2.0)
         context.put("b", 3.0)
-        val output = new StringWriter()
-        engine.evaluate(context, output, "test", "#set($r=$a+$b)$r")
-        output.toString should be ("5.0")
+        val output = engine.evaluate(context, "test", "#set($r=$a+$b)$r")
+        output should be ("5.0")
     }
 
     "Booleans" should "be parseable" in {
@@ -130,9 +127,8 @@ class TemplatingTest extends AnyFlatSpec with Matchers with LocalTempDir {
     }
 
     they should "be convertible to LocalDateTime" in {
-        val output = new StringWriter()
-        engine.evaluate(context, output, "test", "$Timestamp.parse('2017-10-10T10:11:23').toLocalDateTime()")
-        output.toString should be ("2017-10-10T10:11:23")
+        val output = engine.evaluate(context, "test", "$Timestamp.parse('2017-10-10T10:11:23').toLocalDateTime()")
+        output should be ("2017-10-10T10:11:23")
     }
 
     they should "be convertible to epochs" in {
@@ -144,9 +140,8 @@ class TemplatingTest extends AnyFlatSpec with Matchers with LocalTempDir {
 
     they should "support complex operations" in {
         context.put("ts", UtcTimestamp.of(2017, Month.JUNE, 19, 0, 0))
-        val output = new StringWriter()
-        engine.evaluate(context, output, "test", """data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
-        output.toString should be ("data/2017/06/19/1497830400.i-*.log")
+        val output = engine.evaluate(context, "test", """data/$ts.format("yyyy/MM/dd")/${ts.toEpochSeconds()}.i-*.log""")
+        output should be ("data/2017/06/19/1497830400.i-*.log")
     }
 
     "LocalDate" should "be parseable" in {

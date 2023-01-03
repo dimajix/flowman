@@ -26,6 +26,7 @@
 * github-302: Upgrade DeltaLake to 2.2.0
 * github-303: Use multi-stage build for Docker image
 * github-304: Upgrade Cloudera profile to CDP 7.1.8
+* github-312: Fix build with Spark 2.4 and Maven 3.8
 
 This version is fully backwards compatible until and including version 0.27.0.
 

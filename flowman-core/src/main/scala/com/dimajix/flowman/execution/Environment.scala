@@ -21,10 +21,9 @@ import java.io.StringWriter
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
-import org.apache.velocity.VelocityContext
-
 import com.dimajix.flowman.templating.RecursiveValue
 import com.dimajix.flowman.templating.Velocity
+import com.dimajix.flowman.templating.VelocityContext
 
 
 object Environment {
@@ -47,13 +46,11 @@ final class Environment(rawEnvironment:Map[String,Any]) {
     }
 
     private def evaluateNotNull(string:String, additionalValues:Map[String,AnyRef]) : String = {
-        val output = new StringWriter()
         val context = if (additionalValues.nonEmpty)
             new VelocityContext(mutable.Map(additionalValues.toSeq:_*).asJava, templateContext)
         else
             templateContext
-        templateEngine.evaluate(context, output, "context", string)
-        output.getBuffer.toString
+        templateEngine.evaluate(context, "context", string)
     }
 
     /**

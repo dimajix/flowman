@@ -16,7 +16,8 @@ changes over time.
 
 ### Version 0.30.0 - 2023-01-03
 
-* github-278: Parallelize execution of data quality checks
+* github-278: Parallelize execution of data quality checks. This also introduces a new configuration property
+  `flowman.execution.check.parallelism` (default `1`)
 * github-282: Improve implementation for counting records
 * github-288: Support reading local CSV files from fatjar
 * github-290: Simplify specifying project name in fatjar
@@ -33,13 +34,15 @@ changes over time.
 * github-296: Update npm dependencies (vuetify & co)
 * github-297: Parametrize when to execute a specific phase
 * github-299: Move migrationPolicy and migrationStrategy from target into relation
-* github-115: Implement additional build policy in relation target for forcing dirty
+* github-115: Implement additional build policy in relation target for forcing dirty. This also introduces a new
+  configuration property `flowman.default.target.buildPolicy` (default `COMPAT`).
 * github-298: Support fine-grained control when to execute each target of a job
 * github-300: Implement new 'observe' mapping
 * github-301: Upgrade Spark to 3.2.3
 * github-302: Upgrade DeltaLake to 2.2.0
 * github-303: Use multi-stage build for Docker image
 * github-304: Upgrade Cloudera profile to CDP 7.1.8
+* github-312: Fix build with Spark 2.4 and Maven 3.8
 
 
 ### Version 0.29.0 - 2022-11-08

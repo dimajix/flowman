@@ -17,16 +17,11 @@
 package com.dimajix.flowman.fs
 
 import java.io.FileNotFoundException
-import java.io.StringWriter
 
-import scala.annotation.tailrec
 import scala.collection.parallel.ParIterable
 import scala.util.control.NonFatal
 
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileStatus
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.fs.{FileSystem => HadoopFileSystem}
 import org.apache.spark.sql.SparkSession
 import org.apache.velocity.VelocityContext
 import org.slf4j.LoggerFactory
@@ -215,11 +210,9 @@ case class FileCollector(
         pattern.map { filePattern =>
             val partitionValues = defaults ++ partition.toMap
             try {
-                val context = new VelocityContext(templateContext)
+                val context = Velocity.newContext(templateContext)
                 partitionValues.foreach(kv => context.put(kv._1, kv._2))
-                val output = new StringWriter()
-                templateEngine.evaluate(context, output, "FileCollector", filePattern)
-                output.getBuffer.toString
+                templateEngine.evaluate(context, "FileCollector", filePattern)
             }
             catch {
                 case NonFatal(ex) =>

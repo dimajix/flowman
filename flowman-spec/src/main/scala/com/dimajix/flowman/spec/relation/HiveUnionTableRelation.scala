@@ -54,7 +54,7 @@ import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.transforms.UnionTransformer
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.flowman.util.SparkSchemaUtils
 import com.dimajix.spark.sql.catalyst.SqlBuilder
 
 
@@ -255,7 +255,7 @@ case class HiveUnionTableRelation(
         // 2. Find appropriate table
         val table = allTables.find { id =>
                 val table = catalog.getTable(id)
-                SchemaUtils.isCompatible(df.schema, table.schema)
+                SparkSchemaUtils.isCompatible(df.schema, table.schema)
             }
             .orElse {
                 // Try to use provided schema instead
@@ -263,7 +263,7 @@ case class HiveUnionTableRelation(
                     val catalogSchema = schema.catalogSchema
                     allTables.find { id =>
                         val table = catalog.getTable(id)
-                        SchemaUtils.isCompatible(catalogSchema, table.schema)
+                        SparkSchemaUtils.isCompatible(catalogSchema, table.schema)
                     }
                 }
             }
@@ -378,7 +378,7 @@ case class HiveUnionTableRelation(
 
                     sourceSchema.forall { field =>
                         targetFieldsByName.get(field.name)
-                            .forall(tgt => SchemaUtils.isCompatible(field, tgt))
+                            .forall(tgt => SparkSchemaUtils.isCompatible(field, tgt))
                     }
                 }
 
@@ -483,7 +483,7 @@ case class HiveUnionTableRelation(
 
                 sourceSchema.forall { field =>
                     targetFieldsByName.get(field.name)
-                        .forall(tgt => SchemaUtils.isCompatible(field, tgt))
+                        .forall(tgt => SparkSchemaUtils.isCompatible(field, tgt))
                 }
             }
 

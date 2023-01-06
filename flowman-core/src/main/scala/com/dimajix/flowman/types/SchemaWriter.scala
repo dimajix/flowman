@@ -20,6 +20,7 @@ import java.nio.charset.Charset
 import java.util.Locale
 
 import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.util.AvroSchemaUtils
 
 
 /**

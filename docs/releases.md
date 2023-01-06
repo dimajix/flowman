@@ -13,6 +13,10 @@ You will find all official Flowman releases on [GitHub](https://github.com/dimaj
 The following gives an (incomplete) list of past releases of the last 12 months. This will help you to spot breaking 
 changes over time.
 
+### Upcoming
+
+* github-314: Move avro related functionality into separate plugin
+
 
 ### Version 0.30.0 - 2023-01-03
 

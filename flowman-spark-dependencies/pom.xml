@@ -115,6 +115,11 @@
             <artifactId>spark-hive_${scala.api_version}</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-mllib_${scala.api_version}</artifactId>
+            <scope>compile</scope>
+        </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

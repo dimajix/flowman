@@ -1,0 +1,7 @@
+name: ${plugin.name}
+description: ${project.name}
+version: ${plugin.version}
+isolation: false
+jars:
+ - ${plugin.jar}
+ - spark-avro_${scala.api_version}-${spark.version}.jar

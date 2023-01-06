@@ -14,13 +14,28 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.types
+package com.dimajix.flowman.util
 
 import scala.collection.JavaConverters._
 
 import org.apache.avro.Schema.Type._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import com.dimajix.flowman.types.ArrayType
+import com.dimajix.flowman.types.BinaryType
+import com.dimajix.flowman.types.BooleanType
+import com.dimajix.flowman.types.CharType
+import com.dimajix.flowman.types.DateType
+import com.dimajix.flowman.types.DoubleType
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FloatType
+import com.dimajix.flowman.types.IntegerType
+import com.dimajix.flowman.types.LongType
+import com.dimajix.flowman.types.ShortType
+import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.TimestampType
+import com.dimajix.flowman.types.VarcharType
 
 
 class AvroSchemaUtilsTest extends AnyFlatSpec with Matchers {

@@ -26,7 +26,7 @@ import org.apache.spark.sql.types.StructType
 import com.dimajix.flowman.types.FieldType
 
 
-object SchemaUtils {
+object SparkSchemaUtils {
     /**
       * Merges two fields into a common field
       * @param newField

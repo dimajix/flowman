@@ -735,6 +735,7 @@
         <module>flowman-core</module>
         <module>flowman-spec</module>
         <module>flowman-dsl</module>
+        <module>flowman-plugins/avro</module>
         <module>flowman-plugins/aws</module>
         <module>flowman-plugins/azure</module>
         <module>flowman-plugins/kafka</module>
@@ -1264,6 +1265,11 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-avro</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-aws</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1485,6 +1491,18 @@
                     <exclusion>
                         <groupId>org.apache.hadoop</groupId>
                         <artifactId>hadoop-client-runtime</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-mllib_${scala.api_version}</artifactId>
+                <version>${spark.version}</version>
+                <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.spark-project.spark</groupId>
+                        <artifactId>unused</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>

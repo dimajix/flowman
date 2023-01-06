@@ -1,6 +1,13 @@
 # Avro Schema
 The *Avro schema* refers to a schema conforming to the Avro standard
 
+## Plugin
+
+This schema type is provided as part of the [`flowman-avro` plugin](../../plugins/avro.md), which needs to be enabled 
+in your `namespace.yml` file. See [namespace documentation](../namespace.md) for more information for configuring 
+plugins.
+
+
 ## Example
 ```yaml
 kind: avro

@@ -26,8 +26,9 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.spec.annotation.SchemaType
 import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
-import com.dimajix.flowman.types.AvroSchemaUtils
+import com.dimajix.flowman.util.AvroSchemaUtils
 
 
 /**
@@ -58,6 +59,7 @@ case class AvroSchema(
 
 
 
+@SchemaType(kind="avro")
 class AvroSchemaSpec extends ExternalSchemaSpec {
     @JsonSchemaInject(json="""{"type": [ "boolean", "string" ]}""")
     @JsonProperty(value="nullable", required=false) private var nullable: String = "false"

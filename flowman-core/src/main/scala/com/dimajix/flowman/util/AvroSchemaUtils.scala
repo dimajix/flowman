@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.types
+package com.dimajix.flowman.util
 
 import scala.collection.JavaConverters._
 
@@ -34,14 +34,28 @@ import org.apache.avro.Schema.Type.STRING
 import org.apache.avro.Schema.Type.UNION
 import org.apache.avro.Schema.{Field => AField}
 import org.apache.avro.{Schema => ASchema}
-import org.codehaus.jackson.JsonNode
-import org.codehaus.jackson.node.BooleanNode
-import org.codehaus.jackson.node.DoubleNode
-import org.codehaus.jackson.node.IntNode
-import org.codehaus.jackson.node.LongNode
-import org.codehaus.jackson.node.NullNode
-import org.codehaus.jackson.node.TextNode
 import org.slf4j.LoggerFactory
+
+import com.dimajix.flowman.types.ArrayType
+import com.dimajix.flowman.types.BinaryType
+import com.dimajix.flowman.types.BooleanType
+import com.dimajix.flowman.types.ByteType
+import com.dimajix.flowman.types.CharType
+import com.dimajix.flowman.types.DateType
+import com.dimajix.flowman.types.DecimalType
+import com.dimajix.flowman.types.DoubleType
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.FloatType
+import com.dimajix.flowman.types.IntegerType
+import com.dimajix.flowman.types.LongType
+import com.dimajix.flowman.types.MapType
+import com.dimajix.flowman.types.NullType
+import com.dimajix.flowman.types.ShortType
+import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.types.TimestampType
+import com.dimajix.flowman.types.VarcharType
 
 
 class AvroSchemaUtils

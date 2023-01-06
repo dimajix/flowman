@@ -1,3 +1,8 @@
+# Version 0.30.1
+
+* github-314: Move avro related functionality into separate plugin
+
+
 # Version 0.30.0 - 2023-01-03
 
 * github-278: Parallelize execution of data quality checks. This also introduces a new configuration property

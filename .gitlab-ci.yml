@@ -189,6 +189,15 @@ build-cdp7.1-spark3.2:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days
 
+build-cdp7.1-spark3.3:
+  stage: build
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -PCDP-7.1-spark-3.3 -Ddockerfile.skip'
+  artifacts:
+    name: "flowman-dist-cdp7.1-spark-3.3"
+    paths:
+      - flowman-dist/target/flowman-dist-*-bin.tar.gz
+    expire_in: 5 days
+
 build-emr6.9:
   stage: build
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -PEMR-6.9 -Ddockerfile.skip'

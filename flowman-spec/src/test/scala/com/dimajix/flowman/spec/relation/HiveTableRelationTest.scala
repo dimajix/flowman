@@ -21,6 +21,7 @@ import java.io.File
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
@@ -40,6 +41,7 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
+import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -85,6 +87,15 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         }
     }
 
+    override def configureSpark(builder: SparkSession.Builder): SparkSession.Builder = {
+        // This is required for CDP 7.1 with Spark 3.3 (3.3.0.3.3.7180.0-274)
+        if (SPARK_VERSION.matches("3.3.\\d\\.\\d\\.\\d\\.7\\d+\\..+")) {
+            builder.config("spark.sql.hive.metastorePartitionPruningFallbackOnException", "true")
+        }
+        else {
+            builder
+        }
+    }
 
     "The HiveTableRelation" should "support create" in {
         val spec =

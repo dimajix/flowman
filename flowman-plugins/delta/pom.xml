@@ -86,6 +86,27 @@
             </build>
         </profile>
         <profile>
+            <id>CDP-7.1-spark-3.3</id>
+            <properties>
+                <delta.version>2.2.0</delta.version>
+            </properties>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <!-- Disable compilation -->
+                        <plugin>
+                            <groupId>net.alchim31.maven</groupId>
+                            <artifactId>scala-maven-plugin</artifactId>
+                            <configuration>
+                                <sourceDir>no-source</sourceDir>
+                                <testSourceDir>no-test-source</testSourceDir>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+        <profile>
             <id>EMR-6.9</id>
             <properties>
                 <delta.version>2.1.1</delta.version>

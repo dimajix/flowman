@@ -333,7 +333,7 @@
                 <zookeeper.version>3.5.5.${cdp.version}</zookeeper.version>
                 <avro.version>1.8.2.${cdp.version}</avro.version>
                 <json4s.version>3.7.0-M11</json4s.version>
-                <json-smart.version>2.3.1</json-smart.version>
+                <json-smart.version>2.4.7</json-smart.version>
                 <guava.version>28.1-jre</guava.version>
                 <libthrift.version>0.13.0</libthrift.version>
                 <snappy.version>1.1.8.4</snappy.version>
@@ -355,10 +355,74 @@
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compiler.version>3.0.16</commons-compiler.version>
                 <commons-compress.version>1.21</commons-compress.version>
-                <commons-io.version>2.6</commons-io.version>
+                <commons-io.version>2.4</commons-io.version>
                 <commons-lang3.version>3.12.0</commons-lang3.version>
                 <commons-math3.version>3.4.1</commons-math3.version>
                 <commons-text.version>1.6</commons-text.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>CDP-7.1-spark-3.3</id>
+            <repositories>
+                <repository>
+                    <id>cloudera</id>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+                </repository>
+            </repositories>
+            <properties>
+                <hadoop.dist>cdp7</hadoop.dist>
+                <cdp.version>7.1.8.0-801</cdp.version>
+                <java.version>11</java.version>
+                <scala.version>2.12.10</scala.version>
+                <scala.api_version>2.12</scala.api_version>
+                <scalatest.version>3.2.9</scalatest.version>
+                <scalatest-api.version>3.2</scalatest-api.version>
+                <scala-xml.version>1.2.0</scala-xml.version>
+                <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
+                <spark.version>3.3.0.3.3.7180.0-274</spark.version>
+                <spark-api.version>3.3</spark-api.version>
+                <hadoop.version>3.1.1.${cdp.version}</hadoop.version>
+                <hadoop-api.version>3.1</hadoop-api.version>
+                <hive.version>3.1.3000.${cdp.version}</hive.version>
+                <hive-storage-api.version>3.1.3000.${cdp.version}</hive-storage-api.version>
+                <hbase.version>2.2.3.${cdp.version}</hbase.version>
+                <kafka.version>3.1.1.${cdp.version}</kafka.version>
+                <derby.version>10.14.2.0</derby.version>
+                <zookeeper.version>3.5.5.${cdp.version}</zookeeper.version>
+                <avro.version>1.8.2.${cdp.version}</avro.version>
+                <json4s.version>3.7.0-M11</json4s.version>
+                <json-smart.version>2.4.7</json-smart.version>
+                <guava.version>28.1-jre</guava.version>
+                <libthrift.version>0.16.0</libthrift.version>
+                <snappy.version>1.1.8.4</snappy.version>
+                <netty-all.version>4.1.68.Final</netty-all.version>
+                <snakeyaml.version>1.26</snakeyaml.version>
+                <antlr4.version>4.8</antlr4.version>
+                <jackson.version>2.10.5</jackson.version>
+                <jackson-api.version>2.10</jackson-api.version>
+                <jackson.databind.version>2.10.5.1</jackson.databind.version>
+                <log4j.version>2.17.1</log4j.version>
+                <slf4j.version>1.7.32</slf4j.version>
+                <httpclient.version>4.5.13</httpclient.version>
+                <httpcore.version>4.4.15</httpcore.version>
+                <dropwizard.version>4.2.7</dropwizard.version>
+                <joda-time.version>2.9.9</joda-time.version>
+                <curator.version>4.3.0.${cdp.version}</curator.version>
+                <curator-client.version>4.3.0.${cdp.version}</curator-client.version>
+                <commons-cli.version>1.2</commons-cli.version>
+                <commons-collections.version>3.2.2</commons-collections.version>
+                <commons-compiler.version>3.0.16</commons-compiler.version>
+                <commons-compress.version>1.21</commons-compress.version>
+                <commons-io.version>2.11.0</commons-io.version>
+                <commons-lang3.version>3.12.0</commons-lang3.version>
+                <commons-math3.version>3.6.1</commons-math3.version>
+                <commons-text.version>1.9</commons-text.version>
             </properties>
         </profile>
         <profile>

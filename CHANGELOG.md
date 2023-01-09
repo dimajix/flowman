@@ -1,6 +1,8 @@
-# Version 0.30.1
+# Version 1.0.0
 
 * github-314: Move avro related functionality into separate plugin
+* github-307: Describe Flowmans security policy in SECURITY.md
+* github-315: Create build profile for CDP 7.1 with Spark 3.3
 
 
 # Version 0.30.0 - 2023-01-03

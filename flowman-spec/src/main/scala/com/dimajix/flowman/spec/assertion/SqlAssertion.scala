@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,11 +82,7 @@ case class SqlAssertion(
      *
      * @return
      */
-    override def inputs: Seq[MappingOutputIdentifier] = {
-        tests.flatMap(test => SqlParser.resolveDependencies(test.sql))
-            .map(MappingOutputIdentifier.parse)
-            .distinct
-    }
+    override def inputs: Set[MappingOutputIdentifier] = dependencies
 
     /**
      * Executes this [[Assertion]] and returns a corresponding DataFrame
@@ -100,7 +96,7 @@ case class SqlAssertion(
         require(input != null)
 
         AssertionResult.of(this) {
-            DataFrameUtils.withTempViews(input.map(kv => kv._1.name -> kv._2)) {
+            DataFrameUtils.withTempViews(rawDependencies.map(d => d -> input(MappingOutputIdentifier(d)))) {
                 tests.par.map { test =>
                     // Execute query
                     val sql = test.sql
@@ -121,6 +117,9 @@ case class SqlAssertion(
             }
         }
     }
+
+    private lazy val rawDependencies = tests.flatMap(test => SqlParser.resolveDependencies(test.sql)).toSet
+    private lazy val dependencies = rawDependencies.map(MappingOutputIdentifier.parse)
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,8 +62,8 @@ class ColumnsAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSess
             ColumnsAssertion.ColumnIsOfType("campaign", Seq(IntegerType, LongType)),
             ColumnsAssertion.ColumnIsOfType("lineitem", Seq(FloatType))
         ))
-        assertion.inputs should be (Seq(MappingOutputIdentifier("lala")))
-        assertion.requires should be (Set())
+        assertion.inputs should be (Set(MappingOutputIdentifier("lala")))
+        assertion.requires should be (Set.empty)
     }
 
     it should "work" in {

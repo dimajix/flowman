@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright 2019-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.dimajix.spark.sql
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import com.dimajix.spark.SPARK_VERSION
 
 
 class SqlParserTest extends AnyFlatSpec with Matchers {
@@ -60,7 +62,7 @@ class SqlParserTest extends AnyFlatSpec with Matchers {
         deps should be (Set("db.lala"))
     }
 
-    it should "support scalar exporessions" in {
+    it should "support scalar expressions" in {
         val sql =
             """
               |SELECT
@@ -74,4 +76,26 @@ class SqlParserTest extends AnyFlatSpec with Matchers {
         val deps = SqlParser.resolveDependencies(sql)
         deps should be (Set("fe_campaign", "campaign_contacts_raw"))
     }
+
+    it should "support escaped names" in {
+        val sql =
+            """
+              |SELECT
+              | *
+              |FROM `some_mapping`
+              |""".stripMargin
+        val deps = SqlParser.resolveDependencies(sql)
+        deps should be(Set("some_mapping"))
+    }
+
+    it should "support escaped names with special characters" in (if (SPARK_VERSION >= "3") {
+        val sql =
+            """
+              |SELECT
+              | *
+              |FROM `prj/some_mapping:``output```
+              |""".stripMargin
+        val deps = SqlParser.resolveDependencies(sql)
+        deps should be(Set("prj/some_mapping:`output`"))
+    })
 }

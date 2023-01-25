@@ -87,7 +87,7 @@ trait Assertion extends Instance {
      * Returns the dependencies (i.e. names of tables in the Dataflow model)
      * @return
      */
-    def inputs : Seq[MappingOutputIdentifier]
+    def inputs : Set[MappingOutputIdentifier]
 
     /**
      * Executes this [[Assertion]] and returns a corresponding DataFrame. This method is allowed to  throw an exception,

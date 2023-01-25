@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright 2021-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,8 +110,8 @@ object DataFrameUtils {
         tempViewLock.lock()
 
         try {
-            // Register all input DataFrames as temp views
-            input.foreach(kv => kv._2.createOrReplaceTempView(kv._1))
+            // Register all input DataFrames as temp views. We use quotes to escape mapping names
+            input.foreach(kv => kv._2.createOrReplaceTempView("`" + kv._1 + "`"))
 
             try {
                 fn

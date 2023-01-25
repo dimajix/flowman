@@ -187,7 +187,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (assertion.name _).expects().atLeastOnce().returns("assertion")
         (assertion.description _).expects().atLeastOnce().returns(None)
         (assertion.context _).expects().onCall(() => assertionContext)
-        (assertion.inputs _).expects().atLeastOnce().returns(Seq(MappingOutputIdentifier("map", "main", None)))
+        (assertion.inputs _).expects().atLeastOnce().returns(Set(MappingOutputIdentifier("map", "main", None)))
         (assertion.execute _).expects(*,*).returns(AssertionResult(assertion, Instant.now()))
 
         var overrideMappingContext:Context = null
@@ -310,7 +310,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (assertion.context _).expects().onCall(() => assertionContext)
         (assertion.name _).expects().atLeastOnce().returns("assertion")
         (assertion.description _).expects().atLeastOnce().returns(None)
-        (assertion.inputs _).expects().atLeastOnce().returns(Seq(MappingOutputIdentifier("map", "main", None)))
+        (assertion.inputs _).expects().atLeastOnce().returns(Set(MappingOutputIdentifier("map", "main", None)))
         (assertion.execute _).expects(*,*).throws(new UnsupportedOperationException())
 
         var mappingContext:Context = null
@@ -414,13 +414,13 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (assertion1.context _).expects().returns(context)
         (assertion1.name _).expects().atLeastOnce().returns("assertion1")
         (assertion1.description _).expects().atLeastOnce().returns(None)
-        (assertion1.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion1.inputs _).expects().atLeastOnce().returns(Set.empty)
         (assertion1.execute _).expects(*,*).throws(new UnsupportedOperationException())
         (assertionTemplate2.instantiate _).expects(*,None).returns(assertion2)
         (assertion2.context _).expects().returns(context)
         (assertion2.description _).expects().atLeastOnce().returns(None)
         (assertion2.name _).expects().atLeastOnce().returns("assertion2")
-        (assertion2.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion2.inputs _).expects().atLeastOnce().returns(Set.empty)
         (assertion2.execute _).expects(*,*).returns(AssertionResult(assertion2, Instant.now()))
 
         runner.executeTest(test, keepGoing = true) should be (Status.FAILED)
@@ -455,12 +455,12 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
         (assertion1.context _).expects().returns(context)
         (assertion1.name _).expects().atLeastOnce().returns("assertion1")
         (assertion1.description _).expects().atLeastOnce().returns(None)
-        (assertion1.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion1.inputs _).expects().atLeastOnce().returns(Set.empty)
         (assertion1.execute _).expects(*,*).throws(new UnsupportedOperationException())
         (assertionTemplate2.instantiate _).expects(*,None).returns(assertion2)
         (assertion2.name _).expects().atLeastOnce().returns("assertion2")
         (assertion2.description _).expects().atLeastOnce().returns(None)
-        (assertion2.inputs _).expects().returns(Seq())
+        (assertion2.inputs _).expects().returns(Set.empty)
 
         runner.executeTest(test, keepGoing = false) should be (Status.FAILED)
 

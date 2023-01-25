@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,8 +93,8 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 expected = Seq(Array("A", "1"), Array("B", "2"))
             )
         ))
-        assertion.inputs should be (Seq(MappingOutputIdentifier("lala"), MappingOutputIdentifier("lolo")))
-        assertion.requires should be (Set())
+        assertion.inputs should be (Set(MappingOutputIdentifier("lala"), MappingOutputIdentifier("lolo")))
+        assertion.requires should be (Set.empty)
     }
 
     it should "support a single top level test" in {
@@ -124,8 +124,8 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 expected = Seq(Array("A"))
             )
         ))
-        assertion.inputs should be (Seq(MappingOutputIdentifier("lala"), MappingOutputIdentifier("lolo")))
-        assertion.requires should be (Set())
+        assertion.inputs should be (Set(MappingOutputIdentifier("lala"), MappingOutputIdentifier("lolo")))
+        assertion.requires should be (Set.empty)
 
     }
 
@@ -148,8 +148,8 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             )
         )
 
-        assertion.inputs should be (Seq(MappingOutputIdentifier("mx"), MappingOutputIdentifier("my")))
-        assertion.requires should be (Set())
+        assertion.inputs should be (Set(MappingOutputIdentifier("mx"), MappingOutputIdentifier("my")))
+        assertion.requires should be (Set.empty)
 
         val mx = execution.spark.range(2).toDF()
         val my = execution.spark.range(3).toDF()
@@ -183,8 +183,8 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             )
         )
 
-        assertion.inputs should be (Seq(MappingOutputIdentifier("mx")))
-        assertion.requires should be (Set())
+        assertion.inputs should be (Set(MappingOutputIdentifier("mx")))
+        assertion.requires should be (Set.empty)
 
         val mx = execution.spark.range(2).toDF()
 
@@ -216,8 +216,8 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             )
         )
 
-        assertion.inputs should be (Seq(MappingOutputIdentifier("mx")))
-        assertion.requires should be (Set())
+        assertion.inputs should be (Set(MappingOutputIdentifier("mx")))
+        assertion.requires should be (Set.empty)
 
         val mx = execution.spark.range(2).toDF()
 
@@ -247,8 +247,8 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             )
         )
 
-        assertion.inputs should be (Seq(MappingOutputIdentifier("mx")))
-        assertion.requires should be (Set())
+        assertion.inputs should be (Set(MappingOutputIdentifier("mx")))
+        assertion.requires should be (Set.empty)
 
         val mx = execution.spark.range(2).toDF()
 

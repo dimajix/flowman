@@ -55,7 +55,7 @@ final case class Identifier[T](name:String, project:Option[String]) {
 object MappingOutputIdentifier {
     val empty = MappingOutputIdentifier("", "", None)
     def apply(name:String) : MappingOutputIdentifier = parse(name)
-    def apply(mapping: MappingIdentifier, output:String) : MappingOutputIdentifier = MappingOutputIdentifier(mapping.name, output, mapping.project)
+    def apply(mapping:MappingIdentifier, output:String) : MappingOutputIdentifier = MappingOutputIdentifier(mapping.name, output, mapping.project)
 
     def parse(fqName:String) : MappingOutputIdentifier = {
         if (fqName == null || fqName.isEmpty) {

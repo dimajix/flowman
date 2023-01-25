@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,8 @@ class UniqueKeyAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSe
         assertion.name should be ("")
         assertion.mapping should be (MappingOutputIdentifier("some_mapping"))
         assertion.key should be (Seq("date", "from_currency", "to_currency"))
+        assertion.inputs should be(Set(MappingOutputIdentifier("some_mapping")))
+        assertion.requires should be(Set.empty)
     }
 
     it should "return no error" in {

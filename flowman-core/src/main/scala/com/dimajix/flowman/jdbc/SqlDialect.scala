@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.jdbc
 
+import java.sql.SQLException
+
 import org.apache.spark.sql.jdbc.JdbcType
 
 import com.dimajix.flowman.catalog.TableChange
@@ -81,6 +83,13 @@ abstract class SqlDialect {
       * @return
       */
     def literal(value:Any) : String
+
+    /**
+     * Returns true if an SQLException is transient and a retry of the operation may succeed
+     * @param ex
+     * @return
+     */
+    def isTransient(ex:SQLException) : Boolean
 
     /**
      * Returns true if the given table supports a specific table change

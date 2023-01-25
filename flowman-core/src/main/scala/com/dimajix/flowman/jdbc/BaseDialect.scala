@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright 2018-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.sql.Date
 import java.sql.JDBCType
 import java.sql.ResultSet
 import java.sql.SQLException
+import java.sql.SQLTransientException
 import java.sql.Statement
 import java.util.Locale
 
@@ -202,6 +203,19 @@ abstract class BaseDialect extends SqlDialect {
             case ts:Date => s"date('${ts.toString}')"
             case ts:UtcTimestamp => s"timestamp(${ts.toEpochSeconds()})"
             case v:Any =>  v.toString
+        }
+    }
+
+    /**
+     * Returns true if an SQLException is transient and a retry of the operation may succeed
+     *
+     * @param ex
+     * @return
+     */
+    def isTransient(ex: SQLException): Boolean = {
+        ex match {
+            case _:SQLTransientException => true
+            case _ => false
         }
     }
 
@@ -493,15 +507,22 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
     override def createTable(statement:Statement, table:TableDefinition) : Unit = {
         val tableSql = dialect.statement.createTable(table)
         val indexSql = table.indexes.map(idx => dialect.statement.createIndex(table.identifier, idx))
-        statement.executeUpdate(tableSql)
-        indexSql.foreach(statement.executeUpdate)
+        JdbcUtils.executeUpdate(statement, tableSql)
+        indexSql.foreach(sql =>
+            JdbcUtils.executeUpdate(statement, sql)
+        )
     }
     override def dropTable(statement:Statement, table:TableIdentifier) : Unit = {
-        statement.executeUpdate(s"DROP TABLE ${dialect.quote(table)}")
+        val sql = s"DROP TABLE ${dialect.quote(table)}"
+        JdbcUtils.executeUpdate(statement, sql)
+    }
+    override def createView(statement:Statement, table:TableIdentifier, viewSql:String) : Unit = {
+        val sql = dialect.statement.createView(table, viewSql)
+        JdbcUtils.executeUpdate(statement, sql)
     }
     override def dropView(statement:Statement, table:TableIdentifier) : Unit = {
-        val dropSql = dialect.statement.dropView(table)
-        statement.executeUpdate(dropSql)
+        val sql = dialect.statement.dropView(table)
+        JdbcUtils.executeUpdate(statement, sql)
     }
 
     override def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField] = {
@@ -517,19 +538,19 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
 
     override def addColumn(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
         val sql = dialect.statement.addColumn(table, columnName, dataType, isNullable, charset, collation, comment)
-        statement.executeUpdate(sql)
+        JdbcUtils.executeUpdate(statement, sql)
     }
     override def deleteColumn(statement:Statement, table: TableIdentifier, columnName: String): Unit = {
         val sql = dialect.statement.dropColumn(table, columnName)
-        statement.executeUpdate(sql)
+        JdbcUtils.executeUpdate(statement, sql)
     }
     override def updateColumnType(statement:Statement, table: TableIdentifier, columnName: String, newDataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
         val sql = dialect.statement.updateColumnType(table, columnName, newDataType, isNullable, charset, collation, comment)
-        statement.executeUpdate(sql)
+        JdbcUtils.executeUpdate(statement, sql)
     }
     override def updateColumnNullability(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None): Unit = {
         val sql = dialect.statement.updateColumnNullability(table, columnName, dataType, isNullable, charset, collation, comment)
-        statement.executeUpdate(sql)
+        JdbcUtils.executeUpdate(statement, sql)
     }
     override def updateColumnComment(statement:Statement, table: TableIdentifier, columnName: String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]) : Unit = {
         // Default is empty implementation
@@ -597,7 +618,7 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
      */
     override def createIndex(statement:Statement, table:TableIdentifier, index:TableIndex) : Unit = {
         val indexSql = dialect.statement.createIndex(table, index)
-        statement.executeUpdate(indexSql)
+        JdbcUtils.executeUpdate(statement, indexSql)
     }
 
     /**
@@ -608,22 +629,22 @@ class BaseCommands(dialect: SqlDialect) extends SqlCommands {
      */
     override def dropIndex(statement:Statement, table:TableIdentifier, indexName:String) : Unit = {
         val indexSql = dialect.statement.dropIndex(table, indexName)
-        statement.executeUpdate(indexSql)
+        JdbcUtils.executeUpdate(statement, indexSql)
     }
 
     override def dropConstraint(statement:Statement, table:TableIdentifier, constraintName:String) : Unit = {
         val indexSql = dialect.statement.dropConstraint(table, constraintName)
-        statement.executeUpdate(indexSql)
+        JdbcUtils.executeUpdate(statement, indexSql)
     }
 
     override def addPrimaryKey(statement:Statement, table: TableIdentifier, pk:PrimaryKey) : Unit = {
         val sql = dialect.statement.addPrimaryKey(table, pk)
-        statement.executeUpdate(sql)
+        JdbcUtils.executeUpdate(statement, sql)
     }
 
     override def dropPrimaryKey(statement: Statement, table: TableIdentifier): Unit = {
         val sql = dialect.statement.dropPrimaryKey(table)
-        statement.executeUpdate(sql)
+        JdbcUtils.executeUpdate(statement, sql)
     }
 
     protected def query[T](statement: Statement, sql: String)(fn: (ResultSet) => Unit): Unit = {

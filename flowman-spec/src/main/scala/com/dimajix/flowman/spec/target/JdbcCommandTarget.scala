@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright 2022-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,14 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.common.text.StringUtils
+import com.dimajix.flowman.common.ConsoleColors.red
+import com.dimajix.flowman.common.ConsoleColors.yellow
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.jdbc.JdbcUtils
+import com.dimajix.flowman.jdbc.JdbcUtils.withConnection
+import com.dimajix.flowman.jdbc.JdbcUtils.withTransaction
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.Reference
@@ -43,8 +47,6 @@ import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.target.JdbcCommandTarget.Action
 import com.dimajix.flowman.spec.target.JdbcCommandTargetSpec.ActionSpec
-import com.dimajix.flowman.common.ConsoleColors.red
-import com.dimajix.flowman.common.ConsoleColors.yellow
 
 object JdbcCommandTarget {
     case class Action(
@@ -235,34 +237,19 @@ case class JdbcCommandTarget (
         }
     }
 
-    private def withConnection[T](fn: (java.sql.Connection, JDBCOptions) => T): T = {
+    private def withStatement[T](transactional:Boolean)(fn: Statement => T): T = {
         val connection = this.connection.value.asInstanceOf[JdbcConnection]
         val props = connection.toConnectionProperties() ++ properties + ("query" -> "dummy")
         val options = new JDBCOptions(props)
 
-        JdbcUtils.withConnection(options) { con => fn(con, options) }
-    }
-
-    private def withStatement[T](transactional:Boolean)(fn: Statement => T): T = {
-        def exec(con:java.sql.Connection, options:JDBCOptions) : T = {
-            val statement = con.createStatement()
-            try {
-                statement.setQueryTimeout(JdbcUtils.queryTimeout(options))
-                fn(statement)
-            }
-            finally {
-                statement.close()
-            }
-        }
-
-        withConnection { (con, options) =>
+        withConnection(options) { con =>
             if (transactional) {
-                JdbcUtils.withTransaction(con) {
-                    exec(con, options)
+                withTransaction(con) {
+                    JdbcUtils.withStatement(con,options)(fn)
                 }
             }
             else {
-                exec(con, options)
+                JdbcUtils.withStatement(con,options)(fn)
             }
         }
     }

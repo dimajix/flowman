@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright 2018-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,11 @@ import java.sql.ResultSet
 import java.sql.ResultSetMetaData
 import java.sql.SQLException
 import java.sql.Statement
+import java.time.Duration
+import java.time.Instant
 import java.util.Locale
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -41,6 +44,7 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.MapIgnoreCase
+import com.dimajix.common.text.TimeFormatter
 import com.dimajix.common.tryWith
 import com.dimajix.flowman.catalog.PrimaryKey
 import com.dimajix.flowman.catalog.TableChange
@@ -66,7 +70,7 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.types.VarcharType
 
 
-case class JdbcField(
+final case class JdbcField(
     name:String,
     typeName:String,
     dataType:Int,
@@ -115,18 +119,13 @@ object JdbcUtils {
         StructType(tableFields)
     }
 
-    def queryTimeout(options: JDBCOptions) : Int = {
-        // This is not very efficient, but in Spark 2.2 we cannot access parameters
-        options.asProperties.getProperty("queryTimeout", "0").toInt
-    }
-
     def createConnection(options: JDBCOptions, partition:Int = -1) : Connection = {
         val dialect = JdbcDialects.get(options.url)
         val factory = SparkShim.createConnectionFactory(dialect, options)
         factory(partition)
     }
 
-    def withConnection[T](options: JDBCOptions)(fn:(java.sql.Connection) => T) : T = {
+    def withConnection[T](options: JDBCOptions)(fn:java.sql.Connection => T) : T = {
         logger.debug(s"Connecting to jdbc source at ${options.url}")
         val con = try {
             createConnection(options, -1)
@@ -145,15 +144,20 @@ object JdbcUtils {
     }
 
     def withTransaction[T](con:java.sql.Connection)(fn: => T) : T = {
+        val startTime = Instant.now()
+        logger.info(s"Starting JDBC transaction")
         val oldMode = con.getAutoCommit
         con.setAutoCommit(false)
         try {
             val result = fn
             con.commit()
+            val duration = Duration.between(startTime, Instant.now())
+            logger.info(s"Overall JDBC transaction took ${TimeFormatter.toString(duration)}")
             result
         } catch {
             case ex:SQLException =>
-                logger.error(s"SQL transaction failed, rolling back. Exception: ${reasons(ex)}")
+                val duration = Duration.between(startTime, Instant.now())
+                logger.error(s"JDBC transaction failed after ${TimeFormatter.toString(duration)}, rolling back. Exception: ${reasons(ex)}")
                 con.rollback()
                 throw ex
         } finally {
@@ -164,7 +168,7 @@ object JdbcUtils {
     def withStatement[T](conn:Connection, options: JDBCOptions)(fn:Statement => T) : T = {
         val statement = conn.createStatement()
         try {
-            statement.setQueryTimeout(queryTimeout(options))
+            statement.setQueryTimeout(options.queryTimeout)
             fn(statement)
         } finally {
             statement.close()
@@ -173,11 +177,30 @@ object JdbcUtils {
     def withStatement[T](conn:Connection, query:String, options: JDBCOptions)(fn:PreparedStatement => T) : T = {
         val statement = conn.prepareStatement(query)
         try {
-            statement.setQueryTimeout(queryTimeout(options))
+            statement.setQueryTimeout(options.queryTimeout)
             fn(statement)
         } finally {
             statement.close()
         }
+    }
+
+    def retry[T](options: JDBCOptions, dialect: SqlDialect)(fn: => T): T = {
+        //@tailrec
+        def exec(maxRetries:Int, sleep:Int) : T = {
+            try {
+                fn
+            }
+            catch {
+                case ex:SQLException if dialect.isTransient(ex) && maxRetries > 0 =>
+                    logger.warn(s"Transient error during execution of JDBC command:\n${reasons(ex)}\nRetrying in $sleep seconds...")
+                    Thread.sleep(sleep*1000)
+                    exec(maxRetries-1, 2*sleep)
+            }
+        }
+
+        val maxRetries = options.parameters.get("retryCount").map(_.toInt).getOrElse(3)
+        val sleep = options.parameters.get("retryPeriod").map(_.toInt).getOrElse(5)
+        exec(maxRetries, sleep)
     }
 
     /**
@@ -426,9 +449,16 @@ object JdbcUtils {
      */
     def createTable(conn:Connection, table:TableDefinition, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        withStatement(conn, options) { statement =>
-            dialect.command.createTable(statement, table)
+        retry(options, dialect) {
+            withStatement(conn, options) { statement =>
+                dialect.command.createTable(statement, table)
+            }
         }
+    }
+
+    def createTable(statement: Statement, table: TableDefinition, options: JDBCOptions): Unit = {
+        val dialect = SqlDialects.get(options.url)
+        dialect.command.createTable(statement, table)
     }
 
     /**
@@ -438,38 +468,54 @@ object JdbcUtils {
      * @param options
      */
     def dropTable(conn:Connection, table:TableIdentifier, options: JDBCOptions, ifExists:Boolean=false) : Unit = {
-        withStatement(conn, options) { statement =>
-            if (!ifExists || tableExists(conn, table, options)) {
-                dropTable(statement, table, options)
+        if (!ifExists || tableExists(conn, table, options)) {
+            val dialect = SqlDialects.get(options.url)
+            retry(options, dialect) {
+                withStatement(conn, options) { statement =>
+                    dialect.command.dropTable(statement, table)
+                }
             }
         }
     }
-    def dropTable(statement:Statement, table:TableIdentifier, options: JDBCOptions) : Unit = {
+
+    def dropTable(statement: Statement, table: TableIdentifier, options: JDBCOptions): Unit = {
         val dialect = SqlDialects.get(options.url)
         dialect.command.dropTable(statement, table)
     }
 
     def createView(conn:Connection, table:TableIdentifier, sql:String, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        val createSql = dialect.statement.createView(table, sql)
-        withStatement(conn, options) { statement =>
-            executeUpdate(statement, createSql)
+        retry(options, dialect) {
+            withStatement(conn, options) { statement =>
+                dialect.command.createView(statement, table, sql)
+            }
         }
+    }
+
+    def createView(statement: Statement, table: TableIdentifier, sql: String, options: JDBCOptions): Unit = {
+        val dialect = SqlDialects.get(options.url)
+        dialect.command.createView(statement, table, sql)
     }
 
     def alterView(conn:Connection, table:TableIdentifier, sql:String, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        withStatement(conn, options) { statement =>
-            if (dialect.supportsAlterView) {
-                val alterSql = dialect.statement.alterView(table, sql)
-                executeUpdate(statement, alterSql)
+        if (dialect.supportsAlterView) {
+            val alterSql = dialect.statement.alterView(table, sql)
+            retry(options, dialect) {
+                withStatement(conn, options) { statement =>
+                    executeUpdate(statement, alterSql)
+                }
             }
-            else {
-                val dropSql = dialect.statement.dropView(table)
-                executeUpdate(statement, dropSql)
-                val createSql = dialect.statement.createView(table, sql)
-                executeUpdate(statement, createSql)
-
+        }
+        else {
+            // TODO: Wrap in transaction if supported
+            withStatement(conn, options) { statement =>
+                retry(options, dialect) {
+                    dialect.command.dropView(statement, table)
+                }
+                retry(options, dialect) {
+                    dialect.command.createView(statement, table, sql)
+                }
             }
         }
     }
@@ -481,26 +527,28 @@ object JdbcUtils {
      * @param options
      */
     def dropView(conn:Connection, table:TableIdentifier, options: JDBCOptions, ifExists:Boolean=false) : Unit = {
-        withStatement(conn, options) { statement =>
-            if (!ifExists || tableExists(conn, table, options)) {
-                dropView(statement, table, options)
+        if (!ifExists || tableExists(conn, table, options)) {
+            val dialect = SqlDialects.get(options.url)
+            retry(options, dialect) {
+                withStatement(conn, options) { statement =>
+                    dialect.command.dropView(statement, table)
+                }
             }
         }
     }
-    def dropView(statement:Statement, table:TableIdentifier, options: JDBCOptions) : Unit = {
+
+    def dropView(statement: Statement, table: TableIdentifier, options: JDBCOptions): Unit = {
         val dialect = SqlDialects.get(options.url)
         dialect.command.dropView(statement, table)
     }
 
     def dropTableOrView(conn:Connection, table:TableIdentifier, options: JDBCOptions) : Unit = {
-        withStatement(conn, options) { statement =>
-            val meta = conn.getMetaData
-            val (_,realType) = resolveTable(meta, table)
-            if (realType == TableType.VIEW)
-                dropView(statement, table, options)
-            else
-                dropTable(statement, table, options)
-        }
+        val meta = conn.getMetaData
+        val (_,realType) = resolveTable(meta, table)
+        if (realType == TableType.VIEW)
+            dropView(conn, table, options)
+        else
+            dropTable(conn, table, options)
     }
 
 
@@ -512,13 +560,25 @@ object JdbcUtils {
      * @param options
      */
     def truncateTable(conn:Connection, table:TableIdentifier, options: JDBCOptions) : Unit = {
-        withStatement(conn, options) { statement =>
-            truncateTable(statement, table, options)
+        val dialect = SqlDialects.get(options.url)
+        retry(options, dialect) {
+            withStatement(conn, options) { statement =>
+                truncateTable(statement, table, options)
+            }
         }
     }
     def truncateTable(statement:Statement, table:TableIdentifier, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
         executeUpdate(statement, s"TRUNCATE TABLE ${dialect.quote(table)}")
+    }
+
+    def truncatePartition(conn:Connection, table: TableIdentifier, condition: String, options: JDBCOptions): Unit = {
+        val dialect = SqlDialects.get(options.url)
+        retry(options, dialect) {
+            withStatement(conn, options) { statement =>
+                truncatePartition(statement, table, condition, options)
+            }
+        }
     }
 
     /**
@@ -621,8 +681,10 @@ object JdbcUtils {
      */
     def createIndex(conn:Connection, table:TableIdentifier, index:TableIndex, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        withStatement(conn, options) { statement =>
-            dialect.command.createIndex(statement, table, index)
+        retry(options, dialect) {
+            withStatement(conn, options) { statement =>
+                dialect.command.createIndex(statement, table, index)
+            }
         }
     }
 
@@ -634,8 +696,10 @@ object JdbcUtils {
      */
     def dropIndex(conn:Connection, table:TableIdentifier, indexName:String, options: JDBCOptions) : Unit = {
         val dialect = SqlDialects.get(options.url)
-        withStatement(conn, options) { statement =>
-            dialect.command.dropIndex(statement, table, indexName)
+        retry(options, dialect) {
+            withStatement(conn, options) { statement =>
+                dialect.command.dropIndex(statement, table, indexName)
+            }
         }
     }
 
@@ -703,20 +767,24 @@ object JdbcUtils {
             case chg:TableChange => throw new SQLException(s"Unsupported table change $chg for JDBC table $table")
         }
 
+        // TODO: This should be performed within a transaction, if supported
         withStatement(conn, options) { statement =>
             cmds.foreach { cmd =>
-                cmd(statement)
+                retry(options, dialect) {
+                    cmd(statement)
+                }
             }
         }
     }
 
-    protected def executeUpdate(statement: Statement, sql:String) : Unit = {
+    def executeUpdate(statement: Statement, sql:String) : Unit = {
+        logger.debug(s"Executing SQL via JDBC: $sql")
         try {
             statement.executeUpdate(sql)
         }
         catch {
             case NonFatal(ex) =>
-                logger.error(s"Error executing sql: ${reasons(ex)}\n$sql")
+                logger.error(s"Error executing SQL via JDBC: ${reasons(ex)}\n$sql")
                 throw ex
         }
     }

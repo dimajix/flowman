@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright 2022-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package com.dimajix.flowman.spec.relation
+
+import java.sql.Statement
 
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
@@ -255,13 +257,13 @@ case class JdbcViewRelation(
      * @param execution
      */
     override def create(execution: Execution): Unit = {
-        withConnection{ (con,options) =>
-            doCreate(con, options)
+        withStatement { (stmt,options) =>
+            doCreate(stmt, options)
             execution.refreshResource(resource)
         }
     }
-    protected def doCreate(con:java.sql.Connection, options:JDBCOptions): Unit = {
-        JdbcUtils.createView(con, view, statement, options)
+    protected def doCreate(stmt:Statement, options:JDBCOptions): Unit = {
+        JdbcUtils.createView(stmt, view, statement, options)
     }
 
     /**
@@ -336,10 +338,11 @@ case class JdbcViewRelation(
             case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
                 logger.info(s"Migrating JdbcView relation '$identifier' from TABLE to VIEW $view")
                 try {
-                    withStatement(connection, options) { stmt =>
-                        JdbcUtils.dropTable(stmt, view, options)
+                    // TODO: This should be performed within a transaction (if supported)
+                    JdbcUtils.withStatement(connection, options) { statement =>
+                        JdbcUtils.dropTable(statement, view, options)
+                        doCreate(statement, options)
                     }
-                    doCreate(connection, options)
                 }
                 catch {
                     case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)

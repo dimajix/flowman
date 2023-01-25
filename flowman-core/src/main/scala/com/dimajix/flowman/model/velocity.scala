@@ -109,6 +109,7 @@ object ResultWrapper {
             case r:MeasureResult => MeasureResultWrapper(r)
             case r:AssertionResult => AssertionResultWrapper(r)
             case r:AssertionTestResult => AssertionTestResultWrapper(r)
+            case r:DocumenterResult => DocumenterResultWrapper(r)
         }
     }
 }
@@ -170,6 +171,10 @@ final case class MeasureResultWrapper(result:MeasureResult) extends ResultWrappe
 
 
 final case class AssertionTestResultWrapper(result:AssertionTestResult) extends ResultWrapper(result) {
+}
+
+
+final case class DocumenterResultWrapper(result: DocumenterResult) extends ResultWrapper(result) {
 }
 
 

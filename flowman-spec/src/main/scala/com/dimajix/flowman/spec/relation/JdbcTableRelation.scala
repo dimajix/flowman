@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright 2018-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.dimajix.flowman.spec.relation
 import java.sql.SQLInvalidAuthorizationSpecException
 import java.sql.SQLNonTransientConnectionException
 import java.sql.SQLNonTransientException
+import java.sql.Statement
 import java.util.Locale
 
 import scala.util.control.NonFatal
@@ -58,6 +59,7 @@ import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
 import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.jdbc.JdbcUtils
+import com.dimajix.flowman.jdbc.JdbcUtils.withTransaction
 import com.dimajix.flowman.jdbc.SqlDialects
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.MigratableRelation
@@ -266,9 +268,7 @@ abstract class JdbcTableRelationBase(
                         }
                     }
                 }
-
         }
-
     }
     protected def doOverwritePartition(execution: Execution, df:DataFrame, partition:Map[String,SingleValue]) : Unit = {
         stagingIdentifier match {
@@ -350,15 +350,13 @@ abstract class JdbcTableRelationBase(
             fn
         }
         finally {
-            withStatement(con, options) { statement =>
-                logger.debug(s"Dropping temporary staging table ${stagingTable}")
-                try {
-                    JdbcUtils.dropTable(statement, stagingTable, options)
-                }
-                catch {
-                    case NonFatal(ex) =>
-                        logger.error(s"Error dropping temporary staging table ${stagingTable}: ${reasons(ex)}")
-                }
+            logger.debug(s"Dropping temporary staging table ${stagingTable}")
+            try {
+                JdbcUtils.dropTable(con, stagingTable, options)
+            }
+            catch {
+                case NonFatal(ex) =>
+                    logger.error(s"Error dropping temporary staging table ${stagingTable}: ${reasons(ex)}")
             }
         }
     }
@@ -446,9 +444,9 @@ abstract class JdbcTableRelationBase(
         }
         else {
             logger.info(s"Cleaning partitions of JDBC relation '$identifier', this will partially truncate JDBC table $tableIdentifier")
-            withStatement { (statement, options) =>
+            withConnection { (con, options) =>
                 val condition = partitionCondition(partitions, options)
-                JdbcUtils.truncatePartition(statement, tableIdentifier, condition, options)
+                JdbcUtils.truncatePartition(con, tableIdentifier, condition, options)
             }
         }
     }
@@ -520,32 +518,23 @@ abstract class JdbcTableRelationBase(
     override def create(execution:Execution) : Unit = {
         require(execution != null)
 
-        withConnection{ (con,options) =>
-            doCreate(con, options)
+        withStatement { (stmt, options) =>
+            doCreate(stmt, options)
             execution.refreshResource(resource)
         }
     }
 
-    protected def doCreate(con:java.sql.Connection, options:JDBCOptions): Unit = {
+    protected def doCreate(stmt:Statement, options:JDBCOptions): Unit = {
         tableDefinition match {
             case Some(table) =>
                 val pk = table.primaryKey.filter(_.columns.nonEmpty).map(t => s"\n  Primary key ${t.columns.mkString(",")}").getOrElse("")
                 val idx = table.indexes.map(i => s"\n  Index '${i.name}' on ${i.columns.mkString(",")}").foldLeft("")(_ + _)
                 logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier with schema\n${schema.map(_.treeString).orNull}$pk$idx")
-                JdbcUtils.createTable(con, table, options)
+                JdbcUtils.createTable(stmt, table, options)
             case None if sql.nonEmpty =>
                 logger.info(s"Creating JDBC relation '$identifier', this will create JDBC table $tableIdentifier using provided SQL.")
-                withStatement(con, options) { stmt =>
-                    sql.foreach { cmd =>
-                        try {
-                            stmt.executeUpdate(cmd)
-                        }
-                        catch {
-                            case NonFatal(ex) =>
-                                logger.error(s"Error creating table $tableIdentifier, because of failing SQL:\n$cmd")
-                                throw ex
-                        }
-                    }
+                sql.foreach { cmd =>
+                    JdbcUtils.executeUpdate(stmt, cmd)
                 }
             case None =>
                 logger.error(s"Cannot create JDBC relation '$identifier' for JDBC table $tableIdentifier, since no schema is provided.")
@@ -591,16 +580,15 @@ abstract class JdbcTableRelationBase(
                 throw new MigrationFailedException(identifier)
             case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
                 logger.info(s"Migrating JdbcTable relation '$identifier' from VIEW to TABLE $table")
-                withConnection { (con, options) =>
-                    try {
-                        withStatement(con, options) { stmt =>
-                            JdbcUtils.dropView(stmt, tableIdentifier, options)
-                        }
-                        doCreate(con, options)
+                try {
+                    // TODO: This should be done within a transaction (if supported)
+                    withStatement { (statement, options) =>
+                        JdbcUtils.dropView(statement, tableIdentifier, options)
+                        doCreate(statement, options)
                     }
-                    catch {
-                        case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
-                    }
+                }
+                catch {
+                    case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)
                 }
         }
     }
@@ -667,8 +655,11 @@ abstract class JdbcTableRelationBase(
         def recreate(con:java.sql.Connection, options:JDBCOptions) : Unit = {
             try {
                 logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier.")
-                JdbcUtils.dropTable(con, tableIdentifier, options)
-                doCreate(con, options)
+                // TODO: This should be performed within a transaction (if supported)
+                JdbcUtils.withStatement(con, options) { statement =>
+                    JdbcUtils.dropTable(statement, tableIdentifier, options)
+                    doCreate(statement, options)
+                }
             }
             catch {
                 case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)

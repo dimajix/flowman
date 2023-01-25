@@ -69,14 +69,6 @@ abstract class JdbcRelation(
         JdbcUtils.withConnection(options) { con => fn(con,options) }
     }
 
-    protected def withTransaction[T](con:java.sql.Connection)(fn: => T) : T = {
-        val startTime = Instant.now()
-        val result = JdbcUtils.withTransaction(con)(fn)
-        val duration = Duration.between(startTime, Instant.now())
-        logger.info(s"Overall JDBC transaction took ${TimeFormatter.toString(duration)}")
-        result
-    }
-
     protected def withStatement[T](fn:(Statement,JDBCOptions) => T) : T = {
         withConnection { (con, options) =>
             withStatement(con,options)(fn(_,options))
@@ -86,12 +78,11 @@ abstract class JdbcRelation(
     protected def withStatement[T](con:java.sql.Connection,options:JDBCOptions)(fn:Statement => T) : T = {
         val statement = con.createStatement()
         try {
-            statement.setQueryTimeout(JdbcUtils.queryTimeout(options))
+            statement.setQueryTimeout(options.queryTimeout)
             fn(statement)
         }
         finally {
             statement.close()
         }
     }
-
 }

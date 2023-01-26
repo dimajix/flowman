@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright 2021-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,10 +83,6 @@ class ManualSchedulerTest extends AnyFlatSpec with Matchers with MockFactory wit
         val (t4,t4t) = genTarget("t4")
         val (t5,t5t) = genTarget("t5")
 
-        val session = Session.builder()
-            .withConfig(FlowmanConf.EXECUTION_SCHEDULER_CLASS.key, classOf[ManualScheduler].getCanonicalName)
-            .withSparkSession(spark)
-            .build()
         val project = Project(
             name = "prj",
             targets = Map(
@@ -97,6 +93,11 @@ class ManualSchedulerTest extends AnyFlatSpec with Matchers with MockFactory wit
                 "t5" -> t5t
             )
         )
+        val session = Session.builder()
+            .withProject(project)
+            .withConfig(FlowmanConf.EXECUTION_SCHEDULER_CLASS.key, classOf[ManualScheduler].getCanonicalName)
+            .withSparkSession(spark)
+            .build()
         val context = session.getContext(project)
         val job = Job.builder(context)
             .setTargets(Seq(

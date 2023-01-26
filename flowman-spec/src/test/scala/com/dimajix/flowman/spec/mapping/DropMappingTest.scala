@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright 2018-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ class DropMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         project.mappings.keys should contain("drop")
         project.mappings("drop") shouldBe a[DropMappingSpec]
 
-        val session = Session.builder().disableSpark().build()
+        val session = Session.builder(project).disableSpark().build()
         val context = session.getContext(project)
         val instance = context.getMapping(MappingIdentifier("drop"))
         instance shouldBe an[DropMapping]

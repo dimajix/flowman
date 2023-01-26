@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright 2021-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
         val project = Project(
             name = "project"
         )
-        val session = Session.builder().disableSpark().build()
+        val session = Session.builder().withProject(project).disableSpark().build()
         val context = session.getContext(project)
 
         val mapping = new DummyMapping(
@@ -86,7 +86,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
         val project = Project(
             name = "project"
         )
-        val session = Session.builder().disableSpark().build()
+        val session = Session.builder().withProject(project).disableSpark().build()
         val context = session.getContext(project)
 
         val mapping = new DummyMapping(
@@ -214,7 +214,7 @@ class MappingTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
                 "m2" -> mappingTemplate2
             )
         )
-        val session = Session.builder().withSparkSession(spark).build()
+        val session = Session.builder().withProject(project).disableSpark().build()
         val context = session.getContext(project)
 
         val mapping1 = new DummyMapping(

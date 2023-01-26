@@ -35,7 +35,7 @@ import javax.ws.rs.POST
 import javax.ws.rs.Path
 
 import com.dimajix.flowman.execution.Lifecycle
-import com.dimajix.flowman.execution.NoSuchProjectException
+import com.dimajix.flowman.execution.ProjectNotFoundException
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.storage.Store
@@ -160,7 +160,7 @@ class ProjectEndpoint(sessionManager: SessionManager) {
         match {
             case Success(result) =>
                 fn(result)
-            case Failure(_:NoSuchProjectException) =>
+            case Failure(_:ProjectNotFoundException) =>
                 complete(StatusCodes.NotFound -> s"Project '$projectName' not found")
             case Failure(ex) =>
                 throw ex

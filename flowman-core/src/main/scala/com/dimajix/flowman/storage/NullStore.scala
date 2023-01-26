@@ -16,12 +16,12 @@
 
 package com.dimajix.flowman.storage
 
-import com.dimajix.flowman.execution.NoSuchProjectException
+import com.dimajix.flowman.execution.ProjectNotFoundException
 import com.dimajix.flowman.model.Project
 
 
 case class NullStore() extends AbstractStore {
-    override def loadProject(name: String): Project = throw new NoSuchProjectException(name)
+    override def loadProject(name: String): Project = throw new ProjectNotFoundException(name)
 
     override def listProjects(): Seq[Project] = Seq()
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright 2018-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,6 +142,7 @@ final class ProjectContext private[execution](
       */
     @throws[InstantiateMappingFailedException]
     @throws[NoSuchMappingException]
+    @throws[UnknownProjectException]
     override def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true): Mapping = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -184,6 +185,7 @@ final class ProjectContext private[execution](
       */
     @throws[InstantiateRelationFailedException]
     @throws[NoSuchRelationException]
+    @throws[UnknownProjectException]
     override def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -226,6 +228,7 @@ final class ProjectContext private[execution](
       */
     @throws[InstantiateTargetFailedException]
     @throws[NoSuchTargetException]
+    @throws[UnknownProjectException]
     override def getTarget(identifier: TargetIdentifier): Target = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -257,6 +260,7 @@ final class ProjectContext private[execution](
       */
     @throws[InstantiateConnectionFailedException]
     @throws[NoSuchConnectionException]
+    @throws[UnknownProjectException]
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -307,6 +311,7 @@ final class ProjectContext private[execution](
       */
     @throws[InstantiateJobFailedException]
     @throws[NoSuchJobException]
+    @throws[UnknownProjectException]
     override def getJob(identifier: JobIdentifier): Job = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -338,6 +343,7 @@ final class ProjectContext private[execution](
      */
     @throws[InstantiateTestFailedException]
     @throws[NoSuchTestException]
+    @throws[UnknownProjectException]
     override def getTest(identifier: TestIdentifier): Test = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -369,6 +375,7 @@ final class ProjectContext private[execution](
      */
     @throws[InstantiateTemplateFailedException]
     @throws[NoSuchTemplateException]
+    @throws[UnknownProjectException]
     override def getTemplate(identifier: TemplateIdentifier): Template[_] = {
         require(identifier != null && identifier.nonEmpty)
 

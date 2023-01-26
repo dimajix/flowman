@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright 2018-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -281,6 +281,7 @@ object Session {
 
     def builder() = new Builder(None)
     def builder(parent:Session) = new Builder(Some(parent))
+    def builder(project:Project) = new Builder(None).withProject(project)
 }
 
 
@@ -417,20 +418,26 @@ final class Session private[execution](
     private val rootExecution : RootExecution = new RootExecution(this)
     private val operationsManager = new ActivityManager
 
-    private val cachedProjects : mutable.Map[String,Project] = mutable.Map()
-    private def loadProject(name:String) : Option[Project] = {
-        val project = cachedProjects.synchronized {
-            cachedProjects.getOrElseUpdate(name, store.loadProject(name))
+    private def loadProjects() : Seq[Project] = {
+        val allProjects = mutable.Map[String,Project] ()
+        def load(p:String, name:String) : Project = {
+            logger.info(s"Importing project '$name' as dependency of project '$p'")
+            val project = allProjects.getOrElseUpdate(name, store.loadProject(name))
+            project.imports.foreach(i => load(project.name, i.project))
+            project
         }
-        Some(project)
+
+        project.foreach { p =>
+            allProjects.put(p.name, p)
+            p.imports.foreach(i => load(p.name, i.project))
+        }
+        allProjects.values.toSeq
     }
 
-    private lazy val rootContext : RootContext = {
+    private lazy val namespaceContext : RootContext = {
         val builder = RootContext.builder(_namespace, _profiles)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_config, SettingLevel.GLOBAL_OVERRIDE)
-            .withExecution(rootExecution)
-            .withProjectResolver(loadProject)
         _namespace.foreach { ns =>
             _profiles.foreach(p => ns.profiles.get(p).foreach { profile =>
                 logger.info(s"Activating namespace profile '$p'")
@@ -439,6 +446,12 @@ final class Session private[execution](
             builder.withEnvironment(ns.environment)
             builder.withConfig(ns.config)
         }
+        builder.build()
+    }
+    private lazy val rootContext : RootContext = {
+        val builder = RootContext.builder(namespaceContext)
+            .withExecution(rootExecution)
+            .withProjects(loadProjects())
         _project.foreach { prj =>
             // github-155: Apply project configuration to session
             _profiles.foreach(p => prj.profiles.get(p).foreach { profile =>
@@ -472,17 +485,17 @@ final class Session private[execution](
     }
 
     private lazy val _catalog = {
-        val externalCatalogs = _namespace.toSeq.flatMap(_.catalogs).map(_.instantiate(rootContext))
+        val externalCatalogs = _namespace.toSeq.flatMap(_.catalogs).map(_.instantiate(namespaceContext))
         new HiveCatalog(spark, config, externalCatalogs)
     }
 
     private lazy val _projectStore : Store = {
-        _store.orElse(_namespace.flatMap(_.store).map(_.instantiate(rootContext))).getOrElse(new NullStore)
+        _store.orElse(_namespace.flatMap(_.store).map(_.instantiate(namespaceContext))).getOrElse(new NullStore)
     }
 
     private lazy val _history = {
         _namespace.flatMap(_.history)
-            .map(_.instantiate(rootContext))
+            .map(_.instantiate(namespaceContext))
             .getOrElse(new NullStateStore())
     }
     private lazy val _hooks = {

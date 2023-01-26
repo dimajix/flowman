@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright 2018-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,7 @@ class MappingUtilsTest extends AnyFlatSpec with Matchers {
         )
 
         val session = Session.builder()
+            .withProject(project)
             .disableSpark()
             .build()
 

@@ -5,6 +5,15 @@
 * github-315: Create build profile for CDP 7.1 with Spark 3.3
 * github-317: Perform retry on failing JDBC commands
 * github-318: Support mappings from different projects and with non-standard outputs in SQL
+* github-140: Strictly check imports
+
+## Breaking changes
+
+This version introduces some (minor) breaking changes:
+* All Avro related functionality is now moved into the new "flowman-avro" plugin. If you rely on such functionality,
+you explicitly need to include the plugin in the `default-namesapce.yml` file.
+* Imports are now strictly checked. This means when you cross-reference some entity in your project which is provided
+by a different Flowman project, you now need to explicitly import the project in the `project.yml`
 
 
 # Version 0.30.0 - 2023-01-03

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Kaya Kupferschmidt
+ * Copyright 2019-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,6 +136,7 @@ final class ScopeContext(
 
     @throws[InstantiateConnectionFailedException]
     @throws[NoSuchConnectionException]
+    @throws[UnknownProjectException]
     override def getConnection(identifier: ConnectionIdentifier): Connection = {
         if (identifier.project.isEmpty) {
             connections.get(identifier.name) match {
@@ -161,6 +162,7 @@ final class ScopeContext(
 
     @throws[InstantiateMappingFailedException]
     @throws[NoSuchMappingException]
+    @throws[UnknownProjectException]
     override def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true): Mapping = {
         if (identifier.project.isEmpty) {
             mappings.get(identifier.name) match {
@@ -186,6 +188,7 @@ final class ScopeContext(
 
     @throws[InstantiateRelationFailedException]
     @throws[NoSuchRelationException]
+    @throws[UnknownProjectException]
     override def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation = {
         if (identifier.project.isEmpty) {
             relations.get(identifier.name) match {
@@ -210,6 +213,7 @@ final class ScopeContext(
 
     @throws[InstantiateTargetFailedException]
     @throws[NoSuchTargetException]
+    @throws[UnknownProjectException]
     override def getTarget(identifier: TargetIdentifier): Target = {
         if (identifier.project.isEmpty) {
             targets.get(identifier.name) match {
@@ -234,6 +238,7 @@ final class ScopeContext(
 
     @throws[InstantiateJobFailedException]
     @throws[NoSuchJobException]
+    @throws[UnknownProjectException]
     override def getJob(identifier: JobIdentifier): Job = {
         if (identifier.project.isEmpty) {
             jobs.get(identifier.name) match {
@@ -258,6 +263,7 @@ final class ScopeContext(
 
     @throws[InstantiateTestFailedException]
     @throws[NoSuchTestException]
+    @throws[UnknownProjectException]
     override def getTest(identifier: TestIdentifier): Test = {
         if (identifier.project.isEmpty) {
             tests.get(identifier.name) match {
@@ -289,5 +295,6 @@ final class ScopeContext(
      */
     @throws[InstantiateTemplateFailedException]
     @throws[NoSuchTemplateException]
+    @throws[UnknownProjectException]
     override def getTemplate(identifier: TemplateIdentifier): Template[_] = parent.getTemplate(identifier)
 }

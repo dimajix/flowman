@@ -38,8 +38,11 @@ class ExecutionException(
 ) extends Exception(message, cause) {
 }
 
-class NoSuchProjectException(val project:String)
+class UnknownProjectException(val project:String)
+    extends ExecutionException(s"Project '$project' not known, maybe you need to import it first.")
+class ProjectNotFoundException(val project:String)
     extends ExecutionException(s"Project '$project' not found")
+
 class NoSuchMappingException(val mapping:MappingIdentifier)
     extends ExecutionException(s"Mapping '$mapping' not found")
 class NoSuchMappingOutputException(val output:MappingOutputIdentifier)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright 2018-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,6 +132,7 @@ abstract class Context {
       */
     @throws[InstantiateConnectionFailedException]
     @throws[NoSuchConnectionException]
+    @throws[UnknownProjectException]
     def getConnection(identifier: ConnectionIdentifier): Connection
 
     /**
@@ -143,6 +144,7 @@ abstract class Context {
       */
     @throws[InstantiateMappingFailedException]
     @throws[NoSuchMappingException]
+    @throws[UnknownProjectException]
     def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true) : Mapping
 
     /**
@@ -154,6 +156,7 @@ abstract class Context {
       */
     @throws[InstantiateRelationFailedException]
     @throws[NoSuchRelationException]
+    @throws[UnknownProjectException]
     def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation
 
     /**
@@ -165,6 +168,7 @@ abstract class Context {
       */
     @throws[InstantiateTargetFailedException]
     @throws[NoSuchTargetException]
+    @throws[UnknownProjectException]
     def getTarget(identifier: TargetIdentifier): Target
 
     /**
@@ -176,6 +180,7 @@ abstract class Context {
       */
     @throws[InstantiateJobFailedException]
     @throws[NoSuchJobException]
+    @throws[UnknownProjectException]
     def getJob(identifier: JobIdentifier): Job
 
     /**
@@ -187,6 +192,7 @@ abstract class Context {
      */
     @throws[InstantiateTestFailedException]
     @throws[NoSuchTestException]
+    @throws[UnknownProjectException]
     def getTest(identifier: TestIdentifier): Test
 
     /**
@@ -198,6 +204,7 @@ abstract class Context {
      */
     @throws[InstantiateTemplateFailedException]
     @throws[NoSuchTemplateException]
+    @throws[UnknownProjectException]
     def getTemplate(identifier: TemplateIdentifier): Template[_]
 
     /**

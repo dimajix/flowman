@@ -21,7 +21,7 @@ import scala.util.Try
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-import com.dimajix.flowman.execution.NoSuchProjectException
+import com.dimajix.flowman.execution.ProjectNotFoundException
 import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.ObjectMapper
@@ -69,7 +69,7 @@ case class LocalWorkspace(override val root:File) extends AbstractWorkspace {
     override def loadProject(name: String): Project = {
         parcels.find(_.listProjects().exists(_.name == name))
             .map(_.loadProject(name))
-            .getOrElse(throw new NoSuchProjectException(name))
+            .getOrElse(throw new ProjectNotFoundException(name))
     }
 
     /**

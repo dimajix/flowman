@@ -63,7 +63,7 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
                 "tgt" -> targetRelationTemplate
             )
         )
-        val session = Session.builder().disableSpark().build()
+        val session = Session.builder().withProject(project).disableSpark().build()
         val context = session.getContext(project)
 
         (mappingTemplate1.instantiate _).expects(context,None).returns(mapping1)

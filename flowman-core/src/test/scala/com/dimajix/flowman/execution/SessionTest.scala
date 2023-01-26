@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright 2018-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,20 @@
 
 package com.dimajix.flowman.execution
 
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.model.Job
+import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Prototype
+import com.dimajix.flowman.storage.AbstractStore
 import com.dimajix.spark.testing.LocalSparkSession
 
 
-class SessionTest extends AnyFlatSpec with Matchers with LocalSparkSession {
+class SessionTest extends AnyFlatSpec with Matchers with MockFactory with LocalSparkSession {
     "A Session" should "be buildable" in {
         val session = Session.builder()
             .disableSpark()
@@ -195,5 +201,59 @@ class SessionTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         newSession.spark.conf.get("spark.app.name") should be ("My Spark App")
         session.shutdown()
         newSession.shutdown()
+    }
+
+    it should "support importing projects via Stores" in {
+        val project1JobGen = mock[Prototype[Job]]
+        val project1 = Project(
+            name = "project1",
+            jobs = Map("main" -> project1JobGen),
+            imports = Seq(
+                Project.Import(project = "project2"),
+                Project.Import(project = "project3")
+            )
+        )
+        val project2 = Project(
+            name = "project2",
+            environment = Map("env1" -> "val1")
+        )
+        val project3JobGen = mock[Prototype[Job]]
+        val project3 = Project(
+            name = "project3",
+            jobs = Map("daily" -> project3JobGen)
+        )
+        val project4 = Project(
+            name = "project4"
+        )
+        val allProjects = Seq(project2, project3, project4)
+        val store = new AbstractStore() {
+            override def loadProject(name: String): Project = allProjects.find(_.name == name).get
+            override def listProjects(): Seq[Project] = Seq()
+        }
+
+        val session = Session.builder()
+            .withProject(project1)
+            .withStore(store)
+            .disableSpark()
+            .build()
+        val context = session.context
+
+        a[NoSuchJobException] should be thrownBy(context.getJob(JobIdentifier("job")))
+
+        a[NoSuchJobException] should be thrownBy(context.getJob(JobIdentifier("project1/lala")))
+
+        val project1Job = Job.builder(context).build()
+        (project1JobGen.instantiate _).expects(*,None).returns(project1Job)
+        context.getJob(JobIdentifier("project1/main")) should be(project1Job)
+
+        a[NoSuchJobException] should be thrownBy(context.getJob(JobIdentifier("project2/lala")))
+
+        val project3Job = Job.builder(context).build()
+        (project3JobGen.instantiate _).expects(*,None).returns(project3Job)
+        context.getJob(JobIdentifier("project3/daily")) should be(project3Job)
+
+        a[UnknownProjectException] should be thrownBy(context.getJob(JobIdentifier("project4/lala")))
+
+        session.shutdown()
     }
 }

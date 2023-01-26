@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright 2018-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,8 @@ import com.dimajix.flowman.model.TestIdentifier
 
 
 object RootContext {
-    class Builder private[RootContext](namespace:Option[Namespace], profiles:Set[String], parent:Option[Context] = None) extends AbstractContext.Builder[Builder,RootContext](parent, SettingLevel.NAMESPACE_SETTING) {
-        private var projectResolver:Option[String => Option[Project]] = parent.map(_.root).flatMap(_.projectResolver)
+    class Builder private[RootContext](namespace:Option[Namespace], profiles:Set[String]=Set.empty, parent:Option[Context]=None) extends AbstractContext.Builder[Builder,RootContext](parent, SettingLevel.NAMESPACE_SETTING) {
+        private var projects:Seq[Project] = parent.map(_.root).toSeq.flatMap(_.projects)
         private var overrideMappings:Map[MappingIdentifier, Prototype[Mapping]] = Map()
         private var overrideRelations:Map[RelationIdentifier, Prototype[Relation]] = Map()
         private var execution:Option[Execution] = None
@@ -61,8 +61,8 @@ object RootContext {
             this
         }
 
-        def withProjectResolver(resolver:String => Option[Project]) : Builder = {
-            projectResolver = Some(resolver)
+        def withProjects(projects:Seq[Project]) : Builder = {
+            this.projects = projects
             this
         }
 
@@ -100,27 +100,30 @@ object RootContext {
         }
 
         override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Prototype[Connection]]) : RootContext = {
-            new RootContext(namespace, projectResolver, profiles, env, config, execution, connections, overrideMappings, overrideRelations)
+            new RootContext(namespace, projects, profiles, env, config, execution, connections, overrideMappings, overrideRelations)
         }
     }
 
-    def builder() = new Builder(None, Set())
-    def builder(namespace:Namespace) = new Builder(Some(namespace), Set())
-    def builder(namespace:Option[Namespace], profiles:Set[String]) = new Builder(namespace, profiles)
-    def builder(parent:Context) = new Builder(parent.namespace, Set(), Some(parent))
+    def builder() : Builder = new Builder(None)
+    def builder(namespace:Namespace) : Builder = new Builder(Some(namespace))
+    def builder(namespace:Option[Namespace], profiles:Set[String]) : Builder = new Builder(namespace, profiles)
+    def builder(parent:Context) : Builder = new Builder(parent.namespace, parent.root.profiles, Some(parent))
+        .withConnections(parent.root.extraConnections)
+        //.overrideRelations(parent.root.overrideRelations)
+        //.overrideMappings(parent.root.overrideMappings)
 }
 
 
 final class RootContext private[execution](
     _namespace:Option[Namespace],
-    private val projectResolver:Option[String => Option[Project]],
-    _profiles:Set[String],
+    private val projects:Seq[Project],
+    private val profiles:Set[String],
     _env:Map[String,(Any, Int)],
     _config:Map[String,(String, Int)],
     _execution:Option[Execution],
-    extraConnections:Map[String, Prototype[Connection]],
-    overrideMappings:Map[MappingIdentifier, Prototype[Mapping]],
-    overrideRelations:Map[RelationIdentifier, Prototype[Relation]]
+    private val extraConnections:Map[String, Prototype[Connection]],
+    private val overrideMappings:Map[MappingIdentifier, Prototype[Mapping]],
+    private val overrideRelations:Map[RelationIdentifier, Prototype[Relation]]
 ) extends AbstractContext(
     _env + ("namespace" -> (NamespaceWrapper(_namespace) -> SettingLevel.SCOPE_OVERRIDE.level)),
     _config
@@ -162,6 +165,7 @@ final class RootContext private[execution](
       */
     @throws[InstantiateMappingFailedException]
     @throws[NoSuchMappingException]
+    @throws[UnknownProjectException]
     override def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true): Mapping = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -181,6 +185,7 @@ final class RootContext private[execution](
       */
     @throws[InstantiateRelationFailedException]
     @throws[NoSuchRelationException]
+    @throws[UnknownProjectException]
     override def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -200,6 +205,7 @@ final class RootContext private[execution](
       */
     @throws[InstantiateTargetFailedException]
     @throws[NoSuchTargetException]
+    @throws[UnknownProjectException]
     override def getTarget(identifier: TargetIdentifier): Target = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -219,6 +225,7 @@ final class RootContext private[execution](
       */
     @throws[InstantiateConnectionFailedException]
     @throws[NoSuchConnectionException]
+    @throws[UnknownProjectException]
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -254,6 +261,7 @@ final class RootContext private[execution](
       */
     @throws[InstantiateJobFailedException]
     @throws[NoSuchJobException]
+    @throws[UnknownProjectException]
     override def getJob(identifier: JobIdentifier): Job = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -273,6 +281,7 @@ final class RootContext private[execution](
      */
     @throws[InstantiateTestFailedException]
     @throws[NoSuchTestException]
+    @throws[UnknownProjectException]
     override def getTest(identifier: TestIdentifier): Test = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -292,6 +301,7 @@ final class RootContext private[execution](
      */
     @throws[InstantiateTemplateFailedException]
     @throws[NoSuchTemplateException]
+    @throws[UnknownProjectException]
     override def getTemplate(identifier: TemplateIdentifier): Template[_] = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -323,17 +333,24 @@ final class RootContext private[execution](
       */
     private def getProjectContext(projectName:String) : Context = {
         require(projectName != null && projectName.nonEmpty)
-        _children.getOrElseUpdate(projectName, createProjectContext(loadProject(projectName)))
+
+        lazy val project = {
+            projects.find(_.name == projectName).getOrElse(throw new UnknownProjectException(projectName))
+        }
+        _children.getOrElseUpdate(projectName, createProjectContext(project))
     }
 
     private def createProjectContext(project: Project) : Context = {
+        //if (!_projects.exists(_ eq project))
+        //    throw new IllegalArgumentException(s"Project ${project.name} is not registered in execution context")
+
         val builder = ProjectContext.builder(this, project)
         // Apply all selected profiles defined in the project
-        _profiles.foreach { prof =>
-                project.profiles.get(prof).foreach { profile =>
-                    builder.withProfile(profile)
-                }
+        profiles.foreach { prof =>
+            project.profiles.get(prof).foreach { profile =>
+                builder.withProfile(profile)
             }
+        }
 
         // We need to instantiate the projects job within its context, so we create a very temporary context
         def getImportJob(name:String) : Job = {
@@ -380,9 +397,6 @@ final class RootContext private[execution](
         }
 
         context
-    }
-    private def loadProject(name: String): Project = {
-        projectResolver.flatMap(f => f(name)).getOrElse(throw new NoSuchProjectException(name))
     }
 
     /**

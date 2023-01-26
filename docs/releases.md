@@ -8,7 +8,24 @@ fixed.
 You will find all official Flowman releases on [GitHub](https://github.com/dimajix/flowman/releases).
 
 
-## Past Releases 
+## Version Policy
+
+Starting with version 1.0.0, Flowman uses a semantic version schema. This means that Flowman uses a three-digit
+version number *major*.*minor*.*bugfix*. The meaning of the components is as follows:
+
+* The *major* number is increased in two scenarios: Either Flowman has implemented a big new feature set, or some
+  changes lead to incompatibility with previous versions (breaking changes).
+* The *minor* number is increased to indicating new features or slightly changed behaviour.
+* The *bugfix* number is increased for bugfixes. Otherwise, the behaviour and feature set of Flowman remain unchanged.
+
+Generally, you can expect Flowman to be downwards compatible with older releases within the same major version. Some
+minor changes or bugfixes may change the behavior of some features, which have been changed intentionally (for example,
+even a small bugfix intentionally changes the behaviour).
+
+Breaking changes will be documented in the changelog file for each version.
+
+
+## Changelog (excerpt)
 
 The following gives an (incomplete) list of past releases of the last 12 months. This will help you to spot breaking 
 changes over time.
@@ -18,6 +35,19 @@ changes over time.
 * github-314: Move avro related functionality into separate plugin
 * github-307: Describe Flowmans security policy in SECURITY.md
 * github-315: Create build profile for CDP 7.1 with Spark 3.3
+* github-317: Perform retry on failing JDBC commands
+* github-318: Support mappings from different projects and with non-standard outputs in SQL
+* github-140: Strictly check imports
+* github-316: Beautify README.md
+* github-310: Explain versioning policy in CHANGELOG.md
+
+#### Breaking changes
+
+This version introduces some (minor) breaking changes:
+* All Avro related functionality is now moved into the new "flowman-avro" plugin. If you rely on such functionality,
+  you explicitly need to include the plugin in the `default-namesapce.yml` file.
+* Imports are now strictly checked. This means when you cross-reference some entity in your project which is provided
+  by a different Flowman project, you now need to explicitly import the project in the `project.yml`
 
 
 ### Version 0.30.0 - 2023-01-03
@@ -50,6 +80,8 @@ changes over time.
 * github-304: Upgrade Cloudera profile to CDP 7.1.8
 * github-312: Fix build with Spark 2.4 and Maven 3.8
 
+This version is fully backward compatible until and including version 0.27.0.
+
 
 ### Version 0.29.0 - 2022-11-08
 
@@ -67,6 +99,8 @@ changes over time.
 * github-273: Refactor file abstraction
 * github-274: Print Flowman configuration to console
 
+This version is fully backward compatible until and including version 0.27.0.
+
 
 ### Version 0.28.0 - 2022-10-07
 
@@ -82,6 +116,8 @@ changes over time.
 * github-254: Use DATETIME2 for timestamps in MS SQL Server
 * github-256: Provide Maven archetype for simple Flowman projects
 * github-258: Support clustered indexes in MS SQL Server
+
+This version is fully backward compatible until and including version 0.27.0.
 
 
 ### Version 0.27.0 - 2022-09-09
@@ -101,12 +137,23 @@ changes over time.
 * github-243: Use alternative Spark MS SQL Connector for Spark 3.3
 * github-244: Generate project HTML documentation with optional external CSS file
 
+This version breaks full backward compatibility with older versions! See more details below.
+
+#### Breaking changes
+
+In order to provide more flexibility and to increase consistency, the properties of `jdbcQuery` have changed. Before
+this version, you needed to specify the SQL query in the `query` field. Now you have to specify the SQL query either
+in the `sql` field or provide an external file and provide the file name in the `file` field. This new syntax is more
+consistent with `jdbcView` and `hiveView` relations.
+
 
 ### Version 0.26.1 - 2022-08-03
 
 * github-226: Upgrade to Spark 3.2.2
 * github-227: [BUG] Flowman should not fail with field names containing "-", "/" etc
 * github-228: Padding and truncation of CHAR(n)/VARCHAR(n) should be configurable
+
+This version is fully backward compatible until and including version 0.26.0.
 
 
 ### Version 0.26.0 - 2022-07-27
@@ -133,6 +180,8 @@ changes over time.
 * github-205: Initial support Oracle DB via JDBC
 * github-225: [BUG] Staging schema should not have comments
 
+This version breaks full backward compatibility with older versions! See more details below.
+
 #### Breaking changes
 
 We take backward compatibility very seriously. But sometimes a breaking change is needed to clean up code and to
@@ -154,6 +203,8 @@ described in the following table:
 * github-195: [BUG] Metric "target_records" is not reset correctly after an execution phase is finished
 * github-197: [BUG] Impala REFRESH METADATA should not fail when dropping views
 
+This version is fully backward compatible until and including version 0.24.0.
+
 
 ### Version 0.25.0 - 2022-05-31
 
@@ -167,6 +218,8 @@ described in the following table:
 * github-191: Add user provided description to quality checks
 * github-192: Provide example queries for JDBC metric sink
 
+This version is fully backward compatible until and including version 0.24.0.
+
 
 ### Version 0.24.1 - 2022-04-28
 
@@ -174,6 +227,8 @@ described in the following table:
 * github-176: start-/end-date in report should not be the same
 * github-177: Implement generic SQL schema check
 * github-179: Update DeltaLake dependency to 1.2.1
+
+This version is fully backward compatible until and including version 0.24.0.
 
 
 ### Version 0.24.0 - 2022-04-05
@@ -184,6 +239,8 @@ described in the following table:
 * github-172: Update CDP7 profile to the latest patch level
 * github-153: Use non-privileged user in Docker image
 * github-174: Provide application for generating YAML schema
+
+This version breaks full backward compatibility with older versions! See more details below.
 
 #### Breaking changes
 
@@ -219,6 +276,8 @@ table:
 * github-162: ExpressionColumnCheck does not work when results contain NULL values
 * github-163: Implement new column length quality check
 
+This version is fully backward compatible until and including version 0.18.0.
+
 
 ### Version 0.23.0 - 2022-03-18
 
@@ -228,6 +287,8 @@ table:
 * github-151: Implement column level lineage in documentation
 * github-121: Correctly apply documentation, before/after and other common attributes to templates
 * github-152: Implement new 'cast' mapping
+
+This version is fully backward compatible until and including version 0.18.0.
 
 
 ### Version 0.22.0 - 2022-03-01
@@ -243,11 +304,14 @@ table:
 * Add new config variable `flowman.default.target.verifyPolicy` to ignore empty tables during VERIFY phase
 * Implement initial support for indexes in JDBC relations
 
+This version is fully backward compatible until and including version 0.18.0.
 
 
 ### Version 0.21.1 - 2022-01-28
 
 * `flowexec` now returns different exit codes depending on the processing result
+
+This version is fully backward compatible until and including version 0.18.0.
 
 
 ### Version 0.21.0 - 2022-01-26
@@ -257,10 +321,14 @@ table:
 * Implement new `stack` mapping
 * Improve error messages of local CSV parser
 
+This version is fully backward compatible until and including version 0.18.0.
+
 
 ### Version 0.20.1 - 2022-01-06
 
 * Implement detection of dependencies introduced by schema
+
+This version is fully backward compatible until and including version 0.18.0.
 
 
 ### Version 0.20.0 - 2022-01-05
@@ -278,6 +346,8 @@ table:
 * Change the semantics of config variable `flowman.execution.target.forceDirty` (default is `false`)
 * Add new `-d` / `--dirty` option for explicitly marking individual targets as dirty
 
+This version is fully backward compatible until and including version 0.18.0.
+
 
 ### Version 0.19.0 - 2021-12-13
 
@@ -292,6 +362,8 @@ table:
 * Implement more `template` types for `connection`, `schema`, `dataset`, `assertion` and `measure`
 * Implement new `measure` target for creating custom metrics for measuring data quality
 * Add new config option `flowman.execution.mapping.parallelism`
+
+This version is fully backward compatible until and including version 0.18.0.
 
 
 ### Version 0.18.0 - 2021-10-13

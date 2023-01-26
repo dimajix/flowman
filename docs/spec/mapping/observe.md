@@ -22,7 +22,56 @@ mappings:
       min_temperature: "min(air_temperature)"
       max_temperature: "max(air_temperature)"
 ```
-
+These metrics then can be published in a job as follows:
+```yaml
+jobs:
+  main:
+    targets:
+      # At least one target should use the "inspect_measurements" mapping
+      - ...
+    metrics:
+      # Add some common labels to all metrics
+      labels:
+        force: ${force}
+        phase: ${phase}
+        status: ${status}
+      metrics:
+        # This metric contains the number of records per output cube
+        - name: flowman_output_records
+          selector:
+            name: target_records
+            labels:
+              phase: BUILD
+              category: target
+          labels:
+            output: ${name}
+        # This metric contains the processing time per output
+        - name: flowman_output_time
+          selector:
+            name: target_runtime
+            labels:
+              phase: BUILD
+              category: target
+          labels:
+            output: ${name}
+        # This metric contains the overall processing time
+        - name: flowman_processing_time
+          selector:
+            name: job_runtime
+            labels:
+              phase: BUILD
+              category: job
+        # The following metrics have been defined in the "inspect_measurements" mapping
+        - name: record_count
+          selector:
+            name: record_count
+        - name: min_temperature
+          selector:
+            name: min_temperature
+        - name: max_temperature
+          selector:
+            name: max_temperature
+```
 
 ## Fields
 * `kind` **(mandatory)** *(type: string)*: `observe`

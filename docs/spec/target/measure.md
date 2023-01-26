@@ -19,12 +19,53 @@ targets:
         query: "
           SELECT
             COUNT(*) AS record_count,
-            SUM(column IS NULL)  AS column_sum
-          FROM some_mapping"
+            MIN(air_temperature) AS min_temperature,
+            MAX(air_temperature) AS max_temperature
+          FROM measurements"
+```
+These metrics then can be published in a job as follows:
+```yaml
+jobs:
+  main:
+    targets:
+      - measures
+    metrics:
+      # Add some common labels to all metrics
+      labels:
+        force: ${force}
+        phase: ${phase}
+        status: ${status}
+      metrics:
+        # This metric contains the processing time per output
+        - name: flowman_output_time
+          selector:
+            name: target_runtime
+            labels:
+              phase: BUILD
+              category: target
+          labels:
+            output: ${name}
+        # This metric contains the overall processing time
+        - name: flowman_processing_time
+          selector:
+            name: job_runtime
+            labels:
+              phase: BUILD
+              category: job
+        # The following metrics have been defined in the "measures" target
+        - name: record_count
+          selector:
+            name: record_count
+        - name: min_temperature
+          selector:
+            name: min_temperature
+        - name: max_temperature
+          selector:
+            name: max_temperature
 ```
 
-This example will provide two metrics, `record_count` and `column_sum`, which then can be sent to a 
-[metric sink](../metric/index.md) configured in the [namespace](../namespace.md).
+This example will provide three metrics, `record_count`, `min_temperature` and `max_temperature`, which then can be 
+sent to a [metric sink](../metric/index.md) configured in the [namespace](../namespace.md).
 
 
 ## Provided Metrics

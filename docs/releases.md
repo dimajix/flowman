@@ -40,6 +40,7 @@ changes over time.
 * github-140: Strictly check imports
 * github-316: Beautify README.md
 * github-310: Explain versioning policy in CHANGELOG.md
+* github-313: Improve example for "observe" mapping
 
 #### Breaking changes
 

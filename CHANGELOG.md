@@ -6,6 +6,7 @@
 * github-317: Perform retry on failing JDBC commands
 * github-318: Support mappings from different projects and with non-standard outputs in SQL
 * github-140: Strictly check imports
+* github-316: Beautify README.md
 
 ## Breaking changes
 

@@ -2,7 +2,7 @@
 
 This quickstart guide will walk you to a installation of Apache Spark and Flowman on your local Linux box. If you
 are using Windows, you will find some hints for setting up the required "Hadoop WinUtils", but we generally recommend
-to use Linux. You can also run a [Flowman Docker image](setup/docker.md), which is the simplest way to get up to speed.
+using Linux. You can also run a [Flowman Docker image](docs/setup/docker.md), which is the simplest way to get up to speed.
 
 
 ## 1. Install Spark
@@ -22,8 +22,9 @@ homepage. So we download the appropriate Spark distribution from the Apache arch
 ```shell
 # Create a nice playground which doesn't mess up your system
 mkdir playground
-cd playground# Download and unpack Spark & Hadoop
+cd playground
 
+# Download and unpack Spark & Hadoop
 curl -L https://archive.apache.org/dist/spark/spark-3.3.1/spark-3.3.1-bin-hadoop3.2.tgz | tar xvzf -
 
 # Create a nice link

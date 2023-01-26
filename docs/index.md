@@ -107,6 +107,7 @@ following sections:
    :maxdepth: 1
    :glob:
    :hidden:
+   :titlesonly:
    :caption: Command Line Tools
    
    cli/index

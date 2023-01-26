@@ -10,7 +10,7 @@ or for inspecting individual entities.
 * `-D <key>=<value>` Sets a environment variable
 * `--conf <key>=<value>` Sets a Flowman or Spark configuration variable
 * `--info` Dumps the active configuration to the console
-* `--spark-logging <level>` Sets the log level for Spark 
+* `--spark-logging <level>` Sets the log level for Spark
 * `--spark-master <master>` Explicitly sets the address of the Spark master
 * `--spark-name <application_name>` Sets the Spark application name
 * `-X` or `--verbose` Enables logging at more verbose level

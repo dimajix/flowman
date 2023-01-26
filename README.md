@@ -1,28 +1,34 @@
 # [![Flowman Logo](docs/images/flowman-favicon.png) Flowman](https://flowman.io)
+The declarative data build tool based on Apache Spark.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation](https://readthedocs.org/projects/flowman/badge/?version=latest)](https://flowman.readthedocs.io/en/latest/)
 
-Flowman is a Spark based *data build tool* that simplifies the act of writing data transformations as part of ETL
-processes. The main idea is that users write purely declarative *specifications* which describe all details of the
-data sources, sinks and data transformations instead of writing Spark jobs in Scala or Python. The main advantage of 
-this approach is that many technical details of a correct and robust implementation are encapsulated and the user
-can concentrate on the data transformations themselves.
+
+## 🤔 What is Flowman?
+
+Flowman is a *data build tool* based on [Apache Spark](https://spark.apache.org) that simplifies the act of 
+implementing data transformation logic as part of complex data pipelines. Flowman follows a strict "everything-as-code"
+approach, where the whole transformation logic is specified in purely declarative YAML files.
+These describe all details of the data sources, sinks and data transformations. This is much simpler and efficient
+than writing Spark jobs in Scala or Python. Flowman will take care of all the technical details of a correct and robust 
+implementation and the developers can concentrate on the data transformations themselves.
 
 In addition to writing and executing data transformations, Flowman can also be used for managing physical data models, 
-i.e. Hive or JDBC tables. Flowman can create such tables from a specification with the correct schema. This helps to 
-keep all aspects (like transformations and schema information) in a single place managed by a single program.
+i.e. Hive or SQL tables. Flowman can create such tables from a specification with the correct schema and also 
+automatically perform migrations. This helps to 
+keep all aspects (like transformations and schema information) in a single place managed by a single tool.
 
 [![Flowman Diagram](docs/images/flowman-overview.png)](https://flowman.io)
 
 
-### Noteable Features
+## 💪 Noteable Features
 
-* Semantics of a build tool like Maven - just for data instead for applications
+* Semantics of a build tool like Maven — just for data instead for applications
 * Declarative syntax in YAML files
 * Data model management (Create, Migrate and Destroy Hive tables, JDBC tables or file based storage)
-* Generation of meaningful documentation 
-* Flexible expression language
+* Generation of meaningful data model documentation 
+* Flexible expression language for parametrizing a project for different environments (DEV, TEST, PROD)
 * Jobs for managing build targets (like copying files or uploading data via sftp)
 * Automatic data dependency management within the execution of individual jobs
 * Meaningful logging output & rich set of execution metrics
@@ -30,79 +36,69 @@ keep all aspects (like transformations and schema information) in a single place
 * Extendable via Plugins
 
 
-## Documentation
+## 💾 Supported Data Sources and Sinks
+Flowman supports a wide range of data sources, for example
+* Various cloud blob storages (S3, ABS, ...)
+* Relational databases (Postgres, Azure SQL, MS SQL Server, MariaDB, ...)
+* Hadoop (HDFS & Hive)
+* Streaming sources (Kafka)
+
+For file-based sources and sinks, Flowman supports commonly used file formats like CSV, JSON, Parquet and much more. 
+The official documentation provides an overview of
+[supported connectors](https://docs.flowman.io/en/latest/connectors/index.html).
+
+
+## 📚 Documentation
 
 You can find the official homepage at [Flowman.io](https://flowman.io)
  and a comprehensive documentation at [Read the Docs](https://docs.flowman.io). 
 
 
-# Installation
+## 🤓 How do I use Flowman?
 
-You can either grab an appropriate pre-build package at [GitHub](https://github.com/dimajix/flowman/releases) 
+### 1. Install Flowman
 
-## Installing the Packed Distribution 
+You can set up Flowman by following our step-by-step instructions for [local installations](https://docs.flowman.io/en/latest/setup/installation.html)
+or by starting a [Docker container](https://docs.flowman.io/en/latest/setup/docker.html)
 
-The packed distribution file is called `flowman-{version}-bin.tar.gz` and can be extracted at any 
-location using
-```shell
-tar xvzf flowman-{version}-bin.tar.gz
-```
+### 2. Create a Project
 
-## Apache Spark
+Flowman will provide some example projects in the `examples` subdirectory, which you can use as a starting point.
 
-Flowman does not bring its own Spark libraries, but relies on a correctly installed Spark distribution. You can 
-download appropriate packages directly from [https://spark.apache.org](the Spark Homepage). 
+### 3. Execute the Project
 
-## Hadoop Utils for Windows
-
-If you are trying to run the application on Windows, you also need the *Hadoop Winutils*, which is a set of
-DLLs required for the Hadoop libraries to be working. You can get a copy at https://github.com/kontext-tech/winutils .
-Once you downloaded the appropriate version, you need to place the DLLs into a directory `$HADOOP_HOME/bin`, where
-`HADOOP_HOME` refers to some location on your Windows PC. You also need to set the following environment variables:
-* `HADOOP_HOME` should point to the parent directory of the `bin` directory
-* `PATH` should also contain `$HADOOP_HOME/bin`
+You can execute the project interactively by starting the [Flowman Shell](https://docs.flowman.io/en/latest/cli/flowshell/index.html)
 
 
-# Command Line Utils
+## 🚀 Installation
 
-The primary tool provided by Flowman is called `flowexec` and is located in the `bin` folder of the 
-installation directory.
-
-## General Usage
-
-The `flowexec` tool has several subcommands for working with objects and projects. The general pattern 
-looks as follows
-```shell
-flowexec [generic options] <cmd> <subcommand> [specific options and arguments]
-```
-
-For working with `flowexec`, either your current working directory needs to contain a Flowman
-project with a file `project.yml` or you need to specify the path to a valid project via
-```shell
-flowexec -f /path/to/project/folder <cmd>
-```
-    
-## Interactive Shell
-
-With version 0.14.0, Flowman also introduced a new interactive shell for executing data flows. The shell can be
-started via
-```shell
-flowshell -f <project>
-```
-    
-Within the shell, you can interactively build targets and inspect intermediate mappings.
+You simply grab an appropriate pre-build package at [GitHub](https://github.com/dimajix/flowman/releases),
+or you can use a Docker image, which is available at [Docker Hub](https://hub.docker.com/repository/docker/dimajix/flowman).
+More details are described in the [Quickstart Guide](QUICKSTART.md) or in the [official Flowman documentation](https://docs.flowman.io/en/latest/setup/index.html).
 
 
-# Building
+## 🏗 Building
 
-You can build your own version via Maven with
+You can build your own Flowman version via Maven with
 ```shell
 mvn clean install
 ```
 Please also read [BUILDING.md](BUILDING.md) for detailed instructions, specifically on build profiles.
 
 
-# Contributing
+## 💙 Community
 
-You want to contribute to Flowman? Welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) to understand what you can 
-do.
+- [Slack](https://join.slack.com/t/flowman-io/shared_invite/zt-168ltudzp-52cCI1S69OMh7sSajtp~7A): Message us on Slack
+
+
+## 😍 Contributing
+
+You want to contribute to Flowman? Welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) to understand how you can 
+contribute to the project.
+
+* [GitHub issue tracker for Flowman](https://github.com/dimajix/flowman/issues/new) to report feature requests or bugs.
+
+
+## 📄 License
+
+This project is licensed under Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

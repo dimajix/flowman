@@ -1,16 +1,16 @@
 # Running on Windows
 
 Flowman is best run on Linux, especially for production usage. Windows support is at best experimental and will
-probably be never within the focus of the project. Nevertheless, there are also some options for running Flowman on
-Windows, with the main purpose to provide developers some way to create and test projects on their local machines.
+probably never be within the focus of the project. Nevertheless, there are also some options for running Flowman on
+Windows, with the main purpose of providing developers some way to create and test projects on their local machines.
 
 The main difficulty in supporting Windows comes from two aspects
-* Windows doesn't support `bash`, therefore all scripts have been rewritten to run on Windows
+* Windows doesn't support `bash`, therefore, all scripts have been rewritten to run on Windows
 * Hadoop and Spark require some special *Hadoop WinUtils* libraries to be installed
 
 
 ## Installing using WinUtils
-The first naturla option is to install Flowman directly on your Windows machine. Of course this also requires a
+The first natural option is to install Flowman directly on your Windows machine. Of course this also requires a
 working Apache Spark installation. You can download an appropriate version from the
 [Apache Spark homepage](https://spark.apache.org).
 
@@ -29,5 +29,5 @@ A simpler way to run Flowman on Windows is to use a Docker image available on
 
 
 ## Using WSL
-And of course you can also simply install a Linux distro of your choice via WSL and then normally 
+And of course, you can also simply install a Linux distro of your choice via WSL and then normally 
 [install Flowman](installation.md) within WSL.

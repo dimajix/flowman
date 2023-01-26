@@ -106,6 +106,7 @@ using the correct version. The following profiles are available:
 * CDH-6.3
 * CDP-7.1
 * CDP-7.1-spark-3.2
+* CDP-7.1-spark-3.3
 
 With these profiles it is easy to build Flowman to match your environment. 
 

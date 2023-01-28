@@ -5,7 +5,7 @@ services:
     image: dimajix/flowman:latest
     command: bash
     volumes:
-      - ./flow:/home/flowman/flow
+      - ./weather:/home/flowman/weather
       - ./conf:/opt/flowman/conf
     environment:
       - http_proxy=${http_proxy}

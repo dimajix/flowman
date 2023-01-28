@@ -1,9 +1,8 @@
 relations:
   stations:
-    kind: sqlserver
+    kind: jdbcTable
     description: "The 'stations' table contains meta data on all weather stations"
-    connection: sql_server
-    database: dbo
+    connection: jdbcConnection
     table: stations
     schema:
       kind: mapping

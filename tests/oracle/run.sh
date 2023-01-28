@@ -8,7 +8,7 @@ find . -type d | xargs chmod a+rx
 find bin -type f | xargs chmod a+rx
 
 # Start database
-docker-compose up -d mysql
+docker-compose up -d oracle
 
 # Run tests
 docker-compose run --rm flowman bin/run-tests.sh

@@ -4,8 +4,12 @@ services:
   flowman:
     image: dimajix/flowman:latest
     command: bash
+    depends_on:
+      - mysql
     volumes:
-      - ./flow:/home/flowman/flow
+      - ./migrations:/home/flowman/migrations
+      - ./weather:/home/flowman/weather
+      - ./bin:/home/flowman/bin
       - ./conf:/opt/flowman/conf
     environment:
       - http_proxy=${http_proxy}
@@ -17,11 +21,13 @@ services:
       - JDBC_PASSWORD=yourStrong(!)Password
 
   mysql:
-    image: mysql:8.0.30
+    image: mysql:8.0.32
     environment:
       - MYSQL_USER=flowman
       - MYSQL_PASSWORD=yourStrong(!)Password
       - MYSQL_ROOT_PASSWORD=yourStrong(!)Password
-      - MYSQL_DATABASE=weather
+      - MYSQL_DATABASE=flowman
     ports:
       - "3306:3306"
+    volumes:
+      - ./docker/mysql:/etc/mysql/conf.d

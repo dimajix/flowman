@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-sleep 5
+set -e
+
+sleep 15
 
 # Check migrations
 flowexec -f migrations job build v1

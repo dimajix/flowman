@@ -5,7 +5,9 @@ services:
     image: dimajix/flowman:latest
     command: bash
     volumes:
-      - ./flow:/home/flowman/flow
+      - ./migrations:/home/flowman/migrations
+      - ./weather:/home/flowman/weather
+      - ./bin:/home/flowman/bin
       - ./conf:/opt/flowman/conf
     environment:
       - http_proxy=${http_proxy}
@@ -13,7 +15,7 @@ services:
       - SPARK_MASTER=local[*]
       - JDBC_URL=jdbc:oracle:thin:@oracle:1521
       - JDBC_DB=flowman
-      - JDBC_USERNAME=sa
+      - JDBC_USERNAME=flowman
       - JDBC_PASSWORD=yourStrong(!)Password
 
   oracle:

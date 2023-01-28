@@ -1,5 +1,5 @@
 relations:
-  aggregates_v1:
+  aggregates:
     kind: jdbcTable
     connection: jdbcConnection
     table: weather
@@ -27,13 +27,6 @@ relations:
           type: FLOAT
         - name: avg_temperature
           type: DOUBLE
-        - name: comment
-          type: VARCHAR(32)
-          charset: utf8mb4
-          collation: de-DE-x-icu
-        - name: new_column
-          type: VARCHAR(32)
-          description: "This is a new column"
     # (Optionally) specify a primary key
     primaryKey:
       - date
@@ -42,44 +35,3 @@ relations:
     indexes:
       - name: "measurement_idx0"
         columns: [country]
-
-  aggregates_v2:
-    kind: jdbcTable
-    connection: jdbcConnection
-    table: weather
-    schema:
-      kind: inline
-      fields:
-        - name: date
-          type: DATE
-        - name: country
-          type: CHAR(2)
-          description: "FIPS Country Code"
-        - name: min_wind_speed
-          type: DOUBLE
-          description: "Minimum wind speed (m/s)"
-        - name: max_wind_speed
-          type: DOUBLE
-          description: "Maximum wind speed (m/s)"
-        - name: avg_wind_speed
-          type: FLOAT
-          description: "Average wind speed (m/s)"
-        - name: MIN_TEMPERATURE
-          type: FLOAT
-        - name: max_temperature
-          type: FLOAT
-        - name: avg_temperature
-          type: DOUBLE
-        - name: comment
-          type: VARCHAR(32)
-          charset: ucs2
-          collation: en_US
-    # (Optionally) specify a primary key
-    #primaryKey:
-    #  - date
-    #  - country
-    # (Optionally) specify indexes
-    indexes:
-      - name: "measurement_idx0"
-        columns: [date,country]
-

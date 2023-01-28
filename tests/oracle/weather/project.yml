@@ -6,3 +6,4 @@ modules:
   - config
   - mapping
   - job
+  - target

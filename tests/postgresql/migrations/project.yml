@@ -1,4 +1,4 @@
-name: "oracle"
+name: "postgresql"
 version: "1.0"
 
 modules:

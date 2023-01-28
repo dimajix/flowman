@@ -39,3 +39,9 @@ mappings:
           checks:
             - kind: expression
               expression: "max_temperature <= 100"
+
+
+  aggregates_conformed:
+    kind: filter
+    input: aggregates
+    condition: "country IS NOT NULL"

@@ -50,7 +50,7 @@ object SchemaSpec extends TypeRegistry[SchemaSpec] {
     new JsonSubTypes.Type(name = "union", value = classOf[UnionSchemaSpec])
 ))
 abstract class SchemaSpec extends Spec[Schema] {
-    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required=false, defaultValue="inline") protected var kind: String = "inline"
+    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required=false) protected var kind: String = "inline"
 
     override def instantiate(context:Context, properties:Option[Schema.Properties] = None) : Schema
 

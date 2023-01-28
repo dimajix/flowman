@@ -1,0 +1,6 @@
+connections:
+  jdbcConnection:
+    driver: "$jdbc_driver"
+    url: "$jdbc_url/flowman"
+    username: "$jdbc_username"
+    password: "$jdbc_password"

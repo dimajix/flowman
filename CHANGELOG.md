@@ -28,6 +28,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-316: Beautify README.md
 * github-310: Explain versioning policy in CHANGELOG.md
 * github-313: Improve example for "observe" mapping
+* github-319: Support Oracle for History Server 
 
 ### Breaking changes
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright 2018-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,21 +26,7 @@ import com.dimajix.flowman.spec.ObjectMapper
 class SchemaTest extends AnyFlatSpec with Matchers {
     lazy val mapper = ObjectMapper.mapper
 
-    "A Schema" should "default to the inline schema" in {
-        val spec =
-            """
-              |fields:
-              |  - name: str_col
-              |    type: string
-              |  - name: int_col
-              |    type: integer
-            """.stripMargin
-
-        val result = mapper.readValue(spec, classOf[SchemaSpec])
-        result shouldBe a[InlineSchemaSpec]
-    }
-
-    it should "provide a nice string representation (1)" in {
+    "A Schema" should "provide a nice string representation (1)" in {
         val spec =
             """
               |kind: inline

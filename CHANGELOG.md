@@ -29,6 +29,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-310: Explain versioning policy in CHANGELOG.md
 * github-313: Improve example for "observe" mapping
 * github-319: Support Oracle for History Server 
+* github-320: Do not fall back to "inline" schema when no kind is specified
 
 ### Breaking changes
 
@@ -37,6 +38,7 @@ This version introduces some (minor) breaking changes:
 you explicitly need to include the plugin in the `default-namesapce.yml` file.
 * Imports are now strictly checked. This means when you cross-reference some entity in your project which is provided
 by a different Flowman project, you now need to explicitly import the project in the `project.yml`
+* The `kind` for schema definitions is now a mandatory attribute, Flowman will not fall back to a `inline` schema any more. 
 
 
 ## Version 0.30.0 - 2023-01-03

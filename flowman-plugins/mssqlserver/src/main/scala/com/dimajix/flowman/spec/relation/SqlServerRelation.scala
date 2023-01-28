@@ -31,6 +31,7 @@ import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.jdbc.SqlDialects
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Reference
@@ -77,9 +78,10 @@ case class SqlServerRelation(
 
     override protected def appendTable(execution: Execution, df:DataFrame, table:TableIdentifier): Unit = {
         val props = createConnectionProperties()
+        val dialect = SqlDialects.get(props(JDBCOptions.JDBC_URL))
         this.writer(execution, df, "com.microsoft.sqlserver.jdbc.spark", Map(), SaveMode.Append)
             .options(props ++ Map("tableLock" -> "true", "mssqlIsolationLevel" -> "READ_UNCOMMITTED"))
-            .option(JDBCOptions.JDBC_TABLE_NAME, table.unquotedString)
+            .option(JDBCOptions.JDBC_TABLE_NAME, dialect.quote(tableIdentifier))
             .save()
     }
 

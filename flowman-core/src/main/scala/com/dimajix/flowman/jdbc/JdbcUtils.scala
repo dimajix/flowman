@@ -27,7 +27,6 @@ import java.time.Duration
 import java.time.Instant
 import java.util.Locale
 
-import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.util.Try
 import scala.util.control.NonFatal

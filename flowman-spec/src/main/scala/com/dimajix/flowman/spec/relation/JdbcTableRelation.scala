@@ -192,8 +192,9 @@ abstract class JdbcTableRelationBase(
             .format("jdbc")
             .options(props)
 
+        val dialect = SqlDialects.get(props(JDBCOptions.JDBC_URL))
         val tableDf = reader
-            .option(JDBCOptions.JDBC_TABLE_NAME, tableIdentifier.unquotedString)
+            .option(JDBCOptions.JDBC_TABLE_NAME, dialect.quote(tableIdentifier))
             .load()
 
         val filteredDf = filterPartition(tableDf, partitions)
@@ -364,10 +365,11 @@ abstract class JdbcTableRelationBase(
     protected def appendTable(execution: Execution, df:DataFrame, table:TableIdentifier) : Unit = {
         // Save table
         val props = createConnectionProperties()
+        val dialect = SqlDialects.get(props(JDBCOptions.JDBC_URL))
         df.write.format("jdbc")
             .mode(SaveMode.Append)
             .options(props)
-            .option(JDBCOptions.JDBC_TABLE_NAME, table.unquotedString)
+            .option(JDBCOptions.JDBC_TABLE_NAME, dialect.quote(table))
             .save()
     }
 

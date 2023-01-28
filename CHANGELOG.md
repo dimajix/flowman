@@ -30,6 +30,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-313: Improve example for "observe" mapping
 * github-319: Support Oracle for History Server 
 * github-320: Do not fall back to "inline" schema when no kind is specified
+* github-321: Properly support lower case / upper case table names in Oracle
 
 ### Breaking changes
 

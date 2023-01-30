@@ -1,4 +1,4 @@
-name: "oracle"
+name: "weather"
 version: "1.0"
 
 modules:

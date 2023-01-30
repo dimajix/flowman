@@ -29,8 +29,7 @@ relations:
           type: DOUBLE
         - name: comment
           type: VARCHAR(32)
-          charset: utf8mb4
-          collation: utf8mb4_general_ci
+          collation: SQL_AltDiction_CP850_CS_AS
         - name: new_column
           type: VARCHAR(32)
           description: "This is a new column"
@@ -72,8 +71,7 @@ relations:
           type: DOUBLE
         - name: comment
           type: VARCHAR(32)
-          charset: ucs2
-          collation: ucs2_general_ci
+          collation: SQL_Latin1_General_CP1_CI_AI
     # (Optionally) specify a primary key
     #primaryKey:
     #  - date

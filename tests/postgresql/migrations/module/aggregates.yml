@@ -40,7 +40,7 @@ relations:
       - country
     # (Optionally) specify indexes
     indexes:
-      - name: "measurement_idx0"
+      - name: "weather_idx0"
         columns: [country]
 
   aggregates_v2:
@@ -80,6 +80,6 @@ relations:
     #  - country
     # (Optionally) specify indexes
     indexes:
-      - name: "measurement_idx0"
+      - name: "weather_idx2"
         columns: [date,country]
 

@@ -585,6 +585,7 @@ abstract class JdbcTableRelationBase(
                 try {
                     // TODO: This should be done within a transaction (if supported)
                     withStatement { (statement, options) =>
+                        logger.info(s"Dropping JDBC view $tableIdentifier")
                         JdbcUtils.dropView(statement, tableIdentifier, options)
                         doCreate(statement, options)
                     }
@@ -656,9 +657,10 @@ abstract class JdbcTableRelationBase(
 
         def recreate(con:java.sql.Connection, options:JDBCOptions) : Unit = {
             try {
-                logger.info(s"Migrating JDBC relation '$identifier', this will recreate JDBC table $tableIdentifier.")
+                logger.info(s"Migrating JDBC relation '$identifier', this will drop/create JDBC table $tableIdentifier.")
                 // TODO: This should be performed within a transaction (if supported)
                 JdbcUtils.withStatement(con, options) { statement =>
+                    logger.info(s"Dropping JDBC table $tableIdentifier")
                     JdbcUtils.dropTable(statement, tableIdentifier, options)
                     doCreate(statement, options)
                 }

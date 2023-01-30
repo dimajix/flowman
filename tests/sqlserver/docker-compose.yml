@@ -8,6 +8,7 @@ services:
       - ./migrations:/home/flowman/migrations
       - ./twitter:/home/flowman/twitter
       - ./weather:/home/flowman/weather
+      - ./bin:/home/flowman/bin
       - ./conf:/opt/flowman/conf
     environment:
       - http_proxy=${http_proxy}

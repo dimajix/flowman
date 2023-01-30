@@ -81,7 +81,7 @@ case class SqlServerRelation(
         val dialect = SqlDialects.get(props(JDBCOptions.JDBC_URL))
         this.writer(execution, df, "com.microsoft.sqlserver.jdbc.spark", Map(), SaveMode.Append)
             .options(props ++ Map("tableLock" -> "true", "mssqlIsolationLevel" -> "READ_UNCOMMITTED"))
-            .option(JDBCOptions.JDBC_TABLE_NAME, dialect.quote(tableIdentifier))
+            .option(JDBCOptions.JDBC_TABLE_NAME, dialect.quote(table))
             .save()
     }
 

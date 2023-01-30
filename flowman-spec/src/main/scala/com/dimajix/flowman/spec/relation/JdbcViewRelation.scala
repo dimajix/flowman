@@ -263,6 +263,7 @@ case class JdbcViewRelation(
         }
     }
     protected def doCreate(stmt:Statement, options:JDBCOptions): Unit = {
+        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC view $view.")
         JdbcUtils.createView(stmt, view, statement, options)
     }
 
@@ -340,6 +341,7 @@ case class JdbcViewRelation(
                 try {
                     // TODO: This should be performed within a transaction (if supported)
                     JdbcUtils.withStatement(connection, options) { statement =>
+                        logger.info(s"Dropping JDBC table $view")
                         JdbcUtils.dropTable(statement, view, options)
                         doCreate(statement, options)
                     }

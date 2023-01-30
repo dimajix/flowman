@@ -2,7 +2,7 @@ relations:
   aggregates:
     kind: jdbcTable
     connection: jdbcConnection
-    table: weather
+    table: aggregates
     schema:
       kind: inline
       fields:

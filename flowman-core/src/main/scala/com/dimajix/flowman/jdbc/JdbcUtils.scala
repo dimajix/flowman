@@ -720,49 +720,69 @@ object JdbcUtils {
 
         val cmds = changes.flatMap {
             case a:DropColumn =>
-                logger.info(s"Dropping column '${a.column}' from JDBC table $table")
                 currentFields.remove(a.column.toLowerCase(Locale.ROOT))
-                Some((stmt:Statement) => commands.deleteColumn(stmt, table, a.column))
+                Some((stmt:Statement) => {
+                    logger.info(s"Dropping column '${a.column}' from JDBC table $table")
+                    commands.deleteColumn(stmt, table, a.column)
+                })
             case a:AddColumn =>
                 val dataType = dialect.getJdbcType(a.column.ftype)
                 val charset = a.column.charset.map(c => s" CHARACTER SET $c").getOrElse("")
                 val collation = a.column.collation.map(c => s" COLLATE $c").getOrElse("")
-                logger.info(s"Adding column '${a.column.name}' with type '${dataType.databaseTypeDefinition}${charset}${collation}' (${a.column.ftype.sqlType}) to JDBC table $table")
                 currentFields.put(a.column.name.toLowerCase(Locale.ROOT), JdbcField(a.column.name, dataType.databaseTypeDefinition, 0, 0, 0, false, a.column.nullable, a.column.collation, a.column.charset, a.column.description))
-                Some((stmt:Statement) => commands.addColumn(stmt, table, a.column.name, dataType.databaseTypeDefinition, a.column.nullable, a.column.charset, a.column.collation, a.column.description))
+                Some((stmt:Statement) => {
+                    logger.info(s"Adding column '${a.column.name}' with type '${dataType.databaseTypeDefinition}${charset}${collation}' (${a.column.ftype.sqlType}) to JDBC table $table")
+                    commands.addColumn(stmt, table, a.column.name, dataType.databaseTypeDefinition, a.column.nullable, a.column.charset, a.column.collation, a.column.description)
+                })
             case u:UpdateColumnType =>
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))
                 val dataType = dialect.getJdbcType(u.dataType)
                 val charset = u.charset.map(c => s" CHARACTER SET $c").getOrElse("")
                 val collation = u.collation.map(c => s" COLLATE $c").getOrElse("")
-                logger.info(s"Changing column '${u.column}' type from '${current.typeName}' to '${dataType.databaseTypeDefinition}${charset}${collation}' (${u.dataType.sqlType}) in JDBC table $table")
                 currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(typeName=dataType.databaseTypeDefinition))
-                Some((stmt:Statement) => commands.updateColumnType(stmt, table, u.column, dataType.databaseTypeDefinition, current.nullable, charset=u.charset.orElse(current.charset), collation=u.collation.orElse(current.collation), current.description))
+                Some((stmt:Statement) => {
+                    logger.info(s"Changing column '${u.column}' type from '${current.typeName}' to '${dataType.databaseTypeDefinition}${charset}${collation}' (${u.dataType.sqlType}) in JDBC table $table")
+                    commands.updateColumnType(stmt, table, u.column, dataType.databaseTypeDefinition, current.nullable, charset=u.charset.orElse(current.charset), collation=u.collation.orElse(current.collation), current.description)
+                })
             case u:UpdateColumnNullability =>
-                logger.info(s"Updating nullability of column '${u.column}' to ${u.nullable} in JDBC table $table")
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))
                 currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(nullable=u.nullable))
-                Some((stmt:Statement) => commands.updateColumnNullability(stmt, table, u.column, current.typeName, u.nullable, charset=current.charset, collation=current.collation, comment=current.description))
+                Some((stmt:Statement) => {
+                    logger.info(s"Updating nullability of column '${u.column}' to ${u.nullable} in JDBC table $table")
+                    commands.updateColumnNullability(stmt, table, u.column, current.typeName, u.nullable, charset=current.charset, collation=current.collation, comment=current.description)
+                })
             case u:UpdateColumnComment =>
-                logger.info(s"Updating comment of column '${u.column}' in JDBC table $table")
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))
                 currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(description=u.comment))
-                Some((stmt:Statement) => commands.updateColumnComment(stmt, table, u.column, current.typeName, current.nullable, charset=current.charset, collation=current.collation, comment=u.comment))
+                Some((stmt:Statement) => {
+                    logger.info(s"Updating comment of column '${u.column}' in JDBC table $table")
+                    commands.updateColumnComment(stmt, table, u.column, current.typeName, current.nullable, charset=current.charset, collation=current.collation, comment=u.comment)
+                })
             case idx:CreateIndex =>
-                logger.info(s"Adding index '${idx.name}' to JDBC table $table on columns ${idx.columns.mkString(",")}")
-                Some((stmt:Statement) => commands.createIndex(stmt, table, TableIndex(idx.name, idx.columns, idx.unique)))
+                Some((stmt:Statement) => {
+                    logger.info(s"Adding index '${idx.name}' to JDBC table $table on columns ${idx.columns.mkString(",")}")
+                    commands.createIndex(stmt, table, TableIndex(idx.name, idx.columns, idx.unique))
+                })
             case idx:DropIndex =>
-                logger.info(s"Dropping index '${idx.name}' from JDBC table $table")
-                Some((stmt:Statement) => commands.dropIndex(stmt, table, idx.name))
+                Some((stmt:Statement) => {
+                    logger.info(s"Dropping index '${idx.name}' from JDBC table $table")
+                    commands.dropIndex(stmt, table, idx.name)
+                })
             case pk:CreatePrimaryKey =>
-                logger.info(s"Creating primary key for JDBC table $table on columns ${pk.columns.mkString(",")}")
-                Some((stmt:Statement) => commands.addPrimaryKey(stmt, table, PrimaryKey(pk.columns, pk.clustered)))
+                Some((stmt:Statement) => {
+                    logger.info(s"Creating primary key for JDBC table $table on columns ${pk.columns.mkString(",")}")
+                    commands.addPrimaryKey(stmt, table, PrimaryKey(pk.columns, pk.clustered))
+                })
             case pk:DropPrimaryKey =>
-                logger.info(s"Dropping primary key from JDBC table $table")
-                Some((stmt:Statement) => commands.dropPrimaryKey(stmt, table))
+                Some((stmt:Statement) => {
+                    logger.info(s"Dropping primary key from JDBC table $table")
+                    commands.dropPrimaryKey(stmt, table)
+                })
             case sf:ChangeStorageFormat =>
-                logger.info(s"Changing storage format of JDBC table $table to ${sf.format}")
-                Some((stmt:Statement) => commands.changeStorageFormat(stmt, table, sf.format))
+                Some((stmt:Statement) => {
+                    logger.info(s"Changing storage format of JDBC table $table to ${sf.format}")
+                    commands.changeStorageFormat(stmt, table, sf.format)
+                })
             case chg:TableChange => throw new SQLException(s"Unsupported table change $chg for JDBC table $table")
         }
 
@@ -783,7 +803,7 @@ object JdbcUtils {
         }
         catch {
             case NonFatal(ex) =>
-                logger.error(s"Error executing SQL via JDBC: ${reasons(ex)}\n$sql")
+                logger.error(s"Error executing SQL via JDBC: $sql\n    ${reasons(ex)}")
                 throw ex
         }
     }

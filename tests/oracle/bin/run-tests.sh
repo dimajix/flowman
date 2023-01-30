@@ -2,8 +2,6 @@
 
 set -e
 
-sleep 15
-
 # Check migrations
 flowexec -f migrations job build v1
 flowexec -f migrations job build v1

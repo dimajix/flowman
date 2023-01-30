@@ -32,4 +32,4 @@ targets:
 jobs:
   test_timestamp:
     targets:
-      -   test_timestamp
+      - test_timestamp

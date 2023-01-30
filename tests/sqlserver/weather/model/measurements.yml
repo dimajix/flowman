@@ -4,7 +4,6 @@ relations:
     connection: sql_server
     database: dbo
     table: measurement
-    stagingTable: measurement_staging
     schema:
       kind: spark
       file: "${project.basedir}/schema/measurements.json"

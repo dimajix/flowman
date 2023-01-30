@@ -2,7 +2,7 @@ relations:
   aggregates:
     kind: jdbcTable
     connection: jdbcConnection
-    table: weather
+    table: aggregates
     schema:
       kind: inline
       fields:
@@ -27,11 +27,16 @@ relations:
           type: FLOAT
         - name: avg_temperature
           type: DOUBLE
+    # Add partition column
+    partitions:
+      - name: year
+        type: integer
+        granularity: 1
     # (Optionally) specify a primary key
     primaryKey:
       - date
       - country
     # (Optionally) specify indexes
     indexes:
-      - name: "measurement_idx0"
+      - name: "aggregates_idx0"
         columns: [country]

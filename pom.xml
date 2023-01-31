@@ -822,7 +822,6 @@
         <module>flowman-studio-ui</module>
         <module>flowman-studio</module>
         <module>flowman-hub</module>
-        <module>flowman-client</module>
         <module>flowman-yaml-schema</module>
         <module>flowman-parent</module>
         <module>flowman-archetype-quickstart</module>
@@ -1397,11 +1396,6 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-json</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

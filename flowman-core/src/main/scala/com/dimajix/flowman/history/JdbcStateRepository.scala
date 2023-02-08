@@ -116,7 +116,7 @@ private[history] object JdbcStateRepository {
 
     case class GraphNode(
         id:Long,
-        target_id:Long,
+        job_id:Long,
         category:String,
         kind:String,
         name:String

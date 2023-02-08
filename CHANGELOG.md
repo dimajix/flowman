@@ -33,6 +33,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-321: Properly support lower case / upper case table names in Oracle
 * github-309: Automate integration tests
 * github-322: Remove flowman-client
+* github-324: Log environment variables for imported projects
 
 ### Breaking changes
 

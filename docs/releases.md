@@ -41,6 +41,12 @@ changes over time.
 * github-316: Beautify README.md
 * github-310: Explain versioning policy in CHANGELOG.md
 * github-313: Improve example for "observe" mapping
+* github-319: Support Oracle for History Server
+* github-320: Do not fall back to "inline" schema when no kind is specified
+* github-321: Properly support lower case / upper case table names in Oracle
+* github-309: Automate integration tests
+* github-322: Remove flowman-client
+* github-324: Log environment variables for imported projects
 
 #### Breaking changes
 

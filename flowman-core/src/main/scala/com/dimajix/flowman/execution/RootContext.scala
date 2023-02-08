@@ -331,7 +331,7 @@ final class RootContext private[execution](
       * @param projectName
       * @return
       */
-    private def getProjectContext(projectName:String) : Context = {
+    def getProjectContext(projectName:String) : Context = {
         require(projectName != null && projectName.nonEmpty)
 
         lazy val project = {

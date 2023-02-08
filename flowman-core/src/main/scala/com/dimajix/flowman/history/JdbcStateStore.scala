@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright 2018-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -364,7 +364,7 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
                     logger.warn("Retrying after error while executing SQL: {}", e.getMessage)
                     Thread.sleep(timeout)
                     retry(n - 1)(fn)
-                case ex =>
+                case ex:Throwable =>
                     throw new StateStoreException("Error accessing JDBC state store repository", ex)
             }
         }

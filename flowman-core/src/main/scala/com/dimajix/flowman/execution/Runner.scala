@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright 2018-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
+import scala.collection.mutable
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
 
@@ -35,6 +33,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.text.TimeFormatter
+import com.dimajix.flowman.common.ConsoleColors._
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.StateStoreAdaptorListener
@@ -56,7 +55,6 @@ import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.flowman.spi.LogFilter
-import com.dimajix.flowman.common.ConsoleColors._
 import com.dimajix.spark.SparkUtils.withJobGroup
 
 
@@ -120,11 +118,31 @@ private[execution] sealed class RunnerImpl {
     }
 
     def logEnvironment(context:Context) : Unit = {
-        logger.info("Environment:")
-        context.environment.toSeq.sortBy(_._1).foreach { case (key,value) =>
-            LogFilter.filter(logFilters, key, value.toString)
-                .foreach { case (key,value) => logger.info(s"  $key = $value") }
+        val projects = mutable.Set[String]()
+
+        def logEnv(context:Context) : Unit = {
+            val project = context.project
+            val name = project.map(_.name).getOrElse("")
+            if (!projects.contains(name)) {
+                projects.add(name)
+
+                // Log environment of given context
+                logger.info(s"Environment of ${project.map(p => s"project '${p.name}'").getOrElse("session")}:")
+                context.environment.toSeq.sortBy(_._1).foreach { case (key, value) =>
+                    LogFilter.filter(logFilters, key, value.toString)
+                        .foreach { case (key, value) => logger.info(s"  $key = $value") }
+                }
+
+                // Log environments of imported projects
+                val imports = project.toSeq.flatMap(_.imports.map(_.project))
+                val root = context.root
+                imports.foreach(i => logEnv(root.getProjectContext(i)))
+            }
         }
+
+        // Log env of first context
+        logEnv(context)
+        logEnv(context.root)
         logger.info("")
     }
 
@@ -714,7 +732,8 @@ final class Runner(
 
         val jobContext =
             if (isolated || arguments.nonEmpty || job.environment.nonEmpty) {
-                val rootContext = RootContext.builder(job.context)
+                // Use root context to prevent project envs leaking into root context
+                val rootContext = RootContext.builder(job.context.root)
                     .withEnvironment("force", force)
                     .withEnvironment("dryRun", dryRun)
                     .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.JOB_OVERRIDE)
@@ -751,7 +770,7 @@ final class Runner(
      */
     def withTestContext[T](test:Test, execution:Option[Execution]=None, dryRun:Boolean=false)(fn:(Context) => T) : T = {
         val project = test.project.map(_.name)
-        val rootContext = RootContext.builder(test.context)
+        val rootContext = RootContext.builder(test.context.root)
             .withEnvironment("force", false)
             .withEnvironment("dryRun", dryRun)
             .withEnvironment("project", ProjectWrapper(test.project), SettingLevel.JOB_OVERRIDE)

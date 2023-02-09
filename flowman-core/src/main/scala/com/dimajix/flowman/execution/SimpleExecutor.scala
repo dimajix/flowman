@@ -50,6 +50,7 @@ class SimpleExecutor extends Executor {
 
         logger.info(s"Target order for $phase:")
         orderedTargets.foreach(t => logger.info("  - " + t.identifier))
+        logger.info("")
 
         Result.map(orderedTargets, keepGoing) { target =>
             fn(execution, target, phase)

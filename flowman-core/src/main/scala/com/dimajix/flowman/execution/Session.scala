@@ -480,6 +480,7 @@ final class Session private[execution](
             .foreach { case(key,value) =>
                 logger.info("  {} = {}", key: Any, value: Any)
             }
+        logger.info("")
 
         conf
     }

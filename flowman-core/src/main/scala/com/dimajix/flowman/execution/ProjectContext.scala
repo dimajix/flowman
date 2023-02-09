@@ -84,6 +84,8 @@ object ProjectContext {
     }
 
     def builder(parent:Context, project:Project) = new Builder(parent, project)
+        // This will be overriden by the Runner, which sets the project at SCOPE_OVERRIDE level
+        .withEnvironment("project", ProjectWrapper(project), SettingLevel.PROJECT_SETTING)
 }
 
 
@@ -101,10 +103,7 @@ final class ProjectContext private[execution](
     extraConnections:Map[String, Prototype[Connection]],
     overrideMappingTemplates:Map[String, Prototype[Mapping]],
     overrideRelationTemplates:Map[String, Prototype[Relation]]
-) extends AbstractContext(
-    _env + ("project" -> ((ProjectWrapper(_project), SettingLevel.SCOPE_OVERRIDE.level))),
-    _config)
-{
+) extends AbstractContext(_env, _config) {
     private val mappings = TrieMap[String,Mapping]()
     private val overrideMappings = TrieMap[String,Mapping]()
     private val relations = TrieMap[String,Relation]()

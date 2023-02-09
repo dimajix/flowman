@@ -36,6 +36,7 @@ import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.NamespaceWrapper
 import com.dimajix.flowman.model.Profile
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.ProjectWrapper
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
@@ -62,7 +63,7 @@ object RootContext {
         }
 
         def withProjects(projects:Seq[Project]) : Builder = {
-            this.projects = projects
+            this.projects = projects.toList
             this
         }
 
@@ -388,6 +389,8 @@ final class RootContext private[execution](
 
         val context = builder
             .withEnvironment(project.environment, SettingLevel.PROJECT_SETTING)
+            // TODO: Does this make sense? Do we want to that each project sees itself?
+            .withEnvironment("project", ProjectWrapper(project), SettingLevel.PROJECT_SETTING)
             .withConfig(project.config)
             .build()
 

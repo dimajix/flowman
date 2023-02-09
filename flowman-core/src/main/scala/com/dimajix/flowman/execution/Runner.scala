@@ -736,8 +736,10 @@ final class Runner(
                 val rootContext = RootContext.builder(job.context.root)
                     .withEnvironment("force", force)
                     .withEnvironment("dryRun", dryRun)
-                    .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.JOB_OVERRIDE)
-                    .withEnvironment("job", JobWrapper(job), SettingLevel.JOB_OVERRIDE)
+                    // Override any project variable
+                    .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.SCOPE_OVERRIDE)
+                    // Override any job variable
+                    .withEnvironment("job", JobWrapper(job), SettingLevel.SCOPE_OVERRIDE)
                     .withEnvironment(arguments, SettingLevel.SCOPE_OVERRIDE)
                     .withEnvironment(job.environment, SettingLevel.JOB_OVERRIDE)
                     .withExecution(execution)
@@ -751,8 +753,10 @@ final class Runner(
                 ScopeContext.builder(job.context)
                     .withEnvironment("force", force)
                     .withEnvironment("dryRun", dryRun)
-                    .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.JOB_OVERRIDE)
-                    .withEnvironment("job", JobWrapper(job), SettingLevel.JOB_OVERRIDE)
+                    // Override any project variable
+                    .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.SCOPE_OVERRIDE)
+                    // Override any job variable
+                    .withEnvironment("job", JobWrapper(job), SettingLevel.SCOPE_OVERRIDE)
                     .build()
             }
 

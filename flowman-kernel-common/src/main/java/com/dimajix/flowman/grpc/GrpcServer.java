@@ -18,7 +18,6 @@ package com.dimajix.flowman.grpc;
 
 import java.io.IOException;
 import java.net.SocketAddress;
-import java.net.URI;
 import java.util.List;
 
 import io.grpc.Server;
@@ -35,9 +34,9 @@ abstract public class GrpcServer {
         @Override
         public void run() {
             // Use stderr here since the logger may have been reset by its JVM shutdown hook.
-            System.err.println("*** shutting down gRPC server since JVM is shutting down");
+            logger.info("Shutting down gRPC server since JVM is shutting down");
             GrpcServer.this.stop();
-            System.err.println("*** server shut down");
+            logger.info("gRPC server has been shut down");
         }
     };
 
@@ -46,14 +45,20 @@ abstract public class GrpcServer {
     }
 
     public void start() throws IOException {
+        logger.info("Starting gRPC server");
         server.start();
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
     public void stop() {
         if (server != null) {
+            logger.info("Stopping gRPC server");
             server.shutdown();
-            Runtime.getRuntime().removeShutdownHook(shutdownHook);
+            try {
+                Runtime.getRuntime().removeShutdownHook(shutdownHook);
+            }
+            catch(IllegalStateException ex) {
+            }
         }
     }
 
@@ -63,7 +68,11 @@ abstract public class GrpcServer {
     public void awaitTermination() throws InterruptedException {
         if (server != null) {
             server.awaitTermination();
-            Runtime.getRuntime().removeShutdownHook(shutdownHook);
+            try {
+                Runtime.getRuntime().removeShutdownHook(shutdownHook);
+            }
+            catch(IllegalStateException ex) {
+            }
         }
     }
 

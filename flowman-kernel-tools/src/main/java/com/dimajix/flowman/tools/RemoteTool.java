@@ -78,7 +78,7 @@ public class RemoteTool {
     }
 
     public SessionClient newSession(String projectLocation) {
-        val isAbsolute = true; //FileSystem.getProtocol(projectLocation).nonEmpty || Tool.resolvePath(projectLocation).isAbsolute()
+        val isAbsolute = false; //FileSystem.getProtocol(projectLocation).nonEmpty || Tool.resolvePath(projectLocation).isAbsolute()
         val newSession =
             isAbsolute ?
                 _kernel.createSession(projectLocation, config, environment, profiles)

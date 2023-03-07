@@ -19,6 +19,8 @@ package com.dimajix.flowman.kernel.grpc;
 import scala.collection.JavaConverters._
 
 import io.grpc.stub.StreamObserver
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.HADOOP_BUILD_VERSION
@@ -27,8 +29,6 @@ import com.dimajix.flowman.SCALA_BUILD_VERSION
 import com.dimajix.flowman.SCALA_VERSION
 import com.dimajix.flowman.SPARK_BUILD_VERSION
 import com.dimajix.flowman.common.ToolConfig
-import com.dimajix.flowman.grpc.GrpcService
-import com.dimajix.flowman.kernel.RpcUtils.respondTo
 import com.dimajix.flowman.kernel.proto.LogEvent
 import com.dimajix.flowman.kernel.proto.kernel.GetKernelRequest
 import com.dimajix.flowman.kernel.proto.kernel.GetKernelResponse
@@ -47,12 +47,13 @@ import com.dimajix.spark.SPARK_VERSION
 
 
 final class KernelServiceHandler(sessionManager: SessionManager, pluginManager: PluginManager, shutdownHook: () => Unit)
-    extends KernelServiceGrpc.KernelServiceImplBase with GrpcService {
-    private val impl = new KernelServiceHandlerImpl(sessionManager, pluginManager, shutdownHook)
+    extends KernelServiceGrpc.KernelServiceImplBase with ServiceHandler {
+    override protected val logger:Logger = LoggerFactory.getLogger(classOf[KernelServiceHandler])
+
     /**
      */
     override def getNamespace(request: GetNamespaceRequest, responseObserver: StreamObserver[GetNamespaceResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("getNamespace", responseObserver) {
             val details = NamespaceDetails.newBuilder()
 
             sessionManager.rootSession.namespace.foreach { ns =>
@@ -73,7 +74,7 @@ final class KernelServiceHandler(sessionManager: SessionManager, pluginManager: 
     /**
      */
     override def getKernel(request: GetKernelRequest, responseObserver: StreamObserver[GetKernelResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("getKernel", responseObserver) {
             val details = KernelDetails.newBuilder()
             ToolConfig.homeDirectory.map(_.toString).foreach(details.setFlowmanHomeDirectory)
             ToolConfig.confDirectory.map(_.toString).foreach(details.setFlowmanConfigDirectory)
@@ -98,7 +99,7 @@ final class KernelServiceHandler(sessionManager: SessionManager, pluginManager: 
     /**
      */
     override def shutdown(request: ShutdownRequest, responseObserver: StreamObserver[ShutdownResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("shutdown", responseObserver) {
             shutdownHook()
             ShutdownResponse.newBuilder().build()
         }

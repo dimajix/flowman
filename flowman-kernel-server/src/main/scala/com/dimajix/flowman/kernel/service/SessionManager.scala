@@ -16,12 +16,7 @@
 
 package com.dimajix.flowman.kernel.service
 
-import java.lang.Thread.UncaughtExceptionHandler
-import java.util.concurrent.ForkJoinPool
-import java.util.concurrent.ForkJoinWorkerThread
-
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext
 
 import org.slf4j.LoggerFactory
 
@@ -31,27 +26,9 @@ import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.storage.Store
 
 
-object SessionManager {
-    private val logger = LoggerFactory.getLogger(classOf[SessionManager])
-    private class MyForkJoinWorkerThread(pool: ForkJoinPool) extends ForkJoinWorkerThread(pool) { // set the correct classloader here
-        setContextClassLoader(Thread.currentThread.getContextClassLoader)
-    }
-    private object MyForkJoinWorkerThreadFactory extends ForkJoinPool.ForkJoinWorkerThreadFactory {
-        override final def newThread(pool: ForkJoinPool) = new MyForkJoinWorkerThread(pool)
-    }
-    private val exceptionHandler = new UncaughtExceptionHandler {
-        override def uncaughtException(thread: Thread, throwable: Throwable): Unit = {
-            logger.error("Uncaught exception: ", throwable)
-        }
-    }
-}
-
 class SessionManager(val rootSession:execution.Session) {
-    import SessionManager._
     private val logger = LoggerFactory.getLogger(classOf[SessionManager])
     private val sessions = mutable.ListBuffer[SessionService]()
-    private val threadPool = new ForkJoinPool(4, MyForkJoinWorkerThreadFactory, exceptionHandler, true)
-    private implicit val executionContext = ExecutionContext.fromExecutorService(threadPool)
 
     /**
      * Returns a list of all active [[SessionService]]s
@@ -99,6 +76,9 @@ class SessionManager(val rootSession:execution.Session) {
         svc
     }
     def createSession(store: Store, projectLocation: File): SessionService = {
+        if (!projectLocation.isAbsolute())
+            throw new IllegalArgumentException(s"Project location is not absolute: $projectLocation")
+
         val project = Project.read.file(projectLocation)
         createSession(store, project)
     }

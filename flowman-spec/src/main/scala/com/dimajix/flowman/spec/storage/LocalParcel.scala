@@ -26,6 +26,7 @@ import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.io.IOUtils
+import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.tryWith
@@ -58,11 +59,44 @@ case class LocalParcel(override val name:String, override val root:File) extends
      */
     override def listProjects(): Seq[Project] = fileStore.listProjects()
 
+    @throws[IOException]
     override def clean() : Unit = {
         logger.info(s"Cleaning parcel '$name'")
         root.list().foreach(_.delete(true))
     }
 
+    @throws[IOException]
+    override def mkdir(fileName: Path) : Unit = {
+        val newPath = zipSlipProtect(fileName.toString, root)
+        newPath.mkdirs()
+    }
+
+
+    @throws[IOException]
+    override def putFile(fileName: Path, content: Array[Byte]) : Unit = {
+        val newPath = zipSlipProtect(fileName.toString, root)
+        val parent = newPath.parent
+        parent.mkdirs()
+        // copy TarArchiveInputStream to Path newPath
+        val out = newPath.create(true)
+        try {
+            IOUtils.write(content, out)
+            out.close()
+        }
+        catch {
+            case NonFatal(ex) =>
+                newPath.delete()
+                throw ex
+        }
+    }
+
+    @throws[IOException]
+    override def deleteFile(fileName: Path) : Unit = {
+        val newPath = zipSlipProtect(fileName.toString, root)
+        newPath.delete(true)
+    }
+
+    @throws[IOException]
     override def replace(targz: File): Unit = {
         if (!targz.isFile())
             throw new IOException(s"Source file '$targz' doesn't exists!")
@@ -79,6 +113,7 @@ case class LocalParcel(override val name:String, override val root:File) extends
         spec
     }
 
+    @throws[IOException]
     private def decompressTarGzipFile(source: File, target: File): Unit = {
         tryWith(source.open()) { fi =>
             tryWith(new BufferedInputStream(fi)) { bi =>
@@ -86,7 +121,7 @@ case class LocalParcel(override val name:String, override val root:File) extends
                     tryWith(new TarArchiveInputStream(gzi)) { ti =>
                         var entry: ArchiveEntry = ti.getNextEntry
                         while (entry != null) {
-                            val newPath = zipSlipProtect(entry, target)
+                            val newPath = zipSlipProtect(entry.getName, target)
                             if (entry.isDirectory) {
                                 newPath.mkdirs()
                             }
@@ -113,11 +148,12 @@ case class LocalParcel(override val name:String, override val root:File) extends
         }
     }
 
-    private def zipSlipProtect(entry: ArchiveEntry, targetDir: File) : File = {
-        val targetDirResolved = targetDir / entry.getName
+    @throws[IOException]
+    private def zipSlipProtect(entry: String, targetDir: File) : File = {
+        val targetDirResolved = targetDir / entry
         val normalizePath = targetDirResolved.absolute
         if (!normalizePath.toString.startsWith(targetDir.toString))
-            throw new IOException("Bad entry: " + entry.getName)
+            throw new IOException("Target location is not under workspace root: " + entry)
         normalizePath
     }
 }

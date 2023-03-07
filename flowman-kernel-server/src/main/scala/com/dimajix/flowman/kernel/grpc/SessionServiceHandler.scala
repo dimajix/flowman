@@ -19,12 +19,12 @@ package com.dimajix.flowman.kernel.grpc
 import scala.collection.JavaConverters._
 
 import io.grpc.stub.StreamObserver
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.grpc.GrpcService
 import com.dimajix.flowman.kernel.RpcConverters._
-import com.dimajix.flowman.kernel.RpcUtils.respondTo
 import com.dimajix.flowman.kernel.proto.DataFrame
 import com.dimajix.flowman.kernel.proto.JobContext
 import com.dimajix.flowman.kernel.proto.JobIdentifier
@@ -45,6 +45,7 @@ import com.dimajix.flowman.kernel.service.SessionManager
 import com.dimajix.flowman.kernel.service.SessionService
 import com.dimajix.flowman.kernel.service.WorkspaceManager
 import com.dimajix.flowman.model
+import com.dimajix.flowman.storage.Workspace
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
 
@@ -52,11 +53,12 @@ import com.dimajix.flowman.types.StructType
 final class SessionServiceHandler(
     sessionManager: SessionManager,
     workspaceManager: WorkspaceManager
-) extends SessionServiceGrpc.SessionServiceImplBase with GrpcService {
+) extends SessionServiceGrpc.SessionServiceImplBase with ServiceHandler {
+    override protected val logger:Logger = LoggerFactory.getLogger(classOf[SessionServiceHandler])
     /**
      */
     override def createSession(request: CreateSessionRequest, responseObserver: StreamObserver[CreateSessionResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("createSession", responseObserver) {
             val store =
                 if (request.hasWorkspace()) {
                     val workspaceName = request.getWorkspace;
@@ -68,7 +70,12 @@ final class SessionServiceHandler(
 
             val session = {
                 if (request.hasProjectLocation) {
-                    val file = sessionManager.rootSession.fs.file(request.getProjectLocation)
+                    val file = store match {
+                        case ws:Workspace => ws.root / request.getProjectLocation
+                        case _ =>
+                            sessionManager.rootSession.fs.file(request.getProjectLocation)
+                    }
+
                     sessionManager.createSession(store, file)
                 }
                 else if (request.hasProjectName) {
@@ -89,7 +96,7 @@ final class SessionServiceHandler(
     /**
      */
     override def listSessions(request: ListSessionsRequest, responseObserver: StreamObserver[ListSessionsResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("listSessions", responseObserver) {
             val sessions = sessionManager.list()
                 .map(s => Session.newBuilder()
                     .setId(s.id)
@@ -109,7 +116,7 @@ final class SessionServiceHandler(
     /**
      */
     override def getSession(request: GetSessionRequest, responseObserver: StreamObserver[GetSessionResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("getSession", responseObserver) {
             val session = getSession(request.getSessionId)
             val sessionDetails = createSessionDetails(session)
             GetSessionResponse.newBuilder()
@@ -121,7 +128,7 @@ final class SessionServiceHandler(
     /**
      */
     override def deleteSession(request: DeleteSessionRequest, responseObserver: StreamObserver[DeleteSessionResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("deleteSession", responseObserver) {
             val session = getSession(request.getSessionId)
             session.close()
             DeleteSessionResponse.newBuilder().build()
@@ -131,7 +138,7 @@ final class SessionServiceHandler(
     /**
      */
     override def enterContext(request: EnterContextRequest, responseObserver: StreamObserver[EnterContextResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("enterContext", responseObserver) {
             val session = getSession(request.getSessionId)
 
             if (request.hasJob) {
@@ -155,7 +162,7 @@ final class SessionServiceHandler(
     /**
      */
     override def leaveContext(request: LeaveContextRequest, responseObserver: StreamObserver[LeaveContextResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("leaveContext", responseObserver) {
             val session = getSession(request.getSessionId)
             session.leaveJob()
             session.leaveTest()
@@ -167,7 +174,7 @@ final class SessionServiceHandler(
     /**
      */
     override def getContext(request: GetContextRequest, responseObserver: StreamObserver[GetContextResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("getContext", responseObserver) {
             val session = getSession(request.getSessionId)
 
             val response = GetContextResponse.newBuilder()
@@ -194,7 +201,7 @@ final class SessionServiceHandler(
      * </pre>
      */
     override def listMappings(request: ListMappingsRequest, responseObserver: StreamObserver[ListMappingsResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("listMappings", responseObserver) {
             val session = getSession(request.getSessionId)
             val mappings = session.listMappings().map(toProto)
 
@@ -207,7 +214,7 @@ final class SessionServiceHandler(
     /**
      */
     override def getMapping(request: GetMappingRequest, responseObserver: StreamObserver[GetMappingResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("getMapping", responseObserver) {
             val session = getSession(request.getSessionId)
             val mapping = getMapping(session, request.getMapping)
 
@@ -233,7 +240,7 @@ final class SessionServiceHandler(
     /**
      */
     override def readMapping(request: ReadMappingRequest, responseObserver: StreamObserver[ReadMappingResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("readMapping", responseObserver) {
             val session = getSession(request.getSessionId)
             val mapping = getMapping(session, request.getMapping)
             val output = if (request.getOutput.nonEmpty) request.getOutput else "main"
@@ -250,7 +257,7 @@ final class SessionServiceHandler(
     /**
      */
     override def describeMapping(request: DescribeMappingRequest, responseObserver: StreamObserver[DescribeMappingResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("describeMapping", responseObserver) {
             val session = getSession(request.getSessionId)
             val mapping = getMapping(session, request.getMapping)
             val output = if (request.getOutput.nonEmpty) request.getOutput else "main"
@@ -273,7 +280,7 @@ final class SessionServiceHandler(
     /**
      */
     override def validateMapping(request: ValidateMappingRequest, responseObserver: StreamObserver[ValidateMappingResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("validateMapping", responseObserver) {
             val session = getSession(request.getSessionId)
             val mapping = getMapping(session, request.getMapping)
             val executor = session.execution
@@ -307,7 +314,7 @@ final class SessionServiceHandler(
      * </pre>
      */
     override def listRelations(request: ListRelationsRequest, responseObserver: StreamObserver[ListRelationsResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("listRelations", responseObserver) {
             val session = getSession(request.getSessionId)
             val relations = session.listRelations().map(toProto)
 
@@ -320,7 +327,7 @@ final class SessionServiceHandler(
     /**
      */
     override def getRelation(request: GetRelationRequest, responseObserver: StreamObserver[GetRelationResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("getRelation", responseObserver) {
             val session = getSession(request.getSessionId)
             val relation = getRelation(session, request.getRelation)
 
@@ -344,7 +351,7 @@ final class SessionServiceHandler(
     /**
      */
     override def readRelation(request: ReadRelationRequest, responseObserver: StreamObserver[ReadRelationResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("readRelation", responseObserver) {
             val session = getSession(request.getSessionId)
             val relation = getRelation(session, request.getRelation)
             val columns = request.getColumnsList.asScala
@@ -362,7 +369,7 @@ final class SessionServiceHandler(
     /**
      */
     override def executeRelation(request: ExecuteRelationRequest, responseObserver: StreamObserver[ExecuteRelationResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("executeRelation", responseObserver) {
             val session = getSession(request.getSessionId)
             val context = session.context
             val relations = request.getRelationsList
@@ -384,7 +391,7 @@ final class SessionServiceHandler(
     /**
      */
     override def describeRelation(request: DescribeRelationRequest, responseObserver: StreamObserver[DescribeRelationResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("describeRelation", responseObserver) {
             val session = getSession(request.getSessionId)
             val relation = getRelation(session, request.getRelation)
             val partition = request.getPartitionMap().asScala.toMap.map { case(k,v) => k -> SingleValue(v) }
@@ -410,7 +417,7 @@ final class SessionServiceHandler(
      * </pre>
      */
     override def listTargets(request: ListTargetsRequest, responseObserver: StreamObserver[ListTargetsResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("listTargets", responseObserver) {
             val session = getSession(request.getSessionId)
             val targets = session.listTargets().map(toProto)
 
@@ -423,7 +430,7 @@ final class SessionServiceHandler(
     /**
      */
     override def getTarget(request: GetTargetRequest, responseObserver: StreamObserver[GetTargetResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("getTarget", responseObserver) {
             val session = getSession(request.getSessionId)
             val target = getTarget(session, request.getTarget)
 
@@ -453,7 +460,7 @@ final class SessionServiceHandler(
     /**
      */
     override def executeTarget(request: ExecuteTargetRequest, responseObserver: StreamObserver[ExecuteTargetResponse]): Unit = {
-        respondTo (responseObserver) {
+        respondTo ("executeTarget", responseObserver) {
             val session = getSession (request.getSessionId)
             val context = session.context
             val allTargets = request.getTargetsList
@@ -479,7 +486,7 @@ final class SessionServiceHandler(
      * </pre>
      */
     override def listTests(request: ListTestsRequest, responseObserver: StreamObserver[ListTestsResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("listTests", responseObserver) {
             val session = getSession(request.getSessionId)
             val tests = session.listTests().map(toProto)
 
@@ -503,7 +510,7 @@ final class SessionServiceHandler(
      * </pre>
      */
     override def listJobs(request: ListJobsRequest, responseObserver: StreamObserver[ListJobsResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("listJobs", responseObserver) {
             val session = getSession(request.getSessionId)
             val jobs = session.listJobs().map(toProto)
 
@@ -516,7 +523,7 @@ final class SessionServiceHandler(
     /**
      */
     override def getJob(request: GetJobRequest, responseObserver: StreamObserver[GetJobResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("getJob", responseObserver) {
             val session = getSession(request.getSessionId)
             val job = session.getJob(toModel(request.getJob))
 
@@ -544,7 +551,7 @@ final class SessionServiceHandler(
     /**
      */
     override def executeJob(request: ExecuteJobRequest, responseObserver: StreamObserver[ExecuteJobResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("executeJob", responseObserver) {
             val session = getSession(request.getSessionId)
             val job = session.getJob(toModel(request.getJob))
 
@@ -571,7 +578,7 @@ final class SessionServiceHandler(
      * </pre>
      */
     override def getProject(request: GetProjectRequest, responseObserver: StreamObserver[GetProjectResponse]): Unit = {
-        respondTo(responseObserver) {
+        respondTo("getProject", responseObserver) {
             val session = getSession(request.getSessionId)
             val project = session.project
 

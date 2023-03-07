@@ -22,7 +22,7 @@ import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
-class ExitCommand extends Command {
+public class ExitCommand extends Command {
     @Override
     public Status execute(KernelClient kernel, SessionClient session) {
         Shell.getInstance().exit();

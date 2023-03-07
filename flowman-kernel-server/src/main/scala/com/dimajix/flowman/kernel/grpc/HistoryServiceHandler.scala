@@ -16,9 +16,13 @@
 
 package com.dimajix.flowman.kernel.grpc
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
 import com.dimajix.flowman.kernel.proto.history.HistoryServiceGrpc
 
 
-final class HistoryServiceHandler extends HistoryServiceGrpc.HistoryServiceImplBase {
+final class HistoryServiceHandler extends HistoryServiceGrpc.HistoryServiceImplBase with ServiceHandler {
+    override protected val logger:Logger = LoggerFactory.getLogger(classOf[HistoryServiceHandler])
 
 }

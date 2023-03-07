@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.kernel;
+package com.dimajix.flowman.kernel.grpc
 
 import scala.util.control.NonFatal
 
@@ -22,20 +22,27 @@ import io.grpc.Status
 import io.grpc.StatusException
 import io.grpc.StatusRuntimeException
 import io.grpc.stub.StreamObserver
+import org.slf4j.Logger
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.grpc.ExceptionUtils
+import com.dimajix.flowman.grpc.GrpcService
 
 
-object RpcUtils {
-    def respondTo[T](responseObserver:StreamObserver[T])(callable: => T) {
+trait ServiceHandler extends GrpcService {
+    protected val logger:Logger
+
+    def respondTo[T](methodName:String, responseObserver:StreamObserver[T])(callable: => T) {
         val response = try {
             callable;
         }
         catch {
             case e@(_: StatusException | _: StatusRuntimeException) =>
+                logger.error(s"Exception during execution of RPC call ${getClass.getSimpleName}.${methodName}:\n  ${reasons(e)}")
                 responseObserver.onError(e)
                 return;
             case NonFatal(t) =>
+                logger.error(s"Exception during execution of RPC call ${getClass.getSimpleName}.${methodName}:\n  ${reasons(t)}")
                 val e = ExceptionUtils.asStatusException(Status.INTERNAL, t, true)
                 responseObserver.onError(e)
                 return;
@@ -46,7 +53,7 @@ object RpcUtils {
     }
 
 
-    def streamRequests[S,T](responseObserver: StreamObserver[T])(next: S => Unit)(result: => T) : StreamObserver[S] = {
+    def streamRequests[S,T](methodName:String, responseObserver: StreamObserver[T])(next: S => Unit)(result: => T) : StreamObserver[S] = {
         new StreamObserver[S]() {
             @Override
             def onNext(req: S): Unit = {
@@ -55,8 +62,10 @@ object RpcUtils {
                 }
                 catch {
                     case e@(_: StatusException | _: StatusRuntimeException) =>
+                        logger.error(s"Exception during execution of RPC call ${getClass.getSimpleName}.${methodName}:\n  ${reasons(e)}")
                         responseObserver.onError(e)
                     case NonFatal(t) =>
+                        logger.error(s"Exception during execution of RPC call ${getClass.getSimpleName}.${methodName}:\n  ${reasons(t)}")
                         val e = ExceptionUtils.asStatusException(Status.INTERNAL, t, true)
                         responseObserver.onError(e)
                 }
@@ -68,7 +77,7 @@ object RpcUtils {
 
             @Override
             def onCompleted(): Unit = {
-                respondTo(responseObserver)(result)
+                respondTo(methodName, responseObserver)(result)
             }
         };
     }

@@ -41,9 +41,9 @@ object JavaConverters {
     def asScala[S, T](seq: java.util.Map[S, T]): Map[S, T] = seq.asScala.toMap
 
     def asScala[T](opt: java.util.Optional[T]): Option[T] = {
-        if (opt.isEmpty)
-            None
-        else
+        if (opt.isPresent)
             Some(opt.get())
+        else
+            None
     }
 }

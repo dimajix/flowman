@@ -39,6 +39,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-331: Implement Kernel Client
 * github-332: Build Flowman Shell on top of kernel Client/Server
 * github-334: Create standalone Flowman Kernel application
+* github-338: Update Spark to 3.3.2
 
 ### Breaking changes
 

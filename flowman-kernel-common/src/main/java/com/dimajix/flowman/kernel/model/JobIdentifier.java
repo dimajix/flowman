@@ -29,10 +29,7 @@ public class JobIdentifier {
 
     @Override
     public String toString() {
-        if (project.isPresent())
-            return project.get() + "/" + name;
-        else
-            return name;
+        return project.map(s -> s + "/" + name).orElse(name);
     }
 
     public static JobIdentifier ofString(String jobId) {
@@ -57,14 +54,14 @@ public class JobIdentifier {
     }
 
     public com.dimajix.flowman.kernel.proto.JobIdentifier toProto() {
-        if (project.isEmpty()) {
+        if (project.isPresent()) {
             return com.dimajix.flowman.kernel.proto.JobIdentifier.newBuilder()
+                .setProject(project.get())
                 .setName(name)
                 .build();
         }
         else {
             return com.dimajix.flowman.kernel.proto.JobIdentifier.newBuilder()
-                .setProject(project.get())
                 .setName(name)
                 .build();
         }

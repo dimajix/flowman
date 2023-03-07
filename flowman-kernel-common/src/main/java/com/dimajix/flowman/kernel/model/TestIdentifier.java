@@ -54,14 +54,14 @@ public class TestIdentifier {
     }
 
     public com.dimajix.flowman.kernel.proto.TestIdentifier toProto() {
-        if (project.isEmpty()) {
+        if (project.isPresent()) {
             return com.dimajix.flowman.kernel.proto.TestIdentifier.newBuilder()
+                .setProject(project.get())
                 .setName(name)
                 .build();
         }
         else {
             return com.dimajix.flowman.kernel.proto.TestIdentifier.newBuilder()
-                .setProject(project.get())
                 .setName(name)
                 .build();
         }

@@ -54,14 +54,14 @@ public class RelationIdentifier {
     }
 
     public com.dimajix.flowman.kernel.proto.RelationIdentifier toProto() {
-        if (project.isEmpty()) {
+        if (project.isPresent()) {
             return com.dimajix.flowman.kernel.proto.RelationIdentifier.newBuilder()
+                .setProject(project.get())
                 .setName(name)
                 .build();
         }
         else {
             return com.dimajix.flowman.kernel.proto.RelationIdentifier.newBuilder()
-                .setProject(project.get())
                 .setName(name)
                 .build();
         }

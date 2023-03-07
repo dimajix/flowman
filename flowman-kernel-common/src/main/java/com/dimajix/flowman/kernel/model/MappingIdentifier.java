@@ -54,14 +54,14 @@ public class MappingIdentifier {
     }
 
     public com.dimajix.flowman.kernel.proto.MappingIdentifier toProto() {
-        if (project.isEmpty()) {
+        if (project.isPresent()) {
             return com.dimajix.flowman.kernel.proto.MappingIdentifier.newBuilder()
+                .setProject(project.get())
                 .setName(name)
                 .build();
         }
         else {
             return com.dimajix.flowman.kernel.proto.MappingIdentifier.newBuilder()
-                .setProject(project.get())
                 .setName(name)
                 .build();
         }

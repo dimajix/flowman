@@ -54,14 +54,14 @@ public class TargetIdentifier {
     }
 
     public com.dimajix.flowman.kernel.proto.TargetIdentifier toProto() {
-        if (project.isEmpty()) {
+        if (project.isPresent()) {
             return com.dimajix.flowman.kernel.proto.TargetIdentifier.newBuilder()
+                .setProject(project.get())
                 .setName(name)
                 .build();
         }
         else {
             return com.dimajix.flowman.kernel.proto.TargetIdentifier.newBuilder()
-                .setProject(project.get())
                 .setName(name)
                 .build();
         }

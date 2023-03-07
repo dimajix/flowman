@@ -54,14 +54,14 @@ public class ConnectionIdentifier {
     }
 
     public com.dimajix.flowman.kernel.proto.ConnectionIdentifier toProto() {
-        if (project.isEmpty()) {
+        if (project.isPresent()) {
             return com.dimajix.flowman.kernel.proto.ConnectionIdentifier.newBuilder()
+                .setProject(project.get())
                 .setName(name)
                 .build();
         }
         else {
             return com.dimajix.flowman.kernel.proto.ConnectionIdentifier.newBuilder()
-                .setProject(project.get())
                 .setName(name)
                 .build();
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright 2018-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,18 +25,19 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.HADOOP_BUILD_VERSION
-import com.dimajix.flowman.HADOOP_VERSION
 import com.dimajix.flowman.JAVA_VERSION
 import com.dimajix.flowman.SCALA_VERSION
 import com.dimajix.flowman.SPARK_BUILD_VERSION
-import com.dimajix.flowman.SPARK_VERSION
+import com.dimajix.flowman.Tool
 import com.dimajix.flowman.common.ConsoleColors
+import com.dimajix.flowman.common.ConsoleColors.yellow
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.tools.Tool
-import ConsoleColors.yellow
+import com.dimajix.flowman.model.Project
+import com.dimajix.hadoop.HADOOP_VERSION
+import com.dimajix.spark.SPARK_VERSION
 
 
 object Driver {
@@ -117,7 +118,8 @@ class Driver(options:Arguments) extends Tool {
         }
         else {
             // Create Flowman Session, which also includes a Spark Session
-            val project = loadProject(options.projectFile)
+            val projectPath = Tool.resolvePath(options.projectFile)
+            val project = Project.read.file(projectPath)
 
             val config = splitSettings(options.config)
             val environment = splitSettings(options.environment)

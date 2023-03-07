@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dimajix.flowman.kernel.proto.history";
+option java_outer_classname = "HistoryProto";
+
+package com.dimajix.flowman.kernel.history;
+
+import "common.proto";
+
+
+message JobHistoryQuery {
+    repeated string id = 1;
+    repeated string namespace = 2;
+    repeated string project = 3;
+    repeated string job = 4;
+    repeated ExecutionStatus status = 5;
+    repeated ExecutionPhase phase = 6;
+    map<string,string> arguments = 7;
+    optional Timestamp from = 8;
+    optional Timestamp until = 9;
+}
+message JobHistoryDetails {
+    string id = 1;
+    string namespace = 2;
+    string project = 3;
+    string version = 4;
+    string job = 5;
+    ExecutionPhase phase = 6;
+    ExecutionStatus status = 7;
+    map<string,string> arguments = 8;
+    optional Timestamp startDateTime = 9;
+    optional Timestamp endDateTime = 10;
+    optional string error = 11;
+}
+
+
+message TargetHistoryQuery {
+    repeated string id = 1;
+    repeated string namespace = 2;
+    repeated string project = 3;
+    repeated string job = 4;
+    repeated string jobId = 5;
+    repeated string target = 6;
+    repeated ExecutionStatus status = 7;
+    repeated ExecutionPhase phase = 8;
+    map<string,string> partitions = 9;
+    optional Timestamp from = 10;
+    optional Timestamp until = 11;
+}
+message TargetHistoryDetails {
+    string id = 1;
+    string jobId = 2;
+    string namespace = 3;
+    string project = 4;
+    string version = 5;
+    string target = 6;
+    ExecutionPhase phase = 7;
+    ExecutionStatus status = 8;
+    map<string,string> partitions = 9;
+    optional Timestamp startDateTime = 10;
+    optional Timestamp endDateTime = 11;
+    optional string error = 12;
+}
+
+
+message FindJobsRequest {
+    JobHistoryQuery query = 1;
+}
+message FindJobsResponse {
+    repeated JobHistoryDetails jobs = 1;
+}
+
+message GetJobMetricsRequest {
+    string jobId = 1;
+}
+message GetJobMetricsResponse {
+    repeated Measurement measurements = 1;
+}
+
+message FindJobMetricsRequest {
+    JobHistoryQuery query = 1;
+    repeated string groupings = 2;
+}
+message FindJobMetricsResponse {
+    repeated MetricSeries metrics = 1;
+}
+
+
+service HistoryService {
+    rpc findJobs(FindJobsRequest) returns(FindJobsResponse);
+
+    rpc getJobMetrics(GetJobMetricsRequest) returns(GetJobMetricsResponse);
+    rpc findJobMetrics(FindJobMetricsRequest) returns(FindJobMetricsResponse);
+}

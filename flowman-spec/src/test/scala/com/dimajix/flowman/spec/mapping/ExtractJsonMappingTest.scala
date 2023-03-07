@@ -44,6 +44,7 @@ class ExtractJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
               |    input: p0
               |    column: _1
               |    schema:
+              |      kind: inline
               |      fields:
               |        - name: s
               |          type: String
@@ -76,6 +77,7 @@ class ExtractJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
               |    input: p0
               |    column: _1
               |    schema:
+              |      kind: inline
               |      fields:
               |        - name: s
               |          type: String
@@ -247,6 +249,7 @@ class ExtractJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
               |    input: p0
               |    column: _1
               |    schema:
+              |      kind: inline
               |      fields:
               |        - name: s
               |          type: String
@@ -340,6 +343,7 @@ class ExtractJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
               |    column: _1
               |    parseMode: DROPMALFORMED
               |    schema:
+              |      kind: inline
               |      fields:
               |        - name: s
               |          type: String
@@ -415,6 +419,7 @@ class ExtractJsonMappingTest extends AnyFlatSpec with Matchers with LocalSparkSe
               |    column: _1
               |    parseMode: failfast
               |    schema:
+              |      kind: inline
               |      fields:
               |        - name: s
               |          type: String

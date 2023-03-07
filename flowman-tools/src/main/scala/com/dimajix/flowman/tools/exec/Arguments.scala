@@ -56,7 +56,7 @@ class Arguments(args:Array[String]) {
     var infoLogging: Boolean = false
     @Option(name = "-XX", aliases = Array("--debug"), usage = "Produce execution output at debug level.")
     var debugLogging: Boolean = false
-    @Option(name = "--conf", usage = "set a Flowman or Spark config", metaVar = "<confname>=<value>")
+    @Option(name = "--conf", usage = "set a Flowman or Spark config", metaVar = "<key=value>")
     var config: Array[String] = Array()
     @Option(name = "--info", usage = "dump configuration information")
     var info: Boolean = false

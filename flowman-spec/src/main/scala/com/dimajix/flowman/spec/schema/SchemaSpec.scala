@@ -41,7 +41,7 @@ object SchemaSpec extends TypeRegistry[SchemaSpec] {
   * Interface class for declaring relations (for sources and sinks) as part of a model
   */
 @JsonTypeResolver(classOf[CustomTypeResolverBuilder])
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property="kind", defaultImpl=classOf[InlineSchemaSpec], visible=true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property="kind", visible=true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "inline", value = classOf[InlineSchemaSpec]),
     new JsonSubTypes.Type(name = "mapping", value = classOf[MappingSchemaSpec]),

@@ -66,6 +66,11 @@ class InspectCommand extends Command {
             .toSeq
             .sortBy(_._1)
             .foreach{ p => println(s"    ${p._1}") }
+        println("Tests:")
+        project.tests
+            .toSeq
+            .sortBy(_._1)
+            .foreach { p => println(s"    ${p._1}") }
         Status.SUCCESS
     }
 }

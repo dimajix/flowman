@@ -22,7 +22,6 @@ package object spark {
     final val SPARK_VERSION_MAJOR = majorMinor(SPARK_VERSION)._1
     final val SPARK_VERSION_MINOR = majorMinor(SPARK_VERSION)._2
 
-
     /**
      * Given a Spark version string, return the (major version number, minor version number).
      * E.g., for 2.0.1-SNAPSHOT, return (2, 0).

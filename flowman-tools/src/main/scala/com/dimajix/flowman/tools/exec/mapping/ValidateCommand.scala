@@ -41,16 +41,15 @@ class ValidateCommand extends Command {
     var mappings: Array[String] = Array()
 
     override def execute(session: Session, project: Project, context:Context) : Status = {
-        logger.info("Validating mappings {}", if (mappings != null) mappings.mkString(",") else "all")
+        val mappingNames =
+            if (mappings.nonEmpty)
+                mappings.toSeq
+            else
+                project.mappings.keys.toSeq
 
-        // Then execute output operations
+        logger.info(s"Validating mappings ${mappingNames.mkString(",")}")
+
         Try {
-            val mappingNames =
-                if (mappings.nonEmpty)
-                    mappings.toSeq
-                else
-                    project.mappings.keys.toSeq
-
             val tables = mappingNames.map(name => context.getMapping(MappingIdentifier(name)))
             tables.forall(table => session.execution.instantiate(table) != null)
         } match {

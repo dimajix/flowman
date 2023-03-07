@@ -17,13 +17,13 @@
 package com.dimajix.flowman.server
 
 import java.io.File
+import com.dimajix.flowman.Tool
 
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.server.rest.Configuration
 import com.dimajix.flowman.server.rest.Server
-import com.dimajix.flowman.tools.Tool
 
 
 object Application {
@@ -55,7 +55,7 @@ class Application extends Tool {
             .getOrElse(Namespace.read.default())
 
         // Load all plugins from Namespace
-        ns.plugins.foreach(plugins.load)
+        ns.plugins.foreach(pluginManager.load)
         ns
     }
 

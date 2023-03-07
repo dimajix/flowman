@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright 2022-2023 Kaya Kupferschmidt
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.dimajix.flowman.model.AbstractInstance
 trait Parcel extends Store {
     def name : String
     def root : File
+    def clean() : Unit
     def replace(targz:File) : Unit
 }
 

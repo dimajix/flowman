@@ -10,4 +10,4 @@ APP_MAIN="com.dimajix.flowman.hub.Application"
 APP_JAR="$APP_NAME-$APP_VERSION.jar"
 LIB_JARS="@flowman-hub.classpath@"
 
-spark_submit $APP_JAR $LIB_JARS $APP_MAIN "$@"
+run_spark $APP_JAR $LIB_JARS $APP_MAIN "$@"

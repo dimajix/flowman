@@ -105,7 +105,7 @@
         </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-tools</artifactId>
+            <artifactId>flowman-spec</artifactId>
         </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>

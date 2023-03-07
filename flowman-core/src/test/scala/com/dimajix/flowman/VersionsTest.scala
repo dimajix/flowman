@@ -19,11 +19,21 @@ package com.dimajix.flowman
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.hadoop.HADOOP_VERSION
+import com.dimajix.spark.SPARK_VERSION
+
 
 class VersionsTest extends AnyFlatSpec with Matchers {
     "Versions" should "not be empty" in {
         SPARK_VERSION should not be empty
+        HADOOP_VERSION should not be empty
+
         FLOWMAN_VERSION should not be empty
         JAVA_VERSION should not be empty
+        SCALA_VERSION should not be empty
+
+        SPARK_BUILD_VERSION should not be empty
+        HADOOP_BUILD_VERSION should not be empty
+        SCALA_BUILD_VERSION should not be empty
     }
 }

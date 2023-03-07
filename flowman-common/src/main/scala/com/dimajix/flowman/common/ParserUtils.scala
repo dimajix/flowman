@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.common
 
+
 object ParserUtils {
     def parseDelimitedList(list:String) : Seq[String] = {
         list.split(',').map(_.trim).filter(_.nonEmpty)

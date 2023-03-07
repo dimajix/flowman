@@ -36,6 +36,15 @@ class LocalWorkspaceTest extends AnyFlatSpec with Matchers with LocalTempDir {
         ws2.parcels should be (Seq())
     }
 
+    it should "correctly enumerate workspaces" in {
+        val fs = FileSystem(new Configuration())
+        val root = fs.local(tempDir) / "ws_root"
+
+        val ws1 = new LocalWorkspace(root / "ws1")
+        val all = LocalWorkspace.list(root)
+        all.map(_.name) should be (Seq("ws1"))
+    }
+
     it should "store parcels" in {
         val fs = FileSystem(new Configuration())
         val root = fs.local(tempDir) / "ws2"

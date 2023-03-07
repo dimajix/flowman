@@ -34,6 +34,11 @@ Breaking changes will be documented in this changelog file for each version.
 * github-309: Automate integration tests
 * github-322: Remove flowman-client
 * github-324: Log environment variables for imported projects
+* github-329: Create Kernel API
+* github-330: Implement Kernel Server
+* github-331: Implement Kernel Client
+* github-332: Build Flowman Shell on top of kernel Client/Server
+* github-334: Create standalone Flowman Kernel application
 
 ### Breaking changes
 
@@ -42,7 +47,7 @@ This version introduces some (minor) breaking changes:
 you explicitly need to include the plugin in the `default-namesapce.yml` file.
 * Imports are now strictly checked. This means when you cross-reference some entity in your project which is provided
 by a different Flowman project, you now need to explicitly import the project in the `project.yml`
-* The `kind` for schema definitions is now a mandatory attribute, Flowman will not fall back to a `inline` schema any more. 
+* The `kind` for schema definitions is now a mandatory attribute, Flowman will not fall back to a `inline` schema anymore. 
 
 
 ## Version 0.30.0 - 2023-01-03

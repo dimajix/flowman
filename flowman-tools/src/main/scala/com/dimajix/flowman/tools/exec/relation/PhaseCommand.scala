@@ -50,7 +50,7 @@ class PhaseCommand(phase:Phase) extends Command {
     var partition: String = ""
 
     override def execute(session: Session, project: Project, context:Context) : Status = {
-        logger.info(s"Executing phase '$phase' for relations ${if (relations != null) relations.mkString(",") else "all"}")
+        logger.info(s"Executing phase '$phase' for relations ${relations.mkString(",")}")
 
         val toRun = relations.flatMap(_.split(",")).toSeq
         val partition = ParserUtils.parseDelimitedKeyValues(this.partition)

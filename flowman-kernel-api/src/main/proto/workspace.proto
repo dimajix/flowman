@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dimajix.flowman.kernel.proto.workspace";
+option java_outer_classname = "WorkspaceProto";
+
+package com.dimajix.flowman.kernel.workspace;
+
+import "common.proto";
+
+
+message WorkspaceDetails {
+    string name = 1;
+    repeated string projects = 2;
+}
+
+
+message CreateWorkspaceRequest {
+    string name = 1;
+    bool ifNotExists = 2;
+}
+message CreateWorkspaceResponse {
+    WorkspaceDetails workspace = 1;
+}
+
+
+message ListWorkspacesRequest {
+}
+message ListWorkspacesResponse {
+    repeated Workspace workspaces = 1;
+}
+
+message GetWorkspaceRequest {
+    string workspaceName = 1;
+}
+message GetWorkspaceResponse {
+    WorkspaceDetails workspace = 1;
+}
+
+message DeleteWorkspaceRequest {
+    string workspaceName = 1;
+}
+message DeleteWorkspaceResponse {
+}
+
+message CleanWorkspaceRequest {
+    string workspaceName = 1;
+}
+message CleanWorkspaceResponse {
+}
+
+message UploadFilesRequest {
+    string workspaceName = 1;
+    string fileName = 2;
+    FileType fileType = 3;
+    optional bytes fileContent = 4;
+}
+message UploadFilesResponse {
+}
+
+
+service WorkspaceService {
+    rpc CreateWorkspace(CreateWorkspaceRequest) returns (CreateWorkspaceResponse);
+    rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse);
+    rpc GetWorkspace(GetWorkspaceRequest) returns (GetWorkspaceResponse);
+    rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse);
+
+    rpc CleanWorkspace(CleanWorkspaceRequest) returns (CleanWorkspaceResponse);
+    rpc UploadFiles(stream UploadFilesRequest) returns(UploadFilesResponse);
+}

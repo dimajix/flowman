@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dimajix.flowman.kernel.proto.kernel";
+option java_outer_classname = "KernelProto";
+
+package com.dimajix.flowman.kernel.kernel;
+
+import "logging.proto";
+
+
+message ShutdownRequest {}
+message ShutdownResponse {}
+
+
+message SubscribeLogRequest {}
+
+
+message NamespaceDetails {
+    string name = 1;
+    repeated string plugins = 2;
+    map<string,string> environment = 3;
+    map<string,string> config = 4;
+    repeated string profiles = 5;
+    repeated string connections = 6;
+}
+message GetNamespaceRequest {}
+message GetNamespaceResponse {
+    NamespaceDetails namespace = 1;
+}
+
+
+message KernelDetails {
+    optional string flowmanHomeDirectory = 1;
+    optional string flowmanConfigDirectory = 2;
+    optional string flowmanPluginDirectory = 3;
+    string flowmanVersion = 4;
+    string sparkVersion = 5;
+    string hadoopVersion = 6;
+    string javaVersion = 7;
+    string scalaVersion = 8;
+    string sparkBuildVersion = 9;
+    string hadoopBuildVersion = 10;
+    string scalaBuildVersion = 11;
+    repeated string activePlugins = 12;
+}
+message GetKernelRequest {}
+message GetKernelResponse {
+    KernelDetails kernel = 1;
+}
+
+service KernelService {
+    rpc GetNamespace(GetNamespaceRequest) returns(GetNamespaceResponse);
+    rpc GetKernel(GetKernelRequest) returns(GetKernelResponse);
+
+    rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
+
+    rpc SubscribeLog(SubscribeLogRequest) returns(stream LogEvent);
+}

@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dimajix.flowman.kernel.proto.job";
+option java_outer_classname = "JobProto";
+
+package com.dimajix.flowman.kernel.job;
+
+import "common.proto";
+
+
+
+message JobParameter {
+    string name = 1;
+    string type = 2;
+    optional string granularity = 3;
+    optional string default = 4;
+    optional string description = 5;
+}
+
+message JobDetails {
+    optional string project = 1;
+    string name = 2;
+    optional string description = 3;
+    repeated TargetIdentifier targets = 4;
+    repeated JobParameter parameters = 5;
+    map<string,string> environment = 6;
+}
+
+
+message ListJobsRequest {
+    string sessionId = 1;
+    optional string project = 2;
+}
+message ListJobsResponse {
+    repeated JobIdentifier jobs = 2;
+}
+
+message GetJobRequest {
+    string sessionId = 1;
+    JobIdentifier job = 2;
+}
+message GetJobResponse {
+    JobDetails job = 2;
+}
+
+message ExecuteJobRequest {
+    string sessionId = 1;
+    JobIdentifier job = 2;
+    repeated ExecutionPhase phases = 3;
+    repeated string targets = 4;
+    repeated string dirtyTargets = 5;
+    map<string,string> arguments = 6;
+    bool force = 7;
+    bool dirty = 8;
+    bool keepGoing = 10;
+    bool dryRun = 11;
+    int32 parallelism = 12;
+}
+message ExecuteJobResponse {
+    ExecutionStatus status = 1;
+}

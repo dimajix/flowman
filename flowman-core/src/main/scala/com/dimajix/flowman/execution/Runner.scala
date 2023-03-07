@@ -25,6 +25,7 @@ import scala.util.control.NonFatal
 import scala.util.matching.Regex
 
 import org.apache.commons.lang3.StringUtils
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils
@@ -59,8 +60,8 @@ import com.dimajix.spark.SparkUtils.withJobGroup
 
 
 private[execution] sealed class RunnerImpl {
-    protected val logger = LoggerFactory.getLogger(classOf[Runner])
-    protected val logFilters = LogFilter.filters
+    protected val logger: Logger = LoggerFactory.getLogger(classOf[Runner])
+    protected val logFilters: Seq[LogFilter] = LogFilter.filters
 
     def executeTarget(execution:Execution, target:Target, phase:Phase, dryRun:Boolean) : TargetResult = {
         val result =
@@ -93,8 +94,8 @@ private[execution] sealed class RunnerImpl {
     }
 
     protected val lineSize = 109
-    protected val separator = boldWhite(StringUtils.repeat('-', lineSize))
-    protected val doubleSeparator = boldWhite(StringUtils.repeat('=', lineSize))
+    protected val separator: String = boldWhite(StringUtils.repeat('-', lineSize))
+    protected val doubleSeparator: String = boldWhite(StringUtils.repeat('=', lineSize))
     def logSubtitle(s:String) : Unit = {
         val l = (lineSize - 2 - s.length) / 2
         val t = if (l > 3) {

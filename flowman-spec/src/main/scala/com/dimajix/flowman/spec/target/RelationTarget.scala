@@ -108,6 +108,20 @@ object RelationTarget {
             BuildPolicy.ofString(conf.getConf(DEFAULT_TARGET_BUILD_POLICY))
         )
     }
+    def apply(props: Target.Properties, relation: Relation, mapping: MappingOutputIdentifier, partition: Map[String, String]): RelationTarget = {
+        val context = props.context
+        val conf = context.flowmanConf
+        new RelationTarget(
+            props.copy(metadata = props.metadata.copy(kind = "relation")),
+            RelationReference(context, relation),
+            mapping,
+            OutputMode.ofString(conf.getConf(DEFAULT_TARGET_OUTPUT_MODE)),
+            partition,
+            conf.getConf(DEFAULT_TARGET_PARALLELISM),
+            conf.getConf(DEFAULT_TARGET_REBALANCE),
+            BuildPolicy.ofString(conf.getConf(DEFAULT_TARGET_BUILD_POLICY))
+        )
+    }
 }
 case class RelationTarget(
     instanceProperties: Target.Properties,

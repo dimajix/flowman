@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dimajix.flowman.kernel.proto";
+option java_outer_classname = "ExceptionProto";
+
+package com.dimajix.flowman.kernel;
+
+
+message StackTraceElement {
+    optional string classLoaderName = 1;
+    optional string moduleName = 2;
+    optional string moduleVersion = 3;
+    string declaringClass = 4;
+    string methodName = 5;
+    optional string fileName = 6;
+    optional int32 lineNumber = 7;
+}
+message Exception {
+    string className = 1;
+    string fqName = 2;
+    optional string message = 3;
+    repeated StackTraceElement stackTrace = 4;
+    repeated Exception suppressed = 5;
+    optional Exception cause = 6;
+}

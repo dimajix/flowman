@@ -46,7 +46,7 @@ class InspectCommand extends Command {
             ns.profiles
                 .toSeq
                 .sortBy(_._1)
-                .foreach{ case(k,v) => println(s"    $k=$v") }
+                .foreach{ case(k,v) => println(s"    $k") }
 
             println("Connections:")
             ns.connections

@@ -57,7 +57,7 @@ class SchemaTemplateTest extends AnyFlatSpec with Matchers {
               |        type: int
               |        default: 12
               |    template:
-              |      kind: values
+              |      kind: inline
               |      fields:
               |        - name: str_col
               |          type: string

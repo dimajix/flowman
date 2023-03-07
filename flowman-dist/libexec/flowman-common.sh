@@ -88,23 +88,35 @@ fi
 
 
 
-flowman_lib() {
+flowman_spark_lib() {
 	echo $1 | awk -F, '{for(i=1;i<=NF;i++) printf("%s%s",ENVIRON["FLOWMAN_HOME"]"/"$i,(i<NF)?",":"")}'
 }
 
+flowman_java_lib() {
+	echo $1 | awk -F, '{for(i=1;i<=NF;i++) printf("%s%s",ENVIRON["FLOWMAN_HOME"]"/"$i,(i<NF)?":":"")}'
+}
 
-spark_submit() {
+
+run_spark() {
     if [ "$SPARK_JARS" != "" ]; then
         extra_jars=",$SPARK_JARS"
     else
         extra_jars=""
     fi
 
-    $SPARK_SUBMIT \
+    exec $SPARK_SUBMIT \
       --driver-java-options "$SPARK_DRIVER_JAVA_OPTS" \
       --conf spark.execution.extraJavaOptions="$SPARK_EXECUTOR_JAVA_OPTS" \
-      --class $3 \
+      --class "$3" \
       $SPARK_OPTS \
-      --jars "$(flowman_lib $2)$extra_jars" \
+      --jars "$(flowman_spark_lib $2)$extra_jars" \
       $FLOWMAN_HOME/lib/$1 "${@:4}"
+}
+
+
+run_java() {
+    exec java \
+     -cp "$(flowman_java_lib $2):$FLOWMAN_HOME/lib/$1" \
+      "$3" \
+     "${@:4}"
 }

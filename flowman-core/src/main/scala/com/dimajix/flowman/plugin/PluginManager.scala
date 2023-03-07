@@ -32,13 +32,28 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.spi.PluginListener
 
 
+object PluginManager {
+    class Builder {
+        private var _pluginDir:File = new File("")
+
+        def withPluginDir(dir: File): Builder = {
+            _pluginDir = dir
+            this
+        }
+
+        def build() : PluginManager = {
+            new PluginManager(_pluginDir)
+        }
+    }
+
+    def builder() : Builder = new Builder
+}
+
 /**
   * Helper class for loading Plugins
   */
-class PluginManager {
+final class PluginManager private (_pluginDir:File) {
     private val logger = LoggerFactory.getLogger(classOf[PluginManager])
-
-    private var _pluginDir:File = new File("")
     private val _plugins:mutable.Map[String,Plugin] = mutable.Map()
     private val classLoader = {
         // Replaced class loader
@@ -51,11 +66,6 @@ class PluginManager {
                 Thread.currentThread().setContextClassLoader(loader)
                 loader
         }
-    }
-
-    def withPluginDir(dir:File) : PluginManager = {
-        _pluginDir = dir
-        this
     }
 
     /**

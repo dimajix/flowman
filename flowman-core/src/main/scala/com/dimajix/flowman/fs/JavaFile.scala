@@ -19,14 +19,19 @@ package com.dimajix.flowman.fs
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.URI
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardOpenOption
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.Comparator
 import java.util.function.Consumer
 import java.util.stream.Collectors
+
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 import org.apache.hadoop.fs
 
@@ -151,14 +156,27 @@ final case class JavaFile(jpath:Path) extends File {
         .map(new JavaFile(_))
 
     override def glob(pattern: String): Seq[File] = {
-        val stream = Files.newDirectoryStream(jpath, pattern)
-        try {
-            stream.asScala
-                .map(new JavaFile(_))
-                .toList
+        if (pattern == "*") {
+            val stream = Files.newDirectoryStream(jpath)
+            try {
+                stream.asScala.map(new JavaFile(_)).toList
+            }
+            finally {
+                stream.close()
+            }
         }
-        finally {
-            stream.close()
+        else {
+            val filePaths = mutable.ArrayBuffer[File]()
+            val matcher = jpath.getFileSystem.getPathMatcher("glob:" + pattern)
+            Files.walkFileTree(jpath, new SimpleFileVisitor[Path]() {
+                override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
+                    val sub = jpath.relativize(file)
+                    if (matcher.matches(sub))
+                        filePaths += JavaFile(file)
+                    FileVisitResult.CONTINUE
+                }
+            })
+            filePaths.toList
         }
     }
 

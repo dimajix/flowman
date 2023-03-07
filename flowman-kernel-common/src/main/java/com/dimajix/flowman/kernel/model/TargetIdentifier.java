@@ -29,10 +29,7 @@ public class TargetIdentifier {
 
     @Override
     public String toString() {
-        if (project.isPresent())
-            return project.get() + "/" + name;
-        else
-            return name;
+        return project.map(s -> s + "/" + name).orElse(name);
     }
 
     public static TargetIdentifier ofString(String targetId) {

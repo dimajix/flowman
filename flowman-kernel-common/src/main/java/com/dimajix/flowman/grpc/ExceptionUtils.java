@@ -33,12 +33,12 @@ import com.dimajix.flowman.kernel.proto.StackTraceElement;
 public class ExceptionUtils {
     static private StackTraceElement wrap(java.lang.StackTraceElement se) {
         val builder = StackTraceElement.newBuilder();
-        if (se.getClassLoaderName() != null)
-            builder.setClassLoaderName(se.getClassLoaderName());
-        if (se.getModuleName() != null)
-            builder.setModuleName(se.getModuleName());
-        if (se.getModuleVersion() != null)
-            builder.setModuleVersion(se.getModuleVersion());
+        //if (se.getClassLoaderName() != null)
+        //    builder.setClassLoaderName(se.getClassLoaderName());
+        //if (se.getModuleName() != null)
+        //    builder.setModuleName(se.getModuleName());
+        //if (se.getModuleVersion() != null)
+        //    builder.setModuleVersion(se.getModuleVersion());
         builder.setDeclaringClass(se.getClassName());
         builder.setMethodName(se.getMethodName());
         if (se.getFileName() != null)
@@ -49,9 +49,9 @@ public class ExceptionUtils {
 
     static private java.lang.StackTraceElement unwrap(StackTraceElement se) {
         return new java.lang.StackTraceElement(
-            se.hasClassLoaderName() ? se.getClassLoaderName() : null,
-            se.hasModuleName() ? se.getModuleName() : null,
-            se.hasModuleVersion() ? se.getModuleVersion() : null,
+            //se.hasClassLoaderName() ? se.getClassLoaderName() : null,
+            //se.hasModuleName() ? se.getModuleName() : null,
+            //se.hasModuleVersion() ? se.getModuleVersion() : null,
             se.getDeclaringClass(),
             se.getMethodName(),
             se.hasFileName() ? se.getFileName() : null,

@@ -29,10 +29,7 @@ public class RelationIdentifier {
 
     @Override
     public String toString() {
-        if (project.isPresent())
-            return project.get() + "/" + name;
-        else
-            return name;
+        return project.map(s -> s + "/" + name).orElse(name);
     }
 
     public static RelationIdentifier ofString(String relationId) {

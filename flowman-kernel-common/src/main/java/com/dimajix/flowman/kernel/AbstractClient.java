@@ -20,16 +20,13 @@ import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
-import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import lombok.val;
 
 import com.dimajix.flowman.grpc.ExceptionUtils;
-import com.dimajix.flowman.kernel.proto.workspace.UploadFilesResponse;
 
 
 public class AbstractClient {
@@ -98,7 +95,7 @@ public class AbstractClient {
         sink.onCompleted();
 
         // Receiving happens asynchronously
-        var hasFinished = false;
+        boolean hasFinished = false;
         while(!hasFinished) {
             try {
                 finishLatch.await(1, TimeUnit.MINUTES);

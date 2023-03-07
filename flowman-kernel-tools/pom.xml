@@ -115,6 +115,20 @@
     </build>
 
     <dependencies>
+        <!-- The following libraries need explicit version overrides -->
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${grpc-protobuf.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${grpc-guava.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-kernel-common</artifactId>
@@ -184,20 +198,6 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty-shaded</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-        <!-- The following libraries need explicit version overrides -->
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>${grpc-protobuf.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${grpc-guava.version}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

@@ -185,6 +185,20 @@
     </build>
 
     <dependencies>
+        <!-- The following libraries will be shaded -->
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${grpc-protobuf.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${grpc-guava.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spark-dependencies</artifactId>
@@ -234,20 +248,6 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-handler-proxy</artifactId>
-        </dependency>
-
-        <!-- The following libraries will be shaded -->
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>${grpc-protobuf.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${grpc-guava.version}</version>
-            <scope>compile</scope>
         </dependency>
 
         <dependency>

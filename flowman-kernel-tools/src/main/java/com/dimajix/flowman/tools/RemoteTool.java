@@ -45,7 +45,7 @@ public class RemoteTool {
     }
 
     private static String extractWorkspace(URI uri) {
-        var path = uri.getPath().trim();
+        String path = uri.getPath().trim();
         while (path.length() > 0 && path.charAt(0) == '/')
             path = path.substring(1);
 

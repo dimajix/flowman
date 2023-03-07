@@ -17,18 +17,21 @@
 package com.dimajix.flowman.common;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import lombok.val;
 
 
 public class ParserUtils {
     static public List<String> parseDelimitedList(String list)  {
-        return Arrays.stream(list.split(",")).map(String::trim).filter(s -> !s.isBlank()).collect(Collectors.toList());
+        return Arrays.stream(list.split(",")).map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
     }
 
     static public Map<String,String> parseDelimitedKeyValues(String list) {
@@ -59,6 +62,6 @@ public class ParserUtils {
         val sep = setting.indexOf('=');
         val key = setting.substring(0, sep).trim();
         val value = setting.substring(sep + 1).trim().replaceAll("^\"|\"$","");
-        return Map.entry(key, value);
+        return Maps.immutableEntry(key, value);
     }
 }

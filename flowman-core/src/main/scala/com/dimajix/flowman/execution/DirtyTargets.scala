@@ -26,8 +26,8 @@ import com.dimajix.common.IdentityHashSet
 import com.dimajix.flowman.model.Target
 
 
-final class DirtyTargets(targets: Seq[Target], phase:Phase) {
-    private val logger = LoggerFactory.getLogger(classOf[DirtyTargets])
+final class DirtyTargets(execution:Execution, targets: Seq[Target], phase:Phase) {
+    private val logger = execution.loggerFactory.getLogger(classOf[DirtyTargets].getName)
 
     private val dependencies = {
         // Initialize dependencies map with targets as keys

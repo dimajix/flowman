@@ -20,6 +20,8 @@ import io.grpc.BindableService;
 import io.grpc.Server;
 import lombok.val;
 
+import static com.dimajix.flowman.kernel.ThreadPoolExecutor.newExecutor;
+
 
 public class NettyGrpcServer extends GrpcServer {
     public NettyGrpcServer(int port, Iterable<GrpcService> services) {
@@ -51,7 +53,7 @@ final class NettyGrpcServerImpl {
             .forPort(port)
             .permitKeepAliveWithoutCalls(true)
             .maxInboundMetadataSize(1024*1024)
-            .directExecutor();
+            .executor(newExecutor());
 
         for (BindableService service : services)
             builder.addService(service);
@@ -70,7 +72,7 @@ final class ShadedNettyGrpcServerImpl {
             .forPort(port)
             .permitKeepAliveWithoutCalls(true)
             .maxInboundMetadataSize(1024*1024)
-            .directExecutor();
+            .executor(newExecutor());
 
         for (BindableService service : services)
             builder.addService(service);

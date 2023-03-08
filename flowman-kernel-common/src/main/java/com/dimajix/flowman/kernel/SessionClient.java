@@ -19,13 +19,21 @@ package com.dimajix.flowman.kernel;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import io.grpc.ManagedChannel;
+import io.grpc.stub.StreamObserver;
 import lombok.val;
+import org.slf4j.Marker;
+import org.slf4j.event.Level;
+import org.slf4j.event.LoggingEvent;
 
+import com.dimajix.flowman.grpc.ExceptionUtils;
 import com.dimajix.flowman.kernel.model.*;
 import com.dimajix.flowman.kernel.proto.JobContext;
+import com.dimajix.flowman.kernel.proto.LogEvent;
+import com.dimajix.flowman.kernel.proto.LogLevel;
 import com.dimajix.flowman.kernel.proto.TestContext;
 import com.dimajix.flowman.kernel.proto.job.ExecuteJobRequest;
 import com.dimajix.flowman.kernel.proto.job.GetJobRequest;
@@ -44,6 +52,7 @@ import com.dimajix.flowman.kernel.proto.session.GetContextRequest;
 import com.dimajix.flowman.kernel.proto.session.GetSessionRequest;
 import com.dimajix.flowman.kernel.proto.session.LeaveContextRequest;
 import com.dimajix.flowman.kernel.proto.session.SessionServiceGrpc;
+import com.dimajix.flowman.kernel.proto.session.SubscribeLogRequest;
 import com.dimajix.flowman.kernel.proto.target.ExecuteTargetRequest;
 import com.dimajix.flowman.kernel.proto.target.GetTargetRequest;
 import com.dimajix.flowman.kernel.proto.target.ListTargetsRequest;
@@ -54,6 +63,7 @@ import com.dimajix.flowman.kernel.proto.test.ListTestsRequest;
 public final class SessionClient extends AbstractClient {
     private final ManagedChannel channel;
     private final SessionServiceGrpc.SessionServiceBlockingStub blockingStub;
+    private final SessionServiceGrpc.SessionServiceStub asyncStub;
     private final String sessionId;
 
 
@@ -61,6 +71,7 @@ public final class SessionClient extends AbstractClient {
         this.channel = channel;
         this.sessionId = sessionId;
         blockingStub = SessionServiceGrpc.newBlockingStub(channel);
+        asyncStub = SessionServiceGrpc.newStub(channel);
     }
 
     public String getSessionId() {
@@ -83,6 +94,75 @@ public final class SessionClient extends AbstractClient {
         val result = call(() -> blockingStub.getProject(request));
         val project = result.getProject();
         return Project.ofProto(project);
+    }
+
+    public void subscribeLog(Consumer<LoggingEvent> consumer) {
+        val request = SubscribeLogRequest.newBuilder()
+                .setSessionId(sessionId)
+                .build();
+        asyncStub.subscribeLog(request, new StreamObserver<>() {
+            @Override
+            public void onNext(LogEvent value) {
+                val event = new LoggingEvent() {
+                    @Override
+                    public Level getLevel() {
+                        switch(value.getLevel()) {
+                            case TRACE:
+                                return Level.TRACE;
+                            case DEBUG:
+                                return Level.DEBUG;
+                            case INFO:
+                                return Level.INFO;
+                            case WARN:
+                                return Level.WARN;
+                            case ERROR:
+                                return Level.ERROR;
+                            default:
+                                return Level.ERROR;
+                        }
+                    }
+                    @Override
+                    public Marker getMarker() {
+                        return null;
+                    }
+                    @Override
+                    public String getLoggerName() {
+                        return value.getLogger();
+                    }
+                    @Override
+                    public String getMessage() {
+                        return value.getMessage();
+                    }
+                    @Override
+                    public String getThreadName() {
+                        return null;
+                    }
+                    @Override
+                    public Object[] getArgumentArray() {
+                        return new Object[0];
+                    }
+                    @Override
+                    public long getTimeStamp() {
+                        val ts = value.getTimestamp();
+                        return ts.getSeconds() * 1000 + ts.getNanos() / 1000000;
+                    }
+                    @Override
+                    public Throwable getThrowable() {
+                        if (value.hasException()) {
+                            return ExceptionUtils.unwrap(value.getException());
+                        }
+                        else return null;
+                    }
+                };
+                consumer.accept(event);
+            }
+            @Override
+            public void onError(Throwable t) {
+            }
+            @Override
+            public void onCompleted() {
+            }
+        });
     }
 
     public void enterJobContext(String job, Map<String,String> arguments) {

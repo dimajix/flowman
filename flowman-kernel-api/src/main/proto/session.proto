@@ -14,6 +14,7 @@ import "test.proto";
 import "job.proto";
 import "project.proto";
 import "dataframe.proto";
+import "logging.proto";
 
 
 message SessionDetails {
@@ -104,6 +105,11 @@ message ExecuteSqlResponse {
 }
 
 
+message SubscribeLogRequest {
+    string sessionId = 1;
+}
+
+
 service SessionService {
     rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse);
     rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse);
@@ -153,4 +159,6 @@ service SessionService {
 
     // Generic stuff
     rpc ExecuteSql(ExecuteSqlRequest) returns (ExecuteSqlResponse);
+
+    rpc SubscribeLog(SubscribeLogRequest) returns(stream LogEvent);
 }

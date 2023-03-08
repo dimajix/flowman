@@ -36,7 +36,7 @@ class AssertionRunner(
     execution:Execution,
     cacheLevel:StorageLevel=StorageLevel.MEMORY_AND_DISK
 ) {
-    private val logger = LoggerFactory.getLogger(classOf[AssertionRunner])
+    private val logger = execution.loggerFactory.getLogger(classOf[AssertionRunner].getName)
 
     def run(assertions:Seq[Assertion], dryRun:Boolean=false, keepGoing:Boolean=false) : Seq[AssertionResult] = {
         // Collect all required DataFrames for caching. We assume that each DataFrame might be used in multiple

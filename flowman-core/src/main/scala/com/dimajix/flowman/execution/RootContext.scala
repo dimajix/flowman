@@ -22,6 +22,7 @@ import scala.util.control.NonFatal
 
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
+import org.slf4j.ILoggerFactory
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.config.FlowmanConf
@@ -53,6 +54,7 @@ object RootContext {
         private var overrideMappings:Map[MappingIdentifier, Prototype[Mapping]] = Map()
         private var overrideRelations:Map[RelationIdentifier, Prototype[Relation]] = Map()
         private var execution:Option[Execution] = None
+        private var loggerFactory:Option[ILoggerFactory] = None
 
         override protected val logger = LoggerFactory.getLogger(classOf[RootContext])
 
@@ -72,6 +74,10 @@ object RootContext {
         }
         def withExecution(execution:Option[Execution]) : Builder = {
             this.execution = execution
+            this
+        }
+        def withLoggerFactory(loggerFactory: ILoggerFactory) : Builder = {
+            this.loggerFactory = Some(loggerFactory)
             this
         }
 
@@ -100,7 +106,18 @@ object RootContext {
         }
 
         override protected def createContext(env:Map[String,(Any, Int)], config:Map[String,(String, Int)], connections:Map[String, Prototype[Connection]]) : RootContext = {
-            new RootContext(namespace, projects, profiles, env, config, execution, connections, overrideMappings, overrideRelations)
+            new RootContext(
+                namespace,
+                projects,
+                profiles,
+                env,
+                config,
+                execution,
+                loggerFactory.getOrElse(LoggerFactory.getILoggerFactory),
+                connections,
+                overrideMappings,
+                overrideRelations
+            )
         }
     }
 
@@ -109,6 +126,7 @@ object RootContext {
     def builder(namespace:Option[Namespace], profiles:Set[String]) : Builder = new Builder(namespace, profiles)
     def builder(parent:Context) : Builder = new Builder(parent.namespace, parent.root.profiles, Some(parent))
         .withConnections(parent.root.extraConnections)
+        .withLoggerFactory(parent.loggerFactory)
         //.overrideRelations(parent.root.overrideRelations)
         //.overrideMappings(parent.root.overrideMappings)
 }
@@ -121,6 +139,7 @@ final class RootContext private[execution](
     _env:Map[String,(Any, Int)],
     _config:Map[String,(String, Int)],
     _execution:Option[Execution],
+    _loggerFactory:ILoggerFactory,
     private val extraConnections:Map[String, Prototype[Connection]],
     private val overrideMappings:Map[MappingIdentifier, Prototype[Mapping]],
     private val overrideRelations:Map[RelationIdentifier, Prototype[Relation]]
@@ -432,4 +451,11 @@ final class RootContext private[execution](
      * @return
      */
     override def execution: Execution = _exec
+
+    /**
+     * Returns a context specific LoggerFactory
+     *
+     * @return
+     */
+    override def loggerFactory: ILoggerFactory = _loggerFactory
 }

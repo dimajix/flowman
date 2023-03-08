@@ -18,6 +18,7 @@ package com.dimajix.flowman.execution
 
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
+import org.slf4j.ILoggerFactory
 
 import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
@@ -254,4 +255,10 @@ abstract class Context {
      * @return
      */
     def execution : Execution
+
+    /**
+     * Returns a context specific LoggerFactory
+     * @return
+     */
+    def loggerFactory : ILoggerFactory
 }

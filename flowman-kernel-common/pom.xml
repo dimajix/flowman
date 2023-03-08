@@ -96,5 +96,11 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
         </dependency>
+        <!-- Add Scala library to test scope for scoverage plugin -->
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

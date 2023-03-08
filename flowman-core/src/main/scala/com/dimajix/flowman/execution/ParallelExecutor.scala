@@ -34,7 +34,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 
 
-class ParallelExecutor extends Executor {
+class ParallelExecutor(execution: Execution, context:Context) extends Executor {
     /**
      * Executes a list of targets in an appropriate order.
      *
@@ -47,10 +47,9 @@ class ParallelExecutor extends Executor {
      * @param fn - Function to call. Note that the function is expected not to throw a non-fatal exception.
      * @return
      */
-    def execute(execution: Execution, context:Context, phase: Phase, targets: Seq[Target], filter:Target => Boolean, keepGoing: Boolean)(fn:(Execution,Target,Phase) => TargetResult) : Seq[TargetResult] = {
+    def execute(phase: Phase, targets: Seq[Target], filter:Target => Boolean, keepGoing: Boolean)(fn:(Execution,Target,Phase) => TargetResult) : Seq[TargetResult] = {
         val clazz = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_SCHEDULER_CLASS)
-        val ctor = clazz.getDeclaredConstructor()
-        val scheduler = ctor.newInstance()
+        val scheduler = Scheduler.newInstance(clazz, execution, context)
 
         scheduler.initialize(targets, phase, filter)
 

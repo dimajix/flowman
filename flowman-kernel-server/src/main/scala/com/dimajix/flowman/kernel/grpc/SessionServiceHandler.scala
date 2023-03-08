@@ -17,23 +17,32 @@
 package com.dimajix.flowman.kernel.grpc
 
 import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
 
+import io.grpc.Status
+import io.grpc.StatusException
+import io.grpc.StatusRuntimeException
 import io.grpc.stub.StreamObserver
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.grpc.ExceptionUtils
 import com.dimajix.flowman.kernel.RpcConverters._
 import com.dimajix.flowman.kernel.proto.DataFrame
 import com.dimajix.flowman.kernel.proto.JobContext
 import com.dimajix.flowman.kernel.proto.JobIdentifier
+import com.dimajix.flowman.kernel.proto.LogEvent
+import com.dimajix.flowman.kernel.proto.LogLevel
 import com.dimajix.flowman.kernel.proto.MappingIdentifier
 import com.dimajix.flowman.kernel.proto.RelationIdentifier
 import com.dimajix.flowman.kernel.proto.Session
 import com.dimajix.flowman.kernel.proto.TargetIdentifier
 import com.dimajix.flowman.kernel.proto.TestContext
 import com.dimajix.flowman.kernel.proto.TestIdentifier
+import com.dimajix.flowman.kernel.proto.Timestamp
 import com.dimajix.flowman.kernel.proto.job._
 import com.dimajix.flowman.kernel.proto.mapping._
 import com.dimajix.flowman.kernel.proto.project._
@@ -616,6 +625,42 @@ final class SessionServiceHandler(
      */
     override def executeSql(request: ExecuteSqlRequest, responseObserver: StreamObserver[ExecuteSqlResponse]): Unit = super.executeSql(request, responseObserver)
 
+
+    /**
+     */
+    override def subscribeLog(request: SubscribeLogRequest, responseObserver: StreamObserver[LogEvent]): Unit = {
+        try {
+            val session = getSession(request.getSessionId)
+            session.loggerFactory.addSink({ev =>
+                val level = ev.getLevel match {
+                    case org.slf4j.event.Level.TRACE => LogLevel.TRACE
+                    case org.slf4j.event.Level.DEBUG => LogLevel.DEBUG
+                    case org.slf4j.event.Level.INFO => LogLevel.INFO
+                    case org.slf4j.event.Level.WARN => LogLevel.WARN
+                    case org.slf4j.event.Level.ERROR => LogLevel.ERROR
+                }
+                val ts = ev.getTimeStamp
+                val result = LogEvent.newBuilder()
+                    .setLogger(ev.getLoggerName)
+                    .setLevel(level)
+                    .setMessage(ev.getMessage)
+                    .setTimestamp(Timestamp.newBuilder().setSeconds(ts / 1000).setNanos((1000000 * (ts % 1000)).toInt))
+                val ex = ev.getThrowable
+                if (ex != null)
+                    result.setException(ExceptionUtils.wrap(ex, false))
+                responseObserver.onNext(result.build())
+            })
+        }
+        catch {
+            case e@(_: StatusException | _: StatusRuntimeException) =>
+                logger.error(s"Exception during execution of RPC call ${getClass.getSimpleName}.subscribeLog:\n  ${reasons(e)}")
+                responseObserver.onError(e)
+            case NonFatal(t) =>
+                logger.error(s"Exception during execution of RPC call ${getClass.getSimpleName}.subscribeLog:\n  ${reasons(t)}")
+                val e = ExceptionUtils.asStatusException(Status.INTERNAL, t, true)
+                responseObserver.onError(e)
+        }
+    }
 
     private def formatDataFrame(df:org.apache.spark.sql.DataFrame, columns:Seq[String], maxRows:Int) : DataFrame = {
         df.limit(maxRows)

@@ -25,8 +25,8 @@ import scala.util.control.NonFatal
 import scala.util.matching.Regex
 
 import org.apache.commons.lang3.StringUtils
+import org.slf4j.ILoggerFactory
 import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils
 import com.dimajix.common.ExceptionUtils.reasons
@@ -59,8 +59,8 @@ import com.dimajix.flowman.spi.LogFilter
 import com.dimajix.spark.SparkUtils.withJobGroup
 
 
-private[execution] sealed class RunnerImpl {
-    protected val logger: Logger = LoggerFactory.getLogger(classOf[Runner])
+private[execution] sealed class RunnerImpl(runner: Runner) {
+    protected val logger: Logger = runner.loggerFactory.getLogger(classOf[RunnerImpl].getName)
     protected val logFilters: Seq[LogFilter] = LogFilter.filters
 
     def executeTarget(execution:Execution, target:Target, phase:Phase, dryRun:Boolean) : TargetResult = {
@@ -217,7 +217,7 @@ private[execution] sealed class RunnerImpl {
 /**
  * Private implementation of Job specific methods
  */
-private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
+private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl(runner) {
     private val stateStore = runner.stateStore
     private val stateStoreListener = new StateStoreAdaptorListener(stateStore)
 
@@ -364,13 +364,12 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         val jobTargets = job.targets.map(t => context.getTarget(t))
 
         val clazz = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_EXECUTOR_CLASS)
-        val ctor = clazz.getDeclaredConstructor()
-        val executor = ctor.newInstance()
+        val executor = Executor.newInstance(clazz, execution, context)
 
-        val dirtyManager = new DirtyTargets(jobTargets, phase)
+        val dirtyManager = new DirtyTargets(execution, jobTargets, phase)
         dirtyManager.taint(dirtyFilter _)
 
-        executor.execute(execution, context, phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
+        executor.execute(phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
             val sc = execution.spark.sparkContext
             withJobGroup(sc, target.name, s"$phase target ${target.identifier}") {
                 val dirty = dirtyManager.isDirty(target)
@@ -470,7 +469,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
  * Private Implementation for Test specific methods
  * @param runner
  */
-private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl {
+private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl(runner) {
     def executeTest(test:Test, keepGoing:Boolean=false, dryRun:Boolean=false) : Status = {
         runner.withExecution(true) { execution =>
             runner.withTestContext(test, Some(execution), dryRun) { context =>
@@ -571,10 +570,9 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
         require(phase != null)
 
         val clazz = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_EXECUTOR_CLASS)
-        val ctor = clazz.getDeclaredConstructor()
-        val executor = ctor.newInstance()
+        val executor = Executor.newInstance(clazz, execution, context)
 
-        executor.execute(execution, context, phase, targets, _ => true, keepGoing) { (execution, target, phase) =>
+        executor.execute(phase, targets, _ => true, keepGoing) { (execution, target, phase) =>
             val sc = execution.spark.sparkContext
             withJobGroup(sc, target.name, s"$phase target ${target.identifier}") {
                 logSubtitle(s"$phase target '${target.identifier}'")
@@ -602,7 +600,8 @@ final class Runner(
     require(stateStore != null)
     require(hooks != null)
 
-    private val logger = LoggerFactory.getLogger(classOf[Runner])
+    val loggerFactory: ILoggerFactory = parentExecution.loggerFactory
+    private val logger = loggerFactory.getLogger(classOf[Runner].getName)
 
     /**
       * Executes a single job using the given execution and a map of parameters. The Runner may decide not to

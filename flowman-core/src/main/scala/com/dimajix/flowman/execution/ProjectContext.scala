@@ -33,11 +33,11 @@ import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Profile
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.ProjectWrapper
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.TemplateIdentifier
 import com.dimajix.flowman.model.Test

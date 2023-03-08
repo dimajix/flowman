@@ -14,25 +14,21 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.config
+package com.dimajix.flowman.execution
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.execution.SimpleExecutor
 
+class ExecutorTest extends AnyFlatSpec with Matchers {
+    "The Executor" should "support instantiation via reflection" in {
+        val session = Session.builder()
+            .disableSpark()
+            .build()
+        val context = session.context
+        val execution = session.execution
+        val result = Executor.newInstance(classOf[SimpleExecutor], execution, context)
 
-class FlowmanConfTest extends AnyFlatSpec with Matchers {
-    "The FlowmanConf" should "work with ints" in {
-        val conf = new FlowmanConf(Map("some_int" -> "32"))
-        conf.getConf(FlowmanConf.DEFAULT_TARGET_PARALLELISM) should be (16)
-        conf.get("some_int") should be ("32")
-    }
-
-    it should "work with classes" in {
-        val conf = new FlowmanConf(Map())
-        val clazz = conf.getConf(FlowmanConf.EXECUTION_EXECUTOR_CLASS)
-
-        clazz should be (classOf[SimpleExecutor])
+        result shouldBe a[SimpleExecutor]
     }
 }

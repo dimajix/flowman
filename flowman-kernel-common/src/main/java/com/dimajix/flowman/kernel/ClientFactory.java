@@ -17,15 +17,21 @@
 package com.dimajix.flowman.kernel;
 
 import java.net.URI;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinWorkerThread;
 
 import io.grpc.ManagedChannel;
 import io.grpc.inprocess.InProcessChannelBuilder;
+import lombok.val;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.dimajix.flowman.kernel.ThreadPoolExecutor.newExecutor;
+
 
 public class ClientFactory {
-    private static Logger logger = LoggerFactory.getLogger(ClientFactory.class);
+    private static final Logger logger = LoggerFactory.getLogger(ClientFactory.class);
 
     public static KernelClient createClient(URI uri) {
         logger.info("Connecting to Flowman kernel at " + uri.toString());
@@ -69,7 +75,7 @@ public class ClientFactory {
     private static ManagedChannel createNettyChannel(URI uri) throws ClassNotFoundException, NoClassDefFoundError {
         return io.grpc.netty.NettyChannelBuilder
             .forAddress(uri.getHost(), uri.getPort())
-            .directExecutor()
+            .executor(newExecutor())
             .maxInboundMetadataSize(1024*1024)
             .usePlaintext()
             .build();
@@ -78,7 +84,7 @@ public class ClientFactory {
     private static ManagedChannel createShadedNettyChannel(URI uri)  throws ClassNotFoundException, NoClassDefFoundError {
         return io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
             .forAddress(uri.getHost(), uri.getPort())
-            .directExecutor()
+            .executor(newExecutor())
             .maxInboundMetadataSize(1024*1024)
             .usePlaintext()
             .build();

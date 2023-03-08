@@ -16,16 +16,14 @@
 
 package com.dimajix.flowman.execution
 
-import org.slf4j.LoggerFactory
-
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.model.Result
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 
 
-class SimpleExecutor extends Executor {
-    private val logger = LoggerFactory.getLogger(classOf[SimpleExecutor])
+class SimpleExecutor(execution: Execution, context:Context) extends Executor {
+    private val logger = execution.loggerFactory.getLogger(classOf[SimpleExecutor].getName)
 
     /**
      * Executes a list of targets in an appropriate order.
@@ -39,10 +37,9 @@ class SimpleExecutor extends Executor {
      * @param fn - Function to call. Note that the function is expected not to throw a non-fatal exception.
      * @return
      */
-    def execute(execution: Execution, context:Context, phase: Phase, targets: Seq[Target], filter:Target => Boolean, keepGoing: Boolean)(fn:(Execution,Target,Phase) => TargetResult) : Seq[TargetResult] = {
+    def execute(phase: Phase, targets: Seq[Target], filter:Target => Boolean, keepGoing: Boolean)(fn:(Execution,Target,Phase) => TargetResult) : Seq[TargetResult] = {
         val clazz = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_SCHEDULER_CLASS)
-        val ctor = clazz.getDeclaredConstructor()
-        val scheduler = ctor.newInstance()
+        val scheduler = Scheduler.newInstance(clazz, execution, context)
 
         // First determine ordering before filtering active targets, since their might be some transitive dependencies
         // in place. For example accessing a VIEW which does not require a BUILD but accesses other resources

@@ -22,6 +22,11 @@ import com.dimajix.flowman.model.Target
 
 
 object Scheduler {
+    def newInstance(clazz: Class[_ <: Scheduler], execution: Execution, context: Context): Scheduler = {
+        val ctor = clazz.getDeclaredConstructor(classOf[Execution], classOf[Context])
+        ctor.newInstance(execution, context)
+    }
+
     def sort(scheduler: Scheduler, targets: Seq[Target], phase:Phase, filter:Target => Boolean) : Seq[Target] = {
         scheduler.initialize(targets, phase, filter)
 

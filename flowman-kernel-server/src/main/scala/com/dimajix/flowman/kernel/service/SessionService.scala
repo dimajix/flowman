@@ -51,7 +51,9 @@ import com.dimajix.flowman.storage.Store
 
 class SessionService(sessionManager:SessionManager, val store:Store, val project:Project) extends Closeable {
     private val logger = LoggerFactory.getLogger(classOf[SessionService])
+    val loggerFactory : ForwardingLoggerFactory = new ForwardingLoggerFactory()
     val session : Session = Session.builder(sessionManager.rootSession)
+        .withLoggerFactory(loggerFactory)
         .withProject(project)
         .withStore(store)
         .build()

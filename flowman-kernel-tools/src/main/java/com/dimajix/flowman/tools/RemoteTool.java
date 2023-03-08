@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 import lombok.val;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.LoggingEvent;
 
 import com.dimajix.flowman.kernel.ClientFactory;
 import com.dimajix.flowman.kernel.KernelClient;
@@ -89,6 +91,50 @@ public class RemoteTool {
             _session.shutdown();
         }
         _session = newSession;
+
+        newSession.subscribeLog(RemoteTool::logEvent);
+
         return _session;
+    }
+
+    private static void logEvent(LoggingEvent event) {
+        val logger = LoggerFactory.getLogger(event.getLoggerName());
+        switch(event.getLevel()) {
+            case TRACE:
+                val ex1 = event.getThrowable();
+                if (ex1 != null)
+                    logger.trace(event.getMessage(), ex1);
+                else
+                    logger.trace(event.getMessage());
+                break;
+            case DEBUG:
+                val ex2 = event.getThrowable();
+                if (ex2 != null)
+                    logger.debug(event.getMessage(), ex2);
+                else
+                    logger.debug(event.getMessage());
+                break;
+            case INFO:
+                val ex3 = event.getThrowable();
+                if (ex3 != null)
+                    logger.info(event.getMessage(), ex3);
+                else
+                    logger.info(event.getMessage());
+                break;
+            case WARN:
+                val ex4 = event.getThrowable();
+                if (ex4 != null)
+                    logger.warn(event.getMessage(), ex4);
+                else
+                    logger.warn(event.getMessage());
+                break;
+            case ERROR:
+                val ex5 = event.getThrowable();
+                if (ex5 != null)
+                    logger.error(event.getMessage(), ex5);
+                else
+                    logger.error(event.getMessage());
+                break;
+        }
     }
 }

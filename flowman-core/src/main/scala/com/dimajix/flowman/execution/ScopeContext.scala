@@ -17,7 +17,6 @@
 package com.dimajix.flowman.execution
 
 import scala.collection.concurrent.TrieMap
-import scala.collection.mutable
 import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
@@ -30,11 +29,11 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.TemplateIdentifier
 import com.dimajix.flowman.model.Test

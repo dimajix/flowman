@@ -19,7 +19,7 @@ package com.dimajix.flowman.execution
 import com.dimajix.flowman.model.Target
 
 
-class ManualScheduler extends Scheduler {
+class ManualScheduler(execution: Execution, context: Context) extends Scheduler {
     private var targets = Seq[Target]()
 
     /**

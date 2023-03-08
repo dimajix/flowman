@@ -27,8 +27,8 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 
 
-class DependencyScheduler extends Scheduler {
-    private val logger = LoggerFactory.getLogger(classOf[DependencyScheduler])
+class DependencyScheduler(execution: Execution, context: Context) extends Scheduler {
+    private val logger = execution.loggerFactory.getLogger(classOf[DependencyScheduler].getName)
 
     // Map containing all dependencies of all targets. Each entry represents the list of dependencies which
     // have to be executed before the target itself

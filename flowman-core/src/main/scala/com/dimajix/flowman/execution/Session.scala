@@ -22,6 +22,7 @@ import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.SparkShim
+import org.slf4j.ILoggerFactory
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.HiveCatalog
@@ -66,6 +67,7 @@ object Session {
         private var namespace:Option[Namespace] = None
         private var jars = Set[String]()
         private var listeners = Seq[ExecutionListener]()
+        private var loggerFactory:Option[ILoggerFactory] = None
 
         /**
          * Injects a builder for a Spark session. The builder will be lazily called, when required. Note that
@@ -249,6 +251,11 @@ object Session {
             this
         }
 
+        def withLoggerFactory(loggerFactory: ILoggerFactory) : Builder = {
+            this.loggerFactory = Some(loggerFactory)
+            this
+        }
+
         /**
          * Build the Flowman session and applies all previously specified options
          * @return
@@ -269,7 +276,8 @@ object Session {
                 parent.map(_._environment).getOrElse(Map()) ++ environment,
                 parent.map(_._profiles).getOrElse(Set()) ++ profiles,
                 parent.map(_ => Set[String]()).getOrElse(jars),
-                listeners.map(l => (l,None))
+                listeners.map(l => (l,None)),
+                loggerFactory.getOrElse(LoggerFactory.getILoggerFactory)
             )
         }
 
@@ -311,9 +319,10 @@ final class Session private[execution](
     private[execution] val _environment: Map[String,String],
     private[execution] val _profiles:Set[String],
     private[execution] val _jars:Set[String],
-    private[execution] val _listeners:Seq[(ExecutionListener,Option[Token])]
+    private[execution] val _listeners:Seq[(ExecutionListener,Option[Token])],
+    private[execution] val _loggerFactory:ILoggerFactory
 ) {
-    private val logger = LoggerFactory.getLogger(classOf[Session])
+    private val logger = _loggerFactory.getLogger(classOf[Session].getName)
 
     private def sparkJars : Seq[String] = {
         _jars.toSeq
@@ -436,6 +445,7 @@ final class Session private[execution](
 
     private lazy val namespaceContext : RootContext = {
         val builder = RootContext.builder(_namespace, _profiles)
+            .withLoggerFactory(loggerFactory)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_config, SettingLevel.GLOBAL_OVERRIDE)
         _namespace.foreach { ns =>
@@ -451,6 +461,7 @@ final class Session private[execution](
     private lazy val rootContext : RootContext = {
         val builder = RootContext.builder(namespaceContext)
             .withExecution(rootExecution)
+            .withLoggerFactory(loggerFactory)
             .withProjects(loadProjects())
         _project.foreach { prj =>
             // github-155: Apply project configuration to session
@@ -653,6 +664,12 @@ final class Session private[execution](
     def getContext(project: Project) : Context = {
         rootContext.getProjectContext(project)
     }
+
+    /**
+     * Returns a session specific logger factory
+     * @return
+     */
+    def loggerFactory : ILoggerFactory = _loggerFactory
 
     /**
      * Returns a new detached Flowman Session sharing the same Spark Context.

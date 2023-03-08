@@ -49,7 +49,12 @@ class ManualSchedulerTest extends AnyFlatSpec with Matchers with MockFactory wit
         (t5.phases _).expects().atLeastOnce().returns(Set(Phase.BUILD))
         val targets = Seq(t1,t2,t3,t4,t5)
 
-        val scheduler = new ManualScheduler()
+        val session = Session.builder()
+            .disableSpark()
+            .build()
+        val context = session.context
+        val execution = session.execution
+        val scheduler = new ManualScheduler(execution, context)
         scheduler.initialize(targets, Phase.BUILD, _ => true)
 
         scheduler.hasNext() should be (true)

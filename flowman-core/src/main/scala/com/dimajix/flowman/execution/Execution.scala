@@ -24,6 +24,8 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.RuntimeConfig
 import org.apache.spark.sql.SparkSession
+import org.slf4j.ILoggerFactory
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.FlowmanConf
@@ -55,6 +57,8 @@ import com.dimajix.flowman.types.StructType
  * target execution and not created before.
  */
 abstract class Execution {
+    def loggerFactory : ILoggerFactory
+
     /**
       * Returns the MetricRegistry of this execution
       * @return

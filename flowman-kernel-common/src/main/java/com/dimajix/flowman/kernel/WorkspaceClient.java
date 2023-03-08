@@ -68,7 +68,7 @@ public final class WorkspaceClient extends AbstractClient {
 
         val root = localDirectory.getAbsoluteFile().getCanonicalFile();
         val rootPath = root.toPath();
-        logger.info("Uploading local workspace directory '" + rootPath + "' to server...");
+        logger.info("Uploading local workspace directory '" + rootPath + "' to kernel...");
 
         val files = Files.fileTraverser().breadthFirst(root);
         val iter = StreamSupport.stream(files.spliterator(), false)
@@ -79,7 +79,7 @@ public final class WorkspaceClient extends AbstractClient {
     }
     private UploadFilesRequest uploadFile(Path root, File src) {
         val filename = root.relativize(src.toPath()).toString();
-        logger.info("Uploading file '" + src + "' as '" + filename + "' to server...");
+        logger.debug("Uploading file '" + src + "' as '" + filename + "' to server...");
         val result = UploadFilesRequest.newBuilder()
                 .setWorkspaceName(workspaceName)
                 .setFileName(filename);

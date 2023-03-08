@@ -20,6 +20,13 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetResult
 
 
+object Executor {
+    def newInstance(clazz:Class[_ <: Executor], execution: Execution, context:Context) : Executor = {
+        val ctor = clazz.getDeclaredConstructor(classOf[Execution], classOf[Context])
+        ctor.newInstance(execution, context)
+    }
+}
+
 abstract class Executor {
     /**
      * Executes a list of targets in an appropriate order.
@@ -33,5 +40,5 @@ abstract class Executor {
      * @param fn - Function to call. Note that the function is expected not to throw a non-fatal exception.
      * @return
      */
-    def execute(execution: Execution, context:Context, phase: Phase, targets: Seq[Target], filter:Target => Boolean, keepGoing: Boolean)(fn:(Execution,Target,Phase) => TargetResult) : Seq[TargetResult]
+    def execute(phase: Phase, targets: Seq[Target], filter:Target => Boolean, keepGoing: Boolean)(fn:(Execution,Target,Phase) => TargetResult) : Seq[TargetResult]
 }

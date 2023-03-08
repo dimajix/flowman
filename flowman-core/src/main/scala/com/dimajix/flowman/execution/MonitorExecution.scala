@@ -18,6 +18,7 @@ package com.dimajix.flowman.execution
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkSession
+import org.slf4j.ILoggerFactory
 
 import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.FlowmanConf
@@ -143,4 +144,6 @@ final class MonitorExecution(parent:Execution, override val listeners:Seq[(Execu
      * @return
      */
     override protected def delegate : Execution = parent
+
+    override def loggerFactory: ILoggerFactory = parent.loggerFactory
 }

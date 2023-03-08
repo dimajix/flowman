@@ -73,7 +73,7 @@ class MapIgnoreCase[B] private(impl:Map[String,(String,B)] = Map()) extends Map[
       *  @tparam   B1 the type of the value in the key/value pair.
       *  @return   a new map with the new binding added to this map
       *
-      *  @usecase  def + (kv: (A, B)): Map[A, B]
+      *  @usecase  def + (kv: (String, B)): Map[A, B]
       *    @inheritdoc
       */
     override def + [B1 >: B] (kv: (String, B1)): MapIgnoreCase[B1] = new MapIgnoreCase[B1](impl + (kv._1.toLowerCase(Locale.ROOT) -> ((kv._1, kv._2))))

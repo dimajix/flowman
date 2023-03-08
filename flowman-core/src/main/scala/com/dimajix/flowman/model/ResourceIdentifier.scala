@@ -26,6 +26,7 @@ import org.apache.hadoop.fs.Path
 
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.fs.GlobPattern
 
 
@@ -181,12 +182,12 @@ extends ResourceIdentifier
 
     override protected def containsName(other:ResourceIdentifier) : Boolean = {
         @tailrec
-        def isParent(parent:Path, child:Path) : Boolean = {
+        def isParent(parent:String, child:String) : Boolean = {
             if (parent == child) {
                 true
             }
             else {
-                val c2 = child.getParent
+                val c2 = FileSystem.getParent(child)
                 if (c2 != null)
                     isParent(parent, c2)
                 else
@@ -199,7 +200,7 @@ extends ResourceIdentifier
             true
         }
         // Test if this is parent
-        else if (isParent(new Path(name), new Path(other.name))) {
+        else if (isParent(name, other.name)) {
             true
         }
         // Test if wildcards do match

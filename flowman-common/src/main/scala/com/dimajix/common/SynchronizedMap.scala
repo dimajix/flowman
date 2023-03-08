@@ -186,8 +186,6 @@ case class SynchronizedMap[K,V](impl:mutable.Map[K,V]) {
      *              This result will always be ignored. Typically `U` is `Unit`,
      *              but this is not necessary.
      *
-     *  @note    Reuse: $consumesIterator
-     *
      *  @usecase def foreach(f: A => Unit): Unit
      *    @inheritdoc
      */

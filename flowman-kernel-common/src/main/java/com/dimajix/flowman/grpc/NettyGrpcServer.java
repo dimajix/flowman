@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.dimajix.flowman.grpc;
 
 import io.grpc.BindableService;
 import io.grpc.Server;
-import lombok.val;
+import io.grpc.ServerBuilder;
 
 import static com.dimajix.flowman.kernel.ThreadPoolExecutor.newExecutor;
 
@@ -29,17 +29,28 @@ public class NettyGrpcServer extends GrpcServer {
     }
 
     private static Server createServer(int port, Iterable<GrpcService> services) {
+        ServerBuilder<?> serverBuilder;
         try {
-            return ShadedNettyGrpcServerImpl.createServer(port, services);
+            serverBuilder = ShadedNettyGrpcServerImpl.createServer(port);
         }
         catch (ClassNotFoundException|NoClassDefFoundError ex) {
             try {
-                return NettyGrpcServerImpl.createServer(port, services);
+                serverBuilder = NettyGrpcServerImpl.createServer(port);
             }
             catch (ClassNotFoundException|NoClassDefFoundError ex2) {
                 throw new RuntimeException("No Netty binding found for gRPC", ex2);
             }
         }
+
+        serverBuilder
+            .permitKeepAliveWithoutCalls(true)
+            .maxInboundMetadataSize(1024*1024)
+            .executor(newExecutor());
+
+        for (BindableService service : services)
+            serverBuilder.addService(service);
+
+        return serverBuilder.build();
     }
 }
 
@@ -48,17 +59,9 @@ final class NettyGrpcServerImpl {
     private NettyGrpcServerImpl() {
     }
 
-    static Server createServer(int port, Iterable<GrpcService> services) throws ClassNotFoundException, NoClassDefFoundError {
-        val builder = io.grpc.netty.NettyServerBuilder
-            .forPort(port)
-            .permitKeepAliveWithoutCalls(true)
-            .maxInboundMetadataSize(1024*1024)
-            .executor(newExecutor());
-
-        for (BindableService service : services)
-            builder.addService(service);
-
-        return builder.build();
+    static ServerBuilder<?> createServer(int port) throws ClassNotFoundException, NoClassDefFoundError {
+        return io.grpc.netty.NettyServerBuilder
+            .forPort(port);
     }
 }
 
@@ -67,16 +70,8 @@ final class ShadedNettyGrpcServerImpl {
     private ShadedNettyGrpcServerImpl() {
     }
 
-    static Server createServer(int port, Iterable<GrpcService> services) throws ClassNotFoundException, NoClassDefFoundError {
-        val builder = io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
-            .forPort(port)
-            .permitKeepAliveWithoutCalls(true)
-            .maxInboundMetadataSize(1024*1024)
-            .executor(newExecutor());
-
-        for (BindableService service : services)
-            builder.addService(service);
-
-        return builder.build();
+    static ServerBuilder<?> createServer(int port) throws ClassNotFoundException, NoClassDefFoundError {
+        return io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
+            .forPort(port);
     }
 }

@@ -88,6 +88,7 @@
             <artifactId>slf4j-log4j12</artifactId>
         </dependency>
 
+        <!-- Test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>

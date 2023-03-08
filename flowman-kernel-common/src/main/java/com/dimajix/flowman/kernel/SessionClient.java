@@ -100,7 +100,7 @@ public final class SessionClient extends AbstractClient {
         val request = SubscribeLogRequest.newBuilder()
                 .setSessionId(sessionId)
                 .build();
-        asyncStub.subscribeLog(request, new StreamObserver<>() {
+        asyncStub.subscribeLog(request, new StreamObserver<LogEvent>() {
             @Override
             public void onNext(LogEvent value) {
                 val event = new LoggingEvent() {

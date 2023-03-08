@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.kernel.service
 
+import java.util.function.Consumer
+
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 
@@ -24,11 +26,18 @@ import org.slf4j.Logger
 
 import com.dimajix.common.logging.ForwardingEventLogger
 import com.dimajix.common.logging.LogEvent
+import com.dimajix.flowman.kernel.service.ForwardingLoggerFactory.LogEventConsumer
 
 
+object ForwardingLoggerFactory {
+    class LogEventConsumer(sinks:mutable.Buffer[LogEvent => Unit]) extends Consumer[LogEvent] {
+        override def accept(t: LogEvent): Unit = sinks.foreach(_(t))
+    }
+}
 class ForwardingLoggerFactory extends ILoggerFactory {
     private val sinks = mutable.ListBuffer[LogEvent => Unit]()
     private val loggers = TrieMap[String,ForwardingEventLogger]()
+    private val consumer = new LogEventConsumer(sinks)
 
     def addSink(sink:LogEvent => Unit) : Unit = {
         sinks.synchronized {
@@ -37,8 +46,6 @@ class ForwardingLoggerFactory extends ILoggerFactory {
     }
 
     override def getLogger(name: String): Logger = {
-        loggers.getOrElseUpdate(name, {
-            new ForwardingEventLogger(name, ev => sinks.foreach(_(ev)))
-        })
+        loggers.getOrElseUpdate(name, new ForwardingEventLogger(name, consumer))
     }
 }

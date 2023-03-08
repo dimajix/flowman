@@ -51,8 +51,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Flowman'
-copyright = '2022, Kaya Kupferschmidt'
-author = 'Kaya Kupferschmidt'
+copyright = '2023, The Flowman Authors'
+author = 'The Flowman Authors'
 
 github_doc_root = 'https://github.com/dimajix/flowman/tree/master/docs/'
 
@@ -146,7 +146,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'Flowman.tex', 'Flowman Documentation',
-     'Kaya Kupferschmidt', 'manual'),
+     'The Flowman Authors', 'manual'),
 ]
 
 

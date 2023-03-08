@@ -54,6 +54,24 @@ Copyright (c) 2013 Kohsuke Kawaguchi and other contributors
   * HOMEPAGE:
     * http://args4j.kohsuke.org/
 
+Guava
+  * LICENSE
+    * license/LICENSE-guava.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * https://guava.dev/
+
+Protobuf
+  * LICENSE
+    * license/LICENSE-protobuf.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * https://protobuf.dev/
+
+grpc
+  * LICENSE
+    * license/LICENSE-grpc.txt (Apache 2.0 License)
+  * HOMEPAGE:
+    * https://grpc.io/
+
 Jackson
   * LICENSE
     * license/LICENSE-jackson.txt (Apache 2.0 License)

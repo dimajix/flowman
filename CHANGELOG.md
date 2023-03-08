@@ -41,6 +41,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-334: Create standalone Flowman Kernel application
 * github-338: Update Spark to 3.3.2
 * github-333: Forward Logs from Kernel to Client
+* github-339: Set Copyright to "The Flowman Authors"
 
 ### Breaking changes
 

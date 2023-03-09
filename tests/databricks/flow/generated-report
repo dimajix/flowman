@@ -1,0 +1,37 @@
+≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
+Project '@project.name@' version @project.version@
+Lifecycle [VALIDATE, CREATE, BUILD] of job '@project.name@/main' ()
+Started at 2022-11-03T10:21:24.2
+≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
+
+======================================================================================================================
+Start CREATE of job '@project.name@/main' () at 2022-11-03T10:21:24.3
+======================================================================================================================
+
+--- Start CREATE target '@project.name@/measurements' at 2022-11-03T10:21:27.0 ---
+--> SUCCESS CREATE target '@project.name@/measurements' at 2022-11-03T10:21:27.049704Z (PT0.013836S) )<--
+
+--- Start CREATE target '@project.name@/measurements_jdbc' at 2022-11-03T10:21:27.0 ---
+--> FAILED CREATE target '@project.name@/measurements_jdbc' at 2022-11-03T10:21:27.169027Z (PT0.002918S) )<--
+
+======================================================================================================================
+FAILED CREATE of job '@project.name@/main' ()
+Execution Metrics:
+   job_runtime {name=main, project=@project.name@, phase=CREATE, category=job, kind=job} 2823.0
+   output_time {project=@project.name@, phase=CREATE, target=measurements} 25.0
+   output_time {project=@project.name@, phase=CREATE, target=measurements_jdbc} 113.0
+   processing_time {project=@project.name@, phase=CREATE} 2823.0
+   target_runtime {name=measurements, project=@project.name@, phase=CREATE, category=target, kind=relation} 25.0
+   target_runtime {name=measurements_jdbc, project=@project.name@, phase=CREATE, category=target, kind=relation} 113.0
+
+Total time: PT2.851563S
+Finished at: 2022-11-03T10:21:27.171245Z
+======================================================================================================================
+
+
+≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
+FAILED lifecycle [VALIDATE, CREATE, BUILD] of job '@project.name@/main' ()
+Total time: PT3.409472S
+Finished at: 2022-11-03T10:21:27.222452Z
+≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
+

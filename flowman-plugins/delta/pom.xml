@@ -9,9 +9,9 @@
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
-	    <artifactId>flowman-root</artifactId>
+        <artifactId>flowman-plugin-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
     <properties>

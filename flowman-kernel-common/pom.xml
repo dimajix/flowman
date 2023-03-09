@@ -14,6 +14,19 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
+    <profiles>
+        <profile>
+            <id>site</id>
+            <dependencies>
+                <!-- Add Scala dependency, just for site -->
+                <dependency>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-library</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+
     <build>
         <plugins>
             <plugin>
@@ -96,12 +109,6 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
-        </dependency>
-        <!-- Add Scala library to test scope for scoverage plugin -->
-        <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-library</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

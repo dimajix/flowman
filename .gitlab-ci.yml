@@ -38,7 +38,7 @@ sast:
 # Build site and reports
 build-site:
   stage: site
-  script: 'mvn ${MAVEN_CLI_OPTS} clean install -DskipTests -Ddockerfile.skip && mvn ${MAVEN_CLI_OPTS} site -Ddockerfile.skip'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean install -DskipTests -Ddockerfile.skip && mvn ${MAVEN_CLI_OPTS} site -Psite'
   artifacts:
     name: "flowman-site"
     paths:
@@ -203,6 +203,16 @@ build-emr6.9:
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -PEMR-6.9 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-emr6.9"
+    paths:
+      - flowman-dist/target/flowman-dist-*-bin.tar.gz
+    expire_in: 5 days
+
+build-databricks12.2:
+  stage: build
+  image: dimajix/maven-npm:jdk-1.8
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Pdatabricks12.2 -Ddockerfile.skip'
+  artifacts:
+    name: "flowman-dist-databricks12.2"
     paths:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days

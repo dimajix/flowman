@@ -1,0 +1,29 @@
+flowman:
+  version: 1.0.0-SNAPSHOT
+  distribution: com.dimajix.flowman:flowman-dist:bin:1.0.0-SNAPSHOT
+  plugins:
+    - flowman-avro
+    - flowman-aws
+    - flowman-azure
+
+
+# List of subdirectories containing Flowman projects
+projects:
+  - flow
+
+
+# List of packages to be built
+packages:
+  databricks:
+    kind: fatjar
+    build:
+      exclusions:
+        - com.amazonaws:*
+
+
+# List of deployments
+deployments:
+  azure:
+    kind: copy
+    package: databricks
+    location: s3://dimajix-tmp/flowman-dings/prj

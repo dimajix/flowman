@@ -67,10 +67,6 @@
                         <id>default-compile</id>
                         <phase>compile</phase>
                     </execution>
-                    <execution>
-                        <id>default-testCompile</id>
-                        <phase>test-compile</phase>
-                    </execution>
                 </executions>
             </plugin>
         </plugins>

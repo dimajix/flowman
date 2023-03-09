@@ -114,7 +114,7 @@
         <guava.version>14.0.1</guava.version>
         <httpclient.version>4.5.13</httpclient.version>
         <httpcore.version>4.4.14</httpcore.version>
-        <ivy.version>2.4.0</ivy.version>
+        <ivy.version>2.5.1</ivy.version>
         <jackson-api.version>2.13</jackson-api.version>
         <jackson.databind.version>2.13.4.2</jackson.databind.version>
         <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>

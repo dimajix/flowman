@@ -209,7 +209,6 @@ build-emr6.9:
 
 build-databricks12.2:
   stage: build
-  image: dimajix/maven-npm:jdk-1.8
   script: 'mvn ${MAVEN_CLI_OPTS} clean package -Pdatabricks12.2 -Ddockerfile.skip'
   artifacts:
     name: "flowman-dist-databricks12.2"

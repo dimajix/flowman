@@ -15,9 +15,6 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <build>
-    </build>
-
     <dependencyManagement>
         <dependencies>
             <!-- Flowman Dependencies -->

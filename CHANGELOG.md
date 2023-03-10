@@ -44,6 +44,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-339: Set Copyright to "The Flowman Authors"
 * github-345: Loading an embedded schema inside a jar file should not throw an exception
 * github-346: Create build profile for Databricks
+* github-343: Log all client requests in kernel
 
 ### Breaking changes
 

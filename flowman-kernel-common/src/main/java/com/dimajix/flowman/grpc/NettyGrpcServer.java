@@ -44,6 +44,7 @@ public class NettyGrpcServer extends GrpcServer {
 
         serverBuilder
             .permitKeepAliveWithoutCalls(true)
+            .intercept(new LogCallServerInjector())
             .maxInboundMetadataSize(1024*1024)
             .executor(newExecutor());
 

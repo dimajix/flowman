@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,14 @@
 package com.dimajix.flowman.kernel;
 
 import java.net.URI;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinWorkerThread;
 
 import io.grpc.ManagedChannel;
-import io.grpc.inprocess.InProcessChannelBuilder;
 import lombok.val;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.dimajix.flowman.kernel.ThreadPoolExecutor.newExecutor;
+import com.dimajix.flowman.grpc.InProcessGrpcClient;
+import com.dimajix.flowman.grpc.NettyGrpcClient;
 
 
 public class ClientFactory {
@@ -51,42 +48,12 @@ public class ClientFactory {
     }
 
     private static ManagedChannel createInprocessChannel(URI uri) {
-        return InProcessChannelBuilder
-            .forName(uri.getHost())
-            .directExecutor()
-            .usePlaintext()
-            .build();
+        val client = new InProcessGrpcClient(uri);
+        return client.getChannel();
     }
 
     private static ManagedChannel createHttpChannel(URI uri) {
-        try {
-            return createNettyChannel(uri);
-        }
-        catch (ClassNotFoundException|NoClassDefFoundError ex) {
-            try {
-                return createShadedNettyChannel(uri);
-            }
-            catch (ClassNotFoundException|NoClassDefFoundError ex2) {
-                throw new RuntimeException("No Netty binding found for gRPC", ex2);
-            }
-        }
-    }
-
-    private static ManagedChannel createNettyChannel(URI uri) throws ClassNotFoundException, NoClassDefFoundError {
-        return io.grpc.netty.NettyChannelBuilder
-            .forAddress(uri.getHost(), uri.getPort())
-            .executor(newExecutor())
-            .maxInboundMetadataSize(1024*1024)
-            .usePlaintext()
-            .build();
-    }
-
-    private static ManagedChannel createShadedNettyChannel(URI uri)  throws ClassNotFoundException, NoClassDefFoundError {
-        return io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
-            .forAddress(uri.getHost(), uri.getPort())
-            .executor(newExecutor())
-            .maxInboundMetadataSize(1024*1024)
-            .usePlaintext()
-            .build();
+        val client = new NettyGrpcClient(uri);
+        return client.getChannel();
     }
 }

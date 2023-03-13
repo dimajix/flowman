@@ -22,10 +22,10 @@ import scala.collection.JavaConverters._
 
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.fs.File
-import com.dimajix.flowman.grpc.GrpcServer
+import com.dimajix.flowman.grpc.GrpcServerBuilder
 import com.dimajix.flowman.grpc.GrpcService
-import com.dimajix.flowman.grpc.InProcessGrpcServer
-import com.dimajix.flowman.grpc.NettyGrpcServer
+import com.dimajix.flowman.kernel.grpc.ClientIdExtractor
+import com.dimajix.flowman.kernel.grpc.ClientIdGenerator
 import com.dimajix.flowman.kernel.grpc.KernelServiceHandler
 import com.dimajix.flowman.kernel.grpc.SessionServiceHandler
 import com.dimajix.flowman.kernel.grpc.WorkspaceServiceHandler
@@ -44,14 +44,14 @@ object KernelServer {
 
         private var workspaceManager: WorkspaceManager = null
         private var serverName = "flowman-kernel"
-        private var port:Int = 80
-        private var serverFactory: Iterable[GrpcService] => GrpcServer = createInprocessServer
+        private var port:Int = 8088
+        private var serverFactory: () => GrpcServerBuilder = createInprocessServer
 
-        private def createInprocessServer(services:Iterable[GrpcService]) : GrpcServer = {
-            new InProcessGrpcServer(serverName, services.asJava)
+        private def createInprocessServer() : GrpcServerBuilder = {
+            GrpcServerBuilder.forName(serverName)
         }
-        private def createNettyServer(services:Iterable[GrpcService]) : GrpcServer = {
-            new NettyGrpcServer(port, services.asJava)
+        private def createNettyServer() : GrpcServerBuilder = {
+            GrpcServerBuilder.forPort(port)
         }
 
         def withWorkspaceManager(workspaceManager: WorkspaceManager): Builder = {
@@ -92,7 +92,7 @@ object KernelServer {
 
         def build() : KernelServer = {
             val sessionManager = new SessionManager(session)
-            new KernelServer(sessionManager, workspaceManager, pluginManager, serverFactory)
+            new KernelServer(sessionManager, workspaceManager, pluginManager, serverFactory())
         }
     }
 
@@ -104,7 +104,7 @@ class KernelServer private(
     val sessionManager: SessionManager,
     val workspaceManager: WorkspaceManager,
     pluginManager: PluginManager,
-    serverFactory: Iterable[GrpcService] => GrpcServer
+    serverBuilder: GrpcServerBuilder
 ) {
     require(sessionManager != null)
     require(pluginManager != null)
@@ -113,11 +113,19 @@ class KernelServer private(
     private val sessionService = new SessionServiceHandler(sessionManager, workspaceManager)
     private val workspaceService = new WorkspaceServiceHandler(workspaceManager)
 
-    private val server = serverFactory(Seq(
-        kernelService,
-        workspaceService,
-        sessionService
-    ))
+    private val clientWatcher = new ClientIdGenerator(sessionService)
+
+    private val server = serverBuilder
+        .withServices(
+            Seq(
+                kernelService.asInstanceOf[GrpcService],
+                workspaceService.asInstanceOf[GrpcService],
+                sessionService.asInstanceOf[GrpcService]
+            ).asJava
+        )
+        .withTransportFilter(clientWatcher)
+        .withInterceptor(new ClientIdExtractor)
+        .build()
 
     def start() : Unit = server.start()
 

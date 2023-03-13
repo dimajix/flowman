@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-abstract public class GrpcServer {
+public class GrpcServer {
     private static final Logger logger = LoggerFactory.getLogger(GrpcServer.class.getName());
     private final Server server;
 

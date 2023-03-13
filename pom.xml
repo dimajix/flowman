@@ -1333,6 +1333,7 @@
                     </jvmArgs>
                 </configuration>
             </plugin>
+            <!--
             <plugin>
                 <groupId>org.scoverage</groupId>
                 <artifactId>scoverage-maven-plugin</artifactId>
@@ -1343,11 +1344,12 @@
                 <reportSets>
                     <reportSet>
                         <reports>
-                            <report>report</report> <!-- select only one report from: report, integration-report and report-only reporters -->
+                            <report>report</report>
                         </reports>
                     </reportSet>
                 </reportSets>
             </plugin>
+            -->
         </plugins>
     </reporting>
 

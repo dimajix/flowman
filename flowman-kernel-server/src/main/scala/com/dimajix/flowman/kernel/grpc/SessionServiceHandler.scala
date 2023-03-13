@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.kernel.grpc
 
+import java.util.UUID
+
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
 
@@ -31,6 +33,7 @@ import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.grpc.ExceptionUtils
 import com.dimajix.flowman.kernel.RpcConverters._
+import com.dimajix.flowman.kernel.grpc.ClientIdExtractor.CLIENT_ID
 import com.dimajix.flowman.kernel.proto.DataFrame
 import com.dimajix.flowman.kernel.proto.JobContext
 import com.dimajix.flowman.kernel.proto.JobIdentifier
@@ -62,12 +65,23 @@ import com.dimajix.flowman.types.StructType
 final class SessionServiceHandler(
     sessionManager: SessionManager,
     workspaceManager: WorkspaceManager
-) extends SessionServiceGrpc.SessionServiceImplBase with ServiceHandler {
+) extends SessionServiceGrpc.SessionServiceImplBase with ServiceHandler with ClientWatcher {
     override protected val logger:Logger = LoggerFactory.getLogger(classOf[SessionServiceHandler])
+
+
+    override def clientConnected(clientId: UUID): Unit = {
+
+    }
+
+    override def clientDisconnected(clientId: UUID): Unit = {
+        sessionManager.removeClientSessions(clientId)
+    }
+
     /**
      */
     override def createSession(request: CreateSessionRequest, responseObserver: StreamObserver[CreateSessionResponse]): Unit = {
         respondTo("createSession", responseObserver) {
+            val clientId = CLIENT_ID.get()
             val store =
                 if (request.hasWorkspace()) {
                     val workspaceName = request.getWorkspace;
@@ -85,10 +99,10 @@ final class SessionServiceHandler(
                             sessionManager.rootSession.fs.file(request.getProjectLocation)
                     }
 
-                    sessionManager.createSession(store, file)
+                    sessionManager.createSession(store, file, clientId)
                 }
                 else if (request.hasProjectName) {
-                    sessionManager.createSession(store, request.getProjectName)
+                    sessionManager.createSession(store, request.getProjectName, clientId)
                 }
                 else {
                     throw new IllegalArgumentException("Either project name or project location is required for creating a new session")

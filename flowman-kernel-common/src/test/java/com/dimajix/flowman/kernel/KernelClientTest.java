@@ -32,13 +32,13 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.dimajix.flowman.grpc.ExceptionUtils;
-import com.dimajix.flowman.grpc.InProcessGrpcServer;
+import com.dimajix.flowman.grpc.GrpcServer;
+import com.dimajix.flowman.grpc.GrpcServerBuilder;
 import com.dimajix.flowman.grpc.RemoteException;
 
 
 public class KernelClientTest {
-    private InProcessGrpcServer inprocessServer;
+    private GrpcServer inprocessServer;
     private ManagedChannel channel;
     private KernelClient client;
 
@@ -79,7 +79,9 @@ public class KernelClientTest {
 
     @BeforeEach
     public void beforeEachTest() throws IOException {
-        inprocessServer = new InProcessGrpcServer("test",   Collections.singletonList(new WorkspaceDummyImpl()));
+        inprocessServer = GrpcServerBuilder.forName("test")
+            .withServices(Collections.singletonList(new WorkspaceDummyImpl()))
+            .build();
         inprocessServer.start();
         channel = InProcessChannelBuilder
             .forName("test")

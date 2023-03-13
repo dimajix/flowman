@@ -49,7 +49,7 @@ import com.dimajix.flowman.spec.target.RelationTarget
 import com.dimajix.flowman.storage.Store
 
 
-class SessionService(sessionManager:SessionManager, val store:Store, val project:Project) extends Closeable {
+class SessionService(sessionManager:SessionManager, val store:Store, val project:Project, val clientId:UUID) extends Closeable {
     private val logger = LoggerFactory.getLogger(classOf[SessionService])
     val loggerFactory : ForwardingLoggerFactory = new ForwardingLoggerFactory()
     val session : Session = Session.builder(sessionManager.rootSession)
@@ -67,7 +67,7 @@ class SessionService(sessionManager:SessionManager, val store:Store, val project
     val name : String = project.name
     val namespace : Namespace = session.namespace.get
 
-    logger.info(s"Create new SessionService with id '$id'")
+    logger.info(s"Create new SessionService for client $clientId with session id '$id'")
 
     def context : Context = _context
     def execution : Execution = session.execution
@@ -77,7 +77,7 @@ class SessionService(sessionManager:SessionManager, val store:Store, val project
         session.execution.cleanup()
         session.shutdown()
         sessionManager.removeSession(this)
-        logger.info(s"Shutdown SessionService with id '$id'")
+        logger.info(s"Shutdown SessionService for client $clientId with session id '$id'")
     }
 
     def job: Option[Job] = _job

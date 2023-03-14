@@ -46,6 +46,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-346: Create build profile for Databricks
 * github-343: Log all client requests in kernel
 * github-342: Automatically close session when client disconnects from kernel
+* github-351: Failing execution listener instantiation should not fail a build
 
 ### Breaking changes
 

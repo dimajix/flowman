@@ -253,11 +253,30 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl(r
         logger.info(separator)
         logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.name}'$prj $iso")
 
+        def createListeners(context: Context) : Seq[ExecutionListener] = {
+            if (!dryRun) {
+                val extraListeners = (runner.hooks ++ job.hooks).flatMap { listener =>
+                    try {
+                        Some(listener.instantiate(context))
+                    }
+                    catch {
+                        case NonFatal(ex) =>
+                            logger.warn(s"Error creating execution listener, will be ignored. Reason:\n  ${reasons(ex)}")
+                            None
+                    }
+                }
+                stateStoreListener +: extraListeners
+            }
+            else {
+                Seq.empty
+            }
+        }
+
         val startTime = Instant.now()
         runner.withExecution(isolated2) { execution =>
             runner.withJobContext(job, args, Some(execution), force, dryRun, isolated2) { (context, arguments) =>
                 val title = s"lifecycle for job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
-                val listeners = if (!dryRun) stateStoreListener +: (runner.hooks ++ job.hooks).map(_.instantiate(context)) else Seq()
+                val listeners = createListeners(context)
                 val result = execution.withListeners(listeners) { execution =>
                     execution.monitorLifecycle(job, arguments, phases) { execution =>
                         val results = Result.flatMap(phases, keepGoing) { phase =>

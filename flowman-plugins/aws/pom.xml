@@ -240,21 +240,25 @@
                     <groupId>com.amazonaws</groupId>
                     <artifactId>aws-java-sdk-core</artifactId>
                     <version>${aws.version}</version>
+                    <scope>provided</scope>
                 </dependency>
                 <dependency>
                     <groupId>com.amazonaws</groupId>
                     <artifactId>aws-java-sdk-dynamodb</artifactId>
                     <version>${aws.version}</version>
+                    <scope>provided</scope>
                 </dependency>
                 <dependency>
                     <groupId>com.amazonaws</groupId>
                     <artifactId>aws-java-sdk-kms</artifactId>
                     <version>${aws.version}</version>
+                    <scope>provided</scope>
                 </dependency>
                 <dependency>
                     <groupId>com.amazonaws</groupId>
                     <artifactId>aws-java-sdk-s3</artifactId>
                     <version>${aws.version}</version>
+                    <scope>provided</scope>
                 </dependency>
             </dependencies>
         </profile>
@@ -269,21 +273,25 @@
                     <groupId>com.amazonaws</groupId>
                     <artifactId>aws-java-sdk-core</artifactId>
                     <version>${aws.version}</version>
+                    <scope>provided</scope>
                 </dependency>
                 <dependency>
                     <groupId>com.amazonaws</groupId>
                     <artifactId>aws-java-sdk-dynamodb</artifactId>
                     <version>${aws.version}</version>
+                    <scope>provided</scope>
                 </dependency>
                 <dependency>
                     <groupId>com.amazonaws</groupId>
                     <artifactId>aws-java-sdk-kms</artifactId>
                     <version>${aws.version}</version>
+                    <scope>provided</scope>
                 </dependency>
                 <dependency>
                     <groupId>com.amazonaws</groupId>
                     <artifactId>aws-java-sdk-s3</artifactId>
                     <version>${aws.version}</version>
+                    <scope>provided</scope>
                 </dependency>
             </dependencies>
         </profile>
@@ -295,12 +303,12 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
-            <resource>
-                <directory>src/hadoop-${hadoop-api.version}/resources</directory>
-                <filtering>true</filtering>
-            </resource>
         </resources>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+            </plugin>
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>

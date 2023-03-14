@@ -15,6 +15,31 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <phase>initialize</phase>
+                            <goals>
+                                <goal>build-classpath</goal>
+                            </goals>
+                            <configuration>
+                                <includeScope>runtime</includeScope>
+                                <outputProperty>plugin.classpath</outputProperty>
+                                <pathSeparator>,</pathSeparator>
+                                <prefix>.</prefix>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
     <dependencyManagement>
         <dependencies>
             <!-- Flowman Dependencies -->

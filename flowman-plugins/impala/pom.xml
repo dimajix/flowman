@@ -37,6 +37,10 @@
         </resources>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
             </plugin>
@@ -108,6 +112,14 @@
                 <exclusion>
                     <groupId>org.eclipse.jetty.aggregate</groupId>
                     <artifactId>jetty-all</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.sf.jpam</groupId>
+                    <artifactId>jpam</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jamon</groupId>
+                    <artifactId>jamon-runtime</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

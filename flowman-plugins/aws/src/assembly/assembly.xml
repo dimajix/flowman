@@ -22,8 +22,8 @@
     <dependencySets>
         <dependencySet>
             <outputDirectory>plugins/${plugin.name}</outputDirectory>
-            <useTransitiveDependencies>false</useTransitiveDependencies>
-            <useTransitiveFiltering>false</useTransitiveFiltering>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
             <unpack>false</unpack>
             <scope>runtime</scope>
             <useProjectArtifact>true</useProjectArtifact>

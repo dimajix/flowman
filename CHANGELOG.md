@@ -47,6 +47,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-343: Log all client requests in kernel
 * github-342: Automatically close session when client disconnects from kernel
 * github-351: Failing execution listener instantiation should not fail a build
+* github-347: Exclude AWS SDK for Databricks and EMR build profiles
 
 ### Breaking changes
 

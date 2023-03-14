@@ -2,6 +2,4 @@ name: ${plugin.name}
 description: ${project.name}
 version: ${plugin.version}
 isolation: false
-jars:
- - ${plugin.jar}
- - ganymed-ssh2-262.jar
+jars: [${plugin.jar},${plugin.classpath}]

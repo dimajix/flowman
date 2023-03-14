@@ -737,6 +737,13 @@
             </dependency>
 
             <dependency>
+                <groupId>org.lz4</groupId>
+                <artifactId>lz4-java</artifactId>
+                <version>${lz4.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>com.google.code.findbugs</groupId>
                 <artifactId>jsr305</artifactId>
                 <version>${jsr305.version}</version>
@@ -1016,6 +1023,12 @@
                 <scope>compile</scope>
             </dependency>
             <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-cbor</artifactId>
+                <version>${jackson.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
                 <groupId>com.fasterxml.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-joda</artifactId>
                 <version>${jackson.version}</version>
@@ -1163,6 +1176,12 @@
                 <groupId>org.apache.thrift</groupId>
                 <artifactId>libthrift</artifactId>
                 <version>${libthrift.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.thrift</groupId>
+                <artifactId>libfb303</artifactId>
+                <version>0.9.3</version>
                 <scope>provided</scope>
             </dependency>
 

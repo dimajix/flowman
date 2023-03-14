@@ -84,13 +84,24 @@ public class Logging {
 
     private static void initDefault() {
         val loader = Thread.currentThread().getContextClassLoader();
-        if (isLog4j2()) {
-            val url = loader.getResource("com/dimajix/flowman/log4j2-defaults.properties");
-            LoggingImplLog4j2.init(url, color);
+        val log4j2cfg = loader.getResource("META-INF/flowman/conf/log4j2.properties");
+        if (log4j2cfg != null) {
+            LoggingImplLog4j2.init(log4j2cfg, color);
         }
         else {
-            val url = loader.getResource("com/dimajix/flowman/log4j-defaults.properties");
-            initlog4j1(url);
+            val log4jcfg = loader.getResource("META-INF/flowman/conf/log4j.properties");
+            if (log4jcfg != null) {
+                initlog4j1(log4jcfg);
+            }
+            else {
+                if (isLog4j2()) {
+                    val url = loader.getResource("com/dimajix/flowman/log4j2-defaults.properties");
+                    LoggingImplLog4j2.init(url, color);
+                } else {
+                    val url = loader.getResource("com/dimajix/flowman/log4j-defaults.properties");
+                    initlog4j1(url);
+                }
+            }
         }
     }
 

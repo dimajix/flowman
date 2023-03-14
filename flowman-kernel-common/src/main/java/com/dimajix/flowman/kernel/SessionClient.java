@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import lombok.val;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.event.Level;
 import org.slf4j.event.LoggingEvent;
@@ -60,6 +62,7 @@ import com.dimajix.flowman.kernel.proto.test.ListTestsRequest;
 
 
 public final class SessionClient extends AbstractClient {
+    private final Logger logger = LoggerFactory.getLogger(KernelClient.class);
     private final ManagedChannel channel;
     private final SessionServiceGrpc.SessionServiceBlockingStub blockingStub;
     private final SessionServiceGrpc.SessionServiceStub asyncStub;
@@ -214,6 +217,7 @@ public final class SessionClient extends AbstractClient {
     }
 
     public void shutdown() {
+        logger.info("Shutting down session '" + sessionId + "'");
         val request = DeleteSessionRequest.newBuilder()
             .setSessionId(sessionId)
             .build();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public final class WorkspaceClient extends AbstractClient {
 
         val root = localDirectory.getAbsoluteFile().getCanonicalFile();
         val rootPath = root.toPath();
-        logger.info("Uploading local workspace directory '" + rootPath + "' to kernel...");
+        logger.info("Uploading local workspace directory '" + rootPath + "' to kernel workspace '" + workspaceName + "'...");
 
         val files = Files.fileTraverser().breadthFirst(root);
         val iter = StreamSupport.stream(files.spliterator(), false)
@@ -79,7 +79,7 @@ public final class WorkspaceClient extends AbstractClient {
     }
     private UploadFilesRequest uploadFile(Path root, File src) {
         val filename = root.relativize(src.toPath()).toString();
-        logger.debug("Uploading file '" + src + "' as '" + filename + "' to server...");
+        logger.debug("Uploading file '" + src + "' as '" + filename + "' to kernel...");
         val result = UploadFilesRequest.newBuilder()
                 .setWorkspaceName(workspaceName)
                 .setFileName(filename);

@@ -24,6 +24,8 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import dev.dirs.ProjectDirectories;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import lombok.val;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -33,6 +35,7 @@ import org.jline.terminal.TerminalBuilder;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
+import static com.dimajix.common.ExceptionUtils.reasons;
 import static com.dimajix.flowman.common.ConsoleColors.yellow;
 import static com.dimajix.flowman.common.ParserUtils.splitSettings;
 import static com.dimajix.flowman.tools.Versions.FLOWMAN_VERSION;
@@ -186,6 +189,11 @@ public class Shell extends RemoteTool {
                     parser.parseArgument(args);
                 }
             }
+            catch (StatusRuntimeException ex) {
+                writer.println("Error when communicating with kernel:\n  " + reasons(ex));
+                writer.flush();
+                shouldExit = true;
+            }
             catch (UserInterruptException ex) {
             }
             catch (CmdLineException e) {
@@ -193,7 +201,7 @@ public class Shell extends RemoteTool {
                 e.getParser().printUsage(writer, null);
             }
             catch (Throwable e) {
-                writer.println("Error parsing command: " + e.getMessage());
+                writer.println("Error parsing command:\n  " + reasons(e));
             }
 
             val command = cmd.command;
@@ -206,9 +214,8 @@ public class Shell extends RemoteTool {
                         command.execute(getKernel(), getSession());
                     }
                 }
-                catch (Exception e) {
-                    writer.println("Error executing command: " + e.getMessage());
-                    e.printStackTrace(writer);
+                catch (Exception ex) {
+                    writer.println("Error executing command:\n  " + reasons(ex));
                 }
             }
         }

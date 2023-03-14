@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 
 import io.grpc.ManagedChannel;
 import lombok.val;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.dimajix.flowman.kernel.model.Kernel;
 import com.dimajix.flowman.kernel.model.Namespace;
@@ -41,6 +43,7 @@ import com.dimajix.flowman.kernel.proto.workspace.WorkspaceServiceGrpc;
 
 
 public final class KernelClient extends AbstractClient {
+    private final Logger logger = LoggerFactory.getLogger(KernelClient.class);
     private final ManagedChannel channel;
     private final KernelServiceGrpc.KernelServiceBlockingStub kernelStub;
     private final WorkspaceServiceGrpc.WorkspaceServiceBlockingStub workspaceStub;
@@ -61,6 +64,7 @@ public final class KernelClient extends AbstractClient {
     }
 
     public SessionClient createSession(String workspace, String projectLocation, Map<String,String> config, Map<String,String> environment, List<String> profiles) {
+        logger.info("Creating new session in workspace '" + workspace + "' for project '" + projectLocation + "'");
         val request = CreateSessionRequest.newBuilder()
             .setWorkspace(workspace)
             .setProjectLocation(projectLocation)
@@ -74,6 +78,7 @@ public final class KernelClient extends AbstractClient {
         return getSession(result.getSession().getId());
     }
     public SessionClient createSession(String projectLocation, Map<String,String> config, Map<String,String> environment, List<String> profiles) {
+        logger.info("Creating new session for project '" + projectLocation + "'");
         val request = CreateSessionRequest.newBuilder()
             .setProjectLocation(projectLocation)
             .addAllProfiles(profiles)
@@ -109,6 +114,7 @@ public final class KernelClient extends AbstractClient {
     }
 
     public WorkspaceClient createWorkspace(String workspaceName, boolean ifNotExists) {
+        logger.info("Creating new workspace '" + workspaceName + "'");
         val request = CreateWorkspaceRequest.newBuilder()
             .setName(workspaceName)
             .setIfNotExists(ifNotExists)
@@ -118,6 +124,7 @@ public final class KernelClient extends AbstractClient {
     }
 
     public void deleteWorkspace(String workspaceName) {
+        logger.info("Deleting workspace '" + workspaceName + "'");
         val request = DeleteWorkspaceRequest.newBuilder()
             .setWorkspaceName(workspaceName)
             .build();

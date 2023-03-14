@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,10 @@ public class RelationCommand extends NestedCommand {
     @SubCommands({
         @SubCommand(name = "create", impl = CreateCommand.class),
         @SubCommand(name = "describe", impl = DescribeCommand.class),
+        @SubCommand(name = "destroy", impl = DestroyCommand.class),
         @SubCommand(name = "inspect", impl = InspectCommand.class),
         @SubCommand(name = "list", impl = ListCommand.class),
-        @SubCommand(name = "destroy", impl = DestroyCommand.class),
+        @SubCommand(name = "show", impl = ShowCommand.class),
         @SubCommand(name = "truncate", impl = TruncateCommand.class),
         @SubCommand(name = "verify", impl = VerifyCommand.class)
     })

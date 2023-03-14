@@ -33,8 +33,10 @@ import org.apache.spark.sql.catalyst.expressions.NamedExpression
 import org.apache.spark.sql.catalyst.plans.logical.GroupingSets
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.util.IntervalUtils
+import org.apache.spark.sql.execution.ExtendedMode
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.SQLExecution
+import org.apache.spark.sql.execution.SimpleMode
 import org.apache.spark.sql.execution.command.AlterViewAsCommand
 import org.apache.spark.sql.execution.command.CreateViewCommand
 import org.apache.spark.sql.execution.datasources.DataSource
@@ -144,6 +146,11 @@ object SparkShim {
     }
     def observedMetrics(qe: QueryExecution): Map[String, Row] = {
         qe.observedMetrics
+    }
+
+    def explainString[T](ds: Dataset[T], extended: Boolean): String = {
+        val mode = if (extended) ExtendedMode else SimpleMode
+        ds.queryExecution.explainString(mode)
     }
 
     val LocalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.LocalTempView

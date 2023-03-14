@@ -79,7 +79,6 @@ public class GrpcServerBuilder {
         val serverBuilder = builder.build();
 
         serverBuilder
-            .permitKeepAliveWithoutCalls(true)
             .maxInboundMetadataSize(1024*1024)
             .executor(newExecutor());
 

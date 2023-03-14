@@ -74,6 +74,7 @@ message ValidateMappingResponse {
 message CountMappingRequest {
     string sessionId = 1;
     MappingIdentifier mapping = 2;
+    optional string output = 3;
 }
 message CountMappingResponse {
     int64 numRecords = 1;
@@ -93,7 +94,8 @@ message CacheMappingResponse {
 message ExplainMappingRequest {
     string sessionId = 1;
     MappingIdentifier mapping = 2;
-    bool extended = 3;
+    optional string output = 3;
+    bool extended = 4;
 }
 message ExplainMappingResponse {
     string plan = 1;

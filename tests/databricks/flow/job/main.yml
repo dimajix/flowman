@@ -10,7 +10,7 @@ jobs:
     # List all targets which should be built as part of the `main` job
     targets:
       - measurements
-      - measurements_jdbc
+      #- measurements_jdbc
       # Generate documentation
       - documentation
 

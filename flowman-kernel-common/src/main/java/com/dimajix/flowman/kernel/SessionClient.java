@@ -38,14 +38,13 @@ import com.dimajix.flowman.kernel.proto.TestContext;
 import com.dimajix.flowman.kernel.proto.job.ExecuteJobRequest;
 import com.dimajix.flowman.kernel.proto.job.GetJobRequest;
 import com.dimajix.flowman.kernel.proto.job.ListJobsRequest;
-import com.dimajix.flowman.kernel.proto.mapping.DescribeMappingRequest;
-import com.dimajix.flowman.kernel.proto.mapping.GetMappingRequest;
-import com.dimajix.flowman.kernel.proto.mapping.ListMappingsRequest;
+import com.dimajix.flowman.kernel.proto.mapping.*;
 import com.dimajix.flowman.kernel.proto.project.GetProjectRequest;
 import com.dimajix.flowman.kernel.proto.relation.DescribeRelationRequest;
 import com.dimajix.flowman.kernel.proto.relation.ExecuteRelationRequest;
 import com.dimajix.flowman.kernel.proto.relation.GetRelationRequest;
 import com.dimajix.flowman.kernel.proto.relation.ListRelationsRequest;
+import com.dimajix.flowman.kernel.proto.relation.ReadRelationRequest;
 import com.dimajix.flowman.kernel.proto.session.DeleteSessionRequest;
 import com.dimajix.flowman.kernel.proto.session.EnterContextRequest;
 import com.dimajix.flowman.kernel.proto.session.GetContextRequest;
@@ -251,6 +250,61 @@ public final class SessionClient extends AbstractClient {
         return StructType.ofProto(schema);
     }
 
+    public void cacheMapping(MappingIdentifier mappingId, String output) {
+        val request = CacheMappingRequest.newBuilder()
+            .setSessionId(sessionId)
+            .setMapping(mappingId.toProto())
+            .setOutput(output)
+            .build();
+        call(() -> blockingStub.cacheMapping(request));
+    }
+
+    public long countMapping(MappingIdentifier mappingId, String output) {
+        val request = CountMappingRequest.newBuilder()
+            .setSessionId(sessionId)
+            .setMapping(mappingId.toProto())
+            .setOutput(output)
+            .build();
+        val result = call(() -> blockingStub.countMapping(request));
+
+        return result.getNumRecords();
+    }
+
+    public DataFrame readMapping(MappingIdentifier mappingId, String output, List<String> columns, int maxRows) {
+        val request = ReadMappingRequest.newBuilder()
+            .setSessionId(sessionId)
+            .setMapping(mappingId.toProto())
+            .setOutput(output)
+            .addAllColumns(columns)
+            .setMaxRows(maxRows)
+            .build();
+        val result = call(() -> blockingStub.readMapping(request));
+
+        val df = result.getData();
+        val rows = df.getRowsList().stream().map(Row::ofProto).collect(Collectors.toList());
+        val schema = StructType.ofProto(df.getSchema());
+        return new DataFrame(schema, rows);
+    }
+
+    public String explainMapping(MappingIdentifier mappingId, String output) {
+        val request = ExplainMappingRequest.newBuilder()
+            .setSessionId(sessionId)
+            .setMapping(mappingId.toProto())
+            .setOutput(output)
+            .build();
+        val result = call(() -> blockingStub.explainMapping(request));
+
+        return result.getPlan();
+    }
+
+    public void validateMapping(MappingIdentifier mappingId) {
+        val request = ValidateMappingRequest.newBuilder()
+            .setSessionId(sessionId)
+            .setMapping(mappingId.toProto())
+            .build();
+        call(() -> blockingStub.validateMapping(request));
+    }
+
     public List<RelationIdentifier> listRelations() {
         val request = ListRelationsRequest.newBuilder()
             .setSessionId(sessionId)
@@ -282,10 +336,10 @@ public final class SessionClient extends AbstractClient {
 
         return StructType.ofProto(schema);
     }
-    public Status executeRelations(List<RelationIdentifier> targetIds, Phase phase, Map<String,String> partition, boolean force, boolean keepGoing, boolean dryRun) {
+    public Status executeRelations(List<RelationIdentifier> relationIds, Phase phase, Map<String,String> partition, boolean force, boolean keepGoing, boolean dryRun) {
         val request = ExecuteRelationRequest.newBuilder()
             .setSessionId(sessionId)
-            .addAllRelations(targetIds.stream().map(RelationIdentifier::toProto).collect(Collectors.toList()))
+            .addAllRelations(relationIds.stream().map(RelationIdentifier::toProto).collect(Collectors.toList()))
             .putAllPartition(partition)
             .setPhase(phase.toProto())
             .setForce(force)
@@ -297,6 +351,21 @@ public final class SessionClient extends AbstractClient {
         val status = result.getStatus();
 
         return Status.ofProto(status);
+    }
+    public DataFrame readRelation(RelationIdentifier relationId, Map<String,String> partition, List<String> columns, int maxRows) {
+        val request = ReadRelationRequest.newBuilder()
+            .setSessionId(sessionId)
+            .setRelation(relationId.toProto())
+            .putAllPartition(partition)
+            .addAllColumns(columns)
+            .setMaxRows(maxRows)
+            .build();
+        val result = call(() -> blockingStub.readRelation(request));
+
+        val df = result.getData();
+        val rows = df.getRowsList().stream().map(Row::ofProto).collect(Collectors.toList());
+        val schema = StructType.ofProto(df.getSchema());
+        return new DataFrame(schema, rows);
     }
 
     public List<TestIdentifier> listTests() {

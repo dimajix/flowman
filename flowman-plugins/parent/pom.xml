@@ -62,7 +62,6 @@
                 <scope>provided</scope>
             </dependency>
 
-
             <!-- FasterXML Jackson -->
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>

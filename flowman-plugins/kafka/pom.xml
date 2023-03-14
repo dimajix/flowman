@@ -53,12 +53,10 @@
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spec</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spark-testing</artifactId>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -72,7 +70,6 @@
             <version>${kafka.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql-kafka-0-10_${scala.api_version}</artifactId>
@@ -86,7 +83,6 @@
             <version>2.2.0</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.api_version}</artifactId>

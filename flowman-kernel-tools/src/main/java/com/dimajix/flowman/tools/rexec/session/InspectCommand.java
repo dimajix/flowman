@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.rexec.info;
+package com.dimajix.flowman.tools.rexec.session;
 
 import java.util.Map;
 
@@ -26,25 +26,9 @@ import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
-public class InfoCommand extends Command {
+public class InspectCommand extends Command {
     @Override
     public Status execute(KernelClient kernel, SessionClient session) {
-        val info = kernel.getKernel();
-        System.out.println("Flowman kernel server:");
-        System.out.println("    version: " + info.getFlowmanVersion());
-        System.out.println("    Java version: " + info.getJavaVersion());
-        System.out.println("    Scala version: " + info.getScalaVersion() + " (execution) / " + info.getScalaBuildVersion() + " (build)");
-        System.out.println("    Spark version: " + info.getSparkVersion() + " (execution) / " + info.getSparkBuildVersion() + " (build)");
-        System.out.println("    Hadoop version: " + info.getHadoopVersion() + " (execution) / " + info.getHadoopBuildVersion() + " (build)");
-        System.out.println("    home directory: " + info.getFlowmanHomeDirectory().orElse("<unknown>"));
-        System.out.println("    config directory: " + info.getFlowmanConfigDirectory().orElse("<unknown>"));
-        System.out.println("    plugin directory: " + info.getFlowmanPluginDirectory().orElse("<unknown>"));
-
-        val namespace = kernel.getNamespace();
-        System.out.println("Namespace:");
-        System.out.println("    name: " + namespace.getName());
-        System.out.println("    plugins: " + namespace.getPlugins().stream().reduce((l,r) -> l + "," + r));
-
         val project = session.getProject();
         System.out.println("Project:");
         System.out.println("    name: " + project.getName());
@@ -60,14 +44,14 @@ public class InfoCommand extends Command {
             .sorted()
             .forEach(p -> System.out.println("    " + p));
 
-        System.out.println("Environment:");
+        System.out.println("Active Environment:");
         context.getEnvironment()
             .entrySet()
             .stream()
             .sorted(Map.Entry.comparingByKey())
             .forEach(kv -> System.out.println("    " + kv.getKey() + "=" + kv.getValue()));
 
-        System.out.println("Configuration:");
+        System.out.println("Active Configuration:");
         context.getConfig()
             .entrySet()
             .stream()

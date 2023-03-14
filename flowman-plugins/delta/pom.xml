@@ -223,12 +223,10 @@
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spec</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spark-testing</artifactId>
-            <scope>test</scope>
         </dependency>
 
         <dependency>

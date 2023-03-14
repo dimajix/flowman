@@ -43,7 +43,8 @@ final class NettyServerImpl {
 
     static ServerBuilder<?> createBuilder(int port) throws ClassNotFoundException, NoClassDefFoundError {
         return io.grpc.netty.NettyServerBuilder
-            .forPort(port);
+            .forPort(port)
+            .permitKeepAliveWithoutCalls(true);
     }
 }
 
@@ -54,6 +55,7 @@ final class ShadedNettyServerImpl {
 
     static ServerBuilder<?> createBuilder(int port) throws ClassNotFoundException, NoClassDefFoundError {
         return io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
-            .forPort(port);
+            .forPort(port)
+            .permitKeepAliveWithoutCalls(true);
     }
 }

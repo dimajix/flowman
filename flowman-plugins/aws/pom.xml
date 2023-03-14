@@ -326,12 +326,10 @@
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-core</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-scalatest-compat</artifactId>
-            <scope>test</scope>
         </dependency>
 
         <dependency>

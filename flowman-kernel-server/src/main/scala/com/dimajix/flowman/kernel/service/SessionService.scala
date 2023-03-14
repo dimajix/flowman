@@ -47,6 +47,8 @@ import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.spec.target.RelationTarget
 import com.dimajix.flowman.storage.Store
+import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.types.StructType
 
 
 class SessionService(sessionManager:SessionManager, val store:Store, val project:Project, val clientId:UUID) extends Closeable {
@@ -158,7 +160,17 @@ class SessionService(sessionManager:SessionManager, val store:Store, val project
         _context.getMapping(name)
     }
     def collectMapping(mapping:Mapping, output:String) = ???
-    def describeMapping(mapping:Mapping, output:String) = ???
+    def describeMapping(mapping:Mapping, output:String, useSpark:Boolean) : StructType = {
+        val execution = session.execution
+
+        if (useSpark) {
+            val df = execution.instantiate(mapping, output)
+            StructType.of(df.schema)
+        }
+        else {
+            execution.describe(mapping, output)
+        }
+    }
 
     def listRelations() : Seq[RelationIdentifier] = {
         project.relations.keys.map(RelationIdentifier(_)).toSeq
@@ -183,4 +195,16 @@ class SessionService(sessionManager:SessionManager, val store:Store, val project
     }
 
     def collectRelation(relation:Relation) = ???
+    def describeRelation(relation:Relation, partition:Map[String,String], useSpark:Boolean) : StructType = {
+        val partition0 = partition.map { case (k, v) => k -> SingleValue(v) }
+        val execution = session.execution
+
+        if (useSpark) {
+            val df = relation.read(session.execution, partition0)
+            StructType.of(df.schema)
+        }
+        else {
+            relation.describe(execution, partition0)
+        }
+    }
 }

@@ -25,6 +25,8 @@ import io.grpc.Status
 import io.grpc.StatusException
 import io.grpc.StatusRuntimeException
 import io.grpc.stub.StreamObserver
+import org.apache.spark.sql.SparkShim
+import org.apache.spark.storage.StorageLevel
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -284,15 +286,8 @@ final class SessionServiceHandler(
             val session = getSession(request.getSessionId)
             val mapping = getMapping(session, request.getMapping)
             val output = if (request.getOutput.nonEmpty) request.getOutput else "main"
-            val execution = session.execution
 
-            val schema = if (request.getUseSpark) {
-                val df = execution.instantiate(mapping, output)
-                StructType.of(df.schema)
-            }
-            else {
-                execution.describe(mapping, output)
-            }
+            val schema = session.describeMapping(mapping, output, request.getUseSpark)
 
             DescribeMappingResponse.newBuilder()
                 .setSchema(toProto(schema))
@@ -321,15 +316,57 @@ final class SessionServiceHandler(
 
     /**
      */
-    override def countMapping(request: CountMappingRequest, responseObserver: StreamObserver[CountMappingResponse]): Unit = super.countMapping(request, responseObserver)
+    override def countMapping(request: CountMappingRequest, responseObserver: StreamObserver[CountMappingResponse]): Unit = {
+        respondTo("cacheMapping", responseObserver) {
+            val session = getSession(request.getSessionId)
+            val mapping = getMapping(session, request.getMapping)
+            val output = if (request.hasOutput) request.getOutput else "main"
+            val executor = session.execution
+
+            val table = executor.instantiate(mapping, output)
+            val count = table.count()
+
+            CountMappingResponse.newBuilder()
+                .setNumRecords(count)
+                .build()
+        }
+    }
 
     /**
      */
-    override def cacheMapping(request: CacheMappingRequest, responseObserver: StreamObserver[CacheMappingResponse]): Unit = super.cacheMapping(request, responseObserver)
+    override def cacheMapping(request: CacheMappingRequest, responseObserver: StreamObserver[CacheMappingResponse]): Unit = {
+        respondTo("cacheMapping", responseObserver) {
+            val session = getSession(request.getSessionId)
+            val mapping = getMapping(session, request.getMapping)
+            val output = if (request.hasOutput) request.getOutput else "main"
+            val executor = session.execution
+
+            val table = executor.instantiate(mapping, output)
+            if (table.storageLevel == StorageLevel.NONE)
+                table.cache()
+
+            CacheMappingResponse.newBuilder()
+                .build()
+        }
+    }
 
     /**
      */
-    override def explainMapping(request: ExplainMappingRequest, responseObserver: StreamObserver[ExplainMappingResponse]): Unit = super.explainMapping(request, responseObserver)
+    override def explainMapping(request: ExplainMappingRequest, responseObserver: StreamObserver[ExplainMappingResponse]): Unit = {
+        respondTo("explainMapping", responseObserver) {
+            val session = getSession(request.getSessionId)
+            val mapping = getMapping(session, request.getMapping)
+            val output = if (request.hasOutput) request.getOutput else "main"
+            val executor = session.execution
+
+            val table = executor.instantiate(mapping, output)
+            val plan = SparkShim.explainString(table, request.getExtended)
+
+            ExplainMappingResponse.newBuilder()
+                .setPlan(plan)
+                .build()
+        }
+    }
 
     /**
      * <pre>
@@ -417,16 +454,9 @@ final class SessionServiceHandler(
         respondTo("describeRelation", responseObserver) {
             val session = getSession(request.getSessionId)
             val relation = getRelation(session, request.getRelation)
-            val partition = request.getPartitionMap().asScala.toMap.map { case(k,v) => k -> SingleValue(v) }
-            val execution = session.execution
+            val partition = request.getPartitionMap().asScala.toMap
 
-            val schema = if (request.getUseSpark) {
-                val df = relation.read(session.execution, partition)
-                StructType.of(df.schema)
-            }
-            else {
-                relation.describe(execution, partition)
-            }
+            val schema = session.describeRelation(relation, partition, request.getUseSpark)
 
             DescribeRelationResponse.newBuilder()
                 .setSchema(toProto(schema))
@@ -677,13 +707,13 @@ final class SessionServiceHandler(
     }
 
     private def formatDataFrame(df:org.apache.spark.sql.DataFrame, columns:Seq[String], maxRows:Int) : DataFrame = {
-        df.limit(maxRows)
+        val df0 = df.limit(maxRows)
 
         val dfOut =
             if (columns.nonEmpty)
-                df.select(columns.map(c => df(c)): _*)
+                df0.select(columns.map(c => df(c)): _*)
             else
-                df
+                df0
 
         val schema = StructType.of(dfOut.schema)
         val rows = dfOut.collect()

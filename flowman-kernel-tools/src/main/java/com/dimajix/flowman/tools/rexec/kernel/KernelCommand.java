@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.rexec.mapping;
+package com.dimajix.flowman.tools.rexec.kernel;
 
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.spi.SubCommand;
@@ -23,19 +23,13 @@ import org.kohsuke.args4j.spi.SubCommands;
 
 import com.dimajix.flowman.tools.rexec.Command;
 import com.dimajix.flowman.tools.rexec.NestedCommand;
+import com.dimajix.flowman.tools.rexec.project.InspectCommand;
 
 
-public class MappingCommand extends NestedCommand {
+public class KernelCommand extends NestedCommand {
     @Argument(required=true,index=0,metaVar="<subcommand>",usage="the subcommand to run",handler=SubCommandHandler.class)
     @SubCommands({
-        @SubCommand(name = "cache", impl = CacheCommand.class),
-        @SubCommand(name = "count", impl = CountCommand.class),
-        @SubCommand(name = "describe", impl = DescribeCommand.class),
-        @SubCommand(name = "explain", impl = ExplainCommand.class),
-        @SubCommand(name = "inspect", impl = InspectCommand.class),
-        @SubCommand(name = "list", impl = ListCommand.class),
-        @SubCommand(name = "show", impl = ShowCommand.class),
-        @SubCommand(name = "validate", impl = ValidateCommand.class)
+        @SubCommand(name = "inspect", impl = InspectCommand.class)
     })
     Command command = null;
 

@@ -32,6 +32,7 @@ import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.SQLExecution
 import org.apache.spark.sql.execution.command.AlterViewAsCommand
 import org.apache.spark.sql.execution.command.CreateViewCommand
+import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.execution.command.ViewType
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
@@ -134,6 +135,17 @@ object SparkShim {
     def observedMetrics(qe: QueryExecution): Map[String, Row] = {
         Map.empty
     }
+
+
+    def explainString[T](ds: Dataset[T], extended: Boolean): String = {
+        val explain = ExplainCommand(ds.queryExecution.logical, extended = extended)
+        ds.sparkSession.sessionState.executePlan(explain)
+            .executedPlan
+            .executeCollect()
+            .map(_.getString(0))
+            .reduce(_ + "\n" + _)
+    }
+
 
     val LocalTempView : ViewType = org.apache.spark.sql.execution.command.LocalTempView
     val GlobalTempView : ViewType = org.apache.spark.sql.execution.command.GlobalTempView

@@ -38,9 +38,11 @@ class ClientIdExtractor extends ServerInterceptor {
 
     override def interceptCall[ReqT,RespT](call:ServerCall[ReqT, RespT], headers:Metadata, next:ServerCallHandler[ReqT, RespT]) : ServerCall.Listener[ReqT] = {
         // Log Method call
-        val remoteIpAddress = call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR).toString()
+        val attributes = call.getAttributes()
+        val clientId = attributes.get(ClientIdGenerator.CLIENT_ID_KEY)
+        val remoteIpAddress = attributes.get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR).toString()
         val method = call.getMethodDescriptor().getFullMethodName()
-        logger.info(remoteIpAddress + " - " + method)
+        logger.info(s"[$clientId]$remoteIpAddress - $method")
 
         /**
          * For streaming calls, below will make sure client id is injected prior to creating

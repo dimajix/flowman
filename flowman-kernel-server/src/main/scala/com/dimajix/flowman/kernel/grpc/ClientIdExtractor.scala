@@ -31,7 +31,7 @@ import com.dimajix.flowman.kernel.grpc.ClientIdExtractor.CLIENT_ID;
 
 
 object ClientIdExtractor {
-    val CLIENT_ID:ThreadLocal[UUID] = new ThreadLocal[UUID]();
+    val CLIENT_ID:ThreadLocal[UUID] = new ThreadLocal[UUID]()
 }
 class ClientIdExtractor extends ServerInterceptor {
     private val logger = LoggerFactory.getLogger(classOf[ClientIdExtractor])
@@ -56,9 +56,9 @@ class ClientIdExtractor extends ServerInterceptor {
          * serving the call.
          */
         new ForwardingServerCallListener.SimpleForwardingServerCallListener[ReqT](next.startCall(call, headers)) {
-            override def  onHalfClose() : Unit = {
+            override def onHalfClose() : Unit = {
                 if (extractClientId(call, headers))
-                    super.onHalfClose()
+                    delegate().onHalfClose()
             }
         };
     }

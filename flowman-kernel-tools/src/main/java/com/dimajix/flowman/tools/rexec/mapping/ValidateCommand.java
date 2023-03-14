@@ -45,7 +45,7 @@ public class ValidateCommand extends Command {
         val mappingNames = mappings.length > 0 ? Arrays.stream(mappings).map(MappingIdentifier::ofString).collect(Collectors.toList()) : session.listMappings();
         logger.info("Validating mappings " + mappingNames.stream().map(MappingIdentifier::toString).reduce((l,r) -> l + "," + r));
 
-        var error = false;
+        boolean error = false;
         for (val mapping : mappingNames) {
             try {
                 session.validateMapping(mapping);

@@ -49,9 +49,11 @@ object Driver {
         }
         match {
             case Success (Status.SUCCESS) =>
-                System.exit(0)
+                // In case of no error, simply let the normal JVM flow finish the application. Databricks will
+                // complain otherwise
+                //System.exit(0)
             case Success (Status.SKIPPED) =>
-                System.exit(0)
+                //System.exit(0)
             case Success (Status.SUCCESS_WITH_ERRORS) =>
                 System.exit(2)
             case Success (_) =>

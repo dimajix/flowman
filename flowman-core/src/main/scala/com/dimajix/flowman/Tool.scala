@@ -124,13 +124,19 @@ class Tool {
                 ToolConfig.pluginDirectory.map(FlowmanConf.PLUGIN_DIRECTORY.key -> _.toString).toMap ++
                 additionalConfigs
 
+        val pluginJars = pluginManager.jars
+            // Deduplicate file names to avoid problems when creating a Spark session
+            .groupBy(_.getName)
+            .map(_._2.head)
+            .toSeq
+
         // Create Flowman Session, which also includes a Spark Session
         val builder = Session.builder()
             .withNamespace(namespace)
             .withConfig(allConfigs)
             .withEnvironment(additionalEnvironment)
             .withProfiles(profiles)
-            .withJars(pluginManager.jars.map(_.toString))
+            .withJars(pluginJars.map(_.toString))
 
         project.foreach(builder.withProject)
 

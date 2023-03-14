@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,10 +51,9 @@ public class Shell extends RemoteTool {
 
         try {
             val result = run(args);
-            if (result)
-                System.exit(0);
-            else
+            if (!result) {
                 System.exit(3);
+            }
         }
         catch (CmdLineException ex) {
             System.err.println(ex.getMessage());

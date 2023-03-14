@@ -57,7 +57,9 @@ object Shell {
         }
         match {
             case Success (true) =>
-                System.exit(0)
+                // In case of no error, simply let the normal JVM flow finish the application. Databricks will
+                // complain otherwise
+                //System.exit(0)
             case Success (false) =>
                 System.exit(3)
             case Failure(ex:CmdLineException) =>

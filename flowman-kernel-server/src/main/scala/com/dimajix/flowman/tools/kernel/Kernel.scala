@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,8 @@ object Kernel {
         }
         match {
             case Success (true) =>
-                System.exit(0)
+                // Successful without error should not use System.exit()
+                //System.exit(0)
             case Success (false) =>
                 System.exit(3)
             case Failure(ex:CmdLineException) =>

@@ -14,27 +14,32 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.rexec.mapping;
+package com.dimajix.flowman.tools.rexec.misc;
+
+import java.util.Arrays;
 
 import lombok.val;
 import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.spi.RestOfArgumentsHandler;
 
 import com.dimajix.flowman.kernel.KernelClient;
 import com.dimajix.flowman.kernel.SessionClient;
-import com.dimajix.flowman.kernel.model.MappingOutputIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
-public class CacheCommand extends Command {
-    @Argument(usage = "specifies the mapping to cache", metaVar = "<mapping>", required = true)
-    String mapping = "";
+public class SqlCommand extends Command {
+    @Option(name="-n", aliases={"--limit"}, usage="Specifies maximum number of rows to print", metaVar="<limit>", required = false)
+    int limit = 100;
+    @Argument(index = 0, required = true, usage = "SQL statement to execute", metaVar = "<sql>", handler = RestOfArgumentsHandler.class)
+    String[] statement = new String[0];
 
     @Override
     public Status execute(KernelClient kernel, SessionClient session) {
-        val identifier = MappingOutputIdentifier.ofString(this.mapping);
-
-        session.cacheMapping(identifier.getMapping(), identifier.getOutput());
+        val sql = Arrays.stream(statement).reduce((l,r) -> l + "\n" + r).orElse("");
+        val df = session.executeSql(sql, limit);
+        df.show();
         return Status.SUCCESS;
     }
 }

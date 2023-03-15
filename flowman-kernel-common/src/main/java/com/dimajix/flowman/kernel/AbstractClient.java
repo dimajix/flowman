@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.kernel;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +31,11 @@ import lombok.val;
 import com.dimajix.flowman.grpc.ExceptionUtils;
 
 
-public class AbstractClient {
+public abstract class AbstractClient {
+    public abstract boolean isShutdown();
+
+    public abstract boolean isTerminated();
+
     protected interface RpcCallable<T> {
         T call();
     }

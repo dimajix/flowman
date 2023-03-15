@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ public class TestCommand extends NestedCommand {
     @Argument(required=true,index=0,metaVar="<subcommand>",usage="the subcommand to run",handler=SubCommandHandler.class)
     @SubCommands({
         @SubCommand(name = "inspect", impl = InspectCommand.class),
-        @SubCommand(name = "list", impl = ListCommand.class)
+        @SubCommand(name = "list", impl = ListCommand.class),
+        @SubCommand(name = "run", impl = RunCommand.class)
     })
     Command command = null;
 

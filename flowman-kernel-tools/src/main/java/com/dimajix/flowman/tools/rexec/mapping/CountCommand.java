@@ -18,11 +18,6 @@ package com.dimajix.flowman.tools.rexec.mapping;
 
 import lombok.val;
 import org.kohsuke.args4j.Argument;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static com.dimajix.common.ExceptionUtils.isFatal;
-import static com.dimajix.common.ExceptionUtils.reasons;
 
 import com.dimajix.flowman.kernel.KernelClient;
 import com.dimajix.flowman.kernel.SessionClient;
@@ -32,25 +27,15 @@ import com.dimajix.flowman.tools.rexec.Command;
 
 
 public class CountCommand extends Command {
-    private final Logger logger = LoggerFactory.getLogger(CountCommand.class);
-
     @Argument(usage = "specifies the mapping to count", metaVar = "<mapping>", required = true)
     String mapping = "";
 
     @Override
     public Status execute(KernelClient kernel, SessionClient session) {
-        try {
-            val identifier = MappingOutputIdentifier.ofString(this.mapping);
+        val identifier = MappingOutputIdentifier.ofString(this.mapping);
 
-            val numRecords = session.countMapping(identifier.getMapping(), identifier.getOutput());
-            System.out.println("Mapping '" + identifier.getMapping() + "' contains " + numRecords + " records");
-            return Status.SUCCESS;
-        }
-        catch (Throwable e) {
-            if (isFatal(e))
-                throw e;
-            logger.error("Error counting records in mapping '" + mapping + "':\n  "+ reasons(e));
-            return Status.FAILED;
-        }
+        val numRecords = session.countMapping(identifier.getMapping(), identifier.getOutput());
+        System.out.println("Mapping '" + identifier.getMapping() + "' contains " + numRecords + " records");
+        return Status.SUCCESS;
     }
 }

@@ -105,6 +105,14 @@ message ExecuteSqlResponse {
 }
 
 
+message EvaluateExpressionRequest {
+    string sessionId = 1;
+    string expression = 2;
+}
+message EvaluateExpressionResponse {
+    string result = 1;
+}
+
 message SubscribeLogRequest {
     string sessionId = 1;
 }
@@ -159,6 +167,7 @@ service SessionService {
 
     // Generic stuff
     rpc ExecuteSql(ExecuteSqlRequest) returns (ExecuteSqlResponse);
+    rpc EvaluateExpression(EvaluateExpressionRequest) returns (EvaluateExpressionResponse);
 
     rpc SubscribeLog(SubscribeLogRequest) returns(stream LogEvent);
 }

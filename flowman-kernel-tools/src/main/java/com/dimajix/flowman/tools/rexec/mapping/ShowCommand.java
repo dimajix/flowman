@@ -19,11 +19,6 @@ package com.dimajix.flowman.tools.rexec.mapping;
 import lombok.val;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static com.dimajix.common.ExceptionUtils.isFatal;
-import static com.dimajix.common.ExceptionUtils.reasons;
 
 import com.dimajix.flowman.common.ParserUtils;
 import com.dimajix.flowman.kernel.KernelClient;
@@ -34,8 +29,6 @@ import com.dimajix.flowman.tools.rexec.Command;
 
 
 public class ShowCommand extends Command {
-    private Logger logger = LoggerFactory.getLogger(ShowCommand.class);
-
     @Argument(index=0, usage="Specifies the mapping to show", metaVar="<mapping>", required=true)
     String mapping = "";
     @Argument(index=1, usage="Specifies the columns to show as a comma separated list", metaVar="<columns>", required=false)
@@ -47,18 +40,10 @@ public class ShowCommand extends Command {
     @Override
     public Status execute(KernelClient kernel, SessionClient session) {
         val columns = ParserUtils.parseDelimitedList(this.columns);
-        try {
-            val identifier = MappingOutputIdentifier.ofString(this.mapping);
+        val identifier = MappingOutputIdentifier.ofString(this.mapping);
 
-            val df = session.readMapping(identifier.getMapping(), identifier.getOutput(), columns, limit);
-            df.show();
-            return Status.SUCCESS;
-        }
-        catch (Throwable e) {
-            if (isFatal(e))
-                throw e;
-            logger.error("Error showing mapping '" + mapping + "':\n  "+ reasons(e));
-            return Status.FAILED;
-        }
+        val df = session.readMapping(identifier.getMapping(), identifier.getOutput(), columns, limit);
+        df.show();
+        return Status.SUCCESS;
     }
 }

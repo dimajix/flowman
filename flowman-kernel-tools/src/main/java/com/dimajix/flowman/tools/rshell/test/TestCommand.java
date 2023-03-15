@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +21,21 @@ import org.kohsuke.args4j.spi.SubCommand;
 import org.kohsuke.args4j.spi.SubCommandHandler;
 import org.kohsuke.args4j.spi.SubCommands;
 
-import com.dimajix.flowman.tools.rexec.test.ListCommand;
 import com.dimajix.flowman.tools.rexec.Command;
 import com.dimajix.flowman.tools.rexec.NestedCommand;
+import com.dimajix.flowman.tools.rexec.test.InspectCommand;
+import com.dimajix.flowman.tools.rexec.test.ListCommand;
+import com.dimajix.flowman.tools.rexec.test.RunCommand;
 
 
 public class TestCommand extends NestedCommand {
     @Argument(required=true,index=0,metaVar="<subcommand>",usage="the subcommand to run",handler=SubCommandHandler.class)
     @SubCommands({
         @SubCommand(name = "enter", impl = EnterCommand.class),
+        @SubCommand(name = "inspect", impl = InspectCommand.class),
         @SubCommand(name = "leave", impl = LeaveCommand.class),
-        @SubCommand(name = "list", impl = ListCommand.class)
+        @SubCommand(name = "list", impl = ListCommand.class),
+        @SubCommand(name = "run", impl = RunCommand.class)
     })
     Command command = null;
 

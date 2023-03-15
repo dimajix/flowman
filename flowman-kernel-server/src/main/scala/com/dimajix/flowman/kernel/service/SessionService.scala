@@ -17,10 +17,12 @@
 package com.dimajix.flowman.kernel.service
 
 import java.io.Closeable
+import java.time.Clock
 import java.util.UUID
 
 import scala.concurrent.ExecutionContext
 
+import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
@@ -30,6 +32,7 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Runner
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
+import com.dimajix.flowman.execution.TestCoordinator
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Mapping
@@ -45,6 +48,7 @@ import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.model.TestIdentifier
+import com.dimajix.flowman.spec.mapping.SqlMapping
 import com.dimajix.flowman.spec.target.RelationTarget
 import com.dimajix.flowman.storage.Store
 import com.dimajix.flowman.types.SingleValue
@@ -126,7 +130,6 @@ class SessionService(sessionManager:SessionManager, val store:Store, val project
     def getTarget(name:TargetIdentifier) : Target = {
         _context.getTarget(name)
     }
-
     def executeTargets(targets: Seq[Target], lifecycle: Seq[Phase], force: Boolean, keepGoing: Boolean, dryRun: Boolean): Status = {
         val runner = session.runner
         runner.executeTargets(targets, lifecycle, jobName = "cli-tools", force = force, keepGoing = keepGoing, dryRun = dryRun, isolated = false)
@@ -137,6 +140,10 @@ class SessionService(sessionManager:SessionManager, val store:Store, val project
     }
     def getTest(name:TestIdentifier) : Test = {
         _context.getTest(name)
+    }
+    def executeTests(tests: Seq[TestIdentifier], keepGoing: Boolean, dryRun: Boolean, parallelism:Int) : Status = {
+        val coordinator = new TestCoordinator(session, keepGoing, dryRun, parallelism)
+        coordinator.execute(project, tests)
     }
     def enterTest(test: Test): Unit = {
         _context = session.runner.withTestContext(test) { context => context }
@@ -159,7 +166,6 @@ class SessionService(sessionManager:SessionManager, val store:Store, val project
     def getMapping(name:MappingIdentifier) : Mapping = {
         _context.getMapping(name)
     }
-    def collectMapping(mapping:Mapping, output:String) = ???
     def describeMapping(mapping:Mapping, output:String, useSpark:Boolean) : StructType = {
         val execution = session.execution
 
@@ -194,7 +200,6 @@ class SessionService(sessionManager:SessionManager, val store:Store, val project
         runner.executeTargets(targets2, Seq(phase), jobName = "cli-tools", force = force, keepGoing = keepGoing, dryRun = dryRun, isolated = false)
     }
 
-    def collectRelation(relation:Relation) = ???
     def describeRelation(relation:Relation, partition:Map[String,String], useSpark:Boolean) : StructType = {
         val partition0 = partition.map { case (k, v) => k -> SingleValue(v) }
         val execution = session.execution
@@ -206,5 +211,14 @@ class SessionService(sessionManager:SessionManager, val store:Store, val project
         else {
             relation.describe(execution, partition0)
         }
+    }
+
+    def executeSql(statement:String) : DataFrame = {
+        val mapping = SqlMapping(
+            Mapping.Properties(context, "sql-" + Clock.systemUTC().millis()),
+            sql = Some(statement)
+        )
+        val executor = session.execution
+        executor.instantiate(mapping, "main")
     }
 }

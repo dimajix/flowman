@@ -35,28 +35,23 @@ import com.dimajix.flowman.grpc.ExceptionUtils;
 import com.dimajix.flowman.kernel.model.*;
 import com.dimajix.flowman.kernel.proto.JobContext;
 import com.dimajix.flowman.kernel.proto.LogEvent;
-import com.dimajix.flowman.kernel.proto.LogLevel;
 import com.dimajix.flowman.kernel.proto.TestContext;
 import com.dimajix.flowman.kernel.proto.job.ExecuteJobRequest;
 import com.dimajix.flowman.kernel.proto.job.GetJobRequest;
 import com.dimajix.flowman.kernel.proto.job.ListJobsRequest;
 import com.dimajix.flowman.kernel.proto.mapping.*;
+import com.dimajix.flowman.kernel.proto.project.ExecuteProjectRequest;
 import com.dimajix.flowman.kernel.proto.project.GetProjectRequest;
 import com.dimajix.flowman.kernel.proto.relation.DescribeRelationRequest;
 import com.dimajix.flowman.kernel.proto.relation.ExecuteRelationRequest;
 import com.dimajix.flowman.kernel.proto.relation.GetRelationRequest;
 import com.dimajix.flowman.kernel.proto.relation.ListRelationsRequest;
 import com.dimajix.flowman.kernel.proto.relation.ReadRelationRequest;
-import com.dimajix.flowman.kernel.proto.session.DeleteSessionRequest;
-import com.dimajix.flowman.kernel.proto.session.EnterContextRequest;
-import com.dimajix.flowman.kernel.proto.session.GetContextRequest;
-import com.dimajix.flowman.kernel.proto.session.GetSessionRequest;
-import com.dimajix.flowman.kernel.proto.session.LeaveContextRequest;
-import com.dimajix.flowman.kernel.proto.session.SessionServiceGrpc;
-import com.dimajix.flowman.kernel.proto.session.SubscribeLogRequest;
+import com.dimajix.flowman.kernel.proto.session.*;
 import com.dimajix.flowman.kernel.proto.target.ExecuteTargetRequest;
 import com.dimajix.flowman.kernel.proto.target.GetTargetRequest;
 import com.dimajix.flowman.kernel.proto.target.ListTargetsRequest;
+import com.dimajix.flowman.kernel.proto.test.ExecuteTestRequest;
 import com.dimajix.flowman.kernel.proto.test.GetTestRequest;
 import com.dimajix.flowman.kernel.proto.test.ListTestsRequest;
 
@@ -74,6 +69,16 @@ public final class SessionClient extends AbstractClient {
         this.sessionId = sessionId;
         blockingStub = SessionServiceGrpc.newBlockingStub(channel);
         asyncStub = SessionServiceGrpc.newStub(channel);
+    }
+
+    @Override
+    public boolean isShutdown() {
+        return channel.isTerminated();
+    }
+
+    @Override
+    public boolean isTerminated() {
+        return channel.isTerminated();
     }
 
     public String getSessionId() {
@@ -389,6 +394,20 @@ public final class SessionClient extends AbstractClient {
 
         return Test.ofProto(test);
     }
+    public Status executeTests(List<TestIdentifier> testIds, boolean keepGoing, boolean dryRun, int parallelism) {
+        val request = ExecuteTestRequest.newBuilder()
+            .setSessionId(sessionId)
+            .addAllTests(testIds.stream().map(TestIdentifier::toProto).collect(Collectors.toList()))
+            .setKeepGoing(keepGoing)
+            .setDryRun(dryRun)
+            .setParallelism(parallelism)
+            .build();
+
+        val result = call(() -> blockingStub.executeTest(request));
+        val status = result.getStatus();
+
+        return Status.ofProto(status);
+    }
 
     public List<TargetIdentifier> listTargets() {
         val request = ListTargetsRequest.newBuilder()
@@ -460,5 +479,49 @@ public final class SessionClient extends AbstractClient {
         val status = result.getStatus();
 
         return Status.ofProto(status);
+    }
+
+    public Status executeProject(List<Phase> lifecycle, Map<String,String> args, List<String> targets,List<String> dirtyTargets,boolean force, boolean keepGoing, boolean dryRun,int parallelism) {
+        val request = ExecuteProjectRequest.newBuilder()
+            .setSessionId(sessionId)
+            .addAllPhases(lifecycle.stream().map(Phase::toProto).collect(Collectors.toList()))
+            .putAllArguments(args)
+            .addAllTargets(targets)
+            .addAllDirtyTargets(dirtyTargets)
+            .setForce(force)
+            .setKeepGoing(keepGoing)
+            .setDryRun(dryRun)
+            .setParallelism(parallelism)
+            .build();
+
+        val result = call(() -> blockingStub.executeProject(request));
+        val status = result.getStatus();
+
+        return Status.ofProto(status);
+    }
+
+    public DataFrame executeSql(String statement, int maxRows) {
+        val request = ExecuteSqlRequest.newBuilder()
+            .setSessionId(sessionId)
+            .setStatement(statement)
+            .setMaxRows(maxRows)
+            .build();
+        val result = call(() -> blockingStub.executeSql(request));
+
+        val df = result.getData();
+        val rows = df.getRowsList().stream().map(Row::ofProto).collect(Collectors.toList());
+        val schema = StructType.ofProto(df.getSchema());
+        return new DataFrame(schema, rows);
+    }
+
+    public String evaluateExpression(String expression) {
+        val request = EvaluateExpressionRequest.newBuilder()
+            .setSessionId(sessionId)
+            .setExpression(expression)
+            .build();
+
+        val result = call(() -> blockingStub.evaluateExpression(request));
+
+        return result.getResult();
     }
 }

@@ -2282,12 +2282,18 @@
                 "is_repeated": true
               },
               {
-                "id": 8,
+                "id": 5,
+                "name": "dirtyTargets",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
                 "name": "force",
                 "type": "bool"
               },
               {
-                "id": 9,
+                "id": 8,
                 "name": "dirty",
                 "type": "bool"
               },
@@ -2311,7 +2317,7 @@
               {
                 "key_type": "string",
                 "field": {
-                  "id": 5,
+                  "id": 6,
                   "name": "arguments",
                   "type": "string"
                 }
@@ -2939,6 +2945,31 @@
             ]
           },
           {
+            "name": "EvaluateExpressionRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "expression",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "EvaluateExpressionResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "result",
+                "type": "string"
+              }
+            ]
+          },
+          {
             "name": "SubscribeLogRequest",
             "fields": [
               {
@@ -3117,6 +3148,11 @@
                 "name": "ExecuteSql",
                 "in_type": "ExecuteSqlRequest",
                 "out_type": "ExecuteSqlResponse"
+              },
+              {
+                "name": "EvaluateExpression",
+                "in_type": "EvaluateExpressionRequest",
+                "out_type": "EvaluateExpressionResponse"
               },
               {
                 "name": "SubscribeLog",
@@ -3543,22 +3579,16 @@
               },
               {
                 "id": 3,
-                "name": "phases",
-                "type": "ExecutionPhase",
-                "is_repeated": true
-              },
-              {
-                "id": 4,
-                "name": "force",
+                "name": "dryRun",
                 "type": "bool"
               },
               {
-                "id": 5,
+                "id": 4,
                 "name": "keepGoing",
                 "type": "bool"
               },
               {
-                "id": 6,
+                "id": 5,
                 "name": "parallelism",
                 "type": "int32"
               }

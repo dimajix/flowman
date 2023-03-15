@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.dimajix.flowman.tools.rexec.job;
 import java.util.Arrays;
 
 import lombok.val;
-
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 

@@ -24,10 +24,12 @@ import org.kohsuke.args4j.spi.SubCommands;
 import com.dimajix.flowman.tools.rexec.Command;
 import com.dimajix.flowman.tools.rexec.kernel.KernelCommand;
 import com.dimajix.flowman.tools.rexec.mapping.MappingCommand;
+import com.dimajix.flowman.tools.rexec.misc.EvaluateCommand;
 import com.dimajix.flowman.tools.rexec.namespace.NamespaceCommand;
 import com.dimajix.flowman.tools.rexec.project.ProjectCommand;
 import com.dimajix.flowman.tools.rexec.relation.RelationCommand;
 import com.dimajix.flowman.tools.rexec.session.SessionCommand;
+import com.dimajix.flowman.tools.rexec.misc.SqlCommand;
 import com.dimajix.flowman.tools.rexec.target.TargetCommand;
 import com.dimajix.flowman.tools.rshell.job.JobCommand;
 import com.dimajix.flowman.tools.rshell.test.TestCommand;
@@ -37,7 +39,7 @@ public class ParsedCommand {
     @Argument(required=false,index=0,metaVar="<command-group>",usage="the object to work with",handler=SubCommandHandler.class)
     @SubCommands({
         //new SubCommand(name="documentation",impl=classOf[DocumentationCommand]),
-        //new SubCommand(name="eval",impl=classOf[EvaluateCommand]),
+        @SubCommand(name = "eval", impl = EvaluateCommand.class),
         @SubCommand(name = "exit", impl = ExitCommand.class),
         //new SubCommand(name="history",impl=classOf[HistoryCommand]),
         @SubCommand(name = "job", impl = JobCommand.class),
@@ -49,7 +51,7 @@ public class ParsedCommand {
         @SubCommand(name = "quit", impl = ExitCommand.class),
         @SubCommand(name = "relation", impl = RelationCommand.class),
         @SubCommand(name = "session", impl = SessionCommand.class),
-        //new SubCommand(name="sql",impl=SqlCommand.class),
+        @SubCommand(name = "sql", impl= SqlCommand.class),
         @SubCommand(name = "target", impl = TargetCommand.class),
         @SubCommand(name = "test", impl = TestCommand.class)
         //new SubCommand(name="version",impl=classOf[VersionCommand])

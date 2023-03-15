@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.tools;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,10 @@ public class RemoteTool {
         this.profiles = profiles;
         this._kernel =  ClientFactory.createClient(kernelUri);
         this._workspace = openWorkspace(extractWorkspace(kernelUri));
+    }
+
+    public void shutdown() {
+        _kernel.shutdown();
     }
 
     private static String extractWorkspace(URI uri) {

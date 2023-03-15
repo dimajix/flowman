@@ -14,27 +14,29 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.rexec.mapping;
+package com.dimajix.flowman.tools.rexec.misc;
+
+import java.util.Arrays;
 
 import lombok.val;
 import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.spi.RestOfArgumentsHandler;
 
 import com.dimajix.flowman.kernel.KernelClient;
 import com.dimajix.flowman.kernel.SessionClient;
-import com.dimajix.flowman.kernel.model.MappingOutputIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
-public class CacheCommand extends Command {
-    @Argument(usage = "specifies the mapping to cache", metaVar = "<mapping>", required = true)
-    String mapping = "";
+public class EvaluateCommand extends Command {
+    @Argument(index=0, required=true, usage = "expression to evaluate", metaVar = "<expr>", handler=RestOfArgumentsHandler.class)
+    String[] expression = new String[0];
 
     @Override
     public Status execute(KernelClient kernel, SessionClient session) {
-        val identifier = MappingOutputIdentifier.ofString(this.mapping);
-
-        session.cacheMapping(identifier.getMapping(), identifier.getOutput());
+        val expr = Arrays.stream(expression).reduce((l, r) -> l + " " + r).orElse("");
+        val result = session.evaluateExpression(expr);
+        System.out.println(result);
         return Status.SUCCESS;
     }
 }

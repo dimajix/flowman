@@ -39,9 +39,10 @@ message ExecuteProjectRequest {
     string sessionId = 1;
     repeated ExecutionPhase phases = 3;
     repeated string targets = 4;
-    map<string,string> arguments = 5;
-    bool force = 8;
-    bool dirty = 9;
+    repeated string dirtyTargets = 5;
+    map<string,string> arguments = 6;
+    bool force = 7;
+    bool dirty = 8;
     bool keepGoing = 10;
     bool dryRun = 11;
     int32 parallelism = 12;

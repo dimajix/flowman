@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,13 @@ import com.dimajix.flowman.tools.rexec.NestedCommand;
 public class ProjectCommand extends NestedCommand {
     @Argument(required=true,index=0,metaVar="<subcommand>",usage="the subcommand to run",handler=SubCommandHandler.class)
     @SubCommands({
-        @SubCommand(name = "inspect", impl = InspectCommand.class)
+        @SubCommand(name = "build", impl = BuildCommand.class),
+        @SubCommand(name = "create", impl = CreateCommand.class),
+        @SubCommand(name = "destroy", impl = DestroyCommand.class),
+        @SubCommand(name = "inspect", impl = InspectCommand.class),
+        @SubCommand(name = "truncate", impl = TruncateCommand.class),
+        @SubCommand(name = "validate", impl = ValidateCommand.class),
+        @SubCommand(name = "verify", impl = VerifyCommand.class)
     })
     Command command = null;
 

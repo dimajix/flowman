@@ -18,11 +18,6 @@ package com.dimajix.flowman.tools.rexec.target;
 
 import lombok.val;
 import org.kohsuke.args4j.Argument;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static com.dimajix.common.ExceptionUtils.isFatal;
-import static com.dimajix.common.ExceptionUtils.reasons;
 
 import com.dimajix.flowman.kernel.KernelClient;
 import com.dimajix.flowman.kernel.SessionClient;
@@ -35,30 +30,20 @@ import com.dimajix.flowman.tools.rexec.Command;
 
 
 public class InspectCommand extends Command {
-    private final Logger logger = LoggerFactory.getLogger(InspectCommand.class);
-
     @Argument(required = true, usage = "specifies target to inspect", metaVar = "<target>")
     String target = "";
 
     @Override
     public Status execute(KernelClient kernel, SessionClient session) {
-        try {
-            val target = session.getTarget(TargetIdentifier.ofString(this.target));
-            System.out.println("Target:");
-            System.out.println("    name: " + target.getName());
-            System.out.println("    kind: " + target.getKind());
-            System.out.println("    phases: " + target.getPhases().stream().map(Phase::toString).reduce((k, v) -> k + "," + v));
-            System.out.println("    before: " + target.getBefore().stream().map(TargetIdentifier::toString).reduce((k, v) -> k + "," + v));
-            System.out.println("    after: " + target.getAfter().stream().map(TargetIdentifier::toString).reduce((k, v) -> k + "," + v));
-            Lifecycle.ALL.phases.forEach(p -> printDependencies(target,p));
-            return Status.SUCCESS;
-        }
-        catch (Throwable e) {
-            if (isFatal(e))
-                throw e;
-            logger.error("Error inspecting target '" + target + "':\n  "+ reasons(e));
-            return Status.FAILED;
-        }
+        val target = session.getTarget(TargetIdentifier.ofString(this.target));
+        System.out.println("Target:");
+        System.out.println("    name: " + target.getName());
+        System.out.println("    kind: " + target.getKind());
+        System.out.println("    phases: " + target.getPhases().stream().map(Phase::toString).reduce((k, v) -> k + "," + v));
+        System.out.println("    before: " + target.getBefore().stream().map(TargetIdentifier::toString).reduce((k, v) -> k + "," + v));
+        System.out.println("    after: " + target.getAfter().stream().map(TargetIdentifier::toString).reduce((k, v) -> k + "," + v));
+        Lifecycle.ALL.phases.forEach(p -> printDependencies(target,p));
+        return Status.SUCCESS;
     }
 
     private void printDependencies(Target target, Phase phase) {

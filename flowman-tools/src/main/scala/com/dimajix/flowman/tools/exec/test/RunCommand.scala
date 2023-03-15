@@ -28,6 +28,7 @@ import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.tools.exec.Command
 import com.dimajix.flowman.common.ConsoleColors.red
+import com.dimajix.flowman.execution.TestCoordinator
 
 
 class RunCommand extends Command {
@@ -51,39 +52,12 @@ class RunCommand extends Command {
             project.tests.keySet.toSeq
         }
 
-        val status = if (parallelism > 1)
-            executeParallel(session, context, allTests)
-        else
-            executeLinear(session, context, allTests)
+        val coordinator = new TestCoordinator(session, keepGoing, dryRun, parallelism)
+        val status = coordinator.execute(project, allTests.map(TestIdentifier.apply))
 
         if(!status.success) {
             logger.error(red("There have been test failures"))
         }
         status
-    }
-
-    private def executeLinear(session: Session, context:Context, tests:Seq[String]) : Status = {
-        Status.ofAll(tests, keepGoing=keepGoing) { test =>
-            val instance = context.getTest(TestIdentifier(test))
-            executeSingle(session, instance)
-        }
-    }
-
-    private def executeParallel(session: Session, context:Context, tests:Seq[String]) : Status = {
-        Status.parallelOfAll(tests, parallelism, keepGoing=keepGoing, prefix="TestExecution") { test =>
-            val instance = context.getTest(TestIdentifier(test))
-            executeSingle(session, instance)
-        }
-    }
-
-    private def executeSingle(session: Session, test:Test) : Status = {
-        val runner = session.runner
-        if (test.assertions.nonEmpty) {
-            runner.executeTest(test, keepGoing = keepGoing, dryRun = dryRun)
-        }
-        else {
-            logger.info(s"Skipping test ${test.identifier} which does not provide any assertions")
-            Status.SUCCESS
-        }
     }
 }

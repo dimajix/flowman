@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,51 +14,43 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.rexec.target;
+package com.dimajix.flowman.tools.rexec.test;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
-import lombok.val;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
 import com.dimajix.flowman.kernel.KernelClient;
 import com.dimajix.flowman.kernel.SessionClient;
-import com.dimajix.flowman.kernel.model.Lifecycle;
-import com.dimajix.flowman.kernel.model.Phase;
 import com.dimajix.flowman.kernel.model.Status;
-import com.dimajix.flowman.kernel.model.TargetIdentifier;
+import com.dimajix.flowman.kernel.model.TestIdentifier;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
-class PhaseCommand extends Command {
-    @Argument(required = true, usage = "specifies target(s) to execute", metaVar = "<target>")
-    String[] targets = new String[0];
-    @Option(name = "-f", aliases= {"--force"}, usage = "forces execution, even if outputs are already created")
-    boolean force = false;
-    @Option(name = "-k", aliases={"--keep-going"}, usage = "continues execution of job with next target in case of errors")
+public class RunCommand extends Command {
+    @Argument(required = false, usage = "specifies tests(s) to execute", metaVar = "<tests>")
+    String[] tests = new String[0];
+    @Option(name = "-k", aliases={"--keep-going"}, usage = "continues execution of all tests in case of errors")
     boolean keepGoing = false;
     @Option(name = "--dry-run", usage = "perform dry run without actually executing build targets")
     boolean dryRun = false;
-    @Option(name = "-nl", aliases={"--no-lifecycle"}, usage = "only executes the specific phase and not the whole lifecycle")
-    boolean noLifecycle = false;
-
-    private final Phase phase;
-
-    protected PhaseCommand(Phase phase) {
-        this.phase = phase;
-    }
+    @Option(name = "-j", aliases={"--jobs"}, usage = "number of tests to run in parallel")
+    int parallelism = 1;
 
     @Override
     public Status execute(KernelClient kernel, SessionClient session) {
-        val lifecycle = noLifecycle ? Arrays.asList(phase) : Lifecycle.ofPhase(phase).phases;
-
-        val allTargets = Arrays.stream(targets)
+        List<TestIdentifier> allTests = Arrays.stream(tests)
             .flatMap(t -> Arrays.stream(t.split(",")))
-            .map(TargetIdentifier::ofString)
+            .map(TestIdentifier::ofString)
             .collect(Collectors.toList());
 
-        return session.executeTargets(allTargets, lifecycle, force, keepGoing, dryRun);
+        if (allTests.isEmpty()) {
+            allTests = session.listTests();
+        }
+
+        return session.executeTests(allTests, keepGoing, dryRun, parallelism);
     }
 }

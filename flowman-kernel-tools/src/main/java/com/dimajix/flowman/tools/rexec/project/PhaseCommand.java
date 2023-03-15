@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,42 +14,41 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.rexec.relation;
+package com.dimajix.flowman.tools.rexec.project;
 
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 import lombok.val;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import static com.dimajix.common.ExceptionUtils.isFatal;
-import static com.dimajix.common.ExceptionUtils.reasons;
+import static com.dimajix.flowman.common.ParserUtils.splitSettings;
 
-import com.dimajix.flowman.common.ParserUtils;
 import com.dimajix.flowman.kernel.KernelClient;
 import com.dimajix.flowman.kernel.SessionClient;
+import com.dimajix.flowman.kernel.model.Lifecycle;
 import com.dimajix.flowman.kernel.model.Phase;
-import com.dimajix.flowman.kernel.model.RelationIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
-public class PhaseCommand extends Command {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    @Argument(required=true, usage = "specifies relations to execute", metaVar = "<relation>")
-    String[] relations = new String[0];
+class PhaseCommand extends Command {
+    @Argument(index=0, required=false, usage = "specifies job parameters", metaVar = "<param>=<value>")
+    String[] args = new String[0];
+    @Option(name = "-t", aliases={"--target"}, usage = "only process specific targets, as specified by a regex", metaVar = "<target>")
+    String[] targets = new String[]{".*"};
+    @Option(name = "-d", aliases= {"--dirty"}, usage = "mark targets as being dirty, as specified by a regex", metaVar = "<target>")
+    String[] dirtyTargets = new String[0];
     @Option(name = "-f", aliases= {"--force"}, usage = "forces execution, even if outputs are already created")
     boolean force = false;
     @Option(name = "-k", aliases={"--keep-going"}, usage = "continues execution of job with next target in case of errors")
     boolean keepGoing = false;
     @Option(name = "--dry-run", usage = "perform dry run without actually executing build targets")
     boolean dryRun = false;
-    @Option(name = "-p", aliases={"--partition"}, usage = "specify partition to work on, as partition1=value1,partition2=value2")
-    String partition = "";
+    @Option(name = "-nl", aliases={"--no-lifecycle"}, usage = "only executes the specific phase and not the whole lifecycle")
+    boolean noLifecycle = false;
+    @Option(name = "-j", aliases={"--jobs"}, usage = "number of jobs to run in parallel")
+    int parallelism = 1;
 
     private final Phase phase;
 
@@ -59,14 +58,9 @@ public class PhaseCommand extends Command {
 
     @Override
     public Status execute(KernelClient kernel, SessionClient session) {
-        logger.info("Executing phase '" + phase + "' for relations " + Arrays.stream(relations).reduce((k,v) -> k + "," + v));
+        val args = splitSettings(this.args);
+        val lifecycle = noLifecycle ? Arrays.asList(phase) : Lifecycle.ofPhase(phase).phases;
 
-        val toRun = Arrays.stream(relations)
-            .flatMap(r -> Arrays.stream(r.split(",")))
-            .map(RelationIdentifier::ofString)
-            .collect(Collectors.toList());
-        val partition = ParserUtils.parseDelimitedKeyValues(this.partition);
-
-        return session.executeRelations(toRun, phase, partition, force, keepGoing, dryRun);
+        return session.executeProject(lifecycle, args, Arrays.asList(targets), Arrays.asList(dirtyTargets), force, keepGoing, dryRun, parallelism);
     }
 }

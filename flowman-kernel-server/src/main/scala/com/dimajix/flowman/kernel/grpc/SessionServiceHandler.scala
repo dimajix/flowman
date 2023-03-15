@@ -555,7 +555,18 @@ final class SessionServiceHandler(
 
     /**
      */
-    override def executeTest(request: ExecuteTestRequest, responseObserver: StreamObserver[ExecuteTestResponse]): Unit = super.executeTest(request, responseObserver)
+    override def executeTest(request: ExecuteTestRequest, responseObserver: StreamObserver[ExecuteTestResponse]): Unit = {
+        respondTo("executeTest", responseObserver) {
+            val session = getSession(request.getSessionId)
+            val tests = request.getTestsList.asScala.map(toModel)
+
+            val status = session.executeTests(tests, request.getKeepGoing, request.getDryRun, request.getParallelism)
+
+            ExecuteTestResponse.newBuilder()
+                .setStatus(toProto(status))
+                .build()
+        }
+    }
 
     /**
      * <pre>
@@ -660,15 +671,62 @@ final class SessionServiceHandler(
 
     /**
      */
-    override def executeProject(request: ExecuteProjectRequest, responseObserver: StreamObserver[ExecuteProjectResponse]): Unit = super.executeProject(request, responseObserver)
+    override def executeProject(request: ExecuteProjectRequest, responseObserver: StreamObserver[ExecuteProjectResponse]): Unit = {
+        respondTo("executeProject", responseObserver) {
+            val session = getSession(request.getSessionId)
+            val job = session.getJob(model.JobIdentifier("main"))
+
+            val lifecycle = request.getPhasesList().asScala.map(toModel)
+            val force = request.getForce
+            val keepGoing = request.getKeepGoing
+            val dryRun = request.getDryRun
+            val parallelism = request.getParallelism
+            val args = request.getArgumentsMap
+            val targets = request.getTargetsList
+            val dirtyTargets = request.getDirtyTargetsList()
+
+            val status = session.executeJob(job, lifecycle, args.asScala.toMap, targets.asScala, dirtyTargets.asScala, force, keepGoing, dryRun, parallelism)
+
+            ExecuteProjectResponse.newBuilder()
+                .setStatus(toProto(status))
+                .build();
+        }
+    }
 
     /**
      * <pre>
      * Generic stuff
      * </pre>
      */
-    override def executeSql(request: ExecuteSqlRequest, responseObserver: StreamObserver[ExecuteSqlResponse]): Unit = super.executeSql(request, responseObserver)
+    override def executeSql(request: ExecuteSqlRequest, responseObserver: StreamObserver[ExecuteSqlResponse]): Unit = {
+        respondTo("executeSql", responseObserver) {
+            val session = getSession(request.getSessionId)
+            val sql = request.getStatement
 
+            val df = session.executeSql(sql)
+            val data = formatDataFrame(df, Seq.empty, request.getMaxRows)
+            ExecuteSqlResponse.newBuilder()
+                .setData(data)
+                .build()
+        }
+    }
+
+
+    /**
+     */
+    override def evaluateExpression(request: EvaluateExpressionRequest, responseObserver: StreamObserver[EvaluateExpressionResponse]): Unit = {
+        respondTo("evaulateExpression", responseObserver) {
+            val session = getSession(request.getSessionId)
+            val context = session.context
+            val expression = request.getExpression
+
+            val result = context.evaluate(expression)
+
+            EvaluateExpressionResponse.newBuilder()
+                .setResult(result)
+                .build()
+        }
+    }
 
     /**
      */

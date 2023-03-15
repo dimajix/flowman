@@ -24,7 +24,6 @@ import java.util.stream.StreamSupport;
 import com.google.common.io.Files;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
-import io.grpc.stub.StreamObserver;
 import lombok.val;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import com.dimajix.flowman.kernel.proto.FileType;
 import com.dimajix.flowman.kernel.proto.workspace.CleanWorkspaceRequest;
 import com.dimajix.flowman.kernel.proto.workspace.UploadFilesRequest;
-import com.dimajix.flowman.kernel.proto.workspace.UploadFilesResponse;
 import com.dimajix.flowman.kernel.proto.workspace.WorkspaceServiceGrpc;
 
 
@@ -49,6 +47,16 @@ public final class WorkspaceClient extends AbstractClient {
         this.workspaceName = workspaceName;
         blockingStub = WorkspaceServiceGrpc.newBlockingStub(channel);
         asyncStub = WorkspaceServiceGrpc.newStub(channel);
+    }
+
+    @Override
+    public boolean isShutdown() {
+        return channel.isTerminated();
+    }
+
+    @Override
+    public boolean isTerminated() {
+        return channel.isTerminated();
     }
 
     public String getWorkspaceName() { return workspaceName; }

@@ -35,6 +35,7 @@ import org.jline.terminal.TerminalBuilder;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
+import static com.dimajix.common.ExceptionUtils.isFatal;
 import static com.dimajix.common.ExceptionUtils.reasons;
 import static com.dimajix.flowman.common.ConsoleColors.yellow;
 import static com.dimajix.flowman.common.ParserUtils.splitSettings;
@@ -153,7 +154,8 @@ public class Shell extends RemoteTool {
             "|| |    | || (_) |\\ V  V / | | | | | || (_| || | | |\n" +
             "|\\_|    |_| \\___/  \\_/\\_/  |_| |_| |_| \\__,_||_| |_|";
 
-        val kernelInfo = getKernel().getKernel();
+        val kernel = getKernel();
+        val kernelInfo = kernel.getKernel();
         val kernelVersion = kernelInfo.getFlowmanVersion();
         val sparkVersion = kernelInfo.getSparkVersion();
         val hadoopVersion = kernelInfo.getHadoopVersion();
@@ -213,10 +215,16 @@ public class Shell extends RemoteTool {
                         command.execute(getKernel(), getSession());
                     }
                 }
-                catch (Exception ex) {
+                catch (Throwable ex) {
+                    if (isFatal(ex))
+                        throw ex;
                     writer.println("Error executing command:\n  " + reasons(ex));
                 }
             }
+        }
+
+        if (!kernel.isShutdown() && !kernel.isTerminated()) {
+            kernel.shutdown();
         }
 
         return true;

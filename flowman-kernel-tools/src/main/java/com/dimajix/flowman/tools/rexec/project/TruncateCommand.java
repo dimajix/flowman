@@ -14,23 +14,13 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.tools.rshell.test;
+package com.dimajix.flowman.tools.rexec.project;
 
-import org.kohsuke.args4j.Argument;
-
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
-import com.dimajix.flowman.kernel.model.Status;
-import com.dimajix.flowman.tools.rexec.Command;
+import com.dimajix.flowman.kernel.model.Phase;
 
 
-class EnterCommand extends Command {
-    @Argument(index=0, required=true, usage = "name of test to enter", metaVar = "<test>")
-    String test = "";
-
-    @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
-        session.enterTestContext(test);
-        return Status.SUCCESS;
+public class TruncateCommand extends PhaseCommand {
+    public TruncateCommand() {
+        super(Phase.TRUNCATE);
     }
 }

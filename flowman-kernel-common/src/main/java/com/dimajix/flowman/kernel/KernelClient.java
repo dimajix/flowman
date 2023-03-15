@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.kernel;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -54,6 +55,21 @@ public final class KernelClient extends AbstractClient {
         kernelStub = KernelServiceGrpc.newBlockingStub(channel);
         workspaceStub = WorkspaceServiceGrpc.newBlockingStub(channel);
         sessionStub = SessionServiceGrpc.newBlockingStub(channel);
+    }
+
+    public void shutdown() {
+        logger.info("Shutting down connection to Flowman kernel");
+        channel.shutdown();
+    }
+
+    @Override
+    public boolean isShutdown() {
+        return channel.isTerminated();
+    }
+
+    @Override
+    public boolean isTerminated() {
+        return channel.isTerminated();
     }
 
     public List<SessionClient> listSessions() {

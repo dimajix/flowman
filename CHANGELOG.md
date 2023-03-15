@@ -53,6 +53,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-354: Optionally load custom log4j config from jar
 * github-358: Provide different log4j config for Flowman server and kernel
 * github-359: Update jline dependency
+* github-357: Spark session should not be shut down in Databricks environment
 
 ### Breaking changes
 

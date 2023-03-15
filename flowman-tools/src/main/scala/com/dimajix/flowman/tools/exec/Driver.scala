@@ -38,6 +38,7 @@ import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
 import com.dimajix.hadoop.HADOOP_VERSION
 import com.dimajix.spark.SPARK_VERSION
+import com.dimajix.spark.features.isDatabricks
 
 
 object Driver {
@@ -144,7 +145,11 @@ class Driver(options:Arguments) extends Tool {
             }
 
             val result = options.command.execute(session, project, context)
-            session.shutdown()
+
+            // github-357: Spark session should not be shut down in DataBricks environment
+            if (!isDatabricks)
+                session.shutdown()
+
             result
         }
     }

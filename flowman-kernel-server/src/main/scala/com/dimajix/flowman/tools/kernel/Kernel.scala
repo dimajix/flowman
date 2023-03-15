@@ -42,6 +42,7 @@ import com.dimajix.flowman.kernel.service.MultiWorkspaceManager
 import com.dimajix.flowman.kernel.service.WorkspaceManager
 import com.dimajix.hadoop.HADOOP_VERSION
 import com.dimajix.spark.SPARK_VERSION
+import com.dimajix.spark.features.isDatabricks
 
 
 
@@ -156,7 +157,10 @@ final class Kernel(args:Arguments) extends Tool {
     def shutdown(): Unit = {
         if (!server.isTerminated()) {
             server.stop()
-            rootSession.shutdown()
+
+            // github-357: Spark session should not be shut down in DataBricks environment
+            if (!isDatabricks)
+                rootSession.shutdown()
         }
     }
 

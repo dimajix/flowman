@@ -51,6 +51,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-352: Spark sessions should not contain duplicate jars from different plugins
 * github-353: Successful runs should not use System.exit(0)
 * github-354: Optionally load custom log4j config from jar
+* github-358: Provide different log4j config for Flowman server and kernel
 
 ### Breaking changes
 

@@ -4,9 +4,6 @@
 export FLOWMAN_HOME=${FLOWMAN_HOME=$(readlink -f $(dirname $0)/..)}
 export FLOWMAN_CONF_DIR=${FLOWMAN_CONF_DIR=$FLOWMAN_HOME/conf}
 
-# Set default Flowman Studio url for flowctl
-export FLOWMAN_STUDIO_URL=${FLOWMAN_STUDIO_URL="http://localhost:8080/api"}
-
 # Load environment file if present
 if [ -f "$FLOWMAN_CONF_DIR/flowman-env.sh" ]; then
     source "$FLOWMAN_CONF_DIR/flowman-env.sh"
@@ -18,10 +15,10 @@ fi
 
 # Add log4j config
 if [ -f "$FLOWMAN_CONF_DIR/log4j.properties" ]; then
-    SPARK_DRIVER_JAVA_OPTS="-Dlog4j.configuration=$FLOWMAN_CONF_DIR/log4j.properties $SPARK_DRIVER_JAVA_OPTS"
+    SPARK_DRIVER_LOGGING_OPTS="-Dlog4j.configuration=$FLOWMAN_CONF_DIR/log4j.properties"
 fi
 if [ -f "$FLOWMAN_CONF_DIR/log4j2.properties" ]; then
-    SPARK_DRIVER_JAVA_OPTS="-Dlog4j.configurationFile=$FLOWMAN_CONF_DIR/log4j2.properties $SPARK_DRIVER_JAVA_OPTS"
+    SPARK_DRIVER_LOGGING_OPTS="-Dlog4j.configurationFile=$FLOWMAN_CONF_DIR/log4j2.properties"
 fi
 
 
@@ -29,8 +26,8 @@ fi
 : ${SPARK_SUBMIT:="$SPARK_HOME"/bin/spark-submit}
 : ${SPARK_OPTS:=""}
 : ${SPARK_JARS:=""}
-: ${SPARK_DRIVER_JAVA_OPTS:="-server"}
-: ${SPARK_EXECUTOR_JAVA_OPTS:="-server"}
+: ${SPARK_DRIVER_JAVA_OPTS:=""}
+: ${SPARK_EXECUTOR_JAVA_OPTS:=""}
 
 
 # Build Spark dist classpath
@@ -105,7 +102,7 @@ run_spark() {
     fi
 
     exec $SPARK_SUBMIT \
-      --driver-java-options "$SPARK_DRIVER_JAVA_OPTS" \
+      --driver-java-options "$SPARK_DRIVER_LOGGING_OPTS $SPARK_DRIVER_JAVA_OPTS" \
       --conf spark.execution.extraJavaOptions="$SPARK_EXECUTOR_JAVA_OPTS" \
       --class "$3" \
       $SPARK_OPTS \

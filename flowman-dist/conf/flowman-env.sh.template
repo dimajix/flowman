@@ -10,9 +10,6 @@
 #export FLOWMAN_HOME
 #export FLOWMAN_CONF_DIR
 
-# Set URL of Flowman Studio server as used by flowctl
-#export FLOWMAN_STUDIO_URL
-
 # Specify any environment settings and paths
 #
 #export SPARK_HOME

@@ -3,6 +3,15 @@
 basedir=$(readlink -f "$(dirname "$0")"/..)
 source "$basedir"/libexec/flowman-common.sh
 
+# Add log4j config
+if [ -f "$FLOWMAN_CONF_DIR/log4j-history-server.properties" ]; then
+    SPARK_DRIVER_LOGGING_OPTS="-Dlog4j.configuration=$FLOWMAN_CONF_DIR/log4j-history-server.properties"
+fi
+if [ -f "$FLOWMAN_CONF_DIR/log4j2-history-server.properties" ]; then
+    SPARK_DRIVER_LOGGING_OPTS="-Dlog4j.configurationFile=$FLOWMAN_CONF_DIR/log4j2-history-server.properties"
+fi
+
+
 APP_NAME="flowman-server"
 APP_VERSION="@project.version@"
 APP_MAIN="com.dimajix.flowman.server.Application"

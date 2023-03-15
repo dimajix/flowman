@@ -54,6 +54,12 @@ logger.parquet3.level = error
 logger.parquet4.name = parquet.CorruptStatistics
 logger.parquet4.level = error
 
+# Silence Databricks logging
+logger.databricks1.name = com.databricks
+logger.databricks1.level = warn
+logger.databricks2.name = shaded
+logger.databricks2.level = warn
+
 # Slick logging
 logger.slick.name = slick.jdbc.JdbcBackend.statement
 logger.slick.level = warn

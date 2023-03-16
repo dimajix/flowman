@@ -63,6 +63,7 @@ import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.spark.features.hiveVarcharSupported
 import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.sql.SchemaUtils.replaceCharVarchar
+import com.dimajix.util.Reflection
 
 
 object HiveCatalog {
@@ -201,7 +202,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             // Cleanup table definition
             val cleanedSchema = SchemaUtils.truncateComments(table.schema, maxCommentLength)
             val catalogSchema = HiveCatalog.cleanupSchema(cleanedSchema)
-            val cleanedTable = table.copy(schema = catalogSchema)
+            val cleanedTable = SparkShim.withNewSchema(table, catalogSchema)
 
             logger.info(s"Creating Hive table ${table.identifier}")
             val cmd = CreateTableCommand(cleanedTable, ignoreIfExists)

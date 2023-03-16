@@ -9,8 +9,10 @@ jobs:
         default: 2013
     # List all targets which should be built as part of the `main` job
     targets:
+      - database
       - measurements
-      #- measurements_jdbc
+      - stations
+      - aggregates
       # Generate documentation
       - documentation
 

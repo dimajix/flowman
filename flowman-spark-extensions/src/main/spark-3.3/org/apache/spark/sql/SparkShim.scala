@@ -134,8 +134,14 @@ object SparkShim {
         }
         catch {
             case _:NoSuchMethodError | _:NoSuchMethodException =>
-                logger.warn("Falling back to reflection for constructing CreateDatabaseCommand instance")
-                Reflection.construct(classOf[CreateDatabaseCommand], Map("databaseName" -> database, "catalog" -> catalog, "ifNotExists" -> ignoreIfExists, "path" -> path, "comment" -> comment))
+                logger.warn("Falling back to reflection for CreateDatabaseCommand::new. This is an indication that you are using forked Spark libraries.")
+                Reflection.construct(classOf[CreateDatabaseCommand], Map(
+                    "databaseName" -> database,
+                    "catalog" -> catalog,
+                    "ifNotExists" -> ignoreIfExists,
+                    "path" -> path,
+                    "comment" -> comment)
+                )
         }
     }
     def newCatalogTable(
@@ -163,7 +169,7 @@ object SparkShim {
         }
         catch {
             case _:NoSuchMethodError | _:NoSuchMethodException =>
-                logger.warn("Falling back to reflection for constructing CatalogTable instance")
+                logger.warn("Falling back to reflection for CatalogTable::new. This is an indication that you are using forked Spark libraries.")
                 Reflection.construct(classOf[CatalogTable], Map(
                     "identifier" -> identifier,
                     "tableType" -> tableType,
@@ -179,6 +185,16 @@ object SparkShim {
                     "tracksPartitionsInCatalog" -> false,
                     "schemaPreservesCase" -> true
                 ))
+        }
+    }
+    def withNewSchema(table:CatalogTable, schema:StructType) : CatalogTable = {
+        try {
+            table.copy(schema = schema)
+        }
+        catch {
+            case _: NoSuchMethodError | _: NoSuchMethodException =>
+                logger.warn("Falling back to reflection for CatalogTable::copy. This is an indication that you are using forked Spark libraries.")
+                Reflection.copy(table, Map("schema" -> schema))
         }
     }
 

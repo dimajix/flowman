@@ -1,6 +1,6 @@
 flowman:
-  version: 1.0.0-SNAPSHOT
-  distribution: com.dimajix.flowman:flowman-dist:bin:1.0.0-SNAPSHOT
+  version: 1.0.0-dbx-SNAPSHOT
+  distribution: com.dimajix.flowman:flowman-dist:bin:1.0.0-dbx-SNAPSHOT
   plugins:
     - flowman-avro
     - flowman-aws
@@ -16,9 +16,6 @@ projects:
 packages:
   databricks:
     kind: fatjar
-    build:
-      exclusions:
-        - com.amazonaws:*
 
 
 # List of deployments

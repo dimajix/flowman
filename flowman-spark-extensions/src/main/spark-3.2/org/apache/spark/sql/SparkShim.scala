@@ -148,6 +148,9 @@ object SparkShim {
             comment = comment
         )
     }
+    def withNewSchema(table:CatalogTable, schema:StructType) : CatalogTable = {
+        table.copy(schema = schema)
+    }
 
     def createConnectionFactory(dialect: JdbcDialect, options: JDBCOptions) :  Int => Connection = {
         val factory = JdbcUtils.createConnectionFactory(options)

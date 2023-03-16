@@ -50,12 +50,12 @@
         },
         {
             "name": "date_begin",
-            "type": [ { "type": "int", "logicalType": "date" }, "null" ],
+            "type": [ "string", "null" ],
             "doc": "The date when the weather station went into service"
         },
         {
             "name": "date_end",
-            "type": [ { "type": "int", "logicalType": "date" }, "null" ],
+            "type": [ "string", "null" ],
             "doc": "The date when the weather station went out of service"
         }
     ]

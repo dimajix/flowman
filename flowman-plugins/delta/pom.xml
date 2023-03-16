@@ -19,6 +19,7 @@
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
         <delta.version>2.2.0</delta.version>
+        <delta.scope>compile</delta.scope>
     </properties>
 
     <profiles>
@@ -110,6 +111,14 @@
             <id>EMR-6.9</id>
             <properties>
                 <delta.version>2.1.1</delta.version>
+                <delta.scope>provided</delta.scope>
+            </properties>
+        </profile>
+        <profile>
+            <id>databricks-12.2</id>
+            <properties>
+                <delta.version>2.2.0</delta.version>
+                <delta.scope>provided</delta.scope>
             </properties>
         </profile>
         <profile>
@@ -237,6 +246,7 @@
             <groupId>io.delta</groupId>
             <artifactId>delta-core_${scala.api_version}</artifactId>
             <version>${delta.version}</version>
+            <scope>${delta.scope}</scope>
         </dependency>
 
         <dependency>

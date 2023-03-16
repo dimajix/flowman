@@ -52,6 +52,7 @@ object ReflectionUtilTest {
         stuff:Stuff
     )
 }
+
 class ReflectionUtilTest extends AnyFlatSpec with Matchers {
     "The Reflection" should "return a companion object" in {
         Reflection.companion("com.dimajix.util.Reflection") should be (Some(Reflection))
@@ -67,5 +68,15 @@ class ReflectionUtilTest extends AnyFlatSpec with Matchers {
     }
     it should "throw an exception for a missing fundamental type" in {
         an[IllegalArgumentException] should be thrownBy (Reflection.construct(classOf[CaseClass], Map("str" -> "lala")))
+    }
+
+    "Reflection.copy" should "work" in {
+        val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
+        Reflection.copy(obj, Map("str" -> "lolo")) should be (CaseClass(12, "lolo", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
+        Reflection.copy(obj, Map("int" -> 23)) should be (CaseClass(23, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
+    }
+    it should "throw an exception for an unknown parameter" in {
+        val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
+        an[IllegalArgumentException] should be thrownBy(Reflection.copy(obj, Map("int2" -> 12)))
     }
 }

@@ -123,6 +123,7 @@
                             <javacArg>${java.version}</javacArg>
                             <javacArg>-target</javacArg>
                             <javacArg>${java.version}</javacArg>
+                            <javacArg>-parameters</javacArg>
                             <javacArg>-Xlint:all,-serial,-path,-try</javacArg>
                         </javacArgs>
                     </configuration>

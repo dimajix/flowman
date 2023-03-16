@@ -17,6 +17,7 @@
 package com.dimajix.util
 
 import java.lang.reflect.Constructor
+import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 
 
@@ -33,6 +34,51 @@ object Reflection {
         catch {
             case _:ClassNotFoundException => None
         }
+    }
+
+    def copy[T <: AnyRef](src:T, args:Map[String,Any]) : T = {
+        val clazz = src.getClass
+        val argNames = args.keySet
+        val allCopies = clazz.getDeclaredMethods
+            .filter(_.getName == "copy")
+
+        def isCandidate(con: Method): Boolean = {
+            val paramNames = con.getParameters.map(_.getName).toSet
+            argNames.forall(arg => paramNames.contains(arg))
+        }
+        def createParameter(param:Parameter) : AnyRef = {
+            val paramName = param.getName
+            if (args.contains(paramName)) {
+                toAnyRef(args(paramName), param)
+            }
+            else {
+                val getter = clazz.getDeclaredMethod(paramName)
+                getter.invoke(src)
+            }
+        }
+        def tryCopy(copy: Method): Option[T] = {
+            val params = copy.getParameters
+            try {
+                val pvals = params.map(createParameter)
+                Some(copy.invoke(src, pvals:_*).asInstanceOf[T])
+            }
+            catch {
+                case _: Throwable => None
+            }
+        }
+
+        val sortedConstructors = allCopies
+            .filter(isCandidate)
+            .sortBy(_.getParameters.length)
+
+        for (c <- sortedConstructors) {
+            tryCopy(c) match {
+                case Some(i) => return i
+                case None =>
+            }
+        }
+
+        throw new IllegalArgumentException(s"Class ${clazz.getName} does not provide a copy method")
     }
 
     /**
@@ -56,16 +102,7 @@ object Reflection {
         }
         def createParameter(param:Parameter) : AnyRef = {
             if (args.contains(param.getName)) {
-                args(param.getName) match {
-                    case s:Short => java.lang.Short.valueOf(s)
-                    case i:Int => Integer.valueOf(i)
-                    case l:Long => java.lang.Long.valueOf(l)
-                    case f:Float => java.lang.Float.valueOf(f)
-                    case d:Double => java.lang.Double.valueOf(d)
-                    case b:Boolean => java.lang.Boolean.valueOf(b)
-                    case r:AnyRef => r
-                    case _ => throw new IllegalArgumentException(s"Parameter '${param.getName}' has unsupported type")
-                }
+                toAnyRef(args(param.getName), param)
             }
             else {
                 param.getType() match {
@@ -100,5 +137,18 @@ object Reflection {
         }
 
         throw new IllegalArgumentException(s"Cannot construct instance of ${clazz.getName} with parameters ${args}")
+    }
+
+    private def toAnyRef(value:Any, param:Parameter) : AnyRef = {
+        value match {
+            case s: Short => java.lang.Short.valueOf(s)
+            case i: Int => Integer.valueOf(i)
+            case l: Long => java.lang.Long.valueOf(l)
+            case f: Float => java.lang.Float.valueOf(f)
+            case d: Double => java.lang.Double.valueOf(d)
+            case b: Boolean => java.lang.Boolean.valueOf(b)
+            case r: AnyRef => r
+            case _ => throw new IllegalArgumentException(s"Parameter '${param.getName}' has unsupported type")
+        }
     }
 }

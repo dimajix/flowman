@@ -87,55 +87,77 @@ class ReflectionUtilTest extends AnyFlatSpec with Matchers {
     }
 
     "Reflection.construct" should "work" in {
-        Reflection.construct(classOf[CaseClass], Map("int" -> 12, "str" -> "lala")) should be (CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
-        Reflection.construct(classOf[CaseClass], Map("int" -> 12)) should be (CaseClass(12, "", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
+        if (scala.util.Properties.versionNumberString >= "2.12") {
+            Reflection.construct(classOf[CaseClass], Map("int" -> 12, "str" -> "lala")) should be(CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
+            Reflection.construct(classOf[CaseClass], Map("int" -> 12)) should be(CaseClass(12, "", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
+        }
     }
     it should "accept unknown parameters" in {
-        Reflection.construct(classOf[CaseClass], Map("int" -> 12, "int2" -> 24)) should be (CaseClass(12, "", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
+        if (scala.util.Properties.versionNumberString >= "2.12") {
+            Reflection.construct(classOf[CaseClass], Map("int" -> 12, "int2" -> 24)) should be(CaseClass(12, "", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
+        }
     }
     it should "throw an exception for a missing fundamental type" in {
-        an[NoSuchMethodError] should be thrownBy (Reflection.construct(classOf[CaseClass], Map("str" -> "lala")))
+        if (scala.util.Properties.versionNumberString >= "2.12") {
+            an[NoSuchMethodError] should be thrownBy (Reflection.construct(classOf[CaseClass], Map("str" -> "lala")))
+        }
     }
     it should "also use addition apply methods" in {
-        Reflection.construct(classOf[ExtraApply], Map("xyz" -> "lala")) should be (ExtraApply(23, "lala", Seq.empty, Map.empty))
+        if (scala.util.Properties.versionNumberString >= "2.12") {
+            Reflection.construct(classOf[ExtraApply], Map("xyz" -> "lala")) should be(ExtraApply(23, "lala", Seq.empty, Map.empty))
+        }
     }
 
     "Reflection.copy" should "work" in {
-        val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
-        Reflection.copy(obj, Map("str" -> "lolo")) should be (CaseClass(12, "lolo", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
-        Reflection.copy(obj, Map("int" -> 23)) should be (CaseClass(23, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
+        if (scala.util.Properties.versionNumberString >= "2.12") {
+            val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
+            Reflection.copy(obj, Map("str" -> "lolo")) should be(CaseClass(12, "lolo", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
+            Reflection.copy(obj, Map("int" -> 23)) should be(CaseClass(23, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
+        }
     }
     it should "throw an exception for an unknown parameter" in {
-        val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
-        an[NoSuchMethodError] should be thrownBy(Reflection.copy(obj, Map("int2" -> 12)))
+        if (scala.util.Properties.versionNumberString >= "2.12") {
+            val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
+            an[NoSuchMethodError] should be thrownBy (Reflection.copy(obj, Map("int2" -> 12)))
+        }
     }
 
     "Reflection.invoke" should "work" in {
-        val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
-        Reflection.invoke(obj, "concat", classOf[String], Map("a1" -> "a1", "a2" -> 2)) should be ("a12")
-        Reflection.invoke(obj, "nothing", classOf[Unit], Map("a1" -> "a1", "a2" -> 2))
+        if (scala.util.Properties.versionNumberString >= "2.12") {
+            val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
+            Reflection.invoke(obj, "concat", classOf[String], Map("a1" -> "a1", "a2" -> 2)) should be("a12")
+            Reflection.invoke(obj, "nothing", classOf[Unit], Map("a1" -> "a1", "a2" -> 2))
+        }
     }
 
     it should "work with too many parameters" in {
-        val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
-        Reflection.invoke(obj, "concat", classOf[String], Map("a1" -> "a1", "a2" -> 2, "a3" -> 27)) should be ("a12")
+        if (scala.util.Properties.versionNumberString >= "2.12") {
+            val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
+            Reflection.invoke(obj, "concat", classOf[String], Map("a1" -> "a1", "a2" -> 2, "a3" -> 27)) should be("a12")
+        }
     }
 
     it should "throw an exception for a missing parameter" in {
-        val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
-        an[NoSuchMethodError] should be thrownBy(Reflection.invoke(obj, "concat", classOf[String], Map("a1" -> "a1")))
+        if (scala.util.Properties.versionNumberString >= "2.12") {
+            val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
+            an[NoSuchMethodError] should be thrownBy (Reflection.invoke(obj, "concat", classOf[String], Map("a1" -> "a1")))
+        }
     }
 
     it should "forward the right exception" in {
-        val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
-        an[IllegalArgumentException] should be thrownBy (Reflection.invoke(obj, "exception", classOf[String], Map("a1" -> "a1")))
+        if (scala.util.Properties.versionNumberString >= "2.12") {
+            val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
+            an[IllegalArgumentException] should be thrownBy (Reflection.invoke(obj, "exception", classOf[String], Map("a1" -> "a1")))
+        }
     }
 
     it should "work with derived classes" in {
-        val obj = new DerivedClass
-        Reflection.invoke(obj, "concat", classOf[String], Map("a1" -> "a1", "a2" -> 2)) should be("a12")
-        Reflection.invoke(obj, "nothing", classOf[Unit], Map("a1" -> "a1", "a2" -> 2))
-        noException should be thrownBy (Reflection.invoke(obj, "exception", classOf[String], Map("a1" -> "a1")))
-        Reflection.invoke(obj, "concat2", classOf[String], Map("a1" -> "a1", "a2" -> "2")) should be("a12")
+        if (scala.util.Properties.versionNumberString >= "2.12") {
+            val obj = new DerivedClass
+            Reflection.invoke(obj, "concat", classOf[String], Map("a1" -> "a1", "a2" -> 2)) should be("a12")
+            Reflection.invoke(obj, "nothing", classOf[Unit], Map("a1" -> "a1", "a2" -> 2))
+            noException should be thrownBy (Reflection.invoke(obj, "exception", classOf[String], Map("a1" -> "a1")))
+            Reflection.invoke(obj, "concat2", classOf[String], Map("a1" -> "a1", "a2" -> "2")) should be("a12")
+        }
     }
 }

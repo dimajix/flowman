@@ -22,12 +22,14 @@ import com.dimajix.flowman.spec.target.HiveDatabaseTarget
 
 
 case class DatabaseTarget(
-    database:String
+    database:String,
+    catalog:String = ""
 ) extends TargetGen {
     override def apply(props: Target.Properties): HiveDatabaseTarget = {
         HiveDatabaseTarget(
             props,
-            database
+            database,
+            catalog
         )
     }
 }

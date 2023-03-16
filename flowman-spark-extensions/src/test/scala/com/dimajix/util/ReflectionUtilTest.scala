@@ -19,10 +19,53 @@ package com.dimajix.util
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.util.ReflectionUtilTest.CaseClass
+import com.dimajix.util.ReflectionUtilTest.OtherStuff
+import com.dimajix.util.ReflectionUtilTest.Stuff
 
+
+object ReflectionUtilTest {
+    class OtherStuff(val map:Map[String,String]) {
+
+        def canEqual(other: Any): Boolean = other.isInstanceOf[OtherStuff]
+
+        override def equals(other: Any): Boolean = other match {
+            case that: OtherStuff =>
+                (that canEqual this) &&
+                    map == that.map
+            case _ => false
+        }
+
+        override def hashCode(): Int = {
+            val state = Seq(map)
+            state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+        }
+    }
+    case class Stuff(other:OtherStuff) {
+
+    }
+    case class CaseClass(
+        int:Int,
+        str:String,
+        seq:Seq[Int],
+        map:Map[String,Boolean],
+        stuff:Stuff
+    )
+}
 class ReflectionUtilTest extends AnyFlatSpec with Matchers {
     "The Reflection" should "return a companion object" in {
         Reflection.companion("com.dimajix.util.Reflection") should be (Some(Reflection))
         Reflection.companion("com.dimajix.util.NoSuchObject") should be (None)
+    }
+
+    "Reflection.construct" should "work" in {
+        Reflection.construct(classOf[CaseClass], Map("int" -> 12, "str" -> "lala")) should be (CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
+        Reflection.construct(classOf[CaseClass], Map("int" -> 12)) should be (CaseClass(12, "", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
+    }
+    it should "throw an exception for an unknown parameter" in {
+        an[IllegalArgumentException] should be thrownBy(Reflection.construct(classOf[CaseClass], Map("int2" -> 12)))
+    }
+    it should "throw an exception for a missing fundamental type" in {
+        an[IllegalArgumentException] should be thrownBy (Reflection.construct(classOf[CaseClass], Map("str" -> "lala")))
     }
 }

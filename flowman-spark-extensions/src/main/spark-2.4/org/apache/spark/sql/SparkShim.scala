@@ -23,6 +23,10 @@ import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
+import org.apache.spark.sql.catalyst.catalog.BucketSpec
+import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
+import org.apache.spark.sql.catalyst.catalog.CatalogTable
+import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.catalyst.expressions.Alias
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.expressions.NamedExpression
@@ -31,6 +35,7 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.SQLExecution
 import org.apache.spark.sql.execution.command.AlterViewAsCommand
+import org.apache.spark.sql.execution.command.CreateDatabaseCommand
 import org.apache.spark.sql.execution.command.CreateViewCommand
 import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.execution.command.ViewType
@@ -101,11 +106,36 @@ object SparkShim {
 
     def functionRegistry(spark:SparkSession) : FunctionRegistry = spark.sessionState.functionRegistry
 
-    def createView(table:TableIdentifier, select:String, plan:LogicalPlan, allowExisting:Boolean, replace:Boolean) : CreateViewCommand = {
+    def newCreateViewCommand(table:TableIdentifier, select:String, plan:LogicalPlan, allowExisting:Boolean, replace:Boolean) : CreateViewCommand = {
         CreateViewCommand(table, Nil, None, Map(), Some(select), plan, allowExisting, replace, SparkShim.PersistedView)
     }
-    def alterView(table:TableIdentifier, select:String, plan:LogicalPlan) : AlterViewAsCommand = {
+    def newAlterViewCommand(table:TableIdentifier, select:String, plan:LogicalPlan) : AlterViewAsCommand = {
         AlterViewAsCommand(table, select, plan)
+    }
+    def newCreateDatabaseCommand(database: String, catalog: String, path: Option[String], comment: Option[String], ignoreIfExists: Boolean): CreateDatabaseCommand = {
+        CreateDatabaseCommand(database, ignoreIfExists, path, comment, Map())
+    }
+    def newCatalogTable(
+        identifier: TableIdentifier,
+        tableType: CatalogTableType,
+        storage: CatalogStorageFormat,
+        schema: StructType,
+        provider: Option[String] = None,
+        partitionColumnNames: Seq[String] = Seq.empty,
+        bucketSpec: Option[BucketSpec] = None,
+        properties: Map[String, String] = Map.empty,
+        comment: Option[String] = None): CatalogTable = {
+        CatalogTable(
+            identifier = identifier,
+            tableType = tableType,
+            storage = storage,
+            schema = schema,
+            provider = provider,
+            partitionColumnNames = partitionColumnNames,
+            bucketSpec = bucketSpec,
+            properties = properties,
+            comment = comment
+        )
     }
 
     def createConnectionFactory(dialect: JdbcDialect, options: JDBCOptions) :  Int => Connection = {

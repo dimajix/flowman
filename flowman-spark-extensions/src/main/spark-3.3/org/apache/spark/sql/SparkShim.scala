@@ -27,6 +27,10 @@ import org.apache.spark.internal.config.ConfigEntry
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
 import org.apache.spark.sql.catalyst.analysis.ViewType
+import org.apache.spark.sql.catalyst.catalog.BucketSpec
+import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
+import org.apache.spark.sql.catalyst.catalog.CatalogTable
+import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.catalyst.expressions.Alias
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.expressions.GroupingSets
@@ -39,6 +43,7 @@ import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.SQLExecution
 import org.apache.spark.sql.execution.SimpleMode
 import org.apache.spark.sql.execution.command.AlterViewAsCommand
+import org.apache.spark.sql.execution.command.CreateDatabaseCommand
 import org.apache.spark.sql.execution.command.CreateViewCommand
 import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.execution.datasources.FileFormat
@@ -53,11 +58,16 @@ import org.apache.spark.sql.types.Metadata
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.unsafe.types.CalendarInterval
 import org.apache.spark.unsafe.types.UTF8String
+import org.slf4j.LoggerFactory
 
 import com.dimajix.util.DateTimeUtils
+import com.dimajix.util.Reflection
 
 
+class SparkShim
 object SparkShim {
+    private val logger = LoggerFactory.getLogger(classOf[SparkShim])
+
     def getHadoopConf(sparkConf:SparkConf) :org.apache.hadoop.conf.Configuration = SparkHadoopUtil.get.newConfiguration(sparkConf)
 
     def parseCalendarInterval(str:String) : CalendarInterval = IntervalUtils.stringToInterval(UTF8String.fromString(str))
@@ -112,11 +122,64 @@ object SparkShim {
 
     def functionRegistry(spark:SparkSession) : FunctionRegistry = spark.sessionState.functionRegistry
 
-    def createView(table:TableIdentifier, select:String, plan:LogicalPlan, allowExisting:Boolean, replace:Boolean) : CreateViewCommand = {
+    def newCreateViewCommand(table:TableIdentifier, select:String, plan:LogicalPlan, allowExisting:Boolean, replace:Boolean) : CreateViewCommand = {
         CreateViewCommand(table, Nil, None, Map(), Some(select), plan, allowExisting, replace, SparkShim.PersistedView, isAnalyzed=true)
     }
-    def alterView(table:TableIdentifier, select:String, plan:LogicalPlan) : AlterViewAsCommand = {
+    def newAlterViewCommand(table:TableIdentifier, select:String, plan:LogicalPlan) : AlterViewAsCommand = {
         AlterViewAsCommand(table, select, plan, isAnalyzed=true)
+    }
+    def newCreateDatabaseCommand(database:String, catalog:String, path:Option[String], comment:Option[String], ignoreIfExists:Boolean) : CreateDatabaseCommand = {
+        try {
+            CreateDatabaseCommand(database, ignoreIfExists, path, comment, Map())
+        }
+        catch {
+            case _:NoSuchMethodError | _:NoSuchMethodException =>
+                logger.warn("Falling back to reflection for constructing CreateDatabaseCommand instance")
+                Reflection.construct(classOf[CreateDatabaseCommand], Map("databaseName" -> database, "catalog" -> catalog, "ifNotExists" -> ignoreIfExists, "path" -> path, "comment" -> comment))
+        }
+    }
+    def newCatalogTable(
+        identifier: TableIdentifier,
+        tableType: CatalogTableType,
+        storage: CatalogStorageFormat,
+        schema: StructType,
+        provider: Option[String] = None,
+        partitionColumnNames: Seq[String] = Seq.empty,
+        bucketSpec: Option[BucketSpec] = None,
+        properties: Map[String, String] = Map.empty,
+        comment: Option[String] = None) : CatalogTable = {
+        try {
+            CatalogTable(
+                identifier = identifier,
+                tableType = tableType,
+                storage = storage,
+                schema = schema,
+                provider = provider,
+                partitionColumnNames = partitionColumnNames,
+                bucketSpec = bucketSpec,
+                properties = properties,
+                comment = comment
+            )
+        }
+        catch {
+            case _:NoSuchMethodError | _:NoSuchMethodException =>
+                logger.warn("Falling back to reflection for constructing CatalogTable instance")
+                Reflection.construct(classOf[CatalogTable], Map(
+                    "identifier" -> identifier,
+                    "tableType" -> tableType,
+                    "storage" -> storage,
+                    "schema" -> schema,
+                    "provider" -> provider,
+                    "partitionColumnNames" -> partitionColumnNames,
+                    "bucketSpec" -> bucketSpec,
+                    "createTime" -> System.currentTimeMillis,
+                    "lastAccessTime" -> -1L,
+                    "properties" -> properties,
+                    "comment" -> comment,
+                    "tracksPartitionsInCatalog" -> false,
+                    "schemaPreservesCase" -> true
+                ))
+        }
     }
 
     def createConnectionFactory(dialect: JdbcDialect, options: JDBCOptions) :  Int => Connection = {

@@ -22,6 +22,7 @@ import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
@@ -168,7 +169,7 @@ object DeltaUtils {
 
         // Configure catalog table by assembling all options
         val tableByPath = table.isEmpty
-        val catalogTable = CatalogTable(
+        val catalogTable = SparkShim.newCatalogTable(
             identifier = tableIdentifier,
             tableType = if (location.nonEmpty) CatalogTableType.EXTERNAL else CatalogTableType.MANAGED,
             storage = CatalogStorageFormat(

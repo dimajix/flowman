@@ -111,7 +111,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
       * Creates a new database
       */
     @throws[DatabaseAlreadyExistsException]
-    def createDatabase(database:String, ignoreIfExists:Boolean) : Unit = {
+    def createDatabase(database:String, catalog:String, ignoreIfExists:Boolean) : Unit = {
         require(database != null && database.nonEmpty)
 
         val exists = databaseExists(database)
@@ -121,7 +121,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
         if (!exists) {
             logger.info(s"Creating Hive database $database")
-            val cmd = CreateDatabaseCommand(database, ignoreIfExists, None, None, Map())
+            val cmd = SparkShim.newCreateDatabaseCommand(database, catalog, None, None, ignoreIfExists)
             cmd.run(spark)
         }
     }
@@ -664,7 +664,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             logger.info(s"Creating Hive view $table")
 
             val plan = spark.sql(select).queryExecution.analyzed
-            val cmd = SparkShim.createView(table.toSpark, select, plan, false, false)
+            val cmd = SparkShim.newCreateViewCommand(table.toSpark, select, plan, false, false)
             cmd.run(spark)
 
             // Publish view to external catalog
@@ -680,7 +680,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         logger.info(s"Redefining Hive view $table")
 
         val plan = spark.sql(select).queryExecution.analyzed
-        val cmd = SparkShim.alterView(table.toSpark, select, plan)
+        val cmd = SparkShim.newAlterViewCommand(table.toSpark, select, plan)
         cmd.run(spark)
 
         // Publish view to external catalog

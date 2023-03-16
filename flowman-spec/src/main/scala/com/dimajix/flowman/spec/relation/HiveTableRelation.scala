@@ -463,7 +463,7 @@ case class HiveTableRelation(
             .orElse(defaultStorage.serde)
 
         // Configure catalog table by assembling all options
-        val catalogTable = CatalogTable(
+        val catalogTable = SparkShim.newCatalogTable(
             identifier = table.toSpark,
             tableType =
                 if (external)

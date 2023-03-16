@@ -55,6 +55,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-359: Update jline dependency
 * github-357: Spark session should not be shut down in Databricks environment
 * github-360: Logging should exclude more Databricks specific stuff
+* github-361: Work around low level API differences in DataBricks
 
 ### Breaking changes
 

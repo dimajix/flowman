@@ -34,7 +34,8 @@ import com.dimajix.flowman.model.Target
 
 case class HiveDatabaseTarget(
     instanceProperties:Target.Properties,
-    database: String
+    database: String,
+    catalog: String
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[HiveDatabaseTarget])
 
@@ -82,7 +83,7 @@ case class HiveDatabaseTarget(
         require(executor != null)
 
         logger.info(s"Creating Hive database '$database'")
-        executor.catalog.createDatabase(database, true)
+        executor.catalog.createDatabase(database, catalog, true)
     }
 
     /**
@@ -117,11 +118,13 @@ case class HiveDatabaseTarget(
 
 class HiveDatabaseTargetSpec extends TargetSpec {
     @JsonProperty(value="database", required=true) private var database:String = _
+    @JsonProperty(value="catalog", required=false) private var catalog:String = ""
 
     override def instantiate(context: Context, properties:Option[Target.Properties] = None): HiveDatabaseTarget = {
         HiveDatabaseTarget(
             instanceProperties(context, properties),
-            context.evaluate(database)
+            context.evaluate(database),
+            context.evaluate(catalog)
         )
     }
 }

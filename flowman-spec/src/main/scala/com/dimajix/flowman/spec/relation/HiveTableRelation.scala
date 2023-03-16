@@ -29,7 +29,6 @@ import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
-import org.apache.spark.sql.hive.execution.InsertIntoHiveTable
 import org.apache.spark.sql.internal.HiveSerDe
 import org.apache.spark.sql.types.CharType
 import org.apache.spark.sql.types.StringType
@@ -52,8 +51,6 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableType
-import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY
-import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -235,7 +232,7 @@ case class HiveTableRelation(
             val query = df.queryExecution.logical
 
             val overwrite = mode == OutputMode.OVERWRITE || mode == OutputMode.OVERWRITE_DYNAMIC
-            val cmd = InsertIntoHiveTable(
+            val cmd = SparkShim.newInsertIntoHiveTable(
                 table = hiveTable,
                 partition = partitionSpec.toMap.mapValues(v => Some(v.toString)),
                 query = query,

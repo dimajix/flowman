@@ -28,7 +28,10 @@ import org.apache.spark.sql.catalyst.analysis.ViewType
 import org.apache.spark.sql.catalyst.catalog.BucketSpec
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
+import org.apache.spark.sql.catalyst.catalog.CatalogTablePartition
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
+import org.apache.spark.sql.catalyst.catalog.CatalogTypes.TablePartitionSpec
+import org.apache.spark.sql.catalyst.catalog.SessionCatalog
 import org.apache.spark.sql.catalyst.expressions.Alias
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.expressions.NamedExpression
@@ -47,6 +50,7 @@ import org.apache.spark.sql.execution.datasources.FileFormat
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.execution.datasources.jdbc.JdbcUtils
 import org.apache.spark.sql.execution.datasources.v2.FileDataSourceV2
+import org.apache.spark.sql.hive.execution.InsertIntoHiveTable
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.jdbc.JdbcDialect
 import org.apache.spark.sql.sources.RelationProvider
@@ -120,6 +124,22 @@ object SparkShim {
     def newCreateDatabaseCommand(database: String, catalog: String, path: Option[String], comment: Option[String], ignoreIfExists: Boolean): CreateDatabaseCommand = {
         CreateDatabaseCommand(database, ignoreIfExists, path, comment, Map())
     }
+    def newInsertIntoHiveTable(
+        table: CatalogTable,
+        partition: Map[String, Option[String]],
+        query: LogicalPlan,
+        overwrite: Boolean,
+        ifPartitionNotExists: Boolean,
+        outputColumnNames: Seq[String]): InsertIntoHiveTable = {
+        InsertIntoHiveTable(
+            table,
+            partition,
+            query,
+            overwrite,
+            ifPartitionNotExists,
+            outputColumnNames
+        )
+    }
     def newCatalogTable(
         identifier: TableIdentifier,
         tableType: CatalogTableType,
@@ -144,6 +164,10 @@ object SparkShim {
     }
     def withNewSchema(table: CatalogTable, schema: StructType): CatalogTable = {
         table.copy(schema = schema)
+    }
+
+    def listPartitions(catalog: SessionCatalog, tableName: TableIdentifier, partialSpec: Option[TablePartitionSpec] = None): Seq[CatalogTablePartition] = {
+        catalog.listPartitions(tableName, partialSpec)
     }
 
     def createConnectionFactory(dialect: JdbcDialect, options: JDBCOptions) :  Int => Connection = {

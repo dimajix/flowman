@@ -20,6 +20,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.util.ReflectionUtilTest.CaseClass
+import com.dimajix.util.ReflectionUtilTest.DerivedClass
+import com.dimajix.util.ReflectionUtilTest.ExtraApply
 import com.dimajix.util.ReflectionUtilTest.OtherStuff
 import com.dimajix.util.ReflectionUtilTest.Stuff
 
@@ -44,13 +46,38 @@ object ReflectionUtilTest {
     case class Stuff(other:OtherStuff) {
 
     }
+
     case class CaseClass(
         int:Int,
         str:String,
         seq:Seq[Int],
         map:Map[String,Boolean],
         stuff:Stuff
+    ) {
+        def concat(a1:String, a2:Int) : String = a1 + a2
+        def nothing(a1:String, a2:Int) : Unit = {}
+        def exception(a1:String) : Unit = throw new IllegalArgumentException(a1)
+    }
+
+    object ExtraApply {
+        def apply(xyz:String) : ExtraApply = ExtraApply(23, xyz, Seq.empty, Map.empty)
+    }
+    case class ExtraApply(
+        int: Int,
+        str: String,
+        seq: Seq[Int],
+        map: Map[String, Boolean]
     )
+
+    class BaseClass {
+        def concat(a1: String, a2: Int): String = a1 + a2
+        def nothing(a1: String, a2: Int): Unit = {}
+        def exception(a1: String): Unit = throw new IllegalArgumentException(a1)
+    }
+    class DerivedClass extends BaseClass {
+        override def exception(a1: String): Unit = {}
+        def concat2(a1: String, a2:String): String = { a1 + a2 }
+    }
 }
 
 class ReflectionUtilTest extends AnyFlatSpec with Matchers {
@@ -63,11 +90,14 @@ class ReflectionUtilTest extends AnyFlatSpec with Matchers {
         Reflection.construct(classOf[CaseClass], Map("int" -> 12, "str" -> "lala")) should be (CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
         Reflection.construct(classOf[CaseClass], Map("int" -> 12)) should be (CaseClass(12, "", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
     }
-    it should "throw an exception for an unknown parameter" in {
-        an[IllegalArgumentException] should be thrownBy(Reflection.construct(classOf[CaseClass], Map("int2" -> 12)))
+    it should "accept unknown parameters" in {
+        Reflection.construct(classOf[CaseClass], Map("int" -> 12, "int2" -> 24)) should be (CaseClass(12, "", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty))))
     }
     it should "throw an exception for a missing fundamental type" in {
-        an[IllegalArgumentException] should be thrownBy (Reflection.construct(classOf[CaseClass], Map("str" -> "lala")))
+        an[NoSuchMethodError] should be thrownBy (Reflection.construct(classOf[CaseClass], Map("str" -> "lala")))
+    }
+    it should "also use addition apply methods" in {
+        Reflection.construct(classOf[ExtraApply], Map("xyz" -> "lala")) should be (ExtraApply(23, "lala", Seq.empty, Map.empty))
     }
 
     "Reflection.copy" should "work" in {
@@ -77,6 +107,35 @@ class ReflectionUtilTest extends AnyFlatSpec with Matchers {
     }
     it should "throw an exception for an unknown parameter" in {
         val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
-        an[IllegalArgumentException] should be thrownBy(Reflection.copy(obj, Map("int2" -> 12)))
+        an[NoSuchMethodError] should be thrownBy(Reflection.copy(obj, Map("int2" -> 12)))
+    }
+
+    "Reflection.invoke" should "work" in {
+        val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
+        Reflection.invoke(obj, "concat", classOf[String], Map("a1" -> "a1", "a2" -> 2)) should be ("a12")
+        Reflection.invoke(obj, "nothing", classOf[Unit], Map("a1" -> "a1", "a2" -> 2))
+    }
+
+    it should "work with too many parameters" in {
+        val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
+        Reflection.invoke(obj, "concat", classOf[String], Map("a1" -> "a1", "a2" -> 2, "a3" -> 27)) should be ("a12")
+    }
+
+    it should "throw an exception for a missing parameter" in {
+        val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
+        an[NoSuchMethodError] should be thrownBy(Reflection.invoke(obj, "concat", classOf[String], Map("a1" -> "a1")))
+    }
+
+    it should "forward the right exception" in {
+        val obj = CaseClass(12, "lala", Seq.empty, Map.empty, Stuff(new OtherStuff(Map.empty)))
+        an[IllegalArgumentException] should be thrownBy (Reflection.invoke(obj, "exception", classOf[String], Map("a1" -> "a1")))
+    }
+
+    it should "work with derived classes" in {
+        val obj = new DerivedClass
+        Reflection.invoke(obj, "concat", classOf[String], Map("a1" -> "a1", "a2" -> 2)) should be("a12")
+        Reflection.invoke(obj, "nothing", classOf[Unit], Map("a1" -> "a1", "a2" -> 2))
+        noException should be thrownBy (Reflection.invoke(obj, "exception", classOf[String], Map("a1" -> "a1")))
+        Reflection.invoke(obj, "concat2", classOf[String], Map("a1" -> "a1", "a2" -> "2")) should be("a12")
     }
 }

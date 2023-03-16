@@ -306,7 +306,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
             // Delete all partitions
             if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
-                catalog.listPartitions(table.toSpark).foreach { p =>
+                SparkShim.listPartitions(catalog, table.toSpark).foreach { p =>
                     val location = new Path(p.location)
                     val fs = location.getFileSystem(hadoopConf)
                     HadoopUtils.deleteLocation(fs, location)
@@ -342,7 +342,8 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
         // First drop partitions
         if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
-            dropPartitions(table, catalog.listPartitions(table.toSpark).map(p => PartitionSpec(p.spec)))
+            val partitions = SparkShim.listPartitions(catalog, table.toSpark)
+            dropPartitions(table, partitions.map(p => PartitionSpec(p.spec)))
         }
 
         // Then cleanup directory from any remainders
@@ -431,7 +432,8 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
     def partitionExists(table:TableIdentifier, partition:PartitionSpec) : Boolean = {
         require(table != null)
         require(partition != null)
-        catalog.listPartitions(table.toSpark, Some(partition.mapValues(_.toString).toMap).filter(_.nonEmpty)).nonEmpty
+        val filter = Some(partition.mapValues(_.toString).toMap).filter(_.nonEmpty)
+        SparkShim.listPartitions(catalog, table.toSpark, filter).nonEmpty
     }
 
     /**

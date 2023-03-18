@@ -16,47 +16,31 @@
 
 package com.dimajix.flowman.tools.rexec.relation;
 
-import lombok.val;
-import org.kohsuke.args4j.Argument;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static com.dimajix.common.ExceptionUtils.isFatal;
-import static com.dimajix.common.ExceptionUtils.reasons;
-
 import com.dimajix.flowman.kernel.KernelClient;
 import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.Operation;
+import com.dimajix.flowman.kernel.model.Relation;
 import com.dimajix.flowman.kernel.model.RelationIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
-import com.dimajix.flowman.kernel.model.Relation;
 import com.dimajix.flowman.tools.rexec.Command;
+import lombok.val;
+import org.kohsuke.args4j.Argument;
 
 
 class InspectCommand extends Command {
-    private final Logger logger = LoggerFactory.getLogger(InspectCommand.class);
-
     @Argument(required = true, usage = "specifies relation to inspect", metaVar = "<relation>")
     String relation = "";
 
     @Override
     public Status execute(KernelClient kernel, SessionClient session) {
-        try {
-            val relation = session.getRelation(RelationIdentifier.ofString(this.relation));
-            System.out.println("Relation:");
-            System.out.println("    name: " + relation.getName());
-            System.out.println("    kind: " + relation.getKind());
-            printDependencies(relation, Operation.CREATE);
-            printDependencies(relation, Operation.READ);
-            printDependencies(relation, Operation.WRITE);
-            return Status.SUCCESS;
-        }
-        catch (Throwable e) {
-            if (isFatal(e))
-                throw e;
-            logger.error("Error inspecting relation '" + relation + "':\n  "+ reasons(e));
-            return Status.FAILED;
-        }
+        val relation = session.getRelation(RelationIdentifier.ofString(this.relation));
+        System.out.println("Relation:");
+        System.out.println("    name: " + relation.getName());
+        System.out.println("    kind: " + relation.getKind());
+        printDependencies(relation, Operation.CREATE);
+        printDependencies(relation, Operation.READ);
+        printDependencies(relation, Operation.WRITE);
+        return Status.SUCCESS;
     }
     private void printDependencies(Relation relation, Operation op) {
         System.out.println("  Requires - " + op + ":");

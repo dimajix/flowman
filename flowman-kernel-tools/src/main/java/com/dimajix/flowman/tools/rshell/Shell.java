@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import com.dimajix.flowman.kernel.model.Context;
 import dev.dirs.ProjectDirectories;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -176,12 +177,24 @@ public class Shell extends RemoteTool {
         writer.println("\nType in 'help' for getting help");
 
         // REPL-loop
-        while (!shouldExit) {
+        boolean error = false;
+        while (!shouldExit && !error) {
             val cmd = new ParsedCommand();
             try {
                 System.err.flush();
                 System.out.flush();
-                val prompt = "flowman:" + this.getContext() + "> ";
+                String context;
+                try {
+                    context = this.getContext();
+                }
+                catch (Throwable e) {
+                    writer.println("Error communicating with kernel:\n  " + reasons(e));
+                    writer.flush();
+                    error = true;
+                    break;
+                }
+
+                val prompt = "flowman:" + context + "> ";
 
                 console.readLine(prompt);
                 val args = console.getParsedLine().words().stream().filter(w -> !w.trim().isEmpty()).collect(Collectors.toList());
@@ -193,7 +206,7 @@ public class Shell extends RemoteTool {
             catch (StatusRuntimeException ex) {
                 writer.println("Error when communicating with kernel:\n  " + reasons(ex));
                 writer.flush();
-                shouldExit = true;
+                error = true;
             }
             catch (UserInterruptException ex) {
             }
@@ -227,7 +240,7 @@ public class Shell extends RemoteTool {
             kernel.shutdown();
         }
 
-        return true;
+        return !error;
     }
 
     public void exit() {

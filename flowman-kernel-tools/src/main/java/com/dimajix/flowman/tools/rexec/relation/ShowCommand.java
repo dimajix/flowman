@@ -16,27 +16,18 @@
 
 package com.dimajix.flowman.tools.rexec.relation;
 
-import lombok.val;
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.Option;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static com.dimajix.common.ExceptionUtils.isFatal;
-import static com.dimajix.common.ExceptionUtils.reasons;
-
 import com.dimajix.flowman.common.ParserUtils;
 import com.dimajix.flowman.kernel.KernelClient;
 import com.dimajix.flowman.kernel.SessionClient;
-import com.dimajix.flowman.kernel.model.MappingOutputIdentifier;
 import com.dimajix.flowman.kernel.model.RelationIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.tools.rexec.Command;
+import lombok.val;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.Option;
 
 
 public class ShowCommand extends Command {
-    private Logger logger = LoggerFactory.getLogger(ShowCommand.class);
-
     @Argument(index=0, usage="Specifies the relation to show", metaVar="<relation>", required=true)
     String relation = "";
     @Argument(index=1, usage="Specifies the columns to show as a comma separated list", metaVar="<columns>", required=false)
@@ -50,19 +41,11 @@ public class ShowCommand extends Command {
     @Override
     public Status execute(KernelClient kernel, SessionClient session) {
         val columns = ParserUtils.parseDelimitedList(this.columns);
-        try {
-            val identifier = RelationIdentifier.ofString(this.relation);
-            val partition = ParserUtils.parseDelimitedKeyValues(this.partition);
+        val identifier = RelationIdentifier.ofString(this.relation);
+        val partition = ParserUtils.parseDelimitedKeyValues(this.partition);
 
-            val df = session.readRelation(identifier, partition, columns, limit);
-            df.show();
-            return Status.SUCCESS;
-        }
-        catch (Throwable e) {
-            if (isFatal(e))
-                throw e;
-            logger.error("Error showing relation '" + relation + "':\n  "+ reasons(e));
-            return Status.FAILED;
-        }
+        val df = session.readRelation(identifier, partition, columns, limit);
+        df.show();
+        return Status.SUCCESS;
     }
 }

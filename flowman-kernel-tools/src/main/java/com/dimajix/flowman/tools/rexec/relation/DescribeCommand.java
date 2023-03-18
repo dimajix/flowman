@@ -16,27 +16,18 @@
 
 package com.dimajix.flowman.tools.rexec.relation;
 
-import lombok.val;
-import org.slf4j.Logger;
-
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.Option;
-import org.slf4j.LoggerFactory;
-
-import static com.dimajix.common.ExceptionUtils.isFatal;
-import static com.dimajix.common.ExceptionUtils.reasons;
-
 import com.dimajix.flowman.common.ParserUtils;
 import com.dimajix.flowman.kernel.KernelClient;
 import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.RelationIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.tools.rexec.Command;
+import lombok.val;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.Option;
 
 
 class DescribeCommand extends Command {
-    private final Logger logger = LoggerFactory.getLogger(DescribeCommand.class);
-
     @Option(name = "-s", aliases={"--spark"}, usage = "use Spark to derive final schema")
     boolean useSpark = false;
     @Argument(usage = "specifies the relation to describe", metaVar = "<relation>", required = true)
@@ -46,18 +37,10 @@ class DescribeCommand extends Command {
 
     @Override
     public Status execute(KernelClient kernel, SessionClient session) {
-        try {
-            val identifier = RelationIdentifier.ofString(this.relation);
-            val partition = ParserUtils.parseDelimitedKeyValues(this.partition);
-            val schema = session.describeRelation(identifier, partition, useSpark);
-            schema.printTree();
-            return Status.SUCCESS;
-        }
-        catch (Throwable e) {
-            if (isFatal(e))
-                throw e;
-            logger.error("Error describing relation '" + relation + "':\n  "+ reasons(e));
-            return Status.FAILED;
-        }
+        val identifier = RelationIdentifier.ofString(this.relation);
+        val partition = ParserUtils.parseDelimitedKeyValues(this.partition);
+        val schema = session.describeRelation(identifier, partition, useSpark);
+        schema.printTree();
+        return Status.SUCCESS;
     }
 }

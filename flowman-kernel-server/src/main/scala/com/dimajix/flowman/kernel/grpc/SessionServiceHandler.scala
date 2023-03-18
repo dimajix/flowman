@@ -750,17 +750,23 @@ final class SessionServiceHandler(
                 val ex = ev.getThrowable
                 if (ex != null)
                     result.setException(ExceptionUtils.wrap(ex, false))
-                responseObserver.onNext(result.build())
+                responseObserver.synchronized {
+                    responseObserver.onNext(result.build())
+                }
             })
         }
         catch {
             case e@(_: StatusException | _: StatusRuntimeException) =>
                 logger.error(s"Exception during execution of RPC call ${getClass.getSimpleName}.subscribeLog:\n  ${reasons(e)}")
-                responseObserver.onError(e)
+                responseObserver.synchronized {
+                    responseObserver.onError(e)
+                }
             case NonFatal(t) =>
                 logger.error(s"Exception during execution of RPC call ${getClass.getSimpleName}.subscribeLog:\n  ${reasons(t)}")
                 val e = ExceptionUtils.asStatusException(Status.INTERNAL, t, true)
-                responseObserver.onError(e)
+                responseObserver.synchronized {
+                    responseObserver.onError(e)
+                }
         }
     }
 

@@ -58,6 +58,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-361: Work around low level API differences in DataBricks
 * github-363: HiveDatabaseTarget should accept an optional location
 * github-311: Create integration test for EMR
+* github-362: Upgrade EMR to 6.10
 
 ### Breaking changes
 

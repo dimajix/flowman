@@ -69,7 +69,7 @@
             </properties>
         </profile>
         <profile>
-            <id>EMR-6.9</id>
+            <id>EMR-6.10</id>
             <properties>
                 <spark-mssql-connector.group>com.solytic</spark-mssql-connector.group>
                 <spark-mssql-connector.version>1.4.0</spark-mssql-connector.version>

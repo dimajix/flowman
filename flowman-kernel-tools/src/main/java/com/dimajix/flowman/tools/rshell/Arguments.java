@@ -42,7 +42,7 @@ class Arguments {
     @Option(name = "-XX", aliases = {"--debug"}, usage = "Produce execution output at debug level.")
     boolean debugLogging = false;
     @Option(name = "-k" , aliases = {"--kernel"}, usage = "URI to Flowman kernel", metaVar = "<uri>")
-    String kernel = "grpc://localhost:8088/default";
+    String kernel = "grpc://localhost:8088/";
     @Option(name = "--conf", usage = "set a Flowman or Spark config", metaVar = "<key=value>")
     String[] config = new String[0];
     @Option(name = "--info", usage = "dump configuration information")

@@ -16,9 +16,10 @@
 
 package com.dimajix.flowman.kernel.service
 
+import java.util.UUID
+
 import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.storage.Workspace
 
 
@@ -27,22 +28,25 @@ class SimpleWorkspaceManager(workspace:Workspace) extends WorkspaceManager {
 
     // logger.info(s"Initialized SimpleWorkspaceManager at '$root'")
 
-    override def list(): Seq[Workspace] = {
-        Seq(workspace)
+    override def list(): Seq[(String,Workspace)] = {
+        Seq(workspace.name -> workspace)
     }
 
-    override def createWorkspace(name: String): Workspace = {
+    override def createWorkspace(id: String, name:String, clientId:Option[UUID]): (String,Workspace) = {
         throw new UnsupportedOperationException("Creating new Workspaces is not supported for the SimpleWorkspaceManager")
     }
 
-    override def deleteWorkspace(name: String): Unit = {
+    override def deleteWorkspace(id: String): Unit = {
         throw new UnsupportedOperationException("Deleting an existing Workspaces is not supported for the SimpleWorkspaceManager")
     }
 
 
-    override def getWorkspace(name: String): Workspace = {
-        if (name != workspace.name)
-            throw new IllegalArgumentException(s"Workspace '$name' does not exists")
-        workspace
+    override def getWorkspace(id: String): (String,Workspace) = {
+        if (id != workspace.name)
+            throw new IllegalArgumentException(s"Workspace '$id' does not exists")
+        id -> workspace
+    }
+
+    override def removeClientWorkspaces(clientId: UUID): Unit = {
     }
 }

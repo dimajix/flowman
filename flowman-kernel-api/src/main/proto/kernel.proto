@@ -6,14 +6,9 @@ option java_outer_classname = "KernelProto";
 
 package com.dimajix.flowman.kernel.kernel;
 
-import "logging.proto";
-
 
 message ShutdownRequest {}
 message ShutdownResponse {}
-
-
-message SubscribeLogRequest {}
 
 
 message NamespaceDetails {
@@ -54,6 +49,4 @@ service KernelService {
     rpc GetKernel(GetKernelRequest) returns(GetKernelResponse);
 
     rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
-
-    rpc SubscribeLog(SubscribeLogRequest) returns(stream LogEvent);
 }

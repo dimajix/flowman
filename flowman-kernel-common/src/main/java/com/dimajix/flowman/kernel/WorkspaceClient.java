@@ -39,12 +39,12 @@ public final class WorkspaceClient extends AbstractClient {
     private final ManagedChannel channel;
     private final WorkspaceServiceGrpc.WorkspaceServiceBlockingStub blockingStub;
     private final WorkspaceServiceGrpc.WorkspaceServiceStub asyncStub;
-    private final String workspaceName;
+    private final String workspaceId;
 
 
-    public WorkspaceClient(ManagedChannel channel, String workspaceName) {
+    public WorkspaceClient(ManagedChannel channel, String workspaceId) {
         this.channel = channel;
-        this.workspaceName = workspaceName;
+        this.workspaceId = workspaceId;
         blockingStub = WorkspaceServiceGrpc.newBlockingStub(channel);
         asyncStub = WorkspaceServiceGrpc.newStub(channel);
     }
@@ -59,11 +59,11 @@ public final class WorkspaceClient extends AbstractClient {
         return channel.isTerminated();
     }
 
-    public String getWorkspaceName() { return workspaceName; }
+    public String getWorkspaceId() { return workspaceId; }
 
     public void cleanWorkspace() {
         val request = CleanWorkspaceRequest.newBuilder()
-            .setWorkspaceName(workspaceName)
+            .setWorkspaceId(workspaceId)
             .build();
         call(() -> blockingStub.cleanWorkspace(request));
     }
@@ -76,7 +76,7 @@ public final class WorkspaceClient extends AbstractClient {
 
         val root = localDirectory.getAbsoluteFile().getCanonicalFile();
         val rootPath = root.toPath();
-        logger.info("Uploading local workspace directory '" + rootPath + "' to kernel workspace '" + workspaceName + "'...");
+        logger.info("Uploading local directory '" + rootPath + "' to workspace '" + workspaceId + "'...");
 
         val files = Files.fileTraverser().breadthFirst(root);
         val iter = StreamSupport.stream(files.spliterator(), false)
@@ -89,7 +89,7 @@ public final class WorkspaceClient extends AbstractClient {
         val filename = root.relativize(src.toPath()).toString();
         logger.debug("Uploading file '" + src + "' as '" + filename + "' to kernel...");
         val result = UploadFilesRequest.newBuilder()
-                .setWorkspaceName(workspaceName)
+                .setWorkspaceId(workspaceId)
                 .setFileName(filename);
         if (src.isDirectory()) {
             result.setFileType(FileType.DIRECTORY);

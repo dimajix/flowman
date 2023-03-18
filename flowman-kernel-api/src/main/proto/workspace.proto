@@ -10,14 +10,16 @@ import "common.proto";
 
 
 message WorkspaceDetails {
-    string name = 1;
-    repeated string projects = 2;
+    string id = 1;
+    optional string name = 2;
+    repeated string projects = 3;
 }
 
 
 message CreateWorkspaceRequest {
-    string name = 1;
-    bool ifNotExists = 2;
+    optional string id = 1;
+    optional string name = 2;
+    bool ifNotExists = 3;
 }
 message CreateWorkspaceResponse {
     WorkspaceDetails workspace = 1;
@@ -31,26 +33,26 @@ message ListWorkspacesResponse {
 }
 
 message GetWorkspaceRequest {
-    string workspaceName = 1;
+    string workspaceId = 1;
 }
 message GetWorkspaceResponse {
     WorkspaceDetails workspace = 1;
 }
 
 message DeleteWorkspaceRequest {
-    string workspaceName = 1;
+    string workspaceId = 1;
 }
 message DeleteWorkspaceResponse {
 }
 
 message CleanWorkspaceRequest {
-    string workspaceName = 1;
+    string workspaceId = 1;
 }
 message CleanWorkspaceResponse {
 }
 
 message UploadFilesRequest {
-    string workspaceName = 1;
+    string workspaceId = 1;
     string fileName = 2;
     FileType fileType = 3;
     optional bytes fileContent = 4;

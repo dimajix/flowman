@@ -29,7 +29,6 @@ import com.dimajix.flowman.SCALA_BUILD_VERSION
 import com.dimajix.flowman.SCALA_VERSION
 import com.dimajix.flowman.SPARK_BUILD_VERSION
 import com.dimajix.flowman.common.ToolConfig
-import com.dimajix.flowman.kernel.proto.LogEvent
 import com.dimajix.flowman.kernel.proto.kernel.GetKernelRequest
 import com.dimajix.flowman.kernel.proto.kernel.GetKernelResponse
 import com.dimajix.flowman.kernel.proto.kernel.GetNamespaceRequest
@@ -39,7 +38,6 @@ import com.dimajix.flowman.kernel.proto.kernel.KernelServiceGrpc
 import com.dimajix.flowman.kernel.proto.kernel.NamespaceDetails
 import com.dimajix.flowman.kernel.proto.kernel.ShutdownRequest
 import com.dimajix.flowman.kernel.proto.kernel.ShutdownResponse
-import com.dimajix.flowman.kernel.proto.kernel.SubscribeLogRequest
 import com.dimajix.flowman.kernel.service.SessionManager
 import com.dimajix.flowman.plugin.PluginManager
 import com.dimajix.hadoop.HADOOP_VERSION
@@ -104,8 +102,4 @@ final class KernelServiceHandler(sessionManager: SessionManager, pluginManager: 
             ShutdownResponse.newBuilder().build()
         }
     }
-
-    /**
-     */
-    override def subscribeLog(request: SubscribeLogRequest, responseObserver: StreamObserver[LogEvent]): Unit = super.subscribeLog(request, responseObserver)
 }

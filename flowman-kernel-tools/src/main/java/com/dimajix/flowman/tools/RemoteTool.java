@@ -16,10 +16,10 @@
 
 package com.dimajix.flowman.tools;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import lombok.val;
 import org.slf4j.LoggerFactory;
@@ -51,15 +51,15 @@ public class RemoteTool {
         _kernel.shutdown();
     }
 
-    private static String extractWorkspace(URI uri) {
+    private static Optional<String> extractWorkspace(URI uri) {
         String path = uri.getPath().trim();
         while (path.length() > 0 && path.charAt(0) == '/')
             path = path.substring(1);
 
         if (path.isEmpty())
-            return "default";
+            return Optional.empty();
         else
-            return path;
+            return Optional.of(path);
     }
 
     public WorkspaceClient  getWorkspace() { return _workspace; }
@@ -79,8 +79,13 @@ public class RemoteTool {
         return prefix + suffix;
     }
 
-    public WorkspaceClient openWorkspace(String workspaceName)  {
-        _workspace = _kernel.createWorkspace(workspaceName, true);
+    public WorkspaceClient openWorkspace(Optional<String> workspaceName)  {
+        if (workspaceName.isPresent()) {
+            _workspace = _kernel.createWorkspace(workspaceName.get(), true);
+        }
+        else {
+            _workspace = _kernel.createWorkspace();
+        }
         return _workspace;
     }
 
@@ -90,7 +95,7 @@ public class RemoteTool {
             isAbsolute ?
                 _kernel.createSession(projectLocation, config, environment, profiles)
             :
-                _kernel.createSession(_workspace.getWorkspaceName(), projectLocation, config, environment, profiles);
+                _kernel.createSession(_workspace.getWorkspaceId(), projectLocation, config, environment, profiles);
 
         if (_session != null) {
             _session.shutdown();

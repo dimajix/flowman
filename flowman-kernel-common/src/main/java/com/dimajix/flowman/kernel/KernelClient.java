@@ -16,17 +16,6 @@
 
 package com.dimajix.flowman.kernel;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import io.grpc.ManagedChannel;
-import lombok.val;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.dimajix.flowman.kernel.model.Kernel;
 import com.dimajix.flowman.kernel.model.Namespace;
 import com.dimajix.flowman.kernel.proto.kernel.GetKernelRequest;
@@ -41,6 +30,14 @@ import com.dimajix.flowman.kernel.proto.workspace.DeleteWorkspaceRequest;
 import com.dimajix.flowman.kernel.proto.workspace.GetWorkspaceRequest;
 import com.dimajix.flowman.kernel.proto.workspace.ListWorkspacesRequest;
 import com.dimajix.flowman.kernel.proto.workspace.WorkspaceServiceGrpc;
+import io.grpc.ManagedChannel;
+import lombok.val;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 public final class KernelClient extends AbstractClient {
@@ -120,9 +117,9 @@ public final class KernelClient extends AbstractClient {
 
     }
 
-    public WorkspaceClient getWorkspace(String workspaceName) {
+    public WorkspaceClient getWorkspace(String workspaceId) {
         val request = GetWorkspaceRequest.newBuilder()
-            .setWorkspaceName(workspaceName)
+            .setWorkspaceId(workspaceId)
             .build();
         val result = call(() -> workspaceStub.getWorkspace(request));
         val ws = result.getWorkspace();
@@ -132,17 +129,25 @@ public final class KernelClient extends AbstractClient {
     public WorkspaceClient createWorkspace(String workspaceName, boolean ifNotExists) {
         logger.info("Creating new workspace '" + workspaceName + "'");
         val request = CreateWorkspaceRequest.newBuilder()
+            .setId(workspaceName)
             .setName(workspaceName)
             .setIfNotExists(ifNotExists)
             .build();
         val result = call(() -> workspaceStub.createWorkspace(request));
         return getWorkspace(result.getWorkspace().getName());
     }
+    public WorkspaceClient createWorkspace() {
+        logger.info("Creating new unnamed workspace");
+        val request = CreateWorkspaceRequest.newBuilder()
+            .build();
+        val result = call(() -> workspaceStub.createWorkspace(request));
+        return getWorkspace(result.getWorkspace().getName());
+    }
 
-    public void deleteWorkspace(String workspaceName) {
-        logger.info("Deleting workspace '" + workspaceName + "'");
+    public void deleteWorkspace(String workspaceId) {
+        logger.info("Deleting workspace '" + workspaceId + "'");
         val request = DeleteWorkspaceRequest.newBuilder()
-            .setWorkspaceName(workspaceName)
+            .setWorkspaceId(workspaceId)
             .build();
         call(() -> workspaceStub.deleteWorkspace(request));
     }

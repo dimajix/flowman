@@ -16,12 +16,15 @@
 
 package com.dimajix.flowman.kernel.grpc
 
+import java.util.UUID
+
 import scala.collection.JavaConverters._
 
 import io.grpc.stub.StreamObserver
 import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.kernel.grpc.ClientIdExtractor.CLIENT_ID
 import com.dimajix.flowman.kernel.proto.FileType
 import com.dimajix.flowman.kernel.proto.Workspace
 import com.dimajix.flowman.kernel.proto.workspace.CleanWorkspaceRequest
@@ -41,23 +44,33 @@ import com.dimajix.flowman.kernel.proto.workspace.WorkspaceServiceGrpc
 import com.dimajix.flowman.kernel.service.WorkspaceManager
 
 
-final class WorkspaceServiceHandler(manager:WorkspaceManager) extends WorkspaceServiceGrpc.WorkspaceServiceImplBase with ServiceHandler {
+final class WorkspaceServiceHandler(
+    workspaceManager:WorkspaceManager
+) extends WorkspaceServiceGrpc.WorkspaceServiceImplBase with ServiceHandler with ClientWatcher{
     override protected final val logger = LoggerFactory.getLogger(classOf[WorkspaceServiceHandler])
+
+    override def clientDisconnected(clientId: UUID): Unit = {
+        workspaceManager.removeClientWorkspaces(clientId)
+    }
+
     /**
      */
     override def createWorkspace(request: CreateWorkspaceRequest, responseObserver: StreamObserver[CreateWorkspaceResponse]): Unit = {
-        respondTo("getProject", responseObserver) {
-            val name = request.getName
-            val ws = {
-                if (request.getIfNotExists && manager.list().exists(_.name == name)) {
-                    manager.getWorkspace(name)
+        respondTo("createWorkspace", responseObserver) {
+            val hasId = request.hasId && request.getId.nonEmpty
+            val clientId = if (hasId) None else Some(CLIENT_ID.get())
+            val id = if (request.hasId) request.getId else UUID.randomUUID().toString
+            val (wid,ws) = {
+                if (hasId && request.getIfNotExists && workspaceManager.list().exists(_._1 == id)) {
+                    workspaceManager.getWorkspace(id)
                 }
                 else {
-                    manager.createWorkspace(name)
+                    workspaceManager.createWorkspace(id, request.getName, clientId)
                 }
             };
             CreateWorkspaceResponse.newBuilder()
                 .setWorkspace(WorkspaceDetails.newBuilder()
+                    .setId(wid)
                     .setName(ws.name)
                     .addAllProjects(ws.listProjects().map(_.name).asJava)
                     .build()
@@ -70,8 +83,8 @@ final class WorkspaceServiceHandler(manager:WorkspaceManager) extends WorkspaceS
      */
     override def listWorkspaces(request: ListWorkspacesRequest, responseObserver: StreamObserver[ListWorkspacesResponse]): Unit = {
         respondTo("listWorkspaces", responseObserver) {
-            val list = manager.list()
-            val ws = list.map(ws => Workspace.newBuilder().setName(ws.name).build())
+            val list = workspaceManager.list()
+            val ws = list.map { case(id,ws) => Workspace.newBuilder().setId(id).setName(ws.name).build() }
             ListWorkspacesResponse.newBuilder()
                 .addAllWorkspaces(ws.asJava)
                 .build()
@@ -82,10 +95,12 @@ final class WorkspaceServiceHandler(manager:WorkspaceManager) extends WorkspaceS
      */
     override def getWorkspace(request: GetWorkspaceRequest, responseObserver: StreamObserver[GetWorkspaceResponse]): Unit = {
         respondTo("getWorkspace", responseObserver) {
-            val ws = manager.getWorkspace(request.getWorkspaceName)
+            val id = request.getWorkspaceId
+            val (wid,ws) = workspaceManager.getWorkspace(id)
             GetWorkspaceResponse.newBuilder()
                 .setWorkspace(
                     WorkspaceDetails.newBuilder()
+                        .setId(wid)
                         .setName(ws.name)
                         .addAllProjects(ws.listProjects().map(_.name).asJava)
                         .build()
@@ -98,7 +113,7 @@ final class WorkspaceServiceHandler(manager:WorkspaceManager) extends WorkspaceS
      */
     override def deleteWorkspace(request: DeleteWorkspaceRequest, responseObserver: StreamObserver[DeleteWorkspaceResponse]): Unit = {
         respondTo("deleteWorkspace", responseObserver) {
-            manager.deleteWorkspace(request.getWorkspaceName)
+            workspaceManager.deleteWorkspace(request.getWorkspaceId)
             DeleteWorkspaceResponse.getDefaultInstance
         }
     }
@@ -107,7 +122,7 @@ final class WorkspaceServiceHandler(manager:WorkspaceManager) extends WorkspaceS
      */
     override def cleanWorkspace(request: CleanWorkspaceRequest, responseObserver: StreamObserver[CleanWorkspaceResponse]): Unit = {
         respondTo("cleanWorkspace", responseObserver) {
-            val ws = manager.getWorkspace(request.getWorkspaceName);
+            val (_,ws) = workspaceManager.getWorkspace(request.getWorkspaceId);
             ws.clean()
             CleanWorkspaceResponse.newBuilder().build()
         }
@@ -120,11 +135,12 @@ final class WorkspaceServiceHandler(manager:WorkspaceManager) extends WorkspaceS
         var wsName: String = null
         streamRequests("uploadFiles", responseObserver) { req:UploadFilesRequest =>
             if (wsName == null) {
-                wsName = req.getWorkspaceName
+                wsName = req.getWorkspaceId
                 logger.info(s"Receiving file updates for workspace '$wsName'")
-                ws = manager.getWorkspace(wsName)
+                val (_,ws0) = workspaceManager.getWorkspace(wsName)
+                ws = ws0
             } else {
-                if (wsName != req.getWorkspaceName) {
+                if (wsName != req.getWorkspaceId) {
                     throw new IllegalArgumentException("All file upload requests must belong to the same workspace")
                 }
                 logger.debug(s"Receive file ${req.getFileName}")

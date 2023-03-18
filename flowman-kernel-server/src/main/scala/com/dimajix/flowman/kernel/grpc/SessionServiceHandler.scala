@@ -71,10 +71,6 @@ final class SessionServiceHandler(
     override protected val logger:Logger = LoggerFactory.getLogger(classOf[SessionServiceHandler])
 
 
-    override def clientConnected(clientId: UUID): Unit = {
-
-    }
-
     override def clientDisconnected(clientId: UUID): Unit = {
         sessionManager.removeClientSessions(clientId)
     }
@@ -87,7 +83,8 @@ final class SessionServiceHandler(
             val store =
                 if (request.hasWorkspace()) {
                     val workspaceName = request.getWorkspace;
-                    workspaceManager.getWorkspace(workspaceName)
+                    val (wid,ws) = workspaceManager.getWorkspace(workspaceName)
+                    ws
                 }
                 else {
                     sessionManager.rootSession.store

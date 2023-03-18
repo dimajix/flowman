@@ -16,15 +16,19 @@
 
 package com.dimajix.flowman.kernel.service
 
+import java.util.UUID
+
 import com.dimajix.flowman.storage.Workspace
 
 
 abstract class WorkspaceManager {
-    def list(): Seq[Workspace]
+    def list(): Seq[(String,Workspace)]
 
-    def createWorkspace(name: String): Workspace
+    def createWorkspace(id: String, name:String, clientId:Option[UUID]): (String,Workspace)
 
-    def deleteWorkspace(name: String): Unit
+    def deleteWorkspace(id: String): Unit
 
-    def getWorkspace(name: String): Workspace
+    def getWorkspace(id: String): (String,Workspace)
+
+    def removeClientWorkspaces(clientId:UUID) : Unit
 }

@@ -313,6 +313,11 @@
             "fields": [
               {
                 "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
                 "name": "name",
                 "type": "string"
               }
@@ -1457,9 +1462,6 @@
             "name": "ShutdownResponse"
           },
           {
-            "name": "SubscribeLogRequest"
-          },
-          {
             "name": "NamespaceDetails",
             "fields": [
               {
@@ -1616,19 +1618,8 @@
                 "name": "Shutdown",
                 "in_type": "ShutdownRequest",
                 "out_type": "ShutdownResponse"
-              },
-              {
-                "name": "SubscribeLog",
-                "in_type": "SubscribeLogRequest",
-                "out_type": "LogEvent",
-                "out_streamed": true
               }
             ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "logging.proto"
           }
         ],
         "package": {
@@ -3638,11 +3629,16 @@
             "fields": [
               {
                 "id": 1,
-                "name": "name",
+                "name": "id",
                 "type": "string"
               },
               {
                 "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
                 "name": "projects",
                 "type": "string",
                 "is_repeated": true
@@ -3654,11 +3650,16 @@
             "fields": [
               {
                 "id": 1,
-                "name": "name",
+                "name": "id",
                 "type": "string"
               },
               {
                 "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
                 "name": "ifNotExists",
                 "type": "bool"
               }
@@ -3693,7 +3694,7 @@
             "fields": [
               {
                 "id": 1,
-                "name": "workspaceName",
+                "name": "workspaceId",
                 "type": "string"
               }
             ]
@@ -3713,7 +3714,7 @@
             "fields": [
               {
                 "id": 1,
-                "name": "workspaceName",
+                "name": "workspaceId",
                 "type": "string"
               }
             ]
@@ -3726,7 +3727,7 @@
             "fields": [
               {
                 "id": 1,
-                "name": "workspaceName",
+                "name": "workspaceId",
                 "type": "string"
               }
             ]
@@ -3739,7 +3740,7 @@
             "fields": [
               {
                 "id": 1,
-                "name": "workspaceName",
+                "name": "workspaceId",
                 "type": "string"
               },
               {

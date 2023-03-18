@@ -70,12 +70,12 @@ class WorkspaceServiceHandlerTest extends AnyFlatSpec with Matchers with MockFac
         def check5(r: DeleteWorkspaceResponse): Unit = {}
         (observer5.onNext _).expects(*).onCall(check5 _)
         (observer5.onCompleted _).expects()
-        handler.deleteWorkspace(DeleteWorkspaceRequest.newBuilder().setWorkspaceName("test").build(), observer5)
+        handler.deleteWorkspace(DeleteWorkspaceRequest.newBuilder().setWorkspaceId("test").build(), observer5)
 
         // Delete again
         val observer6 = mock[StreamObserver[DeleteWorkspaceResponse]]
         (observer6.onError _).expects(*)
-        handler.deleteWorkspace(DeleteWorkspaceRequest.newBuilder().setWorkspaceName("test").build(), observer6)
+        handler.deleteWorkspace(DeleteWorkspaceRequest.newBuilder().setWorkspaceId("test").build(), observer6)
 
         // List again
         val observer7 = mock[StreamObserver[ListWorkspacesResponse]]

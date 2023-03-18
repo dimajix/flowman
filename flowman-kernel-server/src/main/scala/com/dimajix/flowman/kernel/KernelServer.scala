@@ -113,7 +113,7 @@ class KernelServer private(
     private val sessionService = new SessionServiceHandler(sessionManager, workspaceManager)
     private val workspaceService = new WorkspaceServiceHandler(workspaceManager)
 
-    private val clientWatcher = new ClientIdGenerator(sessionService)
+    private val clientWatcher = new ClientIdGenerator(sessionService, workspaceService)
 
     private val server = serverBuilder
         .withServices(

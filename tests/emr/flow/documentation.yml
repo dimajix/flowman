@@ -1,0 +1,17 @@
+collectors:
+  # Collect documentation of relations
+  - kind: relations
+  # Collect documentation of mappings
+  - kind: mappings
+  # Collect documentation of build targets
+  - kind: targets
+  # Collect lineage of all columns
+  - kind: lineage
+  # Execute all checks
+  - kind: checks
+
+generators:
+  # Create an output file in the project directory
+  - kind: file
+    location: ${project.basedir}/generated-documentation
+    template: html

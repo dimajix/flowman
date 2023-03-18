@@ -16,17 +16,20 @@
 
 package com.dimajix.flowman.dsl.target
 
+import org.apache.hadoop.fs.Path
+
 import com.dimajix.flowman.dsl.TargetGen
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.spec.target.HiveDatabaseTarget
 
 
-case class DatabaseTarget(
+case class HiveDatabaseTarget(
     database:String,
-    catalog:String = ""
+    catalog:String = "",
+    location:Option[Path] = None
 ) extends TargetGen {
-    override def apply(props: Target.Properties): HiveDatabaseTarget = {
-        HiveDatabaseTarget(
+    override def apply(props: Target.Properties): com.dimajix.flowman.spec.target.HiveDatabaseTarget = {
+        com.dimajix.flowman.spec.target.HiveDatabaseTarget(
             props,
             database,
             catalog

@@ -6,7 +6,7 @@ import com.dimajix.flowman.dsl.Module
 import com.dimajix.flowman.dsl.mapping.Union
 import com.dimajix.flowman.dsl.relation.HiveTable
 import com.dimajix.flowman.dsl.schema.InlineSchema
-import com.dimajix.flowman.dsl.target.DatabaseTarget
+import com.dimajix.flowman.dsl.target.HiveDatabaseTarget
 import com.dimajix.flowman.dsl.target.RelationTarget
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.model.PartitionField
@@ -70,7 +70,7 @@ object ErrorModule extends Module {
     )
 
     targets := (
-        "error_database" := DatabaseTarget(
+        "error_database" := HiveDatabaseTarget(
             database = database
         ),
         "error" := withEnvironment { env =>

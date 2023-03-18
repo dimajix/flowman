@@ -1,0 +1,5 @@
+targets:
+  # This target will create a documentation in the VERIFY phase
+  documentation:
+    kind: documentation
+    # We do not specify any additional configuration, so the project's documentation.yml file will be used

@@ -56,6 +56,8 @@ Breaking changes will be documented in this changelog file for each version.
 * github-357: Spark session should not be shut down in Databricks environment
 * github-360: Logging should exclude more Databricks specific stuff
 * github-361: Work around low level API differences in DataBricks
+* github-363: HiveDatabaseTarget should accept an optional location
+* github-311: Create integration test for EMR
 
 ### Breaking changes
 

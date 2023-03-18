@@ -1,0 +1,30 @@
+relations:
+  aggregates:
+    kind: hiveTable
+    database: weather
+    table: aggregates
+    format: parquet
+    # Add partition column
+    partitions:
+      - name: year
+        type: integer
+        granularity: 1
+    # Specify an optional schema here. It is always recommended to explicitly specify a schema for every relation
+    # and not just let data flow from a mapping into a target.
+    schema:
+      kind: inline
+      fields:
+        - name: country
+          type: STRING
+        - name: min_wind_speed
+          type: FLOAT
+        - name: max_wind_speed
+          type: FLOAT
+        - name: avg_wind_speed
+          type: FLOAT
+        - name: min_temperature
+          type: FLOAT
+        - name: max_temperature
+          type: FLOAT
+        - name: avg_temperature
+          type: FLOAT

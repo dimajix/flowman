@@ -1,0 +1,25 @@
+flowman:
+  version: 1.0.0-emr-SNAPSHOT
+  distribution: com.dimajix.flowman:flowman-dist:bin:1.0.0-emr-SNAPSHOT
+  plugins:
+    - flowman-avro
+    - flowman-aws
+
+
+# List of subdirectories containing Flowman projects
+projects:
+  - flow
+
+
+# List of packages to be built
+packages:
+  emr:
+    kind: fatjar
+
+
+# List of deployments
+deployments:
+  aws:
+    kind: copy
+    package: emr
+    location: s3://flowman-test/integration-tests/emr

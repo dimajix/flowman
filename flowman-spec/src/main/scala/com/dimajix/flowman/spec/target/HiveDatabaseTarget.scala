@@ -17,6 +17,7 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.hadoop.fs.Path
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
@@ -35,7 +36,8 @@ import com.dimajix.flowman.model.Target
 case class HiveDatabaseTarget(
     instanceProperties:Target.Properties,
     database: String,
-    catalog: String
+    catalog: String = "",
+    location: Option[Path] = None
 ) extends BaseTarget {
     private val logger = LoggerFactory.getLogger(classOf[HiveDatabaseTarget])
 
@@ -83,7 +85,7 @@ case class HiveDatabaseTarget(
         require(executor != null)
 
         logger.info(s"Creating Hive database '$database'")
-        executor.catalog.createDatabase(database, catalog, true)
+        executor.catalog.createDatabase(database, catalog, location, true)
     }
 
     /**
@@ -119,12 +121,14 @@ case class HiveDatabaseTarget(
 class HiveDatabaseTargetSpec extends TargetSpec {
     @JsonProperty(value="database", required=true) private var database:String = _
     @JsonProperty(value="catalog", required=false) private var catalog:String = ""
+    @JsonProperty(value="location", required=false) private var location:Option[String] = None
 
     override def instantiate(context: Context, properties:Option[Target.Properties] = None): HiveDatabaseTarget = {
         HiveDatabaseTarget(
             instanceProperties(context, properties),
             context.evaluate(database),
-            context.evaluate(catalog)
+            context.evaluate(catalog),
+            context.evaluate(location).map(l => new Path(l))
         )
     }
 }

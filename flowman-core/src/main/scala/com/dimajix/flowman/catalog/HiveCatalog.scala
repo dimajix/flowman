@@ -63,7 +63,6 @@ import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.spark.features.hiveVarcharSupported
 import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.sql.SchemaUtils.replaceCharVarchar
-import com.dimajix.util.Reflection
 
 
 object HiveCatalog {
@@ -112,7 +111,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
       * Creates a new database
       */
     @throws[DatabaseAlreadyExistsException]
-    def createDatabase(database:String, catalog:String, ignoreIfExists:Boolean) : Unit = {
+    def createDatabase(database:String, catalog:String, location:Option[Path], ignoreIfExists:Boolean) : Unit = {
         require(database != null && database.nonEmpty)
 
         val exists = databaseExists(database)
@@ -122,7 +121,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
         if (!exists) {
             logger.info(s"Creating Hive database $database")
-            val cmd = SparkShim.newCreateDatabaseCommand(database, catalog, None, None, ignoreIfExists)
+            val cmd = SparkShim.newCreateDatabaseCommand(database, catalog, location.map(_.toString), None, ignoreIfExists)
             cmd.run(spark)
         }
     }

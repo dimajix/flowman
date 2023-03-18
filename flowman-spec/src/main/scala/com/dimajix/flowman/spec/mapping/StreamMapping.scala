@@ -42,14 +42,12 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.SchemaUtils
 
 
-case class StreamMapping (
+final case class StreamMapping (
     instanceProperties:Mapping.Properties,
     relation:Reference[Relation],
     columns:Seq[Field],
     filter:Option[String] = None
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[StreamMapping])
-
     /**
      * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings
      * which actually read from physical data.

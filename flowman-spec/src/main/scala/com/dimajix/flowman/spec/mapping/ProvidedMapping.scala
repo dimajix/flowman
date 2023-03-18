@@ -26,7 +26,7 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 
 
-case class ProvidedMapping(
+final case class ProvidedMapping(
     instanceProperties:Mapping.Properties,
     table:String
 )

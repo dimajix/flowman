@@ -41,7 +41,7 @@ import com.dimajix.spark.sql.DataFrameUtils.withTempViews
 import com.dimajix.spark.sql.SqlParser
 
 
-case class IterativeSqlMapping(
+final case class IterativeSqlMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     sql:Option[String],

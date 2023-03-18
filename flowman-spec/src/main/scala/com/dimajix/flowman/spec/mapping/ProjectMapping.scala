@@ -38,7 +38,7 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
 
 
-case class ProjectMapping(
+final case class ProjectMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     columns:Seq[ProjectTransformer.Column],

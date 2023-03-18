@@ -29,7 +29,7 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
 
 
-case class CastMapping(
+final case class CastMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     columns:Map[String,FieldType],

@@ -31,7 +31,7 @@ import com.dimajix.flowman.transforms.UnionTransformer
 import com.dimajix.flowman.types.StructType
 
 
-case class UnionMapping(
+final case class UnionMapping(
     instanceProperties:Mapping.Properties,
     input:Seq[MappingOutputIdentifier],
     schema:Option[Schema] = None,

@@ -41,7 +41,7 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.DataFrameBuilder
 
 
-case class SchemaMapping(
+final case class SchemaMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     columns:Seq[Field] = Seq(),

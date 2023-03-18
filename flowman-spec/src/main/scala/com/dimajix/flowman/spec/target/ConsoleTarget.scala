@@ -69,7 +69,7 @@ object ConsoleTarget {
         )
     }
 }
-case class ConsoleTarget(
+final case class ConsoleTarget(
     instanceProperties:Target.Properties,
     dataset:Dataset,
     limit:Int,

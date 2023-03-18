@@ -42,7 +42,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.sql.DataFrameBuilder
 
 
-case class MockRelation(
+final case class MockRelation(
     override val instanceProperties:Relation.Properties,
     relation: RelationIdentifier,
     records:Seq[Record] = Seq()

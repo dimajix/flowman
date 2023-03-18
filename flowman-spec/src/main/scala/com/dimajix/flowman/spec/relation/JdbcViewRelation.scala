@@ -61,7 +61,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
 
 
-case class JdbcViewRelation(
+final case class JdbcViewRelation(
     override val instanceProperties:Relation.Properties,
     override val partitions: Seq[PartitionField] = Seq.empty,
     connection: Reference[Connection],

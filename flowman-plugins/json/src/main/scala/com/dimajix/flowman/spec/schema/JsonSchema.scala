@@ -59,14 +59,12 @@ import com.dimajix.flowman.types.VarcharType
 /**
   * This class encapsulates a data frame schema specified as a JSON schema document.
   */
-case class JsonSchema(
+final case class JsonSchema(
     instanceProperties:Schema.Properties,
     override val file: Option[File],
     override val url: Option[URL],
     override val spec: Option[String]
 ) extends ExternalSchema {
-    protected override val logger = LoggerFactory.getLogger(classOf[JsonSchema])
-
     /**
       * Returns the description of the whole schema
       * @return

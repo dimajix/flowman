@@ -28,7 +28,7 @@ import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.types.StructType
 
 
-case class UpsertMapping(
+final case class UpsertMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     updates:MappingOutputIdentifier,

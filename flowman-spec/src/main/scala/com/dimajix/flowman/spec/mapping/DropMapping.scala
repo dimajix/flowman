@@ -29,7 +29,7 @@ import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.types.StructType
 
 
-case class DropMapping(
+final case class DropMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     columns:Seq[Path],

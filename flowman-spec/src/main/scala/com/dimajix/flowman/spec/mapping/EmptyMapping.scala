@@ -35,7 +35,7 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
 
 
-case class EmptyMapping(
+final case class EmptyMapping(
     instanceProperties:Mapping.Properties,
     columns:Seq[Field] = Seq(),
     schema:Option[Schema]

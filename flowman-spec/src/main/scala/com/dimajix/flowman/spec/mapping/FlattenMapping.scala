@@ -29,7 +29,7 @@ import com.dimajix.flowman.transforms.FlattenTransformer
 import com.dimajix.flowman.types.StructType
 
 
-case class FlattenMapping(
+final case class FlattenMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     naming:CaseFormat,

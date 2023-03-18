@@ -27,7 +27,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-case class AliasMapping(
+final case class AliasMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier
 ) extends BaseMapping {

@@ -44,7 +44,7 @@ object ExplodeMapping {
     )
 }
 
-case class ExplodeMapping(
+final case class ExplodeMapping(
     instanceProperties : Mapping.Properties,
     input: MappingOutputIdentifier,
     array: Path,

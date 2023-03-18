@@ -287,7 +287,7 @@ trait Relation extends Instance {
 /**
  * Common base implementation for the Relation interface class. It contains a couple of common properties.
  */
-abstract class BaseRelation extends AbstractInstance with Relation {
+abstract class BaseRelation extends AbstractInstance with Relation with Logging {
     protected override def instanceProperties : Relation.Properties
 
     /**

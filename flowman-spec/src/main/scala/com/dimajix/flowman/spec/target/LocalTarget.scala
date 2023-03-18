@@ -26,7 +26,6 @@ import com.univocity.parsers.csv.CsvWriter
 import com.univocity.parsers.csv.CsvWriterSettings
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.types.StringType
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -47,7 +46,7 @@ import com.dimajix.flowman.model.TargetDigest
 /**
   * This class will provide output to the local filesystem of the driver.
   */
-case class LocalTarget(
+final case class LocalTarget(
     instanceProperties:Target.Properties,
     mapping:MappingOutputIdentifier,
     path:String,
@@ -59,8 +58,6 @@ case class LocalTarget(
     escape:String,
     columns:Seq[String]
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[LocalTarget])
-
     /**
       * Returns an instance representing this target with the context
       * @return
@@ -124,13 +121,13 @@ case class LocalTarget(
     /**
       * Build the target by writing a file to the local file system of the driver
       *
-      * @param executor
+      * @param execution
       */
-    override def build(executor:Execution) : Unit = {
+    override def build(execution:Execution) : Unit = {
         logger.info(s"Writing mapping '${this.mapping}' to local file '$path'")
 
         val mapping = context.getMapping(this.mapping.mapping)
-        val dfIn = executor.instantiate(mapping, this.mapping.output)
+        val dfIn = execution.instantiate(mapping, this.mapping.output)
         val cols = if (columns.nonEmpty) columns else dfIn.columns.toSeq
         val dfOut = dfIn.select(cols.map(c => dfIn(c).cast(StringType)):_*)
 
@@ -152,7 +149,7 @@ case class LocalTarget(
         if (header)
             writer.writeHeaders(cols:_*)
 
-        val dfCount = countRecords(executor, dfOut)
+        val dfCount = countRecords(execution, dfOut)
         dfCount.rdd.toLocalIterator.foreach(row =>
             writer.writeRow((0 until row.size).map(row.getString).toArray)
         )
@@ -165,12 +162,12 @@ case class LocalTarget(
     /**
       * Performs a verification of the build step or possibly other checks.
       *
-      * @param executor
+      * @param execution
       */
-    override def verify(executor: Execution) : Unit = {
-        require(executor != null)
+    override def verify(execution: Execution) : Unit = {
+        require(execution != null)
 
-        val file = executor.fs.local(path)
+        val file = execution.fs.local(path)
         if (!file.exists()) {
             val error = s"Verification of target '$identifier' failed - local file '$path' does not exist"
             logger.error(error)
@@ -181,10 +178,10 @@ case class LocalTarget(
     /**
       * Cleans the target by removing the target file from the local file system
       *
-      * @param executor
+      * @param execution
       */
-    override def truncate(executor: Execution): Unit = {
-        require(executor != null)
+    override def truncate(execution: Execution): Unit = {
+        require(execution != null)
 
         val outputFile = new File(path)
         if (outputFile.exists()) {

@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonPropertyDescription
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
@@ -44,15 +43,13 @@ import com.dimajix.spark.sql.SqlParser
 
 
 
-case class HiveQueryRelation(
+final case class HiveQueryRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq.empty,
     sql: Option[String] = None,
     file: Option[File] = None
 ) extends BaseRelation with PartitionedRelation {
-    private val logger = LoggerFactory.getLogger(classOf[HiveQueryRelation])
-
     /**
      * Returns the list of all resources which will be created by this relation.
      *

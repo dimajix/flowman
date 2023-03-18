@@ -34,15 +34,13 @@ import com.dimajix.flowman.util.AvroSchemaUtils
 /**
   * Schema implementation for reading Avro schemas.
   */
-case class AvroSchema(
+final case class AvroSchema(
     instanceProperties:Schema.Properties,
     override val file: Option[File],
     override val url: Option[URL],
     override val spec: Option[String],
     nullable: Boolean
 ) extends ExternalSchema {
-    protected override val logger = LoggerFactory.getLogger(classOf[ExternalSchema])
-
     /**
       * Returns the description of the schema
       * @return

@@ -27,7 +27,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-case class RebalanceMapping(
+final case class RebalanceMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     partitions:Int,

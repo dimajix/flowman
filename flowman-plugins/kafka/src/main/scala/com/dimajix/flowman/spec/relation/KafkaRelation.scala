@@ -49,7 +49,7 @@ import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.TimestampType
 
 
-case class KafkaRelation(
+final case class KafkaRelation(
     instanceProperties:Relation.Properties,
     hosts:Seq[String],
     topics:Seq[String],
@@ -57,8 +57,6 @@ case class KafkaRelation(
     endOffset:String="latest",
     options:Map[String,String]=Map()
 ) extends BaseRelation {
-    private val logger = LoggerFactory.getLogger(classOf[KafkaRelation])
-
     /**
       * Returns the list of all resources which will be created by this relation.
       *

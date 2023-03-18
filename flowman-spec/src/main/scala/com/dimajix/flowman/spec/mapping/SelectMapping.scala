@@ -32,7 +32,7 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 
 
-case class SelectMapping(
+final case class SelectMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     columns:Seq[(String,String)],

@@ -34,7 +34,7 @@ import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.sql.SqlParser
 
 
-case class SqlMapping(
+final case class SqlMapping(
     instanceProperties:Mapping.Properties,
     sql:Option[String] = None,
     file:Option[File] = None,

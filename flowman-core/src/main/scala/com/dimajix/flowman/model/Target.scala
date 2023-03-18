@@ -28,10 +28,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.metric.LongAccumulatorMetric
-import com.dimajix.flowman.metric.MetricBundle
 import com.dimajix.flowman.metric.MultiMetricBundle
-import com.dimajix.flowman.metric.Selector
-import com.dimajix.flowman.metric.WallTimeMetric
 import com.dimajix.flowman.model
 import com.dimajix.spark.sql.functions.count_records
 
@@ -220,7 +217,7 @@ trait Target extends Instance {
 
 
 
-abstract class BaseTarget extends AbstractInstance with Target {
+abstract class BaseTarget extends AbstractInstance with Target with Logging {
     protected override def instanceProperties : Target.Properties
 
     /**

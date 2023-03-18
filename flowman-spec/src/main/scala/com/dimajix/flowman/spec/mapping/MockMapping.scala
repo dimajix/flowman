@@ -34,7 +34,7 @@ import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 
 
-case class MockMapping(
+final case class MockMapping(
     instanceProperties:Mapping.Properties,
     mapping:MappingIdentifier,
     records:Seq[Record] = Seq()

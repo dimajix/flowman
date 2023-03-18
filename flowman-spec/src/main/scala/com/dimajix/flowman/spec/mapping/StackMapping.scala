@@ -35,7 +35,7 @@ import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.types.StructType
 
 
-case class StackMapping(
+final case class StackMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     nameColumn:String,

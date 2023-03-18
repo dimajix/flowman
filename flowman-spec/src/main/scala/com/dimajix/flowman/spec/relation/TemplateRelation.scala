@@ -43,7 +43,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
 
 
-case class TemplateRelation(
+final case class TemplateRelation(
        override val instanceProperties:Relation.Properties,
        relation:RelationIdentifier,
        environment:Map[String,String]

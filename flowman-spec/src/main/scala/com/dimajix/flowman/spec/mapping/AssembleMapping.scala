@@ -116,7 +116,7 @@ object AssembleMapping {
 }
 
 
-case class AssembleMapping(
+final case class AssembleMapping(
     instanceProperties : Mapping.Properties,
     input : MappingOutputIdentifier,
     columns: Seq[AssembleMapping.Entry],

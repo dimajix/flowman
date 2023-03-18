@@ -37,7 +37,7 @@ object UnpackJsonMapping {
 }
 
 
-case class UnpackJsonMapping(
+final case class UnpackJsonMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     columns: Seq[UnpackJsonMapping.ColumnMapping],

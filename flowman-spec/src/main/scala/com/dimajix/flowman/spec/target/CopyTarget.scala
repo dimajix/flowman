@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -47,7 +46,7 @@ object CopyTarget {
         format:String
     )
 }
-case class CopyTarget(
+final case class CopyTarget(
     instanceProperties:Target.Properties,
     source:Dataset,
     target:Dataset,
@@ -56,8 +55,6 @@ case class CopyTarget(
     parallelism:Int = 16,
     rebalance: Boolean = false
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[CopyTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return
@@ -137,19 +134,19 @@ case class CopyTarget(
     /**
       * Performs a verification of the build step or possibly other checks.
       *
-      * @param executor
+      * @param execution
       */
-    override protected def verify(executor: Execution): Unit = {
-        require(executor != null)
+    override protected def verify(execution: Execution): Unit = {
+        require(execution != null)
 
-        if (target.exists(executor) == No) {
+        if (target.exists(execution) == No) {
             val error = s"Verification of target '$identifier' failed - target '${target.name}' does not exist"
             logger.error(error)
             throw new VerificationFailedException(identifier, new ExecutionException(error))
         }
 
         schema.foreach { spec =>
-            val file = executor.fs.file(spec.file)
+            val file = execution.fs.file(spec.file)
             if (!file.exists()) {
                 val error = s"Verification of target '$identifier' failed - schema file '${spec.file}' does not exist"
                 logger.error(error)
@@ -161,15 +158,15 @@ case class CopyTarget(
     /**
       * Deletes data of a specific target
       *
-      * @param executor
+      * @param execution
       */
-    override protected def truncate(executor: Execution): Unit = {
-        require(executor != null)
+    override protected def truncate(execution: Execution): Unit = {
+        require(execution != null)
 
-        target.clean(executor)
+        target.clean(execution)
 
         schema.foreach { spec =>
-            val outputFile = executor.fs.file(spec.file)
+            val outputFile = execution.fs.file(spec.file)
             if (outputFile.exists()) {
                 logger.info(s"Removing schema file '${spec.file}'")
                 outputFile.delete()
@@ -181,11 +178,11 @@ case class CopyTarget(
       * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
       * the table definition
       *
-      * @param executor
+      * @param execution
       */
-    override def destroy(executor: Execution): Unit = {
+    override def destroy(execution: Execution): Unit = {
         schema.foreach { spec =>
-            val outputFile = executor.fs.file(spec.file)
+            val outputFile = execution.fs.file(spec.file)
             if (outputFile.exists()) {
                 logger.info(s"Removing schema file '${spec.file}'")
                 outputFile.delete()

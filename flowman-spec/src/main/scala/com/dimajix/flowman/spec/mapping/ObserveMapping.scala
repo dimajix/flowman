@@ -35,7 +35,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-case class ObserveMapping(
+final case class ObserveMapping(
     instanceProperties: Mapping.Properties,
     input: MappingOutputIdentifier,
     measures: Map[String,String]

@@ -34,7 +34,7 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.{types => ftypes}
 
 
-case class ExtractJsonMapping(
+final case class ExtractJsonMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     column: String,

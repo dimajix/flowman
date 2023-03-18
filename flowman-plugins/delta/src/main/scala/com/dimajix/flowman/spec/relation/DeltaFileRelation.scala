@@ -58,7 +58,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.sql.DataFrameUtils.withTempView
 
 
-case class DeltaFileRelation(
+final case class DeltaFileRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq.empty,
@@ -69,7 +69,6 @@ case class DeltaFileRelation(
     override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
     override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
 ) extends DeltaRelation(options, mergeKey) {
-    protected val logger = LoggerFactory.getLogger(classOf[DeltaFileRelation])
     protected val resource = ResourceIdentifier.ofFile(location)
 
     /**

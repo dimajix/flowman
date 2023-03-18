@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark
 import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.jackson.ListMapDeserializer
 
@@ -39,15 +38,13 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.SchemaUtils
 
 
-case class ReadHiveMapping(
+final case class ReadHiveMapping(
     instanceProperties:Mapping.Properties,
     table: TableIdentifier,
     columns:Seq[Field] = Seq(),
     filter:Option[String] = None
 )
 extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[ReadHiveMapping])
-
     /**
      * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings
      * which actually read from physical data.
@@ -74,6 +71,7 @@ extends BaseMapping {
     override def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
         require(execution != null)
         require(input != null)
+        val logger = getLogger(execution, classOf[ReadHiveMapping])
 
         val schema = if (columns.nonEmpty) Some(spark.sql.types.StructType(columns.map(_.sparkField))) else None
         logger.info(s"Reading Hive table $table with filter '${filter.getOrElse("")}'")

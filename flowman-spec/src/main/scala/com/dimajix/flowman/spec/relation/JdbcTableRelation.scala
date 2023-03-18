@@ -562,10 +562,10 @@ abstract class JdbcTableRelationBase(
                     // Check if table type changes
                     if (currentTable.tableType != TableType.UNKNOWN && currentTable.tableType != targetTable.tableType) {
                         // Drop view, recreate table
-                        migrateFromView()
+                        migrateFromView(execution)
                     }
                     else if (TableChange.requiresMigration(currentTable, targetTable, migrationPolicy)) {
-                        migrateFromTable(currentTable, targetTable)
+                        migrateFromTable(execution, currentTable, targetTable)
                         execution.refreshResource(resource)
                     }
                 }
@@ -573,7 +573,7 @@ abstract class JdbcTableRelationBase(
         }
     }
 
-    private def migrateFromView() : Unit = {
+    private def migrateFromView(execution:Execution) : Unit = {
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for JdbcTable relation '$identifier' from VIEW to a TABLE $table, but migrations are disabled.")
@@ -596,7 +596,7 @@ abstract class JdbcTableRelationBase(
         }
     }
 
-    private def migrateFromTable(currentTable:TableDefinition, targetTable:TableDefinition) : Unit = {
+    private def migrateFromTable(execution:Execution, currentTable:TableDefinition, targetTable:TableDefinition) : Unit = {
         withConnection { (con, options) =>
             migrationStrategy match {
                 case MigrationStrategy.NEVER =>

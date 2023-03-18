@@ -34,8 +34,6 @@ case class SparkSchema(
     override val url: Option[URL],
     override val spec: Option[String]
 ) extends ExternalSchema {
-    protected override val logger = LoggerFactory.getLogger(classOf[SparkSchema])
-
     /**
       * Returns the list of all fields of the schema
       * @return

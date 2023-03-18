@@ -21,7 +21,6 @@ import java.nio.charset.Charset
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.IOUtils
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -36,15 +35,13 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 
 
-case class MergeFilesTarget(
+final case class MergeFilesTarget(
     instanceProperties:Target.Properties,
     source:Path,
     target:Path,
     delimiter:String = null,
     overwrite:Boolean = true
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[MergeFilesTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return
@@ -102,10 +99,10 @@ case class MergeFilesTarget(
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
       *
-      * @param executor
+      * @param execution
       */
-    override protected def build(executor: Execution): Unit = {
-        val fs = executor.fs
+    override protected def build(execution: Execution): Unit = {
+        val fs = execution.fs
         val src = fs.file(source)
         val dst = fs.file(target)
         val delimiter = Option(this.delimiter).map(_.getBytes(Charset.forName("UTF-8"))).filter(_.nonEmpty)
@@ -136,12 +133,12 @@ case class MergeFilesTarget(
     /**
       * Performs a verification of the build step or possibly other checks.
       *
-      * @param executor
+      * @param execution
       */
-    override protected def verify(executor: Execution): Unit = {
-        require(executor != null)
+    override protected def verify(execution: Execution): Unit = {
+        require(execution != null)
 
-        val file = executor.fs.file(target)
+        val file = execution.fs.file(target)
         if (!file.exists()) {
             val error = s"Verification of target '$identifier' failed - file file '$target' does not exist"
             logger.error(error)
@@ -152,12 +149,12 @@ case class MergeFilesTarget(
         /**
       * Deletes data of a specific target
       *
-      * @param executor
+      * @param execution
       */
-    override protected def truncate(executor: Execution): Unit = {
-        require(executor != null)
+    override protected def truncate(execution: Execution): Unit = {
+        require(execution != null)
 
-        val outputFile = executor.fs.file(target)
+        val outputFile = execution.fs.file(target)
         if (outputFile.exists()) {
             logger.info(s"Removing file file '$target'")
             outputFile.delete()

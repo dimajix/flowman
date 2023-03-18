@@ -48,7 +48,7 @@ object RankMapping {
     }
 }
 
-case class RankMapping(
+final case class RankMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     keyColumns:Seq[String],

@@ -33,7 +33,7 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
 
 
-case class ConformMapping(
+final case class ConformMapping(
     instanceProperties: Mapping.Properties,
     input: MappingOutputIdentifier,
     types: Map[String,FieldType] = Map(),

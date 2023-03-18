@@ -230,8 +230,7 @@ trait Mapping extends Instance {
 /**
  * Common base implementation for the MappingType interface
  */
-abstract class BaseMapping extends AbstractInstance with Mapping {
-    private val logger = LoggerFactory.getLogger(classOf[BaseMapping])
+abstract class BaseMapping extends AbstractInstance with Mapping with Logging {
     protected override def instanceProperties : Mapping.Properties
 
     /**

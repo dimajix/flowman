@@ -30,7 +30,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-case class TransitiveChildrenMapping(
+final case class TransitiveChildrenMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     parentColumns:Seq[String],

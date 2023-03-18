@@ -21,28 +21,23 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.expr
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
-import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY
-import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.MappingUtils
-import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.DeleteClause
+import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.ExecutionException
 import com.dimajix.flowman.execution.InsertClause
-import com.dimajix.flowman.execution.UpdateClause
-import com.dimajix.flowman.execution.MigrationPolicy
-import com.dimajix.flowman.execution.MigrationStrategy
+import com.dimajix.flowman.execution.MappingUtils
+import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.execution.VerificationFailedException
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.model.BaseTarget
@@ -75,7 +70,7 @@ object MergeTarget {
     }
 }
 
-case class MergeTarget(
+final case class MergeTarget(
     instanceProperties: Target.Properties,
     relation: Reference[Relation],
     mapping: MappingOutputIdentifier,
@@ -85,8 +80,6 @@ case class MergeTarget(
     parallelism: Int = 16,
     rebalance: Boolean = false
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[MergeTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return
@@ -192,14 +185,14 @@ case class MergeTarget(
     /**
       * Builds the target using the given input tables
       *
-      * @param executor
+      * @param execution
       */
-    override def build(executor:Execution) : Unit = {
-        require(executor != null)
+    override def build(execution:Execution) : Unit = {
+        require(execution != null)
 
         logger.info(s"Merging mapping '${this.mapping}' into relation '${relation.identifier}'")
         val mapping = context.getMapping(this.mapping.mapping)
-        val dfIn = executor.instantiate(mapping, this.mapping.output)
+        val dfIn = execution.instantiate(mapping, this.mapping.output)
         val dfOut =
             if (parallelism <= 0)
                 dfIn
@@ -209,7 +202,7 @@ case class MergeTarget(
                 dfIn.coalesce(parallelism)
 
         // Setup metric for counting number of records
-        val dfCount = countRecords(executor, dfOut)
+        val dfCount = countRecords(execution, dfOut)
 
         // Create merge condition
         val conds = key.map(k => col("target." + k) === col("source." + k)) ++ this.condition.map(expr)
@@ -219,19 +212,19 @@ case class MergeTarget(
             else
                 None
         val rel = relation.value
-        rel.merge(executor, dfCount, condition, clauses)
+        rel.merge(execution, dfCount, condition, clauses)
     }
 
     /**
       * Performs a verification of the build step or possibly other checks.
       *
-      * @param executor
+      * @param execution
       */
-    override def verify(executor: Execution) : Unit = {
-        require(executor != null)
+    override def verify(execution: Execution) : Unit = {
+        require(execution != null)
 
         val rel = relation.value
-        if (rel.loaded(executor) == No) {
+        if (rel.loaded(execution) == No) {
             val error = s"Verification of target '$identifier' failed - relation '${relation.identifier}' does not exist"
             logger.error(error)
             throw new VerificationFailedException(identifier, new ExecutionException(error))
@@ -240,26 +233,26 @@ case class MergeTarget(
 
     /**
       * Cleans the target. This will remove any data in the target for the current partition
-      * @param executor
+      * @param execution
       */
-    override def truncate(executor: Execution): Unit = {
-        require(executor != null)
+    override def truncate(execution: Execution): Unit = {
+        require(execution != null)
 
         logger.info(s"Truncating relation '${relation.identifier}'")
         val rel = relation.value
-        rel.truncate(executor)
+        rel.truncate(execution)
     }
 
     /**
       * Destroys both the logical relation and the physical data
-      * @param executor
+      * @param execution
       */
-    override def destroy(executor: Execution) : Unit = {
-        require(executor != null)
+    override def destroy(execution: Execution) : Unit = {
+        require(execution != null)
 
         logger.info(s"Destroying relation '${relation.identifier}''")
         val rel = relation.value
-        rel.destroy(executor)
+        rel.destroy(execution)
     }
 }
 

@@ -27,7 +27,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-case class DistinctMapping(
+final case class DistinctMapping(
    instanceProperties:Mapping.Properties,
    input:MappingOutputIdentifier,
    filter:Option[String] = None

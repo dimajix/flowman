@@ -16,21 +16,11 @@
 package com.dimajix.flowman.spec.relation
 
 import java.sql.Statement
-import java.time.Duration
-import java.time.Instant
-
-import scala.collection.mutable
-import scala.util.control.NonFatal
 
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
-import com.dimajix.common.text.TimeFormatter
 import com.dimajix.flowman.catalog.TableIdentifier
-import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Connection
@@ -44,7 +34,6 @@ abstract class JdbcRelation(
     connection: Reference[Connection],
     properties: Map[String,String] = Map.empty
 ) extends BaseRelation with PartitionedRelation {
-    protected val logger: Logger = LoggerFactory.getLogger(getClass)
     protected val resource: ResourceIdentifier
 
     protected def dropTableOrView(execution: Execution, table:TableIdentifier) : Unit = {

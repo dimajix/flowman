@@ -33,14 +33,12 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 
 
-case class GetFileTarget(
+final case class GetFileTarget(
     instanceProperties:Target.Properties,
     source:Path,
     target:Path,
     overwrite:Boolean
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[GetFileTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return
@@ -98,10 +96,10 @@ case class GetFileTarget(
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
       *
-      * @param executor
+      * @param execution
       */
-    override protected def build(executor: Execution): Unit = {
-        val fs = executor.fs
+    override protected def build(execution: Execution): Unit = {
+        val fs = execution.fs
         val src = fs.file(source)
         val dst = fs.local(target)
         logger.info(s"Retrieving remote file '$src' to local file '$dst' (overwrite=$overwrite)")
@@ -111,12 +109,12 @@ case class GetFileTarget(
     /**
       * Performs a verification of the build step or possibly other checks.
       *
-      * @param executor
+      * @param execution
       */
-    override protected def verify(executor: Execution): Unit = {
-        require(executor != null)
+    override protected def verify(execution: Execution): Unit = {
+        require(execution != null)
 
-        val file = executor.fs.local(target)
+        val file = execution.fs.local(target)
         if (!file.exists()) {
             val error = s"Verification of target '$identifier' failed - local file '$target' does not exist"
             logger.error(error)
@@ -127,10 +125,10 @@ case class GetFileTarget(
     /**
       * Deletes data of a specific target
       *
-      * @param executor
+      * @param execution
       */
-    override protected def truncate(executor: Execution): Unit = {
-        val fs = executor.fs
+    override protected def truncate(execution: Execution): Unit = {
+        val fs = execution.fs
         val dst = fs.local(target)
         if (dst.exists()) {
             logger.info(s"Removing local file '$dst'")

@@ -39,7 +39,7 @@ import com.dimajix.spark.sql.DataFrameBuilder
 import com.dimajix.spark.sql.DataFrameUtils
 
 
-case class ValuesMapping(
+final case class ValuesMapping(
     instanceProperties:Mapping.Properties,
     columns:Seq[Field] = Seq.empty,
     schema:Option[Schema] = None,

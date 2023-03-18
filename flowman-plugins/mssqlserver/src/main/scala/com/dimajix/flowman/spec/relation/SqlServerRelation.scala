@@ -41,7 +41,7 @@ import com.dimajix.flowman.spec.annotation.RelationType
 import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 
 
-case class SqlServerRelation(
+final case class SqlServerRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq.empty,

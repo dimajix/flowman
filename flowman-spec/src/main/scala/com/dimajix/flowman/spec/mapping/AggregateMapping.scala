@@ -34,7 +34,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.spark.sql.ExpressionParser
 
 
-case class AggregateMapping(
+final case class AggregateMapping(
     instanceProperties : Mapping.Properties,
     input : MappingOutputIdentifier,
     dimensions : Seq[String],

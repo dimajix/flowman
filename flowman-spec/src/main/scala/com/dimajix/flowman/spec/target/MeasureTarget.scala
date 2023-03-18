@@ -22,7 +22,6 @@ import java.time.Instant
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.storage.StorageLevel
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -30,7 +29,6 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.metric.LongAccumulatorMetric
 import com.dimajix.flowman.metric.Selector
 import com.dimajix.flowman.metric.SettableGaugeMetric
 import com.dimajix.flowman.model.BaseTarget
@@ -43,12 +41,10 @@ import com.dimajix.flowman.spec.measure.MeasureSpec
 import com.dimajix.spark.sql.DataFrameUtils
 
 
-case class MeasureTarget(
+final case class MeasureTarget(
     instanceProperties: Target.Properties,
     measures: Map[String,Measure]
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[MeasureTarget])
-
     /**
      * Returns an instance representing this target with the context
      *

@@ -22,7 +22,6 @@ import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.No
@@ -56,7 +55,7 @@ object JdbcCommandTarget {
     )
 }
 
-case class JdbcCommandTarget (
+final case class JdbcCommandTarget (
     instanceProperties: Target.Properties,
     connection: Reference[Connection],
     properties: Map[String,String] = Map.empty,
@@ -67,8 +66,6 @@ case class JdbcCommandTarget (
     truncateAction:Option[JdbcCommandTarget.Action] = None,
     destroyAction:Option[JdbcCommandTarget.Action] = None
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[JdbcCommandTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      *
@@ -215,7 +212,7 @@ case class JdbcCommandTarget (
         executeAction(destroyAction, Phase.DESTROY)
     }
 
-    private def executeAction(action:Option[Action], phase:Phase) : Unit = {
+    private def executeAction( action:Option[Action], phase:Phase) : Unit = {
         action.foreach { a =>
             val dirty = isDirty(a, phase)
             if (dirty == Yes || dirty == Unknown) {

@@ -47,7 +47,7 @@ import com.dimajix.spark.sql.DataFrameUtils.withTempViews
 import com.dimajix.spark.sql.SqlParser
 
 
-case class RecursiveSqlMapping(
+final case class RecursiveSqlMapping(
     instanceProperties:Mapping.Properties,
     sql:Option[String],
     file:Option[File] = None,

@@ -36,7 +36,7 @@ import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.types.StructType
 
 
-case class UnitMapping(
+final case class UnitMapping(
     instanceProperties:Mapping.Properties,
     mappings:Map[String,Prototype[Mapping]],
     environment:Map[String,String]

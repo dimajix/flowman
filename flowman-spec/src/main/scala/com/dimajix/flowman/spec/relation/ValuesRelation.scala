@@ -49,7 +49,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.sql.DataFrameBuilder
 
 
-case class ValuesRelation(
+final case class ValuesRelation(
     override val instanceProperties:Relation.Properties,
     columns:Seq[Field] = Seq(),
     _schema:Option[Schema] = None,

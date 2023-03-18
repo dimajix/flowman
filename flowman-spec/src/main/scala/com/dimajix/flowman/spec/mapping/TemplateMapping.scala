@@ -34,7 +34,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-case class TemplateMapping(
+final case class TemplateMapping(
     instanceProperties:Mapping.Properties,
     mapping:MappingIdentifier,
     environment:Map[String,String],

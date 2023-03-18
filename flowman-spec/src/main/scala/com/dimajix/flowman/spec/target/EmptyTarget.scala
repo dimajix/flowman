@@ -29,7 +29,7 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
 
 
-case class EmptyTarget(
+final case class EmptyTarget(
     instanceProperties: Target.Properties,
     partition: Map[String,String]
 ) extends BaseTarget {

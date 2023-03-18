@@ -39,7 +39,7 @@ object CountTarget {
         )
     }
 }
-case class CountTarget(
+final case class CountTarget(
     instanceProperties:Target.Properties,
     mapping:MappingOutputIdentifier
 ) extends BaseTarget {

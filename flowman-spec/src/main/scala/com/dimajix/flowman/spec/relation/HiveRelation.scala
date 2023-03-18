@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spec.relation
 
 import org.apache.spark.sql.DataFrame
-import org.slf4j.Logger
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.TableIdentifier
@@ -28,8 +27,6 @@ import com.dimajix.flowman.types.FieldValue
 
 
 abstract class HiveRelation extends BaseRelation with PartitionedRelation {
-    protected val logger:Logger
-
     def table: TableIdentifier
 
     /**

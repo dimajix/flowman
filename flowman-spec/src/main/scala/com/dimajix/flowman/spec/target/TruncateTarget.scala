@@ -66,13 +66,11 @@ object TruncateTarget {
         )
     }
 }
-case class TruncateTarget(
+final case class TruncateTarget(
     instanceProperties: Target.Properties,
     relation: Reference[Relation],
     partitions:Map[String,FieldValue] = Map()
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[RelationTarget])
-
     /**
      * Returns an instance representing this target with the context
      * @return

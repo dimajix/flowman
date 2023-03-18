@@ -56,8 +56,6 @@ case class DeltaVacuumTarget(
     minFiles:Int = 32,
     maxFiles:Int = 64
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[DeltaVacuumTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      *

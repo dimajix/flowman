@@ -28,7 +28,7 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 
 
-case class ExtendMapping(
+final case class ExtendMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     columns:Map[String,String],

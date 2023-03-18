@@ -27,7 +27,7 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingOutputIdentifier
 
 
-case class JoinMapping(
+final case class JoinMapping(
     instanceProperties:Mapping.Properties,
     input:Seq[MappingOutputIdentifier],
     columns:Seq[String] = Seq(),

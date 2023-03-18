@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -37,13 +36,11 @@ import com.dimajix.flowman.spec.documentation.DocumenterLoader
 import com.dimajix.flowman.spec.documentation.GeneratorSpec
 
 
-case class DocumentTarget(
+final case class DocumentTarget(
     instanceProperties:Target.Properties,
     collectors:Seq[Collector] = Seq(),
     generators:Seq[Generator] = Seq()
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(getClass)
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return

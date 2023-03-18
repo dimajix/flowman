@@ -36,10 +36,10 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-class ProvidedRelation(
+final case class ProvidedRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema],
-    val table:String
+    table:String
 ) extends BaseRelation with SchemaRelation {
     /**
       * Returns the list of all resources which will be created by this relation.
@@ -156,7 +156,7 @@ class ProvidedRelationSpec extends RelationSpec with SchemaRelationSpec {
     @JsonProperty(value="table") private var table: String = _
 
     override def instantiate(context: Context, properties:Option[Relation.Properties] = None): Relation = {
-        new ProvidedRelation(
+        ProvidedRelation(
             instanceProperties(context, properties),
             schema.map(_.instantiate(context)),
             context.evaluate(table)

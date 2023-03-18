@@ -28,7 +28,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-case class CoalesceMapping(
+final case class CoalesceMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     partitions:Int,

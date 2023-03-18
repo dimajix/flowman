@@ -27,7 +27,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-case class FilterMapping(
+final case class FilterMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     condition:String

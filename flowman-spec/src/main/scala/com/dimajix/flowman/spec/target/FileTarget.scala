@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -56,7 +55,7 @@ object FileTarget {
         )
     }
 }
-case class FileTarget(
+final case class FileTarget(
     instanceProperties: Target.Properties,
     mapping:MappingOutputIdentifier,
     location:Path,
@@ -66,7 +65,6 @@ case class FileTarget(
     parallelism: Int,
     rebalance: Boolean = false
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[FileTarget])
     private val qualifiedLocation = {
         val conf = context.hadoopConf
         val fs = location.getFileSystem(conf)
@@ -141,10 +139,10 @@ case class FileTarget(
         }
     }
 
-    override def create(executor: Execution) : Unit = {
-        require(executor != null)
+    override def create(execution: Execution) : Unit = {
+        require(execution != null)
 
-        val fs = qualifiedLocation.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        val fs = qualifiedLocation.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
         if (!fs.getFileStatus(qualifiedLocation).isDirectory) {
             logger.info(s"Creating directory '$qualifiedLocation' for file relation '$identifier'")
             fs.mkdirs(qualifiedLocation)
@@ -155,14 +153,14 @@ case class FileTarget(
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
       *
-      * @param executor
+      * @param execution
       */
-    override def build(executor: Execution): Unit = {
-        require(executor != null)
+    override def build(execution: Execution): Unit = {
+        require(execution != null)
 
         logger.info(s"Writing mapping output '${mapping}' to directory '$qualifiedLocation'")
         val map = context.getMapping(mapping.mapping)
-        val dfIn = executor.instantiate(map, mapping.output)
+        val dfIn = execution.instantiate(map, mapping.output)
         val table = {
             if (parallelism <= 0)
                 dfIn
@@ -172,7 +170,7 @@ case class FileTarget(
                 dfIn.coalesce(parallelism)
         }
 
-        val dfCount = countRecords(executor, table)
+        val dfCount = countRecords(execution, table)
         dfCount.write
             .options(options)
             .format(format)
@@ -183,12 +181,12 @@ case class FileTarget(
     /**
       * Performs a verification of the build step or possibly other checks.
       *
-      * @param executor
+      * @param execution
       */
-    override def verify(executor: Execution) : Unit = {
-        require(executor != null)
+    override def verify(execution: Execution) : Unit = {
+        require(execution != null)
 
-        val file = executor.fs.file(qualifiedLocation)
+        val file = execution.fs.file(qualifiedLocation)
         if (!file.exists()) {
             val error = s"Verification of target '$identifier' failed - location '$qualifiedLocation' does not exist"
             logger.error(error)
@@ -199,12 +197,12 @@ case class FileTarget(
     /**
       * Cleans up a specific target
       *
-      * @param executor
+      * @param execution
       */
-    override def truncate(executor: Execution): Unit = {
-        require(executor != null)
+    override def truncate(execution: Execution): Unit = {
+        require(execution != null)
 
-        val fs = qualifiedLocation.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        val fs = qualifiedLocation.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
         if (fs.getFileStatus(qualifiedLocation).isDirectory) {
             logger.info(s"Truncating directory '$qualifiedLocation' of file relation '$identifier'")
             val files = fs.listStatus(qualifiedLocation)
@@ -212,10 +210,10 @@ case class FileTarget(
         }
     }
 
-    override def destroy(executor: Execution) : Unit = {
-        require(executor != null)
+    override def destroy(execution: Execution) : Unit = {
+        require(execution != null)
 
-        val fs = qualifiedLocation.getFileSystem(executor.spark.sparkContext.hadoopConfiguration)
+        val fs = qualifiedLocation.getFileSystem(execution.spark.sparkContext.hadoopConfiguration)
         if (fs.exists(qualifiedLocation)) {
             logger.info(s"Deleting directory '$qualifiedLocation' of file relation '$identifier'")
             fs.delete(qualifiedLocation, true)

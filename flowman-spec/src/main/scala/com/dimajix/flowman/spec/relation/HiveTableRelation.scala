@@ -34,7 +34,6 @@ import org.apache.spark.sql.types.CharType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.VarcharType
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
@@ -80,7 +79,7 @@ object HiveTableRelation {
 }
 
 
-case class HiveTableRelation(
+final case class HiveTableRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq.empty,
@@ -98,7 +97,6 @@ case class HiveTableRelation(
     override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
     override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
 ) extends HiveRelation with SchemaRelation with MigratableRelation {
-    protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
     private val resource = ResourceIdentifier.ofHiveTable(table)
 
     /**

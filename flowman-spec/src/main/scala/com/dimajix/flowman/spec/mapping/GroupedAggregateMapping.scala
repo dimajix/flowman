@@ -45,7 +45,7 @@ object GroupedAggregateMapping {
     )
 }
 
-case class GroupedAggregateMapping(
+final case class GroupedAggregateMapping(
     instanceProperties : Mapping.Properties,
     input : MappingOutputIdentifier,
     groups : Map[String,GroupedAggregateMapping.Group],

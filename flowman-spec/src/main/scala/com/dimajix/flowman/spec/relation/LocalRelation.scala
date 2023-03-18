@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.Column
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.PartitionSpec
@@ -47,7 +46,7 @@ import com.dimajix.flowman.util.UtcTimestamp
 import com.dimajix.spark.sql.local.implicits._
 
 
-case class LocalRelation(
+final case class LocalRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema],
     override val partitions: Seq[PartitionField],
@@ -57,7 +56,6 @@ case class LocalRelation(
     options:Map[String,String] = Map()
 )
 extends BaseRelation with SchemaRelation with PartitionedRelation {
-    private val logger = LoggerFactory.getLogger(classOf[LocalRelation])
     private lazy val collector : FileCollector = {
         FileCollector.builder(context.fs)
             .location(location)

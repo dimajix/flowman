@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -33,14 +32,12 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 
 
-case class CopyFileTarget(
+final case class CopyFileTarget(
     instanceProperties:Target.Properties,
     source:Path,
     target:Path,
     overwrite:Boolean
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[CopyFileTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return
@@ -98,10 +95,10 @@ case class CopyFileTarget(
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
       *
-      * @param executor
+      * @param execution
       */
-    override protected def build(executor: Execution): Unit = {
-        val fs = executor.fs
+    override protected def build(execution: Execution): Unit = {
+        val fs = execution.fs
         val src = fs.file(source)
         val dst = fs.file(target)
         logger.info(s"Copying remote file '$src' to remote file '$dst' (overwrite=$overwrite)")
@@ -111,12 +108,10 @@ case class CopyFileTarget(
     /**
      * Performs a verification of the build step or possibly other checks.
      *
-     * @param executor
+     * @param execution
      */
-    override def verify(executor: Execution) : Unit = {
-        require(executor != null)
-
-        val file = executor.fs.file(target)
+    override def verify(execution: Execution) : Unit = {
+        val file = execution.fs.file(target)
         if (!file.exists()) {
             val error = s"Verification of target '$identifier' failed - location '$target' does not exist"
             logger.error(error)
@@ -127,10 +122,10 @@ case class CopyFileTarget(
     /**
       * Deletes data of a specific target
       *
-      * @param executor
+      * @param execution
       */
-    override protected def truncate(executor: Execution): Unit = {
-        val fs = executor.fs
+    override protected def truncate(execution: Execution): Unit = {
+        val fs = execution.fs
         val dst = fs.file(target)
         if (dst.exists()) {
             logger.info(s"Removing file '$dst'")

@@ -28,7 +28,6 @@ import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
@@ -64,7 +63,6 @@ case class FileRelation(
     format:String = "csv",
     options:Map[String,String] = Map()
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
-    private val logger = LoggerFactory.getLogger(classOf[FileRelation])
     private val resource = ResourceIdentifier.ofFile(qualifiedLocation)
 
     private lazy val collector : FileCollector = {

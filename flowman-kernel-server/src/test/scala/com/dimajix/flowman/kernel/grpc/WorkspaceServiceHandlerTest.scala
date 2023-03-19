@@ -41,7 +41,7 @@ class WorkspaceServiceHandlerTest extends AnyFlatSpec with Matchers with MockFac
 
         // List
         val observer1 = mock[StreamObserver[ListWorkspacesResponse]]
-        def check1(r:ListWorkspacesResponse) : Unit = r.getWorkspacesList.asScala.map(_.getName) should be (Seq("default"))
+        def check1(r:ListWorkspacesResponse) : Unit = r.getWorkspacesList.asScala.map(_.getId) should be (Seq("default"))
         (observer1.onNext _).expects(*).onCall(check1 _)
         (observer1.onCompleted _).expects()
         handler.listWorkspaces(ListWorkspacesRequest.getDefaultInstance, observer1)
@@ -51,16 +51,16 @@ class WorkspaceServiceHandlerTest extends AnyFlatSpec with Matchers with MockFac
         def check2(r:CreateWorkspaceResponse) : Unit = {}
         (observer2.onNext _).expects(*).onCall(check2 _)
         (observer2.onCompleted _).expects()
-        handler.createWorkspace(CreateWorkspaceRequest.newBuilder().setName("test").build(), observer2)
+        handler.createWorkspace(CreateWorkspaceRequest.newBuilder().setId("test").build(), observer2)
 
         // Create again
         val observer3 = mock[StreamObserver[CreateWorkspaceResponse]]
         (observer3.onError _).expects(*)
-        handler.createWorkspace(CreateWorkspaceRequest.newBuilder().setName("test").build(), observer3)
+        handler.createWorkspace(CreateWorkspaceRequest.newBuilder().setId("test").build(), observer3)
 
         // List again
         val observer4 = mock[StreamObserver[ListWorkspacesResponse]]
-        def check4(r: ListWorkspacesResponse): Unit = r.getWorkspacesList.asScala.map(_.getName).toSet should be(Set("default","test"))
+        def check4(r: ListWorkspacesResponse): Unit = r.getWorkspacesList.asScala.map(_.getId).toSet should be(Set("default","test"))
         (observer4.onNext _).expects(*).onCall(check4 _)
         (observer4.onCompleted _).expects()
         handler.listWorkspaces(ListWorkspacesRequest.getDefaultInstance, observer4)
@@ -79,7 +79,7 @@ class WorkspaceServiceHandlerTest extends AnyFlatSpec with Matchers with MockFac
 
         // List again
         val observer7 = mock[StreamObserver[ListWorkspacesResponse]]
-        def check7(r: ListWorkspacesResponse): Unit = r.getWorkspacesList.asScala.map(_.getName).toSet should be(Set("default"))
+        def check7(r: ListWorkspacesResponse): Unit = r.getWorkspacesList.asScala.map(_.getId).toSet should be(Set("default"))
         (observer7.onNext _).expects(*).onCall(check7 _)
         (observer7.onCompleted _).expects()
         handler.listWorkspaces(ListWorkspacesRequest.getDefaultInstance, observer7)

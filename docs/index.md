@@ -113,6 +113,8 @@ following sections:
    cli/index
    cli/flowexec/index
    cli/flowshell/index
+   cli/flowman-kernel/index
+   cli/flowrshell/index
    cli/*
 ```   
 

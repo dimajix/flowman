@@ -1,6 +1,6 @@
 # Flowman Interactive Remote Shell (`flowrshell`)
 
-![Flowman Kernel](../../images/flowman-kernel.png)
+![Flowman Kernel client/server architecture](../../images/flowman-kernel.png)
 
 The Flowman Remote Shell is the client/server pendant of the [Flowman Shell](../flowshell/index.md) to be used
 with a [Flowman Kernel Server](../flowman-kernel/index.md). It connects to a running Flowman Kernel Server,

@@ -1,4 +1,4 @@
-# Flowman Interactive Shell (flowshell)
+# Flowman Interactive Shell (`flowshell`)
 
 `flowshell` is an interactive shell for inspecting and executing Flowman projects. 
 

@@ -1,6 +1,6 @@
 # Flowman Kernel Server (`flowman-kernel`)
 
-![Flowman Kernel](../../images/flowman-kernel.png)
+![Flowman Kernel client/server architecture](../../images/flowman-kernel.png)
 
 The Flowman Kernel Server (`flowman-kernel`) is the server part of a client/server architecture, such that the
 server is started in an environment closely located to your data while the client is started on the developers local

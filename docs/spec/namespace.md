@@ -1,11 +1,15 @@
 # Namespace
 
 On top of the very global settings, Flowman also supports so-called *namespaces*. Each project is executed within the
-context of one namespace, if nothing else is specified the *default namespace*. Each namespace contains some 
+context of one namespace, which is the *default namespace* if nothing else is specified. Each namespace contains some 
 configuration, such that different namespaces might represent different tenants or different staging environments.
+
+The default namespace is configured in the `conf/default-namespace.yml` file in your Flowman installation directory.
 
 ## Example
 ```yaml
+# default-namespace.yml
+
 name: "default"
 
 history:

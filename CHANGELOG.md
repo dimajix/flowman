@@ -61,6 +61,8 @@ Breaking changes will be documented in this changelog file for each version.
 * github-362: Upgrade EMR to 6.10
 * github-369: Prevent endless loop in Kernel client, when getContext fails
 * github-370: Kernel client should use temporary workspaces with automatic cleanup
+* github-337: Add documentation for flowman-rshell
+* github-336: Add documentation for flowman-kernel
 
 ### Breaking changes
 

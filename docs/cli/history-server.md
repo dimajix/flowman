@@ -1,4 +1,4 @@
-# Flowman History Server
+# Flowman History Server (`flowman-server`)
 
 The Flowman History Server provides both a REST interface and a small UI which gives you an overview of jobs and
 targets executed in the past. In order to use the History Server, you need to configure a *history database* in

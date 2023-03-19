@@ -29,6 +29,7 @@ The commands are organized in command groups
 * `namespace`
 * `project`
 * `target`
+* `test`
 
 Some additional commands in `flowshell` which are not available via `flowexec` are
 * `exit` or `quit`

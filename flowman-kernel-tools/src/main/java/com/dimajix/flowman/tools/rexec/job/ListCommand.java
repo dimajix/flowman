@@ -16,18 +16,18 @@
 
 package com.dimajix.flowman.tools.rexec.job;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
+import lombok.val;
+
 import com.dimajix.flowman.kernel.model.JobIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
-
-import lombok.val;
 
 
 public class ListCommand extends Command {
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val jobs = session.listJobs();
         jobs.stream()
             .map(JobIdentifier::getName)

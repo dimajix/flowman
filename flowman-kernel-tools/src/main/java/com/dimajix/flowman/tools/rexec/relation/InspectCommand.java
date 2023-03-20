@@ -16,15 +16,15 @@
 
 package com.dimajix.flowman.tools.rexec.relation;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
+import lombok.val;
+import org.kohsuke.args4j.Argument;
+
 import com.dimajix.flowman.kernel.model.Operation;
 import com.dimajix.flowman.kernel.model.Relation;
 import com.dimajix.flowman.kernel.model.RelationIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
-import lombok.val;
-import org.kohsuke.args4j.Argument;
 
 
 class InspectCommand extends Command {
@@ -32,7 +32,8 @@ class InspectCommand extends Command {
     String relation = "";
 
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val relation = session.getRelation(RelationIdentifier.ofString(this.relation));
         System.out.println("Relation:");
         System.out.println("    name: " + relation.getName());

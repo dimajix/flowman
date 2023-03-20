@@ -25,6 +25,7 @@ import io.grpc.Status
 import io.grpc.StatusException
 import io.grpc.StatusRuntimeException
 import io.grpc.stub.StreamObserver
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.SparkShim
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.Logger
@@ -59,6 +60,7 @@ import com.dimajix.flowman.kernel.service.SessionManager
 import com.dimajix.flowman.kernel.service.SessionService
 import com.dimajix.flowman.kernel.service.WorkspaceManager
 import com.dimajix.flowman.model
+import com.dimajix.flowman.spec.target.FileTarget
 import com.dimajix.flowman.storage.Workspace
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
@@ -309,7 +311,21 @@ final class SessionServiceHandler(
 
     /**
      */
-    override def saveMappingOutput(request: SaveMappingOutputRequest, responseObserver: StreamObserver[SaveMappingOutputResponse]): Unit = super.saveMappingOutput(request, responseObserver)
+    override def saveMappingOutput(request: SaveMappingOutputRequest, responseObserver: StreamObserver[SaveMappingOutputResponse]): Unit = {
+        respondTo("saveMappingOutput", responseObserver) {
+            val session = getSession(request.getSessionId)
+            val mapping = model.MappingOutputIdentifier(toModel(request.getMapping), if (request.hasOutput) request.getOutput else "main")
+            val location = request.getLocation
+            val format = request.getFormat
+            val options = request.getOptionsMap
+
+            val result = session.saveMapping(mapping, new Path(location), format, options.asScala.toMap)
+
+            SaveMappingOutputResponse.newBuilder()
+                .setStatus(toProto(result))
+                .build()
+        }
+    }
 
     /**
      */
@@ -548,7 +564,28 @@ final class SessionServiceHandler(
 
     /**
      */
-    override def getTest(request: GetTestRequest, responseObserver: StreamObserver[GetTestResponse]): Unit = super.getTest(request, responseObserver)
+    override def getTest(request: GetTestRequest, responseObserver: StreamObserver[GetTestResponse]): Unit = {
+        respondTo("getTest", responseObserver) {
+            val session = getSession(request.getSessionId)
+            val test = session.getTest(toModel(request.getTest))
+
+            val details = TestDetails.newBuilder()
+                .setName(test.name)
+                .putAllEnvironment(test.environment.asJava)
+                .addAllOverrideMappings(test.overrideMappings.map(m => toProto(model.MappingIdentifier(m._1))).asJava)
+                .addAllOverrideRelations(test.overrideRelations.map(m => toProto(model.RelationIdentifier(m._1))).asJava)
+                .addAllFixtureTargets(test.fixtures.keys.map(t => toProto(model.TargetIdentifier(t))).asJava)
+                .addAllBuildTargets(test.targets.map(toProto).asJava)
+                .addAllAssertions(test.assertions.keys.asJava)
+
+            test.project.foreach(p => details.setProject(p.name))
+            test.description.foreach(details.setDescription)
+
+            GetTestResponse.newBuilder()
+                .setTest(details.build())
+                .build()
+        }
+    }
 
     /**
      */

@@ -16,12 +16,11 @@
 
 package com.dimajix.flowman.tools.rshell.test;
 
-import org.kohsuke.args4j.Argument;
-
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
+import lombok.val;
+import org.kohsuke.args4j.Argument;
 
 
 class EnterCommand extends Command {
@@ -29,7 +28,8 @@ class EnterCommand extends Command {
     String test = "";
 
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         session.enterTestContext(test);
         return Status.SUCCESS;
     }

@@ -26,6 +26,7 @@ import com.dimajix.flowman.grpc.GrpcServerBuilder
 import com.dimajix.flowman.grpc.GrpcService
 import com.dimajix.flowman.kernel.grpc.ClientIdExtractor
 import com.dimajix.flowman.kernel.grpc.ClientIdGenerator
+import com.dimajix.flowman.kernel.grpc.HistoryServiceHandler
 import com.dimajix.flowman.kernel.grpc.KernelServiceHandler
 import com.dimajix.flowman.kernel.grpc.SessionServiceHandler
 import com.dimajix.flowman.kernel.grpc.WorkspaceServiceHandler
@@ -112,6 +113,7 @@ class KernelServer private(
     private val kernelService = new KernelServiceHandler(sessionManager, pluginManager, stop)
     private val sessionService = new SessionServiceHandler(sessionManager, workspaceManager)
     private val workspaceService = new WorkspaceServiceHandler(workspaceManager)
+    private val historyService = new HistoryServiceHandler(sessionManager)
 
     private val clientWatcher = new ClientIdGenerator(sessionService, workspaceService)
 
@@ -120,7 +122,8 @@ class KernelServer private(
             Seq(
                 kernelService.asInstanceOf[GrpcService],
                 workspaceService.asInstanceOf[GrpcService],
-                sessionService.asInstanceOf[GrpcService]
+                sessionService.asInstanceOf[GrpcService],
+                historyService.asInstanceOf[GrpcService]
             ).asJava
         )
         .withTransportFilter(clientWatcher)

@@ -19,10 +19,9 @@ package com.dimajix.flowman.tools.rexec.mapping;
 import lombok.val;
 import org.kohsuke.args4j.Argument;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.MappingOutputIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
@@ -31,10 +30,11 @@ public class ExplainCommand extends Command {
     String mapping = "";
 
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val identifier = MappingOutputIdentifier.ofString(this.mapping);
 
-        val plan = session.explainMapping(identifier.getMapping(), identifier.getOutput());
+        val plan = session.explainMapping(identifier);
         System.out.println(plan);
         return Status.SUCCESS;
     }

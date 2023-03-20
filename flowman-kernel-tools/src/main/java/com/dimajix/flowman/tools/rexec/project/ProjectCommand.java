@@ -32,6 +32,7 @@ public class ProjectCommand extends NestedCommand {
         @SubCommand(name = "create", impl = CreateCommand.class),
         @SubCommand(name = "destroy", impl = DestroyCommand.class),
         @SubCommand(name = "inspect", impl = InspectCommand.class),
+        @SubCommand(name = "list", impl = ListCommand.class),
         @SubCommand(name = "truncate", impl = TruncateCommand.class),
         @SubCommand(name = "validate", impl = ValidateCommand.class),
         @SubCommand(name = "verify", impl = VerifyCommand.class)

@@ -24,14 +24,12 @@ import org.kohsuke.args4j.Argument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.dimajix.common.ExceptionUtils.isFatal;
-import static com.dimajix.common.ExceptionUtils.reasons;
-
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.MappingIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
+import static com.dimajix.common.ExceptionUtils.isFatal;
+import static com.dimajix.common.ExceptionUtils.reasons;
 
 
 public class ValidateCommand extends Command {
@@ -41,7 +39,8 @@ public class ValidateCommand extends Command {
     String[] mappings = new String[0];
 
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val mappingNames = mappings.length > 0 ? Arrays.stream(mappings).map(MappingIdentifier::ofString).collect(Collectors.toList()) : session.listMappings();
         logger.info("Validating mappings " + mappingNames.stream().map(MappingIdentifier::toString).reduce((l,r) -> l + "," + r));
 

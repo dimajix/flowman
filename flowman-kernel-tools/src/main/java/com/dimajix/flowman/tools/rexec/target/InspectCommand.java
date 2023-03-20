@@ -19,13 +19,12 @@ package com.dimajix.flowman.tools.rexec.target;
 import lombok.val;
 import org.kohsuke.args4j.Argument;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.Lifecycle;
 import com.dimajix.flowman.kernel.model.Phase;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.kernel.model.Target;
 import com.dimajix.flowman.kernel.model.TargetIdentifier;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
@@ -34,7 +33,8 @@ public class InspectCommand extends Command {
     String target = "";
 
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val target = session.getTarget(TargetIdentifier.ofString(this.target));
         System.out.println("Target:");
         System.out.println("    name: " + target.getName());

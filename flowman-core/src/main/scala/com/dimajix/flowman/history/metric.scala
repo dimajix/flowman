@@ -50,7 +50,7 @@ final case class MetricSeries(
     namespace:String,
     project:String,
     job:String,
-    phase:String,
+    phase:Phase,
     labels:Map[String,String],
     measurements:Seq[Measurement]
 )

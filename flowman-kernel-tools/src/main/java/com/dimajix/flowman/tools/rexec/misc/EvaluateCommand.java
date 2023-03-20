@@ -16,16 +16,14 @@
 
 package com.dimajix.flowman.tools.rexec.misc;
 
-import java.util.Arrays;
-
+import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
+import com.dimajix.flowman.tools.rexec.Command;
 import lombok.val;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.spi.RestOfArgumentsHandler;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
-import com.dimajix.flowman.kernel.model.Status;
-import com.dimajix.flowman.tools.rexec.Command;
+import java.util.Arrays;
 
 
 public class EvaluateCommand extends Command {
@@ -33,7 +31,8 @@ public class EvaluateCommand extends Command {
     String[] expression = new String[0];
 
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val expr = Arrays.stream(expression).reduce((l, r) -> l + " " + r).orElse("");
         val result = session.evaluateExpression(expr);
         System.out.println(result);

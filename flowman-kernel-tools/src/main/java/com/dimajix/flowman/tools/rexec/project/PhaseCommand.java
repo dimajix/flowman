@@ -22,14 +22,12 @@ import lombok.val;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
-import static com.dimajix.flowman.common.ParserUtils.splitSettings;
-
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.Lifecycle;
 import com.dimajix.flowman.kernel.model.Phase;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
+import static com.dimajix.flowman.common.ParserUtils.splitSettings;
 
 
 class PhaseCommand extends Command {
@@ -57,7 +55,8 @@ class PhaseCommand extends Command {
     }
 
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val args = splitSettings(this.args);
         val lifecycle = noLifecycle ? Arrays.asList(phase) : Lifecycle.ofPhase(phase).phases;
 

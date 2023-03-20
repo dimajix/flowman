@@ -732,6 +732,63 @@
       }
     },
     {
+      "protopath": "documentation.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "GenerateDocumentationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "job",
+                "type": "JobIdentifier"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 3,
+                  "name": "arguments",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "GenerateDocumentationResponse"
+          }
+        ],
+        "imports": [
+          {
+            "path": "common.proto"
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel.documentation"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto.documentation"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "DocumentationProto"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "exception.proto",
       "def": {
         "messages": [
@@ -835,6 +892,72 @@
     {
       "protopath": "history.proto",
       "def": {
+        "enums": [
+          {
+            "name": "JobOrder",
+            "enum_fields": [
+              {
+                "name": "JOB_BY_DATETIME"
+              },
+              {
+                "name": "JOB_BY_PROJECT",
+                "integer": 10
+              },
+              {
+                "name": "JOB_BY_NAME",
+                "integer": 20
+              },
+              {
+                "name": "JOB_BY_ID",
+                "integer": 30
+              },
+              {
+                "name": "JOB_BY_STATUS",
+                "integer": 40
+              },
+              {
+                "name": "JOB_BY_PHASE",
+                "integer": 60
+              }
+            ]
+          },
+          {
+            "name": "TargetOrder",
+            "enum_fields": [
+              {
+                "name": "TARGET_BY_DATETIME"
+              },
+              {
+                "name": "TARGET_BY_PROJECT",
+                "integer": 10
+              },
+              {
+                "name": "TARGET_BY_NAME",
+                "integer": 20
+              },
+              {
+                "name": "TARGET_BY_ID",
+                "integer": 30
+              },
+              {
+                "name": "TARGET_BY_STATUS",
+                "integer": 40
+              },
+              {
+                "name": "TARGET_BY_PHASE",
+                "integer": 50
+              },
+              {
+                "name": "TARGET_BY_PARENT_NAME",
+                "integer": 60
+              },
+              {
+                "name": "TARGET_BY_PARENT_ID",
+                "integer": 70
+              }
+            ]
+          }
+        ],
         "messages": [
           {
             "name": "JobHistoryQuery",
@@ -1112,6 +1235,17 @@
                 "id": 1,
                 "name": "query",
                 "type": "JobHistoryQuery"
+              },
+              {
+                "id": 2,
+                "name": "order",
+                "type": "JobOrder",
+                "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "maxResults",
+                "type": "int32"
               }
             ]
           },
@@ -1173,6 +1307,38 @@
                 "is_repeated": true
               }
             ]
+          },
+          {
+            "name": "FindTargetsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "query",
+                "type": "TargetHistoryQuery"
+              },
+              {
+                "id": 2,
+                "name": "order",
+                "type": "TargetOrder",
+                "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "maxResults",
+                "type": "int32"
+              }
+            ]
+          },
+          {
+            "name": "FindTargetsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "Targets",
+                "type": "TargetHistoryDetails",
+                "is_repeated": true
+              }
+            ]
           }
         ],
         "services": [
@@ -1183,6 +1349,11 @@
                 "name": "findJobs",
                 "in_type": "FindJobsRequest",
                 "out_type": "FindJobsResponse"
+              },
+              {
+                "name": "findTargets",
+                "in_type": "FindTargetsRequest",
+                "out_type": "FindTargetsResponse"
               },
               {
                 "name": "getJobMetrics",
@@ -2108,7 +2279,14 @@
             ]
           },
           {
-            "name": "SaveMappingOutputResponse"
+            "name": "SaveMappingOutputResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "status",
+                "type": "ExecutionStatus"
+              }
+            ]
           }
         ],
         "imports": [
@@ -3136,6 +3314,11 @@
                 "out_type": "project.ExecuteProjectResponse"
               },
               {
+                "name": "generateDocumentation",
+                "in_type": "documentation.GenerateDocumentationRequest",
+                "out_type": "documentation.GenerateDocumentationResponse"
+              },
+              {
                 "name": "ExecuteSql",
                 "in_type": "ExecuteSqlRequest",
                 "out_type": "ExecuteSqlResponse"
@@ -3157,6 +3340,9 @@
         "imports": [
           {
             "path": "common.proto"
+          },
+          {
+            "path": "documentation.proto"
           },
           {
             "path": "mapping.proto"

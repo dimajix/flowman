@@ -23,9 +23,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import com.dimajix.flowman.kernel.model.Context;
 import dev.dirs.ProjectDirectories;
-import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import lombok.val;
 import org.jline.reader.LineReader;
@@ -36,15 +34,14 @@ import org.jline.terminal.TerminalBuilder;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
+import com.dimajix.flowman.common.Logging;
+import com.dimajix.flowman.tools.RemoteTool;
 import static com.dimajix.common.ExceptionUtils.isFatal;
 import static com.dimajix.common.ExceptionUtils.reasons;
 import static com.dimajix.flowman.common.ConsoleColors.yellow;
 import static com.dimajix.flowman.common.ParserUtils.splitSettings;
 import static com.dimajix.flowman.tools.Versions.FLOWMAN_VERSION;
 import static com.dimajix.flowman.tools.Versions.JAVA_VERSION;
-
-import com.dimajix.flowman.common.Logging;
-import com.dimajix.flowman.tools.RemoteTool;
 
 
 public class Shell extends RemoteTool {
@@ -185,7 +182,7 @@ public class Shell extends RemoteTool {
                 System.out.flush();
                 String context;
                 try {
-                    context = this.getContext();
+                    context = this.getPrompt();
                 }
                 catch (Throwable e) {
                     writer.println("Error communicating with kernel:\n  " + reasons(e));
@@ -225,7 +222,8 @@ public class Shell extends RemoteTool {
                         command.printHelp(System.out);
                     }
                     else {
-                        command.execute(getKernel(), getSession());
+                        val context = createContext();
+                        command.execute(context);
                     }
                 }
                 catch (Throwable ex) {

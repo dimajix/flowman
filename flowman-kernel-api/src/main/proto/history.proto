@@ -9,6 +9,14 @@ package com.dimajix.flowman.kernel.history;
 import "common.proto";
 
 
+enum JobOrder {
+    JOB_BY_DATETIME = 0;
+    JOB_BY_PROJECT = 10;
+    JOB_BY_NAME = 20;
+    JOB_BY_ID = 30;
+    JOB_BY_STATUS = 40;
+    JOB_BY_PHASE = 60;
+}
 message JobHistoryQuery {
     repeated string id = 1;
     repeated string namespace = 2;
@@ -35,6 +43,16 @@ message JobHistoryDetails {
 }
 
 
+enum TargetOrder {
+    TARGET_BY_DATETIME = 0;
+    TARGET_BY_PROJECT = 10;
+    TARGET_BY_NAME = 20;
+    TARGET_BY_ID = 30;
+    TARGET_BY_STATUS = 40;
+    TARGET_BY_PHASE = 50;
+    TARGET_BY_PARENT_NAME = 60;
+    TARGET_BY_PARENT_ID = 70;
+}
 message TargetHistoryQuery {
     repeated string id = 1;
     repeated string namespace = 2;
@@ -50,7 +68,7 @@ message TargetHistoryQuery {
 }
 message TargetHistoryDetails {
     string id = 1;
-    string jobId = 2;
+    optional string jobId = 2;
     string namespace = 3;
     string project = 4;
     string version = 5;
@@ -66,6 +84,8 @@ message TargetHistoryDetails {
 
 message FindJobsRequest {
     JobHistoryQuery query = 1;
+    repeated JobOrder order = 2;
+    optional int32 maxResults = 3;
 }
 message FindJobsResponse {
     repeated JobHistoryDetails jobs = 1;
@@ -87,8 +107,19 @@ message FindJobMetricsResponse {
 }
 
 
+message FindTargetsRequest {
+    TargetHistoryQuery query = 1;
+    repeated TargetOrder order = 2;
+    optional int32 maxResults = 3;
+}
+message FindTargetsResponse {
+    repeated TargetHistoryDetails Targets = 1;
+}
+
+
 service HistoryService {
     rpc findJobs(FindJobsRequest) returns(FindJobsResponse);
+    rpc findTargets(FindTargetsRequest) returns(FindTargetsResponse);
 
     rpc getJobMetrics(GetJobMetricsRequest) returns(GetJobMetricsResponse);
     rpc findJobMetrics(FindJobMetricsRequest) returns(FindJobMetricsResponse);

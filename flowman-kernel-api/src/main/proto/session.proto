@@ -7,6 +7,7 @@ option java_outer_classname = "SessionProto";
 package com.dimajix.flowman.kernel.session;
 
 import "common.proto";
+import "documentation.proto";
 import "mapping.proto";
 import "relation.proto";
 import "target.proto";
@@ -164,6 +165,9 @@ service SessionService {
     // Project stuff
     rpc GetProject(project.GetProjectRequest) returns(project.GetProjectResponse);
     rpc ExecuteProject(project.ExecuteProjectRequest) returns(project.ExecuteProjectResponse);
+
+    // Documentation
+    rpc generateDocumentation(documentation.GenerateDocumentationRequest) returns(documentation.GenerateDocumentationResponse);
 
     // Generic stuff
     rpc ExecuteSql(ExecuteSqlRequest) returns (ExecuteSqlResponse);

@@ -143,13 +143,14 @@ final class WorkspaceServiceHandler(
                 if (wsName != req.getWorkspaceId) {
                     throw new IllegalArgumentException("All file upload requests must belong to the same workspace")
                 }
-                logger.debug(s"Receive file ${req.getFileName}")
             }
             val parcel = ws.parcels.head
             req.getFileType match {
                 case FileType.FILE if req.hasFileContent =>
+                    logger.debug(s"Workspace '$wsName' receives file '${req.getFileName}'")
                     parcel.putFile(new Path(req.getFileName), req.getFileContent.toByteArray)
                 case FileType.DIRECTORY =>
+                    logger.info(s"Workspace '$wsName' receives directory '${req.getFileName}'")
                     parcel.mkdir(new Path(req.getFileName))
                 case _ =>
                     throw new IllegalArgumentException(s"File type '${req.getFileType}' not supported")

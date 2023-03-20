@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.dimajix.flowman.kernel.proto.documentation.GenerateDocumentationRequest;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import lombok.val;
@@ -246,11 +247,11 @@ public final class SessionClient extends AbstractClient {
 
         return Mapping.ofProto(mapping);
     }
-    public StructType describeMapping(MappingIdentifier mappingId, String output, boolean useSpark) {
+    public StructType describeMapping(MappingOutputIdentifier mappingId, boolean useSpark) {
         val request = DescribeMappingRequest.newBuilder()
             .setSessionId(sessionId)
-            .setMapping(mappingId.toProto())
-            .setOutput(output)
+            .setMapping(mappingId.getMapping().toProto())
+            .setOutput(mappingId.getOutput())
             .setUseSpark(useSpark)
             .build();
         val result = call(() -> blockingStub.describeMapping(request));
@@ -259,31 +260,31 @@ public final class SessionClient extends AbstractClient {
         return StructType.ofProto(schema);
     }
 
-    public void cacheMapping(MappingIdentifier mappingId, String output) {
+    public void cacheMapping(MappingOutputIdentifier mappingId) {
         val request = CacheMappingRequest.newBuilder()
             .setSessionId(sessionId)
-            .setMapping(mappingId.toProto())
-            .setOutput(output)
+            .setMapping(mappingId.getMapping().toProto())
+            .setOutput(mappingId.getOutput())
             .build();
         call(() -> blockingStub.cacheMapping(request));
     }
 
-    public long countMapping(MappingIdentifier mappingId, String output) {
+    public long countMapping(MappingOutputIdentifier mappingId) {
         val request = CountMappingRequest.newBuilder()
             .setSessionId(sessionId)
-            .setMapping(mappingId.toProto())
-            .setOutput(output)
+            .setMapping(mappingId.getMapping().toProto())
+            .setOutput(mappingId.getOutput())
             .build();
         val result = call(() -> blockingStub.countMapping(request));
 
         return result.getNumRecords();
     }
 
-    public DataFrame readMapping(MappingIdentifier mappingId, String output, List<String> columns, int maxRows) {
+    public DataFrame readMapping(MappingOutputIdentifier mappingId, List<String> columns, int maxRows) {
         val request = ReadMappingRequest.newBuilder()
             .setSessionId(sessionId)
-            .setMapping(mappingId.toProto())
-            .setOutput(output)
+            .setMapping(mappingId.getMapping().toProto())
+            .setOutput(mappingId.getOutput())
             .addAllColumns(columns)
             .setMaxRows(maxRows)
             .build();
@@ -295,11 +296,11 @@ public final class SessionClient extends AbstractClient {
         return new DataFrame(schema, rows);
     }
 
-    public String explainMapping(MappingIdentifier mappingId, String output) {
+    public String explainMapping(MappingOutputIdentifier mappingId) {
         val request = ExplainMappingRequest.newBuilder()
             .setSessionId(sessionId)
-            .setMapping(mappingId.toProto())
-            .setOutput(output)
+            .setMapping(mappingId.getMapping().toProto())
+            .setOutput(mappingId.getOutput())
             .build();
         val result = call(() -> blockingStub.explainMapping(request));
 
@@ -312,6 +313,20 @@ public final class SessionClient extends AbstractClient {
             .setMapping(mappingId.toProto())
             .build();
         call(() -> blockingStub.validateMapping(request));
+    }
+
+    public Status saveMapping(MappingOutputIdentifier mappingId, String location, String format, Map<String,String> options) {
+        val request = SaveMappingOutputRequest.newBuilder()
+            .setSessionId(sessionId)
+            .setMapping(mappingId.getMapping().toProto())
+            .setOutput(mappingId.getOutput())
+            .setFormat(format)
+            .setLocation(location)
+            .putAllOptions(options)
+            .build();
+
+        val result = call(() -> blockingStub.saveMappingOutput(request));
+        return Status.ofProto(result.getStatus());
     }
 
     public List<RelationIdentifier> listRelations() {
@@ -479,6 +494,15 @@ public final class SessionClient extends AbstractClient {
         val status = result.getStatus();
 
         return Status.ofProto(status);
+    }
+
+    public void generateDocumentation(JobIdentifier jobId, Map<String,String> args) {
+        val request = GenerateDocumentationRequest.newBuilder()
+            .setSessionId(sessionId)
+            .setJob(jobId.toProto())
+            .putAllArguments(args)
+            .build();
+        call(() -> blockingStub.generateDocumentation(request));
     }
 
     public Status executeProject(List<Phase> lifecycle, Map<String,String> args, List<String> targets,List<String> dirtyTargets,boolean force, boolean keepGoing, boolean dryRun,int parallelism) {

@@ -21,10 +21,9 @@ import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
 import com.dimajix.flowman.common.ParserUtils;
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.MappingOutputIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
@@ -38,11 +37,12 @@ public class ShowCommand extends Command {
 
 
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val columns = ParserUtils.parseDelimitedList(this.columns);
         val identifier = MappingOutputIdentifier.ofString(this.mapping);
 
-        val df = session.readMapping(identifier.getMapping(), identifier.getOutput(), columns, limit);
+        val df = session.readMapping(identifier, columns, limit);
         df.show();
         return Status.SUCCESS;
     }

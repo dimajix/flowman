@@ -39,7 +39,7 @@ object Converter {
             ms.namespace,
             ms.project,
             ms.job,
-            ms.phase,
+            ms.phase.toString,
             ms.labels,
             ms.measurements.map(m => ofSpec(m))
         )

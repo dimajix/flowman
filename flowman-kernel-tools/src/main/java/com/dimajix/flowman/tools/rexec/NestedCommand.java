@@ -20,9 +20,8 @@ import java.io.PrintStream;
 
 import org.kohsuke.args4j.CmdLineParser;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 
 
 public abstract class NestedCommand extends Command {
@@ -49,7 +48,7 @@ public abstract class NestedCommand extends Command {
     }
 
 
-    public Status execute(KernelClient kernel, SessionClient session) {
-        return getCommand().execute(kernel, session);
+    public Status execute(ExecutionContext context) {
+        return getCommand().execute(context);
     }
 }

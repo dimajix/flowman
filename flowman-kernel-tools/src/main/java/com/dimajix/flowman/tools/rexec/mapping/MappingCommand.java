@@ -34,6 +34,7 @@ public class MappingCommand extends NestedCommand {
         @SubCommand(name = "explain", impl = ExplainCommand.class),
         @SubCommand(name = "inspect", impl = InspectCommand.class),
         @SubCommand(name = "list", impl = ListCommand.class),
+        @SubCommand(name = "save", impl = SaveCommand.class),
         @SubCommand(name = "show", impl = ShowCommand.class),
         @SubCommand(name = "validate", impl = ValidateCommand.class)
     })

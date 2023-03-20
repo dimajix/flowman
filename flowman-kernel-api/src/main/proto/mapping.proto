@@ -111,5 +111,5 @@ message SaveMappingOutputRequest {
     map<string,string> options = 7;
 }
 message SaveMappingOutputResponse {
-
+    ExecutionStatus status = 1;
 }

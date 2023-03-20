@@ -152,6 +152,10 @@ public final class KernelClient extends AbstractClient {
         call(() -> workspaceStub.deleteWorkspace(request));
     }
 
+    public HistoryClient getHistory() {
+        return new HistoryClient(channel);
+    }
+
     public Kernel getKernel() {
         val request = GetKernelRequest.newBuilder()
             .build();

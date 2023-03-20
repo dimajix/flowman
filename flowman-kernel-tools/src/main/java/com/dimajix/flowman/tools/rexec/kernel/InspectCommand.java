@@ -16,17 +16,16 @@
 
 package com.dimajix.flowman.tools.rexec.kernel;
 
-import lombok.val;
-
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
+import lombok.val;
 
 
 public class InspectCommand extends Command {
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val kernel = context.getKernel();
         val info = kernel.getKernel();
         System.out.println("Flowman kernel server:");
         System.out.println("    version: " + info.getFlowmanVersion());

@@ -20,13 +20,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.val;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.kernel.model.TestIdentifier;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
@@ -41,7 +41,8 @@ public class RunCommand extends Command {
     int parallelism = 1;
 
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         List<TestIdentifier> allTests = Arrays.stream(tests)
             .flatMap(t -> Arrays.stream(t.split(",")))
             .map(TestIdentifier::ofString)

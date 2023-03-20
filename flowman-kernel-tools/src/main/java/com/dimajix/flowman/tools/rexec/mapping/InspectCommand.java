@@ -19,12 +19,11 @@ package com.dimajix.flowman.tools.rexec.mapping;
 import lombok.val;
 import org.kohsuke.args4j.Argument;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.MappingIdentifier;
 import com.dimajix.flowman.kernel.model.MappingOutputIdentifier;
 import com.dimajix.flowman.kernel.model.ResourceIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
@@ -33,7 +32,8 @@ public class InspectCommand extends Command {
     String mapping = "";
 
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val mapping = session.getMapping(MappingIdentifier.ofString(this.mapping));
         System.out.println("Mapping:");
         System.out.println("    name: " + mapping.getName());

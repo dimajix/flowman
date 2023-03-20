@@ -41,7 +41,7 @@ import com.dimajix.flowman.model.TargetDigest
 
 
 object FileTarget {
-    def apply(context: Context, mapping:MappingOutputIdentifier, location:Path, format:String, options:Map[String,String]) = {
+    def apply(context: Context, mapping: MappingOutputIdentifier, location: Path, format: String, options: Map[String, String]) : FileTarget = {
         val conf = context.flowmanConf
         new FileTarget(
             Target.Properties(context),

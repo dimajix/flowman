@@ -18,16 +18,16 @@ package com.dimajix.flowman.tools.rexec.target;
 
 import lombok.val;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.kernel.model.TargetIdentifier;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
 class ListCommand extends Command {
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val targets = session.listTargets();
         targets.stream().map(TargetIdentifier::getName).sorted().forEach(System.out::println);
         return Status.SUCCESS;

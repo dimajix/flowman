@@ -22,6 +22,7 @@ import java.util.UUID
 
 import scala.concurrent.ExecutionContext
 
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
@@ -49,6 +50,7 @@ import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.model.TestIdentifier
 import com.dimajix.flowman.spec.mapping.SqlMapping
+import com.dimajix.flowman.spec.target.FileTarget
 import com.dimajix.flowman.spec.target.RelationTarget
 import com.dimajix.flowman.storage.Store
 import com.dimajix.flowman.types.SingleValue
@@ -176,6 +178,11 @@ class SessionService(sessionManager:SessionManager, val store:Store, val project
         else {
             execution.describe(mapping, output)
         }
+    }
+    def saveMapping(mapping:MappingOutputIdentifier, location:Path, format:String, options:Map[String,String]) : Status = {
+        val task = FileTarget(context, mapping, location, format, options)
+        val result = task.execute(session.execution, Phase.BUILD).rethrow()
+        result.status
     }
 
     def listRelations() : Seq[RelationIdentifier] = {

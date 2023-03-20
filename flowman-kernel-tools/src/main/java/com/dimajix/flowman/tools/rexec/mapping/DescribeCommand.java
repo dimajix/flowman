@@ -20,10 +20,9 @@ import lombok.val;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.MappingOutputIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
@@ -34,10 +33,11 @@ public class DescribeCommand extends Command {
     String mapping = "";
 
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val identifier = MappingOutputIdentifier.ofString(this.mapping);
 
-        val schema = session.describeMapping(identifier.getMapping(), identifier.getOutput(), useSpark);
+        val schema = session.describeMapping(identifier, useSpark);
         schema.printTree();
         return Status.SUCCESS;
     }

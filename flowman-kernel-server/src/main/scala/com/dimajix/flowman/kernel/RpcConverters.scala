@@ -16,19 +16,23 @@
 
 package com.dimajix.flowman.kernel
 
-import java.lang
-import java.sql.Date
-import java.sql.Timestamp
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 import scala.collection.JavaConverters._
 
 import com.google.protobuf.ByteString
 import org.apache.spark.sql.Row
 
-import com.dimajix.flowman.{model => m}
-import com.dimajix.flowman.{execution => exec}
-import com.dimajix.flowman.{types => ft}
+import com.dimajix.flowman.history.JobOrder
+import com.dimajix.flowman.history.Measurement
+import com.dimajix.flowman.history.MetricSeries
+import com.dimajix.flowman.history.TargetOrder
 import com.dimajix.flowman.kernel.{proto => p}
+import com.dimajix.flowman.{execution => exec}
+import com.dimajix.flowman.{model => m}
+import com.dimajix.flowman.{types => ft}
 
 
 object RpcConverters {
@@ -121,17 +125,38 @@ object RpcConverters {
     }
 
     def toModel(phase: p.ExecutionPhase) : exec.Phase = {
-        phase.name() match {
-            case "VALIDATE" => exec.Phase.VALIDATE
-            case "CREATE" => exec.Phase.CREATE
-            case "BUILD" => exec.Phase.BUILD
-            case "VERIFY" => exec.Phase.VERIFY
-            case "TRUNCATE" => exec.Phase.TRUNCATE
-            case "DESTROY" => exec.Phase.DESTROY
-            case name => throw new IllegalArgumentException(s"Unknown execution phase ${name}")
+        phase match {
+            case p.ExecutionPhase.VALIDATE => exec.Phase.VALIDATE
+            case p.ExecutionPhase.CREATE => exec.Phase.CREATE
+            case p.ExecutionPhase.BUILD => exec.Phase.BUILD
+            case p.ExecutionPhase.VERIFY => exec.Phase.VERIFY
+            case p.ExecutionPhase.TRUNCATE => exec.Phase.TRUNCATE
+            case p.ExecutionPhase.DESTROY => exec.Phase.DESTROY
+            case p => throw new IllegalArgumentException(s"Unknown execution phase ${p}")
+        }
+    }
+    def toProto(phase: exec.Phase) : p.ExecutionPhase = {
+        phase match {
+            case exec.Phase.VALIDATE => p.ExecutionPhase.VALIDATE
+            case exec.Phase.CREATE => p.ExecutionPhase.CREATE
+            case exec.Phase.BUILD => p.ExecutionPhase.BUILD
+            case exec.Phase.VERIFY => p.ExecutionPhase.VERIFY
+            case exec.Phase.TRUNCATE => p.ExecutionPhase.TRUNCATE
+            case exec.Phase.DESTROY => p.ExecutionPhase.DESTROY
         }
     }
 
+    def toModel(status:p.ExecutionStatus) : exec.Status = {
+        status match {
+            case p.ExecutionStatus.UNKNOWN_STATUS => exec.Status.UNKNOWN
+            case p.ExecutionStatus.RUNNING => exec.Status.RUNNING
+            case p.ExecutionStatus.SUCCESS => exec.Status.SUCCESS
+            case p.ExecutionStatus.SUCCESS_WITH_ERRORS => exec.Status.SUCCESS_WITH_ERRORS
+            case p.ExecutionStatus.FAILED => exec.Status.FAILED
+            case p.ExecutionStatus.ABORTED => exec.Status.ABORTED
+            case p.ExecutionStatus.SKIPPED => exec.Status.SKIPPED
+        }
+    }
     def toProto(status: exec.Status) : p.ExecutionStatus = {
         status match {
             case exec.Status.UNKNOWN => p.ExecutionStatus.UNKNOWN_STATUS
@@ -141,6 +166,30 @@ object RpcConverters {
             case exec.Status.FAILED => p.ExecutionStatus.FAILED
             case exec.Status.ABORTED => p.ExecutionStatus.ABORTED
             case exec.Status.SKIPPED => p.ExecutionStatus.SKIPPED
+        }
+    }
+
+    def toModel(order:p.history.JobOrder) : JobOrder = {
+        order match {
+            case p.history.JobOrder.JOB_BY_DATETIME => JobOrder.BY_DATETIME
+            case p.history.JobOrder.JOB_BY_PROJECT => JobOrder.BY_PROJECT
+            case p.history.JobOrder.JOB_BY_NAME => JobOrder.BY_NAME
+            case p.history.JobOrder.JOB_BY_ID => JobOrder.BY_ID
+            case p.history.JobOrder.JOB_BY_STATUS => JobOrder.BY_STATUS
+            case p.history.JobOrder.JOB_BY_PHASE => JobOrder.BY_PHASE
+        }
+    }
+
+    def toModel(order: p.history.TargetOrder): TargetOrder = {
+        order match {
+            case p.history.TargetOrder.TARGET_BY_DATETIME => TargetOrder.BY_DATETIME
+            case p.history.TargetOrder.TARGET_BY_PROJECT => TargetOrder.BY_PROJECT
+            case p.history.TargetOrder.TARGET_BY_NAME => TargetOrder.BY_NAME
+            case p.history.TargetOrder.TARGET_BY_ID => TargetOrder.BY_ID
+            case p.history.TargetOrder.TARGET_BY_STATUS => TargetOrder.BY_STATUS
+            case p.history.TargetOrder.TARGET_BY_PHASE => TargetOrder.BY_PHASE
+            case p.history.TargetOrder.TARGET_BY_PARENT_NAME => TargetOrder.BY_PARENT_NAME
+            case p.history.TargetOrder.TARGET_BY_PARENT_ID => TargetOrder.BY_PARENT_ID
         }
     }
 
@@ -215,16 +264,24 @@ object RpcConverters {
     }
 
 
+    def toModel(ts:p.Timestamp) : ZonedDateTime = {
+        val secs = ts.getSeconds
+        val nanos = ts.getNanos
+        ZonedDateTime.ofInstant(Instant.ofEpochSecond(secs, nanos), ZoneId.systemDefault)
+    }
     def toProto(ts:java.sql.Timestamp) : p.Timestamp = {
         val secs = ts.getTime
         val nanos = ts.getNanos
         p.Timestamp.newBuilder().setSeconds(secs).setNanos(nanos).build()
     }
-
     def toProto(ts: java.time.Instant): p.Timestamp = {
         val secs = ts.getEpochSecond
         val nanos = ts.getNano
         p.Timestamp.newBuilder().setSeconds(secs).setNanos(nanos).build()
+    }
+    def toProto(ts: ZonedDateTime): p.Timestamp = {
+        val instant = ts.toInstant
+        toProto(instant)
     }
 
     def toProto(ts: java.sql.Date): p.Date = {
@@ -271,5 +328,26 @@ object RpcConverters {
         }
         val fields = row.toSeq.map(convert)
         p.Row.newBuilder().addAllField(fields.asJava).build()
+    }
+
+    def toProto(measurement:Measurement) : p.Measurement = {
+        p.Measurement.newBuilder()
+            .setName(measurement.name)
+            .setJobId(measurement.jobId)
+            .setTs(toProto(measurement.ts))
+            .putAllLabels(measurement.labels.asJava)
+            .setValue(measurement.value)
+            .build()
+    }
+    def toProto(series:MetricSeries) : p.MetricSeries = {
+        p.MetricSeries.newBuilder()
+            .setMetric(series.metric)
+            .setNamespace(series.namespace)
+            .setProject(series.project)
+            .setJob(series.job)
+            .setPhase(toProto(series.phase))
+            .putAllLabels(series.labels.asJava)
+            .addAllMeasurements(series.measurements.map(toProto).asJava)
+            .build()
     }
 }

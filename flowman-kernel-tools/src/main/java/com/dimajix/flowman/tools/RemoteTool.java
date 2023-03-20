@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.event.LoggingEvent;
 
 import com.dimajix.flowman.kernel.ClientFactory;
+import com.dimajix.flowman.kernel.HistoryClient;
 import com.dimajix.flowman.kernel.KernelClient;
 import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.WorkspaceClient;
@@ -33,6 +34,7 @@ import com.dimajix.flowman.kernel.WorkspaceClient;
 
 public class RemoteTool {
     private final KernelClient _kernel;
+    private final HistoryClient _history;
     private SessionClient _session= null;
     private WorkspaceClient _workspace = null;
     private final Map<String,String> config;
@@ -44,6 +46,7 @@ public class RemoteTool {
         this.environment = environment;
         this.profiles = profiles;
         this._kernel =  ClientFactory.createClient(kernelUri);
+        this._history = this._kernel.getHistory();
         this._workspace = openWorkspace(extractWorkspace(kernelUri));
     }
 
@@ -65,8 +68,13 @@ public class RemoteTool {
     public WorkspaceClient  getWorkspace() { return _workspace; }
     public KernelClient getKernel() { return _kernel; }
     public SessionClient getSession() { return _session; }
+    public HistoryClient getHistory() { return _history; }
 
-    public String getContext() {
+    public ExecutionContext createContext() {
+        return new ExecutionContext(getKernel(), getWorkspace(), getSession(), getHistory());
+    }
+
+    public String getPrompt() {
         val ctx = _session.getContext();
         val prefix = ctx.getProject().isPresent() ? ctx.getProject().get() : "";
         val suffix =

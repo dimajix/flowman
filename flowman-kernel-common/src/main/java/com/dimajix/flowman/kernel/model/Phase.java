@@ -17,6 +17,10 @@
 package com.dimajix.flowman.kernel.model;
 
 
+import java.util.Locale;
+
+import lombok.val;
+
 import com.dimajix.flowman.kernel.proto.ExecutionPhase;
 
 public enum Phase {
@@ -63,5 +67,23 @@ public enum Phase {
         }
 
         throw new IllegalArgumentException("Unknown phase " + phase.name());
+    }
+
+    public static Phase ofString(String phase) {
+        val upr = phase.toUpperCase(Locale.ROOT);
+        if (upr.equals("VALIDATE"))
+            return VALIDATE;
+        if (upr.equals("CREATE"))
+            return CREATE;
+        if (upr.equals("BUILD"))
+            return BUILD;
+        if (upr.equals("VERIFY"))
+            return VERIFY;
+        if (upr.equals("TRUNCATE"))
+            return TRUNCATE;
+        if (upr.equals("DESTROY"))
+            return DESTROY;
+
+        throw new IllegalArgumentException("Unknown phase " + phase);
     }
 }

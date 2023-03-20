@@ -19,9 +19,10 @@ package com.dimajix.flowman.kernel.model;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Strings;
 import lombok.Value;
 import lombok.val;
+
+import com.dimajix.flowman.kernel.ConsoleUtils;
 
 
 @Value
@@ -32,59 +33,6 @@ public class DataFrame {
     public void show() {
         val header = schema.getFields().stream().map(StructField::getName).toArray(String[]::new);
         val rows = this.rows.stream().map(Row::toStringArray).collect(Collectors.toList());
-        val numCols = header.length;
-        val columnWidth = new int[numCols];
-
-        for (int i = 0; i < numCols; i++) {
-            columnWidth[i] = header[i].length();
-        }
-
-        for (val row : rows) {
-            for (int i = 0; i < numCols; i++) {
-                val rl = row[i].length();
-                if (columnWidth[i] < rl)
-                    columnWidth[i] = rl;
-            }
-        }
-
-        // Separator
-        val rowSep = rowSeparator(columnWidth);
-        System.out.println(rowSep);
-        System.out.println(padRow(header, columnWidth));
-        System.out.println(rowSep);
-        for (val row : rows) {
-            System.out.println(padRow(row, columnWidth));
-        }
-        System.out.println(rowSep);
-    }
-
-    private static String rowSeparator(int[] columnWidth) {
-        val sb = new StringBuilder();
-        sb.append("+");
-        for (val l : columnWidth) {
-            sb.append(Strings.repeat("-", l));
-            sb.append("+");
-        }
-        return sb.toString();
-    }
-
-    private static String padRow(String[] row, int[] columnWidth) {
-        val sb = new StringBuilder();
-        sb.append("|");
-        for (int i = 0; i < row.length; i++) {
-            val col = row[i];
-            val width = columnWidth[i];
-            val cl = col.length();
-            String r;
-            if (cl > width)
-                r = col.substring(0, width - 3) + "...";
-            else if (cl < width)
-                r = Strings.padEnd(col, width, ' ');
-            else
-                r = col;
-            sb.append(r);
-            sb.append("|");
-        }
-        return sb.toString();
+        ConsoleUtils.showTable(header, rows);
     }
 }

@@ -16,15 +16,14 @@
 
 package com.dimajix.flowman.tools.rshell;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
 public class ExitCommand extends Command {
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
         Shell.getInstance().exit();
         return Status.SUCCESS;
     }

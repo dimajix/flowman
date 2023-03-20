@@ -16,18 +16,16 @@
 
 package com.dimajix.flowman.tools.rexec.job;
 
-import java.util.Comparator;
-import java.util.Map;
-
-import lombok.val;
-import org.kohsuke.args4j.Argument;
-
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.Job;
 import com.dimajix.flowman.kernel.model.JobIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
+import lombok.val;
+import org.kohsuke.args4j.Argument;
+
+import java.util.Comparator;
+import java.util.Map;
 
 
 public class InspectCommand extends Command {
@@ -35,7 +33,8 @@ public class InspectCommand extends Command {
     String job = "";
 
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val job = session.getJob(JobIdentifier.ofString(this.job));
         System.out.println("Name: " + job.getName());
         System.out.println("Description: " + job.getDescription());

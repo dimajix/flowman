@@ -21,13 +21,12 @@ import java.util.Map;
 import lombok.val;
 import org.kohsuke.args4j.Argument;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.MappingIdentifier;
 import com.dimajix.flowman.kernel.model.RelationIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.kernel.model.TargetIdentifier;
 import com.dimajix.flowman.kernel.model.TestIdentifier;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
@@ -36,7 +35,8 @@ public class InspectCommand extends Command {
     String test = "";
 
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val test = session.getTest(TestIdentifier.ofString(this.test));
         System.out.println("Name: " + test.getName());
         System.out.println("Description: " + test.getDescription().orElse(""));

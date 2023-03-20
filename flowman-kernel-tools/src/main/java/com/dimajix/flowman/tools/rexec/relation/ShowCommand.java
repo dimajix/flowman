@@ -16,15 +16,15 @@
 
 package com.dimajix.flowman.tools.rexec.relation;
 
-import com.dimajix.flowman.common.ParserUtils;
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
-import com.dimajix.flowman.kernel.model.RelationIdentifier;
-import com.dimajix.flowman.kernel.model.Status;
-import com.dimajix.flowman.tools.rexec.Command;
 import lombok.val;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
+
+import com.dimajix.flowman.common.ParserUtils;
+import com.dimajix.flowman.kernel.model.RelationIdentifier;
+import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
+import com.dimajix.flowman.tools.rexec.Command;
 
 
 public class ShowCommand extends Command {
@@ -39,7 +39,8 @@ public class ShowCommand extends Command {
 
 
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val columns = ParserUtils.parseDelimitedList(this.columns);
         val identifier = RelationIdentifier.ofString(this.relation);
         val partition = ParserUtils.parseDelimitedKeyValues(this.partition);

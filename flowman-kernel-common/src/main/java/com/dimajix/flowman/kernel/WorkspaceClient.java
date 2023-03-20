@@ -19,8 +19,10 @@ package com.dimajix.flowman.kernel;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.StreamSupport;
 
+import com.dimajix.flowman.kernel.proto.workspace.GetWorkspaceRequest;
 import com.google.common.io.Files;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -59,6 +61,14 @@ public final class WorkspaceClient extends AbstractClient {
         return channel.isTerminated();
     }
 
+    public List<String> listProjects() {
+        val request = GetWorkspaceRequest.newBuilder()
+            .setWorkspaceId(workspaceId)
+            .build();
+        val result = call(() -> blockingStub.getWorkspace(request));
+        return result.getWorkspace().getProjectsList();
+    }
+
     public String getWorkspaceId() { return workspaceId; }
 
     public void cleanWorkspace() {
@@ -87,14 +97,15 @@ public final class WorkspaceClient extends AbstractClient {
     }
     private UploadFilesRequest uploadFile(Path root, File src) {
         val filename = root.relativize(src.toPath()).toString();
-        logger.debug("Uploading file '" + src + "' as '" + filename + "' to kernel...");
         val result = UploadFilesRequest.newBuilder()
                 .setWorkspaceId(workspaceId)
                 .setFileName(filename);
         if (src.isDirectory()) {
+            logger.info("Uploading directory'" + src + "' as '" + filename + "' to kernel...");
             result.setFileType(FileType.DIRECTORY);
         }
         else {
+            logger.debug("Uploading file '" + src + "' as '" + filename + "' to kernel...");
             try {
                 val content = Files.toByteArray(src);
                 result.setFileType(FileType.FILE);

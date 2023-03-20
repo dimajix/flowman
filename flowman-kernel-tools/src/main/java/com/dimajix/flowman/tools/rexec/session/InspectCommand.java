@@ -20,15 +20,15 @@ import java.util.Map;
 
 import lombok.val;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
 public class InspectCommand extends Command {
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val session = context.getSession();
         val project = session.getProject();
         System.out.println("Project:");
         System.out.println("    name: " + project.getName());
@@ -37,43 +37,43 @@ public class InspectCommand extends Command {
         System.out.println("    basedir: " + project.getBasedir().orElse(""));
         System.out.println("    filename: " + project.getFilename().orElse(""));
 
-        val context = session.getSession();
+        val sesn = session.getSession();
         System.out.println("Active Profiles:");
-        context.getProfiles()
+        sesn.getProfiles()
             .stream()
             .sorted()
             .forEach(p -> System.out.println("    " + p));
 
         System.out.println("Active Environment:");
-        context.getEnvironment()
+        sesn.getEnvironment()
             .entrySet()
             .stream()
             .sorted(Map.Entry.comparingByKey())
             .forEach(kv -> System.out.println("    " + kv.getKey() + "=" + kv.getValue()));
 
         System.out.println("Active Configuration:");
-        context.getConfig()
+        sesn.getConfig()
             .entrySet()
             .stream()
             .sorted(Map.Entry.comparingByKey())
             .forEach(kv -> System.out.println("    " + kv.getKey() + "=" + kv.getValue()));
 
         System.out.println("Flowman Configuration:");
-        context.getFlowmanConfig()
+        sesn.getFlowmanConfig()
             .entrySet()
             .stream()
             .sorted(Map.Entry.comparingByKey())
             .forEach(kv -> System.out.println("    " + kv.getKey() + "=" + kv.getValue()));
 
         System.out.println("Spark Configuration:");
-        context.getSparkConfig()
+        sesn.getSparkConfig()
             .entrySet()
             .stream()
             .sorted(Map.Entry.comparingByKey())
             .forEach(kv -> System.out.println("    " + kv.getKey() + "=" + kv.getValue()));
 
         System.out.println("Hadoop Configuration:");
-        context.getHadoopConfig()
+        sesn.getHadoopConfig()
             .entrySet()
             .stream()
             .sorted(Map.Entry.comparingByKey())

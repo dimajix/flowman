@@ -905,7 +905,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                 series.groupBy(m => groupings.map(m.labels))
                     .map { case(group,values) =>
                         val labels = groupings.zip(group).toMap
-                        MetricSeries(metric, namespace, project, job, phase, labels, values.toSeq.sortBy(_.ts.toInstant.toEpochMilli))
+                        MetricSeries(metric, namespace, project, job, Phase.ofString(phase), labels, values.toSeq.sortBy(_.ts.toInstant.toEpochMilli))
                     }
             }
             .toSeq

@@ -21,9 +21,8 @@ import java.io.PrintStream;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 
 
 public abstract class Command {
@@ -50,5 +49,5 @@ public abstract class Command {
         out.println();
     }
 
-    public abstract Status execute(KernelClient kernel, SessionClient session);
+    public abstract Status execute(ExecutionContext context);
 }

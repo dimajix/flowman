@@ -20,15 +20,15 @@ import java.util.Map;
 
 import lombok.val;
 
-import com.dimajix.flowman.kernel.KernelClient;
-import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
 public class InspectCommand extends Command {
     @Override
-    public Status execute(KernelClient kernel, SessionClient session) {
+    public Status execute(ExecutionContext context) {
+        val kernel = context.getKernel();
         val namespace = kernel.getNamespace();
         System.out.println("Namespace:");
         System.out.println("    name: " + namespace.getName());

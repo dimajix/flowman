@@ -63,6 +63,8 @@ Breaking changes will be documented in this changelog file for each version.
 * github-370: Kernel client should use temporary workspaces with automatic cleanup
 * github-337: Add documentation for flowman-rshell
 * github-336: Add documentation for flowman-kernel
+* github-366: Feature parity between Flowman shell and Flowman remote shell
+* github-365: Implement saving mappings in Flowman Kernel/client
 
 ### Breaking changes
 

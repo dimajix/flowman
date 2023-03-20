@@ -22,26 +22,29 @@ import org.kohsuke.args4j.spi.SubCommandHandler;
 import org.kohsuke.args4j.spi.SubCommands;
 
 import com.dimajix.flowman.tools.rexec.Command;
+import com.dimajix.flowman.tools.rexec.documentation.DocumentationCommand;
+import com.dimajix.flowman.tools.rexec.history.HistoryCommand;
 import com.dimajix.flowman.tools.rexec.kernel.KernelCommand;
 import com.dimajix.flowman.tools.rexec.mapping.MappingCommand;
 import com.dimajix.flowman.tools.rexec.misc.EvaluateCommand;
+import com.dimajix.flowman.tools.rexec.misc.SqlCommand;
 import com.dimajix.flowman.tools.rexec.namespace.NamespaceCommand;
-import com.dimajix.flowman.tools.rexec.project.ProjectCommand;
 import com.dimajix.flowman.tools.rexec.relation.RelationCommand;
 import com.dimajix.flowman.tools.rexec.session.SessionCommand;
-import com.dimajix.flowman.tools.rexec.misc.SqlCommand;
 import com.dimajix.flowman.tools.rexec.target.TargetCommand;
+import com.dimajix.flowman.tools.rexec.workspace.WorkspaceCommand;
 import com.dimajix.flowman.tools.rshell.job.JobCommand;
+import com.dimajix.flowman.tools.rshell.project.ProjectCommand;
 import com.dimajix.flowman.tools.rshell.test.TestCommand;
 
 
 public class ParsedCommand {
     @Argument(required=false,index=0,metaVar="<command-group>",usage="the object to work with",handler=SubCommandHandler.class)
     @SubCommands({
-        //new SubCommand(name="documentation",impl=classOf[DocumentationCommand]),
+        @SubCommand(name = "documentation", impl = DocumentationCommand.class),
         @SubCommand(name = "eval", impl = EvaluateCommand.class),
         @SubCommand(name = "exit", impl = ExitCommand.class),
-        //new SubCommand(name="history",impl=classOf[HistoryCommand]),
+        @SubCommand(name = "history", impl = HistoryCommand.class),
         @SubCommand(name = "job", impl = JobCommand.class),
         @SubCommand(name = "kernel", impl = KernelCommand.class),
         @SubCommand(name = "mapping", impl = MappingCommand.class),
@@ -53,7 +56,8 @@ public class ParsedCommand {
         @SubCommand(name = "session", impl = SessionCommand.class),
         @SubCommand(name = "sql", impl= SqlCommand.class),
         @SubCommand(name = "target", impl = TargetCommand.class),
-        @SubCommand(name = "test", impl = TestCommand.class)
+        @SubCommand(name = "test", impl = TestCommand.class),
+        @SubCommand(name = "workspace", impl = WorkspaceCommand.class)
         //new SubCommand(name="version",impl=classOf[VersionCommand])
     })
     Command command = null;

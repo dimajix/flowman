@@ -68,6 +68,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-367: Create integration test for "quickstart" archetype
 * github-375: "project reload" does not work correctly in remote shell with nested directories
 * github-376: Document options to parallelize work
+* github-378: Remove travis-ci integration
 
 ### Breaking changes
 

@@ -36,6 +36,7 @@ public class RemoteTool {
     private final KernelClient _kernel;
     private final HistoryClient _history;
     private SessionClient _session= null;
+    private String _projectLocation = null;
     private WorkspaceClient _workspace = null;
     private final Map<String,String> config;
     private final Map<String,String> environment;
@@ -97,6 +98,10 @@ public class RemoteTool {
         return _workspace;
     }
 
+    public SessionClient reloadSession() {
+        return newSession(_projectLocation);
+    }
+
     public SessionClient newSession(String projectLocation) {
         val isAbsolute = false; //FileSystem.getProtocol(projectLocation).nonEmpty || Tool.resolvePath(projectLocation).isAbsolute()
         val newSession =
@@ -109,6 +114,7 @@ public class RemoteTool {
             _session.shutdown();
         }
         _session = newSession;
+        _projectLocation = projectLocation;
 
         newSession.subscribeLog(RemoteTool::logEvent);
 

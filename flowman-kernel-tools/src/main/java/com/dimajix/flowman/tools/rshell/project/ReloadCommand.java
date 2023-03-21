@@ -26,9 +26,7 @@ import lombok.val;
 public class ReloadCommand extends Command {
     @Override
     public Status execute(ExecutionContext context) {
-        val session = context.getSession();
-        val project = session.getProject().getName();
-        Shell.getInstance().newSession(project);
+        Shell.getInstance().reloadSession();
         return Status.SUCCESS;
     }
 }

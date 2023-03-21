@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  mariadb:
+    image: mariadb:10.9.3
+    environment:
+      - MARIADB_USER=weather
+      - MARIADB_PASSWORD=weather
+      - MARIADB_ROOT_PASSWORD=yourStrong(!)Password
+      - MARIADB_DATABASE=weather
+    command:
+      - --sql-mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,ANSI_QUOTES
+    ports:
+      - "3306:3306"

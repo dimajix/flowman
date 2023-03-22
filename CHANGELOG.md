@@ -30,7 +30,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-313: Improve example for "observe" mapping
 * github-319: Support Oracle for History Server 
 * github-320: Do not fall back to "inline" schema when no kind is specified
-* github-321: Properly support lower case / upper case table names in Oracle
+* github-321: [BUG] Properly support lower case / upper case table names in Oracle
 * github-309: Automate integration tests
 * github-322: Remove flowman-client
 * github-324: Log environment variables for imported projects
@@ -42,13 +42,13 @@ Breaking changes will be documented in this changelog file for each version.
 * github-338: Update Spark to 3.3.2
 * github-333: Forward Logs from Kernel to Client
 * github-339: Set Copyright to "The Flowman Authors"
-* github-345: Loading an embedded schema inside a jar file should not throw an exception
+* github-345: [BUG] Loading an embedded schema inside a jar file should not throw an exception
 * github-346: Create build profile for Databricks
 * github-343: Log all client requests in kernel
 * github-342: Automatically close session when client disconnects from kernel
-* github-351: Failing execution listener instantiation should not fail a build
+* github-351: [BUG] Failing execution listener instantiation should not fail a build
 * github-347: Exclude AWS SDK for Databricks and EMR build profiles
-* github-352: Spark sessions should not contain duplicate jars from different plugins
+* github-352: [BUG] Spark sessions should not contain duplicate jars from different plugins
 * github-353: Successful runs should not use System.exit(0)
 * github-354: Optionally load custom log4j config from jar
 * github-358: Provide different log4j config for Flowman server and kernel
@@ -59,16 +59,17 @@ Breaking changes will be documented in this changelog file for each version.
 * github-363: HiveDatabaseTarget should accept an optional location
 * github-311: Create integration test for EMR
 * github-362: Upgrade EMR to 6.10
-* github-369: Prevent endless loop in Kernel client, when getContext fails
+* github-369: [BUG] Prevent endless loop in Kernel client, when getContext fails
 * github-370: Kernel client should use temporary workspaces with automatic cleanup
 * github-337: Add documentation for flowman-rshell
 * github-336: Add documentation for flowman-kernel
 * github-366: Feature parity between Flowman shell and Flowman remote shell
 * github-365: Implement saving mappings in Flowman Kernel/client
 * github-367: Create integration test for "quickstart" archetype
-* github-375: "project reload" does not work correctly in remote shell with nested directories
+* github-375: [BUG] "project reload" does not work correctly in remote shell with nested directories
 * github-376: Document options to parallelize work
 * github-378: Remove travis-ci integration
+* github-379: [BUG] Parallel execution of multiple targets runs too many targets on Java 17
 
 ### Breaking changes
 

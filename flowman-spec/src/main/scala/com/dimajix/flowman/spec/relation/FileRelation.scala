@@ -176,7 +176,7 @@ case class FileRelation(
         val multiPath =  SparkShim.relationSupportsMultiplePaths(providingClass)
 
         val data = mapFiles(partitions) { (partition, paths) =>
-            logger.info(s"File relation '$identifier' reads ${paths.size} files under location '${qualifiedLocation}' in partition ${partition.spec}")
+            logger.info(s"Reading file relation '$identifier' at '${qualifiedLocation}' with partition ${partition.spec}, this will read files ${paths.mkString(",")}")
 
             val pathNames = paths.map(_.toString)
             val reader = this.reader(execution, format, options)

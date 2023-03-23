@@ -1,3 +1,7 @@
+# Version 0.30.1 - 2023-03-23
+* github-379: [BUG] Parallel execution of multiple targets runs too many targets on Java 17
+
+
 # Version 0.30.0 - 2023-01-03
 
 * github-278: Parallelize execution of data quality checks. This also introduces a new configuration property

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+SELF=$(cd $(dirname $0) && pwd)
+cd $SELF/..
+
+set -e
+set -o pipefail
 
 
 FLOWMAN_VERSION=$(mvn -q -N help:evaluate -Dexpression=project.version -DforceStdout)

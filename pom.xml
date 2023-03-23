@@ -37,7 +37,7 @@
 
     <scm>
         <connection>scm:git:git://github.com/dimajix/flowman.git</connection>
-        <developerConnection>scm:git:ssh://github.com:dimajix/flowman.git</developerConnection>
+        <developerConnection>scm:git:ssh://github.com/dimajix/flowman.git</developerConnection>
         <url>https://github.com/dimajix/flowman/tree/master</url>
     </scm>
     <issueManagement>
@@ -983,27 +983,6 @@
                 <inherited>true</inherited>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>com.amashchenko.maven.plugin</groupId>
-                <artifactId>gitflow-maven-plugin</artifactId>
-                <version>1.16.0</version>
-                <configuration>
-                    <installProject>false</installProject>
-                    <verbose>true</verbose>
-                    <versionDigitToIncrement>2</versionDigitToIncrement>
-                    <pushRemote>false</pushRemote>
-                    <gitFlowConfig>
-                        <productionBranch>master</productionBranch>
-                        <developmentBranch>develop</developmentBranch>
-                        <featureBranchPrefix>feature/</featureBranchPrefix>
-                        <releaseBranchPrefix>release/</releaseBranchPrefix>
-                        <hotfixBranchPrefix>hotfix/</hotfixBranchPrefix>
-                        <supportBranchPrefix>support/</supportBranchPrefix>
-                        <versionTagPrefix></versionTagPrefix>
-                        <origin>github</origin>
-                    </gitFlowConfig>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

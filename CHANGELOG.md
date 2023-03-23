@@ -70,6 +70,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-376: Document options to parallelize work
 * github-378: Remove travis-ci integration
 * github-379: [BUG] Parallel execution of multiple targets runs too many targets on Java 17
+* github-308: Revise branching model
 
 ### Breaking changes
 

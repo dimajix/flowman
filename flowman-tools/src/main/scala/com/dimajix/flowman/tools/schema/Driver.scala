@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import org.kohsuke.args4j.CmdLineException
 
 import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.JAVA_VERSION
-import com.dimajix.flowman.SPARK_VERSION
+import com.dimajix.flowman.Tool
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.spec.ModuleSpec
@@ -44,8 +44,8 @@ import com.dimajix.flowman.spec.NamespaceSpec
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.ProjectSpec
 import com.dimajix.flowman.spec.documentation.DocumenterSpec
-import com.dimajix.flowman.tools.Tool
 import com.dimajix.flowman.tools.schema.impl.MyJsonSchemaGenerator
+import com.dimajix.spark.SPARK_VERSION
 
 
 object Driver {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ package object spark {
     final val SPARK_VERSION = org.apache.spark.SPARK_VERSION
     final val SPARK_VERSION_MAJOR = majorMinor(SPARK_VERSION)._1
     final val SPARK_VERSION_MINOR = majorMinor(SPARK_VERSION)._2
-
 
     /**
      * Given a Spark version string, return the (major version number, minor version number).

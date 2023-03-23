@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spec.relation
 
 import org.apache.spark.sql.DataFrame
-import org.slf4j.Logger
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.TableIdentifier
@@ -28,8 +27,6 @@ import com.dimajix.flowman.types.FieldValue
 
 
 abstract class HiveRelation extends BaseRelation with PartitionedRelation {
-    protected val logger:Logger
-
     def table: TableIdentifier
 
     /**

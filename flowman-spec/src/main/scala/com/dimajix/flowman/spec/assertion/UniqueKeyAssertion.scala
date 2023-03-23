@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ case class UniqueKeyAssertion(
      *
      * @return
      */
-    override def inputs: Seq[MappingOutputIdentifier] = Seq(mapping)
+    override def inputs: Set[MappingOutputIdentifier] = Set(mapping)
 
     /**
      * Executes this [[Assertion]] and returns a corresponding DataFrame

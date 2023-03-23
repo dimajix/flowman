@@ -4,10 +4,10 @@ mappings:
     # Join together measurements and stations
     kind: join
     mode: left
-    # Specify list of input mappings to be joined
+    # Specify the list of input mappings to be joined
     inputs:
-      - measurements_extracted
-      - stations_raw
+      - measurements
+      - stations
     # Specify columns to use for joining. Both input mappings need to contain both columns, merging is performed
     # whenever the values of both columns match in both input mappings
     columns:

@@ -1,4 +1,0 @@
-jobs:
-  tests:
-    targets:
-      - test_timestamp

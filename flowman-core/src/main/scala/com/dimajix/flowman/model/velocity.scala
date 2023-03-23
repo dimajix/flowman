@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Kaya Kupferschmidt
+ * Copyright (C) 2020 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,6 +109,7 @@ object ResultWrapper {
             case r:MeasureResult => MeasureResultWrapper(r)
             case r:AssertionResult => AssertionResultWrapper(r)
             case r:AssertionTestResult => AssertionTestResultWrapper(r)
+            case r:DocumenterResult => DocumenterResultWrapper(r)
         }
     }
 }
@@ -170,6 +171,10 @@ final case class MeasureResultWrapper(result:MeasureResult) extends ResultWrappe
 
 
 final case class AssertionTestResultWrapper(result:AssertionTestResult) extends ResultWrapper(result) {
+}
+
+
+final case class DocumenterResultWrapper(result: DocumenterResult) extends ResultWrapper(result) {
 }
 
 

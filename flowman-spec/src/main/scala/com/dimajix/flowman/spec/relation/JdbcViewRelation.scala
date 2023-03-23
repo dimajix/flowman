@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package com.dimajix.flowman.spec.relation
+
+import java.sql.Statement
 
 import scala.collection.JavaConverters._
 import scala.util.control.NonFatal
@@ -59,7 +61,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
 
 
-case class JdbcViewRelation(
+final case class JdbcViewRelation(
     override val instanceProperties:Relation.Properties,
     override val partitions: Seq[PartitionField] = Seq.empty,
     connection: Reference[Connection],
@@ -255,13 +257,14 @@ case class JdbcViewRelation(
      * @param execution
      */
     override def create(execution: Execution): Unit = {
-        withConnection{ (con,options) =>
-            doCreate(con, options)
+        withStatement { (stmt,options) =>
+            doCreate(stmt, options)
             execution.refreshResource(resource)
         }
     }
-    protected def doCreate(con:java.sql.Connection, options:JDBCOptions): Unit = {
-        JdbcUtils.createView(con, view, statement, options)
+    protected def doCreate(stmt:Statement, options:JDBCOptions): Unit = {
+        logger.info(s"Creating JDBC relation '$identifier', this will create JDBC view $view.")
+        JdbcUtils.createView(stmt, view, statement, options)
     }
 
     /**
@@ -336,10 +339,12 @@ case class JdbcViewRelation(
             case MigrationStrategy.ALTER|MigrationStrategy.ALTER_REPLACE|MigrationStrategy.REPLACE =>
                 logger.info(s"Migrating JdbcView relation '$identifier' from TABLE to VIEW $view")
                 try {
-                    withStatement(connection, options) { stmt =>
-                        JdbcUtils.dropTable(stmt, view, options)
+                    // TODO: This should be performed within a transaction (if supported)
+                    JdbcUtils.withStatement(connection, options) { statement =>
+                        logger.info(s"Dropping JDBC table $view")
+                        JdbcUtils.dropTable(statement, view, options)
+                        doCreate(statement, options)
                     }
-                    doCreate(connection, options)
                 }
                 catch {
                     case NonFatal(ex) => throw new MigrationFailedException(identifier, ex)

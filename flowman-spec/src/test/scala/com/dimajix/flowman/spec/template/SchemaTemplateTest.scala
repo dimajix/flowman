@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ class SchemaTemplateTest extends AnyFlatSpec with Matchers {
               |        type: int
               |        default: 12
               |    template:
-              |      kind: values
+              |      kind: inline
               |      fields:
               |        - name: str_col
               |          type: string

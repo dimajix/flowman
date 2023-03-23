@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,16 +36,16 @@ import org.kohsuke.args4j.CmdLineParser
 
 import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.HADOOP_BUILD_VERSION
-import com.dimajix.flowman.HADOOP_VERSION
 import com.dimajix.flowman.JAVA_VERSION
 import com.dimajix.flowman.SCALA_VERSION
 import com.dimajix.flowman.SPARK_BUILD_VERSION
-import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.common.ConsoleColors.yellow
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.tools.StatefulTool
+import com.dimajix.hadoop.HADOOP_VERSION
+import com.dimajix.spark.SPARK_VERSION
 
 
 object Shell {
@@ -57,7 +57,9 @@ object Shell {
         }
         match {
             case Success (true) =>
-                System.exit(0)
+                // In case of no error, simply let the normal JVM flow finish the application. Databricks will
+                // complain otherwise
+                //System.exit(0)
             case Success (false) =>
                 System.exit(3)
             case Failure(ex:CmdLineException) =>
@@ -78,6 +80,8 @@ object Shell {
             println(s"Flowman $FLOWMAN_VERSION")
             println(s"Flowman home: ${ToolConfig.homeDirectory.getOrElse("<unknown>")}")
             println(s"Spark version $SPARK_VERSION")
+            println(s"Hadoop version $HADOOP_VERSION")
+            println(s"Scala version $SCALA_VERSION")
             println(s"Java version $JAVA_VERSION")
             true
         }

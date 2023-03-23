@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
       * Creates a new database
       */
     @throws[DatabaseAlreadyExistsException]
-    def createDatabase(database:String, ignoreIfExists:Boolean) : Unit = {
+    def createDatabase(database:String, catalog:String, location:Option[Path], ignoreIfExists:Boolean) : Unit = {
         require(database != null && database.nonEmpty)
 
         val exists = databaseExists(database)
@@ -121,7 +121,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
         if (!exists) {
             logger.info(s"Creating Hive database $database")
-            val cmd = CreateDatabaseCommand(database, ignoreIfExists, None, None, Map())
+            val cmd = SparkShim.newCreateDatabaseCommand(database, catalog, location.map(_.toString), None, ignoreIfExists)
             cmd.run(spark)
         }
     }
@@ -201,7 +201,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             // Cleanup table definition
             val cleanedSchema = SchemaUtils.truncateComments(table.schema, maxCommentLength)
             val catalogSchema = HiveCatalog.cleanupSchema(cleanedSchema)
-            val cleanedTable = table.copy(schema = catalogSchema)
+            val cleanedTable = SparkShim.withNewSchema(table, catalogSchema)
 
             logger.info(s"Creating Hive table ${table.identifier}")
             val cmd = CreateTableCommand(cleanedTable, ignoreIfExists)
@@ -305,7 +305,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
             // Delete all partitions
             if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
-                catalog.listPartitions(table.toSpark).foreach { p =>
+                SparkShim.listPartitions(catalog, table.toSpark).foreach { p =>
                     val location = new Path(p.location)
                     val fs = location.getFileSystem(hadoopConf)
                     HadoopUtils.deleteLocation(fs, location)
@@ -341,7 +341,8 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
         // First drop partitions
         if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
-            dropPartitions(table, catalog.listPartitions(table.toSpark).map(p => PartitionSpec(p.spec)))
+            val partitions = SparkShim.listPartitions(catalog, table.toSpark)
+            dropPartitions(table, partitions.map(p => PartitionSpec(p.spec)))
         }
 
         // Then cleanup directory from any remainders
@@ -430,7 +431,8 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
     def partitionExists(table:TableIdentifier, partition:PartitionSpec) : Boolean = {
         require(table != null)
         require(partition != null)
-        catalog.listPartitions(table.toSpark, Some(partition.mapValues(_.toString).toMap).filter(_.nonEmpty)).nonEmpty
+        val filter = Some(partition.mapValues(_.toString).toMap).filter(_.nonEmpty)
+        SparkShim.listPartitions(catalog, table.toSpark, filter).nonEmpty
     }
 
     /**
@@ -664,7 +666,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             logger.info(s"Creating Hive view $table")
 
             val plan = spark.sql(select).queryExecution.analyzed
-            val cmd = SparkShim.createView(table.toSpark, select, plan, false, false)
+            val cmd = SparkShim.newCreateViewCommand(table.toSpark, select, plan, false, false)
             cmd.run(spark)
 
             // Publish view to external catalog
@@ -680,7 +682,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         logger.info(s"Redefining Hive view $table")
 
         val plan = spark.sql(select).queryExecution.analyzed
-        val cmd = SparkShim.alterView(table.toSpark, select, plan)
+        val cmd = SparkShim.newAlterViewCommand(table.toSpark, select, plan)
         cmd.run(spark)
 
         // Publish view to external catalog

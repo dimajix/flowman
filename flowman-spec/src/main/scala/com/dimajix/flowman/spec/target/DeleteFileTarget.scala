@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -32,13 +31,11 @@ import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Target
 
 
-case class DeleteFileTarget(
+final case class DeleteFileTarget(
     instanceProperties:Target.Properties,
     location: Path,
     recursive: Boolean
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[DeleteFileTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return
@@ -67,10 +64,12 @@ case class DeleteFileTarget(
     /**
      * Build the "count" target by printing the number of records onto the console
      *
-     * @param executor
+     * @param execution
      */
-    override def build(executor:Execution) : Unit = {
-        val fs = executor.fs
+    override def build(execution:Execution) : Unit = {
+        require(execution != null)
+
+        val fs = execution.fs
         val file = fs.file(location)
         logger.info(s"Deleting file '$file' (recursive=$recursive)")
         file.delete(recursive)
@@ -79,12 +78,12 @@ case class DeleteFileTarget(
     /**
      * Performs a verification of the build step or possibly other checks.
      *
-     * @param executor
+     * @param execution
      */
-    override def verify(executor: Execution) : Unit = {
-        require(executor != null)
+    override def verify(execution: Execution) : Unit = {
+        require(execution != null)
 
-        val file = executor.fs.file(location)
+        val file = execution.fs.file(location)
         if (file.exists()) {
             val error = s"Verification of target '$identifier' failed - location '$location' exists"
             logger.error(error)

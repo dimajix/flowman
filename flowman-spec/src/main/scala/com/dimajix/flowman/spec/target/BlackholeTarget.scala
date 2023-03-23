@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 
 
-case class BlackholeTarget(
+final case class BlackholeTarget(
     instanceProperties:Target.Properties,
     mapping:MappingOutputIdentifier
 ) extends BaseTarget {

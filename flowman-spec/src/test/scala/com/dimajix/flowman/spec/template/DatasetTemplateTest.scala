@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ class DatasetTemplateTest extends AnyFlatSpec with Matchers {
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().disableSpark().build()
+        val session = Session.builder(project).disableSpark().build()
         val context = session.getContext(project)
 
         val rel_1 = context.getTarget(TargetIdentifier("rel_1"))
@@ -126,7 +126,7 @@ class DatasetTemplateTest extends AnyFlatSpec with Matchers {
               |""".stripMargin
 
         val project = Module.read.string(spec).toProject("project")
-        val session = Session.builder().disableSpark().build()
+        val session = Session.builder(project).disableSpark().build()
         val context = session.getContext(project)
 
         an[InstantiateTargetFailedException] should be thrownBy(context.getTarget(TargetIdentifier("rel_1")))

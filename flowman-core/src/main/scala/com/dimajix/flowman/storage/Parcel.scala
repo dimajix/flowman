@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,10 @@
 
 package com.dimajix.flowman.storage
 
+import java.io.IOException
+
+import org.apache.hadoop.fs.Path
+
 import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.AbstractInstance
 
@@ -23,6 +27,18 @@ import com.dimajix.flowman.model.AbstractInstance
 trait Parcel extends Store {
     def name : String
     def root : File
+
+    @throws[IOException]
+    def clean() : Unit
+
+    @throws[IOException]
+    def mkdir(fileName:Path) : Unit
+    @throws[IOException]
+    def putFile(fileName:Path, content:Array[Byte]) : Unit
+    @throws[IOException]
+    def deleteFile(fileName:Path) : Unit
+
+    @throws[IOException]
     def replace(targz:File) : Unit
 }
 

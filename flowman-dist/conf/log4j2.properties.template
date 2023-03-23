@@ -1,5 +1,5 @@
 #
-# Copyright 2022 Kaya Kupferschmidt
+# Copyright (C) 2022 The Flowman Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ appender.console.type = Console
 appender.console.name = console
 appender.console.target = SYSTEM_ERR
 appender.console.layout.type = PatternLayout
-appender.console.layout.pattern = [%highlight{%p}{FATAL=bright red, ERROR=bright red, WARN=bright yellow, INFO=bright blue, DEBUG=blue, TRACE=blue}] %m%n
+appender.console.layout.pattern = [%highlight{%p}{FATAL=bright red, ERROR=bright red, WARN=bright yellow, INFO=bright blue, DEBUG=blue, TRACE=blue}] %m%n%ex{10}
 
 # Flowman logging
 logger.flowman.name = com.dimajix.flowman
@@ -53,6 +53,12 @@ logger.parquet3.name = org.apache.parquet.CorruptStatistics
 logger.parquet3.level = error
 logger.parquet4.name = parquet.CorruptStatistics
 logger.parquet4.level = error
+
+# Silence Databricks logging
+logger.databricks1.name = com.databricks
+logger.databricks1.level = warn
+logger.databricks2.name = shaded
+logger.databricks2.level = warn
 
 # Slick logging
 logger.slick.name = slick.jdbc.JdbcBackend.statement

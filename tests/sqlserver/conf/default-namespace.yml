@@ -1,5 +1,17 @@
 name: "default"
 
+history:
+  kind: jdbc
+  retries: 3
+  timeout: 1000
+  connection:
+    url: "jdbc:sqlserver://sqlserver:1433"
+    driver: "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+    username: "sa"
+    password: "yourStrong(!)Password"
+    properties:
+      databaseName: flowman
+
 metrics:
   - kind: console
   - kind: jdbc
@@ -9,7 +21,7 @@ metrics:
       phase: ${phase}
     connection:
       kind: jdbc
-      url: jdbc:sqlserver://localhost:1433
+      url: "jdbc:sqlserver://sqlserver:1433"
       driver: "com.microsoft.sqlserver.jdbc.SQLServerDriver"
       username: "sa"
       password: "yourStrong(!)Password"
@@ -17,14 +29,10 @@ metrics:
         databaseName: flowman
 
 config:
-  - spark.sql.warehouse.dir=/tmp/flowman/hive/warehouse
-  - spark.hadoop.hive.metastore.uris=
-  - spark.hadoop.javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=/tmp/flowman/hive/db;create=true
-  - spark.hadoop.datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
-
   - spark.executor.cores=$System.getenv('SPARK_EXECUTOR_CORES', '8')
   - spark.executor.memory=$System.getenv('SPARK_EXECUTOR_MEMORY', '16g')
 
 plugins:
+  - flowman-avro
   - flowman-aws
   - flowman-mssqlserver

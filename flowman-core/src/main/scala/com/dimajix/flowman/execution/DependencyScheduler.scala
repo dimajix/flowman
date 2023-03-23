@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 
 
-class DependencyScheduler extends Scheduler {
-    private val logger = LoggerFactory.getLogger(classOf[DependencyScheduler])
+class DependencyScheduler(execution: Execution, context: Context) extends Scheduler {
+    private val logger = execution.loggerFactory.getLogger(classOf[DependencyScheduler].getName)
 
     // Map containing all dependencies of all targets. Each entry represents the list of dependencies which
     // have to be executed before the target itself

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 Kaya Kupferschmidt
+ * Copyright (C) 2019 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.spark.sql.Row
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -37,13 +35,11 @@ import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.spark.sql.DataFrameUtils
 
 
-case class CompareTarget(
+final case class CompareTarget(
     instanceProperties:Target.Properties,
     actual:Dataset,
     expected:Dataset
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[CompareTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return
@@ -80,13 +76,15 @@ case class CompareTarget(
     /**
       * Performs a verification of the build step or possibly other checks.
       *
-      * @param executor
+      * @param execution
       */
-    override protected def verify(executor: Execution): Unit = {
+    override protected def verify(execution: Execution): Unit = {
+        val logger = getLogger(execution)
+
         logger.info(s"Comparing actual dataset '${actual.name}' with expected dataset '${expected.name}'")
-        val expectedDf = expected.read(executor)
+        val expectedDf = expected.read(execution)
         val actualDf = try {
-            actual.read(executor)
+            actual.read(execution)
         }
         catch {
             case ex:Exception => throw new VerificationFailedException(this.identifier, ex)

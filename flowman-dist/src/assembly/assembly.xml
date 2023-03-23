@@ -38,16 +38,21 @@
             <includes>
                 <!-- Only include top level dependencies, otherwise shaded artifacts will appear -->
                 <include>com.dimajix.flowman:flowman-tools</include>
+                <include>com.dimajix.flowman:flowman-kernel-tools</include>
+                <include>com.dimajix.flowman:flowman-kernel-server</include>
                 <include>com.dimajix.flowman:flowman-server</include>
                 <include>com.dimajix.flowman:flowman-studio</include>
                 <include>com.dimajix.flowman:flowman-hub</include>
-                <include>com.dimajix.flowman:flowman-client</include>
+                <!-- Include special dependencies for pure Java tools, which are normally "provided" -->
+                <include>com.google.protobuf:protobuf-java</include>
+                <include>com.google.guava:guava</include>
+                <include>com.google.code.gson:gson</include>
+                <include>com.google.code.findbugs:jsr305</include>
+                <include>org.slf4j:slf4j-api</include>
+                <include>org.apache.logging.log4j:log4j-api</include>
+                <include>org.apache.logging.log4j:log4j-core</include>
+                <include>org.apache.logging.log4j:log4j-slf4j-impl</include>
             </includes>
-            <excludes>
-                <!-- Manually exclude shaded artifacts -->
-                <exclude>org.apache.velocity:velocity-engine-core</exclude>
-                <exclude>com.dimajix.flowman:flowman-spark-dependencies</exclude>
-            </excludes>
             <outputDirectory>lib</outputDirectory>
             <useTransitiveDependencies>true</useTransitiveDependencies>
             <useTransitiveFiltering>true</useTransitiveFiltering>

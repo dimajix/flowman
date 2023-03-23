@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.StructType
 
 
-case class EmptyMapping(
+final case class EmptyMapping(
     instanceProperties:Mapping.Properties,
     columns:Seq[Field] = Seq(),
     schema:Option[Schema]

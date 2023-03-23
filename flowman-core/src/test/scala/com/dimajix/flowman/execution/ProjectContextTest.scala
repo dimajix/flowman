@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ class ProjectContextTest extends AnyFlatSpec with Matchers {
             version = Some("1.0")
         )
         val session = Session.builder()
+            .withProject(project)
             .disableSpark()
             .build()
 
@@ -53,6 +54,7 @@ class ProjectContextTest extends AnyFlatSpec with Matchers {
             basedir = Some(file.absolute.parent)
         )
         val session = Session.builder()
+            .withProject(project)
             .disableSpark()
             .build()
 

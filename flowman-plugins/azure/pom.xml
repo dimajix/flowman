@@ -9,9 +9,9 @@
 
     <parent>
         <groupId>com.dimajix.flowman</groupId>
-        <artifactId>flowman-root</artifactId>
-        <version>0.30.0</version>
-        <relativePath>../../pom.xml</relativePath>
+        <artifactId>flowman-plugin-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
     <properties>
@@ -44,6 +44,10 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
             </plugin>
         </plugins>
@@ -54,6 +58,13 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-azure</artifactId>
             <version>${hadoop.version}</version>
+
+            <exclusions>
+                <exclusion>
+                    <groupId>org.wildfly.openssl</groupId>
+                    <artifactId>wildfly-openssl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

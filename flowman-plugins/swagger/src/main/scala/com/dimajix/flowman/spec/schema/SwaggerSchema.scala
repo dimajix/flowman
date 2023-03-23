@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import com.dimajix.flowman.spec.schema.ExternalSchema.CachedSchema
   * Schema implementation for reading Swagger / OpenAPI schemas. This implementation will preserve the ordering of
   * fields.
   */
-case class SwaggerSchema(
+final case class SwaggerSchema(
     instanceProperties:Schema.Properties,
     override val file: Option[File],
     override val url: Option[URL],
@@ -41,8 +41,6 @@ case class SwaggerSchema(
     entity: Option[String],
     nullable: Boolean
 ) extends ExternalSchema {
-    protected override val logger = LoggerFactory.getLogger(classOf[SwaggerSchema])
-
     /**
       * Returns the list of all fields of the schema
       * @return

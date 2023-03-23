@@ -1,0 +1,87 @@
+relations:
+  aggregates_v1:
+    kind: jdbcTable
+    connection: jdbcConnection
+    table: weather
+    schema:
+      kind: inline
+      fields:
+        - name: date
+          type: DATE
+          nullable: false
+        - name: country
+          type: CHAR(2)
+          nullable: false
+          description: "FIPS Country Code"
+        - name: min_wind_speed
+          type: DECIMAL(10,4)
+          nullable: false
+          description: "Minimum wind speed, which will explain the wind speed but not the direction, which is provided in another cölumn"
+        - name: max_wind_speed
+          type: DECIMAL(10,4)
+          description: "Maximum wind speed"
+        - name: avg_wind_speed
+          type: DECIMAL(20,4)
+        - name: min_temperature
+          type: FLOAT
+        - name: max_temperature
+          type: FLOAT
+        - name: avg_temperature
+          type: DOUBLE
+        - name: comment
+          type: VARCHAR(32)
+          #collation: BINARY_CI
+        - name: new_column
+          type: VARCHAR(32)
+          description: "This is a new column"
+    # (Optionally) specify a primary key
+    primaryKey:
+      - date
+      - country
+    # (Optionally) specify indexes
+    indexes:
+      - name: "weather_idx0"
+        columns: [country]
+
+  aggregates_v2:
+    kind: jdbcTable
+    connection: jdbcConnection
+    table: weather
+    schema:
+      kind: inline
+      fields:
+        - name: date
+          type: DATE
+          nullable: false
+        - name: country
+          type: CHAR(2)
+          nullable: false
+          description: "FIPS Country Code"
+        - name: min_wind_speed
+          type: DECIMAL(20,4)
+          description: "Minimum wind speed (m/s)"
+        - name: max_wind_speed
+          type: DECIMAL(20,4)
+          description: "Maximum wind speed (m/s)"
+        - name: avg_wind_speed
+          type: FLOAT
+          description: "Average wind speed (m/s)"
+        - name: MIN_TEMPERATURE
+          type: FLOAT
+        - name: max_temperature
+          type: FLOAT
+        - name: avg_temperature
+          type: DOUBLE
+        - name: comment
+          type: VARCHAR(32)
+          #charset: ucs2
+          #collation: en_US
+    # (Optionally) specify a primary key
+    #primaryKey:
+    #  - date
+    #  - country
+    # (Optionally) specify indexes
+    indexes:
+      - name: "weather_idx1"
+        columns: [date,country]
+

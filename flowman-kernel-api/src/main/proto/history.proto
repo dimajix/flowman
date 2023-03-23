@@ -1,0 +1,126 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dimajix.flowman.kernel.proto.history";
+option java_outer_classname = "HistoryProto";
+
+package com.dimajix.flowman.kernel.history;
+
+import "common.proto";
+
+
+enum JobOrder {
+    JOB_BY_DATETIME = 0;
+    JOB_BY_PROJECT = 10;
+    JOB_BY_NAME = 20;
+    JOB_BY_ID = 30;
+    JOB_BY_STATUS = 40;
+    JOB_BY_PHASE = 60;
+}
+message JobHistoryQuery {
+    repeated string id = 1;
+    repeated string namespace = 2;
+    repeated string project = 3;
+    repeated string job = 4;
+    repeated ExecutionStatus status = 5;
+    repeated ExecutionPhase phase = 6;
+    map<string,string> arguments = 7;
+    optional Timestamp from = 8;
+    optional Timestamp until = 9;
+}
+message JobHistoryDetails {
+    string id = 1;
+    string namespace = 2;
+    string project = 3;
+    string version = 4;
+    string job = 5;
+    ExecutionPhase phase = 6;
+    ExecutionStatus status = 7;
+    map<string,string> arguments = 8;
+    optional Timestamp startDateTime = 9;
+    optional Timestamp endDateTime = 10;
+    optional string error = 11;
+}
+
+
+enum TargetOrder {
+    TARGET_BY_DATETIME = 0;
+    TARGET_BY_PROJECT = 10;
+    TARGET_BY_NAME = 20;
+    TARGET_BY_ID = 30;
+    TARGET_BY_STATUS = 40;
+    TARGET_BY_PHASE = 50;
+    TARGET_BY_PARENT_NAME = 60;
+    TARGET_BY_PARENT_ID = 70;
+}
+message TargetHistoryQuery {
+    repeated string id = 1;
+    repeated string namespace = 2;
+    repeated string project = 3;
+    repeated string job = 4;
+    repeated string jobId = 5;
+    repeated string target = 6;
+    repeated ExecutionStatus status = 7;
+    repeated ExecutionPhase phase = 8;
+    map<string,string> partitions = 9;
+    optional Timestamp from = 10;
+    optional Timestamp until = 11;
+}
+message TargetHistoryDetails {
+    string id = 1;
+    optional string jobId = 2;
+    string namespace = 3;
+    string project = 4;
+    string version = 5;
+    string target = 6;
+    ExecutionPhase phase = 7;
+    ExecutionStatus status = 8;
+    map<string,string> partitions = 9;
+    optional Timestamp startDateTime = 10;
+    optional Timestamp endDateTime = 11;
+    optional string error = 12;
+}
+
+
+message FindJobsRequest {
+    JobHistoryQuery query = 1;
+    repeated JobOrder order = 2;
+    optional int32 maxResults = 3;
+}
+message FindJobsResponse {
+    repeated JobHistoryDetails jobs = 1;
+}
+
+message GetJobMetricsRequest {
+    string jobId = 1;
+}
+message GetJobMetricsResponse {
+    repeated Measurement measurements = 1;
+}
+
+message FindJobMetricsRequest {
+    JobHistoryQuery query = 1;
+    repeated string groupings = 2;
+}
+message FindJobMetricsResponse {
+    repeated MetricSeries metrics = 1;
+}
+
+
+message FindTargetsRequest {
+    TargetHistoryQuery query = 1;
+    repeated TargetOrder order = 2;
+    optional int32 maxResults = 3;
+}
+message FindTargetsResponse {
+    repeated TargetHistoryDetails Targets = 1;
+}
+
+
+service HistoryService {
+    rpc findJobs(FindJobsRequest) returns(FindJobsResponse);
+    rpc findTargets(FindTargetsRequest) returns(FindTargetsResponse);
+
+    rpc getJobMetrics(GetJobMetricsRequest) returns(GetJobMetricsResponse);
+    rpc findJobMetrics(FindJobMetricsRequest) returns(FindJobMetricsResponse);
+}

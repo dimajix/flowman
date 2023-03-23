@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -33,14 +32,12 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 
 
-case class PutFileTarget(
+final case class PutFileTarget(
     instanceProperties:Target.Properties,
     source:Path,
     target:Path,
     overwrite:Boolean
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[PutFileTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return
@@ -92,8 +89,8 @@ case class PutFileTarget(
         }
     }
 
-    override protected def build(executor:Execution) : Unit = {
-        val fs = executor.fs
+    override protected def build(execution:Execution) : Unit = {
+        val fs = execution.fs
         val src = fs.local(source)
         val dst = fs.file(target)
         logger.info(s"Putting local file '$src' to remote destination '$dst' (overwrite=$overwrite)")
@@ -103,12 +100,12 @@ case class PutFileTarget(
     /**
       * Performs a verification of the build step or possibly other checks.
       *
-      * @param executor
+      * @param execution
       */
-    override protected def verify(executor: Execution): Unit = {
-        require(executor != null)
+    override protected def verify(execution: Execution): Unit = {
+        require(execution != null)
 
-        val file = executor.fs.file(target)
+        val file = execution.fs.file(target)
         if (!file.exists()) {
             val error = s"Verification of target '$identifier' failed - file '$target' does not exist"
             logger.error(error)
@@ -119,12 +116,12 @@ case class PutFileTarget(
     /**
       * Deletes data of a specific target
       *
-      * @param executor
+      * @param execution
       */
-    override protected def truncate(executor: Execution): Unit = {
-        require(executor != null)
+    override protected def truncate(execution: Execution): Unit = {
+        require(execution != null)
 
-        val outputFile = executor.fs.file(target)
+        val outputFile = execution.fs.file(target)
         if (outputFile.exists()) {
             logger.info(s"Removing file '$target'")
             outputFile.delete()

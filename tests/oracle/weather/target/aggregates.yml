@@ -1,7 +1,7 @@
 targets:
   aggregates:
     kind: relation
-    mapping: aggregates
+    mapping: aggregates_conformed
     relation: aggregates
     partition:
       year: $year

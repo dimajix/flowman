@@ -1,0 +1,177 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dimajix.flowman.kernel.proto.session";
+option java_outer_classname = "SessionProto";
+
+package com.dimajix.flowman.kernel.session;
+
+import "common.proto";
+import "documentation.proto";
+import "mapping.proto";
+import "relation.proto";
+import "target.proto";
+import "test.proto";
+import "job.proto";
+import "project.proto";
+import "dataframe.proto";
+import "logging.proto";
+
+
+message SessionDetails {
+    string id = 1;
+    optional string name = 2;
+    optional string workspace = 3;
+    optional string namespace = 4;
+    optional string project = 5;
+    optional string projectVersion = 6;
+    optional string projectDescription = 7;
+    optional string projectBasedir = 8;
+    optional string projectFilename = 9;
+    repeated string profiles = 10;
+    map<string,string> environment = 11;
+    map<string,string> config = 12;
+    map<string,string> flowmanConfig = 13;
+    map<string,string> hadoopConfig = 14;
+    map<string,string> sparkConfig = 15;
+}
+
+
+message CreateSessionRequest {
+    optional string workspace = 1;
+    optional string name = 2;
+    optional string projectName = 3;
+    optional string projectLocation = 4;
+    repeated string profiles = 5;
+    map<string,string> config = 6;
+    map<string,string> environment = 7;
+}
+message CreateSessionResponse {
+    SessionDetails session = 1;
+}
+
+message ListSessionsRequest {
+}
+message ListSessionsResponse {
+    repeated Session sessions = 1;
+}
+
+message GetSessionRequest {
+    string sessionId = 1;
+}
+message GetSessionResponse {
+    SessionDetails session = 1;
+}
+
+message DeleteSessionRequest {
+    string sessionId = 1;
+}
+message DeleteSessionResponse {
+}
+
+
+message EnterContextRequest {
+    string sessionId = 1;
+    oneof context {
+        JobContext job = 2;
+        TestContext test = 3;
+    }
+}
+message EnterContextResponse {
+}
+message LeaveContextRequest {
+    string sessionId = 1;
+}
+message LeaveContextResponse {
+}
+message GetContextRequest {
+    string sessionId = 1;
+}
+message GetContextResponse {
+    optional string project = 1;
+    oneof context {
+        JobContext job = 2;
+        TestContext test = 3;
+    }
+}
+
+
+message ExecuteSqlRequest {
+    string sessionId = 1;
+    string statement = 2;
+    int32 maxRows = 3;
+}
+message ExecuteSqlResponse {
+    DataFrame data = 1;
+}
+
+
+message EvaluateExpressionRequest {
+    string sessionId = 1;
+    string expression = 2;
+}
+message EvaluateExpressionResponse {
+    string result = 1;
+}
+
+message SubscribeLogRequest {
+    string sessionId = 1;
+}
+
+
+service SessionService {
+    rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse);
+    rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse);
+    rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
+    rpc DeleteSession(DeleteSessionRequest) returns (DeleteSessionResponse);
+
+    rpc EnterContext(EnterContextRequest) returns (EnterContextResponse);
+    rpc LeaveContext(LeaveContextRequest) returns (LeaveContextResponse);
+    rpc GetContext(GetContextRequest) returns (GetContextResponse);
+
+    // Mappings stuff
+    rpc ListMappings(mapping.ListMappingsRequest) returns (mapping.ListMappingsResponse);
+    rpc GetMapping(mapping.GetMappingRequest) returns(mapping.GetMappingResponse);
+    rpc ReadMapping(mapping.ReadMappingRequest) returns(mapping.ReadMappingResponse);
+    rpc DescribeMapping(mapping.DescribeMappingRequest) returns(mapping.DescribeMappingResponse);
+    rpc ValidateMapping(mapping.ValidateMappingRequest) returns(mapping.ValidateMappingResponse);
+    rpc SaveMappingOutput(mapping.SaveMappingOutputRequest) returns(mapping.SaveMappingOutputResponse);
+    rpc CountMapping(mapping.CountMappingRequest) returns(mapping.CountMappingResponse);
+    rpc CacheMapping(mapping.CacheMappingRequest) returns(mapping.CacheMappingResponse);
+    rpc ExplainMapping(mapping.ExplainMappingRequest) returns(mapping.ExplainMappingResponse);
+
+    // Relations stuff
+    rpc ListRelations(relation.ListRelationsRequest) returns (relation.ListRelationsResponse);
+    rpc GetRelation(relation.GetRelationRequest) returns(relation.GetRelationResponse);
+    rpc ReadRelation(relation.ReadRelationRequest) returns(relation.ReadRelationResponse);
+    rpc ExecuteRelation(relation.ExecuteRelationRequest) returns(relation.ExecuteRelationResponse);
+    rpc DescribeRelation(relation.DescribeRelationRequest) returns(relation.DescribeRelationResponse);
+
+    // Targets stuff
+    rpc ListTargets(target.ListTargetsRequest) returns (target.ListTargetsResponse);
+    rpc GetTarget(target.GetTargetRequest) returns(target.GetTargetResponse);
+    rpc ExecuteTarget(target.ExecuteTargetRequest) returns(target.ExecuteTargetResponse);
+
+    // Tests stuff
+    rpc ListTests(test.ListTestsRequest) returns (test.ListTestsResponse);
+    rpc GetTest(test.GetTestRequest) returns(test.GetTestResponse);
+    rpc ExecuteTest(test.ExecuteTestRequest) returns(test.ExecuteTestResponse);
+
+    // Job stuff
+    rpc ListJobs(job.ListJobsRequest) returns (job.ListJobsResponse);
+    rpc GetJob(job.GetJobRequest) returns(job.GetJobResponse);
+    rpc ExecuteJob(job.ExecuteJobRequest) returns(job.ExecuteJobResponse);
+
+    // Project stuff
+    rpc GetProject(project.GetProjectRequest) returns(project.GetProjectResponse);
+    rpc ExecuteProject(project.ExecuteProjectRequest) returns(project.ExecuteProjectResponse);
+
+    // Documentation
+    rpc generateDocumentation(documentation.GenerateDocumentationRequest) returns(documentation.GenerateDocumentationResponse);
+
+    // Generic stuff
+    rpc ExecuteSql(ExecuteSqlRequest) returns (ExecuteSqlResponse);
+    rpc EvaluateExpression(EvaluateExpressionRequest) returns (EvaluateExpressionResponse);
+
+    rpc SubscribeLog(SubscribeLogRequest) returns(stream LogEvent);
+}

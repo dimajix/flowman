@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
         val start = Instant.now()
         val targets = Seq()
 
-        val executor = new ParallelExecutor
-        val result = executor.execute(execution, context, Phase.BUILD, targets, _ => true, keepGoing = false) {
+        val executor = new ParallelExecutor(execution, context)
+        val result = executor.execute(Phase.BUILD, targets, _ => true, keepGoing = false) {
             (execution, target, phase) => TargetResult(target, Phase.BUILD, Status.SUCCESS, start)
         }
 
@@ -87,8 +87,8 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
 
         val targets = Seq(t1, t2)
 
-        val executor = new ParallelExecutor
-        val result = executor.execute(execution, context, Phase.BUILD, targets, _ => true, keepGoing = false) {
+        val executor = new ParallelExecutor(execution, context)
+        val result = executor.execute(Phase.BUILD, targets, _ => true, keepGoing = false) {
             (execution, target, phase) =>
                 target.execute(execution, phase)
         }
@@ -159,8 +159,8 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
 
         val targets = Seq(t1, t2, t3, t4)
 
-        val executor = new ParallelExecutor
-        val result = executor.execute(execution, context, Phase.BUILD, targets, _ => true, keepGoing = false) {
+        val executor = new ParallelExecutor(execution, context)
+        val result = executor.execute(Phase.BUILD, targets, _ => true, keepGoing = false) {
             (execution, target, phase) =>
                 target.execute(execution, phase)
         }
@@ -240,8 +240,8 @@ class ParallelExecutorTest extends AnyFlatSpec with Matchers with MockFactory wi
 
         val targets = Seq(t1, t2, t3, t4)
 
-        val executor = new ParallelExecutor
-        val result = executor.execute(execution, context, Phase.BUILD, targets, _ => true, keepGoing = true) {
+        val executor = new ParallelExecutor(execution, context)
+        val result = executor.execute(Phase.BUILD, targets, _ => true, keepGoing = true) {
             (execution, target, phase) =>
                 target.execute(execution, phase)
         }

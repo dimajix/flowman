@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,11 @@
 package com.dimajix.flowman.spec.relation
 
 import java.sql.Statement
-import java.time.Duration
-import java.time.Instant
-
-import scala.collection.mutable
-import scala.util.control.NonFatal
 
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
-import com.dimajix.common.text.TimeFormatter
 import com.dimajix.flowman.catalog.TableIdentifier
-import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.jdbc.JdbcUtils
 import com.dimajix.flowman.model.BaseRelation
 import com.dimajix.flowman.model.Connection
@@ -44,7 +34,6 @@ abstract class JdbcRelation(
     connection: Reference[Connection],
     properties: Map[String,String] = Map.empty
 ) extends BaseRelation with PartitionedRelation {
-    protected val logger: Logger = LoggerFactory.getLogger(getClass)
     protected val resource: ResourceIdentifier
 
     protected def dropTableOrView(execution: Execution, table:TableIdentifier) : Unit = {
@@ -69,14 +58,6 @@ abstract class JdbcRelation(
         JdbcUtils.withConnection(options) { con => fn(con,options) }
     }
 
-    protected def withTransaction[T](con:java.sql.Connection)(fn: => T) : T = {
-        val startTime = Instant.now()
-        val result = JdbcUtils.withTransaction(con)(fn)
-        val duration = Duration.between(startTime, Instant.now())
-        logger.info(s"Overall JDBC transaction took ${TimeFormatter.toString(duration)}")
-        result
-    }
-
     protected def withStatement[T](fn:(Statement,JDBCOptions) => T) : T = {
         withConnection { (con, options) =>
             withStatement(con,options)(fn(_,options))
@@ -86,12 +67,11 @@ abstract class JdbcRelation(
     protected def withStatement[T](con:java.sql.Connection,options:JDBCOptions)(fn:Statement => T) : T = {
         val statement = con.createStatement()
         try {
-            statement.setQueryTimeout(JdbcUtils.queryTimeout(options))
+            statement.setQueryTimeout(options.queryTimeout)
             fn(statement)
         }
         finally {
             statement.close()
         }
     }
-
 }

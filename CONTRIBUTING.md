@@ -8,7 +8,7 @@ You want to contribute to Flowman? Welcome! Please read this document to underst
 
 ## Report an Issue
 
-If you find a bug - behavior of Flowman code contradicting your expectation - you are welcome to report it.
+If you find a bug - behavior of Flowman code, contradicting your expectations - you are welcome to report it.
 We can only handle well-reported, actual bugs, so please follow the guidelines below.
 
 Once you have familiarized with the guidelines, you can go to the [GitHub issue tracker for Flowman](https://github.com/dimajix/flowman/issues/new) to report the issue.
@@ -85,14 +85,14 @@ CLA assistant will save this decision for upcoming contributions and will notify
 These are some rules we try to follow:
 
 -   Apply a clean coding style adapted to the surrounding code, even though we are aware the existing code is not fully clean
--   Use (4)spaces for indentation
+-   Use (4) spaces for indentation
 -   Use variable naming conventions like in the other files you are seeing (camelcase)
--   No println - use SLF4J logging instead
+-   No println — use SLF4J logging instead
 -   Comment your code where it gets non-trivial
 -   Write a unit test
 -   Do not do any incompatible changes, especially do not change or remove existing properties from YAML specs
 
-### How to contribute - the Process
+### How to contribute — the Process
 
 1.  Make sure the change would be welcome (e.g. a bugfix or a useful feature); best do so by proposing it in a GitHub issue
 2.  Create a branch forking the flowman repository and do your change

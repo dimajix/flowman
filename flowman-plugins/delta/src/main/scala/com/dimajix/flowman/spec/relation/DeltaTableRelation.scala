@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.apache.spark.sql.delta.catalog.DeltaTableV2
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.StructType
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.SetIgnoreCase
@@ -57,7 +56,7 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-case class DeltaTableRelation(
+final case class DeltaTableRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq.empty,
@@ -69,7 +68,6 @@ case class DeltaTableRelation(
     override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
     override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
 ) extends DeltaRelation(options, mergeKey) {
-    private val logger = LoggerFactory.getLogger(classOf[DeltaTableRelation])
     protected val resource = ResourceIdentifier.ofHiveTable(table)
 
     /**

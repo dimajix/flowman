@@ -1,4 +1,4 @@
-name: "sqlserver-twitter"
+name: "twitter"
 version: "1.0"
 
 modules:

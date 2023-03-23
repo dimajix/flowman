@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         )
 
         (assertion.requires _).expects().returns(Set())
-        (assertion.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion.inputs _).expects().atLeastOnce().returns(Set.empty)
         (assertion.name _).expects().returns("a1")
         (assertion.description _).expects().returns(None)
         (assertion.context _).expects().returns(context)
@@ -138,7 +138,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         )
 
         (assertion1.requires _).expects().returns(Set())
-        (assertion1.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion1.inputs _).expects().atLeastOnce().returns(Set.empty)
         (assertion1.name _).expects().returns("a1")
         (assertion1.description _).expects().returns(None)
         (assertion1.context _).expects().returns(context)
@@ -153,7 +153,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         )
 
         (assertion2.requires _).expects().returns(Set())
-        (assertion2.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion2.inputs _).expects().atLeastOnce().returns(Set.empty)
         (assertion2.name _).expects().returns("a2")
         (assertion2.description _).expects().returns(None)
         (assertion2.context _).expects().returns(context)
@@ -203,7 +203,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         )
 
         (assertion1.requires _).expects().returns(Set())
-        (assertion1.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion1.inputs _).expects().atLeastOnce().returns(Set.empty)
         (assertion1.name _).expects().returns("a1")
         (assertion1.description _).expects().returns(None)
         (assertion1.context _).expects().returns(context)
@@ -218,7 +218,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         )
 
         (assertion2.requires _).expects().returns(Set())
-        (assertion2.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion2.inputs _).expects().atLeastOnce().returns(Set.empty)
         (assertion2.name _).expects().returns("a2")
         (assertion2.description _).expects().returns(None)
 
@@ -259,7 +259,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         )
 
         (assertion1.requires _).expects().returns(Set())
-        (assertion1.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion1.inputs _).expects().atLeastOnce().returns(Set.empty)
         (assertion1.name _).expects().returns("a1")
         (assertion1.description _).expects().returns(None)
         (assertion1.context _).expects().returns(context)
@@ -274,7 +274,7 @@ class VerifyTargetTest extends AnyFlatSpec with Matchers with MockFactory {
         )
 
         (assertion2.requires _).expects().returns(Set())
-        (assertion2.inputs _).expects().atLeastOnce().returns(Seq())
+        (assertion2.inputs _).expects().atLeastOnce().returns(Set.empty)
         (assertion2.name _).expects().returns("a2")
         (assertion2.description _).expects().returns(None)
         (assertion2.context _).expects().returns(context)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.types.StructType
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
 import com.dimajix.flowman.catalog.TableIdentifier
@@ -50,7 +49,7 @@ import com.dimajix.spark.sql.SqlParser
 import com.dimajix.spark.sql.catalyst.SqlBuilder
 
 
-case class HiveViewRelation(
+final case class HiveViewRelation(
     override val instanceProperties:Relation.Properties,
     override val table: TableIdentifier,
     override val partitions: Seq[PartitionField] = Seq.empty,
@@ -60,7 +59,6 @@ case class HiveViewRelation(
     override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
     override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
 ) extends HiveRelation with MigratableRelation {
-    protected override val logger = LoggerFactory.getLogger(classOf[HiveViewRelation])
     private val resource = ResourceIdentifier.ofHiveTable(table)
 
     /**
@@ -251,10 +249,10 @@ case class HiveViewRelation(
         execution.refreshResource(resource)
     }
 
-    private def getSelect(executor: Execution) : String = {
+    private def getSelect(execution: Execution) : String = {
         val select = statement
             .orElse (
-                mapping.map(id => buildMappingSql(executor, id))
+                mapping.map(id => buildMappingSql(execution, id))
             )
             .getOrElse(
                 throw new IllegalArgumentException("HiveView either requires explicit SQL SELECT statement or mapping")

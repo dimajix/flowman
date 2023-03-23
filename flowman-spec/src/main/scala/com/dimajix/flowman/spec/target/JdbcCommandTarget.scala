@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.No
@@ -30,10 +29,14 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.common.text.StringUtils
+import com.dimajix.flowman.common.ConsoleColors.red
+import com.dimajix.flowman.common.ConsoleColors.yellow
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.jdbc.JdbcUtils
+import com.dimajix.flowman.jdbc.JdbcUtils.withConnection
+import com.dimajix.flowman.jdbc.JdbcUtils.withTransaction
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.Reference
@@ -43,8 +46,6 @@ import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.target.JdbcCommandTarget.Action
 import com.dimajix.flowman.spec.target.JdbcCommandTargetSpec.ActionSpec
-import com.dimajix.flowman.common.ConsoleColors.red
-import com.dimajix.flowman.common.ConsoleColors.yellow
 
 object JdbcCommandTarget {
     case class Action(
@@ -54,7 +55,7 @@ object JdbcCommandTarget {
     )
 }
 
-case class JdbcCommandTarget (
+final case class JdbcCommandTarget (
     instanceProperties: Target.Properties,
     connection: Reference[Connection],
     properties: Map[String,String] = Map.empty,
@@ -65,8 +66,6 @@ case class JdbcCommandTarget (
     truncateAction:Option[JdbcCommandTarget.Action] = None,
     destroyAction:Option[JdbcCommandTarget.Action] = None
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[JdbcCommandTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      *
@@ -213,7 +212,7 @@ case class JdbcCommandTarget (
         executeAction(destroyAction, Phase.DESTROY)
     }
 
-    private def executeAction(action:Option[Action], phase:Phase) : Unit = {
+    private def executeAction( action:Option[Action], phase:Phase) : Unit = {
         action.foreach { a =>
             val dirty = isDirty(a, phase)
             if (dirty == Yes || dirty == Unknown) {
@@ -235,34 +234,19 @@ case class JdbcCommandTarget (
         }
     }
 
-    private def withConnection[T](fn: (java.sql.Connection, JDBCOptions) => T): T = {
+    private def withStatement[T](transactional:Boolean)(fn: Statement => T): T = {
         val connection = this.connection.value.asInstanceOf[JdbcConnection]
         val props = connection.toConnectionProperties() ++ properties + ("query" -> "dummy")
         val options = new JDBCOptions(props)
 
-        JdbcUtils.withConnection(options) { con => fn(con, options) }
-    }
-
-    private def withStatement[T](transactional:Boolean)(fn: Statement => T): T = {
-        def exec(con:java.sql.Connection, options:JDBCOptions) : T = {
-            val statement = con.createStatement()
-            try {
-                statement.setQueryTimeout(JdbcUtils.queryTimeout(options))
-                fn(statement)
-            }
-            finally {
-                statement.close()
-            }
-        }
-
-        withConnection { (con, options) =>
+        withConnection(options) { con =>
             if (transactional) {
-                JdbcUtils.withTransaction(con) {
-                    exec(con, options)
+                withTransaction(con) {
+                    JdbcUtils.withStatement(con,options)(fn)
                 }
             }
             else {
-                exec(con, options)
+                JdbcUtils.withStatement(con,options)(fn)
             }
         }
     }

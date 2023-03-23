@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,16 +41,15 @@ class ValidateCommand extends Command {
     var mappings: Array[String] = Array()
 
     override def execute(session: Session, project: Project, context:Context) : Status = {
-        logger.info("Validating mappings {}", if (mappings != null) mappings.mkString(",") else "all")
+        val mappingNames =
+            if (mappings.nonEmpty)
+                mappings.toSeq
+            else
+                project.mappings.keys.toSeq
 
-        // Then execute output operations
+        logger.info(s"Validating mappings ${mappingNames.mkString(",")}")
+
         Try {
-            val mappingNames =
-                if (mappings.nonEmpty)
-                    mappings.toSeq
-                else
-                    project.mappings.keys.toSeq
-
             val tables = mappingNames.map(name => context.getMapping(MappingIdentifier(name)))
             tables.forall(table => session.execution.instantiate(table) != null)
         } match {

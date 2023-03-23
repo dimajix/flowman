@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ object SftpUploadTarget {
     }
 }
 
-case class SftpUploadTarget(
+final case class SftpUploadTarget(
     instanceProperties:Target.Properties,
     source:Path,
     target:Path,
@@ -79,7 +79,6 @@ case class SftpUploadTarget(
     overwrite:Boolean
 ) extends BaseTarget {
     import SftpUploadTarget._
-    private val logger = LoggerFactory.getLogger(classOf[SftpUploadTarget])
 
     /**
      * Returns all phases which are implemented by this target in the execute method

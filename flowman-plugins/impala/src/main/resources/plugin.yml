@@ -2,7 +2,4 @@ name: ${plugin.name}
 description: ${project.name}
 version: ${plugin.version}
 isolation: false
-jars:
-  - ${plugin.jar}
-  - ImpalaJDBC42-${impala.jdbc.version}.jar
-  - hive-service-${hive.version}.jar
+jars: [${plugin.jar},${plugin.classpath}]

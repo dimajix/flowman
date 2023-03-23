@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,10 +121,10 @@ class JavaFileTest extends AnyFlatSpec with Matchers with LocalTempDir {
     }
 
     it should "support resources somewhere" in {
-        val res = Resources.getURL("com/dimajix/flowman/flowman.properties")
+        val res = Resources.getURL("com/dimajix/flowman/some-test-resource.txt")
         val file = JavaFile(Paths.get(res.toURI))
         file.toString should be (res.toString)
-        file.name should be ("flowman.properties")
+        file.name should be ("some-test-resource.txt")
         file.uri should be (res.toURI)
         file.path.toUri should be (res.toURI)
         file.path should be (new Path(res.toURI))

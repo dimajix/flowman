@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import javax.xml.bind.DatatypeConverter
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
+import com.dimajix.flowman.execution.StateStoreException
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.GraphBuilder
 import com.dimajix.flowman.history.JdbcStateRepository.JobRun
@@ -359,11 +360,12 @@ case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, t
             try {
                 fn
             } catch {
-                case e @(_:SQLRecoverableException|_:SQLTransientException) if n > 1 => {
+                case e @(_:SQLRecoverableException|_:SQLTransientException) if n > 1 =>
                     logger.warn("Retrying after error while executing SQL: {}", e.getMessage)
                     Thread.sleep(timeout)
                     retry(n - 1)(fn)
-                }
+                case ex:Throwable =>
+                    throw new StateStoreException("Error accessing JDBC state store repository", ex)
             }
         }
 

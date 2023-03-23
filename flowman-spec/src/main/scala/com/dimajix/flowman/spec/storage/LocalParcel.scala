@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.io.IOUtils
+import org.apache.hadoop.fs.Path
+import org.slf4j.LoggerFactory
 
 import com.dimajix.common.tryWith
 import com.dimajix.flowman.fs.File
@@ -35,6 +37,8 @@ import com.dimajix.flowman.storage.AbstractParcel
 
 
 case class LocalParcel(override val name:String, override val root:File) extends AbstractParcel with ToSpec[ParcelSpec] {
+    private val logger = LoggerFactory.getLogger(classOf[LocalParcel])
+
     root.mkdirs()
     private val fileStore = FileStore(root)
 
@@ -55,11 +59,50 @@ case class LocalParcel(override val name:String, override val root:File) extends
      */
     override def listProjects(): Seq[Project] = fileStore.listProjects()
 
+    @throws[IOException]
+    override def clean() : Unit = {
+        logger.info(s"Cleaning parcel '$name'")
+        root.list().foreach(_.delete(true))
+    }
+
+    @throws[IOException]
+    override def mkdir(fileName: Path) : Unit = {
+        val newPath = zipSlipProtect(fileName.toString, root)
+        newPath.mkdirs()
+    }
+
+
+    @throws[IOException]
+    override def putFile(fileName: Path, content: Array[Byte]) : Unit = {
+        val newPath = zipSlipProtect(fileName.toString, root)
+        val parent = newPath.parent
+        parent.mkdirs()
+        // copy TarArchiveInputStream to Path newPath
+        val out = newPath.create(true)
+        try {
+            IOUtils.write(content, out)
+            out.close()
+        }
+        catch {
+            case NonFatal(ex) =>
+                newPath.delete()
+                throw ex
+        }
+    }
+
+    @throws[IOException]
+    override def deleteFile(fileName: Path) : Unit = {
+        val newPath = zipSlipProtect(fileName.toString, root)
+        newPath.delete(true)
+    }
+
+    @throws[IOException]
     override def replace(targz: File): Unit = {
         if (!targz.isFile())
             throw new IOException(s"Source file '$targz' doesn't exists!")
 
-        root.glob("*").foreach(_.delete(true))
+        logger.info(s"Replacing parcel '$name' with new contents from '$targz")
+        root.list().foreach(_.delete(true))
         decompressTarGzipFile(targz, root)
     }
 
@@ -70,14 +113,15 @@ case class LocalParcel(override val name:String, override val root:File) extends
         spec
     }
 
-    def decompressTarGzipFile(source: File, target: File): Unit = {
+    @throws[IOException]
+    private def decompressTarGzipFile(source: File, target: File): Unit = {
         tryWith(source.open()) { fi =>
             tryWith(new BufferedInputStream(fi)) { bi =>
                 tryWith(new GzipCompressorInputStream(bi)) { gzi =>
                     tryWith(new TarArchiveInputStream(gzi)) { ti =>
                         var entry: ArchiveEntry = ti.getNextEntry
                         while (entry != null) {
-                            val newPath = zipSlipProtect(entry, target)
+                            val newPath = zipSlipProtect(entry.getName, target)
                             if (entry.isDirectory) {
                                 newPath.mkdirs()
                             }
@@ -104,11 +148,12 @@ case class LocalParcel(override val name:String, override val root:File) extends
         }
     }
 
-    private def zipSlipProtect(entry: ArchiveEntry, targetDir: File) : File = {
-        val targetDirResolved = targetDir / entry.getName
+    @throws[IOException]
+    private def zipSlipProtect(entry: String, targetDir: File) : File = {
+        val targetDirResolved = targetDir / entry
         val normalizePath = targetDirResolved.absolute
         if (!normalizePath.toString.startsWith(targetDir.toString))
-            throw new IOException("Bad entry: " + entry.getName)
+            throw new IOException("Target location is not under workspace root: " + entry)
         normalizePath
     }
 }

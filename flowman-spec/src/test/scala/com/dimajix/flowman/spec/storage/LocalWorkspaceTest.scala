@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,15 @@ class LocalWorkspaceTest extends AnyFlatSpec with Matchers with LocalTempDir {
 
         val ws2 = new LocalWorkspace(root)
         ws2.parcels should be (Seq())
+    }
+
+    it should "correctly enumerate workspaces" in {
+        val fs = FileSystem(new Configuration())
+        val root = fs.local(tempDir) / "ws_root"
+
+        val ws1 = new LocalWorkspace(root / "ws1")
+        val all = LocalWorkspace.list(root)
+        all.map(_.name) should be (Seq("ws1"))
     }
 
     it should "store parcels" in {

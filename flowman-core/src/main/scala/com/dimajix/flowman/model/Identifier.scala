@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ final case class Identifier[T](name:String, project:Option[String]) {
 object MappingOutputIdentifier {
     val empty = MappingOutputIdentifier("", "", None)
     def apply(name:String) : MappingOutputIdentifier = parse(name)
-    def apply(mapping: MappingIdentifier, output:String) : MappingOutputIdentifier = MappingOutputIdentifier(mapping.name, output, mapping.project)
+    def apply(mapping:MappingIdentifier, output:String) : MappingOutputIdentifier = MappingOutputIdentifier(mapping.name, output, mapping.project)
 
     def parse(fqName:String) : MappingOutputIdentifier = {
         if (fqName == null || fqName.isEmpty) {

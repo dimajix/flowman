@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.RuntimeConfig
 import org.apache.spark.sql.SparkSession
+import org.slf4j.ILoggerFactory
+import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.FlowmanConf
@@ -55,6 +57,8 @@ import com.dimajix.flowman.types.StructType
  * target execution and not created before.
  */
 abstract class Execution {
+    def loggerFactory : ILoggerFactory
+
     /**
       * Returns the MetricRegistry of this execution
       * @return

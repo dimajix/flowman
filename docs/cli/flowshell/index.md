@@ -1,4 +1,4 @@
-# Flowman Interactive Shell (flowshell)
+# Flowman Interactive Shell (`flowshell`)
 
 `flowshell` is an interactive shell for inspecting and executing Flowman projects. 
 
@@ -29,6 +29,7 @@ The commands are organized in command groups
 * `namespace`
 * `project`
 * `target`
+* `test`
 
 Some additional commands in `flowshell` which are not available via `flowexec` are
 * `exit` or `quit`

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.dimajix.flowman.execution
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.SparkSession.getActiveSession
 import org.apache.spark.sql.SparkSession.getDefaultSession
+import org.slf4j.ILoggerFactory
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.HiveCatalog
@@ -121,6 +122,8 @@ final class AnalyzingExecution(context: Context) extends CachingExecution(None, 
      * @return
      */
     override def activities: ActivityManager = throw new UnsupportedOperationException
+
+    override def loggerFactory: ILoggerFactory = ???
 
     override def cleaner : SessionCleaner = throw new UnsupportedOperationException
 

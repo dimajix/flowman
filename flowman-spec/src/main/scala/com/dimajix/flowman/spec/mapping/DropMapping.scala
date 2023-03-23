@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.dimajix.flowman.transforms.schema.Path
 import com.dimajix.flowman.types.StructType
 
 
-case class DropMapping(
+final case class DropMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     columns:Seq[Path],

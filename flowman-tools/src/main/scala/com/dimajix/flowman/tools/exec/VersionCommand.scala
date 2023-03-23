@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Kaya Kupferschmidt
+ * Copyright (C) 2020 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,17 @@ package com.dimajix.flowman.tools.exec
 
 import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.HADOOP_BUILD_VERSION
-import com.dimajix.flowman.HADOOP_VERSION
 import com.dimajix.flowman.JAVA_VERSION
 import com.dimajix.flowman.SCALA_BUILD_VERSION
 import com.dimajix.flowman.SCALA_VERSION
 import com.dimajix.flowman.SPARK_BUILD_VERSION
-import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.Project
+import com.dimajix.hadoop.HADOOP_VERSION
+import com.dimajix.spark.SPARK_VERSION
 
 
 class VersionCommand extends Command {

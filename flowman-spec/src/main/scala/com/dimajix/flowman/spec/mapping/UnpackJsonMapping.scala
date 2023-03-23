@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ object UnpackJsonMapping {
 }
 
 
-case class UnpackJsonMapping(
+final case class UnpackJsonMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     columns: Seq[UnpackJsonMapping.ColumnMapping],

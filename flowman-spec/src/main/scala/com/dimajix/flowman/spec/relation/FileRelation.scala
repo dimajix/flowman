@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.apache.spark.sql.execution.datasources.DataSource
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
@@ -64,7 +63,6 @@ case class FileRelation(
     format:String = "csv",
     options:Map[String,String] = Map()
 ) extends BaseRelation with SchemaRelation with PartitionedRelation {
-    private val logger = LoggerFactory.getLogger(classOf[FileRelation])
     private val resource = ResourceIdentifier.ofFile(qualifiedLocation)
 
     private lazy val collector : FileCollector = {
@@ -178,7 +176,7 @@ case class FileRelation(
         val multiPath =  SparkShim.relationSupportsMultiplePaths(providingClass)
 
         val data = mapFiles(partitions) { (partition, paths) =>
-            logger.info(s"File relation '$identifier' reads ${paths.size} files under location '${qualifiedLocation}' in partition ${partition.spec}")
+            logger.info(s"Reading file relation '$identifier' at '${qualifiedLocation}' with partition ${partition.spec}, this will read files ${paths.mkString(",")}")
 
             val pathNames = paths.map(_.toString)
             val reader = this.reader(execution, format, options)

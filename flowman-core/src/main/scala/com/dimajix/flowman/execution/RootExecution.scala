@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.dimajix.flowman.execution
 
 import org.apache.spark.sql.SparkSession
+import org.slf4j.ILoggerFactory
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.HiveCatalog
@@ -36,7 +37,7 @@ import com.dimajix.flowman.model.TargetResult
 
 
 final class RootExecution(val session:Session) extends CachingExecution(None, true) {
-    override protected val logger = LoggerFactory.getLogger(classOf[RootExecution])
+    override protected val logger = session.loggerFactory.getLogger(classOf[RootExecution].getName)
 
     /**
      * Returns the MetricRegistry of this execution
@@ -94,6 +95,8 @@ final class RootExecution(val session:Session) extends CachingExecution(None, tr
      * @return
      */
     override def activities: ActivityManager = session.activities
+
+    override def loggerFactory: ILoggerFactory = session.loggerFactory
 
     /**
      * Returns the [[SessionCleaner]] provided by the [[Session]]

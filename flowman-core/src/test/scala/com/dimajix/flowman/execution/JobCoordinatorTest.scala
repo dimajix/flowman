@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
             "project",
             targets = Map("some_target" -> targetP)
         )
-        val session = Session.builder().withSparkSession(spark).build()
+        val session = Session.builder().withProject(project).withSparkSession(spark).build()
         val context = session.getContext(project)
         val job = Job(
             Job.Properties(context),
@@ -81,7 +81,7 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
             "project",
             targets = Map("some_target" -> targetP)
         )
-        val session = Session.builder().withSparkSession(spark).build()
+        val session = Session.builder().withProject(project).withSparkSession(spark).build()
         val context = session.getContext(project)
         val job = Job(
             Job.Properties(context),
@@ -130,7 +130,7 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
             "project",
             targets = Map("some_target" -> targetP)
         )
-        val session = Session.builder().withSparkSession(spark).build()
+        val session = Session.builder().withProject(project).withSparkSession(spark).build()
         val context = session.getContext(project)
         val job = Job(
             Job.Properties(context),
@@ -222,7 +222,7 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
                 "target3" -> targetP3
             )
         )
-        val session = Session.builder().withSparkSession(spark).build()
+        val session = Session.builder().withProject(project).withSparkSession(spark).build()
         val context = session.getContext(project)
         val job = Job(
             Job.Properties(context),
@@ -311,7 +311,7 @@ class JobCoordinatorTest extends AnyFlatSpec with Matchers with MockFactory with
                 "target3" -> targetP3
             )
         )
-        val session = Session.builder().withSparkSession(spark).build()
+        val session = Session.builder().withProject(project).withSparkSession(spark).build()
         val context = session.getContext(project)
         val job = Job(
             Job.Properties(context),

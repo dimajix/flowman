@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,21 +20,29 @@ import scala.collection.mutable
 import scala.util.Try
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.slf4j.LoggerFactory
 
-import com.dimajix.flowman.execution.NoSuchProjectException
+import com.dimajix.flowman.execution.ProjectNotFoundException
 import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.spec.ObjectMapper
 import com.dimajix.flowman.spec.ToSpec
 import com.dimajix.flowman.storage.AbstractWorkspace
 import com.dimajix.flowman.storage.Parcel
-import com.dimajix.flowman.storage.Workspace
 
 
 object LocalWorkspace {
-    def load(file:File) : LocalWorkspace = new LocalWorkspace(file)
+    def load(file:File) : LocalWorkspace = {
+        if (!exists(file))
+            throw new IllegalArgumentException(s"No parcel workspace found at location '$file'")
+        new LocalWorkspace(file)
+    }
 
-    def list(root:File) : Seq[Workspace] = {
+    def create(file: File): LocalWorkspace = {
+        new LocalWorkspace(file)
+    }
+
+    def list(root:File) : Seq[LocalWorkspace] = {
         val globPattern = "*/.flowman-workspace.yaml"
         root.glob(globPattern)
             .flatMap(file => Try(load(file.parent)).toOption)
@@ -46,19 +54,22 @@ object LocalWorkspace {
 }
 
 case class LocalWorkspace(override val root:File) extends AbstractWorkspace {
+    private val logger = LoggerFactory.getLogger(classOf[LocalWorkspace])
     private val _parcels = mutable.ListBuffer[Parcel]()
 
     root.mkdirs()
     val file = root / ".flowman-workspace.yaml"
     if (!file.exists()) {
+        logger.info(s"Creating new local workspace at '$root'")
         writeWorkspaceFile()
     }
     else {
-        val spec = ObjectMapper.read[ParcelWorkspaceSpec](file)
+        logger.info(s"Opening existing local workspace at '$root'")
+        val spec = ObjectMapper.read[LocalWorkspaceSpec](file)
         spec.parcels.foreach(p => _parcels.append(p.instantiate(root)))
     }
 
-    override def name : String = root.path.getName
+    override def name : String = root.name
 
     /**
      * Loads a project via its name (not its filename or directory)
@@ -69,7 +80,7 @@ case class LocalWorkspace(override val root:File) extends AbstractWorkspace {
     override def loadProject(name: String): Project = {
         parcels.find(_.listProjects().exists(_.name == name))
             .map(_.loadProject(name))
-            .getOrElse(throw new NoSuchProjectException(name))
+            .getOrElse(throw new ProjectNotFoundException(name))
     }
 
     /**
@@ -104,8 +115,15 @@ case class LocalWorkspace(override val root:File) extends AbstractWorkspace {
         writeWorkspaceFile()
     }
 
+    override def clean() : Unit = {
+        logger.info(s"Cleaning workspace $name")
+        root.list().foreach(_.delete(true))
+        _parcels.clear()
+        writeWorkspaceFile()
+    }
+
     private def writeWorkspaceFile() : Unit = {
-        val spec = new ParcelWorkspaceSpec
+        val spec = new LocalWorkspaceSpec
         spec.parcels = _parcels.map(_.asInstanceOf[ToSpec[ParcelSpec]].spec)
 
         val file = root / ".flowman-workspace.yaml"
@@ -120,6 +138,6 @@ case class LocalWorkspace(override val root:File) extends AbstractWorkspace {
 }
 
 
-class ParcelWorkspaceSpec {
+class LocalWorkspaceSpec {
     @JsonProperty(value="parcels", required = true) var parcels: Seq[ParcelSpec] = Seq()
 }

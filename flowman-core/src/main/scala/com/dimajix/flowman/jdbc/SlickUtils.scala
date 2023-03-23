@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import slick.jdbc.DerbyProfile
 import slick.jdbc.H2Profile
 import slick.jdbc.JdbcProfile
 import slick.jdbc.MySQLProfile
+import slick.jdbc.OracleProfile
 import slick.jdbc.PostgresProfile
 import slick.jdbc.SQLServerProfile
 import slick.jdbc.SQLiteProfile
@@ -42,6 +43,7 @@ object SlickUtils {
         val mysqlPattern = """.*\.mysql\..*""".r
         val postgresqlPattern = """.*\.postgresql\..*""".r
         val sqlserverPattern = """.*\.sqlserver\..*""".r
+        val oraclePattern = """oracle\..*""".r
         driver match {
             case derbyPattern() => DerbyProfile
             case sqlitePattern() => SQLiteProfile
@@ -50,6 +52,7 @@ object SlickUtils {
             case mariadbPattern() => MySQLProfile
             case postgresqlPattern() => PostgresProfile
             case sqlserverPattern() => SQLServerProfile
+            case oraclePattern() => OracleProfile
             case _ => throw new UnsupportedOperationException(s"Database with driver ${driver} is not supported")
         }
     }

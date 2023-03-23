@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ private[history] object JdbcStateRepository {
 
     case class GraphNode(
         id:Long,
-        target_id:Long,
+        job_id:Long,
         category:String,
         kind:String,
         name:String
@@ -905,7 +905,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                 series.groupBy(m => groupings.map(m.labels))
                     .map { case(group,values) =>
                         val labels = groupings.zip(group).toMap
-                        MetricSeries(metric, namespace, project, job, phase, labels, values.toSeq.sortBy(_.ts.toInstant.toEpochMilli))
+                        MetricSeries(metric, namespace, project, job, Phase.ofString(phase), labels, values.toSeq.sortBy(_.ts.toInstant.toEpochMilli))
                     }
             }
             .toSeq

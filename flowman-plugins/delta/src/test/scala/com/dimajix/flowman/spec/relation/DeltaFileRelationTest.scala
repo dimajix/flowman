@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
-import com.dimajix.flowman.SPARK_VERSION
 import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.InsertClause
@@ -57,6 +56,7 @@ import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.SPARK_VERSION
 import com.dimajix.spark.sql.streaming.StreamingUtils
 import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.QueryTest

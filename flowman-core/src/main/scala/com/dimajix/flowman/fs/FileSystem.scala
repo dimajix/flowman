@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,22 @@ import com.dimajix.flowman.fs.FileSystem.stripSlash
 
 object FileSystem {
     val SEPARATOR = "/"
+    val SEPARATOR_CHAR = '/'
     val WINDOWS: Boolean = System.getProperty("os.name").startsWith("Windows")
 
     private val HAS_DRIVE_LETTER_SPECIFIER = Pattern.compile("^/?[a-zA-Z]:")
+
+    private def startPositionWithoutWindowsDrive(path: String) = {
+        if (hasWindowsDrive(path)) {
+            if (path.charAt(0) == SEPARATOR_CHAR)
+                3
+            else
+                2
+        }
+        else {
+            0
+        }
+    }
 
     def hasWindowsDrive(path: String) = FileSystem.WINDOWS && HAS_DRIVE_LETTER_SPECIFIER.matcher(path).find
 
@@ -64,6 +77,22 @@ object FileSystem {
         }
         else {
             str
+        }
+    }
+
+    def getParent(fqpath:String): String = {
+        val path = stripProtocol(fqpath)
+        val lastSlash = path.lastIndexOf('/')
+        val start = startPositionWithoutWindowsDrive(path)
+        if ((path.length == start) || (lastSlash == start && path.length == start + 1)) {
+            // at root
+            null
+        }
+        else {
+            if (lastSlash == -1)
+                "."
+            else
+                path.substring(0, if (lastSlash == start) start + 1 else lastSlash)
         }
     }
 

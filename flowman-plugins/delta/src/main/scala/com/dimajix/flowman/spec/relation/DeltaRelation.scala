@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,10 @@ import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.MetadataBuilder
 import org.apache.spark.sql.types.StructType
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.flowman.catalog.PartitionChange
 import com.dimajix.flowman.catalog.PartitionSpec
-import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableChange.AddColumn
 import com.dimajix.flowman.catalog.TableChange.DropColumn
@@ -42,10 +40,10 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnComment
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnNullability
 import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
+import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.execution.MigrationFailedException
-import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.jdbc.HiveDialect
@@ -59,7 +57,6 @@ import com.dimajix.flowman.spark.sql.delta.QualifiedColumn
 
 
 abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String]) extends BaseRelation with PartitionedRelation with SchemaRelation with MigratableRelation {
-    private val logger = LoggerFactory.getLogger(classOf[DeltaRelation])
     protected val resource : ResourceIdentifier
 
     protected def deltaCatalogTable(execution: Execution) : DeltaTableV2

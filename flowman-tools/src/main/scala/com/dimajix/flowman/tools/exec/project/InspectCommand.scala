@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Kaya Kupferschmidt
+ * Copyright (C) 2020 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,11 @@ class InspectCommand extends Command {
             .toSeq
             .sortBy(_._1)
             .foreach{ p => println(s"    ${p._1}") }
+        println("Tests:")
+        project.tests
+            .toSeq
+            .sortBy(_._1)
+            .foreach { p => println(s"    ${p._1}") }
         Status.SUCCESS
     }
 }

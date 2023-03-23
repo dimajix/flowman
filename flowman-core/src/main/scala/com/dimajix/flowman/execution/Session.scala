@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.SparkShim
+import org.slf4j.ILoggerFactory
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.HiveCatalog
@@ -66,6 +67,7 @@ object Session {
         private var namespace:Option[Namespace] = None
         private var jars = Set[String]()
         private var listeners = Seq[ExecutionListener]()
+        private var loggerFactory:Option[ILoggerFactory] = None
 
         /**
          * Injects a builder for a Spark session. The builder will be lazily called, when required. Note that
@@ -249,6 +251,11 @@ object Session {
             this
         }
 
+        def withLoggerFactory(loggerFactory: ILoggerFactory) : Builder = {
+            this.loggerFactory = Some(loggerFactory)
+            this
+        }
+
         /**
          * Build the Flowman session and applies all previously specified options
          * @return
@@ -269,7 +276,8 @@ object Session {
                 parent.map(_._environment).getOrElse(Map()) ++ environment,
                 parent.map(_._profiles).getOrElse(Set()) ++ profiles,
                 parent.map(_ => Set[String]()).getOrElse(jars),
-                listeners.map(l => (l,None))
+                listeners.map(l => (l,None)),
+                loggerFactory.getOrElse(LoggerFactory.getILoggerFactory)
             )
         }
 
@@ -281,6 +289,7 @@ object Session {
 
     def builder() = new Builder(None)
     def builder(parent:Session) = new Builder(Some(parent))
+    def builder(project:Project) = new Builder(None).withProject(project)
 }
 
 
@@ -310,9 +319,10 @@ final class Session private[execution](
     private[execution] val _environment: Map[String,String],
     private[execution] val _profiles:Set[String],
     private[execution] val _jars:Set[String],
-    private[execution] val _listeners:Seq[(ExecutionListener,Option[Token])]
+    private[execution] val _listeners:Seq[(ExecutionListener,Option[Token])],
+    private[execution] val _loggerFactory:ILoggerFactory
 ) {
-    private val logger = LoggerFactory.getLogger(classOf[Session])
+    private val logger = _loggerFactory.getLogger(classOf[Session].getName)
 
     private def sparkJars : Seq[String] = {
         _jars.toSeq
@@ -417,20 +427,27 @@ final class Session private[execution](
     private val rootExecution : RootExecution = new RootExecution(this)
     private val operationsManager = new ActivityManager
 
-    private val cachedProjects : mutable.Map[String,Project] = mutable.Map()
-    private def loadProject(name:String) : Option[Project] = {
-        val project = cachedProjects.synchronized {
-            cachedProjects.getOrElseUpdate(name, store.loadProject(name))
+    private def loadProjects() : Seq[Project] = {
+        val allProjects = mutable.Map[String,Project] ()
+        def load(p:String, name:String) : Project = {
+            logger.info(s"Importing project '$name' as dependency of project '$p'")
+            val project = allProjects.getOrElseUpdate(name, store.loadProject(name))
+            project.imports.foreach(i => load(project.name, i.project))
+            project
         }
-        Some(project)
+
+        project.foreach { p =>
+            allProjects.put(p.name, p)
+            p.imports.foreach(i => load(p.name, i.project))
+        }
+        allProjects.values.toSeq
     }
 
-    private lazy val rootContext : RootContext = {
+    private lazy val namespaceContext : RootContext = {
         val builder = RootContext.builder(_namespace, _profiles)
+            .withLoggerFactory(loggerFactory)
             .withEnvironment(_environment, SettingLevel.GLOBAL_OVERRIDE)
             .withConfig(_config, SettingLevel.GLOBAL_OVERRIDE)
-            .withExecution(rootExecution)
-            .withProjectResolver(loadProject)
         _namespace.foreach { ns =>
             _profiles.foreach(p => ns.profiles.get(p).foreach { profile =>
                 logger.info(s"Activating namespace profile '$p'")
@@ -439,6 +456,13 @@ final class Session private[execution](
             builder.withEnvironment(ns.environment)
             builder.withConfig(ns.config)
         }
+        builder.build()
+    }
+    private lazy val rootContext : RootContext = {
+        val builder = RootContext.builder(namespaceContext)
+            .withExecution(rootExecution)
+            .withLoggerFactory(loggerFactory)
+            .withProjects(loadProjects())
         _project.foreach { prj =>
             // github-155: Apply project configuration to session
             _profiles.foreach(p => prj.profiles.get(p).foreach { profile =>
@@ -467,22 +491,23 @@ final class Session private[execution](
             .foreach { case(key,value) =>
                 logger.info("  {} = {}", key: Any, value: Any)
             }
+        logger.info("")
 
         conf
     }
 
     private lazy val _catalog = {
-        val externalCatalogs = _namespace.toSeq.flatMap(_.catalogs).map(_.instantiate(rootContext))
+        val externalCatalogs = _namespace.toSeq.flatMap(_.catalogs).map(_.instantiate(namespaceContext))
         new HiveCatalog(spark, config, externalCatalogs)
     }
 
     private lazy val _projectStore : Store = {
-        _store.orElse(_namespace.flatMap(_.store).map(_.instantiate(rootContext))).getOrElse(new NullStore)
+        _store.orElse(_namespace.flatMap(_.store).map(_.instantiate(namespaceContext))).getOrElse(new NullStore)
     }
 
     private lazy val _history = {
         _namespace.flatMap(_.history)
-            .map(_.instantiate(rootContext))
+            .map(_.instantiate(namespaceContext))
             .getOrElse(new NullStateStore())
     }
     private lazy val _hooks = {
@@ -639,6 +664,12 @@ final class Session private[execution](
     def getContext(project: Project) : Context = {
         rootContext.getProjectContext(project)
     }
+
+    /**
+     * Returns a session specific logger factory
+     * @return
+     */
+    def loggerFactory : ILoggerFactory = _loggerFactory
 
     /**
      * Returns a new detached Flowman Session sharing the same Spark Context.

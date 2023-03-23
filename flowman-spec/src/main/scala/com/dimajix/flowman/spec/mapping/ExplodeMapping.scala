@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 Kaya Kupferschmidt
+ * Copyright (C) 2019 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ object ExplodeMapping {
     )
 }
 
-case class ExplodeMapping(
+final case class ExplodeMapping(
     instanceProperties : Mapping.Properties,
     input: MappingOutputIdentifier,
     array: Path,

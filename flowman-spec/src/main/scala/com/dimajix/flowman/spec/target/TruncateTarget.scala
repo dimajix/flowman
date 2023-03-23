@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,13 +66,11 @@ object TruncateTarget {
         )
     }
 }
-case class TruncateTarget(
+final case class TruncateTarget(
     instanceProperties: Target.Properties,
     relation: Reference[Relation],
     partitions:Map[String,FieldValue] = Map()
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[RelationTarget])
-
     /**
      * Returns an instance representing this target with the context
      * @return

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,13 +217,13 @@ class PostgresCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         super.addColumn(statement, table, columnName, dataType, isNullable, charset, collation, comment)
         comment.foreach { c =>
             val sql = dialect.statement.updateColumnComment(table, columnName, dataType, isNullable, charset, collation, comment)
-            statement.executeUpdate(sql)
+            JdbcUtils.executeUpdate(statement, sql)
         }
     }
 
     override def updateColumnComment(statement:Statement, table: TableIdentifier, columnName:String, dataType: String, isNullable: Boolean, charset:Option[String]=None, collation:Option[String]=None, comment:Option[String]=None) : Unit = {
         val sql = dialect.statement.updateColumnComment(table, columnName, dataType, isNullable, charset, collation, comment)
-        statement.executeUpdate(sql)
+        JdbcUtils.executeUpdate(statement, sql)
     }
 
     override def dropPrimaryKey(statement: Statement, table: TableIdentifier): Unit = {

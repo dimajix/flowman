@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.types.StructType
 
 
-case class TransitiveChildrenMapping(
+final case class TransitiveChildrenMapping(
     instanceProperties:Mapping.Properties,
     input:MappingOutputIdentifier,
     parentColumns:Seq[String],

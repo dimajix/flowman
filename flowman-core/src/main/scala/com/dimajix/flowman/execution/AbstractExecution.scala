@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.documentation.Documenter
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.withWallTime
@@ -84,7 +85,7 @@ abstract class AbstractExecution extends Execution {
                     Some((listener, listener.startLifecycle(this, job, instance)))
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on startLifecycle: ${ex.toString}.")
+                        logger.warn(s"Execution listener of type ${listener.getClass.getName} threw exception on startLifecycle: ${reasons(ex)}.")
                         None
                 }
             }
@@ -96,7 +97,7 @@ abstract class AbstractExecution extends Execution {
                     listener.finishLifecycle(this, token, result)
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on finishLifecycle: ${ex.toString}.")
+                        logger.warn(s"Execution listener of type ${listener.getClass.getName} threw exception on finishLifecycle: ${reasons(ex)}.")
                 }
             }
         }
@@ -140,7 +141,7 @@ abstract class AbstractExecution extends Execution {
                     Some((listener, listener.startJob(this, job, instance, parent)))
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on startJob: ${ex.toString}.")
+                        logger.warn(s"Execution listener of type ${listener.getClass.getName} threw exception on startJob: ${reasons(ex)}.")
                         None
                 }
             }
@@ -152,7 +153,7 @@ abstract class AbstractExecution extends Execution {
                     listener.finishJob(this, token, result)
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on finishJob: ${ex.toString}.")
+                        logger.warn(s"Execution listener of type ${listener.getClass.getName} threw exception on finishJob: ${reasons(ex)}.")
                 }
             }
         }
@@ -204,7 +205,7 @@ abstract class AbstractExecution extends Execution {
                     Some((listener, listener.startTarget(this, target, target.digest(phase), parent)))
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on startTarget: ${ex.toString}.")
+                        logger.warn(s"Execution listener of type ${listener.getClass.getName} threw exception on startTarget: ${reasons(ex)}.")
                         None
                 }
             }
@@ -216,7 +217,7 @@ abstract class AbstractExecution extends Execution {
                     listener.finishTarget(this, token, result)
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on finishTarget: ${ex.toString}.")
+                        logger.warn(s"Execution listener of type ${listener.getClass.getName} threw exception on finishTarget: ${reasons(ex)}.")
                 }
             }
         }
@@ -259,7 +260,7 @@ abstract class AbstractExecution extends Execution {
                     Some((listener, listener.startAssertion(this, assertion, parent)))
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on startAssertion: ${ex.toString}.")
+                        logger.warn(s"Execution listener of type ${listener.getClass.getName}threw exception on startAssertion: ${reasons(ex)}.")
                         None
                 }
             }
@@ -271,7 +272,7 @@ abstract class AbstractExecution extends Execution {
                     listener.finishAssertion(this, token, result)
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on finishAssertion: ${ex.toString}.")
+                        logger.warn(s"Execution listener of type ${listener.getClass.getName} threw exception on finishAssertion: ${reasons(ex)}.")
                 }
             }
         }
@@ -313,7 +314,7 @@ abstract class AbstractExecution extends Execution {
                     Some((listener, listener.startMeasure(this, measure, parent)))
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on startMeasure: ${ex.toString}.")
+                        logger.warn(s"Execution listener of type ${listener.getClass.getName} threw exception on startMeasure: ${reasons(ex)}.")
                         None
                 }
             }
@@ -325,7 +326,7 @@ abstract class AbstractExecution extends Execution {
                     listener.finishMeasure(this, token, result)
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on finishMeasure: ${ex.toString}.")
+                        logger.warn(s"Execution listener of type ${listener.getClass.getName} threw exception on finishMeasure: ${reasons(ex)}.")
                 }
             }
         }
@@ -367,7 +368,7 @@ abstract class AbstractExecution extends Execution {
                     Some((listener, listener.startDocumenter(this, documenter, parent)))
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on startDocumenter: ${ex.toString}.")
+                        logger.warn(s"Execution listener of type ${listener.getClass.getName} threw exception on startDocumenter: ${reasons(ex)}.")
                         None
                 }
             }
@@ -379,7 +380,7 @@ abstract class AbstractExecution extends Execution {
                     listener.finishDocumenter(this, token, result)
                 } catch {
                     case NonFatal(ex) =>
-                        logger.warn(s"Execution listener threw exception on finishDocumenter: ${ex.toString}.")
+                        logger.warn(s"Execution listener of type ${listener.getClass.getName} threw exception on finishDocumenter: ${reasons(ex)}.")
                 }
             }
         }

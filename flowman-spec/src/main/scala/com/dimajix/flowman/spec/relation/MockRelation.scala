@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.sql.DataFrameBuilder
 
 
-case class MockRelation(
+final case class MockRelation(
     override val instanceProperties:Relation.Properties,
     relation: RelationIdentifier,
     records:Seq[Record] = Seq()

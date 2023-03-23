@@ -1,7 +1,6 @@
 # [![](images/flowman-favicon.png) Flowman](https://flowman.io)
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Build Status](https://travis-ci.org/dimajix/flowman.svg?branch=develop)](https://travis-ci.org/dimajix/flowman)
 [![Documentation](https://readthedocs.org/projects/flowman/badge/?version=latest)](https://flowman.readthedocs.io/en/latest/)
 
 ## What is Flowman
@@ -107,11 +106,14 @@ following sections:
    :maxdepth: 1
    :glob:
    :hidden:
+   :titlesonly:
    :caption: Command Line Tools
    
    cli/index
    cli/flowexec/index
    cli/flowshell/index
+   cli/flowman-kernel/index
+   cli/flowrshell/index
    cli/*
 ```   
 

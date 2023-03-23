@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 Kaya Kupferschmidt
+ * Copyright (C) 2019 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -36,14 +35,12 @@ import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.types.SchemaWriter
 
 
-case class SchemaTarget(
+final case class SchemaTarget(
     instanceProperties: Target.Properties,
     schema: Schema,
     file: Path,
     format: String
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[SchemaTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return
@@ -88,10 +85,10 @@ case class SchemaTarget(
       * Abstract method which will perform the output operation. All required tables need to be
       * registered as temporary tables in the Spark session before calling the execute method.
       *
-      * @param executor
+      * @param execution
       */
-    override def build(executor: Execution): Unit = {
-        require(executor != null)
+    override def build(execution: Execution): Unit = {
+        require(execution != null)
 
         logger.info(s"Writing schema to file '$file'")
         val outputFile = context.fs.file(file)
@@ -101,12 +98,12 @@ case class SchemaTarget(
     /**
       * Performs a verification of the build step or possibly other checks.
       *
-      * @param executor
+      * @param execution
       */
-    override def verify(executor: Execution): Unit = {
-        require(executor != null)
+    override def verify(execution: Execution): Unit = {
+        require(execution != null)
 
-        val outputFile = executor.fs.file(file)
+        val outputFile = execution.fs.file(file)
         if (!outputFile.exists()) {
             val error = s"Verification of target '$identifier' failed - schema file '$file' does not exist"
             logger.error(error)
@@ -117,12 +114,12 @@ case class SchemaTarget(
     /**
       * Deletes data of a specific target
       *
-      * @param executor
+      * @param execution
       */
-    override def truncate(executor: Execution): Unit = {
-        require(executor != null)
+    override def truncate(execution: Execution): Unit = {
+        require(execution != null)
 
-        val outputFile = executor.fs.file(file)
+        val outputFile = execution.fs.file(file)
         if (outputFile.exists()) {
             logger.info(s"Removing schema file '$file'")
             outputFile.delete()

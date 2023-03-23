@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dimajix.flowman.kernel.proto.project";
+option java_outer_classname = "ProjectProto";
+
+package com.dimajix.flowman.kernel.project;
+
+import "common.proto";
+
+
+
+message ProjectDetails {
+    string name = 2;
+    optional string version = 3;
+    optional string basedir = 4;
+    optional string filename = 5;
+    optional string description = 6;
+    repeated string targets = 7;
+    repeated string tests = 8;
+    repeated string jobs = 9;
+    repeated string mappings = 10;
+    repeated string relations = 11;
+    repeated string connections = 12;
+    map<string,string> environment = 14;
+    map<string,string> config = 15;
+    repeated string profiles = 16;
+}
+
+
+message GetProjectRequest {
+    string sessionId = 1;
+}
+message GetProjectResponse {
+    ProjectDetails project = 1;
+}
+
+message ExecuteProjectRequest {
+    string sessionId = 1;
+    repeated ExecutionPhase phases = 3;
+    repeated string targets = 4;
+    repeated string dirtyTargets = 5;
+    map<string,string> arguments = 6;
+    bool force = 7;
+    bool dirty = 8;
+    bool keepGoing = 10;
+    bool dryRun = 11;
+    int32 parallelism = 12;
+}
+message ExecuteProjectResponse {
+    ExecutionStatus status = 1;
+}

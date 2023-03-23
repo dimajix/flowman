@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.nio.charset.Charset
 import java.util.Locale
 
 import com.dimajix.flowman.fs.File
+import com.dimajix.flowman.util.AvroSchemaUtils
 
 
 /**

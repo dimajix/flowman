@@ -28,3 +28,7 @@ relations:
           type: FLOAT
         - name: avg_temperature
           type: FLOAT
+    # (Optionally) specify indexes
+    indexes:
+      - name: "aggregates_idx0"
+        columns: [country]

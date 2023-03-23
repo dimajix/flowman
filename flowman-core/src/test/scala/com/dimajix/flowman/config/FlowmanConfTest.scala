@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,5 @@ class FlowmanConfTest extends AnyFlatSpec with Matchers {
         val clazz = conf.getConf(FlowmanConf.EXECUTION_EXECUTOR_CLASS)
 
         clazz should be (classOf[SimpleExecutor])
-        val ctor = clazz.getDeclaredConstructor()
-        val executor = ctor.newInstance()
-        executor shouldBe a[SimpleExecutor]
     }
 }

@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dimajix.flowman.kernel.proto";
+option java_outer_classname = "CommonProto";
+
+package com.dimajix.flowman.kernel;
+
+
+message Timestamp {
+    // Represents seconds of UTC time since Unix epoch
+    // 1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
+    // 9999-12-31T23:59:59Z inclusive.
+    int64 seconds = 1;
+
+    // Non-negative fractions of a second at nanosecond resolution. Negative
+    // second values with fractions must still have non-negative nanos values
+    // that count forward in time. Must be from 0 to 999,999,999
+    // inclusive.
+    int32 nanos = 2;
+}
+message Date {
+    int64 days = 1;
+}
+
+
+message MappingIdentifier {
+    optional string project = 1;
+    string name = 2;
+}
+
+message MappingOutputIdentifier {
+    optional string project = 1;
+    string name = 2;
+    string output = 3;
+}
+
+message RelationIdentifier {
+    optional string project = 1;
+    string name = 2;
+}
+
+message TargetIdentifier {
+    optional string project = 1;
+    string name = 2;
+}
+
+message JobIdentifier {
+    optional string project = 1;
+    string name = 2;
+}
+
+message TestIdentifier {
+    optional string project = 1;
+    string name = 2;
+}
+
+message ConnectionIdentifier {
+    optional string project = 1;
+    string name = 2;
+}
+
+message ResourceIdentifier {
+    string category = 1;
+    string name = 2;
+    map<string,string> partition = 3;
+}
+
+message WorkspaceIdentifier {
+    string name = 1;
+}
+
+
+message JobContext {
+    JobIdentifier job = 1;
+    map<string,string> arguments = 2;
+}
+
+message TestContext {
+    TestIdentifier test = 1;
+}
+
+message Session {
+    string id = 1;
+    optional string name = 2;
+    optional string workspace = 3;
+    optional string namespace = 4;
+    optional string project = 5;
+}
+message Workspace {
+    string id = 1;
+    optional string name = 2;
+}
+
+
+enum FileType {
+    FILE = 0;
+    DIRECTORY = 1;
+}
+
+enum ExecutionPhase {
+    VALIDATE = 0;
+    CREATE = 10;
+    BUILD = 20;
+    VERIFY = 30;
+    TRUNCATE = 40;
+    DESTROY = 50;
+}
+enum ExecutionStatus {
+    UNKNOWN_STATUS = 0;
+    RUNNING = 10;
+    SUCCESS = 20;
+    SUCCESS_WITH_ERRORS = 30;
+    FAILED = 40;
+    ABORTED = 50;
+    SKIPPED = 60;
+}
+
+
+message Measurement {
+    string name = 1;
+    string jobId = 2;
+    Timestamp ts = 3;
+    map<string,string >labels = 4;
+    double value = 5;
+}
+message MetricSeries {
+    string metric = 1;
+    string namespace = 2;
+    string project = 3;
+    string job = 4;
+    ExecutionPhase phase = 5;
+    map<string,string> labels = 6;
+    repeated Measurement measurements = 7;
+}

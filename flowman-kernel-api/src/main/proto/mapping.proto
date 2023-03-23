@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dimajix.flowman.kernel.proto.mapping";
+option java_outer_classname = "MappingProto";
+
+package com.dimajix.flowman.kernel.mapping;
+
+import "common.proto";
+import "dataframe.proto";
+
+
+message MappingDetails {
+    optional string project = 1;
+    string name = 2;
+    string kind = 3;
+    repeated string outputs = 4;
+    repeated MappingOutputIdentifier inputs = 5;
+    string cache = 6;
+    bool broadcast = 7;
+    bool checkpoint = 8;
+    repeated ResourceIdentifier required = 9;
+}
+
+
+message ListMappingsRequest {
+    string sessionId = 1;
+    optional string project = 2;
+}
+message ListMappingsResponse {
+    repeated MappingIdentifier mappings = 1;
+}
+
+message GetMappingRequest {
+    string sessionId = 1;
+    MappingIdentifier mapping = 2;
+}
+message GetMappingResponse {
+    MappingDetails mapping = 1;
+}
+
+
+message ReadMappingRequest {
+    string sessionId = 1;
+    MappingIdentifier mapping = 2;
+    optional string output = 3;
+    int32 maxRows = 4;
+    repeated string columns = 5;
+}
+message ReadMappingResponse {
+    DataFrame data = 1;
+}
+
+
+message DescribeMappingRequest {
+    string sessionId = 1;
+    MappingIdentifier mapping = 3;
+    optional string output = 4;
+    bool useSpark = 5;
+}
+message DescribeMappingResponse {
+    StructType schema = 1;
+}
+
+
+message ValidateMappingRequest {
+    string sessionId = 1;
+    MappingIdentifier mapping = 2;
+}
+message ValidateMappingResponse {
+}
+
+
+message CountMappingRequest {
+    string sessionId = 1;
+    MappingIdentifier mapping = 2;
+    optional string output = 3;
+}
+message CountMappingResponse {
+    int64 numRecords = 1;
+}
+
+
+message CacheMappingRequest {
+    string sessionId = 1;
+    MappingIdentifier mapping = 2;
+    optional string output = 3;
+    optional string level = 4;
+}
+message CacheMappingResponse {
+}
+
+
+message ExplainMappingRequest {
+    string sessionId = 1;
+    MappingIdentifier mapping = 2;
+    optional string output = 3;
+    bool extended = 4;
+}
+message ExplainMappingResponse {
+    string plan = 1;
+}
+
+
+message SaveMappingOutputRequest {
+    string sessionId = 1;
+    MappingIdentifier mapping = 3;
+    optional string output = 4;
+    string location = 5;
+    string format = 6;
+    map<string,string> options = 7;
+}
+message SaveMappingOutputResponse {
+    ExecutionStatus status = 1;
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ class MapIgnoreCase[B] private(impl:Map[String,(String,B)] = Map()) extends Map[
       *  @tparam   B1 the type of the value in the key/value pair.
       *  @return   a new map with the new binding added to this map
       *
-      *  @usecase  def + (kv: (A, B)): Map[A, B]
+      *  @usecase  def + (kv: (String, B)): Map[A, B]
       *    @inheritdoc
       */
     override def + [B1 >: B] (kv: (String, B1)): MapIgnoreCase[B1] = new MapIgnoreCase[B1](impl + (kv._1.toLowerCase(Locale.ROOT) -> ((kv._1, kv._2))))

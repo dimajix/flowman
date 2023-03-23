@@ -47,6 +47,7 @@ store:
   location: $System.getenv('FLOWMAN_HOME')/examples
 
 plugins:
+  - flowman-avro
   - flowman-aws
   - flowman-azure
   - flowman-delta

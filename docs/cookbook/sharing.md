@@ -62,7 +62,7 @@ name: raw-exporter
 
 imports:
   # Import with no job and no (or default) parameters
-  - poject: project_b
+  - project: project_b
     
   # Import project with specified job context
   - project: project_a

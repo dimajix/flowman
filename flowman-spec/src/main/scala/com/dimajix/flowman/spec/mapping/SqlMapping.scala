@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,11 @@
 
 package com.dimajix.flowman.spec.mapping
 
-import java.io.StringWriter
 import java.net.URL
-import java.nio.charset.Charset
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonPropertyDescription
 import org.apache.commons.io.IOUtils
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 
 import com.dimajix.flowman.execution.Context
@@ -37,7 +34,7 @@ import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.sql.SqlParser
 
 
-case class SqlMapping(
+final case class SqlMapping(
     instanceProperties:Mapping.Properties,
     sql:Option[String] = None,
     file:Option[File] = None,
@@ -55,7 +52,7 @@ extends BaseMapping {
         require(execution != null)
         require(input != null)
 
-        val result = DataFrameUtils.withTempViews(input.map(kv => kv._1.name -> kv._2)) {
+        val result = DataFrameUtils.withTempViews(rawDependencies.map(d => d -> input(MappingOutputIdentifier(d)))) {
             execution.spark.sql(statement)
         }
 
@@ -69,7 +66,8 @@ extends BaseMapping {
       */
     override def inputs : Set[MappingOutputIdentifier] = dependencies
 
-    private lazy val dependencies = SqlParser.resolveDependencies(statement).map(MappingOutputIdentifier.parse)
+    private lazy val rawDependencies = SqlParser.resolveDependencies(statement)
+    private lazy val dependencies = rawDependencies.map(MappingOutputIdentifier.parse)
     private lazy val statement : String = {
         sql
             .orElse(file.map { f =>

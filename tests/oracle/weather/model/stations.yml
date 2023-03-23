@@ -1,0 +1,13 @@
+relations:
+  stations:
+    kind: jdbcTable
+    description: "The 'stations' table contains meta data on all weather stations"
+    connection: jdbcConnection
+    table: stations
+    schema:
+      kind: mapping
+      mapping: stations_conformed
+    indexes:
+      - name: "stations_idx"
+        columns: [usaf, wban]
+        clustered: true

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Kaya Kupferschmidt
+ * Copyright (C) 2020 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.dimajix.flowman.spec.relation
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.spark.sql.DataFrame
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
@@ -36,13 +35,12 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 
 
-case class GenericRelation(
+final case class GenericRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema],
     format:String,
     options:Map[String,String] = Map()
 ) extends BaseRelation with SchemaRelation {
-    private val logger = LoggerFactory.getLogger(classOf[FileRelation])
     private val resource = SimpleResourceIdentifier("genericRelation", identifier.toString)
 
     /**

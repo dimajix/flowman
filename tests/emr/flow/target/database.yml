@@ -1,0 +1,5 @@
+targets:
+  database:
+    kind: hiveDatabase
+    database: weather
+    location: s3://flowman-test/glue/weather.db

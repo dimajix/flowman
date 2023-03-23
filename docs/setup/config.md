@@ -1,8 +1,8 @@
 # Configuration Properties
 
 Flowman supports some configuration properties, which influence the behaviour. These properties either can be set
-on the command line via `--conf` (See [flowexec documentation](../cli/flowexec/index.md)), or in the `config` section of the flow 
-specification (see [module documentation](../spec/module.md)) or in the namespace configuration (see
+on the command line via `--conf` (See [flowexec documentation](../cli/flowexec/index.md)), or in the `config` section 
+of the flow specification (see [module documentation](../spec/module.md)) or in the namespace configuration (see
 [namespace documentation](../spec/namespace.md))
 
 
@@ -193,3 +193,4 @@ config:
   - flowman.workaround.analyze_partition=true
   - flowman.default.relation.migrationStrategy=FAIL
 ```
+The default namespace is configured with the `conf/default-namespace.yml` file in your Flowman installation directory.

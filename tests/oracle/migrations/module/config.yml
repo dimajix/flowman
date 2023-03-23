@@ -1,0 +1,14 @@
+config:
+  # Default migration policy for relations (default: RELAXED)
+  - flowman.default.relation.migrationPolicy=STRICT
+  # Default migration strategy for relations (default: ALTER)
+  - flowman.default.relation.migrationStrategy=ALTER_REPLACE
+
+
+environment:
+  - jdbc_driver=$System.getenv('JDBC_DRIVER', 'oracle.jdbc.OracleDriver')
+  - jdbc_url=$System.getenv('JDBC_URL', 'jdbc:oracle:thin:@localhost:1521')
+  - jdbc_db=$System.getenv('JDBC_DB', 'flowman')
+  - jdbc_username=$System.getenv('JDBC_USERNAME', 'flowman')
+  - jdbc_password=$System.getenv('JDBC_PASSWORD' ,'yourStrong(!)Password')
+

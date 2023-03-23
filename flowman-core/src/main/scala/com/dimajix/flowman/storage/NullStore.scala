@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 Kaya Kupferschmidt
+ * Copyright (C) 2019 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 
 package com.dimajix.flowman.storage
 
-import com.dimajix.flowman.execution.NoSuchProjectException
+import com.dimajix.flowman.execution.ProjectNotFoundException
 import com.dimajix.flowman.model.Project
 
 
 case class NullStore() extends AbstractStore {
-    override def loadProject(name: String): Project = throw new NoSuchProjectException(name)
+    override def loadProject(name: String): Project = throw new ProjectNotFoundException(name)
 
     override def listProjects(): Seq[Project] = Seq()
 }

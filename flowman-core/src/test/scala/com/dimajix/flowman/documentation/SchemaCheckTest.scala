@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,13 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
     }
 
     it should "support filter conditions" in {
+        val valuesGen = mock[Prototype[Mapping]]
+        val valuesMapping = mock[Mapping]
+        val project = Project("project",
+            mappings = Map("excludes" -> valuesGen)
+        )
         val session = Session.builder()
+            .withProject(project)
             .withSparkSession(spark)
             .build()
 
@@ -93,11 +99,6 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
             (None,3,2)
         ))
 
-        val valuesGen = mock[Prototype[Mapping]]
-        val valuesMapping = mock[Mapping]
-        val project = Project("project",
-            mappings = Map("excludes" -> valuesGen)
-        )
 
         val execution = session.execution
         val context = session.getContext(project)
@@ -148,14 +149,15 @@ class SchemaCheckTest extends AnyFlatSpec with Matchers with MockFactory with Lo
     "A ForeignKeySchemaCheck" should "work" in {
         val mappingSpec = mock[Prototype[Mapping]]
         val mapping = mock[Mapping]
-
-        val session = Session.builder()
-            .withSparkSession(spark)
-            .build()
         val project = Project(
             name = "project",
             mappings = Map("mapping" -> mappingSpec)
         )
+
+        val session = Session.builder()
+            .withProject(project)
+            .withSparkSession(spark)
+            .build()
         val context = session.getContext(project)
         val execution = session.execution
 

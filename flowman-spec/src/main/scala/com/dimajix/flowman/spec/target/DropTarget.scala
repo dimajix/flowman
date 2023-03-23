@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -36,7 +35,6 @@ import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.RelationReference
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.types.SingleValue
 
@@ -49,12 +47,10 @@ object DropTarget {
         )
     }
 }
-case class DropTarget(
+final case class DropTarget(
     instanceProperties: Target.Properties,
     relation: Reference[Relation]
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[RelationTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return

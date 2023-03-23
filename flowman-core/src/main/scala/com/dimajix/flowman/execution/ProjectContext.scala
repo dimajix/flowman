@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,11 @@ import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Profile
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.ProjectWrapper
+import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Template
 import com.dimajix.flowman.model.TemplateIdentifier
 import com.dimajix.flowman.model.Test
@@ -84,6 +84,8 @@ object ProjectContext {
     }
 
     def builder(parent:Context, project:Project) = new Builder(parent, project)
+        // This will be overriden by the Runner, which sets the project at SCOPE_OVERRIDE level
+        .withEnvironment("project", ProjectWrapper(project), SettingLevel.PROJECT_SETTING)
 }
 
 
@@ -101,10 +103,7 @@ final class ProjectContext private[execution](
     extraConnections:Map[String, Prototype[Connection]],
     overrideMappingTemplates:Map[String, Prototype[Mapping]],
     overrideRelationTemplates:Map[String, Prototype[Relation]]
-) extends AbstractContext(
-    _env + ("project" -> ((ProjectWrapper(_project), SettingLevel.SCOPE_OVERRIDE.level))),
-    _config)
-{
+) extends AbstractContext(_env, _config) {
     private val mappings = TrieMap[String,Mapping]()
     private val overrideMappings = TrieMap[String,Mapping]()
     private val relations = TrieMap[String,Relation]()
@@ -142,6 +141,7 @@ final class ProjectContext private[execution](
       */
     @throws[InstantiateMappingFailedException]
     @throws[NoSuchMappingException]
+    @throws[UnknownProjectException]
     override def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true): Mapping = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -184,6 +184,7 @@ final class ProjectContext private[execution](
       */
     @throws[InstantiateRelationFailedException]
     @throws[NoSuchRelationException]
+    @throws[UnknownProjectException]
     override def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -226,6 +227,7 @@ final class ProjectContext private[execution](
       */
     @throws[InstantiateTargetFailedException]
     @throws[NoSuchTargetException]
+    @throws[UnknownProjectException]
     override def getTarget(identifier: TargetIdentifier): Target = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -257,6 +259,7 @@ final class ProjectContext private[execution](
       */
     @throws[InstantiateConnectionFailedException]
     @throws[NoSuchConnectionException]
+    @throws[UnknownProjectException]
     override def getConnection(identifier:ConnectionIdentifier) : Connection = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -307,6 +310,7 @@ final class ProjectContext private[execution](
       */
     @throws[InstantiateJobFailedException]
     @throws[NoSuchJobException]
+    @throws[UnknownProjectException]
     override def getJob(identifier: JobIdentifier): Job = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -338,6 +342,7 @@ final class ProjectContext private[execution](
      */
     @throws[InstantiateTestFailedException]
     @throws[NoSuchTestException]
+    @throws[UnknownProjectException]
     override def getTest(identifier: TestIdentifier): Test = {
         require(identifier != null && identifier.nonEmpty)
 
@@ -369,6 +374,7 @@ final class ProjectContext private[execution](
      */
     @throws[InstantiateTemplateFailedException]
     @throws[NoSuchTemplateException]
+    @throws[UnknownProjectException]
     override def getTemplate(identifier: TemplateIdentifier): Template[_] = {
         require(identifier != null && identifier.nonEmpty)
 

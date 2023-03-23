@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,21 +22,15 @@ import java.util.Locale
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.streaming.Trigger
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
-import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
-import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY
-import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_PARALLELISM
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_REBALANCE
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MappingUtils
-import com.dimajix.flowman.execution.MigrationPolicy
-import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
@@ -46,14 +40,13 @@ import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.Relation
-import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.spec.relation.RelationReferenceSpec
 import com.dimajix.flowman.types.SingleValue
 
 
-case class StreamTarget(
+final case class StreamTarget(
     instanceProperties:Target.Properties,
     mapping:MappingOutputIdentifier,
     relation:Reference[Relation],
@@ -63,8 +56,6 @@ case class StreamTarget(
     rebalance: Boolean = false,
     checkpointLocation:Path
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[StreamTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return

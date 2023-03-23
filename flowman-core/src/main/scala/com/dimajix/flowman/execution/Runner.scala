@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,13 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
+import scala.collection.mutable
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
 
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.LoggerFactory
+import org.slf4j.ILoggerFactory
+import org.slf4j.Logger
 
 import com.dimajix.common.ExceptionUtils
 import com.dimajix.common.ExceptionUtils.reasons
@@ -35,6 +34,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.text.TimeFormatter
+import com.dimajix.flowman.common.ConsoleColors._
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.StateStoreAdaptorListener
@@ -56,13 +56,12 @@ import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.flowman.spi.LogFilter
-import com.dimajix.flowman.common.ConsoleColors._
 import com.dimajix.spark.SparkUtils.withJobGroup
 
 
-private[execution] sealed class RunnerImpl {
-    protected val logger = LoggerFactory.getLogger(classOf[Runner])
-    protected val logFilters = LogFilter.filters
+private[execution] sealed class RunnerImpl(runner: Runner) {
+    protected val logger: Logger = runner.loggerFactory.getLogger(classOf[RunnerImpl].getName)
+    protected val logFilters: Seq[LogFilter] = LogFilter.filters
 
     def executeTarget(execution:Execution, target:Target, phase:Phase, dryRun:Boolean) : TargetResult = {
         val result =
@@ -95,8 +94,8 @@ private[execution] sealed class RunnerImpl {
     }
 
     protected val lineSize = 109
-    protected val separator = boldWhite(StringUtils.repeat('-', lineSize))
-    protected val doubleSeparator = boldWhite(StringUtils.repeat('=', lineSize))
+    protected val separator: String = boldWhite(StringUtils.repeat('-', lineSize))
+    protected val doubleSeparator: String = boldWhite(StringUtils.repeat('=', lineSize))
     def logSubtitle(s:String) : Unit = {
         val l = (lineSize - 2 - s.length) / 2
         val t = if (l > 3) {
@@ -120,11 +119,31 @@ private[execution] sealed class RunnerImpl {
     }
 
     def logEnvironment(context:Context) : Unit = {
-        logger.info("Environment:")
-        context.environment.toSeq.sortBy(_._1).foreach { case (key,value) =>
-            LogFilter.filter(logFilters, key, value.toString)
-                .foreach { case (key,value) => logger.info(s"  $key = $value") }
+        val projects = mutable.Set[String]()
+
+        def logEnv(context:Context) : Unit = {
+            val project = context.project
+            val name = project.map(_.name).getOrElse("")
+            if (!projects.contains(name)) {
+                projects.add(name)
+
+                // Log environment of given context
+                logger.info(s"Environment of ${project.map(p => s"project '${p.name}'").getOrElse("session")}:")
+                context.environment.toSeq.sortBy(_._1).foreach { case (key, value) =>
+                    LogFilter.filter(logFilters, key, value.toString)
+                        .foreach { case (key, value) => logger.info(s"  $key = $value") }
+                }
+
+                // Log environments of imported projects
+                val imports = project.toSeq.flatMap(_.imports.map(_.project))
+                val root = context.root
+                imports.foreach(i => logEnv(root.getProjectContext(i)))
+            }
         }
+
+        // Log env of first context
+        logEnv(context)
+        logEnv(context.root)
         logger.info("")
     }
 
@@ -198,7 +217,7 @@ private[execution] sealed class RunnerImpl {
 /**
  * Private implementation of Job specific methods
  */
-private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
+private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl(runner) {
     private val stateStore = runner.stateStore
     private val stateStoreListener = new StateStoreAdaptorListener(stateStore)
 
@@ -234,11 +253,30 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         logger.info(separator)
         logger.info(s"Executing phases ${phases.map(p => "'" + p + "'").mkString(",")} for job '${job.name}'$prj $iso")
 
+        def createListeners(context: Context) : Seq[ExecutionListener] = {
+            if (!dryRun) {
+                val extraListeners = (runner.hooks ++ job.hooks).flatMap { listener =>
+                    try {
+                        Some(listener.instantiate(context))
+                    }
+                    catch {
+                        case NonFatal(ex) =>
+                            logger.warn(s"Error creating execution listener, will be ignored. Reason:\n  ${reasons(ex)}")
+                            None
+                    }
+                }
+                stateStoreListener +: extraListeners
+            }
+            else {
+                Seq.empty
+            }
+        }
+
         val startTime = Instant.now()
         runner.withExecution(isolated2) { execution =>
             runner.withJobContext(job, args, Some(execution), force, dryRun, isolated2) { (context, arguments) =>
                 val title = s"lifecycle for job '${job.identifier}' ${arguments.map(kv => kv._1 + "=" + kv._2).mkString(", ")}"
-                val listeners = if (!dryRun) stateStoreListener +: (runner.hooks ++ job.hooks).map(_.instantiate(context)) else Seq()
+                val listeners = createListeners(context)
                 val result = execution.withListeners(listeners) { execution =>
                     execution.monitorLifecycle(job, arguments, phases) { execution =>
                         val results = Result.flatMap(phases, keepGoing) { phase =>
@@ -345,13 +383,12 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
         val jobTargets = job.targets.map(t => context.getTarget(t))
 
         val clazz = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_EXECUTOR_CLASS)
-        val ctor = clazz.getDeclaredConstructor()
-        val executor = ctor.newInstance()
+        val executor = Executor.newInstance(clazz, execution, context)
 
-        val dirtyManager = new DirtyTargets(jobTargets, phase)
+        val dirtyManager = new DirtyTargets(execution, jobTargets, phase)
         dirtyManager.taint(dirtyFilter _)
 
-        executor.execute(execution, context, phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
+        executor.execute(phase, jobTargets, targetFilter, keepGoing) { (execution, target, phase) =>
             val sc = execution.spark.sparkContext
             withJobGroup(sc, target.name, s"$phase target ${target.identifier}") {
                 val dirty = dirtyManager.isDirty(target)
@@ -451,7 +488,7 @@ private[execution] final class JobRunnerImpl(runner:Runner) extends RunnerImpl {
  * Private Implementation for Test specific methods
  * @param runner
  */
-private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl {
+private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl(runner) {
     def executeTest(test:Test, keepGoing:Boolean=false, dryRun:Boolean=false) : Status = {
         runner.withExecution(true) { execution =>
             runner.withTestContext(test, Some(execution), dryRun) { context =>
@@ -552,10 +589,9 @@ private[execution] final class TestRunnerImpl(runner:Runner) extends RunnerImpl 
         require(phase != null)
 
         val clazz = execution.flowmanConf.getConf(FlowmanConf.EXECUTION_EXECUTOR_CLASS)
-        val ctor = clazz.getDeclaredConstructor()
-        val executor = ctor.newInstance()
+        val executor = Executor.newInstance(clazz, execution, context)
 
-        executor.execute(execution, context, phase, targets, _ => true, keepGoing) { (execution, target, phase) =>
+        executor.execute(phase, targets, _ => true, keepGoing) { (execution, target, phase) =>
             val sc = execution.spark.sparkContext
             withJobGroup(sc, target.name, s"$phase target ${target.identifier}") {
                 logSubtitle(s"$phase target '${target.identifier}'")
@@ -583,7 +619,8 @@ final class Runner(
     require(stateStore != null)
     require(hooks != null)
 
-    private val logger = LoggerFactory.getLogger(classOf[Runner])
+    val loggerFactory: ILoggerFactory = parentExecution.loggerFactory
+    private val logger = loggerFactory.getLogger(classOf[Runner].getName)
 
     /**
       * Executes a single job using the given execution and a map of parameters. The Runner may decide not to
@@ -714,11 +751,14 @@ final class Runner(
 
         val jobContext =
             if (isolated || arguments.nonEmpty || job.environment.nonEmpty) {
-                val rootContext = RootContext.builder(job.context)
+                // Use root context to prevent project envs leaking into root context
+                val rootContext = RootContext.builder(job.context.root)
                     .withEnvironment("force", force)
                     .withEnvironment("dryRun", dryRun)
-                    .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.JOB_OVERRIDE)
-                    .withEnvironment("job", JobWrapper(job), SettingLevel.JOB_OVERRIDE)
+                    // Override any project variable
+                    .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.SCOPE_OVERRIDE)
+                    // Override any job variable
+                    .withEnvironment("job", JobWrapper(job), SettingLevel.SCOPE_OVERRIDE)
                     .withEnvironment(arguments, SettingLevel.SCOPE_OVERRIDE)
                     .withEnvironment(job.environment, SettingLevel.JOB_OVERRIDE)
                     .withExecution(execution)
@@ -732,8 +772,10 @@ final class Runner(
                 ScopeContext.builder(job.context)
                     .withEnvironment("force", force)
                     .withEnvironment("dryRun", dryRun)
-                    .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.JOB_OVERRIDE)
-                    .withEnvironment("job", JobWrapper(job), SettingLevel.JOB_OVERRIDE)
+                    // Override any project variable
+                    .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.SCOPE_OVERRIDE)
+                    // Override any job variable
+                    .withEnvironment("job", JobWrapper(job), SettingLevel.SCOPE_OVERRIDE)
                     .build()
             }
 
@@ -751,7 +793,7 @@ final class Runner(
      */
     def withTestContext[T](test:Test, execution:Option[Execution]=None, dryRun:Boolean=false)(fn:(Context) => T) : T = {
         val project = test.project.map(_.name)
-        val rootContext = RootContext.builder(test.context)
+        val rootContext = RootContext.builder(test.context.root)
             .withEnvironment("force", false)
             .withEnvironment("dryRun", dryRun)
             .withEnvironment("project", ProjectWrapper(test.project), SettingLevel.JOB_OVERRIDE)

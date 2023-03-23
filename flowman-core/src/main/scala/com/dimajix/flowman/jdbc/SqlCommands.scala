@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.dimajix.flowman.catalog.TableIndex
 abstract class SqlCommands {
     def createTable(statement:Statement, table:TableDefinition) : Unit
     def dropTable(statement:Statement, table:TableIdentifier) : Unit
+    def createView(statement:Statement, table:TableIdentifier, viewSql:String) : Unit
     def dropView(statement:Statement, table:TableIdentifier) : Unit
 
     def getJdbcSchema(statement:Statement, table:TableIdentifier) : Seq[JdbcField]

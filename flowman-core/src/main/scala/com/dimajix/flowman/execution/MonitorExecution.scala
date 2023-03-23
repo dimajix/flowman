@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.dimajix.flowman.execution
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkSession
+import org.slf4j.ILoggerFactory
 
 import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.FlowmanConf
@@ -143,4 +144,6 @@ final class MonitorExecution(parent:Execution, override val listeners:Seq[(Execu
      * @return
      */
     override protected def delegate : Execution = parent
+
+    override def loggerFactory: ILoggerFactory = parent.loggerFactory
 }

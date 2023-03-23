@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             )
         )
         val session = Session.builder()
+            .withProject(project)
             .withEnvironment("global_env", "global")
             .withEnvironment("global_env_to_overwrite", "global")
             .withSparkSession(spark)
@@ -189,6 +190,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
             targets = Map("some_target" -> targetTemplate)
         )
         val session = Session.builder()
+            .withProject(project)
             .withSparkSession(spark)
             .build()
         val job = Job.builder(session.getContext(project))

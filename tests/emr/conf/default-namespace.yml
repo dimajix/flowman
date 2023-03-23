@@ -1,0 +1,55 @@
+name: "default"
+
+
+hooks:
+  kind: report
+  location: ${project.basedir}/generated-report
+  metrics:
+    labels:
+      project: ${project.name}
+      phase: ${phase}
+    metrics:
+      # Collect everything
+      - selector:
+          name: .*
+        labels:
+          category: ${category}
+          kind: ${kind}
+          name: ${name}
+      # This metric contains the number of records per output
+      - name: output_records
+        selector:
+          name: target_records
+          labels:
+            category: target
+        labels:
+          target: ${name}
+      # This metric contains the processing time per output
+      - name: output_time
+        selector:
+          name: target_runtime
+          labels:
+            category: target
+        labels:
+          target: ${name}
+      # This metric contains the overall processing time
+      - name: processing_time
+        selector:
+          name: job_runtime
+          labels:
+            category: job
+
+
+metrics:
+  - kind: console
+
+
+config:
+  - spark.executor.cores=$System.getenv('SPARK_EXECUTOR_CORES', '8')
+  - spark.executor.memory=$System.getenv('SPARK_EXECUTOR_MEMORY', '16g')
+
+plugins:
+  - flowman-avro
+  - flowman-aws
+  - flowman-mariadb
+  - flowman-mysql

@@ -5,7 +5,7 @@ import java.sql.Date
 import com.dimajix.flowman.dsl.Job
 import com.dimajix.flowman.dsl.Module
 import com.dimajix.flowman.dsl.Project
-import com.dimajix.flowman.dsl.target.DatabaseTarget
+import com.dimajix.flowman.dsl.target.HiveDatabaseTarget
 import com.dimajix.flowman.types.DateType
 import com.dimajix.flowman.types.StringType
 
@@ -21,7 +21,7 @@ object DqmModule extends Module {
     )
 
     targets += (
-        "dqm_database" := DatabaseTarget(
+        "dqm_database" := HiveDatabaseTarget(
             database = database
         )
     )

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,6 @@ case class DeltaVacuumTarget(
     minFiles:Int = 32,
     maxFiles:Int = 64
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[DeltaVacuumTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      *

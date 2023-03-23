@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.dimajix.flowman.execution.TargetToken
 import com.dimajix.flowman.execution.Token
 import com.dimajix.flowman.jdbc.JdbcUtils.withConnection
 import com.dimajix.flowman.jdbc.JdbcUtils.withStatement
+import com.dimajix.flowman.jdbc.JdbcUtils.executeUpdate
 import com.dimajix.flowman.model.BaseHook
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.Hook
@@ -148,7 +149,7 @@ case class JdbcHook(
                 logger.info(s"Invoking external JDBC hook at ${options.url} with extra args $args")
                 withConnection(options) { con =>
                     withStatement(con, options) { stmt =>
-                        stmt.executeUpdate(sql)
+                        executeUpdate(stmt, sql)
                     }
                 }
             }

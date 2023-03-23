@@ -9,9 +9,14 @@ Before performing a release, please make sure
 
 ## Releasing
 
-When making a release, the gitflow maven plugin should be used for managing versions
+When making a release, the following script should be used for managing versions
 
-    mvn gitflow:release
+    devtools/create-release
+
+When a new major or minor version is to be prepared (from the master branch), then the following script will help
+
+    devtools/create-branch
+
 
 ## Deploying to Central Repository
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ trait Assertion extends Instance {
      * Returns the dependencies (i.e. names of tables in the Dataflow model)
      * @return
      */
-    def inputs : Seq[MappingOutputIdentifier]
+    def inputs : Set[MappingOutputIdentifier]
 
     /**
      * Executes this [[Assertion]] and returns a corresponding DataFrame. This method is allowed to  throw an exception,

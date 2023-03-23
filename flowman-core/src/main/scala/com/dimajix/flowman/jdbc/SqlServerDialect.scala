@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.jdbc
 
+import java.sql.SQLException
 import java.sql.Statement
 import java.util.Locale
 
@@ -82,6 +83,20 @@ class SqlServerDialect extends BaseDialect {
                 case java.sql.Types.NVARCHAR if precision <= 0 || precision >= 1073741823 => StringType
                 case _ => super.getFieldType(sqlType, typeName, precision, scale, signed)
             }
+        }
+    }
+
+    /**
+     * Returns true if an SQLException is transient and a retry of the operation may succeed
+     *
+     * @param ex
+     * @return
+     */
+    override def isTransient(ex: SQLException): Boolean = {
+        ex.getErrorCode match {
+            // Check for deadlock
+            case 1205 => true
+            case _ => super.isTransient(ex)
         }
     }
 
@@ -211,7 +226,8 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         // Optionally create CLUSTERED COLUMNSTORE INDEX
         table.storageFormat.map(_.toLowerCase(Locale.ROOT)) match {
             case Some("columnstore") =>
-                statement.executeUpdate(s"CREATE CLUSTERED COLUMNSTORE INDEX IDX_${table.identifier.table}_columnstore ON ${dialect.quote(table.identifier)}")
+                val sql = s"CREATE CLUSTERED COLUMNSTORE INDEX IDX_${table.identifier.table}_columnstore ON ${dialect.quote(table.identifier)}"
+                JdbcUtils.executeUpdate(statement, sql)
             case Some("rowstore") =>
             case Some(s) => throw new UnsupportedOperationException(s"Storage format '$s' not supported, only 'ROWSTORE' and 'COLUMNSTORE'")
             case None =>
@@ -317,7 +333,7 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
                      |   'COLUMN', ${dialect.literal(column)}
                      |;
                      |""".stripMargin
-        statement.executeUpdate(sql)
+        JdbcUtils.executeUpdate(statement, sql)
     }
     private def dropColumnComment(statement:Statement, table: TableIdentifier, column:String) : Unit = {
         val sql = s"""
@@ -330,7 +346,7 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
                      |   'COLUMN', ${dialect.literal(column)}
                      |;
                      |""".stripMargin
-        statement.executeUpdate(sql)
+        JdbcUtils.executeUpdate(statement, sql)
     }
     private def updateColumnComment(statement:Statement, table: TableIdentifier, column:String, comment:String) : Unit = {
         val sql = s"""
@@ -343,8 +359,7 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
                      |   'COLUMN', ${dialect.literal(column)}
                      |;
                      |""".stripMargin
-        statement.executeUpdate(sql)
-
+        JdbcUtils.executeUpdate(statement, sql)
     }
 
     override def getStorageFormat(statement:Statement, table:TableIdentifier) : Option[String] = {
@@ -363,10 +378,14 @@ class MsSqlServerCommands(dialect: BaseDialect) extends BaseCommands(dialect) {
         if (!current.exists(_.toLowerCase(Locale.ROOT) == desiredFormat)) {
             desiredFormat match {
                 case "columnstore" =>
-                    statement.executeUpdate(s"CREATE CLUSTERED COLUMNSTORE INDEX IDX_${table.table}_columnstore ON ${dialect.quote(table)}")
+                    val sql = s"CREATE CLUSTERED COLUMNSTORE INDEX IDX_${table.table}_columnstore ON ${dialect.quote(table)}"
+                    JdbcUtils.executeUpdate(statement, sql)
                 case "rowstore" =>
                     val indexName = getColumnStoreIndex(statement, table)
-                    indexName.foreach(idx => statement.executeUpdate(s"DROP INDEX $idx ON ${dialect.quote(table)}"))
+                    indexName.foreach { idx =>
+                        val sql = s"DROP INDEX $idx ON ${dialect.quote(table)}"
+                        JdbcUtils.executeUpdate(statement, sql)
+                    }
                 case s => throw new UnsupportedOperationException(s"Storage format '$s' not supported, only 'ROWSTORE' and 'COLUMNSTORE'")
             }
         }

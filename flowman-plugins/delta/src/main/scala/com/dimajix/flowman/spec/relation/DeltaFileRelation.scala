@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.spark.sql.DataFrameUtils.withTempView
 
 
-case class DeltaFileRelation(
+final case class DeltaFileRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq.empty,
@@ -69,7 +69,6 @@ case class DeltaFileRelation(
     override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
     override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
 ) extends DeltaRelation(options, mergeKey) {
-    protected val logger = LoggerFactory.getLogger(classOf[DeltaFileRelation])
     protected val resource = ResourceIdentifier.ofFile(location)
 
     /**

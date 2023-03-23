@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ class PhaseCommand(phase:Phase) extends Command {
     var partition: String = ""
 
     override def execute(session: Session, project: Project, context:Context) : Status = {
-        logger.info(s"Executing phase '$phase' for relations ${if (relations != null) relations.mkString(",") else "all"}")
+        logger.info(s"Executing phase '$phase' for relations ${relations.mkString(",")}")
 
         val toRun = relations.flatMap(_.split(",")).toSeq
         val partition = ParserUtils.parseDelimitedKeyValues(this.partition)

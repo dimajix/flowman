@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.dimajix.flowman.execution
 import com.dimajix.flowman.model.Target
 
 
-class ManualScheduler extends Scheduler {
+class ManualScheduler(execution: Execution, context: Context) extends Scheduler {
     private var targets = Seq[Target]()
 
     /**

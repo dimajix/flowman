@@ -1,5 +1,15 @@
 name: "default"
 
+history:
+  kind: jdbc
+  retries: 3
+  timeout: 1000
+  connection:
+    url: "jdbc:mariadb://mariadb:3306/flowman"
+    driver: "org.mariadb.jdbc.Driver"
+    username: "flowman"
+    password: "yourStrong(!)Password"
+
 metrics:
   - kind: console
   - kind: jdbc
@@ -9,20 +19,16 @@ metrics:
       phase: ${phase}
     connection:
       kind: jdbc
-      url: "jdbc:mariadb://localhost:3306/flowman"
+      url: "jdbc:mariadb://mariadb:3306/flowman"
       driver: "org.mariadb.jdbc.Driver"
       username: "flowman"
       password: "yourStrong(!)Password"
 
 config:
-  - spark.sql.warehouse.dir=/opt/sxp/flowman/hive/warehouse
-  - spark.hadoop.hive.metastore.uris=
-  - spark.hadoop.javax.jdo.option.ConnectionURL=jdbc:derby:;databaseName=/opt/sxp/flowman/hive/db;create=true
-  - spark.hadoop.datanucleus.rdbms.datastoreAdapterClassName=org.datanucleus.store.rdbms.adapter.DerbyAdapter
-
   - spark.executor.cores=$System.getenv('SPARK_EXECUTOR_CORES', '8')
   - spark.executor.memory=$System.getenv('SPARK_EXECUTOR_MEMORY', '16g')
 
 plugins:
+  - flowman-avro
   - flowman-aws
   - flowman-mariadb

@@ -1,0 +1,18 @@
+jobs:
+  v1:
+    targets:
+      - aggregates_v1
+
+  v2:
+    targets:
+      - aggregates_v2
+
+
+targets:
+  aggregates_v1:
+    kind: relation
+    relation: aggregates_v1
+
+  aggregates_v2:
+    kind: relation
+    relation: aggregates_v2

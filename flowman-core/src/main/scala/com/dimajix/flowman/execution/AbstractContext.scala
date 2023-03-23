@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import scala.collection.mutable
 
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
+import org.slf4j.ILoggerFactory
 import org.slf4j.Logger
 
 import com.dimajix.flowman.config.Configuration
@@ -316,4 +317,11 @@ abstract class AbstractContext(
      * @return
      */
     override def execution: Execution = root.execution
+
+    /**
+     * Returns a context specific LoggerFactory
+     *
+     * @return
+     */
+    override def loggerFactory: ILoggerFactory = root.loggerFactory
 }

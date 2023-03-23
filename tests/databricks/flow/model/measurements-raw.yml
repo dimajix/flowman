@@ -1,0 +1,17 @@
+relations:
+  measurements_raw:
+    kind: file
+    format: text
+    location: "${srcdir}/"
+    pattern: "${year}"
+    partitions:
+      - name: year
+        type: integer
+        granularity: 1
+        description: "The year when the measurement was made"
+    schema:
+      kind: inline
+      fields:
+        - name: raw_data
+          type: string
+          description: "Raw measurement data"

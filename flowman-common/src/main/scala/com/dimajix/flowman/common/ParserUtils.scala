@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Kaya Kupferschmidt
+ * Copyright (C) 2020 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 package com.dimajix.flowman.common
+
 
 object ParserUtils {
     def parseDelimitedList(list:String) : Seq[String] = {

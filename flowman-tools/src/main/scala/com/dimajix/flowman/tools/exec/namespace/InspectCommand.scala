@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class InspectCommand extends Command {
             ns.profiles
                 .toSeq
                 .sortBy(_._1)
-                .foreach{ case(k,v) => println(s"    $k=$v") }
+                .foreach{ case(k,v) => println(s"    $k") }
 
             println("Connections:")
             ns.connections

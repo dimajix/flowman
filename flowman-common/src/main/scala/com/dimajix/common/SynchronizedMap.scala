@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,8 +185,6 @@ case class SynchronizedMap[K,V](impl:mutable.Map[K,V]) {
      *  @tparam  U  the type parameter describing the result of function `f`.
      *              This result will always be ignored. Typically `U` is `Unit`,
      *              but this is not necessary.
-     *
-     *  @note    Reuse: $consumesIterator
      *
      *  @usecase def foreach(f: A => Unit): Unit
      *    @inheritdoc

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ class Arguments(args:Array[String]) {
     var infoLogging: Boolean = false
     @Option(name = "-XX", aliases = Array("--debug"), usage = "Produce execution output at debug level.")
     var debugLogging: Boolean = false
-    @Option(name = "--conf", usage = "set a Flowman or Spark config", metaVar = "<confname>=<value>")
+    @Option(name = "--conf", usage = "set a Flowman or Spark config", metaVar = "<key=value>")
     var config: Array[String] = Array()
     @Option(name = "--info", usage = "dump configuration information")
     var info: Boolean = false

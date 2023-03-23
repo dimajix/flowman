@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 
 package com.dimajix.flowman.spec.assertion
-
-import java.time.Instant
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -53,8 +51,8 @@ class ExpressionAssertionTest extends AnyFlatSpec with Matchers with LocalSparkS
             "network IS NOT NULL",
             "campaign IN (1,2)"
         ))
-        assertion.inputs should be (Seq(MappingOutputIdentifier("lala")))
-        assertion.requires should be (Set())
+        assertion.inputs should be (Set(MappingOutputIdentifier("lala")))
+        assertion.requires should be (Set.empty)
     }
 
     it should "work" in {

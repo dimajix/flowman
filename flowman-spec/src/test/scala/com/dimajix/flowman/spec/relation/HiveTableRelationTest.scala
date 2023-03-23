@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.io.File
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
@@ -60,6 +61,7 @@ import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.SPARK_VERSION
 import com.dimajix.spark.features.hiveVarcharSupported
 import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.testing.LocalSparkSession
@@ -85,6 +87,15 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         }
     }
 
+    override def configureSpark(builder: SparkSession.Builder): SparkSession.Builder = {
+        // This is required for CDP 7.1 with Spark 3.3 (3.3.0.3.3.7180.0-274)
+        if (SPARK_VERSION.matches("3.3.\\d\\.\\d\\.\\d\\.7\\d+\\..+")) {
+            builder.config("spark.sql.hive.metastorePartitionPruningFallbackOnException", "true")
+        }
+        else {
+            builder
+        }
+    }
 
     "The HiveTableRelation" should "support create" in {
         val spec =

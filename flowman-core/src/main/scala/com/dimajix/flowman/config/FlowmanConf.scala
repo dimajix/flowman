@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,21 @@
 package com.dimajix.flowman.config
 
 import java.io.File
-import java.nio.file.FileSystem
-import java.util.Locale
-import java.util.NoSuchElementException
 
 import org.apache.spark.SPARK_REPO_URL
 
-import com.dimajix.flowman.SPARK_VERSION
+import com.dimajix.flowman.execution.DependencyScheduler
 import com.dimajix.flowman.execution.Executor
 import com.dimajix.flowman.execution.MigrationPolicy
 import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.OutputMode
-import com.dimajix.flowman.execution.SimpleExecutor
-import com.dimajix.flowman.execution.DependencyScheduler
 import com.dimajix.flowman.execution.Scheduler
+import com.dimajix.flowman.execution.SimpleExecutor
 import com.dimajix.flowman.model.VerifyPolicy
-import com.dimajix.flowman.transforms.ColumnMismatchPolicy
 import com.dimajix.flowman.transforms.CharVarcharPolicy
+import com.dimajix.flowman.transforms.ColumnMismatchPolicy
 import com.dimajix.flowman.transforms.TypeMismatchPolicy
+import com.dimajix.spark.SPARK_VERSION
 import com.dimajix.spark.features
 
 

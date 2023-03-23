@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ class RunnerTargetTest extends AnyFlatSpec with MockFactory with Matchers with L
         )
         val session = Session.builder()
             .withSparkSession(spark)
+            .withProject(project)
             .build()
         val context = session.getContext(project)
 
@@ -69,6 +70,7 @@ class RunnerTargetTest extends AnyFlatSpec with MockFactory with Matchers with L
         )
         val session = Session.builder()
             .withSparkSession(spark)
+            .withProject(project)
             .build()
         val context = session.getContext(project)
 

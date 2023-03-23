@@ -83,7 +83,7 @@ You might also want to skip unittests (the HBase plugin is currently failing und
 ### Build for Custom Spark / Hadoop Version
 
 Per default, Flowman will be built for fairly recent versions of Spark (3.0.2 as of this writing) and Hadoop (3.2.0). 
-But of course you can also build for a different version by either using a profile
+But of course, you can also build for a different version by either using a profile
     
     mvn install -Pspark2.4 -Phadoop2.7 -DskipTests
     
@@ -107,10 +107,11 @@ using the correct version. The following profiles are available:
 * hadoop-3.1
 * hadoop-3.2
 * hadoop-3.3
-* EMR-6.9
+* EMR-6.10
 * CDH-6.3
 * CDP-7.1
 * CDP-7.1-spark-3.2
+* CDP-7.1-spark-3.3
 
 With these profiles it is easy to build Flowman to match your environment. 
 
@@ -172,6 +173,7 @@ The Maven project also contains preconfigured profiles for Cloudera CDH 6.3 and 
     mvn clean install -PCDH-6.3 -DskipTests
     mvn clean install -PCDP-7.1 -DskipTests
     mvn clean install -PCDP-7.1-spark-3.2 -DskipTests
+    mvn clean install -PCDP-7.1-spark-3.3 -DskipTests
 
 
 ### Building for AWS EMR

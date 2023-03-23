@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,18 @@ class ExecutionException(
 ) extends Exception(message, cause) {
 }
 
-class NoSuchProjectException(val project:String)
+class StateStoreException(
+    val message: String = "",
+    val cause: Throwable = None.orNull
+) extends Exception(message, cause) {
+}
+
+
+class UnknownProjectException(val project:String)
+    extends ExecutionException(s"Project '$project' not known, maybe you need to import it first.")
+class ProjectNotFoundException(val project:String)
     extends ExecutionException(s"Project '$project' not found")
+
 class NoSuchMappingException(val mapping:MappingIdentifier)
     extends ExecutionException(s"Mapping '$mapping' not found")
 class NoSuchMappingOutputException(val output:MappingOutputIdentifier)

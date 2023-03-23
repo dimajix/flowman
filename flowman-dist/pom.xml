@@ -11,7 +11,7 @@
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
 	    <artifactId>flowman-root</artifactId>
-        <version>0.30.0</version>
+        <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -33,7 +33,7 @@
                             </delimiters>
                             <useDefaultDelimiters>false</useDefaultDelimiters>
                             <outputDirectory>${project.build.directory}</outputDirectory>
-                            <filters>target/flowman-server-${project.version}-properties.properties,target/flowman-tools-${project.version}-properties.properties,target/flowman-studio-${project.version}-properties.properties,target/flowman-hub-${project.version}-properties.properties</filters>
+                            <filters>target/flowman-server-${project.version}-properties.properties,target/flowman-kernel-server-${project.version}-properties.properties,target/flowman-kernel-tools-${project.version}-properties.properties,target/flowman-tools-${project.version}-properties.properties,target/flowman-studio-${project.version}-properties.properties,target/flowman-hub-${project.version}-properties.properties</filters>
                             <resources>
                                 <resource>
                                     <directory>.</directory>
@@ -77,6 +77,14 @@
                                 <artifactItem>
                                     <groupId>com.dimajix.flowman</groupId>
                                     <artifactId>flowman-yaml-schema</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>tar.gz</type>
+                                    <classifier>bin</classifier>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.dimajix.flowman</groupId>
+                                    <artifactId>flowman-plugin-avro</artifactId>
                                     <version>${project.version}</version>
                                     <type>tar.gz</type>
                                     <classifier>bin</classifier>
@@ -225,6 +233,22 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>com.dimajix.flowman</groupId>
+                                    <artifactId>flowman-kernel-tools</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>properties</type>
+                                    <classifier>properties</classifier>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.dimajix.flowman</groupId>
+                                    <artifactId>flowman-kernel-server</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>properties</type>
+                                    <classifier>properties</classifier>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.dimajix.flowman</groupId>
                                     <artifactId>flowman-server</artifactId>
                                     <version>${project.version}</version>
                                     <type>properties</type>
@@ -281,6 +305,14 @@
         </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-kernel-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-kernel-tools</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-server</artifactId>
         </dependency>
         <dependency>
@@ -291,10 +323,51 @@
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-studio</artifactId>
         </dependency>
+
+        <!-- Explicitly add some dependencies with compile scope for pure Java applications -->
         <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-client</artifactId>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- The following libraries need explicit version overrides -->
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${grpc-protobuf.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${grpc-guava.version}</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>
-

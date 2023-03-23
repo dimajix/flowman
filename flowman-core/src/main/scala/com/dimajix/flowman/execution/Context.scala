@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.dimajix.flowman.execution
 
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
 import org.apache.spark.SparkConf
+import org.slf4j.ILoggerFactory
 
 import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
@@ -132,6 +133,7 @@ abstract class Context {
       */
     @throws[InstantiateConnectionFailedException]
     @throws[NoSuchConnectionException]
+    @throws[UnknownProjectException]
     def getConnection(identifier: ConnectionIdentifier): Connection
 
     /**
@@ -143,6 +145,7 @@ abstract class Context {
       */
     @throws[InstantiateMappingFailedException]
     @throws[NoSuchMappingException]
+    @throws[UnknownProjectException]
     def getMapping(identifier: MappingIdentifier, allowOverrides:Boolean=true) : Mapping
 
     /**
@@ -154,6 +157,7 @@ abstract class Context {
       */
     @throws[InstantiateRelationFailedException]
     @throws[NoSuchRelationException]
+    @throws[UnknownProjectException]
     def getRelation(identifier: RelationIdentifier, allowOverrides:Boolean=true): Relation
 
     /**
@@ -165,6 +169,7 @@ abstract class Context {
       */
     @throws[InstantiateTargetFailedException]
     @throws[NoSuchTargetException]
+    @throws[UnknownProjectException]
     def getTarget(identifier: TargetIdentifier): Target
 
     /**
@@ -176,6 +181,7 @@ abstract class Context {
       */
     @throws[InstantiateJobFailedException]
     @throws[NoSuchJobException]
+    @throws[UnknownProjectException]
     def getJob(identifier: JobIdentifier): Job
 
     /**
@@ -187,6 +193,7 @@ abstract class Context {
      */
     @throws[InstantiateTestFailedException]
     @throws[NoSuchTestException]
+    @throws[UnknownProjectException]
     def getTest(identifier: TestIdentifier): Test
 
     /**
@@ -198,6 +205,7 @@ abstract class Context {
      */
     @throws[InstantiateTemplateFailedException]
     @throws[NoSuchTemplateException]
+    @throws[UnknownProjectException]
     def getTemplate(identifier: TemplateIdentifier): Template[_]
 
     /**
@@ -247,4 +255,10 @@ abstract class Context {
      * @return
      */
     def execution : Execution
+
+    /**
+     * Returns a context specific LoggerFactory
+     * @return
+     */
+    def loggerFactory : ILoggerFactory
 }

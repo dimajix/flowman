@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ import java.time.Instant
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.apache.spark.storage.StorageLevel
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
+import com.dimajix.flowman.common.ConsoleColors.red
 import com.dimajix.flowman.execution.AssertionRunner
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.ErrorMode
@@ -41,16 +41,13 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.spec.assertion.AssertionSpec
-import com.dimajix.flowman.common.ConsoleColors.red
 
 
-case class ValidateTarget(
+final case class ValidateTarget(
     instanceProperties:Target.Properties,
     assertions:Map[String,Assertion] = Map(),
     errorMode:ErrorMode = ErrorMode.FAIL_FAST
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[ValidateTarget])
-
     /**
      * Returns an instance representing this target with the context
      *

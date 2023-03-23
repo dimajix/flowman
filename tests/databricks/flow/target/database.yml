@@ -1,0 +1,4 @@
+targets:
+  database:
+    kind: hiveDatabase
+    database: weather

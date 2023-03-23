@@ -38,7 +38,7 @@ sast:
 # Build site and reports
 build-site:
   stage: site
-  script: 'mvn ${MAVEN_CLI_OPTS} clean install -DskipTests -Ddockerfile.skip && mvn ${MAVEN_CLI_OPTS} site -Ddockerfile.skip'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean install -DskipTests -Ddockerfile.skip && mvn ${MAVEN_CLI_OPTS} site -Psite'
   artifacts:
     name: "flowman-site"
     paths:
@@ -189,11 +189,29 @@ build-cdp7.1-spark3.2:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days
 
-build-emr6.9:
+build-cdp7.1-spark3.3:
   stage: build
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -PEMR-6.9 -Ddockerfile.skip'
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -PCDP-7.1-spark-3.3 -Ddockerfile.skip'
   artifacts:
-    name: "flowman-dist-emr6.9"
+    name: "flowman-dist-cdp7.1-spark-3.3"
+    paths:
+      - flowman-dist/target/flowman-dist-*-bin.tar.gz
+    expire_in: 5 days
+
+build-emr6.10:
+  stage: build
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -PEMR-6.10 -Ddockerfile.skip'
+  artifacts:
+    name: "flowman-dist-emr6.10"
+    paths:
+      - flowman-dist/target/flowman-dist-*-bin.tar.gz
+    expire_in: 5 days
+
+build-databricks12.2:
+  stage: build
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Pdatabricks12.2 -Ddockerfile.skip'
+  artifacts:
+    name: "flowman-dist-databricks12.2"
     paths:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days

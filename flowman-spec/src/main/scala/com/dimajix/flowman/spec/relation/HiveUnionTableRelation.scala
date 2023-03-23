@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
@@ -54,7 +53,7 @@ import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.flowman.transforms.UnionTransformer
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.flowman.util.SchemaUtils
+import com.dimajix.flowman.util.SparkSchemaUtils
 import com.dimajix.spark.sql.catalyst.SqlBuilder
 
 
@@ -72,7 +71,7 @@ object HiveUnionTableRelation {
     }
 }
 
-case class HiveUnionTableRelation(
+final case class HiveUnionTableRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq.empty,
@@ -90,8 +89,6 @@ case class HiveUnionTableRelation(
     override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
     override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
 )  extends BaseRelation with SchemaRelation with PartitionedRelation with MigratableRelation {
-    private val logger = LoggerFactory.getLogger(classOf[HiveUnionTableRelation])
-
     private lazy val tableRegex : TableIdentifier = {
         TableIdentifier(tablePrefix.table + "_[0-9]+", tablePrefix.database.orElse(view.database))
     }
@@ -255,7 +252,7 @@ case class HiveUnionTableRelation(
         // 2. Find appropriate table
         val table = allTables.find { id =>
                 val table = catalog.getTable(id)
-                SchemaUtils.isCompatible(df.schema, table.schema)
+                SparkSchemaUtils.isCompatible(df.schema, table.schema)
             }
             .orElse {
                 // Try to use provided schema instead
@@ -263,7 +260,7 @@ case class HiveUnionTableRelation(
                     val catalogSchema = schema.catalogSchema
                     allTables.find { id =>
                         val table = catalog.getTable(id)
-                        SchemaUtils.isCompatible(catalogSchema, table.schema)
+                        SparkSchemaUtils.isCompatible(catalogSchema, table.schema)
                     }
                 }
             }
@@ -378,7 +375,7 @@ case class HiveUnionTableRelation(
 
                     sourceSchema.forall { field =>
                         targetFieldsByName.get(field.name)
-                            .forall(tgt => SchemaUtils.isCompatible(field, tgt))
+                            .forall(tgt => SparkSchemaUtils.isCompatible(field, tgt))
                     }
                 }
 
@@ -483,7 +480,7 @@ case class HiveUnionTableRelation(
 
                 sourceSchema.forall { field =>
                     targetFieldsByName.get(field.name)
-                        .forall(tgt => SchemaUtils.isCompatible(field, tgt))
+                        .forall(tgt => SparkSchemaUtils.isCompatible(field, tgt))
                 }
             }
 
@@ -511,7 +508,7 @@ case class HiveUnionTableRelation(
         hiveViewRelation.migrate(execution)
     }
 
-    private def doMigrate(alter: => Unit) : Unit = {
+    private def doMigrate(execution: Execution)(alter: => Unit) : Unit = {
         migrationStrategy match {
             case MigrationStrategy.NEVER =>
                 logger.warn(s"Migration required for HiveUnionTable relation '$identifier' of Hive union table $viewIdentifier, but migrations are disabled.")
@@ -527,7 +524,7 @@ case class HiveUnionTableRelation(
     }
 
     private def doMigrateAlterTable(execution:Execution, table:CatalogTable, missingFields:Seq[StructField]) : Unit = {
-        doMigrate {
+        doMigrate(execution) {
             val catalog = execution.catalog
             val id = TableIdentifier.of(table.identifier)
             val targetSchema = table.dataSchema
@@ -538,7 +535,7 @@ case class HiveUnionTableRelation(
     }
 
     private def doMigrateNewTable(execution:Execution, allTables:Seq[TableIdentifier]) : Unit = {
-        doMigrate {
+        doMigrate(execution) {
             val tableSet = allTables.toSet
             val version = (1 to 100000).find(n => !tableSet.contains(tableIdentifier(n))).get
             logger.info(s"Migrating Hive Union Table relation '$identifier' by creating new Hive table ${tableIdentifier(version)}")

@@ -1,0 +1,4016 @@
+{
+  "definitions": [
+    {
+      "protopath": "common.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "FileType",
+            "enum_fields": [
+              {
+                "name": "FILE"
+              },
+              {
+                "name": "DIRECTORY",
+                "integer": 1
+              }
+            ]
+          },
+          {
+            "name": "ExecutionPhase",
+            "enum_fields": [
+              {
+                "name": "VALIDATE"
+              },
+              {
+                "name": "CREATE",
+                "integer": 10
+              },
+              {
+                "name": "BUILD",
+                "integer": 20
+              },
+              {
+                "name": "VERIFY",
+                "integer": 30
+              },
+              {
+                "name": "TRUNCATE",
+                "integer": 40
+              },
+              {
+                "name": "DESTROY",
+                "integer": 50
+              }
+            ]
+          },
+          {
+            "name": "ExecutionStatus",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN_STATUS"
+              },
+              {
+                "name": "RUNNING",
+                "integer": 10
+              },
+              {
+                "name": "SUCCESS",
+                "integer": 20
+              },
+              {
+                "name": "SUCCESS_WITH_ERRORS",
+                "integer": 30
+              },
+              {
+                "name": "FAILED",
+                "integer": 40
+              },
+              {
+                "name": "ABORTED",
+                "integer": 50
+              },
+              {
+                "name": "SKIPPED",
+                "integer": 60
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "Timestamp",
+            "fields": [
+              {
+                "id": 1,
+                "name": "seconds",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "nanos",
+                "type": "int32"
+              }
+            ]
+          },
+          {
+            "name": "Date",
+            "fields": [
+              {
+                "id": 1,
+                "name": "days",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "MappingIdentifier",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "MappingOutputIdentifier",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "output",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "RelationIdentifier",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "TargetIdentifier",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "JobIdentifier",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "TestIdentifier",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ConnectionIdentifier",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ResourceIdentifier",
+            "fields": [
+              {
+                "id": 1,
+                "name": "category",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 3,
+                  "name": "partition",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "WorkspaceIdentifier",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "JobContext",
+            "fields": [
+              {
+                "id": 1,
+                "name": "job",
+                "type": "JobIdentifier"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 2,
+                  "name": "arguments",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "TestContext",
+            "fields": [
+              {
+                "id": 1,
+                "name": "test",
+                "type": "TestIdentifier"
+              }
+            ]
+          },
+          {
+            "name": "Session",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "workspace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "namespace",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "project",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "Workspace",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "Measurement",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "jobId",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "ts",
+                "type": "Timestamp"
+              },
+              {
+                "id": 5,
+                "name": "value",
+                "type": "double"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 4,
+                  "name": "labels",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "MetricSeries",
+            "fields": [
+              {
+                "id": 1,
+                "name": "metric",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "job",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "phase",
+                "type": "ExecutionPhase"
+              },
+              {
+                "id": 7,
+                "name": "measurements",
+                "type": "Measurement",
+                "is_repeated": true
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 6,
+                  "name": "labels",
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "CommonProto"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "dataframe.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "StructField",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "nullable",
+                "type": "bool"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "format",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "collation",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "charset",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "sqlType",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "struct",
+                "type": "StructType"
+              },
+              {
+                "id": 11,
+                "name": "map",
+                "type": "MapType"
+              },
+              {
+                "id": 12,
+                "name": "array",
+                "type": "ArrayType"
+              },
+              {
+                "id": 13,
+                "name": "scalar",
+                "type": "ScalarType"
+              }
+            ]
+          },
+          {
+            "name": "StructType",
+            "fields": [
+              {
+                "id": 1,
+                "name": "typeName",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "fields",
+                "type": "StructField",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "MapType",
+            "fields": [
+              {
+                "id": 1,
+                "name": "typeName",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "keyType",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "struct",
+                "type": "StructType"
+              },
+              {
+                "id": 11,
+                "name": "map",
+                "type": "MapType"
+              },
+              {
+                "id": 12,
+                "name": "array",
+                "type": "ArrayType"
+              },
+              {
+                "id": 13,
+                "name": "scalar",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ArrayType",
+            "fields": [
+              {
+                "id": 1,
+                "name": "typeName",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "struct",
+                "type": "StructType"
+              },
+              {
+                "id": 11,
+                "name": "map",
+                "type": "MapType"
+              },
+              {
+                "id": 12,
+                "name": "array",
+                "type": "ArrayType"
+              },
+              {
+                "id": 13,
+                "name": "scalar",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ScalarType",
+            "fields": [
+              {
+                "id": 1,
+                "name": "typeName",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "MapElement",
+            "fields": [
+              {
+                "id": 1,
+                "name": "key",
+                "type": "Field"
+              },
+              {
+                "id": 2,
+                "name": "value",
+                "type": "Field"
+              }
+            ]
+          },
+          {
+            "name": "Map",
+            "fields": [
+              {
+                "id": 1,
+                "name": "values",
+                "type": "MapElement",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "Array",
+            "fields": [
+              {
+                "id": 1,
+                "name": "values",
+                "type": "Field",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "Null"
+          },
+          {
+            "name": "Field",
+            "fields": [
+              {
+                "id": 1,
+                "name": "double",
+                "type": "double"
+              },
+              {
+                "id": 2,
+                "name": "long",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "bool",
+                "type": "bool"
+              },
+              {
+                "id": 4,
+                "name": "string",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "bytes",
+                "type": "bytes"
+              },
+              {
+                "id": 6,
+                "name": "timestamp",
+                "type": "Timestamp"
+              },
+              {
+                "id": 7,
+                "name": "date",
+                "type": "Date"
+              },
+              {
+                "id": 8,
+                "name": "map",
+                "type": "Map"
+              },
+              {
+                "id": 9,
+                "name": "array",
+                "type": "Array"
+              },
+              {
+                "id": 10,
+                "name": "row",
+                "type": "Row"
+              },
+              {
+                "id": 11,
+                "name": "null",
+                "type": "Null"
+              }
+            ]
+          },
+          {
+            "name": "Row",
+            "fields": [
+              {
+                "id": 1,
+                "name": "field",
+                "type": "Field",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "DataFrame",
+            "fields": [
+              {
+                "id": 1,
+                "name": "schema",
+                "type": "StructType"
+              },
+              {
+                "id": 2,
+                "name": "rows",
+                "type": "Row",
+                "is_repeated": true
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "common.proto"
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "DataFrameProto"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "documentation.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "GenerateDocumentationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "job",
+                "type": "JobIdentifier"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 3,
+                  "name": "arguments",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "GenerateDocumentationResponse"
+          }
+        ],
+        "imports": [
+          {
+            "path": "common.proto"
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel.documentation"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto.documentation"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "DocumentationProto"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "exception.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "StackTraceElement",
+            "fields": [
+              {
+                "id": 1,
+                "name": "classLoaderName",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "moduleName",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "moduleVersion",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "declaringClass",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "methodName",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "fileName",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "lineNumber",
+                "type": "int32"
+              }
+            ]
+          },
+          {
+            "name": "Exception",
+            "fields": [
+              {
+                "id": 1,
+                "name": "className",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "fqName",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "message",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "stackTrace",
+                "type": "StackTraceElement",
+                "is_repeated": true
+              },
+              {
+                "id": 5,
+                "name": "suppressed",
+                "type": "Exception",
+                "is_repeated": true
+              },
+              {
+                "id": 6,
+                "name": "cause",
+                "type": "Exception"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "ExceptionProto"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "history.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "JobOrder",
+            "enum_fields": [
+              {
+                "name": "JOB_BY_DATETIME"
+              },
+              {
+                "name": "JOB_BY_PROJECT",
+                "integer": 10
+              },
+              {
+                "name": "JOB_BY_NAME",
+                "integer": 20
+              },
+              {
+                "name": "JOB_BY_ID",
+                "integer": 30
+              },
+              {
+                "name": "JOB_BY_STATUS",
+                "integer": 40
+              },
+              {
+                "name": "JOB_BY_PHASE",
+                "integer": 60
+              }
+            ]
+          },
+          {
+            "name": "TargetOrder",
+            "enum_fields": [
+              {
+                "name": "TARGET_BY_DATETIME"
+              },
+              {
+                "name": "TARGET_BY_PROJECT",
+                "integer": 10
+              },
+              {
+                "name": "TARGET_BY_NAME",
+                "integer": 20
+              },
+              {
+                "name": "TARGET_BY_ID",
+                "integer": 30
+              },
+              {
+                "name": "TARGET_BY_STATUS",
+                "integer": 40
+              },
+              {
+                "name": "TARGET_BY_PHASE",
+                "integer": 50
+              },
+              {
+                "name": "TARGET_BY_PARENT_NAME",
+                "integer": 60
+              },
+              {
+                "name": "TARGET_BY_PARENT_ID",
+                "integer": 70
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "JobHistoryQuery",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "namespace",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "project",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "job",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 5,
+                "name": "status",
+                "type": "ExecutionStatus",
+                "is_repeated": true
+              },
+              {
+                "id": 6,
+                "name": "phase",
+                "type": "ExecutionPhase",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "from",
+                "type": "Timestamp"
+              },
+              {
+                "id": 9,
+                "name": "until",
+                "type": "Timestamp"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 7,
+                  "name": "arguments",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "JobHistoryDetails",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "version",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "job",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "phase",
+                "type": "ExecutionPhase"
+              },
+              {
+                "id": 7,
+                "name": "status",
+                "type": "ExecutionStatus"
+              },
+              {
+                "id": 9,
+                "name": "startDateTime",
+                "type": "Timestamp"
+              },
+              {
+                "id": 10,
+                "name": "endDateTime",
+                "type": "Timestamp"
+              },
+              {
+                "id": 11,
+                "name": "error",
+                "type": "string"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 8,
+                  "name": "arguments",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "TargetHistoryQuery",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "namespace",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "project",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "job",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 5,
+                "name": "jobId",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 6,
+                "name": "target",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "status",
+                "type": "ExecutionStatus",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "phase",
+                "type": "ExecutionPhase",
+                "is_repeated": true
+              },
+              {
+                "id": 10,
+                "name": "from",
+                "type": "Timestamp"
+              },
+              {
+                "id": 11,
+                "name": "until",
+                "type": "Timestamp"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 9,
+                  "name": "partitions",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "TargetHistoryDetails",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "jobId",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "namespace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "version",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "target",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "phase",
+                "type": "ExecutionPhase"
+              },
+              {
+                "id": 8,
+                "name": "status",
+                "type": "ExecutionStatus"
+              },
+              {
+                "id": 10,
+                "name": "startDateTime",
+                "type": "Timestamp"
+              },
+              {
+                "id": 11,
+                "name": "endDateTime",
+                "type": "Timestamp"
+              },
+              {
+                "id": 12,
+                "name": "error",
+                "type": "string"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 9,
+                  "name": "partitions",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "FindJobsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "query",
+                "type": "JobHistoryQuery"
+              },
+              {
+                "id": 2,
+                "name": "order",
+                "type": "JobOrder",
+                "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "maxResults",
+                "type": "int32"
+              }
+            ]
+          },
+          {
+            "name": "FindJobsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "jobs",
+                "type": "JobHistoryDetails",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetJobMetricsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "jobId",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetJobMetricsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "measurements",
+                "type": "Measurement",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "FindJobMetricsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "query",
+                "type": "JobHistoryQuery"
+              },
+              {
+                "id": 2,
+                "name": "groupings",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "FindJobMetricsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "metrics",
+                "type": "MetricSeries",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "FindTargetsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "query",
+                "type": "TargetHistoryQuery"
+              },
+              {
+                "id": 2,
+                "name": "order",
+                "type": "TargetOrder",
+                "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "maxResults",
+                "type": "int32"
+              }
+            ]
+          },
+          {
+            "name": "FindTargetsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "Targets",
+                "type": "TargetHistoryDetails",
+                "is_repeated": true
+              }
+            ]
+          }
+        ],
+        "services": [
+          {
+            "name": "HistoryService",
+            "rpcs": [
+              {
+                "name": "findJobs",
+                "in_type": "FindJobsRequest",
+                "out_type": "FindJobsResponse"
+              },
+              {
+                "name": "findTargets",
+                "in_type": "FindTargetsRequest",
+                "out_type": "FindTargetsResponse"
+              },
+              {
+                "name": "getJobMetrics",
+                "in_type": "GetJobMetricsRequest",
+                "out_type": "GetJobMetricsResponse"
+              },
+              {
+                "name": "findJobMetrics",
+                "in_type": "FindJobMetricsRequest",
+                "out_type": "FindJobMetricsResponse"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "common.proto"
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel.history"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto.history"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "HistoryProto"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "job.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "JobParameter",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "type",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "granularity",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "default",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "description",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "JobDetails",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "targets",
+                "type": "TargetIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 5,
+                "name": "parameters",
+                "type": "JobParameter",
+                "is_repeated": true
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 6,
+                  "name": "environment",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "ListJobsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "project",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListJobsResponse",
+            "fields": [
+              {
+                "id": 2,
+                "name": "jobs",
+                "type": "JobIdentifier",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetJobRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "job",
+                "type": "JobIdentifier"
+              }
+            ]
+          },
+          {
+            "name": "GetJobResponse",
+            "fields": [
+              {
+                "id": 2,
+                "name": "job",
+                "type": "JobDetails"
+              }
+            ]
+          },
+          {
+            "name": "ExecuteJobRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "job",
+                "type": "JobIdentifier"
+              },
+              {
+                "id": 3,
+                "name": "phases",
+                "type": "ExecutionPhase",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "targets",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 5,
+                "name": "dirtyTargets",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "force",
+                "type": "bool"
+              },
+              {
+                "id": 8,
+                "name": "dirty",
+                "type": "bool"
+              },
+              {
+                "id": 10,
+                "name": "keepGoing",
+                "type": "bool"
+              },
+              {
+                "id": 11,
+                "name": "dryRun",
+                "type": "bool"
+              },
+              {
+                "id": 12,
+                "name": "parallelism",
+                "type": "int32"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 6,
+                  "name": "arguments",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "ExecuteJobResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "status",
+                "type": "ExecutionStatus"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "common.proto"
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel.job"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto.job"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "JobProto"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "kernel.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "ShutdownRequest"
+          },
+          {
+            "name": "ShutdownResponse"
+          },
+          {
+            "name": "NamespaceDetails",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "plugins",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 5,
+                "name": "profiles",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 6,
+                "name": "connections",
+                "type": "string",
+                "is_repeated": true
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 3,
+                  "name": "environment",
+                  "type": "string"
+                }
+              },
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 4,
+                  "name": "config",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "GetNamespaceRequest"
+          },
+          {
+            "name": "GetNamespaceResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "namespace",
+                "type": "NamespaceDetails"
+              }
+            ]
+          },
+          {
+            "name": "KernelDetails",
+            "fields": [
+              {
+                "id": 1,
+                "name": "flowmanHomeDirectory",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "flowmanConfigDirectory",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "flowmanPluginDirectory",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "flowmanVersion",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "sparkVersion",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "hadoopVersion",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "javaVersion",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "scalaVersion",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "sparkBuildVersion",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "hadoopBuildVersion",
+                "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "scalaBuildVersion",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "activePlugins",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetKernelRequest"
+          },
+          {
+            "name": "GetKernelResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "kernel",
+                "type": "KernelDetails"
+              }
+            ]
+          }
+        ],
+        "services": [
+          {
+            "name": "KernelService",
+            "rpcs": [
+              {
+                "name": "GetNamespace",
+                "in_type": "GetNamespaceRequest",
+                "out_type": "GetNamespaceResponse"
+              },
+              {
+                "name": "GetKernel",
+                "in_type": "GetKernelRequest",
+                "out_type": "GetKernelResponse"
+              },
+              {
+                "name": "Shutdown",
+                "in_type": "ShutdownRequest",
+                "out_type": "ShutdownResponse"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel.kernel"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto.kernel"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "KernelProto"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "logging.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "LogLevel",
+            "enum_fields": [
+              {
+                "name": "ALL"
+              },
+              {
+                "name": "FATAL",
+                "integer": 10
+              },
+              {
+                "name": "ERROR",
+                "integer": 20
+              },
+              {
+                "name": "WARN",
+                "integer": 30
+              },
+              {
+                "name": "INFO",
+                "integer": 40
+              },
+              {
+                "name": "DEBUG",
+                "integer": 50
+              },
+              {
+                "name": "TRACE",
+                "integer": 60
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "LogLocation",
+            "fields": [
+              {
+                "id": 1,
+                "name": "file",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "declaringClass",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "methodName",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "fileName",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "lineNumber",
+                "type": "int32"
+              }
+            ]
+          },
+          {
+            "name": "LogEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "logger",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "timestamp",
+                "type": "Timestamp"
+              },
+              {
+                "id": 3,
+                "name": "level",
+                "type": "LogLevel"
+              },
+              {
+                "id": 4,
+                "name": "message",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "location",
+                "type": "LogLocation"
+              },
+              {
+                "id": 6,
+                "name": "exception",
+                "type": "Exception"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "common.proto"
+          },
+          {
+            "path": "exception.proto"
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "LoggingProto"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "mapping.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "MappingDetails",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "kind",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "outputs",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 5,
+                "name": "inputs",
+                "type": "MappingOutputIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 6,
+                "name": "cache",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "broadcast",
+                "type": "bool"
+              },
+              {
+                "id": 8,
+                "name": "checkpoint",
+                "type": "bool"
+              },
+              {
+                "id": 9,
+                "name": "required",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "ListMappingsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "project",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListMappingsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "mappings",
+                "type": "MappingIdentifier",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetMappingRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "mapping",
+                "type": "MappingIdentifier"
+              }
+            ]
+          },
+          {
+            "name": "GetMappingResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "mapping",
+                "type": "MappingDetails"
+              }
+            ]
+          },
+          {
+            "name": "ReadMappingRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "mapping",
+                "type": "MappingIdentifier"
+              },
+              {
+                "id": 3,
+                "name": "output",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "maxRows",
+                "type": "int32"
+              },
+              {
+                "id": 5,
+                "name": "columns",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "ReadMappingResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "data",
+                "type": "DataFrame"
+              }
+            ]
+          },
+          {
+            "name": "DescribeMappingRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "mapping",
+                "type": "MappingIdentifier"
+              },
+              {
+                "id": 4,
+                "name": "output",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "useSpark",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "DescribeMappingResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "schema",
+                "type": "StructType"
+              }
+            ]
+          },
+          {
+            "name": "ValidateMappingRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "mapping",
+                "type": "MappingIdentifier"
+              }
+            ]
+          },
+          {
+            "name": "ValidateMappingResponse"
+          },
+          {
+            "name": "CountMappingRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "mapping",
+                "type": "MappingIdentifier"
+              },
+              {
+                "id": 3,
+                "name": "output",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CountMappingResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "numRecords",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "CacheMappingRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "mapping",
+                "type": "MappingIdentifier"
+              },
+              {
+                "id": 3,
+                "name": "output",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "level",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CacheMappingResponse"
+          },
+          {
+            "name": "ExplainMappingRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "mapping",
+                "type": "MappingIdentifier"
+              },
+              {
+                "id": 3,
+                "name": "output",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "extended",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "ExplainMappingResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "plan",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SaveMappingOutputRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "mapping",
+                "type": "MappingIdentifier"
+              },
+              {
+                "id": 4,
+                "name": "output",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "location",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "format",
+                "type": "string"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 7,
+                  "name": "options",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "SaveMappingOutputResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "status",
+                "type": "ExecutionStatus"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "common.proto"
+          },
+          {
+            "path": "dataframe.proto"
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel.mapping"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto.mapping"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "MappingProto"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "project.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "ProjectDetails",
+            "fields": [
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "version",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "basedir",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "filename",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "targets",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "tests",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 9,
+                "name": "jobs",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 10,
+                "name": "mappings",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "relations",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 12,
+                "name": "connections",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 16,
+                "name": "profiles",
+                "type": "string",
+                "is_repeated": true
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 14,
+                  "name": "environment",
+                  "type": "string"
+                }
+              },
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 15,
+                  "name": "config",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "GetProjectRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetProjectResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "ProjectDetails"
+              }
+            ]
+          },
+          {
+            "name": "ExecuteProjectRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "phases",
+                "type": "ExecutionPhase",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "targets",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 5,
+                "name": "dirtyTargets",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "force",
+                "type": "bool"
+              },
+              {
+                "id": 8,
+                "name": "dirty",
+                "type": "bool"
+              },
+              {
+                "id": 10,
+                "name": "keepGoing",
+                "type": "bool"
+              },
+              {
+                "id": 11,
+                "name": "dryRun",
+                "type": "bool"
+              },
+              {
+                "id": 12,
+                "name": "parallelism",
+                "type": "int32"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 6,
+                  "name": "arguments",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "ExecuteProjectResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "status",
+                "type": "ExecutionStatus"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "common.proto"
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel.project"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto.project"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "ProjectProto"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "relation.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "RelationDetails",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "kind",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "requiredByCreate",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "requiredByWrite",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "requiredByRead",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 9,
+                "name": "providedByCreate",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 10,
+                "name": "providedByWrite",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "providedByRead",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "ListRelationsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "project",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListRelationsResponse",
+            "fields": [
+              {
+                "id": 2,
+                "name": "relations",
+                "type": "RelationIdentifier",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetRelationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "relation",
+                "type": "RelationIdentifier"
+              }
+            ]
+          },
+          {
+            "name": "GetRelationResponse",
+            "fields": [
+              {
+                "id": 2,
+                "name": "relation",
+                "type": "RelationDetails"
+              }
+            ]
+          },
+          {
+            "name": "ExecuteRelationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "relations",
+                "type": "RelationIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "phase",
+                "type": "ExecutionPhase"
+              },
+              {
+                "id": 5,
+                "name": "force",
+                "type": "bool"
+              },
+              {
+                "id": 6,
+                "name": "keepGoing",
+                "type": "bool"
+              },
+              {
+                "id": 7,
+                "name": "dryRun",
+                "type": "bool"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 4,
+                  "name": "partition",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "ExecuteRelationResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "status",
+                "type": "ExecutionStatus"
+              }
+            ]
+          },
+          {
+            "name": "ReadRelationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "relation",
+                "type": "RelationIdentifier"
+              },
+              {
+                "id": 3,
+                "name": "maxRows",
+                "type": "int32"
+              },
+              {
+                "id": 5,
+                "name": "columns",
+                "type": "string",
+                "is_repeated": true
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 4,
+                  "name": "partition",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "ReadRelationResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "data",
+                "type": "DataFrame"
+              }
+            ]
+          },
+          {
+            "name": "DescribeRelationRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "relation",
+                "type": "RelationIdentifier"
+              },
+              {
+                "id": 4,
+                "name": "useSpark",
+                "type": "bool"
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 3,
+                  "name": "partition",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "DescribeRelationResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "schema",
+                "type": "StructType"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "common.proto"
+          },
+          {
+            "path": "dataframe.proto"
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel.relation"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto.relation"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "RelationProto"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "session.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "SessionDetails",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "workspace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "namespace",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "projectVersion",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "projectDescription",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "projectBasedir",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "projectFilename",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "profiles",
+                "type": "string",
+                "is_repeated": true
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 11,
+                  "name": "environment",
+                  "type": "string"
+                }
+              },
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 12,
+                  "name": "config",
+                  "type": "string"
+                }
+              },
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 13,
+                  "name": "flowmanConfig",
+                  "type": "string"
+                }
+              },
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 14,
+                  "name": "hadoopConfig",
+                  "type": "string"
+                }
+              },
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 15,
+                  "name": "sparkConfig",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "CreateSessionRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "workspace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "projectName",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "projectLocation",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "profiles",
+                "type": "string",
+                "is_repeated": true
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 6,
+                  "name": "config",
+                  "type": "string"
+                }
+              },
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 7,
+                  "name": "environment",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "CreateSessionResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "session",
+                "type": "SessionDetails"
+              }
+            ]
+          },
+          {
+            "name": "ListSessionsRequest"
+          },
+          {
+            "name": "ListSessionsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessions",
+                "type": "Session",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetSessionRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetSessionResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "session",
+                "type": "SessionDetails"
+              }
+            ]
+          },
+          {
+            "name": "DeleteSessionRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DeleteSessionResponse"
+          },
+          {
+            "name": "EnterContextRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "job",
+                "type": "JobContext"
+              },
+              {
+                "id": 3,
+                "name": "test",
+                "type": "TestContext"
+              }
+            ]
+          },
+          {
+            "name": "EnterContextResponse"
+          },
+          {
+            "name": "LeaveContextRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "LeaveContextResponse"
+          },
+          {
+            "name": "GetContextRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetContextResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "job",
+                "type": "JobContext"
+              },
+              {
+                "id": 3,
+                "name": "test",
+                "type": "TestContext"
+              }
+            ]
+          },
+          {
+            "name": "ExecuteSqlRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "statement",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "maxRows",
+                "type": "int32"
+              }
+            ]
+          },
+          {
+            "name": "ExecuteSqlResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "data",
+                "type": "DataFrame"
+              }
+            ]
+          },
+          {
+            "name": "EvaluateExpressionRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "expression",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "EvaluateExpressionResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "result",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SubscribeLogRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              }
+            ]
+          }
+        ],
+        "services": [
+          {
+            "name": "SessionService",
+            "rpcs": [
+              {
+                "name": "CreateSession",
+                "in_type": "CreateSessionRequest",
+                "out_type": "CreateSessionResponse"
+              },
+              {
+                "name": "ListSessions",
+                "in_type": "ListSessionsRequest",
+                "out_type": "ListSessionsResponse"
+              },
+              {
+                "name": "GetSession",
+                "in_type": "GetSessionRequest",
+                "out_type": "GetSessionResponse"
+              },
+              {
+                "name": "DeleteSession",
+                "in_type": "DeleteSessionRequest",
+                "out_type": "DeleteSessionResponse"
+              },
+              {
+                "name": "EnterContext",
+                "in_type": "EnterContextRequest",
+                "out_type": "EnterContextResponse"
+              },
+              {
+                "name": "LeaveContext",
+                "in_type": "LeaveContextRequest",
+                "out_type": "LeaveContextResponse"
+              },
+              {
+                "name": "GetContext",
+                "in_type": "GetContextRequest",
+                "out_type": "GetContextResponse"
+              },
+              {
+                "name": "ListMappings",
+                "in_type": "mapping.ListMappingsRequest",
+                "out_type": "mapping.ListMappingsResponse"
+              },
+              {
+                "name": "GetMapping",
+                "in_type": "mapping.GetMappingRequest",
+                "out_type": "mapping.GetMappingResponse"
+              },
+              {
+                "name": "ReadMapping",
+                "in_type": "mapping.ReadMappingRequest",
+                "out_type": "mapping.ReadMappingResponse"
+              },
+              {
+                "name": "DescribeMapping",
+                "in_type": "mapping.DescribeMappingRequest",
+                "out_type": "mapping.DescribeMappingResponse"
+              },
+              {
+                "name": "ValidateMapping",
+                "in_type": "mapping.ValidateMappingRequest",
+                "out_type": "mapping.ValidateMappingResponse"
+              },
+              {
+                "name": "SaveMappingOutput",
+                "in_type": "mapping.SaveMappingOutputRequest",
+                "out_type": "mapping.SaveMappingOutputResponse"
+              },
+              {
+                "name": "CountMapping",
+                "in_type": "mapping.CountMappingRequest",
+                "out_type": "mapping.CountMappingResponse"
+              },
+              {
+                "name": "CacheMapping",
+                "in_type": "mapping.CacheMappingRequest",
+                "out_type": "mapping.CacheMappingResponse"
+              },
+              {
+                "name": "ExplainMapping",
+                "in_type": "mapping.ExplainMappingRequest",
+                "out_type": "mapping.ExplainMappingResponse"
+              },
+              {
+                "name": "ListRelations",
+                "in_type": "relation.ListRelationsRequest",
+                "out_type": "relation.ListRelationsResponse"
+              },
+              {
+                "name": "GetRelation",
+                "in_type": "relation.GetRelationRequest",
+                "out_type": "relation.GetRelationResponse"
+              },
+              {
+                "name": "ReadRelation",
+                "in_type": "relation.ReadRelationRequest",
+                "out_type": "relation.ReadRelationResponse"
+              },
+              {
+                "name": "ExecuteRelation",
+                "in_type": "relation.ExecuteRelationRequest",
+                "out_type": "relation.ExecuteRelationResponse"
+              },
+              {
+                "name": "DescribeRelation",
+                "in_type": "relation.DescribeRelationRequest",
+                "out_type": "relation.DescribeRelationResponse"
+              },
+              {
+                "name": "ListTargets",
+                "in_type": "target.ListTargetsRequest",
+                "out_type": "target.ListTargetsResponse"
+              },
+              {
+                "name": "GetTarget",
+                "in_type": "target.GetTargetRequest",
+                "out_type": "target.GetTargetResponse"
+              },
+              {
+                "name": "ExecuteTarget",
+                "in_type": "target.ExecuteTargetRequest",
+                "out_type": "target.ExecuteTargetResponse"
+              },
+              {
+                "name": "ListTests",
+                "in_type": "test.ListTestsRequest",
+                "out_type": "test.ListTestsResponse"
+              },
+              {
+                "name": "GetTest",
+                "in_type": "test.GetTestRequest",
+                "out_type": "test.GetTestResponse"
+              },
+              {
+                "name": "ExecuteTest",
+                "in_type": "test.ExecuteTestRequest",
+                "out_type": "test.ExecuteTestResponse"
+              },
+              {
+                "name": "ListJobs",
+                "in_type": "job.ListJobsRequest",
+                "out_type": "job.ListJobsResponse"
+              },
+              {
+                "name": "GetJob",
+                "in_type": "job.GetJobRequest",
+                "out_type": "job.GetJobResponse"
+              },
+              {
+                "name": "ExecuteJob",
+                "in_type": "job.ExecuteJobRequest",
+                "out_type": "job.ExecuteJobResponse"
+              },
+              {
+                "name": "GetProject",
+                "in_type": "project.GetProjectRequest",
+                "out_type": "project.GetProjectResponse"
+              },
+              {
+                "name": "ExecuteProject",
+                "in_type": "project.ExecuteProjectRequest",
+                "out_type": "project.ExecuteProjectResponse"
+              },
+              {
+                "name": "generateDocumentation",
+                "in_type": "documentation.GenerateDocumentationRequest",
+                "out_type": "documentation.GenerateDocumentationResponse"
+              },
+              {
+                "name": "ExecuteSql",
+                "in_type": "ExecuteSqlRequest",
+                "out_type": "ExecuteSqlResponse"
+              },
+              {
+                "name": "EvaluateExpression",
+                "in_type": "EvaluateExpressionRequest",
+                "out_type": "EvaluateExpressionResponse"
+              },
+              {
+                "name": "SubscribeLog",
+                "in_type": "SubscribeLogRequest",
+                "out_type": "LogEvent",
+                "out_streamed": true
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "common.proto"
+          },
+          {
+            "path": "documentation.proto"
+          },
+          {
+            "path": "mapping.proto"
+          },
+          {
+            "path": "relation.proto"
+          },
+          {
+            "path": "target.proto"
+          },
+          {
+            "path": "test.proto"
+          },
+          {
+            "path": "job.proto"
+          },
+          {
+            "path": "project.proto"
+          },
+          {
+            "path": "dataframe.proto"
+          },
+          {
+            "path": "logging.proto"
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel.session"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto.session"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "SessionProto"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "target.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "TargetDetails",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "kind",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "phases",
+                "type": "ExecutionPhase",
+                "is_repeated": true
+              },
+              {
+                "id": 5,
+                "name": "before",
+                "type": "TargetIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 6,
+                "name": "after",
+                "type": "TargetIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 9,
+                "name": "requiredByValidate",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 10,
+                "name": "requiredByCreate",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "requiredByBuild",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 12,
+                "name": "requiredByVerify",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 13,
+                "name": "requiredByTruncate",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 14,
+                "name": "requiredByDestroy",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 15,
+                "name": "providedByValidate",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 16,
+                "name": "providedByCreate",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 17,
+                "name": "providedByBuild",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 18,
+                "name": "providedByVerify",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 19,
+                "name": "providedByTruncate",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 20,
+                "name": "providedByDestroy",
+                "type": "ResourceIdentifier",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "ListTargetsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "project",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListTargetsResponse",
+            "fields": [
+              {
+                "id": 2,
+                "name": "targets",
+                "type": "TargetIdentifier",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetTargetRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "target",
+                "type": "TargetIdentifier"
+              }
+            ]
+          },
+          {
+            "name": "GetTargetResponse",
+            "fields": [
+              {
+                "id": 2,
+                "name": "target",
+                "type": "TargetDetails"
+              }
+            ]
+          },
+          {
+            "name": "ExecuteTargetRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "targets",
+                "type": "TargetIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "phases",
+                "type": "ExecutionPhase",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "force",
+                "type": "bool"
+              },
+              {
+                "id": 5,
+                "name": "keepGoing",
+                "type": "bool"
+              },
+              {
+                "id": 6,
+                "name": "dryRun",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "ExecuteTargetResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "status",
+                "type": "ExecutionStatus"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "common.proto"
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel.target"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto.target"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "TargetProto"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "test.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "TestDetails",
+            "fields": [
+              {
+                "id": 1,
+                "name": "project",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "overrideMappings",
+                "type": "MappingIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 6,
+                "name": "overrideRelations",
+                "type": "RelationIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "fixtureTargets",
+                "type": "TargetIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "buildTargets",
+                "type": "TargetIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 9,
+                "name": "assertions",
+                "type": "string",
+                "is_repeated": true
+              }
+            ],
+            "maps": [
+              {
+                "key_type": "string",
+                "field": {
+                  "id": 4,
+                  "name": "environment",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "ListTestsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "project",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListTestsResponse",
+            "fields": [
+              {
+                "id": 2,
+                "name": "tests",
+                "type": "TestIdentifier",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetTestRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "test",
+                "type": "TestIdentifier"
+              }
+            ]
+          },
+          {
+            "name": "GetTestResponse",
+            "fields": [
+              {
+                "id": 2,
+                "name": "test",
+                "type": "TestDetails"
+              }
+            ]
+          },
+          {
+            "name": "ExecuteTestRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "sessionId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "tests",
+                "type": "TestIdentifier",
+                "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "dryRun",
+                "type": "bool"
+              },
+              {
+                "id": 4,
+                "name": "keepGoing",
+                "type": "bool"
+              },
+              {
+                "id": 5,
+                "name": "parallelism",
+                "type": "int32"
+              }
+            ]
+          },
+          {
+            "name": "ExecuteTestResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "status",
+                "type": "ExecutionStatus"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "common.proto"
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel.test"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto.test"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "TestProto"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "workspace.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "WorkspaceDetails",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "projects",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "CreateWorkspaceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "ifNotExists",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "CreateWorkspaceResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "workspace",
+                "type": "WorkspaceDetails"
+              }
+            ]
+          },
+          {
+            "name": "ListWorkspacesRequest"
+          },
+          {
+            "name": "ListWorkspacesResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "workspaces",
+                "type": "Workspace",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "GetWorkspaceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "workspaceId",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetWorkspaceResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "workspace",
+                "type": "WorkspaceDetails"
+              }
+            ]
+          },
+          {
+            "name": "DeleteWorkspaceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "workspaceId",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DeleteWorkspaceResponse"
+          },
+          {
+            "name": "CleanWorkspaceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "workspaceId",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CleanWorkspaceResponse"
+          },
+          {
+            "name": "UploadFilesRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "workspaceId",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "fileName",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "fileType",
+                "type": "FileType"
+              },
+              {
+                "id": 4,
+                "name": "fileContent",
+                "type": "bytes"
+              }
+            ]
+          },
+          {
+            "name": "UploadFilesResponse"
+          }
+        ],
+        "services": [
+          {
+            "name": "WorkspaceService",
+            "rpcs": [
+              {
+                "name": "CreateWorkspace",
+                "in_type": "CreateWorkspaceRequest",
+                "out_type": "CreateWorkspaceResponse"
+              },
+              {
+                "name": "ListWorkspaces",
+                "in_type": "ListWorkspacesRequest",
+                "out_type": "ListWorkspacesResponse"
+              },
+              {
+                "name": "GetWorkspace",
+                "in_type": "GetWorkspaceRequest",
+                "out_type": "GetWorkspaceResponse"
+              },
+              {
+                "name": "DeleteWorkspace",
+                "in_type": "DeleteWorkspaceRequest",
+                "out_type": "DeleteWorkspaceResponse"
+              },
+              {
+                "name": "CleanWorkspace",
+                "in_type": "CleanWorkspaceRequest",
+                "out_type": "CleanWorkspaceResponse"
+              },
+              {
+                "name": "UploadFiles",
+                "in_type": "UploadFilesRequest",
+                "out_type": "UploadFilesResponse",
+                "in_streamed": true
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "common.proto"
+          }
+        ],
+        "package": {
+          "name": "com.dimajix.flowman.kernel.workspace"
+        },
+        "options": [
+          {
+            "name": "java_multiple_files",
+            "value": "true"
+          },
+          {
+            "name": "java_package",
+            "value": "com.dimajix.flowman.kernel.proto.workspace"
+          },
+          {
+            "name": "java_outer_classname",
+            "value": "WorkspaceProto"
+          }
+        ]
+      }
+    }
+  ]
+}

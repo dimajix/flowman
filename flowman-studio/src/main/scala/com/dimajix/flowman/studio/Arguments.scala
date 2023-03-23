@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,12 @@
 package com.dimajix.flowman.studio
 
 import java.io.PrintStream
-import java.net.URL
 
 import scala.collection.JavaConverters._
 
-import org.kohsuke.args4j.Argument
 import org.kohsuke.args4j.CmdLineParser
 import org.kohsuke.args4j.Option
-import org.kohsuke.args4j.spi.SubCommand
-import org.kohsuke.args4j.spi.SubCommandHandler
-import org.kohsuke.args4j.spi.SubCommands
 
-import com.dimajix.flowman.tools.exec.info.InfoCommand
-import com.dimajix.flowman.tools.exec.job.JobCommand
-import com.dimajix.flowman.tools.exec.mapping.MappingCommand
-import com.dimajix.flowman.tools.exec.relation.ModelCommand
-import com.dimajix.flowman.tools.exec.namespace.NamespaceCommand
-import com.dimajix.flowman.tools.exec.project.ProjectCommand
-import com.dimajix.flowman.tools.exec.target.TargetCommand
-import com.dimajix.flowman.tools.exec.test.TestCommand
 
 
 class Arguments(args:Array[String]) {

@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dimajix.flowman.kernel.proto.target";
+option java_outer_classname = "TargetProto";
+
+package com.dimajix.flowman.kernel.target;
+
+import "common.proto";
+
+
+message TargetDetails {
+    optional string project = 1;
+    string name = 2;
+    string kind = 3;
+    repeated ExecutionPhase phases = 4;
+    repeated TargetIdentifier before = 5;
+    repeated TargetIdentifier after = 6;
+
+    repeated ResourceIdentifier requiredByValidate = 9;
+    repeated ResourceIdentifier requiredByCreate = 10;
+    repeated ResourceIdentifier requiredByBuild = 11;
+    repeated ResourceIdentifier requiredByVerify = 12;
+    repeated ResourceIdentifier requiredByTruncate = 13;
+    repeated ResourceIdentifier requiredByDestroy = 14;
+    repeated ResourceIdentifier providedByValidate = 15;
+    repeated ResourceIdentifier providedByCreate = 16;
+    repeated ResourceIdentifier providedByBuild = 17;
+    repeated ResourceIdentifier providedByVerify = 18;
+    repeated ResourceIdentifier providedByTruncate = 19;
+    repeated ResourceIdentifier providedByDestroy = 20;
+}
+
+
+message ListTargetsRequest {
+    string sessionId = 1;
+    optional string project = 2;
+}
+message ListTargetsResponse {
+    repeated TargetIdentifier targets = 2;
+}
+
+message GetTargetRequest {
+    string sessionId = 1;
+    TargetIdentifier target = 2;
+}
+message GetTargetResponse {
+    TargetDetails target = 2;
+}
+
+message ExecuteTargetRequest {
+    string sessionId = 1;
+    repeated TargetIdentifier targets = 2;
+    repeated ExecutionPhase phases = 3;
+    bool force = 4;
+    bool keepGoing = 5;
+    bool dryRun = 6;
+}
+message ExecuteTargetResponse {
+    ExecutionStatus status = 1;
+}

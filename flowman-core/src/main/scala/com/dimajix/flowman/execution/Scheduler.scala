@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,11 @@ import com.dimajix.flowman.model.Target
 
 
 object Scheduler {
+    def newInstance(clazz: Class[_ <: Scheduler], execution: Execution, context: Context): Scheduler = {
+        val ctor = clazz.getDeclaredConstructor(classOf[Execution], classOf[Context])
+        ctor.newInstance(execution, context)
+    }
+
     def sort(scheduler: Scheduler, targets: Seq[Target], phase:Phase, filter:Target => Boolean) : Seq[Target] = {
         scheduler.initialize(targets, phase, filter)
 

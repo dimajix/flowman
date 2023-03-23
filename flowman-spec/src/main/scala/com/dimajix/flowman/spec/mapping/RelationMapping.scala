@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,15 +45,13 @@ import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.sql.SchemaUtils
 
 
-case class RelationMapping(
+final case class RelationMapping(
     instanceProperties:Mapping.Properties,
     relation:Reference[Relation],
     columns:Seq[Field] = Seq(),
     partitions:Map[String,FieldValue] = Map(),
     filter:Option[String] = None
 ) extends BaseMapping {
-    private val logger = LoggerFactory.getLogger(classOf[RelationMapping])
-
     /**
      * Returns a list of physical resources required by this mapping. This list will only be non-empty for mappings
      * which actually read from physical data.
@@ -81,6 +79,7 @@ case class RelationMapping(
     override def execute(execution:Execution, input:Map[MappingOutputIdentifier,DataFrame]): Map[String,DataFrame] = {
         require(execution != null)
         require(input != null)
+        val logger = getLogger(execution, classOf[RelationMapping])
 
         val schema = if (columns.nonEmpty) Some(spark.sql.types.StructType(columns.map(_.sparkField))) else None
         logger.info(s"Reading from relation '${relation.identifier}' with partitions (${partitions.map(kv => kv._1 + "=" + kv._2).mkString(",")}) and filter '${filter.getOrElse("")}'")

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ final case class MetricSeries(
     namespace:String,
     project:String,
     job:String,
-    phase:String,
+    phase:Phase,
     labels:Map[String,String],
     measurements:Seq[Measurement]
 )

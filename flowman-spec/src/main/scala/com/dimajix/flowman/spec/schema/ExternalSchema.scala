@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ object ExternalSchema {
   * Helper class for external schemas which are stored in files or at URLs
   */
 abstract class ExternalSchema extends BaseSchema {
-    protected val logger: Logger
+    protected final lazy val logger: Logger = context.loggerFactory.getLogger(getClass.getName)
     protected val file: Option[File]
     protected val url: Option[URL]
     protected val spec: Option[String]

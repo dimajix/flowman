@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,11 @@ import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
-import org.apache.spark.sql.hive.execution.InsertIntoHiveTable
 import org.apache.spark.sql.internal.HiveSerDe
 import org.apache.spark.sql.types.CharType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.VarcharType
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
@@ -52,8 +50,6 @@ import com.dimajix.flowman.catalog.TableChange.UpdateColumnType
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
 import com.dimajix.flowman.catalog.TableType
-import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_POLICY
-import com.dimajix.flowman.config.FlowmanConf.DEFAULT_RELATION_MIGRATION_STRATEGY
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationFailedException
@@ -83,7 +79,7 @@ object HiveTableRelation {
 }
 
 
-case class HiveTableRelation(
+final case class HiveTableRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq.empty,
@@ -101,7 +97,6 @@ case class HiveTableRelation(
     override val migrationPolicy: MigrationPolicy = MigrationPolicy.RELAXED,
     override val migrationStrategy: MigrationStrategy = MigrationStrategy.ALTER
 ) extends HiveRelation with SchemaRelation with MigratableRelation {
-    protected override val logger = LoggerFactory.getLogger(classOf[HiveTableRelation])
     private val resource = ResourceIdentifier.ofHiveTable(table)
 
     /**
@@ -235,7 +230,7 @@ case class HiveTableRelation(
             val query = df.queryExecution.logical
 
             val overwrite = mode == OutputMode.OVERWRITE || mode == OutputMode.OVERWRITE_DYNAMIC
-            val cmd = InsertIntoHiveTable(
+            val cmd = SparkShim.newInsertIntoHiveTable(
                 table = hiveTable,
                 partition = partitionSpec.toMap.mapValues(v => Some(v.toString)),
                 query = query,
@@ -463,7 +458,7 @@ case class HiveTableRelation(
             .orElse(defaultStorage.serde)
 
         // Configure catalog table by assembling all options
-        val catalogTable = CatalogTable(
+        val catalogTable = SparkShim.newCatalogTable(
             identifier = table.toSpark,
             tableType =
                 if (external)

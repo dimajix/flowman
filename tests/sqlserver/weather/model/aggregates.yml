@@ -3,7 +3,7 @@ relations:
     kind: sqlserver
     connection: sql_server
     database: dbo
-    table: weather
+    table: aggregates
     stagingTable: weather_staging
     storageFormat: ROWSTORE
     schema:
@@ -36,5 +36,5 @@ relations:
       - country
     # (Optionally) specify indexes
     indexes:
-      - name: "measurement_idx0"
+      - name: "aggregates_idx0"
         columns: [country]

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
                 "tgt" -> targetRelationTemplate
             )
         )
-        val session = Session.builder().disableSpark().build()
+        val session = Session.builder().withProject(project).disableSpark().build()
         val context = session.getContext(project)
 
         (mappingTemplate1.instantiate _).expects(context,None).returns(mapping1)

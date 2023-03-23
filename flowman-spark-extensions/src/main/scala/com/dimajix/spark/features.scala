@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,4 +36,9 @@ object features {
         DataType.fromJson("""{"type":"struct","fields":[{"name":"vc","type":"varchar(10)","nullable":true}]}""")
         true
     }.getOrElse(false)
+
+    lazy val isDatabricks: Boolean = {
+        val prop = System.getProperty("sun.java.command")
+        prop != null && prop.startsWith("com.databricks.backend.daemon")
+    }
 }

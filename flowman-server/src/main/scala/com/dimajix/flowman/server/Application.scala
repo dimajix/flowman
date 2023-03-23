@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 Kaya Kupferschmidt
+ * Copyright (C) 2019 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@
 package com.dimajix.flowman.server
 
 import java.io.File
+import com.dimajix.flowman.Tool
 
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.server.rest.Configuration
 import com.dimajix.flowman.server.rest.Server
-import com.dimajix.flowman.tools.Tool
 
 
 object Application {
@@ -55,7 +55,7 @@ class Application extends Tool {
             .getOrElse(Namespace.read.default())
 
         // Load all plugins from Namespace
-        ns.plugins.foreach(plugins.load)
+        ns.plugins.foreach(pluginManager.load)
         ns
     }
 

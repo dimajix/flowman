@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,7 @@ import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.graph.Linker
 import com.dimajix.flowman.metric.LongAccumulatorMetric
-import com.dimajix.flowman.metric.MetricBundle
 import com.dimajix.flowman.metric.MultiMetricBundle
-import com.dimajix.flowman.metric.Selector
-import com.dimajix.flowman.metric.WallTimeMetric
 import com.dimajix.flowman.model
 import com.dimajix.spark.sql.functions.count_records
 
@@ -220,7 +217,7 @@ trait Target extends Instance {
 
 
 
-abstract class BaseTarget extends AbstractInstance with Target {
+abstract class BaseTarget extends AbstractInstance with Target with Logging {
     protected override def instanceProperties : Target.Properties
 
     /**

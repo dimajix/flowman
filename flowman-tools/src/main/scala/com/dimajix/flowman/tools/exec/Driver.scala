@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,18 +25,20 @@ import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.HADOOP_BUILD_VERSION
-import com.dimajix.flowman.HADOOP_VERSION
 import com.dimajix.flowman.JAVA_VERSION
 import com.dimajix.flowman.SCALA_VERSION
 import com.dimajix.flowman.SPARK_BUILD_VERSION
-import com.dimajix.flowman.SPARK_VERSION
+import com.dimajix.flowman.Tool
 import com.dimajix.flowman.common.ConsoleColors
+import com.dimajix.flowman.common.ConsoleColors.yellow
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.execution.Status
-import com.dimajix.flowman.tools.Tool
-import ConsoleColors.yellow
+import com.dimajix.flowman.model.Project
+import com.dimajix.hadoop.HADOOP_VERSION
+import com.dimajix.spark.SPARK_VERSION
+import com.dimajix.spark.features.isDatabricks
 
 
 object Driver {
@@ -48,9 +50,11 @@ object Driver {
         }
         match {
             case Success (Status.SUCCESS) =>
-                System.exit(0)
+                // In case of no error, simply let the normal JVM flow finish the application. Databricks will
+                // complain otherwise
+                //System.exit(0)
             case Success (Status.SKIPPED) =>
-                System.exit(0)
+                //System.exit(0)
             case Success (Status.SUCCESS_WITH_ERRORS) =>
                 System.exit(2)
             case Success (_) =>
@@ -117,7 +121,8 @@ class Driver(options:Arguments) extends Tool {
         }
         else {
             // Create Flowman Session, which also includes a Spark Session
-            val project = loadProject(options.projectFile)
+            val projectPath = Tool.resolvePath(options.projectFile)
+            val project = Project.read.file(projectPath)
 
             val config = splitSettings(options.config)
             val environment = splitSettings(options.environment)
@@ -140,7 +145,11 @@ class Driver(options:Arguments) extends Tool {
             }
 
             val result = options.command.execute(session, project, context)
-            session.shutdown()
+
+            // github-357: Spark session should not be shut down in DataBricks environment
+            if (!isDatabricks)
+                session.shutdown()
+
             result
         }
     }

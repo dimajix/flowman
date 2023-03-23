@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dimajix.flowman.kernel.proto.test";
+option java_outer_classname = "TestProto";
+
+package com.dimajix.flowman.kernel.test;
+
+import "common.proto";
+
+
+message TestDetails {
+    optional string project = 1;
+    string name = 2;
+    optional string description = 3;
+    map<string,string> environment = 4;
+    repeated MappingIdentifier overrideMappings = 5;
+    repeated RelationIdentifier overrideRelations = 6;
+    repeated TargetIdentifier fixtureTargets = 7;
+    repeated TargetIdentifier buildTargets = 8;
+    repeated string assertions = 9;
+}
+
+
+message ListTestsRequest {
+    string sessionId = 1;
+    optional string project = 2;
+}
+message ListTestsResponse {
+    repeated TestIdentifier tests = 2;
+}
+
+message GetTestRequest {
+    string sessionId = 1;
+    TestIdentifier test = 2;
+}
+message GetTestResponse {
+    TestDetails test = 2;
+}
+
+message ExecuteTestRequest {
+    string sessionId = 1;
+    repeated TestIdentifier tests = 2;
+    bool dryRun = 3;
+    bool keepGoing = 4;
+    int32 parallelism = 5;
+}
+message ExecuteTestResponse {
+    ExecutionStatus status = 1;
+}

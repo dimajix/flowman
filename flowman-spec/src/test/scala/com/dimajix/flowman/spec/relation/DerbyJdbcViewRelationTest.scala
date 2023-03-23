@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ class DerbyJdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSpar
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
 
-        val session = Session.builder().withSparkSession(spark).build()
+        val session = Session.builder(project).withSparkSession(spark).build()
         val execution = session.execution
         val context = session.getContext(project)
 
@@ -202,7 +202,7 @@ class DerbyJdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSpar
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
 
-        val session = Session.builder().withSparkSession(spark).build()
+        val session = Session.builder(project).withSparkSession(spark).build()
         val execution = session.execution
         val context = session.getContext(project)
 
@@ -274,7 +274,7 @@ class DerbyJdbcViewRelationTest extends AnyFlatSpec with Matchers with LocalSpar
             """.stripMargin
         val project = Module.read.string(spec).toProject("project")
 
-        val session = Session.builder().withSparkSession(spark).build()
+        val session = Session.builder(project).withSparkSession(spark).build()
         val execution = session.execution
         val context = session.getContext(project)
 

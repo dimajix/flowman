@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,8 @@ class SchemaAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSessi
         assertion.mapping should be (MappingOutputIdentifier("some_mapping"))
         assertion.columns should be (Seq(Field("col_1", StringType), Field("col_2", IntegerType)))
         assertion.schema should be (None)
+        assertion.inputs should be(Set(MappingOutputIdentifier("some_mapping")))
+        assertion.requires should be(Set.empty)
     }
 
     it should "be parseable with embedded schema" in {

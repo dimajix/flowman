@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.spark.SPARK_VERSION
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -145,6 +146,42 @@ class SqlMappingTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
         session.shutdown()
     }
+
+    it should "support projects and outputs" in (if (SPARK_VERSION >= "3") {
+        val sql =
+            """
+              |SELECT
+              |     LOWER(CAST(_1 AS STRING)) AS y,
+              |     CAST(_1 AS DATE) AS y2
+              |FROM `proj/source:output`
+              |""".stripMargin
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val mapping = SqlMapping(
+            Mapping.Properties(session.context),
+            sql = Some(sql)
+        )
+
+        mapping.inputs should be (Set(MappingOutputIdentifier("proj/source:output")))
+
+        val df = execution.spark.createDataFrame(Seq(
+            ("x", 12)
+        ))
+        val result = mapping.execute(execution, Map(MappingOutputIdentifier("proj/source:output") -> df))
+        result("main").collect().size should be (1)
+
+        val inputSchema = ftypes.StructType(Seq(
+            ftypes.Field("_1", ftypes.StringType, description = Some("This is x"))
+        ))
+        val resultSchema = mapping.describe(execution, Map(MappingOutputIdentifier("proj/source:output") -> inputSchema))
+        resultSchema("main") should be(ftypes.StructType(Seq(
+            ftypes.Field("y", ftypes.StringType, description = Some("This is x")),
+            ftypes.Field("y2", ftypes.DateType, description = Some("This is x"))
+        )))
+
+        session.shutdown()
+    })
 
     "Dependencies" should "be correct" in {
         val spec =

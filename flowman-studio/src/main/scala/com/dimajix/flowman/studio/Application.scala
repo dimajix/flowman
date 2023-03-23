@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 Kaya Kupferschmidt
+ * Copyright (C) 2019 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import scala.util.Success
 import scala.util.Try
 
 import org.kohsuke.args4j.CmdLineException
+import com.dimajix.flowman.Tool
 
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.studio.rest.Server
-import com.dimajix.flowman.tools.Tool
 
 
 object Application {

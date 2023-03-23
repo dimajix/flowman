@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package com.dimajix.flowman.jdbc
+
+import java.sql.SQLException
 
 import org.apache.spark.sql.jdbc.JdbcType
 
@@ -81,6 +83,13 @@ abstract class SqlDialect {
       * @return
       */
     def literal(value:Any) : String
+
+    /**
+     * Returns true if an SQLException is transient and a retry of the operation may succeed
+     * @param ex
+     * @return
+     */
+    def isTransient(ex:SQLException) : Boolean
 
     /**
      * Returns true if the given table supports a specific table change

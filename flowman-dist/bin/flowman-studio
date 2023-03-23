@@ -3,6 +3,14 @@
 basedir=$(readlink -f "$(dirname "$0")"/..)
 source "$basedir"/libexec/flowman-common.sh
 
+# Add log4j config
+if [ -f "$FLOWMAN_CONF_DIR/log4j-studio.properties" ]; then
+    SPARK_DRIVER_LOGGING_OPTS="-Dlog4j.configuration=$FLOWMAN_CONF_DIR/log4j-studio.properties"
+fi
+if [ -f "$FLOWMAN_CONF_DIR/log4j2-studio.properties" ]; then
+    SPARK_DRIVER_LOGGING_OPTS="-Dlog4j.configurationFile=$FLOWMAN_CONF_DIR/log4j2-studio.properties"
+fi
+
 APP_NAME="flowman-studio"
 APP_VERSION="@project.version@"
 APP_MAIN="com.dimajix.flowman.studio.Application"
@@ -10,4 +18,4 @@ APP_MAIN="com.dimajix.flowman.studio.Application"
 APP_JAR="$(flowman_lib $APP_NAME-$APP_VERSION.jar)"
 LIB_JARS="$(flowman_lib @flowman-studio.classpath@)"
 
-spark_submit $APP_JAR $LIB_JARS $APP_MAIN "$@"
+run_spark $APP_JAR $LIB_JARS $APP_MAIN "$@"

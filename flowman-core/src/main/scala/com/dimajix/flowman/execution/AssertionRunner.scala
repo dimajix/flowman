@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class AssertionRunner(
     execution:Execution,
     cacheLevel:StorageLevel=StorageLevel.MEMORY_AND_DISK
 ) {
-    private val logger = LoggerFactory.getLogger(classOf[AssertionRunner])
+    private val logger = execution.loggerFactory.getLogger(classOf[AssertionRunner].getName)
 
     def run(assertions:Seq[Assertion], dryRun:Boolean=false, keepGoing:Boolean=false) : Seq[AssertionResult] = {
         // Collect all required DataFrames for caching. We assume that each DataFrame might be used in multiple

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -37,13 +36,11 @@ import com.dimajix.flowman.spec.documentation.DocumenterLoader
 import com.dimajix.flowman.spec.documentation.GeneratorSpec
 
 
-case class DocumentTarget(
+final case class DocumentTarget(
     instanceProperties:Target.Properties,
     collectors:Seq[Collector] = Seq(),
     generators:Seq[Generator] = Seq()
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(getClass)
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return

@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dimajix.flowman.kernel.proto";
+option java_outer_classname = "LoggingProto";
+
+package com.dimajix.flowman.kernel;
+
+import "common.proto";
+import "exception.proto";
+
+
+enum LogLevel {
+    ALL = 0;
+    FATAL = 10;
+    ERROR = 20;
+    WARN = 30;
+    INFO = 40;
+    DEBUG = 50;
+    TRACE = 60;
+}
+message LogLocation {
+    optional string file = 1;
+    optional string declaringClass = 2;
+    optional string methodName = 3;
+    optional string fileName = 4;
+    optional int32 lineNumber = 5;
+}
+message LogEvent {
+    string logger = 1;
+    Timestamp timestamp = 2;
+    LogLevel level = 3;
+    string message = 4;
+    optional LogLocation location = 5;
+    optional Exception exception = 6;
+}

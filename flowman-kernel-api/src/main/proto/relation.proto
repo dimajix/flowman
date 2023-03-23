@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dimajix.flowman.kernel.proto.relation";
+option java_outer_classname = "RelationProto";
+
+package com.dimajix.flowman.kernel.relation;
+
+import "common.proto";
+import "dataframe.proto";
+
+
+message RelationDetails {
+    optional string project = 1;
+    string name = 2;
+    string kind = 3;
+    repeated ResourceIdentifier requiredByCreate = 6;
+    repeated ResourceIdentifier requiredByWrite = 7;
+    repeated ResourceIdentifier requiredByRead = 8;
+    repeated ResourceIdentifier providedByCreate = 9;
+    repeated ResourceIdentifier providedByWrite = 10;
+    repeated ResourceIdentifier providedByRead = 11;
+}
+
+
+message ListRelationsRequest {
+    string sessionId = 1;
+    optional string project = 2;
+}
+message ListRelationsResponse {
+    repeated RelationIdentifier relations = 2;
+}
+
+message GetRelationRequest {
+    string sessionId = 1;
+    RelationIdentifier relation = 2;
+}
+message GetRelationResponse {
+    RelationDetails relation = 2;
+}
+
+message ExecuteRelationRequest {
+    string sessionId = 1;
+    repeated RelationIdentifier relations = 2;
+    ExecutionPhase phase = 3;
+    map<string,string> partition = 4;
+    bool force = 5;
+    bool keepGoing = 6;
+    bool dryRun = 7;
+}
+message ExecuteRelationResponse {
+    ExecutionStatus status = 1;
+}
+
+message ReadRelationRequest {
+    string sessionId = 1;
+    RelationIdentifier relation = 2;
+    int32 maxRows = 3;
+    map<string,string> partition = 4;
+    repeated string columns = 5;
+}
+message ReadRelationResponse {
+    DataFrame data = 1;
+}
+
+message DescribeRelationRequest {
+    string sessionId = 1;
+    RelationIdentifier relation = 2;
+    map<string,string> partition = 3;
+    bool useSpark = 4;
+}
+message DescribeRelationResponse {
+    StructType schema = 1;
+}

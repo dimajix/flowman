@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.dimajix.flowman.catalog.TableIndex
 import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
+import com.dimajix.flowman.jdbc.SqlDialects
 import com.dimajix.flowman.model.Connection
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.Reference
@@ -40,7 +41,7 @@ import com.dimajix.flowman.spec.annotation.RelationType
 import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 
 
-case class SqlServerRelation(
+final case class SqlServerRelation(
     override val instanceProperties:Relation.Properties,
     override val schema:Option[Schema] = None,
     override val partitions: Seq[PartitionField] = Seq.empty,
@@ -77,9 +78,10 @@ case class SqlServerRelation(
 
     override protected def appendTable(execution: Execution, df:DataFrame, table:TableIdentifier): Unit = {
         val props = createConnectionProperties()
+        val dialect = SqlDialects.get(props(JDBCOptions.JDBC_URL))
         this.writer(execution, df, "com.microsoft.sqlserver.jdbc.spark", Map(), SaveMode.Append)
             .options(props ++ Map("tableLock" -> "true", "mssqlIsolationLevel" -> "READ_UNCOMMITTED"))
-            .option(JDBCOptions.JDBC_TABLE_NAME, table.unquotedString)
+            .option(JDBCOptions.JDBC_TABLE_NAME, dialect.quote(table))
             .save()
     }
 

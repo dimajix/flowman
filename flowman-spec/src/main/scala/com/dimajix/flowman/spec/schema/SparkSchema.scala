@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,6 @@ case class SparkSchema(
     override val url: Option[URL],
     override val spec: Option[String]
 ) extends ExternalSchema {
-    protected override val logger = LoggerFactory.getLogger(classOf[SparkSchema])
-
     /**
       * Returns the list of all fields of the schema
       * @return

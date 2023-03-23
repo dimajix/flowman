@@ -9,9 +9,9 @@
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>
-	    <artifactId>flowman-root</artifactId>
-        <version>0.30.0</version>
-        <relativePath>../../pom.xml</relativePath>
+        <artifactId>flowman-plugin-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
     <properties>
@@ -19,6 +19,7 @@
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
         <delta.version>2.2.0</delta.version>
+        <delta.scope>compile</delta.scope>
     </properties>
 
     <profiles>
@@ -86,9 +87,38 @@
             </build>
         </profile>
         <profile>
-            <id>EMR-6.9</id>
+            <id>CDP-7.1-spark-3.3</id>
             <properties>
-                <delta.version>2.1.1</delta.version>
+                <delta.version>2.2.0</delta.version>
+            </properties>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <!-- Disable compilation -->
+                        <plugin>
+                            <groupId>net.alchim31.maven</groupId>
+                            <artifactId>scala-maven-plugin</artifactId>
+                            <configuration>
+                                <sourceDir>no-source</sourceDir>
+                                <testSourceDir>no-test-source</testSourceDir>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+        <profile>
+            <id>EMR-6.10</id>
+            <properties>
+                <delta.version>2.2.0</delta.version>
+                <delta.scope>provided</delta.scope>
+            </properties>
+        </profile>
+        <profile>
+            <id>databricks-12.2</id>
+            <properties>
+                <delta.version>2.2.0</delta.version>
+                <delta.scope>provided</delta.scope>
             </properties>
         </profile>
         <profile>
@@ -147,6 +177,10 @@
         </resources>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
             </plugin>
@@ -202,18 +236,17 @@
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spec</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spark-testing</artifactId>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>io.delta</groupId>
             <artifactId>delta-core_${scala.api_version}</artifactId>
             <version>${delta.version}</version>
+            <scope>${delta.scope}</scope>
         </dependency>
 
         <dependency>

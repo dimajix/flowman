@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import org.apache.spark.sql.types.VarcharType
 
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.execution.SchemaMismatchException
-import com.dimajix.flowman.util.SchemaUtils.coerce
+import com.dimajix.flowman.util.SparkSchemaUtils.coerce
 import com.dimajix.spark.sql.SchemaUtils.CHAR_VARCHAR_TYPE_STRING_METADATA_KEY
 import com.dimajix.spark.sql.functions.nullable_struct
 

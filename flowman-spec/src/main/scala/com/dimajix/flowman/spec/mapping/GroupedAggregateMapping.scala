@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ object GroupedAggregateMapping {
     )
 }
 
-case class GroupedAggregateMapping(
+final case class GroupedAggregateMapping(
     instanceProperties : Mapping.Properties,
     input : MappingOutputIdentifier,
     groups : Map[String,GroupedAggregateMapping.Group],

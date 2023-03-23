@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 Kaya Kupferschmidt
+ * Copyright (C) 2019 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.slf4j.LoggerFactory
+import org.apache.hadoop.fs.Path
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -32,12 +32,12 @@ import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
 
 
-case class HiveDatabaseTarget(
+final case class HiveDatabaseTarget(
     instanceProperties:Target.Properties,
-    database: String
+    database: String,
+    catalog: String = "",
+    location: Option[Path] = None
 ) extends BaseTarget {
-    private val logger = LoggerFactory.getLogger(classOf[HiveDatabaseTarget])
-
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return
@@ -76,24 +76,24 @@ case class HiveDatabaseTarget(
       * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
       * will not provide the data itself, it will only create the container
       *
-      * @param executor
+      * @param execution
       */
-    override def create(executor: Execution): Unit = {
-        require(executor != null)
+    override def create(execution: Execution): Unit = {
+        require(execution != null)
 
         logger.info(s"Creating Hive database '$database'")
-        executor.catalog.createDatabase(database, true)
+        execution.catalog.createDatabase(database, catalog, location, true)
     }
 
     /**
       * Performs a verification of the build step or possibly other checks.
       *
-      * @param executor
+      * @param execution
       */
-    override def verify(executor: Execution): Unit = {
-        require(executor != null)
+    override def verify(execution: Execution): Unit = {
+        require(execution != null)
 
-        if (!executor.catalog.databaseExists(database)) {
+        if (!execution.catalog.databaseExists(database)) {
             val error = s"Database '$database' provided by target '$identifier' does not exist"
             logger.error(error)
             throw new VerificationFailedException(identifier, new ExecutionException(error))
@@ -104,24 +104,28 @@ case class HiveDatabaseTarget(
       * Completely destroys the resource associated with this target. This will delete both the phyiscal data and
       * the table definition
       *
-      * @param executor
+      * @param execution
       */
-    override def destroy(executor: Execution): Unit = {
-        require(executor != null)
+    override def destroy(execution: Execution): Unit = {
+        require(execution != null)
 
-        logger.info(s"Creating Hive database '$database'")
-        executor.catalog.dropDatabase(database, true)
+        logger.info(s"Dropping Hive database '$database'")
+        execution.catalog.dropDatabase(database, true)
     }
 }
 
 
 class HiveDatabaseTargetSpec extends TargetSpec {
     @JsonProperty(value="database", required=true) private var database:String = _
+    @JsonProperty(value="catalog", required=false) private var catalog:String = ""
+    @JsonProperty(value="location", required=false) private var location:Option[String] = None
 
     override def instantiate(context: Context, properties:Option[Target.Properties] = None): HiveDatabaseTarget = {
         HiveDatabaseTarget(
             instanceProperties(context, properties),
-            context.evaluate(database)
+            context.evaluate(database),
+            context.evaluate(catalog),
+            context.evaluate(location).map(l => new Path(l))
         )
     }
 }

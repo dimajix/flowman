@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Kaya Kupferschmidt
+ * Copyright (C) 2022 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ class MappingCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
                 "src" -> sourceRelationTemplate
             )
         )
-        val session = Session.builder().disableSpark().build()
+        val session = Session.builder().withProject(project).disableSpark().build()
         val context = session.getContext(project)
         val execution = session.execution
 

@@ -1,11 +1,15 @@
-version: "3"
+version: "3.9"
 
 services:
   flowman:
     image: dimajix/flowman:latest
     command: bash
+    depends_on:
+      - mariadb
     volumes:
-      - ./flow:/home/flowman/flow
+      - ./migrations:/home/flowman/migrations
+      - ./weather:/home/flowman/weather
+      - ./bin:/home/flowman/bin
       - ./conf:/opt/flowman/conf
     environment:
       - http_proxy=${http_proxy}
@@ -22,7 +26,7 @@ services:
       - MARIADB_USER=flowman
       - MARIADB_PASSWORD=yourStrong(!)Password
       - MARIADB_ROOT_PASSWORD=yourStrong(!)Password
-      - MARIADB_DATABASE=weather
+      - MARIADB_DATABASE=flowman
     command:
       - --sql-mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,ANSI_QUOTES
     ports:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 Kaya Kupferschmidt
+ * Copyright (C) 2018 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,8 @@ object SchemaSpec extends TypeRegistry[SchemaSpec] {
   * Interface class for declaring relations (for sources and sinks) as part of a model
   */
 @JsonTypeResolver(classOf[CustomTypeResolverBuilder])
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property="kind", defaultImpl=classOf[InlineSchemaSpec], visible=true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property="kind", visible=true)
 @JsonSubTypes(value = Array(
-    new JsonSubTypes.Type(name = "avro", value = classOf[AvroSchemaSpec]),
     new JsonSubTypes.Type(name = "inline", value = classOf[InlineSchemaSpec]),
     new JsonSubTypes.Type(name = "mapping", value = classOf[MappingSchemaSpec]),
     new JsonSubTypes.Type(name = "relation", value = classOf[RelationSchemaSpec]),
@@ -51,7 +50,7 @@ object SchemaSpec extends TypeRegistry[SchemaSpec] {
     new JsonSubTypes.Type(name = "union", value = classOf[UnionSchemaSpec])
 ))
 abstract class SchemaSpec extends Spec[Schema] {
-    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required=false, defaultValue="inline") protected var kind: String = "inline"
+    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required=false) protected var kind: String = "inline"
 
     override def instantiate(context:Context, properties:Option[Schema.Properties] = None) : Schema
 

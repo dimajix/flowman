@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Kaya Kupferschmidt
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import com.dimajix.common.IdentityHashSet
 import com.dimajix.flowman.model.Target
 
 
-final class DirtyTargets(targets: Seq[Target], phase:Phase) {
-    private val logger = LoggerFactory.getLogger(classOf[DirtyTargets])
+final class DirtyTargets(execution:Execution, targets: Seq[Target], phase:Phase) {
+    private val logger = execution.loggerFactory.getLogger(classOf[DirtyTargets].getName)
 
     private val dependencies = {
         // Initialize dependencies map with targets as keys

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 Kaya Kupferschmidt
+ * Copyright (C) 2019 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.NoSuchProjectException
+import com.dimajix.flowman.execution.ProjectNotFoundException
 import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.storage.AbstractStore
@@ -42,7 +42,7 @@ case class FileStore(root:File) extends AbstractStore {
             .flatMap(file => loadProjectManifest(file).map((file, _)))
             .find(_._2.name == name)
             .map(fp => Project.read.file(fp._1))
-            .getOrElse(throw new NoSuchProjectException(name))
+            .getOrElse(throw new ProjectNotFoundException(name))
     }
 
     /**

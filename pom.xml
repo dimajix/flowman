@@ -83,7 +83,7 @@
         <!-- Default Hadoop version (3.3) -->
         <hadoop.version>3.3.2</hadoop.version>
         <hadoop-api.version>3.3</hadoop-api.version>
-        <json-smart.version>2.4.7</json-smart.version>
+        <json-smart.version>2.4.9</json-smart.version>
         <commons-codec.version>1.15</commons-codec.version>
 
         <!-- Default Spark version (3.3) -->

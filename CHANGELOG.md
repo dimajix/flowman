@@ -10,7 +10,8 @@ changes lead to incompatibility with previous versions (breaking changes).
 
 Generally, you can expect Flowman to be downwards compatible with older releases within the same major version. Some
 minor changes or bugfixes may change the behavior of some features, which have been changed intentionally (for example,
-even a small bugfix intentionally changes the behaviour).
+even a small bugfix intentionally changes the behaviour). Backward compatibility in Flowman is primarily defined via
+the ability to correctly read and process projects created with older Flowman versions.
 
 Breaking changes will be documented in this changelog file for each version.
 
@@ -69,7 +70,6 @@ Breaking changes will be documented in this changelog file for each version.
 * github-375: [BUG] "project reload" does not work correctly in remote shell with nested directories
 * github-376: Document options to parallelize work
 * github-378: Remove travis-ci integration
-* github-379: [BUG] Parallel execution of multiple targets runs too many targets on Java 17
 * github-308: Revise branching model
 
 ### Breaking changes
@@ -80,6 +80,11 @@ you explicitly need to include the plugin in the `default-namesapce.yml` file.
 * Imports are now strictly checked. This means when you cross-reference some entity in your project which is provided
 by a different Flowman project, you now need to explicitly import the project in the `project.yml`
 * The `kind` for schema definitions is now a mandatory attribute, Flowman will not fall back to a `inline` schema anymore. 
+
+
+## Version 0.30.1 - 2023-03-23
+
+* github-379: [BUG] Parallel execution of multiple targets runs too many targets on Java 17
 
 
 ## Version 0.30.0 - 2023-01-03

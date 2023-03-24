@@ -32,10 +32,11 @@ class ManualScheduler extends Scheduler {
      * @param filter  Specifies a filter
      */
     override def initialize(targets: Seq[Target], phase: Phase, filter: Target => Boolean): Unit = {
+        val activeTargets = targets.filter(t => t.phases.contains(phase) && filter(t))
         this.targets =
             phase match {
-                case Phase.DESTROY | Phase.TRUNCATE => targets.filter(t => t.phases.contains(phase) && filter(t)).reverse
-                case _ => targets.filter(t => t.phases.contains(phase) && filter(t))
+                case Phase.DESTROY | Phase.TRUNCATE => activeTargets.reverse
+                case _ => activeTargets
             }
     }
 

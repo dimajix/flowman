@@ -116,6 +116,8 @@ class DependencySchedulerTest extends AnyFlatSpec with Matchers {
 
         sort(Seq(t1,t2,t3,t4), Phase.BUILD).map(_.name) should be (Seq("t1","t2","t3","t4"))
         sort(Seq(t1,t2,t3,t4), Phase.DESTROY).map(_.name) should be (Seq("t4","t3","t2","t1"))
+        sort(Seq(t4, t3, t2, t1), Phase.BUILD).map(_.name) should be(Seq("t1", "t2", "t3", "t4"))
+        sort(Seq(t4, t3, t2, t1), Phase.DESTROY).map(_.name) should be(Seq("t4", "t3", "t2", "t1"))
 
         session.shutdown()
     }
@@ -312,6 +314,26 @@ class DependencySchedulerTest extends AnyFlatSpec with Matchers {
         )
 
         a[RuntimeException] should be thrownBy (sort(Seq(t1,t2), Phase.BUILD))
+
+        session.shutdown()
+    }
+
+    it should "preserve the given ordering" in {
+        val session = Session.builder()
+            .disableSpark()
+            .build()
+        val context = session.context
+        val execution = session.execution
+
+        val t1 = DummyTarget(context, "t1", Set.empty, Set.empty)
+        val t2 = DummyTarget(context, "t2", Set.empty, Set.empty)
+        val t3 = DummyTarget(context, "t3", Set.empty, Set.empty)
+        val t4 = DummyTarget(context, "t4", Set.empty, Set.empty)
+
+        sort(Seq(t1, t2, t3, t4), Phase.BUILD).map(_.name) should be(Seq("t1", "t2", "t3", "t4"))
+        sort(Seq(t4, t3, t2, t1), Phase.BUILD).map(_.name) should be(Seq("t4", "t3", "t2", "t1"))
+        sort(Seq(t1, t2, t3, t4), Phase.DESTROY).map(_.name) should be(Seq("t4", "t3", "t2", "t1"))
+        sort(Seq(t4, t3, t2, t1), Phase.DESTROY).map(_.name) should be(Seq("t1", "t2", "t3", "t4"))
 
         session.shutdown()
     }

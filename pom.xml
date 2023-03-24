@@ -83,7 +83,6 @@
         <!-- Default Hadoop version (3.3) -->
         <hadoop.version>3.3.2</hadoop.version>
         <hadoop-api.version>3.3</hadoop-api.version>
-        <json-smart.version>2.4.7</json-smart.version>
         <commons-codec.version>1.15</commons-codec.version>
 
         <!-- Default Spark version (3.3) -->
@@ -220,7 +219,6 @@
                 <jackson.databind.version>2.9.10.1</jackson.databind.version>
                 <jackson.version>2.9.10</jackson.version>
                 <joda-time.version>2.9.9</joda-time.version>
-                <json-smart.version>2.3</json-smart.version>
                 <json4s.version>3.5.3</json4s.version>
                 <jsr305.version>1.3.9</jsr305.version>
                 <libthrift.version>0.9.3-1</libthrift.version>
@@ -299,7 +297,6 @@
                 <jackson.databind.version>2.10.5.1</jackson.databind.version>
                 <jackson.version>2.10.5</jackson.version>
                 <joda-time.version>2.9.9</joda-time.version>
-                <json-smart.version>2.3</json-smart.version>
                 <json4s.version>3.5.3</json4s.version>
                 <jsr305.version>1.3.9</jsr305.version>
                 <libthrift.version>0.16.0</libthrift.version>
@@ -369,7 +366,6 @@
                 <jackson.databind.version>2.10.5.1</jackson.databind.version>
                 <jackson.version>2.10.5</jackson.version>
                 <joda-time.version>2.9.9</joda-time.version>
-                <json-smart.version>2.4.7</json-smart.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.13.0</libthrift.version>
@@ -439,7 +435,6 @@
                 <jackson.databind.version>2.10.5.1</jackson.databind.version>
                 <jackson.version>2.10.5</jackson.version>
                 <joda-time.version>2.9.9</joda-time.version>
-                <json-smart.version>2.4.7</json-smart.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.16.0</libthrift.version>
@@ -846,7 +841,6 @@
                 <hadoop.version>2.6.5</hadoop.version>
                 <hadoop-api.version>2.6</hadoop-api.version>
                 <commons-codec.version>1.10</commons-codec.version>
-                <json-smart.version>1.3.1</json-smart.version>
             </properties>
         </profile>
         <profile>
@@ -855,7 +849,6 @@
                 <hadoop.version>2.7.7</hadoop.version>
                 <hadoop-api.version>2.7</hadoop-api.version>
                 <commons-codec.version>1.10</commons-codec.version>
-                <json-smart.version>1.3.1</json-smart.version>
             </properties>
         </profile>
         <profile>
@@ -864,7 +857,6 @@
                 <hadoop.version>2.8.5</hadoop.version>
                 <hadoop-api.version>2.8</hadoop-api.version>
                 <commons-codec.version>1.10</commons-codec.version>
-                <json-smart.version>1.3.1</json-smart.version>
             </properties>
         </profile>
         <profile>
@@ -873,7 +865,6 @@
                 <hadoop.version>2.9.2</hadoop.version>
                 <hadoop-api.version>2.9</hadoop-api.version>
                 <commons-codec.version>1.10</commons-codec.version>
-                <json-smart.version>1.3.1</json-smart.version>
             </properties>
         </profile>
         <profile>
@@ -882,7 +873,6 @@
                 <hadoop.version>3.1.2</hadoop.version>
                 <hadoop-api.version>3.1</hadoop-api.version>
                 <commons-codec.version>1.11</commons-codec.version>
-                <json-smart.version>2.3</json-smart.version>
             </properties>
         </profile>
         <profile>
@@ -891,7 +881,6 @@
                 <hadoop.version>3.2.0</hadoop.version>
                 <hadoop-api.version>3.2</hadoop-api.version>
                 <commons-codec.version>1.11</commons-codec.version>
-                <json-smart.version>2.3</json-smart.version>
             </properties>
         </profile>
         <profile>
@@ -900,7 +889,6 @@
                 <hadoop.version>3.3.1</hadoop.version>
                 <hadoop-api.version>3.3</hadoop-api.version>
                 <commons-codec.version>1.15</commons-codec.version>
-                <json-smart.version>2.4.7</json-smart.version>
             </properties>
         </profile>
     </profiles>
@@ -1959,6 +1947,10 @@
                         <groupId>org.apache.zookeeper</groupId>
                         <artifactId>zookeeper</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>net.minidev</groupId>
+                        <artifactId>json-smart</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
@@ -2214,13 +2206,6 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
                 <version>${slf4j.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>net.minidev</groupId>
-                <artifactId>json-smart</artifactId>
-                <version>${json-smart.version}</version>
                 <scope>provided</scope>
             </dependency>
 

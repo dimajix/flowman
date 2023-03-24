@@ -17,6 +17,7 @@
 package com.dimajix.flowman.execution
 
 import scala.annotation.tailrec
+import scala.collection.mutable
 import scala.util.control.NonFatal
 
 import org.slf4j.LoggerFactory
@@ -33,6 +34,7 @@ class DependencyScheduler(execution: Execution, context: Context) extends Schedu
     // Map containing all dependencies of all targets. Each entry represents the list of dependencies which
     // have to be executed before the target itself
     private var dependencies = IdentityHashMap[Target,IdentityHashSet[Target]]()
+    private var targets = mutable.Buffer[Target]()
     private var running = IdentityHashSet[Target]()
     private var phase:Phase = Phase.BUILD
     private var filter:Target => Boolean = (Target) => true
@@ -78,6 +80,11 @@ class DependencyScheduler(execution: Execution, context: Context) extends Schedu
             case _ =>
                 dependencies
         }
+        // Store targets in original (or reversed) order to preserve given ordering if possible
+        this.targets = phase match {
+            case Phase.DESTROY | Phase.TRUNCATE => targets.reverse.toBuffer
+            case _ => targets.toBuffer
+        }
         this.running = IdentityHashSet[Target]()
         this.phase = phase
         this.filter = filter
@@ -112,8 +119,9 @@ class DependencyScheduler(execution: Execution, context: Context) extends Schedu
      */
     override def next(): Option[Target] = {
         @tailrec
-        def getCandidates() : Iterable[Target] = {
-            val candidates = dependencies.filter(_._2.isEmpty).keys
+        def getCandidates() : Seq[Target] = {
+            // Retrieve candidates in order of targets but with empty dependencies
+            val candidates = targets.filter(t => dependencies(t).isEmpty).seq
 
             // Check for cyclic dependencies: No candidates found, but dependencies non-empty and no running targets
             if (candidates.isEmpty && dependencies.nonEmpty && running.isEmpty) {
@@ -169,9 +177,10 @@ class DependencyScheduler(execution: Execution, context: Context) extends Schedu
      * @param candidates
      * @return
      */
-    protected def selectNext(candidates:Iterable[Target]) : Option[Target] = {
+    protected def selectNext(candidates:Seq[Target]) : Option[Target] = {
         // Sort candidates, so the selection algorithm is deterministic
-        candidates.toSeq.sortBy(_.name).headOption
+        //candidates.toSeq.sortBy(_.name).headOption
+        candidates.headOption
     }
 
     /**
@@ -181,6 +190,7 @@ class DependencyScheduler(execution: Execution, context: Context) extends Schedu
     protected def addTarget(target:Target) : Unit = {
         if (!dependencies.contains(target)) {
             dependencies.put(target, IdentityHashSet[Target]())
+            targets.append(target)
         }
     }
 
@@ -191,6 +201,9 @@ class DependencyScheduler(execution: Execution, context: Context) extends Schedu
      */
     protected def removeTarget(target:Target) : Unit = {
         dependencies.remove(target)
+        val idx = targets.indexWhere(_ eq target)
+        if (idx >= 0)
+            targets.remove(idx)
     }
 
     /**
@@ -209,7 +222,8 @@ class DependencyScheduler(execution: Execution, context: Context) extends Schedu
      * @param dependency
      */
     protected def addDependency(target:Target, dependency:Target) : Unit = {
-        dependencies.getOrElseUpdate(target, IdentityHashSet[Target]()).add(dependency)
+        val deps = dependencies.getOrElse(target, throw new IllegalArgumentException(s"Cannot add dependencies to unknown target ${target.identifier}"))
+        deps.add(dependency)
     }
 
     /**

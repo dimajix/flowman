@@ -16,14 +16,15 @@
 
 package com.dimajix.flowman.documentation
 
-import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.TaskSupport
+import scala.collection.parallel.ThreadPoolTaskSupport
 import scala.util.control.NonFatal
 
 import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
+import com.dimajix.flowman.common.ConsoleColors.yellow
 import com.dimajix.flowman.common.ThreadUtils
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Context
@@ -32,7 +33,6 @@ import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.spi.ColumnCheckExecutor
 import com.dimajix.flowman.spi.SchemaCheckExecutor
-import com.dimajix.flowman.common.ConsoleColors.yellow
 import com.dimajix.spark.SparkUtils
 import com.dimajix.spark.SparkUtils.withJobGroup
 
@@ -126,10 +126,11 @@ class CheckExecutor(execution: Execution) {
 
     private def runAllChecks(context:Context, df:DataFrame, schema:SchemaDoc) : SchemaDoc = {
         val parallelism = context.flowmanConf.getConf(FlowmanConf.EXECUTION_CHECK_PARALLELISM)
-        val pool = if (parallelism > 1 ) ThreadUtils.newForkJoinPool("documenter", parallelism) else null
-        implicit val ts = if (pool != null) new ForkJoinTaskSupport(pool) else null
-        // Get current JobGroup and JobDescription to pass to other threads
-        implicit val jobGroup = SparkUtils.getJobGroup(execution.spark.sparkContext)
+        val pool = if (parallelism > 1 ) ThreadUtils.newExecutor("documenter", parallelism) else null
+        // github-382: A ForkJoinPool could possibly run too many checks in parallel
+        implicit val ts: TaskSupport = if (pool != null) new ThreadPoolTaskSupport(pool) else null
+        // Get current Spark JobGroup and JobDescription to pass to other threads
+        implicit val jobGroup: (String, String) = SparkUtils.getJobGroup(execution.spark.sparkContext)
 
         try {
             val columnChecks = runColumnChecks(context, df, schema.columns)

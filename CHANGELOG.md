@@ -71,6 +71,8 @@ Breaking changes will be documented in this changelog file for each version.
 * github-376: Document options to parallelize work
 * github-378: Remove travis-ci integration
 * github-308: Revise branching model
+* github-381: Remove json-smart dependency
+* github-382: [BUG] Parallel execution of multiple dq checks runs too many checks on Java 17
 
 ### Breaking changes
 

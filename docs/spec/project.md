@@ -7,9 +7,9 @@ version and a list of subdirectories, which contain the entity definitions.
 
 ## Project Specification
 
-Flowman always requires a *Project* top level file containing general information (like a projects name and version) 
-and directories where to look for specifications. The project file should be named `project.yml`, this way `flowexec` 
-and `flowshell` will directly pick it up when only the directory is given on the command line.
+Flowman always requires a *Project* top level file containing general information (like the name and version of a 
+project) and directories where to look for specifications. The project file should be named `project.yml`, this way 
+`flowexec` and `flowshell` will directly pick it up when only the directory is given on the command line.
 
 A typical `project.yml` file looks as follows:
 
@@ -19,6 +19,7 @@ version: "1.0"
 description: "My first example project"
 
 modules:
+ # List of subdirectories containing project files (*.yml, *.yaml)
  - config
  - model
  - mapping
@@ -26,9 +27,12 @@ modules:
  - job
   
 imports:
+  # Import another project with no (or default) parameters
   - project: other_project 
 
+  # Import a project with specified job context
   - project: commons
+    # Specify values for job parameters
     arguments:
       processing_date: $processing_date
 ```
@@ -49,13 +53,13 @@ of a project is currently being used.
 A description of the overall project. Can be any text, is not used by Flowman otherwise
 
 * `modules` **(mandatory)** *(list:string)*
-The `modules` secion contains a list of *subdirectories* or *filenames* where Flowman should search for more YAML 
+The `modules` section contains a list of *subdirectories* or *filenames* where Flowman should search for more YAML 
 specification files. This helps to organize complex projects into different modules and/or aspects. The directory and 
 file names are relative to the project file itself.
 
 * `imports` **(optional)** *(list:import)*
 Within the `imports` section you can specify different projects to be imported and made available for referencing
-its entities.
+its entities. Please read [sharing entities](../cookbook/sharing.md) for more details.
 
 
 ## Proposed Directory Layout

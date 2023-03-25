@@ -73,6 +73,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-308: Revise branching model
 * github-381: Remove json-smart dependency
 * github-382: [BUG] Parallel execution of multiple dq checks runs too many checks on Java 17
+* github-384: Improve documentation for using docker-compose
 
 ### Breaking changes
 

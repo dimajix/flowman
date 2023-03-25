@@ -25,7 +25,8 @@ environment variables:
 
 ## Using Docker
 A simpler way to run Flowman on Windows is to use a Docker image available on
-[Docker Hub](https://hub.docker.com/repository/docker/dimajix/flowman)
+[Docker Hub](https://hub.docker.com/repository/docker/dimajix/flowman).
+More details for using Docker are described in [Running in Docker](docker.md).
 
 
 ## Using WSL

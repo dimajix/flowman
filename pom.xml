@@ -75,7 +75,7 @@
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <junit.version>5.8.2</junit.version>
         <netty.version>3.9.9.Final</netty.version>
-        <protobuf.version>2.5.0</protobuf.version>
+        <protobuf.version>3.16.3</protobuf.version>
         <re2j.version>1.1</re2j.version>
         <scala-collection-compat.version>2.1.1</scala-collection-compat.version>
         <scalamock.version>5.1.0</scalamock.version>
@@ -135,7 +135,7 @@
 
         <!-- gRPC related versions -->
         <grpc.version>1.53.0</grpc.version>
-        <grpc-protobuf.version>3.22.2</grpc-protobuf.version>
+        <grpc-protobuf.version>3.16.3</grpc-protobuf.version>
         <grpc-guava.version>31.1-jre</grpc-guava.version>
 
         <!-- Flowman version -->

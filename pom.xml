@@ -135,8 +135,8 @@
 
         <!-- gRPC related versions -->
         <grpc.version>1.53.0</grpc.version>
-        <grpc-protobuf.version>3.21.7</grpc-protobuf.version>
-        <grpc-guava.version>31.0.1-jre</grpc-guava.version>
+        <grpc-protobuf.version>3.22.2</grpc-protobuf.version>
+        <grpc-guava.version>31.1-jre</grpc-guava.version>
 
         <!-- Flowman version -->
         <flowman.version>${project.version}</flowman.version>

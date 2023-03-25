@@ -64,12 +64,12 @@ class SessionManager(val rootSession:execution.Session) {
      * @param projectPath
      * @return
      */
-    def createSession(store: Store, projectName:String, clientId:UUID) : SessionService = {
+    def createSession(store: Store, projectName:String, environment:Map[String,String], config:Map[String,String], clientId:UUID) : SessionService = {
         val project = store.loadProject(projectName)
-        createSession(store, project, clientId)
+        createSession(store, project, environment, config, clientId)
     }
-    def createSession(store: Store, project:Project, clientId:UUID) : SessionService = {
-        val svc = new SessionService(this, store, project, clientId)
+    def createSession(store: Store, project:Project, environment:Map[String,String], config:Map[String,String], clientId:UUID) : SessionService = {
+        val svc = new SessionService(this, store, project, environment, config, clientId)
 
         sessions.synchronized {
             sessions.append(svc)
@@ -77,15 +77,15 @@ class SessionManager(val rootSession:execution.Session) {
 
         svc
     }
-    def createSession(store: Store, projectLocation: File, clientId:UUID): SessionService = {
+    def createSession(store: Store, projectLocation: File, environment:Map[String,String], config:Map[String,String], clientId:UUID): SessionService = {
         if (!projectLocation.isAbsolute())
             throw new IllegalArgumentException(s"Project location is not absolute: $projectLocation")
 
         val project = Project.read.file(projectLocation)
-        createSession(store, project, clientId)
+        createSession(store, project, environment, config, clientId)
     }
-    def createSession(projectLocation:File, clientId:UUID) : SessionService = {
-        createSession(rootSession.store, projectLocation, clientId)
+    def createSession(projectLocation:File, environment:Map[String,String], config:Map[String,String], clientId:UUID) : SessionService = {
+        createSession(rootSession.store, projectLocation, environment, config, clientId)
     }
 
     def removeClientSessions(clientId:UUID) : Unit = {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,35 @@
 
 package com.dimajix.flowman.tools;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URI;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import lombok.val;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.LoggingEvent;
+import org.yaml.snakeyaml.Yaml;
 
 import com.dimajix.flowman.kernel.ClientFactory;
 import com.dimajix.flowman.kernel.HistoryClient;
 import com.dimajix.flowman.kernel.KernelClient;
 import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.WorkspaceClient;
+import com.dimajix.flowman.templating.Velocity;
+import static com.dimajix.common.ExceptionUtils.reasons;
+import static com.dimajix.flowman.common.ParserUtils.splitSetting;
 
 
 public class RemoteTool {
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
     private final KernelClient _kernel;
     private final HistoryClient _history;
     private SessionClient _session= null;
@@ -41,6 +53,8 @@ public class RemoteTool {
     private final Map<String,String> config;
     private final Map<String,String> environment;
     private final List<String> profiles;
+    private Map<String,String> userConfig = Collections.emptyMap();
+    private Map<String,String> userEnvironment = Collections.emptyMap();
 
     public RemoteTool(URI kernelUri, Map<String,String> config, Map<String,String> environment, List<String> profiles) {
         this.config = config;
@@ -49,6 +63,7 @@ public class RemoteTool {
         this._kernel =  ClientFactory.createClient(kernelUri);
         this._history = this._kernel.getHistory();
         this._workspace = openWorkspace(extractWorkspace(kernelUri));
+        loadUserSettings();
     }
 
     public void shutdown() {
@@ -103,12 +118,19 @@ public class RemoteTool {
     }
 
     public SessionClient newSession(String projectLocation) {
+        Map<String,String> allConfigs = new HashMap<>();
+        allConfigs.putAll(userConfig);
+        allConfigs.putAll(config);
+        Map<String,String> allEnvironment = new HashMap<>();
+        allEnvironment.putAll(userEnvironment);
+        allEnvironment.putAll(environment);
+
         val isAbsolute = false; //FileSystem.getProtocol(projectLocation).nonEmpty || Tool.resolvePath(projectLocation).isAbsolute()
         val newSession =
             isAbsolute ?
-                _kernel.createSession(projectLocation, config, environment, profiles)
+                _kernel.createSession(projectLocation, allConfigs, allEnvironment, profiles)
             :
-                _kernel.createSession(_workspace.getWorkspaceId(), projectLocation, config, environment, profiles);
+                _kernel.createSession(_workspace.getWorkspaceId(), projectLocation, allConfigs, allEnvironment, profiles);
 
         if (_session != null) {
             _session.shutdown();
@@ -159,6 +181,52 @@ public class RemoteTool {
                 else
                     logger.error(event.getMessage());
                 break;
+        }
+    }
+
+    private void loadUserSettings() {
+        val settingsFile = new File(".flowman-env.yml");
+        if (settingsFile.exists()) {
+            try {
+                logger.info("Loading user overrides from " + settingsFile.getAbsoluteFile().getCanonicalPath());
+                val yaml = new Yaml();
+                try (val inputStream = new FileInputStream(settingsFile)) {
+                    HashMap<String,Object> yamlMap = yaml.load(inputStream);
+                    val rawUserEnvironment = getKeyValuesArray(yamlMap, "environment");
+                    val rawUserConfig = getKeyValuesArray(yamlMap, "config");
+
+                    val vc = Velocity.newContext();
+                    rawUserEnvironment.entrySet().forEach(e -> vc.put(e.getKey(), e.getValue()));
+
+                    userEnvironment = rawUserEnvironment.entrySet().stream()
+                        .map(kv -> Map.entry(kv.getKey(), Velocity.evaluate(vc, "userEnvironment", kv.getValue())))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    userConfig = rawUserConfig.entrySet().stream()
+                        .map(kv -> Map.entry(kv.getKey(), Velocity.evaluate(vc, "userConfig", kv.getValue())))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                }
+            }
+            catch (IOException ex) {
+                logger.warn("Cannot load user settings '.flowman-env.yml':\n  "+ reasons(ex));
+            }
+        }
+    }
+
+    private static Map<String,String> getKeyValuesArray(Map<String,Object> root, String path) {
+        val env = root.get(path);
+        if (env != null && env instanceof List) {
+            val array = (List)env;
+            val result = new HashMap<String,String>();
+            for (val entry : array) {
+                if (entry instanceof String) {
+                    val me = splitSetting((String)entry);
+                    result.put(me.getKey(), me.getValue());
+                }
+            }
+            return result;
+        }
+        else {
+            return Collections.emptyMap();
         }
     }
 }

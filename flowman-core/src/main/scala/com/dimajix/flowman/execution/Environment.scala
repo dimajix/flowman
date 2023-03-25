@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.execution
 
-import java.io.StringWriter
-
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 

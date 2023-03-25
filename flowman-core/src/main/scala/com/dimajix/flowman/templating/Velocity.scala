@@ -38,17 +38,17 @@ object Velocity {
     }
 
     addObject("File", FileWrapper)
-    addObject("Boolean", BooleanWrapper)
-    addObject("Integer", IntegerWrapper)
-    addObject("Float", FloatWrapper)
-    addObject("LocalDate", LocalDateWrapper)
-    addObject("LocalDateTime", LocalDateTimeWrapper)
-    addObject("Timestamp", TimestampWrapper)
-    addObject("Duration", DurationWrapper)
-    addObject("Period", PeriodWrapper)
-    addObject("System", SystemWrapper)
-    addObject("String", StringWrapper)
-    addObject("URL", URLWrapper)
+    addObject("Boolean", new BooleanWrapper())
+    addObject("Integer", new IntegerWrapper())
+    addObject("Float", new FloatWrapper())
+    addObject("LocalDate", new LocalDateWrapper())
+    addObject("LocalDateTime", new LocalDateTimeWrapper())
+    addObject("Timestamp", new TimestampWrapper())
+    addObject("Duration", new DurationWrapper())
+    addObject("Period", new PeriodWrapper())
+    addObject("System", new SystemWrapper())
+    addObject("String", new StringWrapper())
+    addObject("URL", new URLWrapper())
     addObject("JSON", JsonWrapper)
 
 

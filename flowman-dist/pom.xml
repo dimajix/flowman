@@ -355,6 +355,16 @@
             <artifactId>jsr305</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <scope>compile</scope>
+        </dependency>
 
         <!-- The following libraries need explicit version overrides -->
         <dependency>

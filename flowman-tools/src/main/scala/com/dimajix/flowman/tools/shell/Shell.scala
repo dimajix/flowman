@@ -17,6 +17,7 @@
 package com.dimajix.flowman.tools.shell
 
 import java.io.File
+import java.io.PrintWriter
 
 import scala.collection.JavaConverters._
 import scala.util.Failure
@@ -99,6 +100,7 @@ object Shell {
             Logging.setSparkLogging(options.sparkLogging)
 
             _instance = new Shell(options)
+            _instance.loadUserSettings()
             _instance.loadProject(options.projectFile)
             _instance.run()
         }
@@ -171,6 +173,11 @@ class Shell(args:Arguments) extends StatefulTool(
         }
         writer.println("\nType in 'help' for getting help")
 
+        loop(console, writer)
+    }
+
+
+    private def loop(console:LineReader, writer:PrintWriter): Boolean = {
         // REPL-loop
         while (true) {
             val cmd = new ParsedCommand

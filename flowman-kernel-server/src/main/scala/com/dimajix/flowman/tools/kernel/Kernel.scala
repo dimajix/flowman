@@ -106,7 +106,6 @@ object Kernel {
 
 
 final class Kernel(args:Arguments) extends Tool {
-    private val logger = LoggerFactory.getLogger(classOf[Kernel])
     lazy val workspaceDirectory =
         if (args.workspace.isEmpty)
             Tool.resolvePath(new File(".").getAbsoluteFile)

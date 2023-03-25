@@ -16,6 +16,25 @@ or for inspecting individual entities.
 * `-X` or `--verbose` Enables logging at more verbose level
 * `-XX` or `--debug` Enables logging at debug level
 
+### User Settings File
+By using the option `-D` and `--conf` you can manually override both Flowman environment and config variables. In
+addition to these command line options, Flowman will also look for a file `.flowman-env.yml` in the current working
+directory (which may not be the project directory!) for additional overrides. The file `.flowman-env.yml` looks as
+follows:
+```yaml
+environment:
+  # Override environment, for example set different directories
+  - basedir=file:///tmp/weather
+  - srcdir=$System.getenv('WEATHER_SRCDIR', 's3a://dimajix-training/data/weather')
+
+config:
+  # Override config, for example inject AWS Credentials
+  - spark.hadoop.fs.s3a.access.key=$System.getenv('AWS_ACCESS_KEY_ID')
+  - spark.hadoop.fs.s3a.secret.key=$System.getenv('AWS_SECRET_ACCESS_KEY')
+```
+The recommendation is not to add this file to source control (like git). Instead, developers should maintain their
+private copy of this file containing their specific configuration settings (like credentials, local directories etc).
+
 
 ### Exit Codes
 

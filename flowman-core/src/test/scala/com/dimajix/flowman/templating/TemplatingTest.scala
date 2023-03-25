@@ -166,14 +166,14 @@ class TemplatingTest extends AnyFlatSpec with Matchers with LocalTempDir {
 
     "Durations" should "be parseable" in {
         context.put("one_int", 1)
-        context.put("two_int", 2)
+        context.put("two_long", 2l)
         context.put("one_str", "1")
         context.put("two_str", "2")
         evaluate("$Duration.parse('P1D')") should be ("PT24H")
         evaluate("$Duration.ofDays(2)") should be ("PT48H")
         evaluate("$Duration.ofHours(7)") should be ("PT7H")
         evaluate("$Duration.ofDays($one_int)") should be ("PT24H")
-        evaluate("$Duration.ofHours($two_int)") should be ("PT2H")
+        evaluate("$Duration.ofHours($two_long)") should be ("PT2H")
         evaluate("$Duration.ofDays($one_str)") should be ("PT24H")
         evaluate("$Duration.ofHours($two_str)") should be ("PT2H")
     }

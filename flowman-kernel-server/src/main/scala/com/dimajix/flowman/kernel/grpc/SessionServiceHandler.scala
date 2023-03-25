@@ -92,6 +92,8 @@ final class SessionServiceHandler(
                     sessionManager.rootSession.store
                 }
 
+            val config = request.getConfigMap.asScala.toMap
+            val environment = request.getEnvironmentMap.asScala.toMap
             val session = {
                 if (request.hasProjectLocation) {
                     val file = store match {
@@ -100,10 +102,10 @@ final class SessionServiceHandler(
                             sessionManager.rootSession.fs.file(request.getProjectLocation)
                     }
 
-                    sessionManager.createSession(store, file, clientId)
+                    sessionManager.createSession(store, file, environment, config, clientId)
                 }
                 else if (request.hasProjectName) {
-                    sessionManager.createSession(store, request.getProjectName, clientId)
+                    sessionManager.createSession(store, request.getProjectName, environment, config, clientId)
                 }
                 else {
                     throw new IllegalArgumentException("Either project name or project location is required for creating a new session")

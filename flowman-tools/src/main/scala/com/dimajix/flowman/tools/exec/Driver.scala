@@ -100,6 +100,7 @@ object Driver {
             ConsoleColors.setColorEnabled(!options.batchMode)
 
             val driver = new Driver(options)
+            driver.loadUserSettings()
             driver.run()
         }
     }
@@ -107,8 +108,6 @@ object Driver {
 
 
 class Driver(options:Arguments) extends Tool {
-    private val logger = LoggerFactory.getLogger(classOf[Driver])
-
     /**
       * Main method for running this command
       * @return
@@ -120,37 +119,41 @@ class Driver(options:Arguments) extends Tool {
             Status.SUCCESS
         }
         else {
-            // Create Flowman Session, which also includes a Spark Session
-            val projectPath = Tool.resolvePath(options.projectFile)
-            val project = Project.read.file(projectPath)
-
-            val config = splitSettings(options.config)
-            val environment = splitSettings(options.environment)
-            val session = createSession(
-                options.sparkMaster,
-                options.sparkName,
-                project = Some(project),
-                additionalConfigs = config.toMap,
-                additionalEnvironment = environment.toMap,
-                profiles = options.profiles
-            )
-            val context = session.getContext(project)
-
-            logger.info(s"Flowman $FLOWMAN_VERSION using Spark $SPARK_VERSION and Hadoop $HADOOP_VERSION and Scala $SCALA_VERSION (Java $JAVA_VERSION)")
-            if (SPARK_VERSION != SPARK_BUILD_VERSION || HADOOP_VERSION != HADOOP_BUILD_VERSION) {
-                logger.warn(yellow("Detected Version mismatch between build and execution:"))
-                logger.warn(yellow(s"  Hadoop build version: ${HADOOP_BUILD_VERSION}, Hadoop execution version: ${HADOOP_VERSION}"))
-                logger.warn(yellow(s"  Spark build version: ${SPARK_BUILD_VERSION}, Spark execution version: ${SPARK_VERSION}"))
-                logger.warn(yellow("It is highly recommended to use matching versions, specifically for Spark."))
-            }
-
-            val result = options.command.execute(session, project, context)
-
-            // github-357: Spark session should not be shut down in DataBricks environment
-            if (!isDatabricks)
-                session.shutdown()
-
-            result
+            runCommand()
         }
+    }
+
+    private def runCommand() : Status = {
+        // Create Flowman Session, which also includes a Spark Session
+        val projectPath = Tool.resolvePath(options.projectFile)
+        val project = Project.read.file(projectPath)
+
+        val config = splitSettings(options.config)
+        val environment = splitSettings(options.environment)
+        val session = createSession(
+            options.sparkMaster,
+            options.sparkName,
+            project = Some(project),
+            additionalConfigs = config.toMap,
+            additionalEnvironment = environment.toMap,
+            profiles = options.profiles
+        )
+        val context = session.getContext(project)
+
+        logger.info(s"Flowman $FLOWMAN_VERSION using Spark $SPARK_VERSION and Hadoop $HADOOP_VERSION and Scala $SCALA_VERSION (Java $JAVA_VERSION)")
+        if (SPARK_VERSION != SPARK_BUILD_VERSION || HADOOP_VERSION != HADOOP_BUILD_VERSION) {
+            logger.warn(yellow("Detected Version mismatch between build and execution:"))
+            logger.warn(yellow(s"  Hadoop build version: ${HADOOP_BUILD_VERSION}, Hadoop execution version: ${HADOOP_VERSION}"))
+            logger.warn(yellow(s"  Spark build version: ${SPARK_BUILD_VERSION}, Spark execution version: ${SPARK_VERSION}"))
+            logger.warn(yellow("It is highly recommended to use matching versions, specifically for Spark."))
+        }
+
+        val result = options.command.execute(session, project, context)
+
+        // github-357: Spark session should not be shut down in DataBricks environment
+        if (!isDatabricks)
+            session.shutdown()
+
+        result
     }
 }

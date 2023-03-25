@@ -57,10 +57,19 @@ import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
 
 
-class SessionService(sessionManager:SessionManager, val store:Store, val project:Project, val clientId:UUID) extends Closeable {
+class SessionService(
+    sessionManager:SessionManager,
+    val store:Store,
+    val project:Project,
+    val extraEnvironment:Map[String,String],
+    val extraConfig:Map[String,String],
+    val clientId:UUID
+) extends Closeable {
     private val logger = LoggerFactory.getLogger(classOf[SessionService])
     val loggerFactory : ForwardingLoggerFactory = new ForwardingLoggerFactory()
     val session : Session = Session.builder(sessionManager.rootSession)
+        .withEnvironment(extraEnvironment)
+        .withConfig(extraConfig)
         .withLoggerFactory(loggerFactory)
         .withProject(project)
         .withStore(store)

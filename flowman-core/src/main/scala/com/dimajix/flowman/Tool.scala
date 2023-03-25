@@ -17,11 +17,18 @@
 package com.dimajix.flowman
 
 import java.io.File
-import java.nio.file.Path
 
+import scala.util.control.NonFatal
+import scala.collection.JavaConverters._
+
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ArrayNode
 import org.apache.hadoop.conf.Configuration
+import org.slf4j.LoggerFactory
 
+import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.Resources
+import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Session
@@ -30,6 +37,7 @@ import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.SystemSettings
 import com.dimajix.flowman.plugin.PluginManager
+import com.dimajix.flowman.util.ObjectMapper
 
 
 object Tool {
@@ -63,12 +71,15 @@ object Tool {
 }
 
 class Tool {
+    protected final val logger = LoggerFactory.getLogger(getClass)
     // First create PluginManager
-    final protected val pluginManager:PluginManager = createPluginManager()
+    protected final val pluginManager:PluginManager = createPluginManager()
     // Second load global system settings (including plugins for namespaces)
     final val systemSettings:SystemSettings = loadSystemSettings()
     // Third load namespace
     final val namespace:Namespace = loadNamespace()
+    private var userEnvironment:Map[String,String] = Map.empty
+    private var userConfig:Map[String,String] = Map.empty
 
     protected def createPluginManager() : PluginManager = {
         val pluginManager = PluginManager.builder()
@@ -108,6 +119,33 @@ class Tool {
         ns
     }
 
+    protected def loadUserSettings() : Unit = {
+        def getKeyValuesArray(root:JsonNode, path:String) : Map[String,String] = {
+            val env = root.path(path)
+            if (env.isArray) {
+                val array = env.asInstanceOf[ArrayNode]
+                val entries = array.elements().asScala.map(_.asText()).toSeq
+                splitSettings(entries).toMap
+            }
+            else {
+                Map.empty
+            }
+        }
+        val settingsFile = new File(".flowman-env.yml")
+        if (settingsFile.exists()) {
+            logger.info(s"Loading user overrides from ${settingsFile.getAbsoluteFile.getCanonicalPath}")
+            try {
+                val settings = ObjectMapper.read[JsonNode](settingsFile)
+                userEnvironment = getKeyValuesArray(settings, "environment")
+                userConfig = getKeyValuesArray(settings, "config")
+            }
+            catch {
+                case NonFatal(ex) =>
+                    logger.warn(s"Cannot load user settings '.flowman-env.yml':\n  ${reasons(ex)}")
+            }
+        }
+    }
+
     protected def createSession(
          sparkMaster:String,
          sparkName:String,
@@ -122,6 +160,7 @@ class Tool {
             ToolConfig.homeDirectory.map(FlowmanConf.HOME_DIRECTORY.key -> _.toString).toMap ++
                 ToolConfig.confDirectory.map(FlowmanConf.CONF_DIRECTORY.key -> _.toString).toMap ++
                 ToolConfig.pluginDirectory.map(FlowmanConf.PLUGIN_DIRECTORY.key -> _.toString).toMap ++
+                userConfig ++
                 additionalConfigs
 
         val pluginJars = pluginManager.jars
@@ -134,6 +173,7 @@ class Tool {
         val builder = Session.builder()
             .withNamespace(namespace)
             .withConfig(allConfigs)
+            .withEnvironment(userEnvironment)
             .withEnvironment(additionalEnvironment)
             .withProfiles(profiles)
             .withJars(pluginJars.map(_.toString))

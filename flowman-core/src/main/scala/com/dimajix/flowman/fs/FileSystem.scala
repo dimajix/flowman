@@ -127,7 +127,7 @@ object FileSystem {
   * This is a super thin wrapper around Hadoop FileSystems which is used to create Flowman File instances
   * @param conf
   */
-case class FileSystem(conf:Configuration) {
+final case class FileSystem(conf:Configuration) {
 
     def file(path:Path) : File = {
         val uri = path.toUri

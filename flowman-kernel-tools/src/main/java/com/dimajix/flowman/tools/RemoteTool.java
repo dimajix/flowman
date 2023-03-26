@@ -27,11 +27,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Maps;
 import lombok.val;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.LoggingEvent;
 import org.yaml.snakeyaml.Yaml;
+
+import static com.dimajix.common.ExceptionUtils.reasons;
+import static com.dimajix.flowman.common.ParserUtils.splitSetting;
 
 import com.dimajix.flowman.kernel.ClientFactory;
 import com.dimajix.flowman.kernel.HistoryClient;
@@ -39,8 +43,6 @@ import com.dimajix.flowman.kernel.KernelClient;
 import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.WorkspaceClient;
 import com.dimajix.flowman.templating.Velocity;
-import static com.dimajix.common.ExceptionUtils.reasons;
-import static com.dimajix.flowman.common.ParserUtils.splitSetting;
 
 
 public class RemoteTool {
@@ -191,7 +193,7 @@ public class RemoteTool {
                 logger.info("Loading user overrides from " + settingsFile.getAbsoluteFile().getCanonicalPath());
                 val yaml = new Yaml();
                 try (val inputStream = new FileInputStream(settingsFile)) {
-                    HashMap<String,Object> yamlMap = yaml.load(inputStream);
+                    Map<String,Object> yamlMap = yaml.loadAs(inputStream, Map.class);
                     val rawUserEnvironment = getKeyValuesArray(yamlMap, "environment");
                     val rawUserConfig = getKeyValuesArray(yamlMap, "config");
 
@@ -199,10 +201,10 @@ public class RemoteTool {
                     rawUserEnvironment.entrySet().forEach(e -> vc.put(e.getKey(), e.getValue()));
 
                     userEnvironment = rawUserEnvironment.entrySet().stream()
-                        .map(kv -> Map.entry(kv.getKey(), Velocity.evaluate(vc, "userEnvironment", kv.getValue())))
+                        .map(kv -> Maps.immutableEntry(kv.getKey(), Velocity.evaluate(vc, "userEnvironment", kv.getValue())))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                     userConfig = rawUserConfig.entrySet().stream()
-                        .map(kv -> Map.entry(kv.getKey(), Velocity.evaluate(vc, "userConfig", kv.getValue())))
+                        .map(kv -> Maps.immutableEntry(kv.getKey(), Velocity.evaluate(vc, "userConfig", kv.getValue())))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                 }
             }

@@ -17,6 +17,8 @@ described in the [lifecycle documentation](lifecycle.md).
 .. toctree::
    :maxdepth: 1
    :glob:
+   :hidden:
+   :titlesonly:
 
    *
 ```

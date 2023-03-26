@@ -11,14 +11,3 @@ to be performed).
 
 In addition to understand the core entities, it is also important to understand Flowman's execution model which is
 described in the [lifecycle documentation](lifecycle.md).
-
-
-```eval_rst
-.. toctree::
-   :maxdepth: 1
-   :glob:
-   :hidden:
-   :titlesonly:
-
-   *
-```

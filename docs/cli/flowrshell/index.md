@@ -26,6 +26,27 @@ only need network access to the kernel and no other services like data sources, 
 * `-X` or `--verbose` Enables logging at more verbose level
 * `-XX` or `--debug` Enables logging at debug level
 
+### Excluding Files (`.flowman-ignore`)
+Before uploading the current local working directory to the kernel, the Flowman Remote Shell will look for a file
+`.flowman-ignore`, which can contain a list of glob patterns of files and directories to ignore. All matching files and
+directories will not be uploaded to the kernel. This allows you to exclude the local `.git` directory and similar files
+which are not required by Flowman and would otherwise blow up the amount of data that needs to be transferred. A simple
+example would look as follows
+```ignore
+# Ignore Docker
+docker
+
+# Ignore git directory 
+.git
+
+# Ignore IntelliJ directory
+.idea
+
+# Ignore all other dot-files
+.*
+```
+
+
 ### User Settings File
 *Available since Flowman version 1.0.0*
 

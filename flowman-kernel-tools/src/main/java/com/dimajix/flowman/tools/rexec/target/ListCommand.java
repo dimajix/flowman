@@ -24,7 +24,7 @@ import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
-class ListCommand extends Command {
+public class ListCommand extends Command {
     @Override
     public Status execute(ExecutionContext context) {
         val session = context.getSession();

@@ -146,9 +146,14 @@ final class WorkspaceServiceHandler(
             }
             val parcel = ws.parcels.head
             req.getFileType match {
-                case FileType.FILE if req.hasFileContent =>
+                case FileType.FILE =>
                     logger.debug(s"Workspace '$wsName' receives file '${req.getFileName}'")
-                    parcel.putFile(new Path(req.getFileName), req.getFileContent.toByteArray)
+                    val content =
+                        if (req.hasFileContent)
+                            req.getFileContent.toByteArray
+                        else
+                            new Array[Byte](0)
+                    parcel.putFile(new Path(req.getFileName), content)
                 case FileType.DIRECTORY =>
                     logger.info(s"Workspace '$wsName' receives directory '${req.getFileName}'")
                     parcel.mkdir(new Path(req.getFileName))

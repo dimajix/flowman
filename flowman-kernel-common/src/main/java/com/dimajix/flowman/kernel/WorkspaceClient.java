@@ -18,8 +18,16 @@ package com.dimajix.flowman.kernel;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import com.dimajix.flowman.kernel.proto.workspace.GetWorkspaceRequest;
@@ -34,6 +42,7 @@ import com.dimajix.flowman.kernel.proto.FileType;
 import com.dimajix.flowman.kernel.proto.workspace.CleanWorkspaceRequest;
 import com.dimajix.flowman.kernel.proto.workspace.UploadFilesRequest;
 import com.dimajix.flowman.kernel.proto.workspace.WorkspaceServiceGrpc;
+import com.dimajix.flowman.kernel.util.Globber;
 
 
 public final class WorkspaceClient extends AbstractClient {
@@ -84,36 +93,39 @@ public final class WorkspaceClient extends AbstractClient {
         if (!localDirectory.isDirectory())
             throw new IllegalArgumentException("Local workspace '" + localDirectory + "' must be a directory, but it is not");
 
-        val root = localDirectory.getAbsoluteFile().getCanonicalFile();
-        val rootPath = root.toPath();
+        val globber = new Globber(localDirectory);
+        val rootPath = globber.getRootPath();
         logger.info("Uploading local directory '" + rootPath + "' to workspace '" + workspaceId + "'...");
 
-        val files = Files.fileTraverser().breadthFirst(root);
-        val iter = StreamSupport.stream(files.spliterator(), false)
-            .filter(file -> !file.equals(root))
+        val iter = globber.glob()
             .map(file -> uploadFile(rootPath, file))
             .iterator();
         stream(asyncStub::uploadFiles, iter);
     }
-    private UploadFilesRequest uploadFile(Path root, File src) {
-        val filename = root.relativize(src.toPath()).toString();
+
+    private UploadFilesRequest uploadFile(Path root, Path src) {
+        val filename = root.relativize(src).toString();
         val result = UploadFilesRequest.newBuilder()
                 .setWorkspaceId(workspaceId)
                 .setFileName(filename);
-        if (src.isDirectory()) {
+        val srcFile = src.toFile();
+        if (srcFile.isDirectory()) {
             logger.info("Uploading directory'" + src + "' as '" + filename + "' to kernel...");
             result.setFileType(FileType.DIRECTORY);
         }
-        else {
+        else if (srcFile.isFile()) {
             logger.debug("Uploading file '" + src + "' as '" + filename + "' to kernel...");
             try {
-                val content = Files.toByteArray(src);
+                val content = Files.toByteArray(srcFile);
                 result.setFileType(FileType.FILE);
                 result.setFileContent(ByteString.copyFrom(content));
             }
             catch(IOException ex) {
                 throw new RuntimeException(ex);
             }
+        }
+        else {
+            logger.info("Ignoring special file'" + src + "'...");
         }
         return result.build();
     }

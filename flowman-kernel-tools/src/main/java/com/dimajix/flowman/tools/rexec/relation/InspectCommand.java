@@ -27,7 +27,7 @@ import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
 
 
-class InspectCommand extends Command {
+public class InspectCommand extends Command {
     @Argument(required = true, usage = "specifies relation to inspect", metaVar = "<relation>")
     String relation = "";
 

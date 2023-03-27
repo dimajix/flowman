@@ -27,7 +27,7 @@ import com.dimajix.flowman.tools.rexec.Command;
 import static com.dimajix.flowman.common.ParserUtils.splitSettings;
 
 
-class SaveCommand extends Command {
+public class SaveCommand extends Command {
     @Option(name="-f", aliases={"--format"}, usage="Specifies the format", metaVar="<format>", required = false)
     String format = "csv";
     @Option(name="-o", aliases={"--option"}, usage = "additional format specific option", metaVar = "<key=value>", required = false)

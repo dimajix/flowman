@@ -73,6 +73,10 @@
 
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-common-java</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-kernel-api</artifactId>
         </dependency>
 

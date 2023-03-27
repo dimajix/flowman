@@ -74,7 +74,7 @@ class RestHookTest extends AnyFlatSpec with Matchers with LocalSparkSession with
 
         server.foreach { binding =>
             serverBinding = binding
-            serverUrl = SocketUtils.toURL("http", binding.localAddress, allowAny = false)
+            serverUrl = SocketUtils.toURL("http", binding.localAddress, false)
         }
 
         Await.ready(server, Duration.Inf)

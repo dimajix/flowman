@@ -16,7 +16,8 @@
 
 package com.dimajix.common
 
-sealed abstract class Trilean {
+
+sealed abstract class Trilean extends Serializable with Product {
     def unary_! : Trilean
     def ||(other:Trilean) : Trilean
     def &&(other:Trilean) : Trilean

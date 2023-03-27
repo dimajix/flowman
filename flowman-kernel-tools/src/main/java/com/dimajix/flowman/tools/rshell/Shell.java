@@ -38,10 +38,10 @@ import com.dimajix.flowman.common.Logging;
 import com.dimajix.flowman.tools.RemoteTool;
 import static com.dimajix.common.ExceptionUtils.isFatal;
 import static com.dimajix.common.ExceptionUtils.reasons;
-import static com.dimajix.flowman.common.ConsoleColors.yellow;
-import static com.dimajix.flowman.common.ParserUtils.splitSettings;
-import static com.dimajix.flowman.tools.Versions.FLOWMAN_VERSION;
-import static com.dimajix.flowman.tools.Versions.JAVA_VERSION;
+import static com.dimajix.common.text.ParserUtils.splitSettings;
+import static com.dimajix.flowman.Versions.FLOWMAN_VERSION;
+import static com.dimajix.flowman.Versions.JAVA_VERSION;
+import static com.dimajix.common.text.ConsoleColors.yellow;
 
 
 public class Shell extends RemoteTool {

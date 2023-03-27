@@ -21,16 +21,15 @@ import scala.util.Success
 import scala.util.Try
 
 import org.kohsuke.args4j.CmdLineException
-import org.slf4j.LoggerFactory
 
+import com.dimajix.common.text.ConsoleColors
+import com.dimajix.common.text.ConsoleColors.yellow
 import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.HADOOP_BUILD_VERSION
 import com.dimajix.flowman.JAVA_VERSION
 import com.dimajix.flowman.SCALA_VERSION
 import com.dimajix.flowman.SPARK_BUILD_VERSION
 import com.dimajix.flowman.Tool
-import com.dimajix.flowman.common.ConsoleColors
-import com.dimajix.flowman.common.ConsoleColors.yellow
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.common.ToolConfig

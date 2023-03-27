@@ -898,6 +898,7 @@
         <module>flowman-spark-dependencies</module>
         <module>flowman-spark-testing</module>
         <module>flowman-spark-extensions</module>
+        <module>flowman-common-java</module>
         <module>flowman-common</module>
         <module>flowman-core</module>
         <module>flowman-spec</module>
@@ -1364,6 +1365,11 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spark-extensions</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-common-java</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

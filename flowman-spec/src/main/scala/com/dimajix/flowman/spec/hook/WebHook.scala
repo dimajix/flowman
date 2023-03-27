@@ -43,7 +43,7 @@ import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.TargetResultWrapper
 import com.dimajix.flowman.spec.hook.WebHook.DummyJobToken
 import com.dimajix.flowman.spec.hook.WebHook.DummyTargetToken
-import com.dimajix.flowman.common.ConsoleColors.yellow
+import com.dimajix.common.text.ConsoleColors.yellow
 
 
 object WebHook {

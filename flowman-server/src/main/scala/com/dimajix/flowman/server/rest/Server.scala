@@ -121,7 +121,7 @@ class Server(
             .run()
 
         binding.foreach { binding =>
-            val listenUrl = SocketUtils.toURL("http", binding.localAddress, allowAny = true)
+            val listenUrl = SocketUtils.toURL("http", binding.localAddress, true)
             logger.info(s"Flowman Server online at $listenUrl")
         }
 

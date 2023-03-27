@@ -47,7 +47,7 @@ import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.spec.connection.JdbcConnection
 import com.dimajix.flowman.spec.hook.JdbcHook.DummyJobToken
 import com.dimajix.flowman.spec.hook.JdbcHook.DummyTargetToken
-import com.dimajix.flowman.common.ConsoleColors.yellow
+import com.dimajix.common.text.ConsoleColors.yellow
 
 
 object JdbcHook {

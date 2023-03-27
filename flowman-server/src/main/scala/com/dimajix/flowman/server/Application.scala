@@ -17,8 +17,8 @@
 package com.dimajix.flowman.server
 
 import java.io.File
-import com.dimajix.flowman.Tool
 
+import com.dimajix.flowman.Tool
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.model.Namespace

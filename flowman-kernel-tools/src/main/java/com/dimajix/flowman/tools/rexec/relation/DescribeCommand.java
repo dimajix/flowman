@@ -20,11 +20,11 @@ import lombok.val;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
-import com.dimajix.flowman.common.ParserUtils;
 import com.dimajix.flowman.kernel.model.RelationIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
+import static com.dimajix.common.text.ParserUtils.parseDelimitedKeyValues;
 
 
 class DescribeCommand extends Command {
@@ -39,7 +39,7 @@ class DescribeCommand extends Command {
     public Status execute(ExecutionContext context) {
         val session = context.getSession();
         val identifier = RelationIdentifier.ofString(this.relation);
-        val partition = ParserUtils.parseDelimitedKeyValues(this.partition);
+        val partition = parseDelimitedKeyValues(this.partition);
         val schema = session.describeRelation(identifier, partition, useSpark);
         schema.printTree();
         return Status.SUCCESS;

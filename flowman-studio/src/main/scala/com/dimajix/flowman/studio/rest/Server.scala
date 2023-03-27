@@ -134,7 +134,7 @@ class Server(
             .run()
 
         server.foreach { binding =>
-            val listenUrl = SocketUtils.toURL("http", binding.localAddress, allowAny = true)
+            val listenUrl = SocketUtils.toURL("http", binding.localAddress, true)
             logger.info(s"Flowman Studio online at $listenUrl")
 
             register(binding.localAddress)
@@ -149,7 +149,7 @@ class Server(
      */
     private def register(localAddress:InetSocketAddress) : Unit = {
         conf.getHubUrl().foreach { url =>
-            val localUrl = SocketUtils.toURL("http", localAddress)
+            val localUrl = SocketUtils.toURL("http", localAddress, false)
 
             logger.info(s"Registering Flowman Studio running at $localUrl with Flowman Hub running at $url")
             val request = StudioRegistrationRequest(id=conf.getStudioId(), url=localUrl.toString)

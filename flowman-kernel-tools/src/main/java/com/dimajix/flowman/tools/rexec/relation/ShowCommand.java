@@ -20,11 +20,12 @@ import lombok.val;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
-import com.dimajix.flowman.common.ParserUtils;
 import com.dimajix.flowman.kernel.model.RelationIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
+import static com.dimajix.common.text.ParserUtils.parseDelimitedKeyValues;
+import static com.dimajix.common.text.ParserUtils.parseDelimitedList;
 
 
 public class ShowCommand extends Command {
@@ -41,9 +42,9 @@ public class ShowCommand extends Command {
     @Override
     public Status execute(ExecutionContext context) {
         val session = context.getSession();
-        val columns = ParserUtils.parseDelimitedList(this.columns);
+        val columns = parseDelimitedList(this.columns);
         val identifier = RelationIdentifier.ofString(this.relation);
-        val partition = ParserUtils.parseDelimitedKeyValues(this.partition);
+        val partition = parseDelimitedKeyValues(this.partition);
 
         val df = session.readRelation(identifier, partition, columns, limit);
         df.show();

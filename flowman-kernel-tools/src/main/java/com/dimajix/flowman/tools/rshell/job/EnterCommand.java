@@ -16,13 +16,13 @@
 
 package com.dimajix.flowman.tools.rshell.job;
 
-import com.dimajix.flowman.kernel.model.Status;
-import com.dimajix.flowman.tools.ExecutionContext;
-import com.dimajix.flowman.tools.rexec.Command;
 import lombok.val;
 import org.kohsuke.args4j.Argument;
 
-import static com.dimajix.flowman.common.ParserUtils.splitSettings;
+import com.dimajix.flowman.kernel.model.Status;
+import com.dimajix.flowman.tools.ExecutionContext;
+import com.dimajix.flowman.tools.rexec.Command;
+import static com.dimajix.common.text.ParserUtils.splitSettings;
 
 
 public class EnterCommand extends Command {

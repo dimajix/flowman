@@ -1,0 +1,5 @@
+# This is a comment
+*/exclude
+**/exclude-*
+no_such_dir
+excludedir

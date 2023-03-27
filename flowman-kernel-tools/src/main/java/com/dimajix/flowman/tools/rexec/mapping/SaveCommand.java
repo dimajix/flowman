@@ -24,7 +24,7 @@ import com.dimajix.flowman.kernel.model.MappingOutputIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
-import static com.dimajix.flowman.common.ParserUtils.splitSettings;
+import static com.dimajix.common.text.ParserUtils.splitSettings;
 
 
 public class SaveCommand extends Command {

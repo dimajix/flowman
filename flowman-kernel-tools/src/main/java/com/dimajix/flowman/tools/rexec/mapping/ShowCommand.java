@@ -20,7 +20,7 @@ import lombok.val;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 
-import com.dimajix.flowman.common.ParserUtils;
+import com.dimajix.common.text.ParserUtils;
 import com.dimajix.flowman.kernel.model.MappingOutputIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.tools.ExecutionContext;

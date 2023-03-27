@@ -18,17 +18,8 @@ package com.dimajix.flowman.kernel;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import com.dimajix.flowman.kernel.proto.workspace.GetWorkspaceRequest;
 import com.google.common.io.Files;
@@ -42,7 +33,7 @@ import com.dimajix.flowman.kernel.proto.FileType;
 import com.dimajix.flowman.kernel.proto.workspace.CleanWorkspaceRequest;
 import com.dimajix.flowman.kernel.proto.workspace.UploadFilesRequest;
 import com.dimajix.flowman.kernel.proto.workspace.WorkspaceServiceGrpc;
-import com.dimajix.flowman.kernel.util.Globber;
+import com.dimajix.common.io.Globber;
 
 
 public final class WorkspaceClient extends AbstractClient {

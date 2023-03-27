@@ -24,7 +24,7 @@ import org.apache.spark.sql.DataFrame
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
-import com.dimajix.flowman.common.ConsoleColors.yellow
+import com.dimajix.common.text.ConsoleColors.yellow
 import com.dimajix.flowman.common.ThreadUtils
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.execution.Context

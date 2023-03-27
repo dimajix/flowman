@@ -26,7 +26,7 @@ import org.apache.spark.storage.StorageLevel
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
-import com.dimajix.flowman.common.ConsoleColors.red
+import com.dimajix.common.text.ConsoleColors.red
 import com.dimajix.flowman.execution.AssertionRunner
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.ErrorMode

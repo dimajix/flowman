@@ -16,19 +16,19 @@
 
 package com.dimajix.flowman.tools.rexec.job;
 
+import java.util.Arrays;
+
+import lombok.val;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.Option;
+
 import com.dimajix.flowman.kernel.model.JobIdentifier;
 import com.dimajix.flowman.kernel.model.Lifecycle;
 import com.dimajix.flowman.kernel.model.Phase;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
-import lombok.val;
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.Option;
-
-import java.util.Arrays;
-
-import static com.dimajix.flowman.common.ParserUtils.splitSettings;
+import static com.dimajix.common.text.ParserUtils.splitSettings;
 
 
 class PhaseCommand extends Command {

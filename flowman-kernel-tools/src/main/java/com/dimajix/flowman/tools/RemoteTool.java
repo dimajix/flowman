@@ -34,15 +34,14 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.event.LoggingEvent;
 import org.yaml.snakeyaml.Yaml;
 
-import static com.dimajix.common.ExceptionUtils.reasons;
-import static com.dimajix.flowman.common.ParserUtils.splitSetting;
-
 import com.dimajix.flowman.kernel.ClientFactory;
 import com.dimajix.flowman.kernel.HistoryClient;
 import com.dimajix.flowman.kernel.KernelClient;
 import com.dimajix.flowman.kernel.SessionClient;
 import com.dimajix.flowman.kernel.WorkspaceClient;
 import com.dimajix.flowman.templating.Velocity;
+import static com.dimajix.common.ExceptionUtils.reasons;
+import static com.dimajix.common.text.ParserUtils.splitSetting;
 
 
 public class RemoteTool {

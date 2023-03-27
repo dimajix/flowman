@@ -292,6 +292,12 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-common-java</artifactId>
+                <version>${flowman.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-common</artifactId>
                 <version>${flowman.version}</version>
                 <scope>compile</scope>

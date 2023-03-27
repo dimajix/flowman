@@ -25,12 +25,12 @@ import org.kohsuke.args4j.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.dimajix.flowman.common.ParserUtils;
 import com.dimajix.flowman.kernel.model.Phase;
 import com.dimajix.flowman.kernel.model.RelationIdentifier;
 import com.dimajix.flowman.kernel.model.Status;
 import com.dimajix.flowman.tools.ExecutionContext;
 import com.dimajix.flowman.tools.rexec.Command;
+import static com.dimajix.common.text.ParserUtils.parseDelimitedKeyValues;
 
 
 public class PhaseCommand extends Command {
@@ -62,7 +62,7 @@ public class PhaseCommand extends Command {
             .flatMap(r -> Arrays.stream(r.split(",")))
             .map(RelationIdentifier::ofString)
             .collect(Collectors.toList());
-        val partition = ParserUtils.parseDelimitedKeyValues(this.partition);
+        val partition = parseDelimitedKeyValues(this.partition);
 
         return session.executeRelations(toRun, phase, partition, force, keepGoing, dryRun);
     }

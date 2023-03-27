@@ -27,7 +27,7 @@ import org.apache.http.impl.client.HttpClients
 
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.Hook
-import com.dimajix.flowman.common.ConsoleColors.yellow
+import com.dimajix.common.text.ConsoleColors.yellow
 
 
 case class RestHook(

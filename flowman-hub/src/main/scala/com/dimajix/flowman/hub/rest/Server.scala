@@ -99,10 +99,10 @@ class Server(
             .run()
 
         server.foreach { binding =>
-            val listenUrl = SocketUtils.toURL("http", binding.localAddress, allowAny = true)
+            val listenUrl = SocketUtils.toURL("http", binding.localAddress, true)
             logger.info(s"Flowman Studio online at $listenUrl")
 
-            val localUrl = SocketUtils.toURL("http", binding.localAddress, allowAny = false)
+            val localUrl = SocketUtils.toURL("http", binding.localAddress, false)
 
             launcherManager.addLauncher(new LocalLauncher(localUrl, system))
         }

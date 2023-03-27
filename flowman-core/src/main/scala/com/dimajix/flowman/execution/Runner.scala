@@ -34,7 +34,7 @@ import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.text.TimeFormatter
-import com.dimajix.flowman.common.ConsoleColors._
+import com.dimajix.common.text.ConsoleColors._
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.StateStoreAdaptorListener

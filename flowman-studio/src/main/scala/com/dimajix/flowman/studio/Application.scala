@@ -21,8 +21,8 @@ import scala.util.Success
 import scala.util.Try
 
 import org.kohsuke.args4j.CmdLineException
-import com.dimajix.flowman.Tool
 
+import com.dimajix.flowman.Tool
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ParserUtils.splitSettings
 import com.dimajix.flowman.studio.rest.Server

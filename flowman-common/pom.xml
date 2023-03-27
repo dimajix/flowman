@@ -39,6 +39,10 @@
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-scalatest-compat</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.dimajix.flowman</groupId>
+            <artifactId>flowman-common-java</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.scala-lang</groupId>
@@ -51,13 +55,12 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
         </dependency>
-
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
 
         <dependency>
@@ -71,19 +74,6 @@
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-scala_${scala.api_version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-1.2-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j-impl</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
         </dependency>
 
         <dependency>

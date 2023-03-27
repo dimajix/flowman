@@ -29,8 +29,8 @@ import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.common.text.StringUtils
-import com.dimajix.flowman.common.ConsoleColors.red
-import com.dimajix.flowman.common.ConsoleColors.yellow
+import com.dimajix.common.text.ConsoleColors.red
+import com.dimajix.common.text.ConsoleColors.yellow
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase

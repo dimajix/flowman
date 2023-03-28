@@ -22,10 +22,10 @@ docker-compose up -d sqlserver
 
 ### Start Flowman Container
 Once the MS SQL Server is up, you need to start the Flowman container, which will mount all lessons in a volume
-under `/opt/flowman/lessons`. All `README.md` files assume that you changed into the directory `/opt/flowman`.
+under `/home/flowman/lessons`. All `README.md` files assume that you changed into the directory `/home/flowman`.
 
 ```shell
 docker-compose run --rm flowman bash
 
-cd /opt/flowman
+cd /home/flowman
 ```

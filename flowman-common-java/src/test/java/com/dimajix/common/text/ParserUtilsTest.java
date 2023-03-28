@@ -47,7 +47,7 @@ public class ParserUtilsTest {
 
     @Test
     public void testSplitSettings1() {
-        val result = ParserUtils.splitSettings(Arrays.asList("x=12","b","c=","yz=\"This is some test\"").toArray(String[]::new));
+        val result = ParserUtils.splitSettings(new String[]{"x=12", "b", "c=", "yz=\"This is some test\""});
         val expected = new HashMap<String,String>();
         expected.put("x", "12");
         expected.put("b", "");

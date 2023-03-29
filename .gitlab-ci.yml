@@ -207,11 +207,11 @@ build-emr6.10:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days
 
-build-databricks12.2:
-  stage: build
-  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Pdatabricks12.2 -Ddockerfile.skip'
-  artifacts:
-    name: "flowman-dist-databricks12.2"
-    paths:
-      - flowman-dist/target/flowman-dist-*-bin.tar.gz
-    expire_in: 5 days
+#build-databricks12.2:
+#  stage: build
+#  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Pdatabricks12.2 -Ddockerfile.skip'
+#  artifacts:
+#    name: "flowman-dist-databricks12.2"
+#    paths:
+#      - flowman-dist/target/flowman-dist-*-bin.tar.gz
+#    expire_in: 5 days

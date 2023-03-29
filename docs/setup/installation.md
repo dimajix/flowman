@@ -63,7 +63,7 @@ versions. The naming is very simple:
 ```
 flowman-dist-<version>-oss-spark<spark-version>-hadoop<hadoop-version>-bin.tar.gz
 ```
-You simply have to use the package which fits to the Spark and Hadoop versions of your environment. For example the
+You simply have to use the package which fits to the Spark and Hadoop versions of your environment. For example, the
 package of Flowman 0.30.0 and for Spark 3.3 and Hadoop 3.3 would be
 ```
 flowman-dist-0.30.0-oss-spark3.3-hadoop3.3-bin.tar.gz
@@ -76,23 +76,23 @@ https://github.com/dimajix/flowman/releases/download/0.30.0/flowman-dist-0.30.0-
 ### Supported Spark Environments
 Flowman is available for a large number of different Spark/Hadoop environments. The following variants are available:
 
-| Distribution     | Spark | Hadoop | Java | Variant                 |
-|------------------|-------|--------|------|-------------------------|
-| Open Source      | 2.4.8 | 2.6    | 1.8  | oss-spark2.4-hadoop2.6  |
-| Open Source      | 2.4.8 | 2.7    | 1.8  | oss-spark2.4-hadoop2.7  |
-| Open Source      | 3.0.3 | 2.7    | 11   | oss-spark3.0-hadoop2.7  |
-| Open Source      | 3.0.3 | 3.2    | 11   | oss-spark3.0-hadoop3.2  |
-| Open Source      | 3.1.2 | 2.7    | 11   | oss-spark3.1-hadoop2.7  |
-| Open Source      | 3.1.2 | 3.2    | 11   | oss-spark3.1-hadoop3.2  |
-| Open Source      | 3.2.3 | 2.7    | 11   | oss-spark3.2-hadoop2.7  |
-| Open Source      | 3.2.3 | 3.3    | 11   | oss-spark3.2-hadoop3.3  |
-| Open Source      | 3.3.2 | 2.7    | 11   | oss-spark3.3-hadoop2.7  |
-| Open Source      | 3.3.2 | 3.3    | 11   | oss-spark3.3-hadoop3.3  |
-| AWS EMR 6.10     | 3.3.1 | 3.3    | 1.8  | emr-spark3.3-hadoop3.3  |
-| Cloudera CDH 6.3 | 2.4.0 | 3.0    | 1.8  | cdh6-spark2.4-hadoop3.0 |
-| Cloudera CDP 7.1 | 2.4.8 | 3.1    | 1.8  | cdp7-spark2.4-hadoop3.1 |
-| Cloudera CDP 7.1 | 3.2.1 | 3.1    | 11   | cdp7-spark3.2-hadoop3.1 |
-| Cloudera CDP 7.1 | 3.3.0 | 3.1    | 11   | cdp7-spark3.3-hadoop3.1 |
+| Distribution     | Spark | Hadoop | Java | Scala | Variant                 |
+|------------------|-------|--------|------|-------|-------------------------|
+| Open Source      | 2.4.8 | 2.6    | 1.8  | 2.11  | oss-spark2.4-hadoop2.6  |
+| Open Source      | 2.4.8 | 2.7    | 1.8  | 2.11  | oss-spark2.4-hadoop2.7  |
+| Open Source      | 3.0.3 | 2.7    | 11   | 2.12  | oss-spark3.0-hadoop2.7  |
+| Open Source      | 3.0.3 | 3.2    | 11   | 2.12  | oss-spark3.0-hadoop3.2  |
+| Open Source      | 3.1.2 | 2.7    | 11   | 2.12  | oss-spark3.1-hadoop2.7  |
+| Open Source      | 3.1.2 | 3.2    | 11   | 2.12  | oss-spark3.1-hadoop3.2  |
+| Open Source      | 3.2.3 | 2.7    | 11   | 2.12  | oss-spark3.2-hadoop2.7  |
+| Open Source      | 3.2.3 | 3.3    | 11   | 2.12  | oss-spark3.2-hadoop3.3  |
+| Open Source      | 3.3.2 | 2.7    | 11   | 2.12  | oss-spark3.3-hadoop2.7  |
+| Open Source      | 3.3.2 | 3.3    | 11   | 2.12  | oss-spark3.3-hadoop3.3  |
+| AWS EMR 6.10     | 3.3.1 | 3.3    | 1.8  | 2.12  | emr-spark3.3-hadoop3.3  |
+| Cloudera CDH 6.3 | 2.4.0 | 3.0    | 1.8  | 2.11  | cdh6-spark2.4-hadoop3.0 |
+| Cloudera CDP 7.1 | 2.4.8 | 3.1    | 1.8  | 2.11  | cdp7-spark2.4-hadoop3.1 |
+| Cloudera CDP 7.1 | 3.2.1 | 3.1    | 11   | 2.12  | cdp7-spark3.2-hadoop3.1 |
+| Cloudera CDP 7.1 | 3.3.0 | 3.1    | 11   | 2.12  | cdp7-spark3.3-hadoop3.1 |
 
 
 ### Building Flowman

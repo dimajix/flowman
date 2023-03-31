@@ -64,7 +64,7 @@ With these two small changes in place we converted the normal environment variab
 parameter then can be specified when starting the execution as follows:
 
 ```shell
-cd /opt/flowman
+cd /home/flowman
 flowexec -f lessons/04-parameters job build main year=2014 --force
 ```
 
@@ -77,7 +77,7 @@ Sometimes it is required to process a whole range of parameters. This is also we
 in order to process all years from 2013 until 2017 (exclusive), you simply need to execute
 
 ```shell
-cd /opt/flowman
+cd /home/flowman
 flowexec -f lessons/04-parameters job build main year:start=2014 year:end=2017 --force
 ```
 
@@ -86,7 +86,7 @@ You can even process multiple years in parallel by adding the command line optio
 in parallel.
 
 ```shell
-cd /opt/flowman
+cd /home/flowman
 flowexec -f lessons/04-parameters job build main year:start=2014 year:end=2017 --force -j 2
 ```
 

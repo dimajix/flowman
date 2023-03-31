@@ -135,14 +135,14 @@ step.
 Let us describe the schema of the `stations_raw` relation. You should see a schema which exactly matches the one
 defined in the Avro schema definition file.
 ```shell
-cd /opt/flowman
+cd /home/flowman
 flowexec -f lessons/02-schema relation describe stations_raw
 ```
 
 Let us also describe the schema of the `stations` relation, this will return a schema which matches the embedded
 schema in `model/stations.yml`. 
 ```shell
-cd /opt/flowman
+cd /home/flowman
 flowexec -f lessons/02-schema relation describe stations
 ```
 
@@ -152,7 +152,7 @@ Now let us have a look at the schema definitions of the first lesson using the s
 a different schema definition for the original CSV relation. Column names will be inferred from the header line and
 all data types are set to `string`:
 ```shell
-cd /opt/flowman
+cd /home/flowman
 flowexec -f lessons/01-basics relation describe stations_raw
 ```
 
@@ -160,7 +160,7 @@ If you next try to describe the schema of the output from the first lesson, you 
 Flowman is not provided an explicit schema and therefore tries to infer the actual schema from files. But if the project
 has not been executed yet, there won't be any file to inspect:
 ```shell
-cd /opt/flowman
+cd /home/flowman
 flowexec -f lessons/01-basics relation describe stations
 ```
 

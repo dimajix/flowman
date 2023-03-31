@@ -312,7 +312,7 @@ targets:
       year: $year
 ```
 
-## 2.4 Putting all together
+### 2.4 Putting all together
 
 Now we have defined a whole data flow including three targets. Now we simply need to create a job, which will include
 all these three targets:

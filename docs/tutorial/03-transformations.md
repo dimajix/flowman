@@ -216,14 +216,14 @@ jobs:
 With all pieces in place, we can simply execute the whole project with `flowexec`:
 
 ```shell
-cd /opt/flowman
+cd /home/flowman
 flowxec -f lessons/03-transformations job build main --force
 ```
 
 When we want to process a different year, we can simply override the environment variable `year` on the command line
 as follows:
 ```shell
-cd /opt/flowman
+cd /home/flowman
 flowxec -f lessons/03-transformations job build main --force -D year=2014
 ```
 

@@ -10,7 +10,7 @@
     <parent>
         <groupId>com.dimajix.flowman</groupId>
         <artifactId>flowman-plugin-parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0-synapse-SNAPSHOT</version>
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
@@ -70,6 +70,14 @@
         </profile>
         <profile>
             <id>EMR-6.10</id>
+            <properties>
+                <spark-mssql-connector.group>com.solytic</spark-mssql-connector.group>
+                <spark-mssql-connector.version>1.4.0</spark-mssql-connector.version>
+                <spark-mssql-connector.suffix>_${scala.api_version}</spark-mssql-connector.suffix>
+            </properties>
+        </profile>
+        <profile>
+            <id>synapse-3.3</id>
             <properties>
                 <spark-mssql-connector.group>com.solytic</spark-mssql-connector.group>
                 <spark-mssql-connector.version>1.4.0</spark-mssql-connector.version>

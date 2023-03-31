@@ -77,6 +77,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-377: Load override config/env from .flowman-env.yml
 * github-344: Support .flowman-ignore file for Flowman Kernel client
 * github-385: Update Flowman tutorial
+* github-386: Create Integration Test for Azure Synapse
 
 ### Breaking changes
 

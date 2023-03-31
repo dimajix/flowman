@@ -207,6 +207,15 @@ build-emr6.10:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days
 
+build-synapse3.3:
+  stage: build
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Psynapse-3.3 -Ddockerfile.skip'
+  artifacts:
+    name: "flowman-dist-synapse"
+    paths:
+      - flowman-dist/target/flowman-dist-*-bin.tar.gz
+    expire_in: 5 days
+
 #build-databricks12.2:
 #  stage: build
 #  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Pdatabricks12.2 -Ddockerfile.skip'

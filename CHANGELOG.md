@@ -56,12 +56,12 @@ Breaking changes will be documented in this changelog file for each version.
 * github-359: Update jline dependency
 * github-357: Spark session should not be shut down in Databricks environment
 * github-360: Logging should exclude more Databricks specific stuff
-* github-361: Work around low level API differences in DataBricks
+* github-361: Work around low-level API differences in DataBricks
 * github-363: HiveDatabaseTarget should accept an optional location
 * github-311: Create integration test for EMR
 * github-362: Upgrade EMR to 6.10
 * github-369: [BUG] Prevent endless loop in Kernel client, when getContext fails
-* github-370: Kernel client should use temporary workspaces with automatic cleanup
+* github-370: The Kernel client should use temporary workspaces with automatic cleanup
 * github-337: Add documentation for flowman-rshell
 * github-336: Add documentation for flowman-kernel
 * github-366: Feature parity between Flowman shell and Flowman remote shell
@@ -78,6 +78,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-344: Support .flowman-ignore file for Flowman Kernel client
 * github-385: Update Flowman tutorial
 * github-386: Create Integration Test for Azure Synapse
+* github-387: Remove scala-arm dependency
 
 ### Breaking changes
 

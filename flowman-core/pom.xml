@@ -147,13 +147,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.jsuereth</groupId>
-            <artifactId>scala-arm_${scala.api_version}</artifactId>
-            <version>2.0</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
             <groupId>com.typesafe.slick</groupId>
             <artifactId>slick_${scala.api_version}</artifactId>
             <version>3.3.3</version>

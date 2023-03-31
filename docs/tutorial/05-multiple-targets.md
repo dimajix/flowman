@@ -49,22 +49,33 @@ data.
 
 The logical data flow will look as follows:
 
-
 ```eval_rst
 .. mermaid::
 
   flowchart LR
-      r_stations_raw[[relation\n stations_raw\n CSV\n S3]] -->  m_stations_raw
-      m_stations_raw{{mapping\n stations_raw}} -->  r_stations
-      r_measurement_raw[[relation\n measurement_raw\n raw text\n S3]] -->  m_measurement_raw
-      m_measurement_raw{{mapping\n measurement_raw}} -->  m_measurement_extracted
-      m_measurement_extracted{{mapping\n measurement_raw}} -->  r_measurement
-      r_stations[[relation\n stations\n Parquet\n local]] --> m_stations
-      r_measurement[[relation\n measurement\n Parquet\n local]] --> m_measurement
-      m_stations{{mapping\n stations}} --> m_facts
-      m_measurement{{mapping\n measurement}} --> m_facts
-      m_facts{{mapping\n facts}} --> m_aggregates{{mapping\n aggregates}}
-      m_aggregates --> r_aggregates[[relation\n aggregates\n Parquet\n local]]
+    r_stations_raw[[relation\n stations_raw\n CSV\n S3]] -->  m_stations_raw
+    m_stations_raw{{mapping\n stations_raw}} -->  r_stations
+    r_measurement_raw[[relation\n measurement_raw\n raw text\n S3]] -->  m_measurement_raw
+    m_measurement_raw{{mapping\n measurement_raw}} -->  m_measurement_extracted
+    m_measurement_extracted{{mapping\n measurement_raw}} -->  r_measurement
+    r_stations[[relation\n stations\n Parquet\n local]] --> m_stations
+    r_measurement[[relation\n measurement\n Parquet\n local]] --> m_measurement
+    m_stations{{mapping\n stations}} --> m_facts
+    m_measurement{{mapping\n measurement}} --> m_facts
+    m_facts{{mapping\n facts}} --> m_aggregates{{mapping\n aggregates}}
+    m_aggregates --> r_aggregates[[relation\n aggregates\n Parquet\n local]]
+    style r_stations_raw fill:#339,stroke-width:3px
+    style m_stations_raw fill:#669,stroke-width:3px
+    style r_stations fill:#339,stroke-width:3px
+    style r_measurement_raw fill:#339,stroke-width:3px
+    style m_measurement_raw fill:#669,stroke-width:3px
+    style m_measurement_extracted fill:#669,stroke-width:3px
+    style r_measurement fill:#339,stroke-width:3px
+    style m_measurement fill:#669,stroke-width:3px
+    style m_stations fill:#669,stroke-width:3px
+    style m_facts fill:#669,stroke-width:3px
+    style m_aggregates fill:#669,stroke-width:3px
+    style r_aggregates fill:#339,stroke-width:3px
 ```
 
 
@@ -76,9 +87,13 @@ In the first part, we will implement the following subgraph of the whole data fl
 .. mermaid::
 
   flowchart LR
-      r_measurement_raw[[relation\n measurement_raw\n raw text\n S3]] -->  m_measurement_raw
-      m_measurement_raw{{mapping\n measurement_raw}} -->  m_measurement_extracted
-      m_measurement_extracted{{mapping\n measurement_raw}} -->  r_measurement
+    r_measurement_raw[[relation\n measurement_raw\n raw text\n S3]] -->  m_measurement_raw
+    m_measurement_raw{{mapping\n measurement_raw}} -->  m_measurement_extracted
+    m_measurement_extracted{{mapping\n measurement_raw}} -->  r_measurement
+    style r_measurement_raw fill:#339,stroke-width:3px
+    style m_measurement_raw fill:#669,stroke-width:3px
+    style m_measurement_extracted fill:#669,stroke-width:3px
+    style r_measurement fill:#339,stroke-width:3px
 ```
 
 First, we create a relation to access the raw input data stored as text files in S3:
@@ -180,8 +195,11 @@ The weather stations reference data is processed with a similar pattern:
 .. mermaid::
 
   flowchart LR
-      r_stations_raw[[relation\n stations_raw\n CSV\n S3]] -->  m_stations_raw
-      m_stations_raw{{mapping\n stations_raw}} -->  r_stations
+    r_stations_raw[[relation\n stations_raw\n CSV\n S3]] -->  m_stations_raw
+    m_stations_raw{{mapping\n stations_raw}} -->  r_stations
+    style r_stations_raw fill:#339,stroke-width:3px
+    style m_stations_raw fill:#669,stroke-width:3px
+    style r_stations fill:#339,stroke-width:3px
 ```
 
 The corresponding flow definitions look as follows:
@@ -237,13 +255,21 @@ to do so, we read from the intermediate Parquet files instead from the raw data.
 .. mermaid::
 
   flowchart LR
-      r_stations[[relation\n stations\n Parquet\n local]] --> m_stations
-      r_measurement[[relation\n measurement\n Parquet\n local]] --> m_measurement
-      m_stations{{mapping\n stations}} --> m_joined
-      m_measurement{{mapping\n measurement}} --> m_joined
-      m_joined{{mapping\n measurements_joined}} --> m_facts
-      m_facts{{mapping\n facts}} --> m_aggregates
-      m_aggregates{{mapping\n aggregates}} --> r_aggregates[[relation\n aggregates\n Parquet\n local]]
+    r_stations[[relation\n stations\n Parquet\n local]] --> m_stations
+    r_measurement[[relation\n measurement\n Parquet\n local]] --> m_measurement
+    m_stations{{mapping\n stations}} --> m_joined
+    m_measurement{{mapping\n measurement}} --> m_joined
+    m_joined{{mapping\n measurements_joined}} --> m_facts
+    m_facts{{mapping\n facts}} --> m_aggregates
+    m_aggregates{{mapping\n aggregates}} --> r_aggregates[[relation\n aggregates\n Parquet\n local]]
+    style r_stations fill:#339,stroke-width:3px
+    style r_measurement fill:#339,stroke-width:3px
+    style m_stations fill:#669,stroke-width:3px
+    style m_measurement fill:#669,stroke-width:3px
+    style m_joined fill:#669,stroke-width:3px
+    style m_facts fill:#669,stroke-width:3px
+    style m_aggregates fill:#669,stroke-width:3px
+    style r_aggregates fill:#339,stroke-width:3px
 ```
 
 This flow is implemented by the following definitions:
@@ -340,6 +366,7 @@ target `aggregates`, which needs to be executed after the targets `stations` and
 to take care of these dependencies explicitly yourself, instead Flowman will analyze all the inputs and outputs of
 each target and execute the targets in a correct order.
 
+
 ## 3. Execution
 
 With these entities in place we ca now execute the project as follows:
@@ -348,3 +375,8 @@ With these entities in place we ca now execute the project as follows:
 cd /opt/flowman
 flowexec -f lessons/05-multiple-targets job build main year=2014 --force
 ```
+
+
+## 4. Next Lesson
+In the next lesson, we will start using the Flowman shell as an interactive development tool for working with
+Flowman projects.

@@ -265,6 +265,26 @@ jobs:
 ```
 
 
+### 3.6 Summary
+
+The preceding steps built a complete data flow which looks as follows:
+
+```eval_rst
+.. mermaid::
+
+  flowchart LR
+    r_stations_raw[[relation_raw\n stations\n CSV\n S3]] --> m_stations_raw
+    m_stations_raw{{mapping\n stations_raw}} --> m_stations_conformed
+    m_stations_conformed{{mapping\n stations_conformed}} --> t_stations
+    t_stations(target\n stations) --> r_stations[[relation\n stations\n Parquet\n local]]
+    style t_stations fill:#93f,stroke-width:3px
+    style r_stations_raw fill:#339,stroke-width:3px
+    style m_stations_raw fill:#669,stroke-width:3px
+    style m_stations_conformed fill:#669,stroke-width:3px
+    style r_stations fill:#339,stroke-width:3px
+```
+
+
 ## 4. Execution
 
 We now have defined a complete Flowman project including configuration, environment variables, relations, mappings,

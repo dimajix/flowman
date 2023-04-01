@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.history
+package com.dimajix.flowman.spec.history
 
 import java.sql.Timestamp
 import java.time.ZoneId
@@ -35,6 +35,23 @@ import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.Action
+import com.dimajix.flowman.history.Graph
+import com.dimajix.flowman.history.InputMapping
+import com.dimajix.flowman.history.JobColumn
+import com.dimajix.flowman.history.JobOrder
+import com.dimajix.flowman.history.JobQuery
+import com.dimajix.flowman.history.JobState
+import com.dimajix.flowman.history.MappingNode
+import com.dimajix.flowman.history.Measurement
+import com.dimajix.flowman.history.MetricSeries
+import com.dimajix.flowman.history.ReadRelation
+import com.dimajix.flowman.history.RelationNode
+import com.dimajix.flowman.history.Resource
+import com.dimajix.flowman.history.TargetColumn
+import com.dimajix.flowman.history.TargetOrder
+import com.dimajix.flowman.history.TargetQuery
+import com.dimajix.flowman.history.TargetState
+import com.dimajix.flowman.history.WriteRelation
 import com.dimajix.flowman.jdbc.SlickUtils
 import com.dimajix.flowman.model.Category
 

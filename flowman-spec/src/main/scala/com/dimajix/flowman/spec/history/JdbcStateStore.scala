@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.history
+package com.dimajix.flowman.spec.history
 
 import java.security.MessageDigest
 import java.sql.SQLRecoverableException
@@ -29,10 +29,20 @@ import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.StateStoreException
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.GraphBuilder
-import com.dimajix.flowman.history.JdbcStateRepository.JobRun
-import com.dimajix.flowman.history.JdbcStateRepository.TargetRun
-import com.dimajix.flowman.history.JdbcStateStore.JdbcJobToken
-import com.dimajix.flowman.history.JdbcStateStore.JdbcTargetToken
+import com.dimajix.flowman.history.AbstractStateStore
+import com.dimajix.flowman.history.Graph
+import com.dimajix.flowman.history.JobColumn
+import com.dimajix.flowman.history.JobOrder
+import com.dimajix.flowman.history.JobQuery
+import com.dimajix.flowman.history.JobState
+import com.dimajix.flowman.history.JobToken
+import com.dimajix.flowman.history.Measurement
+import com.dimajix.flowman.history.MetricSeries
+import com.dimajix.flowman.history.TargetColumn
+import com.dimajix.flowman.history.TargetOrder
+import com.dimajix.flowman.history.TargetQuery
+import com.dimajix.flowman.history.TargetState
+import com.dimajix.flowman.history.TargetToken
 import com.dimajix.flowman.jdbc.SlickUtils
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobDigest
@@ -40,6 +50,10 @@ import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
+import com.dimajix.flowman.spec.history.JdbcStateRepository.JobRun
+import com.dimajix.flowman.spec.history.JdbcStateRepository.TargetRun
+import com.dimajix.flowman.spec.history.JdbcStateStore.JdbcJobToken
+import com.dimajix.flowman.spec.history.JdbcStateStore.JdbcTargetToken
 import com.dimajix.flowman.spi.LogFilter
 
 

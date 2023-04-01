@@ -28,7 +28,6 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.config.FlowmanConf.EXECUTION_TARGET_FORCE_DIRTY
 import com.dimajix.flowman.config.FlowmanConf.EXECUTION_TARGET_USE_HISTORY
 import com.dimajix.flowman.execution.RunnerHistoryTest.NullTarget
-import com.dimajix.flowman.history.JdbcStateStore
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.Metadata
@@ -36,9 +35,10 @@ import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetDigest
+import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetResult
+import com.dimajix.flowman.spec.history.JdbcStateStore
 import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
 

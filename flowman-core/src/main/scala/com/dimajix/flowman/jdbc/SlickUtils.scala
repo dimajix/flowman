@@ -29,10 +29,10 @@ import slick.jdbc.SQLiteProfile
 object SlickUtils {
     lazy val defaultExecutor =  slick.util.AsyncExecutor(
         name="Flowman.default",
-        minThreads = 20,
-        maxThreads = 20,
+        minThreads = 10,
+        maxThreads = 10,
         queueSize = 1000,
-        maxConnections = 20
+        maxConnections = 10
     )
 
     def getProfile(driver:String) : JdbcProfile = {

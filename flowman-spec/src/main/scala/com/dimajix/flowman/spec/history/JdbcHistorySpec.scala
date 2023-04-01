@@ -19,7 +19,6 @@ package com.dimajix.flowman.spec.history
 import com.fasterxml.jackson.annotation.JsonProperty
 
 import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.history.JdbcStateStore
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.spec.connection.JdbcConnection

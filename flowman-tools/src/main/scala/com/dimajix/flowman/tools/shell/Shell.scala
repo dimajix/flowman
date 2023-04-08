@@ -36,6 +36,7 @@ import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.CmdLineParser
 
 import com.dimajix.common.text.ConsoleColors.yellow
+import com.dimajix.flowman.FLOWMAN_LOGO
 import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.HADOOP_BUILD_VERSION
 import com.dimajix.flowman.JAVA_VERSION
@@ -154,16 +155,8 @@ class Shell(args:Arguments) extends StatefulTool(
         console.getHistory.load()
         Runtime.getRuntime.addShutdownHook(new Thread() { override def run() : Unit = console.getHistory.save() })
 
-        val logo =
-            """______  _
-              ||  ___|| |
-              || |_   | |  ___ __      __ _ __ ___    __ _  _ __
-              ||  _|  | | / _ \\ \ /\ / /| '_ ` _ \  / _` || '_ \
-              || |    | || (_) |\ V  V / | | | | | || (_| || | | |
-              |\_|    |_| \___/  \_/\_/  |_| |_| |_| \__,_||_| |_|""".stripMargin
-
         writer.println("\nWelcome to")
-        writer.println(s"$logo    $FLOWMAN_VERSION\n")
+        writer.println(s"$FLOWMAN_LOGO    $FLOWMAN_VERSION\n")
         writer.println(s"Using Spark $SPARK_VERSION and Hadoop $HADOOP_VERSION and Scala $SCALA_VERSION (Java $JAVA_VERSION)")
         if (SPARK_VERSION != SPARK_BUILD_VERSION || HADOOP_VERSION != HADOOP_BUILD_VERSION) {
             writer.println(yellow("Detected Version mismatch between build and execution:"))

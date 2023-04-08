@@ -25,6 +25,7 @@ import scala.util.Try
 import org.kohsuke.args4j.CmdLineException
 
 import com.dimajix.common.text.ConsoleColors.yellow
+import com.dimajix.flowman.FLOWMAN_LOGO
 import com.dimajix.flowman.FLOWMAN_VERSION
 import com.dimajix.flowman.HADOOP_BUILD_VERSION
 import com.dimajix.flowman.JAVA_VERSION
@@ -129,14 +130,7 @@ final class Kernel(args:Arguments) extends Tool {
      * @return
      */
     def start(): Unit = {
-        val logo =
-            """______  _
-              ||  ___|| |
-              || |_   | |  ___ __      __ _ __ ___    __ _  _ __
-              ||  _|  | | / _ \\ \ /\ / /| '_ ` _ \  / _` || '_ \
-              || |    | || (_) |\ V  V / | | | | | || (_| || | | |
-              |\_|    |_| \___/  \_/\_/  |_| |_| |_| \__,_||_| |_|""".stripMargin
-        logger.info(s"\n$logo    $FLOWMAN_VERSION\n")
+        logger.info(s"\n$FLOWMAN_LOGO    $FLOWMAN_VERSION\n")
 
         logger.info(s"Flowman $FLOWMAN_VERSION using Spark $SPARK_VERSION and Hadoop $HADOOP_VERSION and Scala $SCALA_VERSION (Java $JAVA_VERSION)")
         if (SPARK_VERSION != SPARK_BUILD_VERSION || HADOOP_VERSION != HADOOP_BUILD_VERSION) {

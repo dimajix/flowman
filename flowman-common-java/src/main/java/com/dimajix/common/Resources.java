@@ -17,9 +17,12 @@
 package com.dimajix.common;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
+import com.google.common.io.CharStreams;
 import lombok.val;
 
 
@@ -35,12 +38,30 @@ public final class Resources {
     public static Properties loadProperties(String resourceName) throws IOException {
         val loader = Thread.currentThread().getContextClassLoader();
         val url = loader.getResource(resourceName);
+        if (url == null)
+            throw new IOException("Cannot find resource '" + resourceName + "'");
+
         return loadProperties(url);
     }
 
     public static Properties loadProperties(Class<?> contextClass, String resourceName) throws IOException {
         val url = com.google.common.io.Resources.getResource(contextClass, resourceName);
         return loadProperties(url);
+    }
+
+    public static String loadResource(String resourceName) throws IOException {
+        val loader = Thread.currentThread().getContextClassLoader();
+        val url = loader.getResource(resourceName);
+        if (url == null)
+            throw new IOException("Cannot find resource '" + resourceName + "'");
+
+        val inputStream = url.openStream();
+        try {
+            val reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+            return CharStreams.toString(reader);
+        } finally {
+            inputStream.close();
+        }
     }
 
     private static Properties loadProperties(URL url) throws IOException {

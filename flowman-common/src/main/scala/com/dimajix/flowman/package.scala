@@ -16,15 +16,13 @@
 
 package com.dimajix
 
-import com.dimajix.common.Resources
-
 
 package object flowman {
-    private val props = Resources.loadProperties("com/dimajix/flowman/flowman.properties")
-    val JAVA_VERSION: String = System.getProperty("java.version")
+    val FLOWMAN_VERSION: String = Versions.FLOWMAN_VERSION
+    val FLOWMAN_LOGO: String = Versions.FLOWMAN_LOGO
+    val JAVA_VERSION: String = Versions.JAVA_VERSION
     val SCALA_VERSION: String = scala.util.Properties.versionNumberString
-    val FLOWMAN_VERSION: String = props.getProperty("version")
-    val SPARK_BUILD_VERSION: String = props.getProperty("spark_version")
-    val HADOOP_BUILD_VERSION: String = props.getProperty("hadoop_version")
-    val SCALA_BUILD_VERSION: String = props.getProperty("scala_version")
+    val SPARK_BUILD_VERSION: String = Versions.SPARK_BUILD_VERSION
+    val HADOOP_BUILD_VERSION: String = Versions.HADOOP_BUILD_VERSION
+    val SCALA_BUILD_VERSION: String = Versions.SCALA_BUILD_VERSION
 }

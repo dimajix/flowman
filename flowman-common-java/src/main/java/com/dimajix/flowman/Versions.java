@@ -18,20 +18,28 @@ package com.dimajix.flowman;
 
 
 import java.io.IOException;
-import java.util.Properties;
+
+import lombok.val;
 
 import com.dimajix.common.Resources;
 
 
 public final class Versions {
-    private final static Properties props;
-    public final static String JAVA_VERSION = System.getProperty("java.version");
     public final static String FLOWMAN_VERSION;
+    public static final String FLOWMAN_LOGO;
+    public static final String SPARK_BUILD_VERSION;
+    public static final String HADOOP_BUILD_VERSION;
+    public final static String JAVA_VERSION = System.getProperty("java.version");
+    public static final String SCALA_BUILD_VERSION;
 
     static {
         try {
-            props = Resources.loadProperties("com/dimajix/flowman/flowman.properties");
+            val props = Resources.loadProperties("com/dimajix/flowman/flowman.properties");
             FLOWMAN_VERSION = props.getProperty("version");
+            SPARK_BUILD_VERSION = props.getProperty("spark_version");
+            HADOOP_BUILD_VERSION = props.getProperty("hadoop_version");
+            SCALA_BUILD_VERSION = props.getProperty("scala_version");
+            FLOWMAN_LOGO = com.dimajix.common.Resources.loadResource("com/dimajix/flowman/flowman-logo.txt");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

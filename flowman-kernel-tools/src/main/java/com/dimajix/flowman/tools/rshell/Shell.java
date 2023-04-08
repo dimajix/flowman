@@ -38,10 +38,11 @@ import com.dimajix.flowman.common.Logging;
 import com.dimajix.flowman.tools.RemoteTool;
 import static com.dimajix.common.ExceptionUtils.isFatal;
 import static com.dimajix.common.ExceptionUtils.reasons;
+import static com.dimajix.common.text.ConsoleColors.yellow;
 import static com.dimajix.common.text.ParserUtils.splitSettings;
+import static com.dimajix.flowman.Versions.FLOWMAN_LOGO;
 import static com.dimajix.flowman.Versions.FLOWMAN_VERSION;
 import static com.dimajix.flowman.Versions.JAVA_VERSION;
-import static com.dimajix.common.text.ConsoleColors.yellow;
 
 
 public class Shell extends RemoteTool {
@@ -144,14 +145,6 @@ public class Shell extends RemoteTool {
             }
         });
 
-        val logo =
-            " ______  _\n" +
-            "||  ___|| |\n" +
-            "|| |_   | |  ___ __      __ _ __ ___    __ _  _ __\n" +
-            "||  _|  | | / _ \\\\ \\ /\\ / /| '_ ` _ \\  / _` || '_ \\\n" +
-            "|| |    | || (_) |\\ V  V / | | | | | || (_| || | | |\n" +
-            "|\\_|    |_| \\___/  \\_/\\_/  |_| |_| |_| \\__,_||_| |_|";
-
         val kernel = getKernel();
         val kernelInfo = kernel.getKernel();
         val kernelVersion = kernelInfo.getFlowmanVersion();
@@ -163,7 +156,7 @@ public class Shell extends RemoteTool {
         val hadoopBuildVersion = kernelInfo.getHadoopBuildVersion();
 
         writer.println("\nWelcome to");
-        writer.println(logo + "    client: " + FLOWMAN_VERSION + " / kernel: " + kernelVersion + "\n");
+        writer.println(FLOWMAN_LOGO + "    client: " + FLOWMAN_VERSION + " / kernel: " + kernelVersion + "\n");
         writer.println("Kernel is using Spark " + sparkVersion + " and Hadoop " + hadoopVersion + " and Scala " + scalaVersion + " (Java " + javaVersion+ ")");
         if (!sparkVersion.equals(sparkBuildVersion) || !hadoopVersion.equals(hadoopBuildVersion)) {
             writer.println(yellow("Detected version mismatch in kernel between build and execution environment:"));

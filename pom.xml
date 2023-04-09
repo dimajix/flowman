@@ -132,6 +132,7 @@
         <scalatest.version>3.2.9</scalatest.version>
         <slf4j.version>1.7.32</slf4j.version>
         <snakeyaml.version>1.31</snakeyaml.version>
+        <snakeyaml.scope>provided</snakeyaml.scope>
 
         <!-- gRPC related versions -->
         <grpc.version>1.53.0</grpc.version>
@@ -634,6 +635,7 @@
                 <scalatest.version>3.2.9</scalatest.version>
                 <slf4j.version>1.7.32</slf4j.version>
                 <snakeyaml.version>1.24</snakeyaml.version>
+                <snakeyaml.scope>compile</snakeyaml.scope>
                 <snappy.version>1.1.8.4</snappy.version>
             </properties>
         </profile>
@@ -2291,7 +2293,7 @@
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
                 <version>${snakeyaml.version}</version>
-                <scope>provided</scope>
+                <scope>${snakeyaml.scope}</scope>
             </dependency>
 
             <!-- Codehaus Jackson -->

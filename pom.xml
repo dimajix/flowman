@@ -131,7 +131,7 @@
         <scalatest-api.version>3.2</scalatest-api.version>
         <scalatest.version>3.2.9</scalatest.version>
         <slf4j.version>1.7.32</slf4j.version>
-        <snakeyaml.version>1.31</snakeyaml.version>
+        <snakeyaml.version>2.0</snakeyaml.version>
         <snakeyaml.scope>provided</snakeyaml.scope>
 
         <!-- gRPC related versions -->

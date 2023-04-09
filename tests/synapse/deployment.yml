@@ -1,0 +1,27 @@
+flowman:
+  version: 1.0.0-synapse-SNAPSHOT
+  distribution: com.dimajix.flowman:flowman-dist:bin:1.0.0-synapse-SNAPSHOT
+  plugins:
+    - flowman-avro
+    - flowman-aws
+    - flowman-azure
+    - flowman-mssqlserver
+
+
+# List of subdirectories containing Flowman projects
+projects:
+  - flow
+
+
+# List of packages to be built
+packages:
+  synapse:
+    kind: fatjar
+
+
+# List of deployments
+deployments:
+  synapse:
+    kind: copy
+    package: synapse
+    location: abfs://flowman@dimajixspark.dfs.core.windows.net/integration-tests

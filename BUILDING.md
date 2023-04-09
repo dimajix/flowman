@@ -103,6 +103,7 @@ using the correct version. The following profiles are available:
 * hadoop-3.2
 * hadoop-3.3
 * EMR-6.10
+* synapse-3.3
 * CDH-6.3
 * CDP-7.1
 * CDP-7.1-spark-3.2
@@ -199,18 +200,32 @@ mvn clean install -Pspark-3.3 -Phadoop-3.3 -Dhadoop.version=3.3.2 -DskipTests
 
 ## Building for Cloudera
 
-The Maven project also contains preconfigured profiles for Cloudera CDH 6.3 and for Cloudera CDP 7.1.
-
+The Maven project also contains preconfigured profiles for Cloudera CDH 6.3 and for Cloudera CDP 7.1 and also supports
+optional Spark 3.2 and Spark 3.3 parcels for CDP 7.1:
 ```shell
 mvn clean install -PCDH-6.3 -DskipTests
 ```
-
 ```shell
 mvn clean install -PCDP-7.1 -DskipTests
 ```
-
 ```shell
 mvn clean install -PCDP-7.1-spark-3.2 -DskipTests
+```
+```shell
+mvn clean install -PCDP-7.1-spark-3.3 -DskipTests
+```
+
+## Building for AWS EMR
+
+The Maven project also contains preconfigured profiles for AWS EMR 6.10.
+```shell
+mvn clean install -PEMR-6.10 -DskipTests
+```
+
+## Building for Azure Synapse
+Flowman also provides a build profile for Azure Synapse 3.3:
+```shell
+mvn clean install -Psynapase-3.3 -DskipTests
 ```
 
 

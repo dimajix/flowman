@@ -1,0 +1,10 @@
+targets:
+  aggregates:
+    kind: relation
+    mapping: aggregates
+    relation: aggregates
+
+  aggregates_jdbc:
+    kind: relation
+    mapping: aggregates
+    relation: aggregates_jdbc

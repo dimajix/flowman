@@ -1,0 +1,4 @@
+# Here go all project specific configuration options for Spark and Flowman
+config:
+  # Use anonymous access to S3
+  - spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.AnonymousAWSCredentialsProvider

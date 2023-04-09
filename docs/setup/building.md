@@ -108,6 +108,7 @@ using the correct version. The following profiles are available:
 * hadoop-3.2
 * hadoop-3.3
 * EMR-6.10
+* synapse-3.3
 * CDH-6.3
 * CDP-7.1
 * CDP-7.1-spark-3.2
@@ -129,58 +130,84 @@ mvn install -Djava.version=1.8
 
 ### Building for Open Source Hadoop and Spark
 
-Spark 2.4 and Hadoop 2.6:
+#### Spark 2.4 and Hadoop 2.6:
+```shell
+mvn clean install -Pspark-2.4 -Phadoop-2.6 -DskipTests
+```
 
-    mvn clean install -Pspark-2.4 -Phadoop-2.6 -DskipTests
-    
-Spark 2.4 and Hadoop 2.7:
+#### Spark 2.4 and Hadoop 2.7:
+```shell
+mvn clean install -Pspark-2.4 -Phadoop-2.7 -DskipTests
+```
 
-    mvn clean install -Pspark-2.4 -Phadoop-2.7 -DskipTests
+#### Spark 2.4 and Hadoop 2.8:
+```shell
+mvn clean install -Pspark-2.4 -Phadoop-2.8 -DskipTests
+```
 
-Spark 2.4 and Hadoop 2.8:
+#### Spark 2.4 and Hadoop 2.9:
+```shell
+mvn clean install -Pspark-2.4 -Phadoop-2.9 -DskipTests
+```
 
-    mvn clean install -Pspark-2.4 -Phadoop-2.8 -DskipTests
+#### Spark 3.0 and Hadoop 3.1
+```shell
+mvn clean install -Pspark-3.0 -Phadoop-3.1 -DskipTests
+```
 
-Spark 2.4 and Hadoop 2.9:
+#### Spark 3.0 and Hadoop 3.2
+```shell
+mvn clean install -Pspark-3.0 -Phadoop-3.2 -DskipTests
+```
 
-    mvn clean install -Pspark-2.4 -Phadoop-2.9 -DskipTests
+#### Spark 3.1 and Hadoop 3.2
+```shell
+mvn clean install -Pspark-3.1 -Phadoop-3.2 -DskipTests
+```
 
-Spark 3.0 and Hadoop 3.1
+#### Spark 3.2 and Hadoop 3.3
+```shell
+mvn clean install -Pspark-3.2 -Phadoop-3.3 -Phadoop.version=3.3.1 -DskipTests
+```
 
-    mvn clean install -Pspark-3.0 -Phadoop-3.1 -DskipTests
-
-Spark 3.0 and Hadoop 3.2
-
-    mvn clean install -Pspark-3.0 -Phadoop-3.2 -DskipTests
-
-Spark 3.1 and Hadoop 3.2
-
-    mvn clean install -Pspark-3.1 -Phadoop-3.2 -DskipTests
-
-Spark 3.2 and Hadoop 3.3
-
-    mvn clean install -Pspark-3.2 -Phadoop-3.3 -Phadoop.version=3.3.1 -DskipTests
-
-Spark 3.3 and Hadoop 3.3
-
-    mvn clean install -Pspark-3.3 -Phadoop-3.3 -Phadoop.version=3.3.2 -DskipTests
+#### Spark 3.3 and Hadoop 3.3
+```shell
+mvn clean install -Pspark-3.3 -Phadoop-3.3 -Phadoop.version=3.3.2 -DskipTests
+```
 
 
 ### Building for Cloudera
 
-The Maven project also contains preconfigured profiles for Cloudera CDH 6.3 and for CDP 7.1.
+The Maven project also contains preconfigured profiles for Cloudera CDH 6.3 and for CDP 7.1 and also supports
+optional Spark 3.2 and Spark 3.3 parcels for CDP 7.1:
+```shell
+mvn clean install -PCDH-6.3 -DskipTests
+```
 
-    mvn clean install -PCDH-6.3 -DskipTests
-    mvn clean install -PCDP-7.1 -DskipTests
-    mvn clean install -PCDP-7.1-spark-3.2 -DskipTests
-    mvn clean install -PCDP-7.1-spark-3.3 -DskipTests
+```shell
+mvn clean install -PCDP-7.1 -DskipTests
+```
 
+```shell
+mvn clean install -PCDP-7.1-spark-3.2 -DskipTests
+```
+
+```shell
+mvn clean install -PCDP-7.1-spark-3.3 -DskipTests
+```
 
 ### Building for AWS EMR
 
-The Maven project also contains preconfigured profiles for AWS EMR 6.9.
+The Maven project also contains preconfigured profiles for AWS EMR 6.10.
+```shell
+mvn clean install -PEMR-6.10 -DskipTests
+```
 
-    mvn clean install -PEMR-6.9 -DskipTests
+### Building for Azure Synapse
+Flowman also provides a build profile for Azure Synapse 3.3:
+```shell
+mvn clean install -Psynapase-3.3 -DskipTests
+```
 
 
 ## Coverage Analysis

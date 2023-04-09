@@ -1,0 +1,60 @@
+relations:
+  aggregates:
+    kind: hiveTable
+    database: weather
+    table: aggregates
+    format: parquet
+    schema:
+      kind: inline
+      fields:
+        - name: country
+          type: CHAR(2)
+          nullable: false
+          description: "FIPS Country Code"
+        - name: min_wind_speed
+          type: FLOAT
+          description: "Minimum wind speed, which will explain the wind speed but not the direction, which is provided in another cölumn"
+        - name: max_wind_speed
+          type: FLOAT
+          description: "Maximum wind speed"
+        - name: avg_wind_speed
+          type: FLOAT
+        - name: min_temperature
+          type: FLOAT
+        - name: max_temperature
+          type: FLOAT
+        - name: avg_temperature
+          type: FLOAT
+
+
+  aggregates_jdbc:
+    kind: sqlserver
+    connection: sql_server
+    database: dbo
+    table: aggregates
+    stagingTable: weather_staging
+    storageFormat: ROWSTORE
+    schema:
+      kind: inline
+      fields:
+        - name: country
+          type: CHAR(2)
+          nullable: false
+          description: "FIPS Country Code"
+        - name: min_wind_speed
+          type: FLOAT
+          description: "Minimum wind speed, which will explain the wind speed but not the direction, which is provided in another cölumn"
+        - name: max_wind_speed
+          type: FLOAT
+          description: "Maximum wind speed"
+        - name: avg_wind_speed
+          type: FLOAT
+        - name: min_temperature
+          type: FLOAT
+        - name: max_temperature
+          type: FLOAT
+        - name: avg_temperature
+          type: FLOAT
+    # (Optionally) specify a primary key
+    primaryKey:
+      - country

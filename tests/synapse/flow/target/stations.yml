@@ -1,0 +1,10 @@
+targets:
+  stations:
+    kind: relation
+    mapping: stations_conformed
+    relation: stations
+
+  stations_jdbc:
+    kind: relation
+    mapping: stations
+    relation: stations_jdbc

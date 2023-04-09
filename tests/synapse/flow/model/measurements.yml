@@ -1,0 +1,37 @@
+relations:
+  measurements:
+    kind: hiveTable
+    database: weather
+    table: measurement
+    format: parquet
+    schema:
+      kind: spark
+      file: "${project.basedir}/schema/measurements.json"
+    # Add partition column
+    partitions:
+      - name: year
+        type: integer
+        granularity: 1
+
+
+  measurements_jdbc:
+    kind: sqlserver
+    connection: sql_server
+    database: dbo
+    table: measurement
+    schema:
+      kind: spark
+      file: "${project.basedir}/schema/measurements.json"
+    # Add partition column
+    partitions:
+      - name: year
+        type: integer
+        granularity: 1
+    primaryKey:
+      - usaf
+      - wban
+      - date
+      - time
+    indexes:
+      - name: "measurement_idx0"
+        columns: [usaf, wban]

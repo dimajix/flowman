@@ -1,0 +1,24 @@
+relations:
+  stations:
+    kind: hiveTable
+    description: "The 'stations' table contains meta data on all weather stations"
+    database: weather
+    table: stations
+    format: parquet
+    schema:
+      kind: mapping
+      mapping: stations_conformed
+
+  stations_jdbc:
+    kind: sqlserver
+    description: "The 'stations' table contains meta data on all weather stations"
+    connection: sql_server
+    database: dbo
+    table: stations
+    schema:
+      kind: mapping
+      mapping: stations_conformed
+    indexes:
+      - name: "stations_idx"
+        columns: [usaf, wban]
+        clustered: true

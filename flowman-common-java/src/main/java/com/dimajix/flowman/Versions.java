@@ -39,7 +39,9 @@ public final class Versions {
             SPARK_BUILD_VERSION = props.getProperty("spark_version");
             HADOOP_BUILD_VERSION = props.getProperty("hadoop_version");
             SCALA_BUILD_VERSION = props.getProperty("scala_version");
-            FLOWMAN_LOGO = com.dimajix.common.Resources.loadResource("com/dimajix/flowman/flowman-logo.txt");
+
+            val logo = com.dimajix.common.Resources.loadResource("com/dimajix/flowman/flowman-logo.txt");
+            FLOWMAN_LOGO = logo.substring(0, logo.length() - 1);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -80,7 +80,7 @@ function get_branch_info {
 Branching details:
 BRANCH NAME:     $GIT_BRANCH
 BRANCH VERSION:  $VERSION
-MASTER VERSION:  $NEXT_VERSION
+MAIN VERSION:    $NEXT_VERSION
 
 FULL NAME:  $GIT_NAME
 E-MAIL:     $GIT_EMAIL
@@ -99,7 +99,7 @@ function get_release_info {
   if [ -z "$GIT_BRANCH" ]; then
     # If no branch is specified, found out the latest branch from the repo.
     GIT_BRANCH=$(git ls-remote --heads "$FLOWMAN_REPO" |
-      grep -v refs/heads/master |
+      grep -v refs/heads/main |
       grep branch |
       awk '{print $2}' |
       sort -r |

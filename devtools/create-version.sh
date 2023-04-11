@@ -17,12 +17,12 @@ done
 check_clean_directory
 get_branch_info
 
-git checkout master
-git pull origin master
+git checkout main
+git pull origin main
 git checkout -b $GIT_BRANCH
 git push origin
 
-git checkout master
+git checkout main
 mvn versions:set -DnewVersion=$NEXT_VERSION
-git commit -a -m "Set version to next master version to $NEXT_VERSION"
+git commit -a -m "Set version to next main version to $NEXT_VERSION"
 git push origin

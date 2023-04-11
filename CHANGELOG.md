@@ -79,6 +79,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-385: Update Flowman tutorial
 * github-386: Create Integration Test for Azure Synapse
 * github-387: Remove scala-arm dependency
+* github-390: Rename "master" branch to "main"
 
 ### Breaking changes
 

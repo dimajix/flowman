@@ -49,6 +49,7 @@ build_profile -Phadoop-2.7 -Pspark-3.3
 build_profile -Phadoop-3.3 -Pspark-3.3 -Dhadoop.version=3.3.2
 
 build_profile -PEMR-6.10
+build_profile -Psynapse-3.3
 build_profile -PCDP-7.1-spark-3.2
 build_profile -PCDP-7.1-spark-3.3
 

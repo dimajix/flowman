@@ -80,6 +80,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-386: Create Integration Test for Azure Synapse
 * github-387: Remove scala-arm dependency
 * github-390: Rename "master" branch to "main"
+* github-392: 'relation' mapping should support numeric partition values
 
 ### Breaking changes
 

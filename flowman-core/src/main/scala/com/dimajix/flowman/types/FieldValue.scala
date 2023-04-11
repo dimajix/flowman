@@ -37,7 +37,7 @@ private class FieldValueDeserializer(vc:Class[_]) extends StdDeserializer[FieldV
     def deserialize(jp: JsonParser, ctxt: DeserializationContext): FieldValue = {
         val node = jp.getCodec.readTree[JsonNode](jp)
         node.getNodeType match {
-            case JsonNodeType.STRING => {
+            case JsonNodeType.BOOLEAN|JsonNodeType.NUMBER|JsonNodeType.STRING => {
                 SingleValue(node.asText)
             }
             case JsonNodeType.ARRAY => {

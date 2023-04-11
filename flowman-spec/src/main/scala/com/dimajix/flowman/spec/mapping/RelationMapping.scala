@@ -136,8 +136,8 @@ final case class RelationMapping(
 
 class RelationMappingSpec extends MappingSpec {
     @JsonProperty(value = "relation", required = true) private var relation:RelationReferenceSpec = _
-    @JsonProperty(value = "columns", required=false) private var columns:Map[String,String] = Map()
-    @JsonProperty(value = "partitions", required=false) private var partitions:Map[String,FieldValue] = Map()
+    @JsonProperty(value = "columns", required=false) private var columns:Map[String,String] = Map.empty
+    @JsonProperty(value = "partitions", required=false) private var partitions:Map[String,FieldValue] = Map.empty
     @JsonProperty(value = "filter", required=false) private var filter:Option[String] = None
 
     /**

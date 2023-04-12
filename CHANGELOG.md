@@ -93,15 +93,13 @@ by a different Flowman project, you now need to explicitly import the project in
 * The `kind` for schema definitions is now a mandatory attribute, Flowman will not fall back to a `inline` schema anymore. 
 
 
-## Version 0.30.1 (LTS) - 2023-04-12
+## Version 0.30.1 - 2023-04-12
 
 * github-379: [BUG] Parallel execution of multiple targets runs too many targets on Java 17
 * github-383: Flowman should preserve target ordering
 
 
-## Version 0.30.0 (LTS) - 2023-01-03
-
-This version line 0.30.x is a long term support release, which will receive bug-fixes and dependency updates.
+## Version 0.30.0 - 2023-01-03
 
 * github-278: Parallelize execution of data quality checks. This also introduces a new configuration property
   `flowman.execution.check.parallelism` (default `1`)

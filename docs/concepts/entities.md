@@ -3,7 +3,7 @@
 Flowman is a *data build tool* which uses a declarative syntax to specify, what needs to be built. The main difference
 to classical build tools like `make`, `maven` is that Flowman builds *data* instead of *applications* or *libraries*.
 Flowman borrows many features from classical build tools, like support for [build phases](lifecycle.md), automatic
-dependency detection, clean console output and more.
+dependency detection, clean console output, and more.
 
 But how can we instruct Flowman to build data? The input and output data is specified in declarative yaml files
 together with all transformations applied along the way from reading to writing data. At the core of these yaml
@@ -21,7 +21,7 @@ distributed filesystem like HDFS or files stored in object store like S3.
 A relation can serve both as a data source or a data sink, or as both (this is when automatic dependency management 
 comes into play, which is required to determine the correct build order). Each relation typically has some important
 properties like its *schema* (i.e. the columns including name and type), its location (be it a directory in a shared
-file system or a URL to connect to). Of course the available properties depend on the specific *kind* of relation.
+file system or a URL to connect to). Of course, the available properties depend on the specific *kind* of relation.
 
 ### Examples
 For example a table in Hive can be specified as follows:

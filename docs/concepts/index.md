@@ -9,5 +9,5 @@ which are used to model all the aspects of a data flow, like relations (which de
 data sources and sinks), mappings (which describe data transformations) and targets (which describe the actual work
 to be performed).
 
-In addition to understand the core entities, it is also important to understand Flowman's execution model which is
+In addition to understanding the core entities, it is also important to understand Flowman's execution model which is
 described in the [lifecycle documentation](lifecycle.md).

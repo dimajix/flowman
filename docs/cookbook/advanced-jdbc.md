@@ -6,7 +6,7 @@ not support some special or exotic features of the relational database, which yo
 more control than provided via the standard approach by using the [`jdbcTable`](../spec/relation/jdbcTable.md), 
 [`jdbcQuery`](../spec/relation/jdbcQuery.md) and [`jdbcView`](../spec/relation/jdbcView.md) relations.
 
-Basically there are two main situations where the abstraction provided by Flowman might hide required special features:
+Basically, there are two main situations where the abstraction provided by Flowman might hide required special features:
 * You need more control over the `CREATE TABLE` statement
 * You need to execute additional commands as part of your data build process
 

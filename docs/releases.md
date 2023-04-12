@@ -47,6 +47,53 @@ changes over time.
 * github-309: Automate integration tests
 * github-322: Remove flowman-client
 * github-324: Log environment variables for imported projects
+* github-329: Create Kernel API
+* github-330: Implement Kernel Server
+* github-331: Implement Kernel Client
+* github-332: Build Flowman Shell on top of kernel Client/Server
+* github-334: Create standalone Flowman Kernel application
+* github-338: Update Spark to 3.3.2
+* github-333: Forward Logs from Kernel to Client
+* github-339: Set Copyright to "The Flowman Authors"
+* github-345: [BUG] Loading an embedded schema inside a jar file should not throw an exception
+* github-346: Create build profile for Databricks
+* github-343: Log all client requests in kernel
+* github-342: Automatically close session when client disconnects from kernel
+* github-351: [BUG] Failing execution listener instantiation should not fail a build
+* github-347: Exclude AWS SDK for Databricks and EMR build profiles
+* github-352: [BUG] Spark sessions should not contain duplicate jars from different plugins
+* github-353: Successful runs should not use System.exit(0)
+* github-354: Optionally load custom log4j config from jar
+* github-358: Provide different log4j config for Flowman server and kernel
+* github-359: Update jline dependency
+* github-357: Spark session should not be shut down in Databricks environment
+* github-360: Logging should exclude more Databricks specific stuff
+* github-361: Work around low-level API differences in DataBricks
+* github-363: HiveDatabaseTarget should accept an optional location
+* github-311: Create integration test for EMR
+* github-362: Upgrade EMR to 6.10
+* github-369: [BUG] Prevent endless loop in Kernel client, when getContext fails
+* github-370: The Kernel client should use temporary workspaces with automatic cleanup
+* github-337: Add documentation for flowman-rshell
+* github-336: Add documentation for flowman-kernel
+* github-366: Feature parity between Flowman shell and Flowman remote shell
+* github-365: Implement saving mappings in Flowman Kernel/client
+* github-367: Create integration test for "quickstart" archetype
+* github-375: [BUG] "project reload" does not work correctly in remote shell with nested directories
+* github-376: Document options to parallelize work
+* github-378: Remove travis-ci integration
+* github-308: Revise branching model
+* github-381: Remove json-smart dependency
+* github-382: [BUG] Parallel execution of multiple dq checks runs too many checks on Java 17
+* github-384: Improve documentation for using docker-compose
+* github-377: Load override config/env from .flowman-env.yml
+* github-344: Support .flowman-ignore file for Flowman Kernel client
+* github-385: Update Flowman tutorial
+* github-386: Create Integration Test for Azure Synapse
+* github-387: Remove scala-arm dependency
+* github-390: Rename "master" branch to "main"
+* github-392: 'relation' mapping should support numeric partition values
+* github-393: Move Maven archetype to flowman-maven project
 
 #### Breaking changes
 
@@ -55,6 +102,12 @@ This version introduces some (minor) breaking changes:
   you explicitly need to include the plugin in the `default-namesapce.yml` file.
 * Imports are now strictly checked. This means when you cross-reference some entity in your project which is provided
   by a different Flowman project, you now need to explicitly import the project in the `project.yml`
+
+
+### Version 0.30.1 - 2023-04-12
+
+* github-379: [BUG] Parallel execution of multiple targets runs too many targets on Java 17
+* github-383: Flowman should preserve target ordering
 
 
 ### Version 0.30.0 - 2023-01-03

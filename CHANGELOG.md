@@ -1,4 +1,4 @@
-# Version 0.30.1 - 2023-03-24
+# Version 0.30.1 - 2023-04-12
 
 * github-379: [BUG] Parallel execution of multiple targets runs too many targets on Java 17
 * github-383: Flowman should preserve target ordering

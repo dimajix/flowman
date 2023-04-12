@@ -14,6 +14,12 @@ The following gives an (incomplete) list of past releases of the last 12 months.
 changes over time.
 
 
+### Version 0.30.1 - 2023-04-12
+
+* github-379: [BUG] Parallel execution of multiple targets runs too many targets on Java 17
+* github-383: Flowman should preserve target ordering
+
+
 ### Version 0.30.0 - 2023-01-03
 
 * github-278: Parallelize execution of data quality checks. This also introduces a new configuration property

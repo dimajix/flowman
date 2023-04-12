@@ -18,7 +18,7 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
-## Version 1.0.0
+## Version 1.0.0 
 
 * github-314: Move avro related functionality into separate plugin
 * github-307: Describe Flowmans security policy in SECURITY.md
@@ -81,6 +81,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-387: Remove scala-arm dependency
 * github-390: Rename "master" branch to "main"
 * github-392: 'relation' mapping should support numeric partition values
+* github-393: Move Maven archetype to flowman-maven project
 
 ### Breaking changes
 
@@ -92,13 +93,15 @@ by a different Flowman project, you now need to explicitly import the project in
 * The `kind` for schema definitions is now a mandatory attribute, Flowman will not fall back to a `inline` schema anymore. 
 
 
-## Version 0.30.1 - 2023-03-23
+## Version 0.30.1 (LTS) - 2023-04-12
 
 * github-379: [BUG] Parallel execution of multiple targets runs too many targets on Java 17
 * github-383: Flowman should preserve target ordering
 
 
-## Version 0.30.0 - 2023-01-03
+## Version 0.30.0 (LTS) - 2023-01-03
+
+This version line 0.30.x is a long term support release, which will receive bug-fixes and dependency updates.
 
 * github-278: Parallelize execution of data quality checks. This also introduces a new configuration property
   `flowman.execution.check.parallelism` (default `1`)

@@ -38,7 +38,7 @@
     <scm>
         <connection>scm:git:git://github.com/dimajix/flowman.git</connection>
         <developerConnection>scm:git:ssh://github.com/dimajix/flowman.git</developerConnection>
-        <url>https://github.com/dimajix/flowman/tree/master</url>
+        <url>https://github.com/dimajix/flowman/tree/main</url>
     </scm>
     <issueManagement>
         <url>https://github.com/dimajix/flowman/issues</url>
@@ -993,7 +993,6 @@
         <module>flowman-hub</module>
         <module>flowman-yaml-schema</module>
         <module>flowman-parent</module>
-        <module>flowman-archetype-quickstart</module>
         <module>flowman-dist</module>
         <module>docker</module>
     </modules>

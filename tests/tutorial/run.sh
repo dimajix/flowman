@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 # Clone Flowman Tutorial
 rm -rf tutorial
 git clone https://github.com/dimajix/flowman-tutorial.git tutorial

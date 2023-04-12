@@ -6,17 +6,18 @@ Since Flowman relies on a provided installation of Apache Spark, you should be a
 inherits all security issues of the libraries used from its environment. For example Flowman will use Spark, 
 Jackson and several Apache Commons libraries provided by its runtime environment. This also means that most
 (if not all) open security issues reported on GitHub are related to libraries provided by your runtime environment
-(for example Cloudera, AWS EMR, ...) and need to be addressed independently.
+(for example, Cloudera, AWS EMR, ...) and need to be addressed independently.
 
 
 ## Supported Versions
 
-Generally, only the latest Flowman version is currently supported.
+Generally, the latest Flowman version is supported along some older long term support (LTS) releases.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+| Version  | Supported |
+|----------|-----------|
+| 1.0.x    | ✅         |
+| 0.30.x   | ✅         |
+| < 0.30.x | ❌         |
 
 
 ## Reporting a Vulnerability

@@ -29,6 +29,7 @@ import com.dimajix.flowman.model.AssertionTestResult
 import com.dimajix.flowman.model.BaseAssertion
 import com.dimajix.flowman.model.MappingOutputIdentifier
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.spark.SparkUtils
 import com.dimajix.spark.sql.DataFrameUtils
 import com.dimajix.spark.sql.SqlParser
 
@@ -97,20 +98,27 @@ case class SqlAssertion(
 
         AssertionResult.of(this) {
             DataFrameUtils.withTempViews(rawDependencies.map(d => d -> input(MappingOutputIdentifier(d)))) {
+                // Store job group and description of current thread
+                val sc = execution.spark.sparkContext
+                val (jobGroupId, jobDescription) = SparkUtils.getJobGroup(sc)
+
                 tests.par.map { test =>
-                    // Execute query
-                    val sql = test.sql
+                    // Propagate job group and description to current thread
+                    SparkUtils.withJobGroup(sc, jobGroupId, jobDescription) {
+                        // Execute query
+                        val sql = test.sql
 
-                    AssertionTestResult.of(sql) {
-                        val actual = execution.spark.sql(sql)
+                        AssertionTestResult.of(sql) {
+                            val actual = execution.spark.sql(sql)
 
-                        val result = DataFrameUtils.diffToStringValues(test.expected, actual)
-                        result match {
-                            case Some(diff) =>
-                                logger.error(s"failed query: $sql\n$diff")
-                                false
-                            case None =>
-                                true
+                            val result = DataFrameUtils.diffToStringValues(test.expected, actual)
+                            result match {
+                                case Some(diff) =>
+                                    logger.error(s"failed query: $sql\n$diff")
+                                    false
+                                case None =>
+                                    true
+                            }
                         }
                     }
                 }.toList

@@ -46,7 +46,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-345: [BUG] Loading an embedded schema inside a jar file should not throw an exception
 * github-346: Create build profile for Databricks
 * github-343: Log all client requests in kernel
-* github-342: Automatically close session when client disconnects from kernel
+* github-342: Automatically close session when the client disconnects from kernel
 * github-351: [BUG] Failing execution listener instantiation should not fail a build
 * github-347: Exclude AWS SDK for Databricks and EMR build profiles
 * github-352: [BUG] Spark sessions should not contain duplicate jars from different plugins
@@ -80,8 +80,9 @@ Breaking changes will be documented in this changelog file for each version.
 * github-386: Create Integration Test for Azure Synapse
 * github-387: Remove scala-arm dependency
 * github-390: Rename "master" branch to "main"
-* github-392: 'relation' mapping should support numeric partition values
+* github-392: [BUG] 'relation' mapping should support numeric partition values
 * github-393: Move Maven archetype to flowman-maven project
+* github-394: [BUG] The Spark job group and description are not set for sql assertions
 
 ### Breaking changes
 

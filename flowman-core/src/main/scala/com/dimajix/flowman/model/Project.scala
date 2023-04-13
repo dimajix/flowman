@@ -33,6 +33,7 @@ object Project {
 
     case class Import(
         project:String,
+        location:Option[String] = None,
         job:Option[String] = None,
         arguments:Map[String,String] = Map.empty
     )

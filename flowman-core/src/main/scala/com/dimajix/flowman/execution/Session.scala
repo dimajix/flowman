@@ -429,16 +429,39 @@ final class Session private[execution](
 
     private def loadProjects() : Seq[Project] = {
         val allProjects = mutable.Map[String,Project] ()
-        def load(p:String, name:String) : Project = {
-            logger.info(s"Importing project '$name' as dependency of project '$p'")
-            val project = allProjects.getOrElseUpdate(name, store.loadProject(name))
-            project.imports.foreach(i => load(project.name, i.project))
+        def loadProject(parent:Project, imprt:Project.Import) : Project = {
+            val name = imprt.project
+            imprt.location.map { location0 =>
+                // Create temporary context, just to allow variable interpolation in import
+                val builder = RootContext.builder(namespaceContext)
+                    .withExecution(rootExecution)
+                    .withLoggerFactory(loggerFactory)
+                    .withProject(parent)
+                    .withConfig(parent.config, SettingLevel.PROJECT_SETTING)
+                _profiles.foreach(p => parent.profiles.get(p).foreach { profile =>
+                    builder.withConfig(profile.config, SettingLevel.PROJECT_PROFILE)
+                })
+                val context = builder.build().getProjectContext(parent)
+                val location = context.evaluate(location0)
+
+                logger.info(s"Importing project '$name' from '$location' as a dependency of project '${parent.name}'")
+                val file = context.fs.file(location)
+                Project.read.file(file)
+            }
+            .getOrElse {
+                logger.info(s"Importing project '$name' as a dependency of project '${parent.name}'")
+                store.loadProject(name)
+            }
+        }
+        def load(p:Project, imprt:Project.Import) : Project = {
+            val project = allProjects.getOrElseUpdate(imprt.project, loadProject(p, imprt))
+            project.imports.foreach(i => load(project, i))
             project
         }
 
         project.foreach { p =>
             allProjects.put(p.name, p)
-            p.imports.foreach(i => load(p.name, i.project))
+            p.imports.foreach(i => load(p, i))
         }
         allProjects.values.toSeq
     }
@@ -638,7 +661,7 @@ final class Session private[execution](
     /**
       * Returns the root context of this session.
       */
-    def context : Context = rootContext
+    def context : RootContext = rootContext
 
     /**
       * Returns the root execution of this session. You might want to wrap it up into a [[ScopedExecution]] to

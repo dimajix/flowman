@@ -68,6 +68,11 @@ object RootContext {
             this
         }
 
+        def withProject(project: Project): Builder = {
+            this.projects = Seq(project)
+            this
+        }
+
         def withExecution(execution:Execution) : Builder = {
             this.execution = Some(execution)
             this
@@ -360,7 +365,7 @@ final class RootContext private[execution](
     }
 
     private def createProjectContext(project: Project) : Context = {
-        //if (!_projects.exists(_ eq project))
+        //if (!projects.exists(_ eq project))
         //    throw new IllegalArgumentException(s"Project ${project.name} is not registered in execution context")
 
         val builder = ProjectContext.builder(this, project)

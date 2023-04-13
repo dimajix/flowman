@@ -1,0 +1,11 @@
+name: project-imports
+version: 1.0
+
+modules:
+ - config
+ - relation
+
+
+imports:
+  - project: project-b
+    location: ${project.basedir}/../project-b

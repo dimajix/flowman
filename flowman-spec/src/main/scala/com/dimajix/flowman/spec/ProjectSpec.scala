@@ -26,11 +26,13 @@ import com.dimajix.flowman.spec.ProjectSpec.ImportSpec
 object ProjectSpec {
     final class ImportSpec {
         @JsonProperty(value = "project", required=true) private var project: String = ""
+        @JsonProperty(value = "location", required=false) private var location: Option[String] = None
         @JsonProperty(value = "job", required=false) private var job: Option[String] = None
         @JsonProperty(value = "arguments", required=false) private var arguments: Map[String,String] = Map()
         def instantiate(): Project.Import = {
             Project.Import(
                 project,
+                location,
                 job,
                 arguments
             )

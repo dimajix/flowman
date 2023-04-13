@@ -66,6 +66,8 @@ imports:
     
   # Import project with specified job context
   - project: project_a
+    # Optional specify the location
+    location: ${project.basedir}/../project_a
     # The job may even be a variable, so different job context can be imported
     job: $period
     arguments:

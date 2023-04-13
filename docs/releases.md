@@ -92,8 +92,10 @@ changes over time.
 * github-386: Create Integration Test for Azure Synapse
 * github-387: Remove scala-arm dependency
 * github-390: Rename "master" branch to "main"
-* github-392: 'relation' mapping should support numeric partition values
+* github-392: [BUG] 'relation' mapping should support numeric partition values
 * github-393: Move Maven archetype to flowman-maven project
+* github-394: [BUG] The Spark job group and description are not set for sql assertions
+* github-395: Support optional file locations for project imports
 
 #### Breaking changes
 

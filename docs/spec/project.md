@@ -32,6 +32,8 @@ imports:
 
   # Import a project with specified job context
   - project: commons
+    # Optional specify the location
+    location: ${project.basedir}/../commons
     # Specify values for job parameters
     arguments:
       processing_date: $processing_date
@@ -64,7 +66,7 @@ its entities. Please read [sharing entities](../cookbook/sharing.md) for more de
 
 ## Proposed Directory Layout
 
-It is best practice to use a directory structure. Depending on the project, two slightly different approaches have
+The best practice is to use a directory structure. Depending on the project, two slightly different approaches have
 turned out to be useful: Either separating models and mappings or putting them together.
 ```
 root

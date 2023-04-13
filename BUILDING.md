@@ -3,17 +3,18 @@
 The whole project is built using Maven. The build also includes a Docker image, which requires that Docker
 is installed on the build machine.
 
-## Prerequisites
+### Prerequisites
 
 You need the following tools installed on your machine:
-* JDK 1.8 or later - but not too new (Java 16 is currently not supported)
+* JDK 11 or later - but not too new (Java 16 is currently not supported)
 * Apache Maven (install via package manager download from https://maven.apache.org/download.cgi)
 * npm (install via package manager or download from https://www.npmjs.com/get-npm)
+* Docker (the creation of the Docker image can be skipped via `-Ddockerfile.skip`)
 * Windows users also need Hadoop winutils installed. Those can be retrieved from https://github.com/cdarlint/winutils
 and later. See some additional details for building on Windows below.
   
 
-# Build with Maven
+## Build with Maven
 
 Building Flowman with the default settings (i.e. newest supported Spark and Hadoop versions will be used) is as easy as
 
@@ -21,13 +22,13 @@ Building Flowman with the default settings (i.e. newest supported Spark and Hado
 mvn clean install
 ```
 
-## Main Artifacts
+### Main Artifacts
 
 The main artifacts will be a Docker image 'dimajix/flowman' and additionally a tar.gz file containing a runnable 
 version of Flowman for direct installation in cases where Docker is not available or when you want to run Flowman 
 in a complex environment with Kerberos. You can find the `tar.gz` file in the directory `flowman-dist/target`
 
-## Skip Tests
+### Skip Tests
 
 In case you don't want to run tests, you can simply append `-DskipTests`
 
@@ -35,7 +36,7 @@ In case you don't want to run tests, you can simply append `-DskipTests`
 mvn clean install -DskipTests
 ```
 
-## Skip Docker Image
+### Skip Docker Image
 
 In case you don't want to build the Docker image (for example when the build itself is done within a Docker container), 
 you can simply append `-Ddockerfile.skip`
@@ -45,12 +46,12 @@ mvn clean install -Ddockerfile.skip
 ```
 
 
-# Custom Builds
+## Custom Builds
 
 Flowman supports various versions of Spark and Hadoop to match your requirements and your environment. By providing
 appropriate build profiles, you can easily create a custom build.
 
-## Build on Windows
+### Build on Windows
 
 Although you can normally build Flowman on Windows, it is recommended to use Linux instead. But nevertheless Windows
 is still supported to some extend, but requires some extra care. You will need the Hadoop WinUtils installed. You can 
@@ -71,7 +72,7 @@ It may well be the case that some unittests fail on Windows - don't panic, we fo
 the `master` branch really builds clean with all unittests passing on Linux.
 
 
-## Build for Custom Spark / Hadoop Version
+### Build for Custom Spark / Hadoop Version
 
 Per default, Flowman will be built for fairly recent versions of Spark (3.0.2 as of this writing) and Hadoop (3.2.0). 
 But of course you can also build for a different version by either using a profile
@@ -112,7 +113,7 @@ using the correct version. The following profiles are available:
 With these profiles it is easy to build Flowman to match your environment. 
 
 
-## Building for specific Java Version
+### Building for specific Java Version
 
 If nothing else is set on the command line, Flowman will now build for Java 11 (except when building the profile
 CDH-6.3, where Java 1.8 is used). If you are still stuck on Java 1.8, you can simply override the Java version by 
@@ -123,82 +124,82 @@ mvn install -Djava.version=1.8
 ```
 
 
-## Building for Open Source Hadoop and Spark
+### Building for Open Source Hadoop and Spark
 
-### Spark 2.4 and Hadoop 2.6:
+#### Spark 2.4 and Hadoop 2.6:
 
 ```shell
 mvn clean install -Pspark-2.4 -Phadoop-2.6 -DskipTests
 ```
 
-### Spark 2.4 and Hadoop 2.7:
+#### Spark 2.4 and Hadoop 2.7:
 
 ```shell
 mvn clean install -Pspark-2.4 -Phadoop-2.7 -DskipTests
 ```
 
-### Spark 2.4 and Hadoop 2.8:
+#### Spark 2.4 and Hadoop 2.8:
 
 ```shell
 mvn clean install -Pspark-2.4 -Phadoop-2.8 -DskipTests
 ```
 
-### Spark 2.4 and Hadoop 2.9:
+#### Spark 2.4 and Hadoop 2.9:
 
 ```shell
 mvn clean install -Pspark-2.4 -Phadoop-2.9 -DskipTests
 ```
 
-### Spark 3.0 and Hadoop 3.1
+#### Spark 3.0 and Hadoop 3.1
 
 ```shell
 mvn clean install -Pspark-3.0 -Phadoop-3.1 -DskipTests
 ```
 
-### Spark 3.0 and Hadoop 3.2
+#### Spark 3.0 and Hadoop 3.2
 
 ```shell
 mvn clean install -Pspark-3.0 -Phadoop-3.2 -DskipTests
 ```
 
-### Spark 3.1 and Hadoop 2.7
+#### Spark 3.1 and Hadoop 2.7
 
 ```shell
 mvn clean install -Pspark-3.1 -Phadoop-2.7 -DskipTests
 ```
 
-### Spark 3.1 and Hadoop 3.2
+#### Spark 3.1 and Hadoop 3.2
 
 ```shell
 mvn clean install -Pspark-3.1 -Phadoop-3.2 -DskipTests
 ```
 
-### Spark 3.2 and Hadoop 2.7
+#### Spark 3.2 and Hadoop 2.7
 
 ```shell
 mvn clean install -Pspark-3.2 -Phadoop-2.7 -DskipTests
 ```
 
-### Spark 3.2 and Hadoop 3.3
+#### Spark 3.2 and Hadoop 3.3
 
 ```shell
 mvn clean install -Pspark-3.2 -Phadoop-3.3 -Dhadoop.version=3.3.1 -DskipTests
 ```
 
-### Spark 3.3 and Hadoop 2.7
+#### Spark 3.3 and Hadoop 2.7
 
 ```shell
 mvn clean install -Pspark-3.3 -Phadoop-2.7 -DskipTests
 ```
 
-### Spark 3.3 and Hadoop 3.3
+#### Spark 3.3 and Hadoop 3.3
 
 ```shell
 mvn clean install -Pspark-3.3 -Phadoop-3.3 -Dhadoop.version=3.3.2 -DskipTests
 ```
 
 
-## Building for Cloudera
+### Building for Cloudera
 
 The Maven project also contains preconfigured profiles for Cloudera CDH 6.3 and for Cloudera CDP 7.1 and also supports
 optional Spark 3.2 and Spark 3.3 parcels for CDP 7.1:
@@ -215,21 +216,21 @@ mvn clean install -PCDP-7.1-spark-3.2 -DskipTests
 mvn clean install -PCDP-7.1-spark-3.3 -DskipTests
 ```
 
-## Building for AWS EMR
+### Building for AWS EMR
 
 The Maven project also contains preconfigured profiles for AWS EMR 6.10.
 ```shell
 mvn clean install -PEMR-6.10 -DskipTests
 ```
 
-## Building for Azure Synapse
+### Building for Azure Synapse
 Flowman also provides a build profile for Azure Synapse 3.3:
 ```shell
 mvn clean install -Psynapase-3.3 -DskipTests
 ```
 
 
-# Coverage Analysis
+## Coverage Analysis
 
 Flowman also now supports creating a coverage analysis via the scoverage Maven plugin. It is not part of the default
 build and has to be triggered explicitly:
@@ -239,7 +240,7 @@ mvn scoverage:report
 ```
 
 
-# Building Documentation
+## Building Documentation
 
 Flowman also contains Markdown documentation which is processed by Sphinx to generate the online HTML documentation.
 

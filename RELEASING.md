@@ -42,7 +42,7 @@ You can also deploy to a different repository by setting the following propertie
 * `deployment.repository.url` - the url of the default release repository
 * `deployment.repository.snapshot-url` - the url of the snapshot repository
 
-Per default, Flowman uses the staging mechanism provided by the nexus-staging-maven-plugin. This this is not what you
+Per default, Flowman uses the staging mechanism provided by the nexus-staging-maven-plugin. If this is not what you
 want, you can simply disable the Plugin via `skipTests` 
 
 With these settings you can deploy to a different (local) repository, for example

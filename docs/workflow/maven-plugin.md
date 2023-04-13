@@ -251,8 +251,9 @@ artifacts:
   | packaging  | tar.gz       |
 
 What type of package is preferable (dist or fatjar) depends on your infrastructure and deployment pipelines. People
-with a dedicated Hadoop cluster (Cloudera, AWS EMR) will probably be happy with a `dist` package while folks with severless
-on demand infrastructure (Azure Synapse, AWS EMR serverless) will probably prefer a `fatjar`package.
+with a dedicated Hadoop cluster (Cloudera, AWS EMR) will probably be happy with a `dist` package, while folks with a
+serverless infrastructure (Azure Synapse, AWS EMR serverless) will probably prefer a completely self-contained 
+`fatjar`package.
 
 > Note for Windows users: Maven will also execute all tests in your Flowman project. The Hadoop dependency will require
 the so-called *WinUtils* to be installed on your machine, please read more about

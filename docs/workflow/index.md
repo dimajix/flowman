@@ -14,5 +14,11 @@ no additional installation on developer machines or CI/CD infrastructure is requ
 
 There are different approaches possible, even within the Maven universe. 
 
-* [Using Maven standard plugins](maven-classic.md)
-* [Using Flowman Maven plugins](maven-plugin.md)
+* [Using Flowman Maven plugins](maven-plugin.md). The first approach uses Maven as the build system together with
+  the Flowman Maven plugin. This is the preferred archetype as it simplifies creating appropriate artifacts like Flowman
+  distributions or fat jars.
+* [Using Maven standard plugins](maven-classic.md). The second approach will also use Maven, but only together with 
+  standard Maven plugins like the maven-dependency-plugin and the maven-assembly-plugin.
+  This approach will only create a Flowman distribution `tar.gz` and cannot be used out of the box for creating a fat
+  jar. Of course, explicitly using standard Maven plugins offers more flexibility, but also requires more expertise for
+  working with Maven.

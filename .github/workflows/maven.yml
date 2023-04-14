@@ -14,6 +14,11 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# The maven-dependency-submission-action
+# uses an API that requires write permission on the repository to submit dependencies
+permissions:
+  contents: write
+
 jobs:
   build:
 

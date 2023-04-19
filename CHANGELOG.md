@@ -85,6 +85,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-394: [BUG] The Spark job group and description are not set for sql assertions
 * github-395: Support optional file locations for project imports
 * github-397: Automate build using GitHub actions
+* github-403: Upgrade Spark 3.2 to 3.2.4
 
 ### Breaking changes
 

@@ -167,11 +167,6 @@ case class FileRelation(
         if (!collector.exists())
             throw new FileNotFoundException(s"Location '$qualifiedLocation' does match any existing directories and files")
 
-        // Convert partition value to valid Spark literal
-        def toLit(value:Any) : Column = value match {
-            case v:UtcTimestamp => lit(v.toTimestamp())
-            case _ => lit(value)
-        }
         val providingClass = DataSource.lookupDataSource(format, execution.spark.sessionState.conf)
         val multiPath =  SparkShim.relationSupportsMultiplePaths(providingClass)
 
@@ -192,7 +187,7 @@ case class FileRelation(
             }
 
             // Add partitions values as columns
-            partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, toLit(p._2)))
+            partition.toSeq.foldLeft(df)((df,p) => df.withColumn(p._1, FieldValue.asLiteral(p._2)))
         }
 
         val df1 = data.reduce(_ union _)
@@ -209,7 +204,7 @@ case class FileRelation(
         val parts = MapIgnoreCase(this.partitions.map(p => p.name -> p))
         partitions.foldLeft(df) { case(df,(pname, pvalue)) =>
             val part = parts(pname)
-            df.filter(df(pname).isin(part.interpolate(pvalue).toSeq:_*))
+            df.filter(df(pname).isin(part.interpolate(pvalue).map(FieldValue.asLiteral).toSeq:_*))
         }
     }
 
@@ -275,9 +270,10 @@ case class FileRelation(
         }
     }
     private def doWriteStaticPartitions(execution:Execution, df:DataFrame, partition:Map[String,SingleValue], mode:OutputMode) : Unit = {
-        val partitionMap = PartitionSchema(partitions).spec(partition).toMap
+        val partitionSpec = PartitionSchema(partitions).spec(partition)
+        val partitionMap = partitionSpec.toMap
         val outputPath = collector.resolve(partitionMap)
-        logger.info(s"Writing file relation '$identifier' partition (${partitionMap.map(kv => kv._1 + "=" + kv._2).mkString(",")}) to output location '$outputPath' as '$format' with mode '$mode'")
+        logger.info(s"Writing file relation '$identifier' partition ${partitionSpec.spec} to output location '$outputPath' as '$format' with mode '$mode'")
 
         requireAllPartitionKeys(partition)
 

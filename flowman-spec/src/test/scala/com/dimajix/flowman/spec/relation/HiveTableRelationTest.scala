@@ -26,6 +26,7 @@ import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.analysis.PartitionAlreadyExistsException
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
+import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types.CharType
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.types.IntegerType
@@ -34,6 +35,7 @@ import org.apache.spark.sql.types.ShortType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.TimestampType
 import org.apache.spark.sql.types.VarcharType
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -60,6 +62,7 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.util.UtcTimestamp
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.SPARK_VERSION
 import com.dimajix.spark.features.hiveVarcharSupported
@@ -88,6 +91,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
     }
 
     override def configureSpark(builder: SparkSession.Builder): SparkSession.Builder = {
+        builder.config("hive.exec.dynamic.partition.mode", "nonstrict")
         // This is required for CDP 7.1 with Spark 3.3 (3.3.0.3.3.7180.0-274)
         if (SPARK_VERSION.matches("3.3.\\d\\.\\d\\.\\d\\.7\\d+\\..+")) {
             builder.config("spark.sql.hive.metastorePartitionPruningFallbackOnException", "true")
@@ -478,7 +482,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                     Field("str_col", ftypes.StringType),
                     Field("int_col", ftypes.IntegerType)
                 )
-            ))
+            )),
+            external = false
         )
 
         // == Create ================================================================================================
@@ -523,7 +528,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                     Field("str_col", ftypes.StringType),
                     Field("int_col", ftypes.IntegerType)
                 )
-            ))
+            )),
+            external = false
         )
 
         // == Create ================================================================================================
@@ -572,7 +578,8 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                     Field("str_col", ftypes.StringType),
                     Field("int_col", ftypes.IntegerType)
                 )
-            ))
+            )),
+            external = false
         )
 
         // == Create ================================================================================================
@@ -703,7 +710,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                |    kind: hiveTable
                |    database: default
                |    table: lala_0010
-               |    external: false
+               |    external: true
                |    location: ${location.toURI}
                |    schema:
                |      kind: inline
@@ -887,7 +894,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
                |    kind: hiveTable
                |    database: default
                |    table: lala_0012
-               |    external: false
+               |    external: true
                |    location: ${location.toURI}
                |    schema:
                |      kind: inline
@@ -934,7 +941,7 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         val table = session.catalog.getTable(TableIdentifier("lala_0012", Some("default")))
         table.comment should be(None)
         table.identifier should be (TableIdentifier("lala_0012", Some("default")).toSpark)
-        table.tableType should be (CatalogTableType.MANAGED)
+        table.tableType should be (CatalogTableType.EXTERNAL)
         table.schema should be (StructType(
             StructField("str_col", StringType) ::
                 StructField("int_col", IntegerType) ::
@@ -1073,6 +1080,154 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
         // Test 2nd destruction
         a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
         location.exists() should be (false)
+        an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
+
+        session.shutdown()
+    }}
+
+    it should "support create, clean and destroy with timestamp partitions" in {if (hiveSupported) {
+        val location = new File(tempDir, "hive/default/lala744_ts")
+        val spec =
+            s"""
+               |relations:
+               |  t0:
+               |    kind: hiveTable
+               |    database: default
+               |    table: lala_0012
+               |    external: true
+               |    location: ${location.toURI}
+               |    schema:
+               |      kind: inline
+               |      fields:
+               |        - name: str_col
+               |          type: string
+               |        - name: int_col
+               |          type: integer
+               |    partitions:
+               |      - name: p_col
+               |        type: timestamp
+               |""".stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0")).asInstanceOf[HiveTableRelation]
+
+        location.exists() should be(false)
+        an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
+
+        // == Create ================================================================================================
+        relation.exists(execution) should be(No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(No)
+        relation.loaded(execution, Map()) should be(No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T01:00"))) should be(No)
+        relation.create(execution)
+
+        // == Check =================================================================================================
+        relation.exists(execution) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+        relation.loaded(execution, Map()) should be(No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T01:00"))) should be(No)
+        location.exists() should be(true)
+        spark.catalog.getTable("default", "lala_0012") should not be (null)
+        spark.read.table("default.lala_0012").count() should be(0)
+
+        val table = session.catalog.getTable(TableIdentifier("lala_0012", Some("default")))
+        table.comment should be(None)
+        table.identifier should be(TableIdentifier("lala_0012", Some("default")).toSpark)
+        table.tableType should be(CatalogTableType.EXTERNAL)
+        table.schema should be(StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                StructField("p_col", TimestampType, nullable = false) ::
+                Nil
+        ))
+        table.dataSchema should be(StructType(
+            StructField("str_col", StringType) ::
+                StructField("int_col", IntegerType) ::
+                Nil
+        ))
+        table.partitionColumnNames should be(Seq("p_col"))
+        table.partitionSchema should be(StructType(
+            StructField("p_col", TimestampType, nullable = false) ::
+                Nil
+        ))
+
+        // == Write ==================================================================================================
+        val schema = StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("char_col", StringType),
+            StructField("int_col", IntegerType)
+        ))
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row("v1", "str", 21)
+        ))
+        val df = spark.createDataFrame(rdd, schema)
+        relation.write(execution, df, Map("p_col" -> SingleValue("2023-03-02T01:00")))
+        relation.loaded(execution, Map()) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T01:00"))) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T02:00"))) should be(No)
+
+        // == Read ===================================================================================================
+        relation.read(execution, Map()).count() should be(1)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T01:00"))).count() should be(1)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T02:00"))).count() should be(0)
+
+        // == Overwrite =============================================================================================
+        relation.write(execution, df, Map("p_col" -> SingleValue("2023-03-02T01:00")))
+        relation.loaded(execution, Map()) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T01:00"))) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T02:00"))) should be(No)
+
+        // == Read ===================================================================================================
+        relation.read(execution, Map()).count() should be(1)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T01:00"))).count() should be(1)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T02:00"))).count() should be(0)
+
+        // == Write Dynamic ==========================================================================================
+        relation.write(execution, df.withColumn("p_col", lit(UtcTimestamp.parse("2023-03-03T11:00:00").toTimestamp())), Map.empty, OutputMode.OVERWRITE_DYNAMIC)
+        relation.loaded(execution, Map()) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T01:00"))) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T02:00"))) should be(No)
+        //relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-03T11:00"))) should be(Yes)
+
+        // == Read ===================================================================================================
+        relation.read(execution, Map()).count() should be(2)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T01:00"))).count() should be(1)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T02:00"))).count() should be(0)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-03T11:00"))).count() should be(1)
+
+        // == Truncate ==============================================================================================
+        relation.truncate(execution, Map("p_col" -> SingleValue("2023-03-02T01:00")))
+        relation.exists(execution) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+        relation.loaded(execution, Map()) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T01:00"))) should be(No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T02:00"))) should be(No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-03T11:00"))) should be(Yes)
+        location.exists() should be(true)
+        spark.catalog.getTable("default", "lala_0012") should not be (null)
+        spark.read.table("default.lala_0012").count() should be(1)
+
+        // == Read ===================================================================================================
+        relation.read(execution, Map()).count() should be(1)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T01:00"))).count() should be(0)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T02:00"))).count() should be(0)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-03T11:00"))).count() should be(1)
+
+        // == Destroy ================================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be(No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(No)
+        relation.loaded(execution, Map()) should be(No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T01:00"))) should be(No)
+        location.exists() should be(false)
         an[AnalysisException] shouldBe thrownBy(spark.catalog.getTable("default", "lala_0012"))
 
         session.shutdown()

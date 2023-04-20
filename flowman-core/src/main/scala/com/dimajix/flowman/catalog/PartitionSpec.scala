@@ -18,13 +18,10 @@ package com.dimajix.flowman.catalog
 
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.catalyst.catalog.ExternalCatalogUtils
-import org.apache.spark.sql.catalyst.expressions.Expression
-import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.functions.lit
 
 import com.dimajix.common.MapIgnoreCase
-import com.dimajix.common.SetIgnoreCase
 import com.dimajix.flowman.jdbc.HiveDialect
+import com.dimajix.flowman.types.FieldValue
 
 
 object PartitionSpec {
@@ -72,10 +69,17 @@ final case class PartitionSpec(values:MapIgnoreCase[Any]) {
     def path(root:Path, columns:Seq[String]) : Path = {
         columns
             .map(col => values.getKeyValue(col))
-            .map(nv => ExternalCatalogUtils.getPartitionPathString(nv._1, nv._2.toString))
+            .map { case (key,value) =>
+                val str = FieldValue.asString(value)
+                ExternalCatalogUtils.getPartitionPathString(key, str)
+            }
             .foldLeft(root)((path, segment) => new Path(path, segment))
     }
 
+    /**
+     * Returns a nice and human readable representation of the partition spec
+     * @return
+     */
     def spec : String = {
         def str(any:Any) : String = {
             any match {
@@ -87,9 +91,19 @@ final case class PartitionSpec(values:MapIgnoreCase[Any]) {
         values.map(kv => kv._1 + "=" + str(kv._2)).mkString("(",", ",")")
     }
 
+    /**
+     * Returns a valid SQL predicate as a string
+     * @return
+     */
     def predicate : String = {
         values.map { case (k, v) => k + "=" + HiveDialect.literal(v) }.mkString(" AND ")
     }
+
+    /**
+     * Returns a map with filter conditions to be used with the Hive Metastore catalog
+     * @return
+     */
+    def catalogPartition : Map[String,String] = mapValues(FieldValue.asString).toMap
 
     override def toString: String = {
         "PartitionSpec" + spec

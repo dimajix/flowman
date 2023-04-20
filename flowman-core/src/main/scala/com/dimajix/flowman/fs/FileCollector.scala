@@ -108,7 +108,7 @@ object FileCollector {
             new FileCollector(
                 _location,
                 _partitions,
-                _pattern.orElse(Some(_partitions.map(p => s"$p=$$$p").mkString("/"))).filter(_.nonEmpty),
+                _pattern.orElse(Some(_partitions.map(p => s"$p=$${String.partitionEncode($$$p)}").mkString("/"))).filter(_.nonEmpty),
                 _defaults
             )
         }

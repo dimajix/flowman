@@ -16,13 +16,31 @@
 
 package com.dimajix.flowman.types
 
+import org.apache.spark.sql.functions.lit
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.util.ObjectMapper
+import com.dimajix.flowman.util.UtcTimestamp
 
 
 class FieldValueTest extends AnyFlatSpec with Matchers {
+    "FieldValue.asString" should "work" in {
+        FieldValue.asString("abc") should be ("abc")
+        FieldValue.asString(12) should be ("12")
+        val ts = UtcTimestamp.parse("2023-03-10T10:22:10")
+        FieldValue.asString(ts) should be ("2023-03-10 10:22:10")
+        FieldValue.asString(ts.toTimestamp()) should be ("2023-03-10 10:22:10")
+    }
+
+    "FieldValue.asLiteral" should "work" in {
+        FieldValue.asLiteral("abc") should be(lit("abc"))
+        FieldValue.asLiteral(12) should be(lit(12))
+        val ts = UtcTimestamp.parse("2023-03-10T10:22:10")
+        FieldValue.asLiteral(ts) should be(lit(ts.toTimestamp()))
+        FieldValue.asLiteral(ts.toTimestamp()) should be(lit(ts.toTimestamp()))
+    }
+
     "A String" should "be deserializable as a SingleValue" in {
         val spec ="some_string"
         val value = ObjectMapper.parse[FieldValue](spec)

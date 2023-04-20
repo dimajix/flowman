@@ -46,6 +46,8 @@ import com.dimajix.flowman.execution.DeleteClause
 import com.dimajix.flowman.execution.InsertClause
 import com.dimajix.flowman.execution.UpdateClause
 import com.dimajix.flowman.model.PartitionField
+import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.util.UtcTimestamp
 
 
 object DeltaUtils {
@@ -129,7 +131,9 @@ object DeltaUtils {
             throw new IllegalArgumentException(s"Cannot perform upsert activity without primary key")
 
         val keyCondition = keyColumns.map(k => col("relation." + k) <=> col("df." + k))
-        val partitionCondition = partitionSpec.values.map { case (k, v) => (col("relation." + k) === lit(v)) }
+        val partitionCondition = partitionSpec.values.map { case (k, v) =>
+            (col("relation." + k) === FieldValue.asLiteral(v))
+        }
         val mergeCondition = (keyCondition ++ partitionCondition).reduce(_ && _)
         table.as("relation")
             .merge(df.as("df"), mergeCondition)

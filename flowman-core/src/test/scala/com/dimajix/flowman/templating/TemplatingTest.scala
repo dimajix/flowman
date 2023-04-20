@@ -24,12 +24,15 @@ import java.sql.Date
 import java.time.LocalDate
 import java.time.Month
 
+import scala.collection.mutable
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.annotation.TemplateObject
 import com.dimajix.flowman.util.UtcTimestamp
 import com.dimajix.spark.testing.LocalTempDir
+import scala.collection.JavaConverters._
 
 
 object TemplatingTest {
@@ -44,8 +47,12 @@ class TemplatingTest extends AnyFlatSpec with Matchers with LocalTempDir {
     private val engine = Velocity.newEngine()
     private val context = Velocity.newContext()
 
-    private def evaluate(text:String) : String = {
-        engine.evaluate(context, "test", text)
+    private def evaluate(text:String, params:Map[String,AnyRef] = Map.empty) : String = {
+        val ctx = if (params.nonEmpty)
+            Velocity.newContext(context, params)
+        else
+            context
+        engine.evaluate(ctx, "test", text)
     }
 
     "Integers" should "be parseable" in {
@@ -197,6 +204,12 @@ class TemplatingTest extends AnyFlatSpec with Matchers with LocalTempDir {
         evaluate("$String.concat('abc','def', 'ghi')") should be ("abcdefghi")
         evaluate("$String.concat('abc','def', '1', '2')") should be ("abcdef12")
         evaluate("$String.concat('abc','def', '1', '2', '3')") should be ("abcdef123")
+    }
+
+    it should "provide partitionEncode" in {
+        evaluate("$String.partitionEncode($p)", Map("p" -> "xyz")) should be ("xyz")
+        evaluate("$String.partitionEncode($p)", Map("p" -> UtcTimestamp.parse("2023-03-10T20:10:00").toTimestamp())) should be ("2023-03-10 20%3A10%3A00")
+        evaluate("$String.partitionEncode($p)", Map("p" -> UtcTimestamp.parse("2023-03-10T20:10:00"))) should be ("2023-03-10 20%3A10%3A00")
     }
 
     "System" should "provide access to some system variables" in {

@@ -23,6 +23,7 @@ import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.SQLTransientException
 import java.sql.Statement
+import java.sql.Timestamp
 import java.util.Locale
 
 import scala.collection.mutable
@@ -201,6 +202,7 @@ abstract class BaseDialect extends SqlDialect {
         value match {
             case s:String => "'" + escape(s) + "'"
             case ts:Date => s"date('${ts.toString}')"
+            case ts:Timestamp => s"timestamp(${ts.toInstant.getEpochSecond})"
             case ts:UtcTimestamp => s"timestamp(${ts.toEpochSeconds()})"
             case v:Any =>  v.toString
         }
@@ -481,6 +483,8 @@ class BaseExpressions(dialect: SqlDialect) extends SqlExpressions {
             value match {
                 case s:String => "'" + dialect.escape(s) + "'"
                 case ts:Date => "'" + ts.toString + "'"
+                case ts:Timestamp => "'" + ts.toString + "'"
+                case ts:UtcTimestamp => "'" + ts.toTimestamp().toString + "'"
                 case v:Any =>  v.toString
             }
         }        // Do not use column quoting for the PARTITION expression

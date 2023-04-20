@@ -244,7 +244,7 @@ final case class HiveUnionTableRelation(
         val catalog = execution.catalog
         val partitionSchema = PartitionSchema(this.partitions)
         val partitionSpec = partitionSchema.spec(partition)
-        logger.info(s"Writing to Hive union relation '$identifier' using partition values ${HiveDialect.expr.partition(partitionSpec)}")
+        logger.info(s"Writing to Hive union relation '$identifier' using partition values ${partitionSpec.spec}")
 
         // 1. Find all tables
         val allTables = listTables(execution)

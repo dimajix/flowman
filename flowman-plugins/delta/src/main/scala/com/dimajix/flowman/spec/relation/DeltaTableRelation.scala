@@ -138,7 +138,7 @@ final case class DeltaTableRelation(
 
         val partitionSpec = PartitionSchema(partitions).spec(partition)
 
-        logger.info(s"Writing Delta relation '$identifier' to table $table partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode'")
+        logger.info(s"Writing Delta relation '$identifier' to table $table partition ${partitionSpec.spec} with mode '$mode'")
 
         val extDf = applyOutputSchema(execution, addPartition(df, partition))
         mode match {

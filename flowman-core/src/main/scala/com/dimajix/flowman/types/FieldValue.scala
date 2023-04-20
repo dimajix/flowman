@@ -16,6 +16,11 @@
 
 package com.dimajix.flowman.types
 
+import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.DeserializationContext
@@ -25,6 +30,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.node.JsonNodeType
 import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
+import org.apache.spark.sql.Column
+import org.apache.spark.sql.functions.lit
+
+import com.dimajix.flowman.util.UtcTimestamp
 
 
 private class FieldValueDeserializer(vc:Class[_]) extends StdDeserializer[FieldValue](vc) {
@@ -57,6 +66,24 @@ private class FieldValueDeserializer(vc:Class[_]) extends StdDeserializer[FieldV
     }
 }
 
+
+object FieldValue {
+    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm[:ss]")
+
+    def asString(value:Any) : String = {
+        value match {
+            case ts: UtcTimestamp => formatter.format(ts.dt)
+            case ts: Timestamp => formatter.format(ts.toInstant.atOffset(ZoneOffset.UTC))
+            case x => x.toString
+        }
+    }
+    def asLiteral(value:Any) : Column = {
+        value match {
+            case v: UtcTimestamp => lit(v.toTimestamp())
+            case _ => lit(value)
+        }
+    }
+}
 
 @JsonDeserialize(using=classOf[FieldValueDeserializer])
 @JsonSchemaInject(

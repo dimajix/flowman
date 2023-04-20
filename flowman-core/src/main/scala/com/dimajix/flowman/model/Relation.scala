@@ -52,6 +52,7 @@ import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StructType
+import com.dimajix.flowman.util.UtcTimestamp
 
 
 object Relation {
@@ -576,7 +577,9 @@ trait PartitionedRelation { this:Relation =>
 
         def applyPartitionFilter(df: DataFrame, partitionName: String, partitionValue: FieldValue): DataFrame = {
             val field = partitionSchema.get(partitionName)
-            val values = field.interpolate(partitionValue).toSeq
+            val values = field.interpolate(partitionValue)
+                .map(FieldValue.asLiteral)
+                .toSeq
             df.filter(df(partitionName).isin(values: _*))
         }
 
@@ -593,7 +596,7 @@ trait PartitionedRelation { this:Relation =>
         def addPartitionColumn(df: DataFrame, partitionName: String, partitionValue: SingleValue): DataFrame = {
             val field = partitionSchema.get(partitionName)
             val value = field.parse(partitionValue.value)
-            df.withColumn(partitionName, lit(value))
+            df.withColumn(partitionName, FieldValue.asLiteral(value))
         }
 
         partition.foldLeft(df)((df, pv) => addPartitionColumn(df, pv._1, pv._2))

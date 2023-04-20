@@ -21,6 +21,7 @@ import java.io.FileNotFoundException
 import java.io.PrintWriter
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Paths
+import java.sql.Timestamp
 import java.util.UUID
 
 import com.google.common.io.Resources
@@ -34,6 +35,7 @@ import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.TimestampType
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -52,6 +54,7 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.schema.InlineSchema
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.SingleValue
+import com.dimajix.flowman.util.UtcTimestamp
 import com.dimajix.flowman.{types => ftypes}
 import com.dimajix.spark.sql.streaming.StreamingUtils
 import com.dimajix.spark.testing.LocalSparkSession
@@ -870,6 +873,191 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         session.shutdown()
     }
 
+    it should "support timestamp partitions without explicit pattern" in {
+        val spark = this.spark
+        import spark.implicits._
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val outputPath = Paths.get(tempDir.toString, "csv", "test2")
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            schema = Some(InlineSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("str_col", com.dimajix.flowman.types.StringType),
+                    Field("int_col", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("p_col", com.dimajix.flowman.types.TimestampType)
+            )
+        )
+
+        relation.requires(Operation.CREATE) should be(Set.empty)
+        relation.provides(Operation.CREATE) should be(Set(ResourceIdentifier.ofFile(new Path(outputPath.toUri))))
+        relation.requires(Operation.READ) should be(Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=*").toUri))))
+        relation.provides(Operation.READ) should be(Set.empty)
+        relation.requires(Operation.WRITE) should be(Set.empty)
+        relation.provides(Operation.WRITE) should be(Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=*").toUri))))
+        relation.requires(Operation.READ, Map("p_col" -> SingleValue("2023-01-01T00:00"))) should be(Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=2023-01-01 00%3A00%3A00").toUri))))
+        relation.provides(Operation.READ, Map("p_col" -> SingleValue("2023-01-01T00:00"))) should be(Set.empty)
+        relation.requires(Operation.WRITE, Map("p_col" -> SingleValue("2023-01-01T00:00"))) should be(Set.empty)
+        relation.provides(Operation.WRITE, Map("p_col" -> SingleValue("2023-01-01T00:00"))) should be(Set(ResourceIdentifier.ofFile(new Path(outputPath.resolve("p_col=2023-01-01 00%3A00%3A00").toUri))))
+
+        // == Read ===================================================================================================
+        a[FileNotFoundException] should be thrownBy (relation.read(execution))
+        outputPath.toFile.exists() should be(false)
+        outputPath.resolve("p_col=2023-01-01 00%3A00%3A00").toFile.exists() should be (false)
+        outputPath.resolve("p_col=2023-01-01 00%3A00%3A00").toFile.exists() should be (false)
+
+        // ===== Create =============================================================================================
+        outputPath.toFile.exists() should be(false)
+        relation.exists(execution) should be(No)
+        relation.loaded(execution, Map()) should be(No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-02-01T00:00"))) should be(No)
+        relation.create(execution)
+        relation.exists(execution) should be(Yes)
+        relation.conforms(execution) should be(Yes)
+        relation.loaded(execution, Map()) should be(No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-02-01T00:00"))) should be(No)
+        outputPath.toFile.exists() should be(true)
+        outputPath.resolve("p_col=2023-01-01 00%3A00%3A00").toFile.exists() should be(false)
+        outputPath.resolve("p_col=2023-01-01 00%3A00%3A00").toFile.exists() should be(false)
+
+        // == Read ===================================================================================================
+        relation.read(execution, Map()).count() should be(0)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))).count() should be(0)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-03T00:00"))).count() should be(0)
+        relation.read(execution, Map()).schema should be(StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", TimestampType)
+        )))
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))).schema should be(StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", TimestampType, false)
+        )))
+
+        // ===== Write =============================================================================================
+        val df = spark.createDataFrame(Seq(
+            ("lala", 1),
+            ("lolo", 2)
+        ))
+            .withColumnRenamed("_1", "str_col")
+            .withColumnRenamed("_2", "int_col")
+        relation.exists(execution) should be(Yes)
+        relation.conforms(execution) should be(Yes)
+        relation.loaded(execution, Map()) should be(No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))) should be(No)
+        relation.write(execution, df, Map("p_col" -> SingleValue("2023-03-02T00:00")), OutputMode.OVERWRITE)
+        relation.exists(execution) should be(Yes)
+        relation.conforms(execution) should be(Yes)
+        relation.loaded(execution, Map()) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-03T00:00"))) should be(No)
+        outputPath.toFile.exists() should be(true)
+        outputPath.resolve("p_col=2023-03-02 00%3A00%3A00").toFile.exists() should be(true)
+        outputPath.resolve("p_col=2023-03-03 00%3A00%3A00").toFile.exists() should be(false)
+
+        // == Read ===================================================================================================
+        relation.read(execution, Map()).count() should be(2)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))).count() should be(2)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-03T00:00"))).count() should be(0)
+
+        relation.read(execution, Map()).as[(String, Option[Int], Option[Timestamp])].collect().sortBy(x => (x._1,x._2)) should be(Seq(
+            ("lala", Some(1), Some(UtcTimestamp.parse("2023-03-02T00:00:00").toTimestamp())),
+            ("lolo", Some(2), Some(UtcTimestamp.parse("2023-03-02T00:00:00").toTimestamp()))
+        ))
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))).as[(String, Option[Int], Option[Timestamp])].collect().sortBy(x => (x._1,x._2)) should be(Seq(
+            ("lala", Some(1), Some(UtcTimestamp.parse("2023-03-02T00:00:00").toTimestamp())),
+            ("lolo", Some(2), Some(UtcTimestamp.parse("2023-03-02T00:00:00").toTimestamp()))
+        ))
+
+        relation.read(execution, Map()).schema should be(StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", TimestampType)
+        )))
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))).schema should be(StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", TimestampType)
+        )))
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-03T00:00"))).schema should be(StructType(Seq(
+            StructField("str_col", StringType),
+            StructField("int_col", IntegerType),
+            StructField("p_col", TimestampType)
+        )))
+
+        // ===== Write =============================================================================================
+        relation.write(execution, df, Map("p_col" -> SingleValue("2023-03-03T00:00")), OutputMode.OVERWRITE)
+        relation.exists(execution) should be(Yes)
+        relation.conforms(execution) should be(Yes)
+        relation.loaded(execution, Map()) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-03T00:00"))) should be(Yes)
+        outputPath.resolve("p_col=2023-03-02 00%3A00%3A00").toFile.exists() should be(true)
+        outputPath.resolve("p_col=2023-03-03 00%3A00%3A00").toFile.exists() should be(true)
+
+        // == Read ===================================================================================================
+        relation.read(execution, Map()).count() should be(4)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))).count() should be(2)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-03T00:00"))).count() should be(2)
+
+        // ===== Truncate =============================================================================================
+        relation.exists(execution) should be(Yes)
+        relation.conforms(execution) should be(Yes)
+        relation.loaded(execution, Map()) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-03T00:00"))) should be(Yes)
+        relation.truncate(execution, Map("p_col" -> SingleValue("2023-03-02T00:00")))
+        relation.exists(execution) should be(Yes)
+        relation.conforms(execution) should be(Yes)
+        relation.loaded(execution, Map()) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))) should be(No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-03T00:00"))) should be(Yes)
+        outputPath.resolve("p_col=2023-03-02 00%3A00%3A00").toFile.exists() should be(false)
+        outputPath.resolve("p_col=2023-03-03 00%3A00%3A00").toFile.exists() should be(true)
+
+        // == Read ===================================================================================================
+        relation.read(execution, Map()).count() should be(2)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))).count() should be(0)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-03T00:00"))).count() should be(2)
+
+        // ===== Truncate =============================================================================================
+        relation.truncate(execution)
+        relation.exists(execution) should be(Yes)
+        relation.conforms(execution) should be(Yes)
+        relation.loaded(execution, Map()) should be(No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))) should be(No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-03T00:00"))) should be(No)
+        outputPath.resolve("data.csv").toFile.exists() should be(false)
+        outputPath.toFile.exists() should be(true)
+        outputPath.resolve("p_col=2023-03-02 00%3A00%3A00").toFile.exists() should be(false)
+        outputPath.resolve("p_col=2023-03-03 00%3A00%3A00").toFile.exists() should be(false)
+
+        // == Read ===================================================================================================
+        relation.read(execution, Map()).count() should be(0)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))).count() should be(0)
+        relation.read(execution, Map("p_col" -> SingleValue("2023-03-03T00:00"))).count() should be(0)
+
+        // ===== Destroy =============================================================================================
+        relation.exists(execution) should be(Yes)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))) should be(No)
+        relation.destroy(execution)
+        relation.exists(execution) should be(No)
+        relation.conforms(execution) should be(No)
+        relation.loaded(execution, Map("p_col" -> SingleValue("2023-03-02T00:00"))) should be(No)
+        outputPath.toFile.exists() should be(false)
+
+        session.shutdown()
+    }
+
     it should "support using wildcards for unspecified partitions" in {
         val spark = this.spark
         import spark.implicits._
@@ -1229,6 +1417,92 @@ class FileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSession 
         relation.loaded(execution, Map("part" -> SingleValue("1"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("2"))) should be (No)
         relation.loaded(execution, Map("part" -> SingleValue("3"))) should be (No)
+
+        session.shutdown()
+    }
+
+    it should "support dynamic partitions with timestamps" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+
+        val outputPath = Paths.get(tempDir.toString, "test_" + UUID.randomUUID().toString)
+        val relation = FileRelation(
+            Relation.Properties(context, "local"),
+            location = new Path(outputPath.toUri),
+            format = "csv",
+            schema = Some(InlineSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("c0", com.dimajix.flowman.types.IntegerType),
+                    Field("c1", com.dimajix.flowman.types.DoubleType)
+                )
+            )),
+            partitions = Seq(
+                PartitionField("part", com.dimajix.flowman.types.TimestampType)
+            )
+        )
+
+        // == Create =================================================================================================
+        outputPath.toFile.exists() should be(false)
+        outputPath.resolve("part=2023-03-02 00%3A00%3A00").toFile.exists() should be(false)
+        outputPath.resolve("part=2023-03-03 00%3A00%3A00").toFile.exists() should be(false)
+        relation.exists(execution) should be(No)
+        relation.loaded(execution) should be(No)
+        relation.create(execution)
+        relation.exists(execution) should be(Yes)
+        relation.loaded(execution) should be(No)
+        outputPath.toFile.exists() should be(true)
+        outputPath.resolve("part=2023-03-02 00%3A00%3A00").toFile.exists() should be(false)
+        outputPath.resolve("part=2023-03-03 00%3A00%3A00").toFile.exists() should be(false)
+
+        // == Write ==================================================================================================
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row(null, null, UtcTimestamp.parse("2023-02-10T01:00").toTimestamp()),
+            Row(234, 123.0, UtcTimestamp.parse("2023-02-10T01:00").toTimestamp()),
+            Row(2345, 1234.0, UtcTimestamp.parse("2023-02-10T01:00").toTimestamp()),
+            Row(23456, 12345.0, UtcTimestamp.parse("2023-02-12T02:00").toTimestamp())
+        ))
+        val df = spark.createDataFrame(rdd, StructType(relation.fields.map(_.catalogField)))
+        relation.write(execution, df, Map(), OutputMode.OVERWRITE_DYNAMIC)
+        outputPath.toFile.exists() should be(true)
+        outputPath.resolve("part=2023-02-10 01%3A00%3A00").toFile.exists() should be(true)
+        outputPath.resolve("part=2023-02-12 02%3A00%3A00").toFile.exists() should be(true)
+
+        // == Read ==================================================================================================
+        relation.loaded(execution) should be(Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("2023-02-10T01:00"))) should be(Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("2023-02-12T02:00"))) should be(Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("2023-03-03T03:00"))) should be(No)
+        relation.read(execution, Map()).count() should be(4)
+        relation.read(execution, Map("part" -> SingleValue("2023-02-10T01:00"))).count() should be(3)
+        relation.read(execution, Map("part" -> SingleValue("2023-02-12T02:00"))).count() should be(1)
+        relation.read(execution, Map("part" -> SingleValue("2023-03-03T03:00"))).count() should be(0)
+
+        // == Truncate ==============================================================================================
+        relation.truncate(execution, Map("part" -> SingleValue("2023-02-12T02:00")))
+        outputPath.toFile.exists() should be(true)
+        outputPath.resolve("part=2023-02-10 01%3A00%3A00").toFile.exists() should be(true)
+        outputPath.resolve("part=2023-02-12 02%3A00%3A00").toFile.exists() should be(false)
+
+        relation.loaded(execution) should be(Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("2023-02-10T01:00"))) should be(Yes)
+        relation.loaded(execution, Map("part" -> SingleValue("2023-02-12T02:00"))) should be(No)
+        relation.loaded(execution, Map("part" -> SingleValue("2023-03-03T03:00"))) should be(No)
+        relation.read(execution, Map()).count() should be(3)
+        relation.read(execution, Map("part" -> SingleValue("2023-02-10T01:00"))).count() should be(3)
+        relation.read(execution, Map("part" -> SingleValue("2023-02-12T02:00"))).count() should be(0)
+        relation.read(execution, Map("part" -> SingleValue("2023-03-03T03:00"))).count() should be(0)
+
+        // == Destroy ===============================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be(No)
+        relation.loaded(execution) should be(No)
+        relation.loaded(execution, Map("part" -> SingleValue("2023-02-10T01:00"))) should be(No)
+        relation.loaded(execution, Map("part" -> SingleValue("2023-02-12T02:00"))) should be(No)
+        relation.loaded(execution, Map("part" -> SingleValue("2023-03-03T03:00"))) should be(No)
 
         session.shutdown()
     }

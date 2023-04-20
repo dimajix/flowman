@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.templating
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.util.control.NonFatal
 
@@ -86,6 +87,10 @@ object Velocity {
      */
     def newContext(parent: VelocityContext) : VelocityContext = {
         new VelocityContext(parent)
+    }
+
+    def newContext(parent: VelocityContext, additionalValues:Map[String,AnyRef]): VelocityContext = {
+        new VelocityContext(mutable.Map(additionalValues.toSeq:_*).asJava, parent)
     }
 
     /**

@@ -16,12 +16,14 @@
 
 package com.dimajix.flowman.catalog
 
+import java.sql.Timestamp
 import java.util.Locale
 
 import scala.collection.mutable
 import scala.util.control.NonFatal
 
 import org.apache.hadoop.fs.Path
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.analysis.DatabaseAlreadyExistsException
@@ -32,6 +34,7 @@ import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTablePartition
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
+import org.apache.spark.sql.catalyst.expressions.AttributeReference
 import org.apache.spark.sql.execution.command.AlterTableAddColumnsCommand
 import org.apache.spark.sql.execution.command.AlterTableAddPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableChangeColumnCommand
@@ -39,10 +42,10 @@ import org.apache.spark.sql.execution.command.AlterTableDropPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableSetLocationCommand
 import org.apache.spark.sql.execution.command.AnalyzePartitionCommand
 import org.apache.spark.sql.execution.command.AnalyzeTableCommand
-import org.apache.spark.sql.execution.command.CreateDatabaseCommand
 import org.apache.spark.sql.execution.command.CreateTableCommand
 import org.apache.spark.sql.execution.command.DropDatabaseCommand
 import org.apache.spark.sql.execution.command.DropTableCommand
+import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.hive.HiveClientShim
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
@@ -60,6 +63,8 @@ import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.fs.HadoopUtils
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
+import com.dimajix.flowman.types.FieldValue
+import com.dimajix.flowman.util.UtcTimestamp
 import com.dimajix.spark.features.hiveVarcharSupported
 import com.dimajix.spark.sql.SchemaUtils
 import com.dimajix.spark.sql.SchemaUtils.replaceCharVarchar
@@ -431,8 +436,34 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
     def partitionExists(table:TableIdentifier, partition:PartitionSpec) : Boolean = {
         require(table != null)
         require(partition != null)
-        val filter = Some(partition.mapValues(_.toString).toMap).filter(_.nonEmpty)
-        SparkShim.listPartitions(catalog, table.toSpark, filter).nonEmpty
+
+        // Check if the partition spec contains complex types, which do not correctly work with the simpler "listPartitions" method
+        val complexTypes = partition.values.values.exists {
+            case _:UtcTimestamp|_:Timestamp => true
+            case _ => false
+        }
+        if (complexTypes) {
+            // Unfortunately listPartitions does not always work with Timestamp columns, therefore we need to do more work
+            val schema = getTable(table).partitionSchema
+                .map(f => f.name.toLowerCase(Locale.ROOT) -> f)
+                .toMap
+
+            val filter = partition.values.map { case (key, value) =>
+                val lwrKey = key.toLowerCase(Locale.ROOT)
+                val field = schema.getOrElse(lwrKey, throw new IllegalArgumentException(s"Table $table does not contain a partition column '$key'"))
+                val att = AttributeReference(field.name, field.dataType, field.nullable)()
+                val lit = FieldValue.asLiteral(value)
+                (new Column(att) === lit).expr
+            }.toSeq
+
+            catalog.listPartitionsByFilter(table.toSpark, filter).nonEmpty
+        }
+        else {
+            // If no complex types are used, we can use a faster API
+            val filter = Some(partition.catalogPartition).filter(_.nonEmpty)
+            SparkShim.listPartitions(catalog, table.toSpark, filter).nonEmpty
+        }
+
     }
 
     /**
@@ -443,7 +474,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
     @throws[NoSuchTableException]
     @throws[NoSuchPartitionException]
     def getPartition(table: TableIdentifier, partition:PartitionSpec): CatalogTablePartition = {
-        catalog.getPartition(table.toSpark, partition.mapValues(_.toString).toMap)
+        catalog.getPartition(table.toSpark, partition.catalogPartition)
     }
 
     /**
@@ -488,7 +519,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         require(location != null && location.toString.nonEmpty)
 
         logger.info(s"Adding partition ${partition.spec} to table $table at '$location'")
-        val sparkPartition = partition.mapValues(_.toString).toMap
+        val sparkPartition = partition.catalogPartition
         val cmd = AlterTableAddPartitionCommand(table.toSpark, Seq((sparkPartition, Some(location.toString))), false)
         cmd.run(spark)
 
@@ -514,7 +545,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         require(partition != null && partition.nonEmpty)
         require(location != null && location.toString.nonEmpty)
 
-        val sparkPartition = partition.mapValues(_.toString).toMap
+        val sparkPartition = partition.catalogPartition
         if (partitionExists(table, partition)) {
             logger.info(s"Replacing partition ${partition.spec} of table $table with location '$location'")
             val cmd = AlterTableSetLocationCommand(table.toSpark, Some(sparkPartition), location.toString)
@@ -539,7 +570,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         require(table != null)
         require(partition != null && partition.nonEmpty)
 
-        val sparkPartition = partition.mapValues(_.toString).toMap
+        val sparkPartition = partition.catalogPartition
         logger.info(s"Refreshing partition ${partition.spec} of table $table")
 
         if (!partitionExists(table, partition)) {
@@ -592,7 +623,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         HadoopUtils.truncateLocation(fs, location)
 
         callExternalCatalogs(s"TRUNCATE PARTITION $table") { ec =>
-            val sparkPartition = partition.mapValues(_.toString).toMap
+            val sparkPartition = partition.catalogPartition
             val catalogTable = getTable(table)
             val catalogPartition = catalog.getPartition(table.toSpark, sparkPartition)
             ec.truncatePartition(catalogTable, catalogPartition)
@@ -631,7 +662,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         // Keep only those partitions which really need to be dropped
         val dropPartitions = flaggedPartitions.filter(_._2).map(_._1)
         // Convert to Spark partitions
-        val sparkPartitions = dropPartitions.map(_.mapValues(_.toString).toMap)
+        val sparkPartitions = dropPartitions.map(_.catalogPartition)
         // Convert to external catalog partitions which can be reused in the last step
         val catalogPartitions = sparkPartitions.map(catalog.getPartition(table.toSpark, _)).filter(_ != null)
 

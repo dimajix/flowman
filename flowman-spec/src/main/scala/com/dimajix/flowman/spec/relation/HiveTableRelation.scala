@@ -179,7 +179,7 @@ final case class HiveTableRelation(
         require(partitionSpec != null)
         require(mode != null)
 
-        logger.info(s"Writing Hive relation '$identifier' to table $table partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode' using Hive insert")
+        logger.info(s"Writing Hive relation '$identifier' to table $table partition ${partitionSpec.spec} with mode '$mode' using Hive insert")
 
         // Apply output schema before writing to Hive
         val outputDf = {
@@ -232,7 +232,7 @@ final case class HiveTableRelation(
             val overwrite = mode == OutputMode.OVERWRITE || mode == OutputMode.OVERWRITE_DYNAMIC
             val cmd = SparkShim.newInsertIntoHiveTable(
                 table = hiveTable,
-                partition = partitionSpec.toMap.mapValues(v => Some(v.toString)),
+                partition = partitionSpec.catalogPartition.mapValues(Some(_)),
                 query = query,
                 overwrite = overwrite,
                 ifPartitionNotExists = false,
@@ -274,7 +274,7 @@ final case class HiveTableRelation(
         require(partitionSpec != null)
         require(mode != null)
 
-        logger.info(s"Writing Hive relation '$identifier' to table $table partition ${HiveDialect.expr.partition(partitionSpec)} with mode '$mode' using direct write")
+        logger.info(s"Writing Hive relation '$identifier' to table $table partition ${partitionSpec.spec} with mode '$mode' using direct write")
 
         if (location.isEmpty)
             throw new IllegalArgumentException("Hive table relation requires 'location' for direct write mode")
@@ -288,7 +288,7 @@ final case class HiveTableRelation(
             case None => throw new IllegalArgumentException("Require 'format' for directly writing to Hive tables")
         }
 
-        logger.info(s"Writing to output location '$outputPath' (partition=${partitionSpec.toMap}) as '$format'")
+        logger.info(s"Writing to output location '$outputPath' (partition=${partitionSpec.spec}) as '$format'")
         this.writer(execution, df, format, options, mode.batchMode)
             .save(outputPath.toString)
 

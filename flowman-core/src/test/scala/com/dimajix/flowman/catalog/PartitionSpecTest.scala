@@ -54,4 +54,26 @@ class PartitionSpecTest extends AnyFlatSpec with Matchers {
 
         partitionSpec.predicate should be ("p_str='lala' AND p_int=123 AND p_date=date('2021-08-03') AND p_timestamp=timestamp(1627956224)")
     }
+
+    it should "create a human readable spec" in {
+        val partitionSpec = PartitionSpec(Map(
+            "p_str" -> "lala",
+            "p_int" -> 123,
+            "p_date" -> java.sql.Date.valueOf("2021-08-03"),
+            "p_timestamp" -> UtcTimestamp.parse("2021-08-03T02:03:44")
+        ))
+
+        partitionSpec.spec should be("(p_str='lala', p_int=123, p_date=2021-08-03, p_timestamp=2021-08-03T02:03:44.0)")
+    }
+
+    it should "create a Hive compatible partition map" in {
+        val partitionSpec = PartitionSpec(Map(
+            "p_str" -> "lala",
+            "p_int" -> 123,
+            "p_date" -> java.sql.Date.valueOf("2021-08-03"),
+            "p_timestamp" -> UtcTimestamp.parse("2021-08-03T02:03:44")
+        ))
+
+        partitionSpec.catalogPartition should be(Map("p_str" -> "lala", "p_int" -> "123", "p_date" -> "2021-08-03", "p_timestamp" -> "2021-08-03 02:03:44"))
+    }
 }

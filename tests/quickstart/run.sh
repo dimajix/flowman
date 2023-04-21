@@ -1,23 +1,31 @@
 #!/usr/bin/env bash
 
+set -e
+
 # Start database (in background)
 docker-compose up -d mariadb
 
 # Clean previous project
 rm -rf quickstart-test
 
+# Get current Flowman version
+FLOWMAN_VERSION=$(mvn -f ../.. -q -N help:evaluate -Dexpression=project.version -DforceStdout)
+
 # Create archetype
 mvn archetype:generate \
       -DarchetypeGroupId=com.dimajix.flowman \
       -DarchetypeArtifactId=flowman-archetype-quickstart \
-      -DarchetypeVersion=1.0.0-SNAPSHOT \
+      -DarchetypeVersion=0.30.0 \
       -DinteractiveMode=false \
       -DgroupId=com.dimajix.flowman.integration-tests \
       -DartifactId=quickstart-test \
       -Dversion=1.0-SNAPSHOT
 
+# Replace Flowman version
+sed -i "16s#<version>.*</version>#<version>$FLOWMAN_VERSION</version>#" quickstart-test/pom.xml
+
 # Build project
-cd quickstart-test
+cd quickstart-test || exit
 mvn clean install
 
 # Unpack dist

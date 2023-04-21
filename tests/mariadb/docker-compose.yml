@@ -2,7 +2,8 @@ version: "3.9"
 
 services:
   flowman:
-    image: dimajix/flowman:latest
+    # The image actually is a normal Flowman image, but a new tag will be created by the run.sh script
+    image: flowman-it-mariadb:latest
     command: bash
     depends_on:
       - mariadb

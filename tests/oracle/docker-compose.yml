@@ -2,7 +2,8 @@ version: "3"
 
 services:
   flowman:
-    image: dimajix/flowman:latest
+    # The image actually is a normal Flowman image, but a new tag will be created by the run.sh script
+    image: flowman-it-oracle:latest
     command: bash
     volumes:
       - ./migrations:/home/flowman/migrations

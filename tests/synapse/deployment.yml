@@ -1,6 +1,6 @@
 flowman:
-  version: 1.0.0-synapse-SNAPSHOT
-  distribution: com.dimajix.flowman:flowman-dist:bin:1.0.0-synapse-SNAPSHOT
+  version: ${flowman.version}
+  distribution: com.dimajix.flowman:flowman-dist:bin:${flowman.version}
   plugins:
     - flowman-avro
     - flowman-aws

@@ -16,8 +16,8 @@
 
 package com.dimajix.flowman.templating;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 import lombok.val;
 import org.apache.spark.sql.catalyst.catalog.ExternalCatalogUtils;
@@ -38,8 +38,8 @@ public class StringWrapper {
     public String concat(String c1, String c2, String c3, String c4, String c5) {
         return c1 + c2 + c3 + c4 + c5;
     }
-    public String urlEncode(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    public String urlEncode(String value) throws UnsupportedEncodingException {
+        return URLEncoder.encode(value, "UTF-8");
     }
     public String escapePathName(String value) {
         return ExternalCatalogUtils.escapePathName(value); //.replace(" ", "%20");

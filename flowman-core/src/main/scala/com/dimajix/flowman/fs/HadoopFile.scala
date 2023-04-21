@@ -20,7 +20,6 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.net.URI
 import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 import org.apache.hadoop.fs.FSDataInputStream
 import org.apache.hadoop.fs.FSDataOutputStream
@@ -66,7 +65,7 @@ final case class HadoopFile(fs:org.apache.hadoop.fs.FileSystem, path:Path) exten
       * @return
       */
     override def /(sub:String) : File = {
-        val rel = new Path(new URI(URLEncoder.encode(sub, StandardCharsets.UTF_8)))
+        val rel = new Path(new URI(URLEncoder.encode(sub, "UTF-8")))
         if (rel.isAbsolute)
             HadoopFile(fs, rel)
         else

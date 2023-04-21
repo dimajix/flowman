@@ -49,9 +49,7 @@ data.
 
 The logical data flow will look as follows:
 
-```eval_rst
-.. mermaid::
-
+```{mermaid}
   flowchart LR
     r_stations_raw[[relation\n stations_raw\n CSV\n S3]] -->  m_stations_raw
     m_stations_raw{{mapping\n stations_raw}} -->  r_stations
@@ -64,18 +62,18 @@ The logical data flow will look as follows:
     m_measurement{{mapping\n measurement}} --> m_facts
     m_facts{{mapping\n facts}} --> m_aggregates{{mapping\n aggregates}}
     m_aggregates --> r_aggregates[[relation\n aggregates\n Parquet\n local]]
-    style r_stations_raw fill:#339,stroke-width:3px
-    style m_stations_raw fill:#669,stroke-width:3px
-    style r_stations fill:#339,stroke-width:3px
-    style r_measurement_raw fill:#339,stroke-width:3px
-    style m_measurement_raw fill:#669,stroke-width:3px
-    style m_measurement_extracted fill:#669,stroke-width:3px
-    style r_measurement fill:#339,stroke-width:3px
-    style m_measurement fill:#669,stroke-width:3px
-    style m_stations fill:#669,stroke-width:3px
-    style m_facts fill:#669,stroke-width:3px
-    style m_aggregates fill:#669,stroke-width:3px
-    style r_aggregates fill:#339,stroke-width:3px
+    style r_stations_raw fill:#339,stroke-width:3px,color:#fff
+    style m_stations_raw fill:#669,stroke-width:3px,color:#fff
+    style r_stations fill:#339,stroke-width:3px,color:#fff
+    style r_measurement_raw fill:#339,stroke-width:3px,color:#fff
+    style m_measurement_raw fill:#669,stroke-width:3px,color:#fff
+    style m_measurement_extracted fill:#669,stroke-width:3px,color:#fff
+    style r_measurement fill:#339,stroke-width:3px,color:#fff
+    style m_measurement fill:#669,stroke-width:3px,color:#fff
+    style m_stations fill:#669,stroke-width:3px,color:#fff
+    style m_facts fill:#669,stroke-width:3px,color:#fff
+    style m_aggregates fill:#669,stroke-width:3px,color:#fff
+    style r_aggregates fill:#339,stroke-width:3px,color:#fff
 ```
 
 
@@ -83,17 +81,15 @@ The logical data flow will look as follows:
 
 In the first part, we will implement the following subgraph of the whole data flow:
 
-```eval_rst
-.. mermaid::
-
+```{mermaid}
   flowchart LR
     r_measurement_raw[[relation\n measurement_raw\n raw text\n S3]] -->  m_measurement_raw
     m_measurement_raw{{mapping\n measurement_raw}} -->  m_measurement_extracted
     m_measurement_extracted{{mapping\n measurement_raw}} -->  r_measurement
-    style r_measurement_raw fill:#339,stroke-width:3px
-    style m_measurement_raw fill:#669,stroke-width:3px
-    style m_measurement_extracted fill:#669,stroke-width:3px
-    style r_measurement fill:#339,stroke-width:3px
+    style r_measurement_raw fill:#339,stroke-width:3px,color:#fff
+    style m_measurement_raw fill:#669,stroke-width:3px,color:#fff
+    style m_measurement_extracted fill:#669,stroke-width:3px,color:#fff
+    style r_measurement fill:#339,stroke-width:3px,color:#fff
 ```
 
 First, we create a relation to access the raw input data stored as text files in S3:
@@ -191,15 +187,13 @@ The weather stations reference data is processed with a similar pattern:
 4. We define a target which writes the output from the mapping into the Parquet relation.
 
 
-```eval_rst
-.. mermaid::
-
+```{mermaid}
   flowchart LR
     r_stations_raw[[relation\n stations_raw\n CSV\n S3]] -->  m_stations_raw
     m_stations_raw{{mapping\n stations_raw}} -->  r_stations
-    style r_stations_raw fill:#339,stroke-width:3px
-    style m_stations_raw fill:#669,stroke-width:3px
-    style r_stations fill:#339,stroke-width:3px
+    style r_stations_raw fill:#339,stroke-width:3px,color:#fff
+    style m_stations_raw fill:#669,stroke-width:3px,color:#fff
+    style r_stations fill:#339,stroke-width:3px,color:#fff
 ```
 
 The corresponding flow definitions look as follows:
@@ -251,9 +245,7 @@ targets:
 In the last step, we join both data sources (measurements & reference data) and perform a simple aggregation. In order
 to do so, we read from the intermediate Parquet files instead from the raw data.
 
-```eval_rst
-.. mermaid::
-
+```{mermaid}
   flowchart LR
     r_stations[[relation\n stations\n Parquet\n local]] --> m_stations
     r_measurement[[relation\n measurement\n Parquet\n local]] --> m_measurement
@@ -262,14 +254,14 @@ to do so, we read from the intermediate Parquet files instead from the raw data.
     m_joined{{mapping\n measurements_joined}} --> m_facts
     m_facts{{mapping\n facts}} --> m_aggregates
     m_aggregates{{mapping\n aggregates}} --> r_aggregates[[relation\n aggregates\n Parquet\n local]]
-    style r_stations fill:#339,stroke-width:3px
-    style r_measurement fill:#339,stroke-width:3px
-    style m_stations fill:#669,stroke-width:3px
-    style m_measurement fill:#669,stroke-width:3px
-    style m_joined fill:#669,stroke-width:3px
-    style m_facts fill:#669,stroke-width:3px
-    style m_aggregates fill:#669,stroke-width:3px
-    style r_aggregates fill:#339,stroke-width:3px
+    style r_stations fill:#339,stroke-width:3px,color:#fff
+    style r_measurement fill:#339,stroke-width:3px,color:#fff
+    style m_stations fill:#669,stroke-width:3px,color:#fff
+    style m_measurement fill:#669,stroke-width:3px,color:#fff
+    style m_joined fill:#669,stroke-width:3px,color:#fff
+    style m_facts fill:#669,stroke-width:3px,color:#fff
+    style m_aggregates fill:#669,stroke-width:3px,color:#fff
+    style r_aggregates fill:#339,stroke-width:3px,color:#fff
 ```
 
 This flow is implemented by the following definitions:

@@ -118,6 +118,28 @@ following sections:
 ```   
 
 
+### Workflow
+
+Flowman provides simple but powerful command line tools for executing your projects. This provides a great flexibility
+for defining your perfect workflow from development to production deployment. But this flexibility makes it more
+difficult to get started. Luckily Flowman also provides some guidance for setting up your projects and for defining
+a streamlined development workflow.
+
+* [Development & Deployment Workflow](workflow/index.md): How to implement an efficient development workflow with Flowman
+
+
+```eval_rst
+.. toctree::
+   :maxdepth: 1
+   :glob:
+   :hidden:
+   :caption: Workflow
+   
+   workflow/index
+   workflow/*
+```
+
+
 ### Specification Documentation
 
 So-called specifications describe the logical data flow, data sources and more. A full
@@ -187,27 +209,6 @@ More detail on all these items is described in the following sections:
    
    documenting/index
    documenting/*
-```
-
-### Workflow
-
-Flowman provides simple but powerful command line tools for executing your projects. This provides a great flexibility
-for defining your perfect workflow from development to production deployment. But this flexibility makes it more 
-difficult to get started. Luckily Flowman also provides some guidance for setting up your projects and for defining
-a streamlined development workflow.
-
-* [Development & Deployment Workflow](workflow/index.md): How to implement an efficient development workflow with Flowman
-
-
-```eval_rst
-.. toctree::
-   :maxdepth: 1
-   :glob:
-   :hidden:
-   :caption: Workflow
-   
-   workflow/index
-   workflow/*
 ```
 
 

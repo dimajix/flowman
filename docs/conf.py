@@ -34,7 +34,7 @@
 extensions = [
     'sphinx_markdown_tables',
     'sphinxcontrib.mermaid',
-    'recommonmark',
+    'myst_parser',
     'sphinx.ext.autodoc'
 ]
 

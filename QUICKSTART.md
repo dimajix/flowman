@@ -16,7 +16,7 @@ Fortunately, Spark is rather simple to install locally on your machine:
 
 ### Download & Install Spark
 
-As of this writing, the latest release of Flowman is 0.29.0 and is available prebuilt for Spark 3.3.1 on the Spark
+As of this writing, the latest release of Flowman is 0.30.0 and is available prebuilt for Spark 3.3.1 on the Spark
 homepage. So we download the appropriate Spark distribution from the Apache archive and unpack it.
 
 ```shell
@@ -47,14 +47,14 @@ environment variables:
 ## 2. Install Flowman
 
 You find prebuilt Flowman packages on the corresponding release page on GitHub. For this quickstart, we chose
-`flowman-dist-0.25.0-oss-spark3.2-hadoop3.3-bin.tar.gz` which nicely fits to the Spark package we just downloaded before.
+`flowman-dist-0.30.0-oss-spark3.3-hadoop3.3-bin.tar.gz` which nicely fits to the Spark package we just downloaded before.
 
 ```shell
 # Download and unpack Flowman
-curl -L https://github.com/dimajix/flowman/releases/download/0.29.0/flowman-dist-0.29.0-oss-spark3.3-hadoop3.3-bin.tar.gz | tar xvzf -
+curl -L https://github.com/dimajix/flowman/releases/download/0.30.0/flowman-dist-0.30.0-oss-spark3.3-hadoop3.3-bin.tar.gz | tar xvzf -
 
 # Create a nice link
-ln -snf flowman-0.29.0-oss-spark3.3-hadoop3.3 flowman
+ln -snf flowman-0.30.0-oss-spark3.3-hadoop3.3 flowman
 ```
 
 ### Flowman Configuration
@@ -135,7 +135,7 @@ Note how the prompt has changed and will now include the job name. Now we can in
 ```
 flowman:weather/main> mapping list
 flowman:weather/main> mapping show measurements_raw
-flowman:weather/main> mapping show measurements-extracted
+flowman:weather/main> mapping show measurements_extracted
 flowman:weather/main> mapping show stations_raw
 ```
 Finally we'd like to leave the job context again.
@@ -159,7 +159,7 @@ Flowman also provides an execution history. In the trivial deployment, this info
 Derby database, but other databases like MySQL, MariaDB etc are also supported.
 ```
 flowman:weather> history job search
-flowman:weather> history target search -J 1
+flowman:weather> history target search -P weather
 ```
 
 

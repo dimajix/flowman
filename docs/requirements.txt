@@ -1,4 +1,4 @@
-docutils==0.18
+docutils==0.18.1
 markdown==3.4.3
 myst-parser==1.0.0
 sphinx==6.1.3

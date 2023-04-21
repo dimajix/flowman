@@ -14,7 +14,7 @@ Of course, you need a working Docker installation, which should be quite easy. T
 containing Flowman via the following command:
 
 ```shell
-docker run --rm -ti dimajix/flowman:0.27.0-oss-spark3.3-hadoop3.3 bash   
+docker run --rm -ti dimajix/flowman:0.30.0-oss-spark3.3-hadoop3.3 bash   
 ```
 
 Note that this simply starts a bash shell, but Flowman is only away some fingertips. 
@@ -26,7 +26,7 @@ may want to make local data accessible to Flowman or you may simply want to exec
 on your local machine. This can be easily achieved as follows:
 
 ```shell
-docker run --rm -ti -v /home/kaya/flowman/example/weather:/home/flowman/local dimajix/flowman:0.27.0-oss-spark3.3-hadoop3.3 bash   
+docker run --rm -ti -v /home/kaya/flowman/example/weather:/home/flowman/local dimajix/flowman:0.30.0-oss-spark3.3-hadoop3.3 bash   
 ```
 
 This will mount the local directory `/home/kaya/flowman/example/weather` on your host computer into the Docker
@@ -46,8 +46,7 @@ batch processing (`flowexec` is the right tool for that scenario), it gives us a
 are organized.
 
 ```shell
-cd flowman
-bin/flowshell -f examples/weather
+flowshell -f examples/weather
 ```
 
 ### Inspecting Relations
@@ -84,7 +83,7 @@ Note how the prompt has changed and will now include the job name. Now we can in
 ```
 flowman:weather/main> mapping list
 flowman:weather/main> mapping show measurements_raw
-flowman:weather/main> mapping show measurements-extracted
+flowman:weather/main> mapping show measurements_extracted
 flowman:weather/main> mapping show stations_raw
 ```
 Finally we'd like to leave the job context again.
@@ -105,10 +104,10 @@ flowman:weather> relation show aggregates -p year=2011
 ### History
 
 Flowman also provides an execution history. In the trivial deployment, this information is stored locally in a
-Derby database, but other databases like MySQL, MariaDB etc are also supported.
+Derby database, but other databases like MySQL, MariaDB etc. are also supported.
 ```
 flowman:weather> history job search
-flowman:weather> history target search -J 1
+flowman:weather> history target search -P weather
 ```
 
 
@@ -142,7 +141,7 @@ that with `flowexec` you specify the commands on the command line while `flowshe
 
 For example for running the “build” lifecycle of the weather project for the year 2014, you only need to run:
 ```shell
-bin/flowexec -f examples/weather job build main year=2014
+flowexec -f examples/weather job build main year=2014
 ```
 
 

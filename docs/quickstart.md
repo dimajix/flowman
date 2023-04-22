@@ -21,7 +21,7 @@ Note that this simply starts a bash shell, but Flowman is only away some fingert
 
 ### Mounting volumes
 
-You probably might want to mount some local directory into the Docker container running Flowman. For example you
+You probably might want to mount some local directory into the Docker container running Flowman. For example, you
 may want to make local data accessible to Flowman or you may simply want to execute some Flowman project stored
 on your local machine. This can be easily achieved as follows:
 

@@ -14,10 +14,15 @@ mvn archetype:generate \
     -DarchetypeArtifactId=flowman-archetype-assembly \
     -DgroupId=test \
     -DartifactId=quickstart-test \
-    -Dversion=1.0-SNAPSHOT \
+    -Dversion=1.0-SNAPSHOT
 
 # Replace Flowman version
-sed -i "16s#<version>.*</version>#<version>$FLOWMAN_VERSION</version>#" quickstart-test/pom.xml
+xmlstarlet ed \
+  --inplace \
+  -N x=http://maven.apache.org/POM/4.0.0 \
+  --update /x:project/x:parent/x:version \
+  --value "$FLOWMAN_VERSION" \
+  quickstart-test/pom.xml
 
 cd quickstart-test || exit
 mvn clean install

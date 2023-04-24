@@ -14,7 +14,12 @@ rm -rf demo-weather
 git clone https://github.com/dimajix/flowman-demo-weather demo-weather
 
 # Replace Flowman version
-sed -i "17s#<version>.*</version>#<version>$FLOWMAN_VERSION</version>#" demo-weather/pom.xml
+xmlstarlet ed \
+  --inplace \
+  -N x=http://maven.apache.org/POM/4.0.0 \
+  --update /x:project/x:parent/x:version \
+  --value "$FLOWMAN_VERSION" \
+  demo-weather/pom.xml
 
 cd demo-weather || exit
 mvn clean install

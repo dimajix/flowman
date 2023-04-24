@@ -15,7 +15,6 @@ find bin -type f | xargs chmod a+rx
 docker-compose up -d mariadb
 
 # Run tests
-sleep 5
 docker-compose run --rm flowman bin/run-tests.sh
 
 # Clean up

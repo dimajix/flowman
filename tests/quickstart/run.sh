@@ -15,14 +15,18 @@ FLOWMAN_VERSION=$(mvn -f ../.. -q -N help:evaluate -Dexpression=project.version 
 mvn archetype:generate \
       -DarchetypeGroupId=com.dimajix.flowman \
       -DarchetypeArtifactId=flowman-archetype-quickstart \
-      -DarchetypeVersion=0.30.0 \
       -DinteractiveMode=false \
       -DgroupId=com.dimajix.flowman.integration-tests \
       -DartifactId=quickstart-test \
       -Dversion=1.0-SNAPSHOT
 
 # Replace Flowman version
-sed -i "16s#<version>.*</version>#<version>$FLOWMAN_VERSION</version>#" quickstart-test/pom.xml
+xmlstarlet ed \
+  --inplace \
+  -N x=http://maven.apache.org/POM/4.0.0 \
+  --update /x:project/x:parent/x:version \
+  --value "$FLOWMAN_VERSION" \
+  quickstart-test/pom.xml
 
 # Build project
 cd quickstart-test || exit

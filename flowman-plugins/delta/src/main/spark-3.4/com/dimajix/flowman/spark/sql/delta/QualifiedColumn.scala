@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Flowman Authors
+ * Copyright (C) 2021 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,13 @@
  * limitations under the License.
  */
 
-package com.dimajix.common.logging;
+package com.dimajix.flowman.spark.sql.delta
 
-import lombok.Value;
-import org.slf4j.Marker;
-import org.slf4j.event.Level;
-import org.slf4j.event.LoggingEvent;
+import org.apache.spark.sql.catalyst.plans.logical.QualifiedColType
+import org.apache.spark.sql.types.DataType
 
-@Value
-public class LogEvent implements LoggingEvent {
-    Level level;
-    String loggerName;
-    String message;
-    long timeStamp;
-    Throwable throwable;
 
-    @Override
-    public Marker getMarker() { return null; }
-    @Override
-    public String getThreadName() { return null; }
-
-    @Override
-    public Object[] getArgumentArray() { return null; }
+object QualifiedColumn {
+    def apply(name:String, catalogType:DataType, nullable:Boolean, description:Option[String]) : QualifiedColType =
+        QualifiedColType(None, name, catalogType, nullable, description, None, None)
 }

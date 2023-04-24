@@ -16,8 +16,6 @@
 
 package com.dimajix.spark.sql.sources.sequencefile
 
-import scala.collection.immutable.Map
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileStatus
 import org.apache.hadoop.fs.Path
@@ -27,6 +25,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext
 import org.apache.spark.TaskContext
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.SparkShim.toPath
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources.CodecStreams
 import org.apache.spark.sql.execution.datasources.FileFormat
@@ -70,7 +69,7 @@ class SequenceFileFormat extends DataSourceRegister with FileFormat {
 
         (file:PartitionedFile) => {
             val seqFile = new SequenceFile.Reader(options.hadoopConf,
-                SequenceFile.Reader.file(new Path(file.filePath)),
+                SequenceFile.Reader.file(toPath(file.filePath)),
                 SequenceFile.Reader.length(file.length),
                 SequenceFile.Reader.start(file.start)
             )

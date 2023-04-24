@@ -453,7 +453,7 @@
             </properties>
         </profile>
         <profile>
-            <id>EMR-6.9</id>
+            <id>EMR-6.10</id>
             <repositories>
                 <repository>
                     <id>emr-6.10.0</id>
@@ -548,7 +548,7 @@
                 <commons-io.version>2.11.0</commons-io.version>
                 <commons-lang3.version>3.12.0</commons-lang3.version>
                 <commons-math3.version>3.6.1</commons-math3.version>
-                <commons-text.version>1.10</commons-text.version>
+                <commons-text.version>1.10.0</commons-text.version>
                 <curator-client.version>2.13.0</curator-client.version>
                 <curator.version>2.13.0</curator.version>
                 <derby.version>10.14.2.0</derby.version>
@@ -606,7 +606,7 @@
                 <commons-io.version>2.11.0</commons-io.version>
                 <commons-lang3.version>3.12.0</commons-lang3.version>
                 <commons-math3.version>3.6.1</commons-math3.version>
-                <commons-text.version>1.10</commons-text.version>
+                <commons-text.version>1.10.0</commons-text.version>
                 <curator-client.version>2.13.0</curator-client.version>
                 <curator.version>2.13.0</curator.version>
                 <derby.version>10.14.2.0</derby.version>

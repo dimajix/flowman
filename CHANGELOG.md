@@ -87,6 +87,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-397: Automate build using GitHub actions
 * github-403: Upgrade Spark 3.2 to 3.2.4
 * github-404: [BUG] Partition columns do not support Timestamp data type
+* github-409: [BUG] Fix build for AWS EMR 6.10 and Azure Synapse 3.3
 
 ### Breaking changes
 

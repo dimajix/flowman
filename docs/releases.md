@@ -100,6 +100,7 @@ changes over time.
 * github-403: Upgrade Spark 3.2 to 3.2.4
 * github-404: [BUG] Partition columns do not support Timestamp data type
 * github-409: [BUG] Fix build for AWS EMR 6.10 and Azure Synapse 3.3
+* github-407: Update Delta to 2.3.0 for Spark 3.3
 
 #### Breaking changes
 

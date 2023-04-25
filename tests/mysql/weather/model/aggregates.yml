@@ -15,7 +15,7 @@ relations:
       kind: inline
       fields:
         - name: country
-          type: STRING
+          type: VARCHAR(4)
         - name: min_wind_speed
           type: FLOAT
         - name: max_wind_speed

@@ -2,10 +2,12 @@ version: "3"
 
 services:
   flowman:
-    image: dimajix/flowman:latest
+    # The image actually is a normal Flowman image, but a new tag will be created by the run.sh script
+    image: flowman-it-mysql:latest
     command: bash
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     volumes:
       - ./migrations:/home/flowman/migrations
       - ./weather:/home/flowman/weather
@@ -31,3 +33,7 @@ services:
       - "3306:3306"
     volumes:
       - ./docker/mysql:/etc/mysql/conf.d
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "--password='yourStrong(!)Password'"]
+      timeout: 5s
+      retries: 20

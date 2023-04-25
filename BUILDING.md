@@ -12,12 +12,15 @@ You need the following tools installed on your machine:
 * Docker (the creation of the Docker image can be skipped via `-Ddockerfile.skip`)
 * Windows users also need Hadoop winutils installed. Those can be retrieved from https://github.com/cdarlint/winutils
 and later. See some additional details for building on Windows below.
+* gpg (signing can be disabled via `-Dgpg.skip`)
+
+For running the integration tests in the `tests` directory, you will need some additional components installed:
+* xmlstarlet
   
 
 ## Build with Maven
 
 Building Flowman with the default settings (i.e. newest supported Spark and Hadoop versions will be used) is as easy as
-
 ```shell
 mvn clean install
 ```
@@ -30,19 +33,24 @@ in a complex environment with Kerberos. You can find the `tar.gz` file in the di
 
 ### Skip Tests
 
-In case you don't want to run tests, you can simply append `-DskipTests`
-
+In case you do not want to run tests, you can simply append `-DskipTests`
 ```shell
 mvn clean install -DskipTests
 ```
 
 ### Skip Docker Image
 
-In case you don't want to build the Docker image (for example when the build itself is done within a Docker container), 
+In case you do not want to build the Docker image (for example when the build itself is done within a Docker container), 
 you can simply append `-Ddockerfile.skip`
-
 ```shell
 mvn clean install -Ddockerfile.skip
+```
+
+### Skip GPG Signing
+
+In case you do not want to sign the artifacts with GPG, you can simply add `-Dgpg.skip` to the Maven command line
+```shell
+mvn clean install -Dgpg.skip
 ```
 
 
@@ -54,7 +62,7 @@ appropriate build profiles, you can easily create a custom build.
 ### Build on Windows
 
 Although you can normally build Flowman on Windows, it is recommended to use Linux instead. But nevertheless Windows
-is still supported to some extend, but requires some extra care. You will need the Hadoop WinUtils installed. You can 
+is still supported to some extent, but requires some extra care. You will need the Hadoop WinUtils installed. You can 
 download the binaries from https://github.com/cdarlint/winutils and install an appropriate version somewhere onto 
 your machine. Do not forget to set the `HADOOP_HOME` or `PATH` environment variable to the installation directory of these 
 utils!
@@ -68,8 +76,8 @@ git config --global core.autocrlf input
 ```
 
    
-It may well be the case that some unittests fail on Windows - don't panic, we focus on Linux systems and ensure that
-the `master` branch really builds clean with all unittests passing on Linux.
+It may well be the case that some unittests fail on Windows — do not panic, we focus on Linux systems and ensure that
+the `main` branch really builds clean with all unittests passing on Linux.
 
 
 ### Build for Custom Spark / Hadoop Version
@@ -115,9 +123,9 @@ With these profiles it is easy to build Flowman to match your environment.
 
 ### Building for specific Java Version
 
-If nothing else is set on the command line, Flowman will now build for Java 11 (except when building the profile
-CDH-6.3, where Java 1.8 is used). If you are still stuck on Java 1.8, you can simply override the Java version by 
-specifying the property `java.version`
+If nothing else is set on the command line, Flowman will now be built for Java 11 (except when building for Spark 2.4, EMR
+or Azure Synapse, where Java 1.8 is used). If you are still stuck on Java 1.8, you can simply override the Java version 
+by specifying the property `java.version`
 
 ```shell
 mvn install -Djava.version=1.8

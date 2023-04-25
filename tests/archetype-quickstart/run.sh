@@ -2,17 +2,25 @@
 
 set -e
 
+# Clean previous project
+rm -rf quickstart-test
+
+# Get current Flowman version
+FLOWMAN_VERSION=$(mvn -f ../.. -q -N help:evaluate -Dexpression=project.version -DforceStdout)
+
 mvn archetype:generate \
     -B \
     -DarchetypeGroupId=com.dimajix.flowman.maven \
     -DarchetypeArtifactId=flowman-archetype-quickstart \
     -DgroupId=test \
-    -DartifactId=quickstart \
+    -DartifactId=quickstart-test \
     -Dversion=1.0-SNAPSHOT \
-    -DflowmanVersion=1.0.0-SNAPSHOT
+    -DflowmanVersion=$FLOWMAN_VERSION
 
-cd quickstart || exit
+cd quickstart-test || exit
 mvn clean install
 
 cd ..
-rm -rf quickstart
+
+# Clean up
+rm -rf quickstart-test

@@ -2,15 +2,22 @@
 
 set -e
 
+# Get current Flowman version
+FLOWMAN_TAG=$(mvn -f ../.. -q -N help:evaluate -Dexpression=flowman.dist.label -DforceStdout)
+
 # Clone Flowman Tutorial
 rm -rf tutorial
 git clone https://github.com/dimajix/flowman-tutorial.git tutorial
-# Fix permissions
+
+# Make projects world readable, such that the directory is readable as a volume mounted into Docker
 chmod -R a+r tutorial
 find tutorial -type d | xargs chmod a+rx
 
 # Enter Tutorials directory
 cd tutorial || exit
+
+# Fix Flowman version
+sed -i "s#dimajix/flowman:.*#dimajix/flowman:$FLOWMAN_TAG#" docker-compose.yml
 
 # Start SQL Server
 docker-compose up -d sqlserver

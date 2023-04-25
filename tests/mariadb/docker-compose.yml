@@ -2,10 +2,12 @@ version: "3.9"
 
 services:
   flowman:
-    image: dimajix/flowman:latest
+    # The image actually is a normal Flowman image, but a new tag will be created by the run.sh script
+    image: flowman-it-mariadb:latest
     command: bash
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     volumes:
       - ./migrations:/home/flowman/migrations
       - ./weather:/home/flowman/weather
@@ -31,3 +33,7 @@ services:
       - --sql-mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,ANSI_QUOTES
     ports:
       - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "--password='yourStrong(!)Password'"]
+      timeout: 5s
+      retries: 20

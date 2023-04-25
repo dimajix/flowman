@@ -59,7 +59,7 @@ The documentation contains a [dedicated section for Windows users](windows.md)
 Since version 0.14.1, prebuilt releases are provided on the [Flowman Homepage](https://flowman.io) or on 
 [GitHub](https://github.com/dimajix/flowman/releases). This probably is the simplest way to grab a working Flowman 
 package. Note that for each release, there are different packages being provided, for different Spark and Hadoop 
-versions. The naming is very simple:
+versions. The naming is straight forward:
 ```
 flowman-dist-<version>-oss-spark<spark-version>-hadoop<hadoop-version>-bin.tar.gz
 ```
@@ -76,24 +76,24 @@ https://github.com/dimajix/flowman/releases/download/0.30.0/flowman-dist-0.30.0-
 ### Supported Spark Environments
 Flowman is available for a large number of different Spark/Hadoop environments. The following variants are available:
 
-| Distribution     | Spark | Hadoop | Java | Scala | Variant                    |
-|------------------|-------|--------|------|-------|----------------------------|
-| Open Source      | 2.4.8 | 2.6    | 1.8  | 2.11  | oss-spark2.4-hadoop2.6     |
-| Open Source      | 2.4.8 | 2.7    | 1.8  | 2.11  | oss-spark2.4-hadoop2.7     |
-| Open Source      | 3.0.3 | 2.7    | 11   | 2.12  | oss-spark3.0-hadoop2.7     |
-| Open Source      | 3.0.3 | 3.2    | 11   | 2.12  | oss-spark3.0-hadoop3.2     |
-| Open Source      | 3.1.2 | 2.7    | 11   | 2.12  | oss-spark3.1-hadoop2.7     |
-| Open Source      | 3.1.2 | 3.2    | 11   | 2.12  | oss-spark3.1-hadoop3.2     |
-| Open Source      | 3.2.3 | 2.7    | 11   | 2.12  | oss-spark3.2-hadoop2.7     |
-| Open Source      | 3.2.3 | 3.3    | 11   | 2.12  | oss-spark3.2-hadoop3.3     |
-| Open Source      | 3.3.2 | 2.7    | 11   | 2.12  | oss-spark3.3-hadoop2.7     |
-| Open Source      | 3.3.2 | 3.3    | 11   | 2.12  | oss-spark3.3-hadoop3.3     |
-| AWS EMR 6.10     | 3.3.1 | 3.3    | 1.8  | 2.12  | emr-spark3.3-hadoop3.3     |
-| Azure Synapse    | 3.3.1 | 3.3    | 1.8  | 2.12  | synapse-spark3.3-hadoop3.3 |
-| Cloudera CDH 6.3 | 2.4.0 | 3.0    | 1.8  | 2.11  | cdh6-spark2.4-hadoop3.0    |
-| Cloudera CDP 7.1 | 2.4.8 | 3.1    | 1.8  | 2.11  | cdp7-spark2.4-hadoop3.1    |
-| Cloudera CDP 7.1 | 3.2.1 | 3.1    | 11   | 2.12  | cdp7-spark3.2-hadoop3.1    |
-| Cloudera CDP 7.1 | 3.3.0 | 3.1    | 11   | 2.12  | cdp7-spark3.3-hadoop3.1    |
+| Distribution     | Spark | Hadoop | Java | Scala | Variant                       |
+|------------------|-------|--------|------|-------|-------------------------------|
+| Open Source      | 2.4.8 | 2.6    | 1.8  | 2.11  | oss-spark2.4-hadoop2.6        |
+| Open Source      | 2.4.8 | 2.7    | 1.8  | 2.11  | oss-spark2.4-hadoop2.7        |
+| Open Source      | 3.0.3 | 2.7    | 11   | 2.12  | oss-spark3.0-hadoop2.7        |
+| Open Source      | 3.0.3 | 3.2    | 11   | 2.12  | oss-spark3.0-hadoop3.2        |
+| Open Source      | 3.1.2 | 2.7    | 11   | 2.12  | oss-spark3.1-hadoop2.7        |
+| Open Source      | 3.1.2 | 3.2    | 11   | 2.12  | oss-spark3.1-hadoop3.2        |
+| Open Source      | 3.2.3 | 2.7    | 11   | 2.12  | oss-spark3.2-hadoop2.7        |
+| Open Source      | 3.2.3 | 3.3    | 11   | 2.12  | oss-spark3.2-hadoop3.3        |
+| Open Source      | 3.3.2 | 2.7    | 11   | 2.12  | oss-spark3.3-hadoop2.7        |
+| Open Source      | 3.3.2 | 3.3    | 11   | 2.12  | oss-spark3.3-hadoop3.3        |
+| AWS EMR 6.10     | 3.3.1 | 3.3    | 1.8  | 2.12  | emr6.10-spark3.3-hadoop3.3    |
+| Azure Synapse    | 3.3.1 | 3.3    | 1.8  | 2.12  | synapse3.3-spark3.3-hadoop3.3 |
+| Cloudera CDH 6.3 | 2.4.0 | 3.0    | 1.8  | 2.11  | cdh6-spark2.4-hadoop3.0       |
+| Cloudera CDP 7.1 | 2.4.8 | 3.1    | 1.8  | 2.11  | cdp7-spark2.4-hadoop3.1       |
+| Cloudera CDP 7.1 | 3.2.1 | 3.1    | 11   | 2.12  | cdp7-spark3.2-hadoop3.1       |
+| Cloudera CDP 7.1 | 3.3.0 | 3.1    | 11   | 2.12  | cdp7-spark3.3-hadoop3.1       |
 
 
 ### Building Flowman
@@ -269,9 +269,9 @@ plugins:
 ```
 
 ### `default-namespace.yml`
-On top of the very global settings, Flowman also supports so called *namespaces*. Each project is executed within the
-context of one namespace, if nothing else is specified the *default namespace*. Each namespace contains some 
-configuration, such that different namespaces might represent different tenants or different staging environments.
+On top of the very global settings, Flowman also supports so-called *namespaces*. Each project is executed within the
+context of one namespace, which would be the *default namespace* if nothing else is specified . Each namespace contains 
+some configuration, such that different namespaces might represent different tenants or different staging environments.
 
 #### Example
 ```yaml

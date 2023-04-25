@@ -1,4 +1,4 @@
-# Running in Docker
+# Running Flowman in Docker
 
 Flowman can also be run inside Docker, especially when working in local mode (i.e. without a cluster). This is a
 great option to use in a Windows environment, where setting up a working Spark environment and running Flowman

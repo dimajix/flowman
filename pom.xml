@@ -583,7 +583,7 @@
         <profile>
             <id>synapse-3.3</id>
             <properties>
-                <hadoop.dist>synapse</hadoop.dist>
+                <hadoop.dist>synapse3.3</hadoop.dist>
                 <java.version>1.8</java.version>
                 <scala.version>2.12.15</scala.version>
                 <scala.api_version>2.12</scala.api_version>

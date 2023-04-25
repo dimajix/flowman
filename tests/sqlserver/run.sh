@@ -15,7 +15,6 @@ find bin -type f | xargs chmod a+rx
 docker-compose up -d sqlserver
 
 # Run tests
-sleep 10
 docker-compose run --rm flowman bin/run-tests.sh
 
 # Clean up

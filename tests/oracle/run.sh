@@ -15,7 +15,6 @@ find bin -type f | xargs chmod a+rx
 docker-compose up -d oracle
 
 # Run tests
-sleep 15
 docker-compose run --rm flowman bin/run-tests.sh
 
 # Clean up

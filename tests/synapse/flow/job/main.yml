@@ -12,10 +12,14 @@ jobs:
       - measurements
       - stations
       - aggregates
+      # Delta targets
+      - measurements_delta
+      - aggregates_delta
       # Optional JDBC targets
       #- measurements_jdbc
       #- stations_jdbc
       #- aggregates_jdbc
+
       # Generate documentation
       - documentation
 

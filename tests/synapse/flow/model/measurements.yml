@@ -35,3 +35,21 @@ relations:
     indexes:
       - name: "measurement_idx0"
         columns: [usaf, wban]
+
+
+  measurements_delta:
+    kind: deltaTable
+    database: weather
+    table: measurement_delta
+    schema:
+      kind: spark
+      file: "${project.basedir}/schema/measurements.json"
+    partitions:
+      - name: year
+        type: integer
+        granularity: 1
+    mergeKey:
+      - usaf
+      - wban
+      - date
+      - time

@@ -45,7 +45,6 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
-import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.PartitionField
 import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.flowman.model.Relation
@@ -221,7 +220,7 @@ final case class DeltaTableRelation(
         val catalog = execution.catalog
         if (catalog.tableExists(table)) {
             fullSchema match {
-                case Some(fullSchema) =>
+                case Some(targetSchema) =>
                     val table = catalog.getTable(this.table)
                     if (table.tableType == CatalogTableType.VIEW) {
                         false
@@ -229,7 +228,6 @@ final case class DeltaTableRelation(
                     else  {
                         val table = deltaCatalogTable(execution)
                         val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
-                        val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema)
                         val sourceTable = TableDefinition(
                             this.table,
                             TableType.TABLE,

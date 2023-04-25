@@ -1338,6 +1338,64 @@ class DeltaFileRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         // == Destroy ===============================================================================================
         relation.destroy(execution)
+        relation.exists(execution) should be (No)
+
+        session.shutdown()
+    }
+
+    it should "support CHAR(n)/VARCHAR(n) data types" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+
+        val location = new File(tempDir, "delta/default/lala3")
+        val relation = DeltaFileRelation(
+            Relation.Properties(context, "delta_relation"),
+            location = new Path(location.toURI),
+            schema = Some(InlineSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("c0", ftypes.StringType),
+                    Field("c1", ftypes.VarcharType(10)),
+                    Field("c2", ftypes.CharType(4))
+                )
+            ))
+        )
+
+        // == Create =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.create(execution)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+
+        relation.describe(execution) should be(com.dimajix.flowman.types.StructType(Seq(
+            Field("c0", com.dimajix.flowman.types.StringType),
+            Field("c1", com.dimajix.flowman.types.VarcharType(10)),
+            Field("c2", com.dimajix.flowman.types.CharType(4))
+        )))
+
+        // == Migrate ================================================================================================
+        relation.exists(execution) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+
+        // == Destroy ================================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
 
         session.shutdown()
     }

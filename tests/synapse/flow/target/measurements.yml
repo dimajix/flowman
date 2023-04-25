@@ -12,3 +12,11 @@ targets:
     relation: measurements_jdbc
     partition:
       year: $year
+
+  measurements_delta:
+    kind: merge
+    mapping: measurements_deduplicated
+    relation: measurements_delta
+    clauses:
+      - action: insert
+      - action: update

@@ -20,6 +20,8 @@ import java.util.Locale
 
 import scala.language.existentials
 
+import com.dimajix.spark.features.hiveVarcharSupported
+
 
 object SchemaUtils {
 
@@ -82,6 +84,18 @@ object SchemaUtils {
             case _:VarcharType => StringType
             case dt:FieldType => dt
         }
+    }
+
+    /**
+     * Replaces CHAR(n)/VARCHAR(n) if not supported by Hive
+     * @param schema
+     * @return
+     */
+    def cleanupSchema(schema:StructType) : StructType = {
+        if (hiveVarcharSupported)
+            schema
+        else
+            replaceCharVarchar(schema)
     }
 
     /**

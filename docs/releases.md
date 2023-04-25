@@ -102,6 +102,7 @@ changes over time.
 * github-409: [BUG] Fix build for AWS EMR 6.10 and Azure Synapse 3.3
 * github-407: Update Delta to 2.3.0 for Spark 3.3
 * github-406: Improve integration tests to automatically pick up the current Flowman version
+* github-408: Make use of DeltaLake in Synapse integration test
 
 #### Breaking changes
 

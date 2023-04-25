@@ -77,7 +77,7 @@ git config --global core.autocrlf input
 
    
 It may well be the case that some unittests fail on Windows — do not panic, we focus on Linux systems and ensure that
-the `master` branch really builds clean with all unittests passing on Linux.
+the `main` branch really builds clean with all unittests passing on Linux.
 
 
 ### Build for Custom Spark / Hadoop Version
@@ -123,7 +123,7 @@ With these profiles it is easy to build Flowman to match your environment.
 
 ### Building for specific Java Version
 
-If nothing else is set on the command line, Flowman will now build for Java 11 (except when building for Spark 2.4, EMR
+If nothing else is set on the command line, Flowman will now be built for Java 11 (except when building for Spark 2.4, EMR
 or Azure Synapse, where Java 1.8 is used). If you are still stuck on Java 1.8, you can simply override the Java version 
 by specifying the property `java.version`
 

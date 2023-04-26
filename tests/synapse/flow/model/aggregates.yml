@@ -58,3 +58,29 @@ relations:
     # (Optionally) specify a primary key
     primaryKey:
       - country
+
+
+  aggregates_delta:
+    kind: deltaTable
+    database: weather
+    table: aggregates_delta
+    schema:
+      kind: inline
+      fields:
+        - name: country
+          type: CHAR(2)
+          nullable: false
+        - name: min_wind_speed
+          type: FLOAT
+        - name: max_wind_speed
+          type: FLOAT
+        - name: avg_wind_speed
+          type: FLOAT
+        - name: min_temperature
+          type: FLOAT
+        - name: max_temperature
+          type: FLOAT
+        - name: avg_temperature
+          type: FLOAT
+    mergeKey:
+      - country

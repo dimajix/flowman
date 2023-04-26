@@ -27,17 +27,16 @@ import org.apache.spark.sql.delta.catalog.DeltaTableV2
 import org.apache.spark.sql.streaming.StreamingQuery
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.types.StructType
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.SetIgnoreCase
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
+import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.catalog.PartitionSpec
 import com.dimajix.flowman.catalog.TableChange
 import com.dimajix.flowman.catalog.TableDefinition
 import com.dimajix.flowman.catalog.TableIdentifier
-import com.dimajix.flowman.catalog.TableType
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.MigrationPolicy
@@ -55,7 +54,6 @@ import com.dimajix.flowman.model.Schema
 import com.dimajix.flowman.spec.annotation.RelationType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
-import com.dimajix.spark.sql.DataFrameUtils.withTempView
 
 
 final case class DeltaFileRelation(
@@ -228,10 +226,9 @@ final case class DeltaFileRelation(
     override def conforms(execution: Execution): Trilean = {
         if (exists(execution) == Yes) {
             fullSchema match {
-                case Some(fullSchema) =>
+                case Some(targetSchema) =>
                     val table = deltaCatalogTable(execution)
                     val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
-                    val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema)
                     val sourceTable = TableDefinition(
                         TableIdentifier.empty,
                         columns = sourceSchema.fields,
@@ -285,7 +282,7 @@ final case class DeltaFileRelation(
      * @param execution
      */
     override def create(execution: Execution): Unit = {
-        val sparkSchema = StructType(fields.map(_.catalogField))
+        val sparkSchema = HiveCatalog.cleanupSchema(StructType(fields.map(_.catalogField)))
         logger.info(s"Creating Delta file relation '$identifier' at '$location' and schema\n${sparkSchema.treeString}")
         if (schema.isEmpty) {
             throw new UnspecifiedSchemaException(identifier)

@@ -48,4 +48,5 @@ plugins:
   - flowman-avro
   - flowman-aws
   - flowman-azure
+  - flowman-delta
   - flowman-mssqlserver

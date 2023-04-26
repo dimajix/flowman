@@ -3,6 +3,7 @@ mappings:
   aggregates:
     kind: aggregate
     input: facts
+    filter: "country IS NOT NULL"
     dimensions:
       - country
     aggregations:

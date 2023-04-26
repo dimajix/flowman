@@ -145,7 +145,7 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
     protected def migrateInternal(execution: Execution): Unit = {
         val table = deltaCatalogTable(execution)
         val sourceSchema = com.dimajix.flowman.types.StructType.of(table.schema())
-        val targetSchema = com.dimajix.flowman.types.SchemaUtils.replaceCharVarchar(fullSchema.get)
+        val targetSchema = fullSchema.get
         val sourceTable = TableDefinition(
             TableIdentifier.empty,
             columns = sourceSchema.fields,
@@ -174,7 +174,11 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
             case MigrationStrategy.ALTER =>
                 val migrations = TableChange.migrate(currentTable, targetTable, migrationPolicy)
                 if (migrations.exists(m => !supported(m))) {
-                    logger.error(s"Cannot migrate Delta relation '$identifier', since that would require unsupported changes.\nCurrent schema:\n${currentTable.schema.treeString}New schema:\n${targetTable.schema.treeString}")
+                    val unsupportedChanges = migrations.filter(m => !supported(m))
+                    logger.error(s"Cannot migrate Delta relation '$identifier', since that would require unsupported changes.\n"+
+                        s"Current schema:\n${currentTable.schema.treeString}" +
+                        s"New schema:\n${targetTable.schema.treeString}" +
+                        s"Unsupported changes:\n${unsupportedChanges.map(m => " - " + m.toString).mkString("\n")}")
                     throw new MigrationFailedException(identifier)
                 }
                 alter(migrations)

@@ -1266,6 +1266,69 @@ class DeltaTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSe
         session.shutdown()
     }
 
+    it should "support CHAR(n)/VARCHAR(n) data types" in {
+        val session = Session.builder()
+            .withSparkSession(spark)
+            .build()
+        val execution = session.execution
+        val context = session.context
+
+        val relation = DeltaTableRelation(
+            Relation.Properties(context, "delta_relation"),
+            table = TableIdentifier("delta_table", Some("default")),
+            schema = Some(InlineSchema(
+                Schema.Properties(context, "delta_schema"),
+                fields = Seq(
+                    Field("c0", com.dimajix.flowman.types.VarcharType(10)),
+                    Field("c2", com.dimajix.flowman.types.CharType(4))
+                )
+            ))
+        )
+
+        // == Create =================================================================================================
+        session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be(false)
+        relation.create(execution)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+        session.catalog.tableExists(TableIdentifier("delta_table", Some("default"))) should be(true)
+
+        relation.describe(execution) should be(com.dimajix.flowman.types.StructType(Seq(
+            Field("c0", com.dimajix.flowman.types.VarcharType(10)),
+            Field("c2", com.dimajix.flowman.types.CharType(4))
+        )))
+
+        // Inspect Hive table
+        val table_1 = session.catalog.getTable(TableIdentifier("delta_table", Some("default")))
+        table_1.identifier should be(TableIdentifier("delta_table", Some("default")).toSpark)
+        table_1.tableType should be(CatalogTableType.MANAGED)
+        table_1.schema should be(StructType(Seq()))
+        table_1.dataSchema should be(StructType(Seq()))
+        table_1.partitionColumnNames should be(Seq())
+        table_1.partitionSchema should be(StructType(Seq()))
+
+        // == Migrate ================================================================================================
+        relation.exists(execution) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.FAIL)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.REPLACE)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+        relation.migrate(execution, MigrationPolicy.RELAXED, MigrationStrategy.ALTER_REPLACE)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be(Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be(Yes)
+
+        // == Destroy ================================================================================================
+        relation.destroy(execution)
+        session.catalog.tableExists(TableIdentifier("lala", Some("delta_table"))) should be(false)
+
+        session.shutdown()
+    }
 
     it should "support migrations by adding new columns" in {
         val session = Session.builder()

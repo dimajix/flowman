@@ -64,12 +64,12 @@ mappings:
     kind: aggregate
     input: measurements
     dimensions:
+      - year
       - usaf
       - wban
       - date
       - time
     aggregations:
-      report_type: "FIRST(report_type, True)"
       wind_direction: "FIRST(CASE WHEN wind_direction_qual='1' THEN wind_direction END, True)"
       wind_direction_qual: "FIRST(wind_direction_qual, True)"
       wind_observation: "FIRST(wind_observation, True)"

@@ -71,18 +71,38 @@ import com.dimajix.spark.sql.SchemaUtils.replaceCharVarchar
 
 
 object HiveCatalog {
+    /**
+     * Replaces CHAR(n)/VARCHAR(n) if not supported by Hive
+     *
+     * @param schema
+     * @return
+     */
     def cleanupSchema(schema:StructType) : StructType = {
         if (hiveVarcharSupported)
             schema
         else
             replaceCharVarchar(schema)
     }
+
+    /**
+     * Replaces CHAR(n)/VARCHAR(n) if not supported by Hive
+     *
+     * @param schema
+     * @return
+     */
     def cleanupFields(schema:Seq[StructField]) : Seq[StructField] = {
         if (hiveVarcharSupported)
             schema
         else
             schema.map(replaceCharVarchar)
     }
+
+    /**
+     * Replaces CHAR(n)/VARCHAR(n) if not supported by Hive
+     *
+     * @param schema
+     * @return
+     */
     def cleanupField(field:StructField) : StructField = {
         if (hiveVarcharSupported)
             field

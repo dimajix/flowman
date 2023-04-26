@@ -8,3 +8,9 @@ targets:
     kind: relation
     mapping: aggregates
     relation: aggregates_jdbc
+
+  aggregates_delta:
+    kind: relation
+    mapping: aggregates
+    relation: aggregates_delta
+    mode: update

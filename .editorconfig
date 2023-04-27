@@ -18,6 +18,7 @@ insert_final_newline = true
 
 [*.scala]
 indent_size = 4
+max_line_length = 120
 
 [*.yml]
 indent_size = 2
@@ -34,3 +35,4 @@ indent_size = 2
 [*.md]
 trim_trailing_whitespace = false
 indent_size = 2
+max_line_length = 120

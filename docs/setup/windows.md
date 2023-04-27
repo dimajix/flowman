@@ -1,4 +1,4 @@
-# Running on Windows
+# Running Flowman on Windows
 
 Flowman is best run on Linux, especially for production usage. Windows support is at best experimental and will
 probably never be within the focus of the project. Nevertheless, there are also some options for running Flowman on

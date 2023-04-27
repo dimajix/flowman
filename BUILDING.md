@@ -251,6 +251,22 @@ mvn scoverage:report
 ## Building Documentation
 
 Flowman also contains Markdown documentation which is processed by Sphinx to generate the online HTML documentation.
+This requires an appropriate Python installation, with the following packages installed:
+* Python >= 3.8
+* docutils==0.18.1
+* markdown==3.4.3
+* myst-parser==1.0.0
+* sphinx==6.1.3
+* sphinx-markdown-tables==0.0.17
+* sphinxcontrib-mermaid==0.8.1
+* sphinx_rtd_theme==1.2.0
+* recommonmark==0.7.1
 
-    cd docs
-    make html
+An appropriate `requirements.txt` file for installing all required packages is provided in the `docs` directory.
+
+Once the Python environment is set up, the documentation can be easily generated via the provided `Makefile`
+```shell
+cd docs
+make clean html
+```
+

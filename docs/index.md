@@ -2,6 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation](https://readthedocs.org/projects/flowman/badge/?version=latest)](https://flowman.readthedocs.io/en/latest/)
+[![Build](https://github.com/dimajix/flowman/actions/workflows/maven.yml/badge.svg)](https://github.com/dimajix/flowman/actions/workflows/maven.yml)
 
 ## What is Flowman
 
@@ -29,6 +30,9 @@ central place in your value chain for data preparations for the next steps.
 
 [![Flowman Logo](images/flowman-overview.png)](https://flowman.io)
 
+Flowman supports many different execution environments from trivial [non-distributed Docker](setup/docker.md), over
+managed Spark clusters like [AWS EMR](setup/emr.md) and [Azure Synapse](setup/synapse.md) to classical 
+[on premise Hadoop clusters](setup/installation.md) like Cloudera.
 
 ### Notable Features
 
@@ -227,6 +231,8 @@ More detail on all these items is described in the following sections:
    setup/installation
    setup/docker
    setup/windows
+   setup/emr
+   setup/synapse
    setup/config
    setup/building
 ```

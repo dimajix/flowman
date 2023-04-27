@@ -1,4 +1,4 @@
-# Building Flowman
+# Building Flowman from Sources
 
 Since Flowman depends on libraries like Spark and Hadoop, which are commonly provided by a platform environment like
 Cloudera or EMR,  you currently need to build Flowman yourself to match the correct versions. 

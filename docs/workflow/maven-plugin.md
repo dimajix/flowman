@@ -202,7 +202,7 @@ A much simpler option than setting up a local Flowman development installation i
 images. This approach is recommended especially for Windows users, but is also very simple for Linux and Mac users.
 
 ```shell
-docker run --rm -ti --mount type=bind,source=<your-project-dir>,target=/opt/flowman/project dimajix/flowman:0.30.0-oss-spark3.3-hadoop3.3 bash
+docker run --rm -ti --mount type=bind,source=<your-project-dir>,target=/opt/flowman/project dimajix/flowman:1.0.0-oss-spark3.3-hadoop3.3 bash
 ```
 
 ### Using Flowman Shell

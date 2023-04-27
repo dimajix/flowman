@@ -24,13 +24,13 @@ packages being provided, for different Spark and Hadoop versions. The naming is 
 flowman-dist-<version>-oss-spark<spark-version>-hadoop<hadoop-version>-bin.tar.gz
 ```
 You simply have to use the package which fits to the Spark and Hadoop versions of your environment. For example, the
-package of Flowman 0.30.0 and for Spark 3.3 and Hadoop 3.3 would be
+package of Flowman 1.0.0 and for Spark 3.3 and Hadoop 3.3 would be
 ```
-flowman-dist-0.30.0-oss-spark3.3-hadoop3.3-bin.tar.gz
+flowman-dist-1.0.0-oss-spark3.3-hadoop3.3-bin.tar.gz
 ```
 and the full URL then would be
 ```
-https://github.com/dimajix/flowman/releases/download/0.30.0/flowman-dist-0.30.0-oss-spark3.3-hadoop3.3-bin.tar.gz
+https://github.com/dimajix/flowman/releases/download/1.0.0/flowman-dist-1.0.0-oss-spark3.3-hadoop3.3-bin.tar.gz
 ```
 
 ## Supported Spark Environments

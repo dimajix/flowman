@@ -18,7 +18,7 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
-## Version 1.0.0 
+## Version 1.0.0 - 2023-04-27
 
 * github-314: Move avro related functionality into separate plugin
 * github-307: Describe Flowmans security policy in SECURITY.md

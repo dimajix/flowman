@@ -30,7 +30,7 @@ Breaking changes will be documented in the changelog file for each version.
 The following gives an (incomplete) list of past releases of the last 12 months. This will help you to spot breaking 
 changes over time.
 
-### Upcoming
+### Version 0.30.1 - 2023-04-27
 
 * github-314: Move avro related functionality into separate plugin
 * github-307: Describe Flowmans security policy in SECURITY.md

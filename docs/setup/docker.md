@@ -15,12 +15,12 @@ We publish Flowman Docker images on [Docker Hub](https://hub.docker.com/reposito
 which are good enough for local work. You can easily start a Flowman session in Docker as follows:
 
 ```shell
-docker run --rm -ti dimajix/flowman:0.30.0-oss-spark3.3-hadoop3.3 bash
+docker run --rm -ti dimajix/flowman:1.0.0-oss-spark3.3-hadoop3.3 bash
 ```
 When you are using [git bash](https://git-scm.com/download/win), you will probably need to use `winpty`, which 
 translates to the following command
 ```shell
-winpty docker run --rm -ti dimajix/flowman:0.30.0-oss-spark3.3-hadoop3.3 bash
+winpty docker run --rm -ti dimajix/flowman:1.0.0-oss-spark3.3-hadoop3.3 bash
 ```
 
 Once the Docker image has started, you will be presented with a bash prompt. Then you can easily build the
@@ -35,7 +35,7 @@ flowexec -f examples/weather job build main
 By using Docker volumes, you can easily mount a Flowman project into the Docker container, for example
 
 ```shell
-docker run --rm -ti --mount type=bind,source=$(pwd)/my_project,target=/home/flowman/my_project dimajix/flowman:0.30.0-oss-spark3.3-hadoop3.3 bash
+docker run --rm -ti --mount type=bind,source=$(pwd)/my_project,target=/home/flowman/my_project dimajix/flowman:1.0.0-oss-spark3.3-hadoop3.3 bash
 ```
 The command above will start a Docker container running Flowman, and the local subdirectory `my_project` within the 
 current working directory is mounted into the container at `/home/flowman/my_project`. Then you open your project
@@ -58,7 +58,7 @@ version: "3"
 services:
   flowman:
     # Set the appropriate Flowman Docker image of your choice.
-    image: dimajix/flowman:0.30.0-oss-spark3.3-hadoop3.3
+    image: dimajix/flowman:1.0.0-oss-spark3.3-hadoop3.3
     # Let Docker start a bash if nothing else is specified.
     command: bash
     # Mount local volumes into the Docker container. Adjust the example entries to your needs!

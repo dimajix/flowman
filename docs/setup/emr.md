@@ -4,7 +4,7 @@ Since version 0.30.0, Flowman officially supports AWS EMR (Elastic Map Reduce) a
 to provide a high degree of compatibility with EMR, Flowman provides special build variants for AWS, which can be
 identified via the term "emr" in their version.
 
-For example, the Flowman version `0.30.0-emr6.9-spark3.3-hadoop3.3` contains a build specifically crafted for EMR
+For example, the Flowman version `1.0.0-emr6.10-spark3.3-hadoop3.3` contains a build specifically crafted for EMR
 version 6.9, which contains Spark 3.3 and Hadoop 3.3. You should always use a Flowman version which matches your
 EMR version (or the other way round) in order to avoid incompatibilities between libraries.
 
@@ -29,13 +29,13 @@ opening firewall ports, providing your public ssh key and more. You can read det
 Once you successfully logged in to the master node, you need to download an EMR optimized version of Flowman using
 `wget` or `curl`:
 ```shell
-wget https://github.com/dimajix/flowman/releases/download/0.30.0/flowman-dist-0.30.0-emr6.9-spark3.3-hadoop3.3-bin.tar.gz
+wget https://github.com/dimajix/flowman/releases/download/1.0.0/flowman-dist-1.0.0-emr6.10-spark3.3-hadoop3.3-bin.tar.gz
 ```
 Next you unpack Flowman as follows:
 ```shell
-tar xvzf flowman-dist-0.30.0-emr6.9-spark3.3-hadoop3.3-bin.tar.gz
+tar xvzf flowman-dist-1.0.0-emr6.10-spark3.3-hadoop3.3-bin.tar.gz
 ```
-This will create a directory `flowman-0.30.0-emr6.9-spark3.3-hadoop3.3` which contains all executables and libraries
+This will create a directory `flowman-1.0.0-emr6.10-spark3.3-hadoop3.3` which contains all executables and libraries
 of Flowman.
 
 #### Directory Layout
@@ -139,7 +139,7 @@ Finally, you can now start Flowman. For example, if you wanted to run the weathe
 as follows
 ```shell
 # Enter installation directory of Flowman
-cd flowman-0.30.0-emr6.9-spark3.3-hadoop3.3
+cd flowman-1.0.0-emr6.10-spark3.3-hadoop3.3
 
 # Start Flowman shell with the weather example
 bin/flowshell -f examples/weather

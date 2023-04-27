@@ -1,4 +1,4 @@
-# Running Flowman in AWS EMR
+# Deploying Flowman to AWS EMR
 
 Since version 0.30.0, Flowman officially supports AWS EMR (Elastic Map Reduce) as an execution environment. In order
 to provide a high degree of compatibility with EMR, Flowman provides special build variants for AWS, which can be
@@ -151,8 +151,8 @@ bin/flowshell -f examples/weather
 
 The previous approach of logging in to the master node, downloading Flowman and installing Flowman, and then
 executing a project is difficult to automate. But EMR also offers so-called step functions, which will be executed
-directly after the creation of an EMR cluster. Once all step functions (you can specify multiple), then cluster can
-optionally be shut down by AWS. Therefore, this approach fits well to periodic batch processes where some Flowman
+directly after the creation of an EMR cluster. After all step functions (you can specify multiple) have completed, AWS 
+can optionally shut down the cluster. Therefore, this approach fits well to periodic batch processes where some Flowman
 projects should be executed. 
 
 But running a step function does not work well with the traditional shell based approach of Flowman. Instead, the easiest
@@ -161,8 +161,8 @@ Such jar files are called "fat jar", since they tend to be very big.
 
 ### 1. Build a fat jar
 
-Normally, you need to be a Maven expert to build such a fat jar. But not so with Flowman, since it provides a
-plugin for Maven, the so-called `flowman-maven-plugin`, which greatly simplifies building such fat jars. You can
+Normally, one needs to be a Maven expert to build such a fat jar. But not so with Flowman, since it provides a
+plugin for Maven, the so-called `flowman-maven-plugin`, which greatly simplifies building such fat jars. One can
 find a detailed description for using the plugin at [Using Flowman Maven Plugin](../workflow/maven-plugin.md).
 
 In this case, we need a small `pom.xml` file (this is the build descriptor for Maven), which looks as follows:

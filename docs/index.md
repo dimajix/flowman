@@ -2,6 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation](https://readthedocs.org/projects/flowman/badge/?version=latest)](https://flowman.readthedocs.io/en/latest/)
+[![Build](https://github.com/dimajix/flowman/actions/workflows/maven.yml/badge.svg)](https://github.com/dimajix/flowman/actions/workflows/maven.yml)
 
 ## What is Flowman
 
@@ -230,6 +231,8 @@ More detail on all these items is described in the following sections:
    setup/installation
    setup/docker
    setup/windows
+   setup/emr
+   setup/synapse
    setup/config
    setup/building
 ```

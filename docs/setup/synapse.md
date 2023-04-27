@@ -1,4 +1,4 @@
-# Running Flowman in Azure Synapse
+# Deploying Flowman to Azure Synapse
 
 Since version 1.0.0, Flowman officially supports Azure Synapse as an execution environment. In order
 to provide a high degree of compatibility, Flowman provides a special build variant for Azure Synapse, which can be

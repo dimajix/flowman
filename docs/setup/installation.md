@@ -270,7 +270,7 @@ plugins:
 
 ### `default-namespace.yml`
 On top of the very global settings, Flowman also supports so-called *namespaces*. Each project is executed within the
-context of one namespace, which would be the *default namespace* if nothing else is specified . Each namespace contains 
+context of one namespace, which would be the *default namespace* if nothing else is specified. Each namespace contains 
 some configuration, such that different namespaces might represent different tenants or different staging environments.
 
 #### Example

@@ -260,8 +260,11 @@ This requires an appropriate Python installation, with the following packages in
 * sphinx-markdown-tables==0.0.17
 * sphinxcontrib-mermaid==0.8.1
 * sphinx_rtd_theme==1.2.0
+* recommonmark==0.7.1
 
-Once your Python environment is working, you can easily create the documentation via the provided `Makefile`
+An appropriate `requirements.txt` file for installing all required packages is provided in the `docs` directory.
+
+Once the Python environment is set up, the documentation can be easily generated via the provided `Makefile`
 ```shell
 cd docs
 make clean html

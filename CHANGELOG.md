@@ -20,6 +20,12 @@ Breaking changes will be documented in this changelog file for each version.
 
 ## Version 1.1.0
 
+
+## Version 1.0.1
+
+* github-411: [BUG] commons-text has wrong groupId in pom.xml
+
+
 ## Version 1.0.0 - 2023-04-27
 
 * github-314: Move avro related functionality into separate plugin

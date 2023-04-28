@@ -18,7 +18,7 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
-## Version 1.0.1
+## Version 1.1.0
 
 ## Version 1.0.0 - 2023-04-27
 

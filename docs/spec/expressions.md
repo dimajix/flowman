@@ -1,6 +1,6 @@
 # Script Expressions
 
-Flowman allows to use *expressions* at many places in the YAML specification files. For example you can reference 
+Flowman allows to use *expressions* at many places in the YAML specification files. For example, you can reference 
 variables defined in the `environment` section or also access a set of predefined objects inside values.
 
 Flowman uses [Apache Velocity](https://velocity.apache.org/) as the template engine. Please also read 
@@ -16,7 +16,7 @@ mappings:
     kind: read
     source: $weather_source
 ```
-This example uses a variable `weather_source` to define which relation to read form. This way
+This example uses a variable `weather_source` to define which relation to read from. This way,
 different environments can be supported by simply setting different values for that variable.
 
 Variables can be set globally in a project's `environment` section or in a profile of a
@@ -26,7 +26,7 @@ project (which then has to be activated) or on the command line.
 ## Predefined Objects
 Flowman also provides some predefined objects, which are available in the expression language.
 These objects either simply hold some data (like the location of the project), or they also 
-provide some functions (for working with date and time).
+provide some functions (for working with date and time). 
 
 ### `project`
 * `project.basedir`
@@ -35,63 +35,94 @@ provide some functions (for working with date and time).
 * `project.version`
 
 ### `Integer`
-* `Integer.parse(string)` or `Integer.valueOf(string)`
+* `Integer.parse(string) -> int` 
+* `Integer.valueOf(string) -> int`
 
 ### `Float`
-* `Float.parse(string)` or `Float.valueOf(string)`
+* `Float.parse(string) -> float`
+* `Float.valueOf(string) -> float`
+
+### `Boolean`
+* `Boolean.parse(string) -> boolean`
+* `Boolean.valueOf(string) -> boolean`
 
 ### `LocalDate`
-* `LocalDate.parse(string)` or `LocalDateTime.valueOf(string)`
-* `LocalDate.ofEpochSeconds(int)`
-* `LocalDate.format(date:string, format:string)`
-* `LocalDate.addDays(date:string, amount:int)`
-* `LocalDate.addWeeks(date:string, amount:int)`
-* `LocalDate.addMonths(date:string, amount:int)`
-* `LocalDate.addYears(date:string, amount:int)`
+* `LocalDate.now() -> LocalDate`
+* `LocalDate.today() -> LocalDate`
+* `LocalDate.parse(date:string) -> LocalDate`
+* `LocalDateTime.valueOf(date:string) -> LocalDate`
+* `LocalDate.format(date:string, format:string) -> string`
+* `LocalDate.addDays(date:string, days:int) -> LocalDate`
+* `LocalDate.addWeeks(date:string, weeks:int) -> LocalDate`
+* `LocalDate.addMonths(date:string, months:int) -> LocalDate`
+* `LocalDate.addYears(date:string, years:int) -> LocalDate`
 
 ### `LocalDateTime`
-* `LocalDateTime.parse(string)` or `LocalDateTime.valueOf(string)`
-* `LocalDateTime.ofEpochSeconds(int)`
-* `LocalDateTime.format(datetime:string, format:string)`
-* `LocalDateTime.add(datetime:string, duration:string)`
-* `LocalDateTime.subtract(datetime:string, duration:string)`
-* `LocalDateTime.addSeconds(datetime:string, amount:int)`
-* `LocalDateTime.addMinutes(datetime:string, amount:int)`
-* `LocalDateTime.addHours(datetime:string, amount:int)`
-* `LocalDateTime.addDays(datetime:string, amount:int)`
-* `LocalDateTime.addWeeks(datetime:string, amount:int)`
-* `LocalDateTime.addMonths(datetime:string, amount:int)`
-* `LocalDateTime.addYears(datetime:string, amount:int)`
-
+* `LocalDateTime.now() -> LocalDateTime`
+* `LocalDateTime.parse(datetime:string) -> LocalDateTime`
+* `LocalDateTime.valueOf(datetime:string) -> LocalDateTime`
+* `LocalDateTime.ofEpochSeconds(epoch:int) -> LocalDateTime`
+* `LocalDateTime.format(datetime:string, format:string) -> string`
+* `LocalDateTime.add(datetime:string, duration:string) -> LocalDateTime`
+* `LocalDateTime.subtract(datetime:string, duration:string) -> LocalDateTime`
+* `LocalDateTime.addSeconds(datetime:string, seconds:int) -> LocalDateTime`
+* `LocalDateTime.addMinutes(datetime:string, minutes:int) -> LocalDateTime`
+* `LocalDateTime.addHours(datetime:string, hours:int) -> LocalDateTime`
+* `LocalDateTime.addDays(datetime:string, days:int) -> LocalDateTime`
+* `LocalDateTime.addWeeks(datetime:string, weeks:int) -> LocalDateTime`
+* `LocalDateTime.addMonths(datetime:string, months:int) -> LocalDateTime`
+* `LocalDateTime.addYears(datetime:string, years:int) -> LocalDateTime`
 
 ### `Timestamp`
-* `Timestamp.parse(string)` or `Timestamp.valueOf(string)`
-* `Timestamp.ofEpochSeconds(int)`
+* `Timestamp.parse(ts:string) -> Timestamp`
+* `Timestamp.valueOf(ts:string) -> Timestamp`
+* `Timestamp.ofEpochSeconds(epoch:int) -> Timestamp`
+* `Timestamp.add(ts:string, duration:string) -> Timestamp`
+* `Timestamp.subtract(ts:string, duration:string) -> Timestamp`
 
 ### `Duration`
-* `Duration.ofDays(numberOfDays:int)`
-* `Duration.ofHours(numberOfHours:int)`
-* `Duration.ofMinutes(numberOfMinutes:int)`
-* `Duration.ofSeconds(numberOfSeconds:int)`
-* `Duration.ofMillis(numberOfMilliseconds:int)`
-* `Duration.between(datetime:string,datetime:string)`
-* `Duration.parse(string)` or `Duration.valueOf(string)`
+* `Duration.ofDays(days:int) -> Duration`
+* `Duration.ofHours(hours:int) -> Duration`
+* `Duration.ofMinutes(minutes:int) -> Duration`
+* `Duration.ofSeconds(seconds:int) -> Duration`
+* `Duration.ofMillis(milliseconds:int) -> Duration`
+* `Duration.between(datetime:string, datetime:string) -> Duration`
+* `Duration.parse(duration:string) -> Duration`
+* `Duration.valueOf(duration:string) -> Duration`
 
 ### `Period`
-* `Period.ofYears(numberOfYears:int)`
-* `Period.ofMonths(numberOfMonths:int)`
-* `Period.ofWeeks(numberOfWeeks:int)`
-* `Period.ofDays(numberOfDays:int)`
-* `Period.parse(string)` or `Period.valueOf(string)`
+* `Period.ofYears(years:int) -> Period`
+* `Period.ofMonths(months:int) -> Period`
+* `Period.ofWeeks(weeks:int) -> Period`
+* `Period.ofDays(days:int) -> Period`
+* `Period.parse(period:string) -> Period`
+* `Period.valueOf(period:string) -> Period`
 
 ### `System`
-* `System.getenv(env:string)` or `System.getenv(env:string, default:string)`
-* `System.getProperty(env:string)` or `System.getProperty(env:string, default:string)`
+* `System.getenv(env:string) -> string`
+* `System.getenv(env:string, default:string) -> string`
+* `System.getProperty(property:string) -> string`
+* `System.getProperty(property:string, default:string) -> string`
 
 ### `String`
-* `String.concat(left:string, right:string)`
+* `String.concat(left:string, right:string) -> string`
+* `String.concat(s1:string,s2:string, s3:string) -> string`
+* `String.concat(s1:string,s2:string, s3:string, s4:string) -> string`
+* `String.concat(s1:string,s2:string, s3:string, s4:string, s5:string) -> string`
+* `String.urlEncode(url:string) -> string`
+* `String.escapePathName(url:string) -> string`
+* `String.partitionEncode(url:string) -> string`
 
+### `URL`
+* `URL.encode(url:string) -> string`
+* `URL.decode(url:string) -> string`
+
+### `File`
+* `File.read(filename:string) -> string`
+
+### `JSON`
+* `JSON.path(json:string, path:string) -> string`
 
 ### `AzureKeyVault` (since Flowman 1.1.0)
-Provided by the [Azure plugin](../plugins/azure.md)
-* `AzureKeyVault.getSecret(vaultName:string, secretName:string)` or `AzureKeyVault.getSecret(vaultName:string, secretName:string, linkedService:string)` 
+* `AzureKeyVault.getSecret(vaultName:string, secretName:string) -> string`
+* `AzureKeyVault.getSecret(vaultName:string, secretName:string, linkedService:string) -> string` 

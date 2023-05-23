@@ -35,6 +35,6 @@ object SchemaCheckExecutor {
     }
 }
 
-trait SchemaCheckExecutor {
+abstract class SchemaCheckExecutor {
     def execute(execution: Execution, context:Context, df:DataFrame, test:SchemaCheck) : Option[CheckResult]
 }

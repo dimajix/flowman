@@ -36,7 +36,7 @@ object ColumnCheckExecutor {
     }
 }
 
-trait ColumnCheckExecutor {
+abstract class ColumnCheckExecutor {
     /**
      * Executes a column check
      * @param execution - execution to use

@@ -19,4 +19,4 @@ for /F "tokens=1* delims=," %%a in (%r%) do (
 if not %r% == "" goto :loop
 
 
-%SPARK_SUBMIT% --driver-java-options "%SPARK_DRIVER_JAVA_OPTS%" --conf spark.execution.extraJavaOptions="%SPARK_EXECUTOR_JAVA_OPTS%" --class %APP_MAIN% %SPARK_OPTS% --jars %LIB_JARS% %APP_JAR% %*
+%SPARK_SUBMIT% --driver-java-options "%SPARK_DRIVER_JAVA_OPTS%" --conf spark.executor.extraJavaOptions="%SPARK_EXECUTOR_JAVA_OPTS%" --class %APP_MAIN% %SPARK_OPTS% --jars %LIB_JARS% %APP_JAR% %*

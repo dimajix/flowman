@@ -49,12 +49,9 @@ object Module {
          */
         @throws[ModelException]
         def file(file:File) : Module = {
-            if (!file.isAbsolute()) {
-                readFile(file.absolute)
-            }
-            else {
-                readFile(file)
-            }
+            files(file)
+                .map(_._2)
+                .foldLeft(Module())((l, r) => l.merge(r))
         }
 
         @throws[ModelException]
@@ -85,24 +82,6 @@ object Module {
         def string(text:String) : Module = {
             wrapExceptions("raw-string") {
                 reader.string(text)
-            }
-        }
-
-        @throws[ModelException]
-        private def readFile(file:File) : Module = {
-            wrapExceptions(file.toString) {
-                if (file.isDirectory()) {
-                    logger.info(s"Reading all module files in directory ${file.toString}")
-                    val patterns = reader.globPatterns.map(GlobPattern(_))
-                    file.list()
-                        .par
-                        .filter(f => f.isFile() && patterns.exists(_.matches(f.name)))
-                        .map(f => loadFile(f))
-                        .foldLeft(Module())((l, r) => l.merge(r))
-                }
-                else {
-                    loadFile(file)
-                }
             }
         }
 

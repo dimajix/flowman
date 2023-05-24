@@ -19,6 +19,12 @@ packages:
   synapse:
     kind: fatjar
 
+execution:
+  javaOptions:
+    - -Dhttp.proxyHost=${http.proxyHost}
+    - -Dhttp.proxyPort=${http.proxyPort}
+    - -Dhttps.proxyHost=${https.proxyHost}
+    - -Dhttps.proxyPort=${https.proxyPort}
 
 # List of deployments
 deployments:

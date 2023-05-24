@@ -10,7 +10,7 @@ changes lead to incompatibility with previous versions (breaking changes).
 
 Generally, you can expect Flowman to be downwards compatible with older releases within the same major version. Some
 minor changes or bugfixes may change the behavior of some features, which have been changed intentionally (for example,
-even a small bugfix intentionally changes the behaviour). Backward compatibility in Flowman is primarily defined via
+even a small bugfix intentionally changes the behavior). Backward compatibility in Flowman is primarily defined via
 the ability to correctly read and process projects created with older Flowman versions.
 
 Breaking changes will be documented in this changelog file for each version.
@@ -19,6 +19,8 @@ Breaking changes will be documented in this changelog file for each version.
 # Changelog
 
 ## Version 1.1.0
+
+* github-413: Support Azure Key Vault for retrieving secrets
 
 
 ## Version 1.0.1

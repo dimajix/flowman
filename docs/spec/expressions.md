@@ -43,25 +43,25 @@ provide some functions (for working with date and time).
 ### `LocalDate`
 * `LocalDate.parse(string)` or `LocalDateTime.valueOf(string)`
 * `LocalDate.ofEpochSeconds(int)`
-* `LocalDate.format(string, string)`
-* `LocalDate.addDays(string, int)`
-* `LocalDate.addWeeks(string, int)`
-* `LocalDate.addMonths(string, int)`
-* `LocalDate.addYears(string, int)`
+* `LocalDate.format(date:string, format:string)`
+* `LocalDate.addDays(date:string, amount:int)`
+* `LocalDate.addWeeks(date:string, amount:int)`
+* `LocalDate.addMonths(date:string, amount:int)`
+* `LocalDate.addYears(date:string, amount:int)`
 
 ### `LocalDateTime`
 * `LocalDateTime.parse(string)` or `LocalDateTime.valueOf(string)`
 * `LocalDateTime.ofEpochSeconds(int)`
-* `LocalDateTime.format(string, string)`
-* `LocalDateTime.add(string, string)`
-* `LocalDateTime.subtract(string, string)`
-* `LocalDateTime.addSeconds(string, int)`
-* `LocalDateTime.addMinutes(string, int)`
-* `LocalDateTime.addHours(string, int)`
-* `LocalDateTime.addDays(string, int)`
-* `LocalDateTime.addWeeks(string, int)`
-* `LocalDateTime.addMonths(string, int)`
-* `LocalDateTime.addYears(string, int)`
+* `LocalDateTime.format(datetime:string, format:string)`
+* `LocalDateTime.add(datetime:string, duration:string)`
+* `LocalDateTime.subtract(datetime:string, duration:string)`
+* `LocalDateTime.addSeconds(datetime:string, amount:int)`
+* `LocalDateTime.addMinutes(datetime:string, amount:int)`
+* `LocalDateTime.addHours(datetime:string, amount:int)`
+* `LocalDateTime.addDays(datetime:string, amount:int)`
+* `LocalDateTime.addWeeks(datetime:string, amount:int)`
+* `LocalDateTime.addMonths(datetime:string, amount:int)`
+* `LocalDateTime.addYears(datetime:string, amount:int)`
 
 
 ### `Timestamp`
@@ -69,24 +69,29 @@ provide some functions (for working with date and time).
 * `Timestamp.ofEpochSeconds(int)`
 
 ### `Duration`
-* `Duration.ofDays(int)`
-* `Duration.ofHours(int)`
-* `Duration.ofMinutes(int)`
-* `Duration.ofSeconds(int)`
-* `Duration.ofMillis(int)`
-* `Duration.between(string,string)`
+* `Duration.ofDays(numberOfDays:int)`
+* `Duration.ofHours(numberOfHours:int)`
+* `Duration.ofMinutes(numberOfMinutes:int)`
+* `Duration.ofSeconds(numberOfSeconds:int)`
+* `Duration.ofMillis(numberOfMilliseconds:int)`
+* `Duration.between(datetime:string,datetime:string)`
 * `Duration.parse(string)` or `Duration.valueOf(string)`
 
 ### `Period`
-* `Period.ofYears(int)`
-* `Period.ofMonths(int)`
-* `Period.ofWeeks(int)`
-* `Period.ofDays(int)`
+* `Period.ofYears(numberOfYears:int)`
+* `Period.ofMonths(numberOfMonths:int)`
+* `Period.ofWeeks(numberOfWeeks:int)`
+* `Period.ofDays(numberOfDays:int)`
 * `Period.parse(string)` or `Period.valueOf(string)`
 
 ### `System`
-* `System.getenv(string)` or `System.getenv(string,string)`
-* `System.getProperty(string)` or `System.getProperty(string,string)`
+* `System.getenv(env:string)` or `System.getenv(env:string, default:string)`
+* `System.getProperty(env:string)` or `System.getProperty(env:string, default:string)`
 
 ### `String`
-* `String.concat(string,string)`
+* `String.concat(left:string, right:string)`
+
+
+### `AzureKeyVault` (since Flowman 1.1.0)
+Provided by the [Azure plugin](../plugins/azure.md)
+* `AzureKeyVault.getSecret(vaultName:string, secretName:string)` or `AzureKeyVault.getSecret(vaultName:string, secretName:string, linkedService:string)` 

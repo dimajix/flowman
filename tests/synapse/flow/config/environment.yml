@@ -7,3 +7,5 @@ environment:
   - jdbc_db=$System.getenv('JDBC_DB', 'weather')
   - jdbc_username=$System.getenv('JDBC_USERNAME', 'sqladminuser@flowman')
   - jdbc_password=$System.getenv('JDBC_PASSWORD' ,'yourStrong(!)Password')
+
+  - keyVaultValue=$AzureKeyVault.getSecret('flowman','my-test-secret')

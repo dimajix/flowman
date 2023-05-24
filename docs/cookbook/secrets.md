@@ -103,4 +103,29 @@ JSON paths as defined above, the file needs to look as follows:
 ```
 Finally, you need to set the system environment variable `MSSQLSERVER_SECRETS` to point to the corresponding file before
 starting Flowman. This additional indirection is not strictly required, but helps to decouple Flowman configuration
-from deployment logic.
+from the deployment logic.
+
+
+## Using Key Vaults
+
+Another alternative for storing and retrieving secrets is to use key vaults. These are often provided by cloud 
+environments. Flowman currently supports Azure Key Vault to access secrets. You will need to activate the
+[Azure Plugin](../plugins/azure.md) in order to use this feature in Flowman. Once enabled, you can easily access
+secrets as follows:
+```yaml
+environment:
+  - sql_host=$AzureKeyVault.getSecret('datahub', 'sql_host')
+  - sql_username=$AzureKeyVault.getSecret('datahub', 'sql_username')
+  - sql_password=$AzureKeyVault.getSecret('datahub', 'sql_password')
+  - sql_database=$AzureKeyVault.getSecret('datahub', 'sql_database')
+
+connections:
+  datahub:
+    kind: jdbc
+    driver: "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+    url: jdbc:sqlserver://$sql_host
+    username: $sql_username
+    password: $sql_password
+    properties:
+      databaseName: $sql_database
+```

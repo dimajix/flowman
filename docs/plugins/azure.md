@@ -1,7 +1,12 @@
 # Azure Plugin
 
-The Azure plugin mainly provides the ADLS (Azure DataLake Filesystem) and ABS (Azure Blob Filesystem) to be used 
+The Azure plugin mainly provides the ADLS2 (Azure DataLake Filesystem) and ABS (Azure Blob Filesystem) to be used 
 as the storage layer.
+
+
+## Provided Template Functions 
+Since Flowman version 1.1.0, the plugin also provides the templating function `AzureKeyVault.getSecret` to access Azure
+Key Vaults.
 
 
 ## Activation

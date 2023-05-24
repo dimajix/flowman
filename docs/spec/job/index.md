@@ -1,6 +1,6 @@
 # Jobs
 
-In addition to a completely data centric data flow specification, Flowman also supports so called *jobs*, which simply
+In addition to a completely data centric data flow specification, Flowman also supports so-called *jobs*, which simply
 provide a list of targets to be built. The correct build order of all specified build targets is determined
 automatically by Flowman by examining the artifacts being generated and required by each target. 
 
@@ -86,7 +86,7 @@ A list of metrics that should be published after job execution. See below for mo
 
 * `executions` **(optional)** *(type: list:execution)* (since Flowman 0.30.0):
 This **optional** section provides fine-grained control over when the individual phases are to be executed. This allows 
-to reduce the amount of redundant work when a whole (date) range is used for a parameter. Within this section you can 
+reducing the amount of redundant work when a whole (date) range is used for a parameter. Within this section you can 
 explicitly state when each phase should be executed. Each entry of the list has three attributes
   * `phase` **(required)** *(type: string)* - the execution phase to be configured. You can have multiple entries
     per phase, these will be logically merged during execution.
@@ -101,7 +101,7 @@ explicitly state when each phase should be executed. Each entry of the list has 
     list. This list in the `executions` sections acts as a filter on top of the jobs  main target list. Defaults to `.*`,
     which simply selects all job targets for execution.
 
-Please find more information about this option in the [Cookbook for Execution Phases](../../cookbook/execution-phases.md).
+Please find more information about `executions` in the [Cookbook for Execution Phases](../../cookbook/execution-phases.md).
 When this section is omitted, then all targets will participate in all execution phases, and all phases will be
 executed for the full parameter range (if specified on the command line).
 
@@ -119,14 +119,38 @@ For each job Flowman provides the following execution metrics:
 
 ## Job Parameters
 
-A Job optionally can have parameters, which play a special role. First they have to be specified when a job is run from 
-the command line (via `flowexec job run param=value`).
+A Job optionally can have parameters, which play a special role. They are available as environment variables, but
+explicitly provided as part of the job invocation. Parameters are defined as part of the job:
+```yaml
+jobs:
+  main:
+    parameters:
+      - name: processing_date
+        type: date
+        description: "Specifies the date in yyyy-MM-dd for which the job will be run"
+        granularity: 1
+        default: "2022-03-10"
+```
 
-Second flowman can be configured such that every run of a job is logged into a database. The log entry includes the 
+### Parameter Fields
+
+* `name` **(mandatory)** *(type: string)*: The name of the parameter.
+* `type` **(optional)** *(type: datatype)* *(default: string)*: The data type of the parameter. See 
+[Fields and Datatypes](../fields.md) for a complete list of supported data types
+* `description` **(optional)** *(type: string)*: A description of the parameter
+* `default` **(optional)** *(type: object)*: Provides a default value of the parameter.
+* `granularity` **(optional)** *(type: integer)* *(default: 1)*: Defines the step size of the parameter.
+
+### Using Parameters
+
+Job parameters have to be specified when a job is run from the command line (via `flowexec job run param=value`),
+except if there is a default value defined for a parameter.
+
+Flowman can be configured such that every run of a job is logged into a database. Each log entry includes the 
 job's name and also all values for all parameters. This way it is possible to identify individual runs of a job.
 
 With these explanations in mind, you should only declare job parameters which have an influence on the data processing 
-result (for example the processing date range). Other settings like credentials should not be provided as job 
+result (for example, the processing date range). Other settings like credentials should not be provided as job 
 parameters, but as normal environment variables instead.
 
 Note that you can also execute a whole range of values for a given parameter as follows:
@@ -140,14 +164,14 @@ This would assume that the job parameter `processing_datetime` is of type `date`
 
 Because a Job might be invoked with different values for the same set of parameters, each 
 Job will be executed in a logically isolated environment, where all cached data is cleared
-after the Job is finished. This way it is ensured that all mappings which rely on specific
-parameter values, are reevaluated when the same Job is run mutliple times within a project.
+after the Job is finished. This way it is ensured that all mappings, which rely on specific
+parameter values, are reevaluated when the same Job is run multiple times within a project.
 
 
 ## Publishing Metrics
 
 Each job can define a set of metrics to be published. The job only contains the logical definition of metrics,
-the type and endpoint of the receiver of the metrics is defined in the [namespace](../namespace.md).
+the type and endpoint for publishing the metrics is defined in the [namespace](../namespace.md).
 
 
 ## Sub Pages

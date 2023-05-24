@@ -127,54 +127,6 @@ object SparkShim {
     def newAlterViewCommand(table:TableIdentifier, select:String, plan:LogicalPlan) : AlterViewAsCommand = {
         AlterViewAsCommand(table, select, plan, isAnalyzed=true)
     }
-    def newCreateDatabaseCommand(database: String, catalog: String, path: Option[String], comment: Option[String], ignoreIfExists: Boolean): CreateDatabaseCommand = {
-        CreateDatabaseCommand(database, ignoreIfExists, path, comment, Map())
-    }
-    def newInsertIntoHiveTable(
-        table: CatalogTable,
-        partition: Map[String, Option[String]],
-        query: LogicalPlan,
-        overwrite: Boolean,
-        ifPartitionNotExists: Boolean,
-        outputColumnNames: Seq[String]) : InsertIntoHiveTable = {
-        InsertIntoHiveTable(
-            table,
-            partition,
-            query,
-            overwrite,
-            ifPartitionNotExists,
-            outputColumnNames
-        )
-    }
-    def newCatalogTable(
-        identifier: TableIdentifier,
-        tableType: CatalogTableType,
-        storage: CatalogStorageFormat,
-        schema: StructType,
-        provider: Option[String] = None,
-        partitionColumnNames: Seq[String] = Seq.empty,
-        bucketSpec: Option[BucketSpec] = None,
-        properties: Map[String, String] = Map.empty,
-        comment: Option[String] = None): CatalogTable = {
-        CatalogTable(
-            identifier = identifier,
-            tableType = tableType,
-            storage = storage,
-            schema = schema,
-            provider = provider,
-            partitionColumnNames = partitionColumnNames,
-            bucketSpec = bucketSpec,
-            properties = properties,
-            comment = comment
-        )
-    }
-    def withNewSchema(table:CatalogTable, schema:StructType) : CatalogTable = {
-        table.copy(schema = schema)
-    }
-
-    def listPartitions(catalog: SessionCatalog, tableName: TableIdentifier, partialSpec: Option[TablePartitionSpec] = None): Seq[CatalogTablePartition] = {
-        catalog.listPartitions(tableName, partialSpec)
-    }
 
     def createConnectionFactory(dialect: JdbcDialect, options: JDBCOptions) :  Int => Connection = {
         val factory = JdbcUtils.createConnectionFactory(options)

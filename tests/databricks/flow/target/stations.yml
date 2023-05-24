@@ -1,9 +1,0 @@
-targets:
-  # Define a build target "stations"...
-  stations:
-    # ... which builds a relation
-    kind: relation
-    # ... by reading the result from the mapping "stations_raw"
-    mapping: stations_raw
-    # ... and by writing the records to the relation "stations"
-    relation: stations

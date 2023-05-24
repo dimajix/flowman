@@ -1,9 +1,0 @@
-relations:
-  stations:
-    kind: hiveTable
-    database: weather
-    table: stations
-    format: parquet
-    schema:
-      kind: mapping
-      mapping: stations_raw

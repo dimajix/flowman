@@ -122,13 +122,6 @@
             </properties>
         </profile>
         <profile>
-            <id>databricks-12.2</id>
-            <properties>
-                <delta.version>2.2.0</delta.version>
-                <delta.scope>provided</delta.scope>
-            </properties>
-        </profile>
-        <profile>
             <id>spark-2.4</id>
             <properties>
                 <delta.version>0.6.1</delta.version>

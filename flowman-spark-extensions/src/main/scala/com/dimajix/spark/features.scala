@@ -36,9 +36,4 @@ object features {
         DataType.fromJson("""{"type":"struct","fields":[{"name":"vc","type":"varchar(10)","nullable":true}]}""")
         true
     }.getOrElse(false)
-
-    lazy val isDatabricks: Boolean = {
-        val prop = System.getProperty("sun.java.command")
-        prop != null && prop.startsWith("com.databricks.backend.daemon")
-    }
 }

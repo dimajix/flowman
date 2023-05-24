@@ -29,6 +29,7 @@ import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException
 import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
+import org.apache.spark.sql.hive.execution.InsertIntoHiveTable
 import org.apache.spark.sql.internal.HiveSerDe
 import org.apache.spark.sql.types.CharType
 import org.apache.spark.sql.types.StringType
@@ -230,7 +231,7 @@ final case class HiveTableRelation(
             val query = df.queryExecution.logical
 
             val overwrite = mode == OutputMode.OVERWRITE || mode == OutputMode.OVERWRITE_DYNAMIC
-            val cmd = SparkShim.newInsertIntoHiveTable(
+            val cmd = InsertIntoHiveTable(
                 table = hiveTable,
                 partition = partitionSpec.catalogPartition.mapValues(Some(_)),
                 query = query,
@@ -458,7 +459,7 @@ final case class HiveTableRelation(
             .orElse(defaultStorage.serde)
 
         // Configure catalog table by assembling all options
-        val catalogTable = SparkShim.newCatalogTable(
+        val catalogTable = CatalogTable(
             identifier = table.toSpark,
             tableType =
                 if (external)

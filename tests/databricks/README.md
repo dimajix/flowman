@@ -1,2 +1,0 @@
-# Test Suite for Databricks
-

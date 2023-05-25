@@ -173,7 +173,7 @@ object DeltaUtils {
 
         // Configure catalog table by assembling all options
         val tableByPath = table.isEmpty
-        val catalogTable = SparkShim.newCatalogTable(
+        val catalogTable = CatalogTable(
             identifier = tableIdentifier,
             tableType = if (location.nonEmpty) CatalogTableType.EXTERNAL else CatalogTableType.MANAGED,
             storage = CatalogStorageFormat(

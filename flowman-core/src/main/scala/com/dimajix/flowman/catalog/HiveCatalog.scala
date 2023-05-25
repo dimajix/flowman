@@ -42,10 +42,10 @@ import org.apache.spark.sql.execution.command.AlterTableDropPartitionCommand
 import org.apache.spark.sql.execution.command.AlterTableSetLocationCommand
 import org.apache.spark.sql.execution.command.AnalyzePartitionCommand
 import org.apache.spark.sql.execution.command.AnalyzeTableCommand
+import org.apache.spark.sql.execution.command.CreateDatabaseCommand
 import org.apache.spark.sql.execution.command.CreateTableCommand
 import org.apache.spark.sql.execution.command.DropDatabaseCommand
 import org.apache.spark.sql.execution.command.DropTableCommand
-import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.hive.HiveClientShim
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
@@ -146,7 +146,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
         if (!exists) {
             logger.info(s"Creating Hive database $database")
-            val cmd = SparkShim.newCreateDatabaseCommand(database, catalog, location.map(_.toString), None, ignoreIfExists)
+            val cmd = CreateDatabaseCommand(database, ignoreIfExists, location.map(_.toString), None, Map.empty)
             cmd.run(spark)
         }
     }
@@ -226,7 +226,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
             // Cleanup table definition
             val cleanedSchema = SchemaUtils.truncateComments(table.schema, maxCommentLength)
             val catalogSchema = HiveCatalog.cleanupSchema(cleanedSchema)
-            val cleanedTable = SparkShim.withNewSchema(table, catalogSchema)
+            val cleanedTable = table.copy(schema=catalogSchema)
 
             logger.info(s"Creating Hive table ${table.identifier}")
             val cmd = CreateTableCommand(cleanedTable, ignoreIfExists)
@@ -330,7 +330,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
             // Delete all partitions
             if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
-                SparkShim.listPartitions(catalog, table.toSpark).foreach { p =>
+                catalog.listPartitions(table.toSpark).foreach { p =>
                     val location = new Path(p.location)
                     val fs = location.getFileSystem(hadoopConf)
                     HadoopUtils.deleteLocation(fs, location)
@@ -366,7 +366,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
 
         // First drop partitions
         if (catalogTable.partitionSchema != null && catalogTable.partitionSchema.fields.nonEmpty) {
-            val partitions = SparkShim.listPartitions(catalog, table.toSpark)
+            val partitions = catalog.listPartitions(table.toSpark)
             dropPartitions(table, partitions.map(p => PartitionSpec(p.spec)))
         }
 
@@ -481,7 +481,7 @@ final class HiveCatalog(val spark:SparkSession, val config:Configuration, val ex
         else {
             // If no complex types are used, we can use a faster API
             val filter = Some(partition.catalogPartition).filter(_.nonEmpty)
-            SparkShim.listPartitions(catalog, table.toSpark, filter).nonEmpty
+            catalog.listPartitions(table.toSpark, filter).nonEmpty
         }
 
     }

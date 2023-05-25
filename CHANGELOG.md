@@ -22,6 +22,7 @@ Breaking changes will be documented in this changelog file for each version.
 
 * github-413: Support Azure Key Vault for retrieving secrets
 * github-415: Improve documentation for Velocity templating
+* github-361: Remove broken support for Databricks
 
 
 ## Version 1.0.1

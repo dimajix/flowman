@@ -1,4 +1,4 @@
-# [![](images/flowman-favicon.png) Flowman](https://flowman.io)
+# Flowman
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation](https://readthedocs.org/projects/flowman/badge/?version=latest)](https://flowman.readthedocs.io/en/latest/)
@@ -6,8 +6,9 @@
 
 ## What is Flowman
 
-Flowman is a Spark based *data build tool* that simplifies the act of writing data transformation application. Flowman
-can be seen as a ETL tool, with a strong focus on transformation and schema management. 
+[Flowman](https://flowman.io) is a Spark based *data build tool* that simplifies
+the act of writing data transformation application. Flowman can be seen as a ETL
+tool, with a strong focus on transformation and schema management.
 
 The main idea is that developers define all input/output tables and the whole transformation logic in purely 
 declarative YAML files instead of writing complex Spark jobs in Scala or Python. The main advantage of this approach 

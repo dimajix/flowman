@@ -1,0 +1,8 @@
+.theme-toggle-container {
+  display: none;
+}
+
+.sidebar-tree .reference:hover {
+  color: #ffffff;
+  background: inherit;
+}

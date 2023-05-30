@@ -102,6 +102,9 @@ html_theme = 'furo'
 html_theme_options = {
     'sidebar_hide_name': True,
     'light_css_variables': {
+        # Fonts
+        'sidebar-caption-font-size': 'var(--sidebar-item-font-size)',
+
         # Base colors
         'color-background-primary': '#f5f5f0',
         'color-background-hover': '#051535ff',

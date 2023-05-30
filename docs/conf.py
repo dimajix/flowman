@@ -109,7 +109,7 @@ html_theme_options = {
 
         # Brand colors
         'color-brand-primary': '#071f4e',
-        'color-brand-content': '#0c6545',
+        'color-brand-content': '#129969',
 
         # Inline code background
         'color-inline-code-background': 'inherit',
@@ -153,7 +153,7 @@ html_theme_options = {
 
         # Brand colors
         'color-brand-primary': '#071f4e',
-        'color-brand-content': '#0c6545',
+        'color-brand-content': '#129969',
 
         # Highlighted text (search)
         'color-highlighted-background': '#ddeeff',

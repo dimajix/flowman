@@ -112,6 +112,9 @@ html_theme_options = {
         'color-brand-primary': '#071f4e',
         'color-brand-content': '#129969',
 
+        # API documentation
+        'color-highlight-on-target': 'inherit',
+
         # Inline code background
         'color-inline-code-background': 'inherit',
 
@@ -165,7 +168,7 @@ html_theme_options = {
 
         # API documentation
         'color-api-keyword': 'var(--color-foreground-primary)',
-        'color-highlight-on-target': '#ffffcc',
+        'color-highlight-on-target': 'inherit',
 
         # Admonitions
         'color-admonition-background': 'transparent',

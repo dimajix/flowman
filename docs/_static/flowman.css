@@ -1,3 +1,51 @@
+@font-face {
+    font-family: "Comfortaa";
+    src: local("Comfortaa"),
+      url("fonts/Comfortaa/Comfortaa-VariableFont_wght.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 1 1000;
+}
+
+@font-face {
+    font-family: "Comfortaa";
+    src: local("Comfortaa"),
+      url("fonts/Comfortaa/Comfortaa-Light.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 300;
+}
+
+@font-face {
+    font-family: "Comfortaa";
+    src: local("Comfortaa"),
+      url("fonts/Comfortaa/Comfortaa-Regular.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "Comfortaa";
+    src: local("Comfortaa"),
+      url("fonts/Comfortaa/Comfortaa-Medium.ttf.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 500;
+}
+
+@font-face {
+    font-family: "Comfortaa";
+    src: local("Comfortaa"),
+      url("fonts/Comfortaa/Comfortaa-SemiBold.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 600;
+}
+
+@font-face {
+    font-family: "Comfortaa";
+    src: local("Comfortaa"),
+      url("fonts/Comfortaa/Comfortaa-Bold.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 700;
+}
+
 .theme-toggle-container {
   display: none;
 }

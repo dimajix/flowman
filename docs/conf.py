@@ -103,6 +103,7 @@ html_theme_options = {
     'sidebar_hide_name': True,
     'light_css_variables': {
         # Fonts
+        'font-stack': 'Comfortaa',
         'sidebar-caption-font-size': 'var(--sidebar-item-font-size)',
 
         # Base colors

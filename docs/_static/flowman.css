@@ -54,6 +54,11 @@ h1, h2, h3, h4, h5, h6 {
   display: none;
 }
 
+.nav-overlay-icon .icon,
+.toc-overlay-icon .icon {
+  color: var(--color-header-text);
+}
+
 .sidebar-tree li>ul {
   background: var(--color-background-hover);
 }

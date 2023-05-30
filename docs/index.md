@@ -59,7 +59,6 @@ A small [quickstart guide](quickstart.md) will lead you through a simple example
 .. toctree::
    :maxdepth: 1
    :glob:
-   :caption: Quickstart Guide
 
    quickstart
 ```   
@@ -74,7 +73,6 @@ In order to successfully implement your projects with Flowman, you need to get a
 .. toctree::
    :maxdepth: 1
    :glob:
-   :caption: Concepts
 
    concepts/index
    concepts/*
@@ -90,7 +88,6 @@ more in-depth knowledge step by step.
 .. toctree::
    :maxdepth: 1
    :glob:
-   :caption: Tutorial
 
    tutorial/index
    tutorial/*
@@ -112,7 +109,6 @@ following sections:
    :glob:
    :hidden:
    :titlesonly:
-   :caption: Command Line Tools
    
    cli/index
    cli/flowexec/index
@@ -138,7 +134,6 @@ a streamlined development workflow.
    :maxdepth: 1
    :glob:
    :hidden:
-   :caption: Workflow
    
    workflow/index
    workflow/*
@@ -164,7 +159,6 @@ More detail on all these items is described in the following sections:
    :glob:
    :hidden:
    :titlesonly:
-   :caption: Reference Documentation
    
    spec/index
    spec/project
@@ -199,7 +193,6 @@ More detail on all these items is described in the following sections:
    :maxdepth: 1
    :glob:
    :hidden:
-   :caption: Testing
    
    testing/index
    testing/*
@@ -210,7 +203,6 @@ More detail on all these items is described in the following sections:
    :maxdepth: 1
    :glob:
    :hidden:
-   :caption: Documenting
    
    documenting/index
    documenting/*
@@ -226,7 +218,6 @@ More detail on all these items is described in the following sections:
 .. toctree::
    :maxdepth: 1
    :hidden:
-   :caption: Setup & Configuration
    
    setup/index
    setup/installation
@@ -250,7 +241,6 @@ much more.
    :maxdepth: 1
    :glob:
    :hidden:
-   :caption: Cookbooks
    
    cookbook/*
 ```
@@ -267,7 +257,6 @@ Flowman also provides optional plugins which extend functionality. You can find 
    :glob:
    :hidden:
    :titlesonly:
-   :caption: Connectors & Plugins
    
    connectors/index
    plugins/index
@@ -279,7 +268,6 @@ Flowman also provides optional plugins which extend functionality. You can find 
    :maxdepth: 1
    :glob:
    :hidden:
-   :caption: Misc
    
    faq/index
    releases

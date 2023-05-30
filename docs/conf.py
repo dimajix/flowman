@@ -106,6 +106,7 @@ html_theme_options = {
         'color-background-primary': '#f5f5f0',
         'color-background-hover': '#051535ff',
         'color-background-hover--transparent': '#05153500',
+        'color-background-border': '#ababa8',
 
         # Brand colors
         'color-brand-primary': '#071f4e',
@@ -144,7 +145,7 @@ html_theme_options = {
         'color-background-secondary': '#f8f9fb',
         'color-background-hover': '#051535ff',
         'color-background-hover--transparent': '#05153500',
-        'color-background-border': '#eeebee',
+        'color-background-border': '#ababa8',
         'color-background-item': '#ccc',
 
         # Announcements

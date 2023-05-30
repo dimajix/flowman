@@ -2,6 +2,10 @@
   display: none;
 }
 
+.sidebar-tree li>ul {
+  background: var(--color-background-hover);
+}
+
 .sidebar-tree .reference:hover {
   color: #ffffff;
   background: inherit;

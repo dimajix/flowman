@@ -1,5 +1,5 @@
 docutils==0.18.1
-furo==2022.9.29
+furo==2023.5.20
 markdown==3.4.3
 myst-parser==1.0.0
 recommonmark==0.7.1

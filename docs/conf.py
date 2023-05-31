@@ -81,7 +81,7 @@ language = 'en'
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'github-dark'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -92,30 +92,118 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 # html_theme_options = {}
+html_theme_options = {
+    'sidebar_hide_name': True,
+    'light_css_variables': {
+        # Fonts
+        'sidebar-caption-font-size': 'var(--sidebar-item-font-size)',
+
+        # Base colors
+        'color-background-primary': '#f5f5f0',
+        'color-background-hover': '#051535ff',
+        'color-background-hover--transparent': '#05153500',
+        'color-background-border': '#ababa8',
+
+        # Brand colors
+        'color-brand-primary': '#071f4e',
+        'color-brand-content': '#129969',
+
+        # API documentation
+        'color-highlight-on-target': 'inherit',
+
+        # Inline code background
+        'color-inline-code-background': 'inherit',
+
+        # Header
+        'color-header-background': 'var(--color-sidebar-background)',
+        'color-header-text': 'var(--color-sidebar-caption-text)',
+
+        # Sidebar (left)
+        'color-sidebar-background': '#071f4e',
+        'color-sidebar-caption-text': '#f5f5f0',
+        'color-sidebar-link-text--top-level': '#7ec3fc',
+        'color-sidebar-link-text': 'var(--color-sidebar-caption-text)',
+        'color-sidebar-search-foreground': '#ffffff',
+        'color-sidebar-search-background': 'var(--color-sidebar-background)',
+        'color-sidebar-search-background--focus': 'var(--color-brand-content)',
+        'color-sidebar-search-border': 'var(--color-sidebar-search-background--focus)',
+        'color-sidebar-search-icon': 'var(--color-sidebar-caption-text)',
+    },
+    # Redefine all entries in dark_css_variables to match the values from
+    # light_css_variables
+    'dark_css_variables': {
+        'color-problematic': '#b30000',
+
+        # Base Colors
+        'color-foreground-primary': 'black',
+        'color-foreground-secondary': '#5a5c63',
+        'color-foreground-muted': '#646776',
+        'color-foreground-border': '#878787',
+
+        'color-background-primary': '#f5f5f0',
+        'color-background-secondary': '#f8f9fb',
+        'color-background-hover': '#051535ff',
+        'color-background-hover--transparent': '#05153500',
+        'color-background-border': '#ababa8',
+        'color-background-item': '#ccc',
+
+        # Announcements
+        'color-announcement-background': '#000000dd',
+        'color-announcement-text': '#eeebee',
+
+        # Brand colors
+        'color-brand-primary': '#071f4e',
+        'color-brand-content': '#129969',
+
+        # Highlighted text (search)
+        'color-highlighted-background': '#ddeeff',
+
+        # GUI Labels
+        'color-guilabel-background': '#ddeeff80',
+        'color-guilabel-border': '#bedaf580',
+
+        # API documentation
+        'color-api-keyword': 'var(--color-foreground-primary)',
+        'color-highlight-on-target': 'inherit',
+
+        # Admonitions
+        'color-admonition-background': 'transparent',
+
+        # Cards
+        'color-card-border': 'var(--color-background-secondary)',
+        'color-card-background': 'transparent',
+        'color-card-marginals-background': 'var(--color-background-secondary)',
+    },
+}
+
+html_title = 'Flowman documentation'
+html_logo = 'images/flowman-logo.png'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+html_css_files = ['flowman.css']
+html_js_files = ['flowman.js']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 #
 # This is required for the alabaster theme
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
-html_sidebars = {
-    '**': [
-        'relations.html',  # needs 'show_related': True theme option to display
-        'searchbox.html',
-    ]
-}
+# html_sidebars = {
+#     '**': [
+#         'relations.html',  # needs 'show_related': True theme option to display
+#         'searchbox.html',
+#     ]
+# }
 
 
 # -- Options for HTMLHelp output ------------------------------------------

@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "flowman-docs"
+version = "1.0.0"
+description = "Documentation of Flowman"
+authors = ["The Flowman Authors <info@flowman.io>"]
+license = "Apache License 2.0"
+
+[tool.poetry.dependencies]
+myst-parser = "^1.0.0"
+python = "^3.10"
+recommonmark = "^0.7.1"
+Sphinx = "^6.2.1"
+sphinx-markdown-tables = "^0.0.17"
+sphinx-rtd-theme = "^1.2.1"
+sphinxcontrib-mermaid = "^0.9.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

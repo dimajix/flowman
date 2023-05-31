@@ -255,25 +255,42 @@ mvn scoverage:report
 ```
 
 
-## Building Documentation
+## Building the Documentation
 
-Flowman also contains Markdown documentation which is processed by Sphinx to generate the online HTML documentation.
-This requires an appropriate Python installation, with the following packages installed:
-* Python >= 3.8
-* docutils==0.18.1
-* markdown==3.4.3
-* myst-parser==1.0.0
-* sphinx==6.1.3
-* sphinx-markdown-tables==0.0.17
-* sphinxcontrib-mermaid==0.8.1
-* sphinx_rtd_theme==1.2.0
-* recommonmark==0.7.1
+Flowman contains documentation written in Markdown which is processed by Sphinx
+to generate the online HTML documentation. The required Python dependencies can
+be installed via [Poetry](https://python-poetry.org/) (recommended) or
+[Conda](https://conda.io).
 
-An appropriate `requirements.txt` file for installing all required packages is provided in the `docs` directory.
+### Building with Poetry
 
-Once the Python environment is set up, the documentation can be easily generated via the provided `Makefile`
+After installing Python 3.10+ and Poetry 1.3.0+ (see
+<https://python-poetry.org/docs/#installation>), the documentation can be easily
+generated via the provided `Makefile`:
+
 ```shell
 cd docs
 make clean html
 ```
 
+### Building with Conda
+
+Create the Conda environment:
+
+```shell
+conda create -f docs/environment.yaml -c conda-forge
+```
+
+Activate the Conda environment:
+
+```shell
+conda activate flowman-docs
+```
+
+Build the documentation via the provided `Makefile` but skip Poetry by erasing
+the variables `INSTALLDEPS` and `ENVRUNNER`:
+
+```shell
+cd docs
+make clean html INSTALLDEPS="" ENVRUNNER=""
+```

@@ -21,6 +21,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.util.TimeZone
 
+import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.internal.config.ConfigEntry
@@ -155,6 +156,8 @@ object SparkShim {
     def observedMetrics(qe: QueryExecution): Map[String, Row] = {
         qe.observedMetrics
     }
+
+    def toPath(path:String) : Path = new Path(path)
 
     def explainString[T](ds: Dataset[T], extended: Boolean): String = {
         val mode = if (extended) ExtendedMode else SimpleMode

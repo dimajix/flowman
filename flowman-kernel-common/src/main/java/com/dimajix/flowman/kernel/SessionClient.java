@@ -22,17 +22,16 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.dimajix.flowman.grpc.ExceptionUtils;
 import com.dimajix.flowman.kernel.proto.documentation.GenerateDocumentationRequest;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import lombok.val;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.Marker;
 import org.slf4j.event.Level;
 import org.slf4j.event.LoggingEvent;
 
-import com.dimajix.flowman.grpc.ExceptionUtils;
 import com.dimajix.flowman.kernel.model.*;
 import com.dimajix.flowman.kernel.proto.JobContext;
 import com.dimajix.flowman.kernel.proto.LogEvent;
@@ -111,57 +110,32 @@ public final class SessionClient extends AbstractClient {
         asyncStub.subscribeLog(request, new StreamObserver<LogEvent>() {
             @Override
             public void onNext(LogEvent value) {
-                val event = new LoggingEvent() {
-                    @Override
-                    public Level getLevel() {
-                        switch(value.getLevel()) {
-                            case TRACE:
-                                return Level.TRACE;
-                            case DEBUG:
-                                return Level.DEBUG;
-                            case INFO:
-                                return Level.INFO;
-                            case WARN:
-                                return Level.WARN;
-                            case ERROR:
-                                return Level.ERROR;
-                            default:
-                                return Level.ERROR;
-                        }
-                    }
-                    @Override
-                    public Marker getMarker() {
-                        return null;
-                    }
-                    @Override
-                    public String getLoggerName() {
-                        return value.getLogger();
-                    }
-                    @Override
-                    public String getMessage() {
-                        return value.getMessage();
-                    }
-                    @Override
-                    public String getThreadName() {
-                        return null;
-                    }
-                    @Override
-                    public Object[] getArgumentArray() {
-                        return new Object[0];
-                    }
-                    @Override
-                    public long getTimeStamp() {
-                        val ts = value.getTimestamp();
-                        return ts.getSeconds() * 1000 + ts.getNanos() / 1000000;
-                    }
-                    @Override
-                    public Throwable getThrowable() {
-                        if (value.hasException()) {
-                            return ExceptionUtils.unwrap(value.getException());
-                        }
-                        else return null;
-                    }
-                };
+                Level level;
+                switch(value.getLevel()) {
+                    case TRACE:
+                        level = Level.TRACE;
+                        break;
+                    case DEBUG:
+                        level = Level.DEBUG;
+                        break;
+                    case INFO:
+                        level = Level.INFO;
+                        break;
+                    case WARN:
+                        level = Level.WARN;
+                        break;
+                    case ERROR:
+                        level = Level.ERROR;
+                        break;
+                    default:
+                        level = Level.ERROR;
+                }
+                val logger = value.getLogger();
+                val message = value.getMessage();
+                val ts = value.getTimestamp();
+                val timestamp = ts.getSeconds() * 1000 + ts.getNanos() / 1000000;
+                val throwable = value.hasException() ? ExceptionUtils.unwrap(value.getException()) : null;
+                val event = new com.dimajix.common.logging.LogEvent(level, logger, message, timestamp, throwable);
                 consumer.accept(event);
             }
             @Override

@@ -19,6 +19,7 @@ package com.dimajix.spark.sql.catalyst
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.spark.features.hiveVarcharSupported
 import com.dimajix.spark.testing.LocalSparkSession
 
 
@@ -44,6 +45,16 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
                   |SELECT * FROM sql_builder_0
                   |""".stripMargin
             )
+        }
+
+        if (hiveSupported && hiveVarcharSupported) {
+            spark.sql(
+                """
+                  CREATE TABLE sql_builder_2(
+                    col_0 CHAR(10),
+                    col_1 VARCHAR(20)
+                  )
+                """)
         }
     }
 
@@ -368,5 +379,17 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         val sql2 = new SqlBuilder(df2.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql2))
         sql2.withoutQuotes should be ("SELECT gen_attr_0 AS col_0, gen_attr_1 AS col_1 FROM (SELECT col_0 AS gen_attr_0, col_1 AS gen_attr_1 FROM default.sql_builder_0) AS gen_subquery_1 ORDER BY gen_attr_0 DESC NULLS FIRST")
+    })
+
+    it should "support VARCHAR(n) and CHAR(n) columns" in (if (hiveSupported && hiveVarcharSupported) {
+        val df2 = spark.sql(
+            """
+              |SELECT
+              |  x.col_0,
+              |  x.col_1
+              |FROM sql_builder_2 x""".stripMargin)
+        val sql2 = new SqlBuilder(df2.queryExecution.analyzed).toSQL
+        noException shouldBe thrownBy(spark.sql(sql2))
+        sql2.withoutQuotes should be("SELECT col_0, col_1 FROM default.sql_builder_2")
     })
 }

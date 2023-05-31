@@ -81,26 +81,25 @@
         <scalamock.version>5.1.0</scalamock.version>
 
         <!-- Default Hadoop version (3.3) -->
-        <hadoop.version>3.3.2</hadoop.version>
+        <hadoop.version>3.3.4</hadoop.version>
         <hadoop-api.version>3.3</hadoop-api.version>
         <commons-codec.version>1.15</commons-codec.version>
 
-        <!-- Default Spark version (3.3) -->
-        <scala.version>2.12.15</scala.version>
+        <!-- Default Spark version (3.4) -->
+        <scala.version>2.12.17</scala.version>
         <scala.api_version>2.12</scala.api_version>
-        <spark.version>3.3.2</spark.version>
-        <spark-api.version>3.3</spark-api.version>
+        <spark.version>3.4.0</spark.version>
+        <spark-api.version>3.4</spark-api.version>
         <hive.version>2.3.9</hive.version>
-        <hive-storage-api.version>2.7.2</hive-storage-api.version>
-        <kafka.version>2.8.1</kafka.version>
-        <zookeeper.version>3.6.2</zookeeper.version>
-        <snappy.version>1.1.8.4</snappy.version>
-        <antlr4.version>4.8</antlr4.version>
-        <avro.version>1.11.0</avro.version>
+        <hive-storage-api.version>2.8.1</hive-storage-api.version>
+        <kafka.version>3.3.2</kafka.version>
+        <zookeeper.version>3.6.3</zookeeper.version>
+        <antlr4.version>4.9.3</antlr4.version>
+        <avro.version>1.11.1</avro.version>
         <commons-cli.version>1.5.0</commons-cli.version>
         <commons-collections.version>3.2.2</commons-collections.version>
-        <commons-compiler.version>3.0.16</commons-compiler.version>
-        <commons-compress.version>1.21</commons-compress.version>
+        <commons-compiler.version>3.1.9</commons-compiler.version>
+        <commons-compress.version>1.22</commons-compress.version>
         <commons-io.version>2.11.0</commons-io.version>
         <commons-lang3.version>3.12.0</commons-lang3.version>
         <commons-math3.version>3.6.1</commons-math3.version>
@@ -111,29 +110,32 @@
         <dropwizard.version>4.2.0</dropwizard.version>
         <gson.version>2.2.4</gson.version>
         <guava.version>14.0.1</guava.version>
-        <httpclient.version>4.5.13</httpclient.version>
-        <httpcore.version>4.4.14</httpcore.version>
-        <ivy.version>2.4.0</ivy.version>
-        <jackson-api.version>2.13</jackson-api.version>
-        <jackson.databind.version>2.13.4.2</jackson.databind.version>
+        <httpclient.version>4.5.14</httpclient.version>
+        <httpcore.version>4.4.16</httpcore.version>
+        <ivy.version>2.5.1</ivy.version>
+        <jackson-api.version>2.14</jackson-api.version>
+        <jackson.databind.version>2.14.2</jackson.databind.version>
         <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
-        <jackson.version>2.13.4</jackson.version>
-        <joda-time.version>2.10.13</joda-time.version>
+        <jackson.version>2.14.2</jackson.version>
+        <joda-time.version>2.12.2</joda-time.version>
         <json4s.version>3.7.0-M11</json4s.version>
         <jsr305.version>3.0.0</jsr305.version>
         <libthrift.version>0.12.0</libthrift.version>
-        <log4j.version>2.17.2</log4j.version>
+        <log4j.version>2.19.0</log4j.version>
         <lz4.version>1.8.0</lz4.version>
-        <netty-all.version>4.1.74.Final</netty-all.version>
+        <netty-all.version>4.1.87.Final</netty-all.version>
         <netty-all.exclusion>none</netty-all.exclusion>
+        <netty-extras.scope>provided</netty-extras.scope>
         <paranamer.version>2.8</paranamer.version>
-        <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
-        <scala-xml.version>1.2.0</scala-xml.version>
+        <scala-parser-combinators.version>2.1.1</scala-parser-combinators.version>
+        <scala-xml.version>2.1.0</scala-xml.version>
         <scalatest-api.version>3.2</scalatest-api.version>
         <scalatest.version>3.2.9</scalatest.version>
-        <slf4j.version>1.7.32</slf4j.version>
-        <snakeyaml.version>1.31</snakeyaml.version>
+        <slf4j.version>2.0.6</slf4j.version>
+        <slf4j-api.version>2</slf4j-api.version>
+        <snakeyaml.version>1.33</snakeyaml.version>
         <snakeyaml.scope>provided</snakeyaml.scope>
+        <snappy.version>1.1.9.1</snappy.version>
 
         <!-- gRPC related versions -->
         <grpc.version>1.53.0</grpc.version>
@@ -228,12 +230,14 @@
                 <lz4.version>1.4.0</lz4.version>
                 <netty-all.version>4.1.42.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
+                <netty-extras.scope>provided</netty-extras.scope>
                 <protobuf.version>2.5.0</protobuf.version>
                 <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
                 <scala-xml.version>1.0.5</scala-xml.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <slf4j.version>1.7.25</slf4j.version>
+                <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.23</snakeyaml.version>
                 <snappy.version>1.1.7.3</snappy.version>
             </properties>
@@ -307,12 +311,14 @@
                 <lz4.version>1.4.0</lz4.version>
                 <netty-all.version>4.1.68.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
+                <netty-extras.scope>provided</netty-extras.scope>
                 <protobuf.version>2.5.0</protobuf.version>
                 <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
                 <scala-xml.version>1.0.5</scala-xml.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <slf4j.version>1.7.30</slf4j.version>
+                <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.26</snakeyaml.version>
                 <snappy.version>1.1.7.5</snappy.version>
             </properties>
@@ -377,12 +383,14 @@
                 <lz4.version>1.7.1</lz4.version>
                 <netty-all.version>4.1.63.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
+                <netty-extras.scope>provided</netty-extras.scope>
                 <protobuf.version>2.5.0</protobuf.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <scala-xml.version>1.2.0</scala-xml.version>
                 <scalatest-api.version>3.2</scalatest-api.version>
                 <scalatest.version>3.2.9</scalatest.version>
                 <slf4j.version>1.7.30</slf4j.version>
+                <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.26</snakeyaml.version>
                 <snappy.version>1.1.8.4</snappy.version>
             </properties>
@@ -447,12 +455,14 @@
                 <lz4.version>1.8.0</lz4.version>
                 <netty-all.version>4.1.68.Final</netty-all.version>
                 <netty-all.exclusion>none</netty-all.exclusion>
+                <netty-extras.scope>provided</netty-extras.scope>
                 <protobuf.version>2.5.0</protobuf.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <scala-xml.version>1.2.0</scala-xml.version>
                 <scalatest-api.version>3.2</scalatest-api.version>
                 <scalatest.version>3.2.9</scalatest.version>
                 <slf4j.version>1.7.32</slf4j.version>
+                <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.26</snakeyaml.version>
                 <snappy.version>1.1.8.4</snappy.version>
             </properties>
@@ -517,6 +527,7 @@
                 <lz4.version>1.8.0</lz4.version>
                 <netty-all.version>4.1.74.Final</netty-all.version>
                 <netty-all.exclusion>none</netty-all.exclusion>
+                <netty-extras.scope>compile</netty-extras.scope>
                 <paranamer.version>2.8</paranamer.version>
                 <protobuf.version>2.5.0</protobuf.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
@@ -524,6 +535,7 @@
                 <scalatest-api.version>3.2</scalatest-api.version>
                 <scalatest.version>3.2.9</scalatest.version>
                 <slf4j.version>1.7.32</slf4j.version>
+                <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.30</snakeyaml.version>
                 <snappy.version>1.1.8.4</snappy.version>
             </properties>
@@ -576,6 +588,7 @@
                 <lz4.version>1.8.0</lz4.version>
                 <netty-all.version>4.1.74.Final</netty-all.version>
                 <netty-all.exclusion>none</netty-all.exclusion>
+                <netty-extras.scope>compile</netty-extras.scope>
                 <paranamer.version>2.8</paranamer.version>
                 <protobuf.version>2.5.0</protobuf.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
@@ -583,6 +596,7 @@
                 <scalatest-api.version>3.2</scalatest-api.version>
                 <scalatest.version>3.2.9</scalatest.version>
                 <slf4j.version>1.7.32</slf4j.version>
+                <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.24</snakeyaml.version>
                 <snakeyaml.scope>compile</snakeyaml.scope>
                 <snappy.version>1.1.8.4</snappy.version>
@@ -632,12 +646,14 @@
                 <lz4.version>1.4.0</lz4.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
+                <netty-extras.scope>provided</netty-extras.scope>
                 <paranamer.version>2.8</paranamer.version>
                 <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
                 <scala-xml.version>1.0.5</scala-xml.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <slf4j.version>1.7.16</slf4j.version>
+                <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.15</snakeyaml.version>
                 <snappy.version>1.1.7.3</snappy.version>
             </properties>
@@ -683,12 +699,14 @@
                 <lz4.version>1.7.1</lz4.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
+                <netty-extras.scope>provided</netty-extras.scope>
                 <paranamer.version>2.8</paranamer.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <scala-xml.version>1.2.0</scala-xml.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
                 <scalatest.version>3.0.8</scalatest.version>
                 <slf4j.version>1.7.30</slf4j.version>
+                <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.24</snakeyaml.version>
                 <snappy.version>1.1.8.2</snappy.version>
             </properties>
@@ -734,12 +752,14 @@
                 <lz4.version>1.7.1</lz4.version>
                 <netty-all.version>4.1.51.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
+                <netty-extras.scope>provided</netty-extras.scope>
                 <paranamer.version>2.8</paranamer.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <scala-xml.version>1.2.0</scala-xml.version>
                 <scalatest-api.version>3.2</scalatest-api.version>
                 <scalatest.version>3.2.5</scalatest.version>
                 <slf4j.version>1.7.30</slf4j.version>
+                <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.24</snakeyaml.version>
                 <snappy.version>1.1.8.2</snappy.version>
             </properties>
@@ -766,7 +786,7 @@
                 <commons-io.version>2.8.0</commons-io.version>
                 <commons-lang3.version>3.12.0</commons-lang3.version>
                 <commons-math3.version>3.4.1</commons-math3.version>
-                <commons-text.version>1.10.0</commons-text.version>
+                <commons-text.version>1.6</commons-text.version>
                 <curator-client.version>2.13.0</curator-client.version>
                 <curator.version>2.13.0</curator.version>
                 <derby.version>10.14.2.0</derby.version>
@@ -786,12 +806,14 @@
                 <lz4.version>1.7.1</lz4.version>
                 <netty-all.version>4.1.68.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
+                <netty-extras.scope>provided</netty-extras.scope>
                 <paranamer.version>2.8</paranamer.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <scala-xml.version>1.2.0</scala-xml.version>
                 <scalatest-api.version>3.2</scalatest-api.version>
                 <scalatest.version>3.2.9</scalatest.version>
                 <slf4j.version>1.7.30</slf4j.version>
+                <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.27</snakeyaml.version>
                 <snappy.version>1.1.8.4</snappy.version>
             </properties>
@@ -838,14 +860,70 @@
                 <lz4.version>1.8.0</lz4.version>
                 <netty-all.version>4.1.74.Final</netty-all.version>
                 <netty-all.exclusion>none</netty-all.exclusion>
+                <netty-extras.scope>compile</netty-extras.scope>
                 <paranamer.version>2.8</paranamer.version>
                 <scala-parser-combinators.version>1.1.2</scala-parser-combinators.version>
                 <scala-xml.version>1.2.0</scala-xml.version>
                 <scalatest-api.version>3.2</scalatest-api.version>
                 <scalatest.version>3.2.9</scalatest.version>
                 <slf4j.version>1.7.32</slf4j.version>
+                <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.31</snakeyaml.version>
                 <snappy.version>1.1.8.4</snappy.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-3.4</id>
+            <properties>
+                <scala.version>2.12.17</scala.version>
+                <scala.api_version>2.12</scala.api_version>
+                <spark.version>3.4.0</spark.version>
+                <spark-api.version>3.4</spark-api.version>
+                <hive.version>2.3.9</hive.version>
+                <hive-storage-api.version>2.8.1</hive-storage-api.version>
+                <kafka.version>3.3.2</kafka.version>
+                <zookeeper.version>3.6.3</zookeeper.version>
+
+                <antlr4.version>4.9.3</antlr4.version>
+                <avro.version>1.11.1</avro.version>
+                <commons-cli.version>1.5.0</commons-cli.version>
+                <commons-codec.version>1.15</commons-codec.version>
+                <commons-collections.version>3.2.2</commons-collections.version>
+                <commons-compiler.version>3.1.9</commons-compiler.version>
+                <commons-compress.version>1.22</commons-compress.version>
+                <commons-io.version>2.11.0</commons-io.version>
+                <commons-lang3.version>3.12.0</commons-lang3.version>
+                <commons-math3.version>3.6.1</commons-math3.version>
+                <commons-text.version>1.10.0</commons-text.version>
+                <curator-client.version>2.13.0</curator-client.version>
+                <curator.version>2.13.0</curator.version>
+                <derby.version>10.14.2.0</derby.version>
+                <dropwizard.version>4.2.0</dropwizard.version>
+                <guava.version>14.0.1</guava.version>
+                <httpclient.version>4.5.14</httpclient.version>
+                <httpcore.version>4.4.16</httpcore.version>
+                <ivy.version>2.5.1</ivy.version>
+                <jackson-api.version>2.14</jackson-api.version>
+                <jackson.databind.version>2.14.2</jackson.databind.version>
+                <jackson.version>2.14.2</jackson.version>
+                <joda-time.version>2.12.2</joda-time.version>
+                <json4s.version>3.7.0-M11</json4s.version>
+                <jsr305.version>3.0.0</jsr305.version>
+                <libthrift.version>0.12.0</libthrift.version>
+                <log4j.version>2.19.0</log4j.version>
+                <lz4.version>1.8.0</lz4.version>
+                <netty-all.version>4.1.87.Final</netty-all.version>
+                <netty-all.exclusion>none</netty-all.exclusion>
+                <netty-extras.scope>provided</netty-extras.scope>
+                <paranamer.version>2.8</paranamer.version>
+                <scala-parser-combinators.version>2.1.1</scala-parser-combinators.version>
+                <scala-xml.version>2.1.0</scala-xml.version>
+                <scalatest-api.version>3.2</scalatest-api.version>
+                <scalatest.version>3.2.9</scalatest.version>
+                <slf4j.version>2.0.6</slf4j.version>
+                <slf4j-api.version>2</slf4j-api.version>
+                <snakeyaml.version>1.33</snakeyaml.version>
+                <snappy.version>1.1.9.1</snappy.version>
             </properties>
         </profile>
 
@@ -900,7 +978,7 @@
         <profile>
             <id>hadoop-3.3</id>
             <properties>
-                <hadoop.version>3.3.1</hadoop.version>
+                <hadoop.version>3.3.4</hadoop.version>
                 <hadoop-api.version>3.3</hadoop-api.version>
                 <commons-codec.version>1.15</commons-codec.version>
             </properties>
@@ -1628,6 +1706,27 @@
                         <groupId>org.apache.hadoop</groupId>
                         <artifactId>hadoop-client-runtime</artifactId>
                     </exclusion>
+                    <!-- Exclude Netty-modules, which are not part of the dist -->
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-codec-http</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-codec-http2</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-codec-socks</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-handler-proxy</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>netty-handler-proxy</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
@@ -1669,6 +1768,11 @@
                     <exclusion>
                         <groupId>org.spark-project.spark</groupId>
                         <artifactId>unused</artifactId>
+                    </exclusion>
+                    <!-- Exclude Jackson stuff, which is not part of the dist -->
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.datatype</groupId>
+                        <artifactId>jackson-datatype-jsr310</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -2059,7 +2163,7 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-codec</artifactId>
                 <version>${netty-all.version}</version>
-                <scope>provided</scope>
+                <scope>${netty-extras.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
@@ -2071,19 +2175,19 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-codec-http</artifactId>
                 <version>${netty-all.version}</version>
-                <scope>compile</scope>
+                <scope>${netty-extras.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-codec-http2</artifactId>
                 <version>${netty-all.version}</version>
-                <scope>compile</scope>
+                <scope>${netty-extras.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-codec-socks</artifactId>
                 <version>${netty-all.version}</version>
-                <scope>compile</scope>
+                <scope>${netty-extras.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
@@ -2101,7 +2205,7 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-handler-proxy</artifactId>
                 <version>${netty-all.version}</version>
-                <scope>compile</scope>
+                <scope>${netty-extras.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>

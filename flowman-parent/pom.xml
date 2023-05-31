@@ -1239,19 +1239,19 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-codec-http</artifactId>
                 <version>${netty-all.version}</version>
-                <scope>compile</scope>
+                <scope>${netty-extras.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-codec-http2</artifactId>
                 <version>${netty-all.version}</version>
-                <scope>compile</scope>
+                <scope>${netty-extras.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-codec-socks</artifactId>
                 <version>${netty-all.version}</version>
-                <scope>compile</scope>
+                <scope>${netty-extras.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
@@ -1269,7 +1269,7 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-handler-proxy</artifactId>
                 <version>${netty-all.version}</version>
-                <scope>compile</scope>
+                <scope>${netty-extras.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>

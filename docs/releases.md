@@ -30,7 +30,15 @@ Breaking changes will be documented in the changelog file for each version.
 The following gives an (incomplete) list of past releases of the last 12 months. This will help you to spot breaking 
 changes over time.
 
-### Version 0.30.1 - 2023-04-27
+### Version 1.1.0 - Upcoming
+
+* github-413: Support Azure Key Vault for retrieving secrets
+* github-415: Improve documentation for Velocity templating
+* github-361: Remove broken support for Databricks
+* github-402: Support Spark 3.4
+
+
+### Version 1.0.0 - 2023-04-27
 
 * github-314: Move avro related functionality into separate plugin
 * github-307: Describe Flowmans security policy in SECURITY.md

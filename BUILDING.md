@@ -254,8 +254,9 @@ Flowman contains documentation written in Markdown which is processed by Sphinx
 to generate the online HTML documentation. [Poetry](https://python-poetry.org/)
 is used for installing the dependencies.
 
-Once Poetry is installed (see <https://python-poetry.org/docs/#installation>),
-the documentation can be easily generated via the provided `Makefile`:
+Once Python 3.10+ and Poetry 1.3.0+ are installed (see
+<https://python-poetry.org/docs/#installation>), the documentation can be easily
+generated via the provided `Makefile`:
 
 ```shell
 cd docs

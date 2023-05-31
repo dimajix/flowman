@@ -1,0 +1,101 @@
+@font-face {
+    font-family: "Roboto Slab";
+    src: local("Roboto Slab"),
+      url("fonts/RobotoSlab/RobotoSlab-VariableFont_wght.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 1 1000;
+}
+
+@font-face {
+    font-family: "Roboto Slab";
+    src: local("Roboto Slab"),
+      url("fonts/RobotoSlab/RobotoSlab-Thin.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 100;
+}
+
+@font-face {
+    font-family: "Roboto Slab";
+    src: local("Roboto Slab"),
+      url("fonts/RobotoSlab/RobotoSlab-ExtraLight.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 200;
+}
+
+@font-face {
+    font-family: "Roboto Slab";
+    src: local("Roboto Slab"),
+      url("fonts/RobotoSlab/RobotoSlab-Light.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 300;
+}
+
+@font-face {
+    font-family: "Roboto Slab";
+    src: local("Roboto Slab"),
+      url("fonts/RobotoSlab/RobotoSlab-Regular.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "Roboto Slab";
+    src: local("Roboto Slab"),
+      url("fonts/RobotoSlab/RobotoSlab-Medium.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 500;
+}
+
+@font-face {
+    font-family: "Roboto Slab";
+    src: local("Roboto Slab"),
+      url("fonts/RobotoSlab/RobotoSlab-SemiBold.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 600;
+}
+
+@font-face {
+    font-family: "Roboto Slab";
+    src: local("Roboto Slab"),
+      url("fonts/RobotoSlab/RobotoSlab-Bold.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 700;
+}
+
+@font-face {
+    font-family: "Roboto Slab";
+    src: local("Roboto Slab"),
+      url("fonts/RobotoSlab/RobotoSlab-ExtraBold.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 800;
+}
+
+@font-face {
+    font-family: "Roboto Slab";
+    src: local("Roboto Slab"),
+      url("fonts/RobotoSlab/RobotoSlab-Black.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 900;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Roboto Slab";
+}
+
+.theme-toggle-container {
+  display: none;
+}
+
+.nav-overlay-icon .icon,
+.toc-overlay-icon .icon {
+  color: var(--color-header-text);
+}
+
+.sidebar-tree li>ul {
+  background: var(--color-background-hover);
+}
+
+.sidebar-tree .reference:hover {
+  color: #ffffff;
+  background: inherit;
+}

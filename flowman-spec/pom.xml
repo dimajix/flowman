@@ -6,6 +6,7 @@
     <artifactId>flowman-spec</artifactId>
     <name>Flowman YAML spec</name>
     <description>Flowman YAML spec</description>
+    <url>https://flowman.io</url>
 
     <parent>
         <artifactId>flowman-root</artifactId>

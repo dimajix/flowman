@@ -24,6 +24,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-415: Improve documentation for Velocity templating
 * github-361: Remove broken support for Databricks
 * github-402: Support Spark 3.4
+* github-417: Fix URL to flowman.io in all Maven modules
 
 
 ## Version 1.0.1

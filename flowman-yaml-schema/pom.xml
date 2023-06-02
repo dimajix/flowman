@@ -6,6 +6,7 @@
     <artifactId>flowman-yaml-schema</artifactId>
     <name>Flowman YAML schema</name>
     <description>Flowman YAML schema to be used for syntax highlighting and auto-completion in capable editors</description>
+    <url>https://flowman.io</url>
     <packaging>pom</packaging>
 
     <parent>

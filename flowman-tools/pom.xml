@@ -6,6 +6,7 @@
     <artifactId>flowman-tools</artifactId>
     <name>Flowman cli tools</name>
     <description>Flowman command line interface tools</description>
+    <url>https://flowman.io</url>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

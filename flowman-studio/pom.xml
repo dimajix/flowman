@@ -6,6 +6,7 @@
     <artifactId>flowman-studio</artifactId>
     <name>Flowman Studio</name>
     <description>Flowman Studio</description>
+    <url>https://flowman.io</url>
 
     <parent>
         <artifactId>flowman-root</artifactId>

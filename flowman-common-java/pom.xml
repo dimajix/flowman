@@ -6,6 +6,7 @@
     <artifactId>flowman-common-java</artifactId>
     <name>Flowman common Java library</name>
     <description>Flowman common Java library</description>
+    <url>https://flowman.io</url>
 
     <parent>
         <groupId>com.dimajix.flowman</groupId>

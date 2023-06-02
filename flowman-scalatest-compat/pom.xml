@@ -6,6 +6,7 @@
     <artifactId>flowman-scalatest-compat</artifactId>
     <name>Flowman ScalaTest compatibility library</name>
     <description>Flowman ScalaTest compatibility library</description>
+    <url>https://flowman.io</url>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

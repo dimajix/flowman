@@ -6,6 +6,7 @@
     <artifactId>flowman-spark-extensions</artifactId>
     <name>Flowman Spark extensions</name>
     <description>Flowman Spark extensions</description>
+    <url>https://flowman.io</url>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

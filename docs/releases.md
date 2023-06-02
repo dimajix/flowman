@@ -36,6 +36,12 @@ changes over time.
 * github-415: Improve documentation for Velocity templating
 * github-361: Remove broken support for Databricks
 * github-402: Support Spark 3.4
+* github-417: Fix URL to flowman.io in all Maven modules
+
+
+### Version 1.0.1
+
+* github-411: [BUG] commons-text has wrong groupId in pom.xml
 
 
 ### Version 1.0.0 - 2023-04-27

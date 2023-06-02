@@ -6,6 +6,7 @@
     <artifactId>flowman-kernel-api</artifactId>
     <name>Flowman Kernel API</name>
     <description>Flowman Kernel gRPC protocol definition</description>
+    <url>https://flowman.io</url>
 
     <parent>
         <artifactId>flowman-root</artifactId>

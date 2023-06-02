@@ -6,6 +6,7 @@
     <artifactId>flowman-dist</artifactId>
     <name>Flowman Distribution</name>
     <description>Flowman installable binary distribution</description>
+    <url>https://flowman.io</url>
     <packaging>pom</packaging>
 
     <parent>

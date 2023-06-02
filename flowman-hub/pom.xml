@@ -6,6 +6,7 @@
     <artifactId>flowman-hub</artifactId>
     <name>Flowman Hub</name>
     <description>Flowman Hub</description>
+    <url>https://flowman.io</url>
 
     <parent>
         <artifactId>flowman-root</artifactId>

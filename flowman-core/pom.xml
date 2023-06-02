@@ -6,6 +6,7 @@
     <artifactId>flowman-core</artifactId>
     <name>Flowman core library</name>
     <description>Flowman core library</description>
+    <url>https://flowman.io</url>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

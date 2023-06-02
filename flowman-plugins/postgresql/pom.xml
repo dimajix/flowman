@@ -6,6 +6,7 @@
     <artifactId>flowman-plugin-postgresql</artifactId>
     <name>Flowman PostgreSQL plugin</name>
     <description>Flowman PostgreSQL plugin</description>
+    <url>https://flowman.io</url>
 
     <parent>
         <groupId>com.dimajix.flowman</groupId>

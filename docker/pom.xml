@@ -6,6 +6,7 @@
     <artifactId>flowman-docker</artifactId>
     <name>Flowman Docker image</name>
     <description>Flowman Docker image</description>
+    <url>https://flowman.io</url>
     <packaging>pom</packaging>
 
     <parent>

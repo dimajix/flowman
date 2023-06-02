@@ -6,6 +6,7 @@
     <artifactId>flowman-kernel-common</artifactId>
     <name>Flowman Kernel common</name>
     <description>Flowman Kernel client/server common code</description>
+    <url>https://flowman.io</url>
 
     <parent>
         <artifactId>flowman-root</artifactId>

@@ -6,6 +6,7 @@
     <artifactId>flowman-kernel-tools</artifactId>
     <name>Flowman Kernel cli tools</name>
     <description>Flowman kernel related command line interface tools</description>
+    <url>https://flowman.io</url>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

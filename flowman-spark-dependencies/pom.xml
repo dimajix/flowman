@@ -10,6 +10,7 @@
         projects when you want to link against Flowman. Otherwise, the Spark dependencies will not be added
         automatically, since Flowman has marked them as "provided" dependencies.
     </description>
+    <url>https://flowman.io</url>
     <packaging>pom</packaging>
 
     <parent>

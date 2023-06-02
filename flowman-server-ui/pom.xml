@@ -6,6 +6,7 @@
     <artifactId>flowman-server-ui</artifactId>
     <name>Flowman Server UI</name>
     <description>Flowman Server UI</description>
+    <url>https://flowman.io</url>
 
     <parent>
 	    <groupId>com.dimajix.flowman</groupId>

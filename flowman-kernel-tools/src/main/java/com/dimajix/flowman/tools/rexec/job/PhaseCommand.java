@@ -17,6 +17,7 @@
 package com.dimajix.flowman.tools.rexec.job;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import lombok.val;
 import org.kohsuke.args4j.Argument;
@@ -61,9 +62,11 @@ class PhaseCommand extends Command {
     public Status execute(ExecutionContext context) {
         val session = context.getSession();
         val args = splitSettings(this.args);
+        val targets = Arrays.stream(this.targets).flatMap(t -> Arrays.stream(t.split(","))).collect(Collectors.toList());
+        val dirtyTargets = Arrays.stream(this.dirtyTargets).flatMap(t -> Arrays.stream(t.split(","))).collect(Collectors.toList());
         val lifecycle = noLifecycle ? Arrays.asList(phase) : Lifecycle.ofPhase(phase).phases;
 
         val jobId = JobIdentifier.ofString(job);
-        return session.executeJob(jobId, lifecycle, args, Arrays.asList(targets), Arrays.asList(dirtyTargets), force, keepGoing, dryRun, parallelism);
+        return session.executeJob(jobId, lifecycle, args, targets, dirtyTargets, force, keepGoing, dryRun, parallelism);
     }
 }

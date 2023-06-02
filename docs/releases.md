@@ -37,6 +37,7 @@ changes over time.
 * github-361: Remove broken support for Databricks
 * github-402: Support Spark 3.4
 * github-417: Fix URL to flowman.io in all Maven modules
+* github-416: Support specifying multiple targets separated by commas on CLI
 
 
 ### Version 1.0.1

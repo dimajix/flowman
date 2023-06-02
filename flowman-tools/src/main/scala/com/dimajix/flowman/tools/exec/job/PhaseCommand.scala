@@ -63,6 +63,8 @@ sealed class PhaseCommand(phase:Phase) extends Command {
 
     override def execute(session: Session, project: Project, context:Context) : Status = {
         val args = splitSettings(this.args).toMap
+        val targets = this.targets.flatMap(_.split(","))
+        val dirtyTargets = this.dirtyTargets.flatMap(_.split(","))
         Try {
             context.getJob(JobIdentifier(job))
         }

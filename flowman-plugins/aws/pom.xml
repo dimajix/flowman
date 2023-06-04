@@ -55,6 +55,11 @@
                     <artifactId>aws-java-sdk-s3</artifactId>
                     <version>${aws.version}</version>
                 </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
             </dependencies>
         </profile>
 
@@ -112,6 +117,11 @@
                     <artifactId>aws-java-sdk-s3</artifactId>
                     <version>${aws.version}</version>
                 </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
             </dependencies>
         </profile>
 
@@ -139,6 +149,11 @@
                 <dependency>
                     <groupId>com.amazonaws</groupId>
                     <artifactId>aws-java-sdk-s3</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
                     <version>${aws.version}</version>
                 </dependency>
             </dependencies>
@@ -170,6 +185,11 @@
                     <artifactId>aws-java-sdk-s3</artifactId>
                     <version>${aws.version}</version>
                 </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
             </dependencies>
         </profile>
 
@@ -199,6 +219,11 @@
                     <artifactId>aws-java-sdk-s3</artifactId>
                     <version>${aws.version}</version>
                 </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
             </dependencies>
         </profile>
 
@@ -226,6 +251,11 @@
                 <dependency>
                     <groupId>com.amazonaws</groupId>
                     <artifactId>aws-java-sdk-s3</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
                     <version>${aws.version}</version>
                 </dependency>
             </dependencies>
@@ -261,6 +291,11 @@
                     <version>${aws.version}</version>
                     <scope>provided</scope>
                 </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
             </dependencies>
         </profile>
 
@@ -293,6 +328,11 @@
                     <artifactId>aws-java-sdk-s3</artifactId>
                     <version>${aws.version}</version>
                     <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
+                    <version>${aws.version}</version>
                 </dependency>
             </dependencies>
         </profile>

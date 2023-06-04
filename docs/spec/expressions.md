@@ -124,5 +124,11 @@ provide some functions (for working with date and time).
 * `JSON.path(json:string, path:string) -> string`
 
 ### `AzureKeyVault` (since Flowman 1.1.0)
+The following functions are provided by the [Azure Plugin](../plugins/azure.md)
 * `AzureKeyVault.getSecret(vaultName:string, secretName:string) -> string`
 * `AzureKeyVault.getSecret(vaultName:string, secretName:string, linkedService:string) -> string` 
+
+### `AwsSecretsManager` (since Flowman 1.1.0)
+The following functions are provided by the [AWS Plugin](../plugins/aws.md)
+* `AwsSecretsManager.getSecret(secretName:string, region:string) -> string`
+* `AwsSecretsManager.getSecret(secretName:string, keyName:string, region:string) -> string`

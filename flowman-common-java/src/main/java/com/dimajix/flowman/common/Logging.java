@@ -31,7 +31,6 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.properties.PropertiesConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.impl.StaticLoggerBinder;
 
 
 public final class Logging {
@@ -173,7 +172,8 @@ public final class Logging {
         // This distinguishes the log4j 1.2 binding, currently
         // org.slf4j.impl.Log4jLoggerFactory, from the log4j 2.0 binding, currently
         // org.apache.logging.slf4j.Log4jLoggerFactory
-        val binderClass = StaticLoggerBinder.getSingleton().getLoggerFactoryClassStr();
+        val binderClass = LoggerFactory.getILoggerFactory().getClass().getName();
+        //val binderClass = StaticLoggerBinder.getSingleton().getLoggerFactoryClassStr();
         return "org.apache.logging.slf4j.Log4jLoggerFactory".equals(binderClass);
     }
 

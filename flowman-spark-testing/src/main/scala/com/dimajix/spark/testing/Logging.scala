@@ -21,10 +21,11 @@ import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.core.LoggerContext
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Suite
-import org.slf4j.impl.StaticLoggerBinder
+import org.slf4j.LoggerFactory
 
 
-trait Logging extends BeforeAndAfterAll {  this:Suite =>
+trait Logging extends BeforeAndAfterAll {
+    this: Suite =>
     override def beforeAll(): Unit = {
         super.beforeAll()
 
@@ -56,7 +57,8 @@ trait Logging extends BeforeAndAfterAll {  this:Suite =>
         // This distinguishes the log4j 1.2 binding, currently
         // org.slf4j.impl.Log4jLoggerFactory, from the log4j 2.0 binding, currently
         // org.apache.logging.slf4j.Log4jLoggerFactory
-        val binderClass = StaticLoggerBinder.getSingleton.getLoggerFactoryClassStr
+        val binderClass: String = LoggerFactory.getILoggerFactory.getClass.getName
+        //val binderClass = StaticLoggerBinder.getSingleton.getLoggerFactoryClassStr
         "org.apache.logging.slf4j.Log4jLoggerFactory".equals(binderClass)
     }
 }

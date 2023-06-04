@@ -26,6 +26,7 @@ import com.amazonaws.services.secretsmanager.model.GetSecretValueRequest
 
 import com.dimajix.flowman.annotation.TemplateObject
 
+
 object AwsSecretsManagerWrapper {
     private val clients = mutable.Map[String,AWSSecretsManager]()
     def client(region:String) : AWSSecretsManager = {

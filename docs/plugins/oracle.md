@@ -14,7 +14,7 @@ plugins:
 
 ## Usage
 
-In order to connect to a Oracle database, you need to specify a [JDBC connection](../spec/connection/jdbc.md)
+In order to connect to an Oracle database, you need to specify a [JDBC connection](../spec/connection/jdbc.md)
 and use that one in a [JDBC relation](../spec/relation/jdbcTable.md) as follows:
 
 ```yaml

@@ -1,5 +1,5 @@
 # Recursive SQL Mapping
-The `recursiveSql` mapping allows to execute recursive SQL transformation which contains Spark SQL code.
+The `recursiveSql` mapping allows executing recursive SQL transformation which contains Spark SQL code.
 
 ## Example
 ```
@@ -48,7 +48,7 @@ The SQL statement to execute
 The name of a file containing the SQL to execute.
 
 * `uri` **(optional)** *(type: string)* *(default: empty)*: 
-A url pointing to a resource containing the SQL to execute.
+A URL pointing to a resource containing the SQL to execute.
 
 * `maxIterations` **(optional)** *(type: int)* *(default: 99)*:
 The maximum of iterations. The mapping will fail if the number of actual iterations required to find the fix point 
@@ -60,7 +60,7 @@ exceeds this number.
 
 
 ## Description
-The `recursiveSql` mapping allows to execute recursive SQL statements, which refer to themselves. The result of each
+The `recursiveSql` mapping allows executing recursive SQL statements, which refer to themselves. The result of each
 step is made available as a temporary table `__this__`. Currently, the query has to be a `UNION` where the first part
 may not contain a reference to `__this__`. The first part of the `UNION` will be used to determine the schema of the
 result.

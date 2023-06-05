@@ -33,7 +33,7 @@ You will then be able to select specific instances by using these labels.
 Currently, Flowman provides three different ways of *collecting metrics*, which are presented below. 
 
 ### Builtin Metrics
-First of all, Flowman already provides a small set of built-in metrics, which are collected automatically.
+First, Flowman already provides a small set of built-in metrics, which are collected automatically.
 
 | Metric           | Description                                                                 |
 |------------------|-----------------------------------------------------------------------------|
@@ -145,13 +145,13 @@ jobs:
 ```
 The example will export the following metrics
 
-| Exported Metric          | Flowman Metric           | Restrictions                      |
-|--------------------------|--------------------------|-----------------------------------|
-| flowman_output_records   | target_records           | Only for targets in `BUILD` phase |
-| flowman_output_time      | target_runtime           | Only for targets in `BUILD` phase |
-| flowman_processing_time  | job_runtime              | Only for jobs in `BUILD` phase    |
-| transaction_count        | transaction_count        |                                   |
-| total_transaction_amount | total_transaction_amount |                                   |
+| Exported Metric            | Flowman Metric             | Restrictions                      |
+|----------------------------|----------------------------|-----------------------------------|
+| `flowman_output_records`   | `target_records`           | Only for targets in `BUILD` phase |
+| `flowman_output_time`      | `target_runtime`           | Only for targets in `BUILD` phase |
+| `flowman_processing_time`  | `job_runtime`              | Only for jobs in `BUILD` phase    |
+| `transaction_count`        | `transaction_count`        |                                   |
+| `total_transaction_amount` | `total_transaction_amount` |                                   |
 
 
 ### Metric Sink

@@ -1,6 +1,6 @@
 # Azure Plugin
 
-The Azure plugin mainly provides the ADLS2 (Azure DataLake Filesystem) and ABS (Azure Blob Filesystem) to be used 
+The Azure plugin mainly provides the ADLS2 (Azure Data Lake file system) and ABS (Azure Blob Storage) to be used
 as the storage layer.
 
 

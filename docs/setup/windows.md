@@ -6,16 +6,16 @@ Windows, with the main purpose of providing developers some way to create and te
 
 The main difficulty in supporting Windows comes from two aspects
 * Windows doesn't support `bash`, therefore, all scripts have been rewritten to run on Windows
-* Hadoop and Spark require some special *Hadoop WinUtils* libraries to be installed
+* Hadoop and Spark require some special *Hadoop Winutils* libraries to be installed
 
 
-## Installing using WinUtils
+## Installing using Winutils
 The first natural option is to install Flowman directly on your Windows machine. Of course this also requires a
 working Apache Spark installation. You can download an appropriate version from the
 [Apache Spark homepage](https://spark.apache.org).
 
 Next, you are required to install the *Hadoop Winutils*, which is a set of DLLs required for the Hadoop libraries to
-be working. You can get a copy at https://github.com/kontext-tech/winutils .
+be working. You can get a copy at https://github.com/kontext-tech/winutils.
 Once you downloaded the appropriate version, you need to place the DLLs into a directory `$HADOOP_HOME/bin`, where
 `HADOOP_HOME` refers to some arbitrary location of your choice on your Windows PC. You also need to set the following
 environment variables:

@@ -12,7 +12,7 @@ Server will provide you a powerful Web UI for keeping track of past runs.
  
 In order to efficiently work with larger data sets, Flowman also supports a client/server model where a kernel server
 is started within your Big Data environment and is accessed from the local development client via the Flowman Remote
-Shell. This significantly simplifies working with huge amounts of data from a developers client without the need
+Shell. This significantly simplifies working with huge amounts of data from a developer's client without the need
 to provide a direct network connectivity to data sources, YARN clusters, etc. The client only needs to connect to
 the Flowman Kernel server via a single port, and then all the work is performed by the server side.
 * [Flowman Kernel Server](flowman-kernel/index.md)

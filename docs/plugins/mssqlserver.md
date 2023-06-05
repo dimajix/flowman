@@ -2,7 +2,7 @@
 
 The MS SQL Server plugin provides a JDBC driver  to access MS SQL Server and Azure SQL Server databases via 
 the [JDBC relation](../spec/relation/jdbcTable.md). Moreover, it also provides a specialized  
-[`sqlserver` relation](../spec/relation/sqlserver.md) which uses bulk copy to speed up writing process and it
+[`sqlserver` relation](../spec/relation/sqlserver.md) which uses bulk copy to speed up writing process, and it
 also uses temp tables to encapsulate the whole data upload within a transaction.
 
 
@@ -33,7 +33,7 @@ SPARK_OPTS="--conf spark.executor.extraClassPath=mssql-jdbc-9.2.1.jre8.jar --con
 
 ## Usage
 
-In order to connect to a MS SQL Server or Azure SQL database, you need to specify a [JDBC connection](../spec/connection/jdbc.md)
+In order to connect to an MS SQL Server or Azure SQL database, you need to specify a [JDBC connection](../spec/connection/jdbc.md)
 and use that one in a [JDBC relation](../spec/relation/jdbcTable.md) as follows:
 
 ```yaml

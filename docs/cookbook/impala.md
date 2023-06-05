@@ -66,7 +66,7 @@ connections:
 
 In addition to the namespace configuration, you also need to provide valid Kerberos credentials stored in a keytab.
 Impala then in turn requires a valid JAAS configuration file, which refers to that keytab. That file may look as
-follows (of course you need to replace `KRB_PRINCIPAL` and `MY.KERBEROS.REALM`:
+follows (of course you need to replace `KRB_PRINCIPAL` and `MY.KERBEROS.REALM`):
 ```
 Client {
   com.sun.security.auth.module.Krb5LoginModule required
@@ -78,7 +78,7 @@ Client {
   debug=false;
 };
 ```
-Finally you need to tell Flowman to read in this JAAS file. This can be done by specifing a Java command line option
+Finally, you need to tell Flowman to read in this JAAS file. This can be done by specifying a Java command line option
 in `conf/flowman-env.sh` as follows:
 ```
 SPARK_DRIVER_JAVA_OPTS="-Djava.security.auth.login.config=$FLOWMAN_CONF_DIR/jaas.conf"

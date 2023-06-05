@@ -8,7 +8,7 @@ automatically generate the SQL from other mappings.
 You can either specify a [mapping](../mapping/index.md) as the source of the Hive view. Flowman will then create an
 SQL which is equivalent to the logic contained in the mapping. This only works if all (direct and indirect) sources
 of the mapping also refer to Hive relations like views or tables. Also note that the process of transforming a data
-flow into an SQL is non trivial, and therefore not all kinds of operation sequences might be supported.
+flow into an SQL is non-trivial, and therefore not all kinds of operation sequences might be supported.
 ```yaml
 mappings:
   transaction_latest:
@@ -49,7 +49,7 @@ relations:
 ```
 
 ### External SQL
-You can also specify the name of a external file containing the sql by using the `file` propery instead as follows:
+You can also specify the name of an external file containing the SQL by using the `file` property instead as follows:
 ```yaml
 relations:
   transaction_latest:

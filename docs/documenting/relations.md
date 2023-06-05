@@ -4,7 +4,7 @@ As with other entities, Flowman tries to automatically infer a meaningful docume
 for the schema of a relation. In order to do so, Flowman will query the original data source and look up any
 metadata (for example Flowman will pick up column descriptions in the Hive Metastore).
 
-In order to provide additiona information, you can explicitly provide additional documentation for mappings via the
+In order to provide additional information, you can explicitly provide additional documentation for mappings via the
 `documentation` tag, which is supported by all mappings.
 
 ## Example

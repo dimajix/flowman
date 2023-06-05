@@ -26,7 +26,7 @@ https://github.com/dimajix/flowman/releases/download/0.24.1/flowman-dist-0.24.1-
 
 When you decide against downloading a prebuilt Flowman distribution, you can simply build it yourself with Maven. As
 a prerequisite, you need
-    * Java (1.8 for Spark <= 2.4 and 11 for Spark >= 3.0)
+    * Java (1.8 for Spark ≤ 2.4 and 11 for Spark ≥ 3.0)
     * Apache Maven
     * On Windows: Hadoop libraries
 
@@ -53,7 +53,7 @@ mvn clean install -Ddockerfile.skip
 
 ## Main Artifacts
 
-The main artifacts will be a Docker image 'dimajix/flowman' and additionally a tar.gz file containing a runnable 
+The main artifacts will be a Docker image `dimajix/flowman` and additionally a `tar.gz` file containing a runnable
 version of Flowman for direct installation in cases where Docker is not available or when you want to run Flowman 
 in a complex environment with Kerberos. You can find the `tar.gz` file in the directory `flowman-dist/target`
 
@@ -65,17 +65,17 @@ appropriate build profiles, you can easily create a custom build.
 
 ### Build on Windows
 
-Although you can normally build Flowman on Windows, you will need the Hadoop WinUtils installed. You can download
+Although you can normally build Flowman on Windows, you will need the Hadoop Winutils installed. You can download
 the binaries from https://github.com/steveloughran/winutils and install an appropriate version somewhere onto your 
 machine. Do not forget to set the HADOOP_HOME environment variable to the installation directory of these utils!
 
 You should also configure git such that all files are checked out using "LF" endings instead of "CRLF", otherwise
-some unittests may fail and Docker images might not be useable. This can be done by setting the git configuration
-value "core.autocrlf" to "input"
+some unit tests may fail, and Docker images might not be useable. This can be done by setting the git configuration
+value `core.autocrlf` to `input`:
 
     git config --global core.autocrlf input
     
-You might also want to skip unittests (the HBase plugin is currently failing under windows)
+You might also want to skip unit tests (the HBase plugin is currently failing under windows)
 
     mvn clean install -DskipTests    
 
@@ -87,7 +87,7 @@ But of course, you can also build for a different version by either using a prof
     
     mvn install -Pspark2.4 -Phadoop2.7 -DskipTests
     
-This will always select the latest bugfix version within the minor version. You can also specify versions explicitly 
+This will always select the latest bug fix version within the minor version. You can also specify versions explicitly
 as follows:    
 
     mvn install -Dspark.version=2.4.1 -Dhadoop.version=2.7.3

@@ -57,7 +57,7 @@ flowexec -f examples/weather project build year=2018 -nl
 
 ### Executing Parameter Ranges
 The following example will only execute the `BUILD` phase of the project, which defines a parameter
-`processing_datetime` with type datetime. The job will be executed for the whole date range from 2021-06-01 until
+`processing_datetime` with type `datetime`. The job will be executed for the whole date range from 2021-06-01 until
 2021-08-10 with a step size of one day. Flowman will execute up to four jobs in parallel (`-j 4`).
 
 ```shell

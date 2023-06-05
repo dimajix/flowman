@@ -28,7 +28,7 @@ The server can be started via `flowman-kernel <options...>`, with the following 
 * `-h` displays help
 * `-w <workspace_root>` specifies a workspace root directory where the kernel will store the projects uploaded
 by the clients. Each client will upload its files into a separate workspace below this directory.
-* `-p <port>` port to listen on, default ist 8088
+* `-p <port>` port to listen on, default is 8088
 * `--conf <key>=<value>` Sets a Flowman or Spark configuration variable
 * `--spark-logging <level>` Sets the log level for Spark
 * `--spark-master <master>` Explicitly sets the address of the Spark master

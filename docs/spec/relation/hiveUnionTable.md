@@ -89,7 +89,7 @@ Name of the Hive database where the tables should be created in
 
  * `partitions` **(optional)** *(list:partition)* *(default: empty)*:
  Specifies all partition columns. This is used both for creating Hive tables, but also for
- writing and reading to and from them. Therefore if you are working with partitioned Hive
+ writing and reading to and from them. Therefore, if you are working with partitioned Hive
  tables **you have to specify partition columns, even if Flowman is not used for creating
  the table**.
 
@@ -109,7 +109,7 @@ following changes to a data schema are supported
 * Column nullability can be changed. If changing from nullable to non-nullable, the currently underlying table will
   be reused (since the new type is stricter than before), otherwise a new table will be created.
 * The data type of on existing column can be changed. Depending on the change (i.e. more or less restrictive data type), 
-  either the existing physical table will be reused, or a new underlying table will be created and the view will be
+  either the existing physical table will be reused, or a new underlying table will be created, and the view will be
   adjusted.
 
 
@@ -131,7 +131,7 @@ When using Hive union tables as data sinks in a [`relation` target](../target/re
 whole lifecycle for you. This means that
 * Hive tables will be created and migrated during `create` phase
 * Hive tables will be populated with records and partitions will be added during `build` phase
-* Hive tables will be truncated or individual partitions will be dropped during `clean` phase
+* Hive tables will be truncated, or individual partitions will be dropped during `clean` phase
 * Hive tables will be removed during `destroy` phase
 
 ### Supported Data Types

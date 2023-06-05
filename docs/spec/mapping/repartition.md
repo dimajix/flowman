@@ -56,4 +56,4 @@ Specifies if the records within each partition should also be sorted
 
 This transformation can be used as part of a processing optimization where you want
 to repartition the result of some mapping because you perform multiple join operations
-on the same columns afterwards.
+on the same columns afterward.

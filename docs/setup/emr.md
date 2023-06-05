@@ -86,7 +86,7 @@ directory.
 The `flowman-env.sh` script sets up an execution environment on a system level. Here some very fundamental Spark
 and Hadoop properties can be configured, like for example
 * `KRB_PRINCIPAL` and `KRB_KEYTAB` for using Kerberos
-* Generic Java options like http proxy and more
+* Generic Java options like HTTP proxy and more
 
 ```shell
 #!/usr/bin/env bash
@@ -111,7 +111,7 @@ and Hadoop properties can be configured, like for example
 
 #### Configuration of  `default-namespace.yml`
 On top of the very global settings, Flowman also supports so-called *namespaces*. Each project is executed within the
-context of one namespace, which would be the *default namespace* if nothing else is specified . Each namespace contains
+context of one namespace, which would be the *default namespace* if nothing else is specified. Each namespace contains
 some configuration, such that different namespaces might represent different tenants or different staging environments.
 
 ```yaml
@@ -131,7 +131,7 @@ plugins:
 ### 4. Copy your Flowman project
 
 Flowman alone will not be too useful, you will also want to bring your Flowman project to AWS. You can either copy your
-project files to the master node, oder you can also copy them to S3 and have Flowman load them from there.
+project files to the master node, or you can also copy them to S3 and have Flowman load them from there.
 
 ### 5. Run Flowman
 
@@ -266,13 +266,13 @@ mvn flowman:deploy
 
 When defining a cluster, you can specify steps to execute. Here we can add Flowman as a Spark application:
 
-| Setting                 | Description                   | Value                                                                   |
-|-------------------------|-------------------------------|-------------------------------------------------------------------------|
-| Type                    | The type of the step function | "Spark application"                                                     |
-| Deployment mode         | Spark deployment mode         | "client"                                                                |
-| Application location    | Location of the fat jar in S3 | s3://flowman-test/integration-tests/emr/my-project-1.0-SNAPSHOT-emr.jar |
-| spark-submit parameters | Parameters passed to Spark    | --class com.dimajix.flowman.tools.exec.Driver                           |
-| Application arguments   | Parameters passed to Flowman  | -f flow job build main                                                  |
+| Setting                 | Description                   | Value                                                                     |
+|-------------------------|-------------------------------|---------------------------------------------------------------------------|
+| Type                    | The type of the step function | "Spark application"                                                       |
+| Deployment mode         | Spark deployment mode         | "client"                                                                  |
+| Application location    | Location of the fat jar in S3 | `s3://flowman-test/integration-tests/emr/my-project-1.0-SNAPSHOT-emr.jar` |
+| spark-submit parameters | Parameters passed to Spark    | `--class com.dimajix.flowman.tools.exec.Driver`                           |
+| Application arguments   | Parameters passed to Flowman  | `-f flow job build main`                                                  |
 
 
 
@@ -301,12 +301,12 @@ mvn flowman:deploy
 First you need to create an "application" in EMR Studio, then you can create a "job run", which refers to the Flowman
 executable. The following settings are required:
 
-| Setting           | Description                   | Value                                                                   |
-|-------------------|-------------------------------|-------------------------------------------------------------------------|
-| Type              | The type of the step function | "Spark application"                                                     |
-| Deployment mode   | Spark deployment mode         | "client"                                                                |
-| Script location   | Location of the fat jar in S3 | s3://flowman-test/integration-tests/emr/my-project-1.0-SNAPSHOT-emr.jar |
-| Main class        | The Java class to execute     | com.dimajix.flowman.tools.exec.Driver                                   |
-| Script arguments  | Parameters passed to Flowman  | ["-B", "-f", "flow", "job", "build", "main"]                            |
+| Setting           | Description                   | Value                                                                     |
+|-------------------|-------------------------------|---------------------------------------------------------------------------|
+| Type              | The type of the step function | "Spark application"                                                       |
+| Deployment mode   | Spark deployment mode         | "client"                                                                  |
+| Script location   | Location of the fat jar in S3 | `s3://flowman-test/integration-tests/emr/my-project-1.0-SNAPSHOT-emr.jar` |
+| Main class        | The Java class to execute     | `com.dimajix.flowman.tools.exec.Driver`                                   |
+| Script arguments  | Parameters passed to Flowman  | `["-B", "-f", "flow", "job", "build", "main"]`                            |
 
 Once you submit the job, and all settings are correct, AWS should spin up a temporary Spark cluster and start Flowman.

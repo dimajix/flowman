@@ -22,8 +22,8 @@ relations:
 ```
 
 Since Flowman 0.18.0, you can also directly specify the relation inside the target definition. This saves you
-from having to create a separate relation definition in the `relations` section. This is only recommeneded, if you
-do not access the target relation otherwise, such that a shared definition would not provide any benefir.
+from having to create a separate relation definition in the `relations` section. This is only recommended, if you
+do not access the target relation otherwise, such that a shared definition would not provide any benefit.
 ```yaml
 targets:
   my_stream:
@@ -58,7 +58,7 @@ targets:
 
 * `checkpointLocation` **(optional)** *(type: string)* *(default=empty)*:
   Specifies the checkpoint location where Spark periodically stores the current state of the streaming query such
-  that the application correctly continues from the last state when restartet. The checkpoint location needs to be
+  that the application correctly continues from the last state when restarted. The checkpoint location needs to be
   accessible from all executors, i.e. it needs to reside on some shared storage (HDFS, S3, ...). 
 
 * `trigger` **(optional)** *(type: string)* *(default=empty)*:
@@ -74,7 +74,7 @@ targets:
   coalesce any partitions and generate as many files as Spark partitions. The default value is controlled by the
   Flowman config variable `floman.default.target.parallelism`.
 
-* `rebalance` **(optional)** *(type: bool)* *(default=false)*:
+* `rebalance` **(optional)** *(type: boolean)* *(default=false)*:
   Enables rebalancing the size of all partitions by introducing an additional internal shuffle operation. Each partition
   and output file will contain approximately the same number of records. The default value is controlled by the
   Flowman config variable `floman.default.target.rebalance`.

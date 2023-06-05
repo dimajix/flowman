@@ -1,7 +1,7 @@
 # Configuration Properties
 
-Flowman supports some configuration properties, which influence the behaviour. These properties either can be set
-on the command line via `--conf` (See [flowexec documentation](../cli/flowexec/index.md)), or in the `config` section 
+Flowman supports some configuration properties, which influence the behavior. These properties either can be set
+on the command line via `--conf` (See [`flowexec` documentation](../cli/flowexec/index.md)), or in the `config` section
 of the flow specification (see [module documentation](../spec/module.md)) or in the namespace configuration (see
 [namespace documentation](../spec/namespace.md))
 
@@ -61,7 +61,7 @@ Configure the executor to use. The default `SimpleExecutor` will process all tar
 
 - `flowman.execution.mapping.parallelism` *(type: int)* *(default: 1)* (since Flowman 0.19.0)
 The number of mappings to be processed in parallel. Increasing this number may help in scenarios where many 
-relations are read from and their initial setup is slow (for example due to slow directory listings). With the
+relations are read from, and their initial setup is slow (for example due to slow directory listings). With the
 default value of 1, the parallelism is completely disabled and a non-threaded code path is used instead.
 
 - `flowman.execution.mapping.schemaCache` *(type: boolean)* *(default: true)* (since Flowman 0.22.0)
@@ -71,7 +71,7 @@ Turn on/off caching of schema information of mappings. Caching this information 
 
 - `flowman.execution.relation.schemaCache` *(type: boolean)* *(default: true)* (since Flowman 0.22.0)
 Turn on/off caching of schema information of relations. Caching this information (which is enabled per default) can
- speed up schema inference, which is used for `relation` schemas and when creating the documentation of relations and.
+ speed up schema inference, which is used for `relation` schemas and when creating the documentation of relations and
  mappings. Turning off the cache is mainly for debugging purposes.
 
 - `flowman.execution.scheduler.class` *(type: class)* *(default: `com.dimajix.flowman.execution.DependencyScheduler`)* (since Flowman 0.16.0)
@@ -159,7 +159,7 @@ Sets the default target build policy, which takes effect in the `BUILD` phase. P
   - *`COMPAT`*: A target is considered to be dirty, if the target is empty, or when the output mode is set to `APPEND`. This setting provides the same behaviour as Flowman before version 0.30.0.
     
 - `flowman.default.target.rebalance` *(type: boolean)* *(default:false)* (since Flowman 0.15.0)
-If set to `true`, Flowman will try to write a similar records per each output file. Rebelancing might be an expensive
+If set to `true`, Flowman will try to write similar records per each output file. Rebalancing might be an expensive
 operation since it will invoke a Spark network shuffle. Note that you can still explicitly use different settings per
 target. 
 
@@ -174,9 +174,9 @@ you can still explicitly use different settings per target.
 Sometimes some workarounds are required, especially for non-quite-open-source Big Data platforms.
 
 - `flowman.workaround.analyze_partition` *(type: boolean)* (since Flowman 0.18.0)
-Enables a workaround for CDP 7.1, where ANALYZE TABLES wouldn't always work correctly (especially in unittests). The
+Enables a workaround for CDP 7.1, where ANALYZE TABLES wouldn't always work correctly (especially in unit tests). The
   workaround is enabled per default if the Spark version matches ?.?.?.7.?.?.?.+ (i.e. 2.4.0.7.1.6.0-297) AND if 
-  the Spark repository url contains "cloudera".
+  the Spark repository URL contains "cloudera".
   
 
 ## Example

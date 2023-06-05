@@ -1,5 +1,5 @@
 # JSON Schema
-The *JSON schema* refers to a JSON schema definition. Note that by the nature of JSON, there is no well defined
+The *JSON schema* refers to a JSON schema definition. Note that by the nature of JSON, there is no well-defined
 ordering of fields within the definition.
 
 ## Plugin

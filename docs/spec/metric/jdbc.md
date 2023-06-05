@@ -34,7 +34,7 @@ metrics:
 * `connection` **(mandatory)** *(string/connection)*: Either the name of a [`jdbc` connection](../connection/jdbc.md) 
 or a directly embedded JDBC connection (like in the example).
 
-* `tablePrefix` **(optional)** *(string)* *(default: flowman_)*: Prefix of all table names created by Flowman
+* `tablePrefix` **(optional)** *(string)* *(default: `flowman_`)*: Prefix of all table names created by Flowman
 get one entry ("commit") per publication of metrics.
 
 

@@ -2,7 +2,7 @@
 # Earliest Mapping
 
 The `earliest` mapping keeps only the earliest (oldest) record per ID. This is useful
-when working with streams of change events and you only want to keep the first
+when working with streams of change events, and you only want to keep the first
 event for each ID.
 
 ## Example

@@ -15,12 +15,12 @@ version number *major*.*minor*.*bugfix*. The meaning of the components is as fol
 
 * The *major* number is increased in two scenarios: Either Flowman has implemented a big new feature set, or some
   changes lead to incompatibility with previous versions (breaking changes).
-* The *minor* number is increased to indicating new features or slightly changed behaviour.
-* The *bugfix* number is increased for bugfixes. Otherwise, the behaviour and feature set of Flowman remain unchanged.
+* The *minor* number is increased to indicating new features or slightly changed behavior.
+* The *bugfix* number is increased for bug fixes. Otherwise, the behavior and feature set of Flowman remain unchanged.
 
 Generally, you can expect Flowman to be downwards compatible with older releases within the same major version. Some
-minor changes or bugfixes may change the behavior of some features, which have been changed intentionally (for example,
-even a small bugfix intentionally changes the behaviour).
+minor changes or bug fixes may change the behavior of some features, which have been changed intentionally (for example,
+even a small bug fix intentionally changes the behavior).
 
 Breaking changes will be documented in the changelog file for each version.
 

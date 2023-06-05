@@ -8,7 +8,7 @@ Data quality is an important topic, which is also addressed in Flowman in multip
 First you might want to add some [validate](../spec/target/validate.md) and [verify](../spec/target/verify.md) targets
 to your job. The `validate` the target will be executed before the `CREATE` phase and is well suited for performing some tests
 on the source data. If these tests fail, you may either emit a simple warning or stop the build altogether in failed
-state (which is the default behaviour).
+state (which is the default behavior).
 
 The `verify` target will be executed in the `VERIFY` phase after the `BUILD` phase and is well suited for conducting
 data quality tests after the build itself has finished. Again a failing `verify` target may either only generate a
@@ -81,7 +81,7 @@ proceed any processing. This approach can be used to only start the data transfo
 matches your expectations.
 
 ### Continuous Monitoring of Data Quality
-If you want to setup some continuous monitoring of your data quality (either input or output or both), then the
+If you want to set up some continuous monitoring of your data quality (either input or output or both), then the
 [`measure` target](../spec/target/measure.md) is the right choice. It will collect arbitrary numerical metrics from
 the data and publish it to a metrics sink like Prometheus. Typically, metric collectors are used in conjunction with
 a dashboard (like Grafana), which then can be used to display the whole history of these metrics over time. This way
@@ -91,6 +91,6 @@ some threshold is reached.
 ### Documenting Expectations with Reality Check
 Finally, the whole documentation subsystem is the right tool for specifying your expectations on the data quality and
 have these expectations automatically checked with the real data. In combination with continuous monitoring this can
-help to better understand what might be going wrong. In contrast to pre/post-condition checking, a failed check in
+help to better understand what might be going wrong. In contrast to pre-/post-condition checking, a failed check in
 the documentation will not fail the build - it will simply be marked as failed in the documentation, but that's all
 what will happen.

@@ -1,7 +1,7 @@
 
 # Assemble Mapping
 
-The assemble mapping is used to reassemble data with a possibly nested schema. For example it is possible to extract
+The "assemble" mapping is used to reassemble data with a possibly nested schema. For example, it is possible to extract
 some nested sub-entities, remove specific columns or subtrees or move subtrees to the top level.
 
 ## Examples
@@ -151,5 +151,5 @@ This part contains the assembling specification. It consists of an array with th
 ## Description
 
 The `assemble` mapping will recreate a new structure from the incoming mapping. This is useful for working with nested
-data, where only some subtrees are required or the structure should be changed otherwise. Note that currently modifying
+data, where only some subtrees are required, or the structure should be changed otherwise. Note that currently modifying
 elements in arrays is not supported, you need to `explode` these arrays into multiple records first.

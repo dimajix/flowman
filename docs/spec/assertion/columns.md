@@ -57,22 +57,22 @@ test:
 * `description` **(optional)** *(type: string)*:
   A textual description of the assertion
 
-* `mapping` **(optional)** *(type: srting)*:
+* `mapping` **(optional)** *(type: string)*:
   The name of the mapping which is to be tested.
 
-* `expected` **(optional)** *(type: list:srting)*:
+* `expected` **(optional)** *(type: list:string)*:
   A list of column schema expressions.
   
 
 ### Column Schema Expressions 
 
-In order to verify type properties of columns, Flowman provides a small expression language. Currently the following
+In order to verify type properties of columns, Flowman provides a small expression language. Currently, the following
 four expressions a supported:
 
 * `<column_name> IS PRESENT`: Verifies that a column called `column_name` is present in the schema. The check is
- case insensitive.
+ case-insensitive.
 * `<column_name> IS ABSENT`: Verifies that a column called `column_name` is *not* present in the schema. The check is
-  case insensitive.
+  case-insensitive.
 * `<column_name> IS OF TYPE <typename>`: Verifies that a column called `column_name` is present in the schema and 
   that it is of type `typename`. All Spark SQL types are allowed. 
 * `<column_name> IS OF TYPE (<typename_1>, <typename_2>, ...)`: Verifies that a column called `column_name` is present 

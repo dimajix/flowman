@@ -82,7 +82,7 @@ all aggregations and the dimensions defined in each group. If both options are v
 more efficient, since it will reduce the records before aggregation.
 
 * `dimensions` **(mandatory)** *(type: list:string)*:
-  The list of dimensions within this aggregation group used for creating aggregation groups. These corresponds to
+  The list of dimensions within this aggregation group used for creating aggregation groups. This corresponds to
   the set of dimensions specified in a `GROUP BY` clause.
   
 * `aggregations` **(optional)** *(type: list:string)*:
@@ -90,7 +90,7 @@ more efficient, since it will reduce the records before aggregation.
   then all aggregations will be used.
 
 * `filter` **(optional)** *(type: string)*:
- A Spark SQL filter condition to be applied to all incoming records within this group *befpre* aggregation.
+ A Spark SQL filter condition to be applied to all incoming records within this group *before* aggregation.
   
 * `having`  **(optional)** *(type: string)*:
   A Spark SQL filter condition to be applied to all aggregates within this group after aggregation.

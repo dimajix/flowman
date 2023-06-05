@@ -120,15 +120,15 @@ mvn flowman:deploy
 ### 3. Execute in Azure Synapse
 
 First you need to create an "Apache Spark Pool" in Azure Synapse with the correct Spark version, which would be 3.3
-as the time of writing. Then you need to create an "Apache Spark job definition" in Azure Synapse Workspace wth the 
+as the time of writing. Then you need to create an "Apache Spark job definition" in Azure Synapse Workspace with the
 following properties:
 
-| Setting                | Description                                                          | Value                                                                                                   |
-|------------------------|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| Language               | The type of the Spark application, either Python or Scala            | "Scala"                                                                                                 |
-| Main job file          | Location of the fat jar in Azure Blob Storage                        | abfss://flowman@dimajixspark.dfs.core.windows.net/integration-tests/my-project-1.0-SNAPSHOT-synapse.jar |
-| Main class             | The Java/Scala class to execute                                      | com.dimajix.flowman.tools.exec.Driver                                                                   |
-| Command line arguments | Command line parameters passed to Flowman                            | -B -f flow job build main --force                                                                       |
-| Apache Spark pool      | Spark pool to use for this job. Needs to provide the correct version | *name of your Spark pool*                                                                               |
+| Setting                | Description                                                          | Value                                                                                                     |
+|------------------------|----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| Language               | The type of the Spark application, either Python or Scala            | "Scala"                                                                                                   |
+| Main job file          | Location of the fat jar in Azure Blob Storage                        | `abfss://flowman@dimajixspark.dfs.core.windows.net/integration-tests/my-project-1.0-SNAPSHOT-synapse.jar` |
+| Main class             | The Java/Scala class to execute                                      | `com.dimajix.flowman.tools.exec.Driver`                                                                   |
+| Command line arguments | Command line parameters passed to Flowman                            | `-B -f flow job build main --force`                                                                       |
+| Apache Spark pool      | Spark pool to use for this job. Needs to provide the correct version | *name of your Spark pool*                                                                                 |
 
 Once you submit the job, and all settings are correct, AWS should spin up a temporary Spark cluster and start Flowman.

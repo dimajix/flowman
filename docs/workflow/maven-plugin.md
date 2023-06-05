@@ -141,29 +141,29 @@ packages:
     # The package is a "fatjar" package, i.e. a single jar file containing both Flowman and your project
     kind: fatjar
 ```
-This deployment descriptor will create two packages, using the Maven coordinates (groupId, artifactId and version) of 
+This deployment descriptor will create two packages, using the Maven coordinates (`groupId`, `artifactId` and `version`) of
 the `pom.xml` file. Each package is created as a separate classifier:
 
 * The `jard` package will create a Maven artifact with coordinates `my.company:quickstart:1.0-SNAPSHOT:jar:jard`, i.e.
 
-| Property   | Value        |
-|------------|--------------|
-| groupId    | my.company   |
-| artifactId | quickstart   |
-| version    | 1.0-SNAPSHOT |
-| classifier | jard         |
-| packaging  | jar          |
+| Property     | Value          |
+|--------------|----------------|
+| `groupId`    | `my.company`   |
+| `artifactId` | `quickstart`   |
+| `version`    | `1.0-SNAPSHOT` |
+| `classifier` | `jard`         |
+| `packaging`  | `jar`          |
 
 * The `distd` package will create a Maven artifact with coordinates `my.company:quickstart:1.0-SNAPSHOT:tar.gz:distd`,
 i.e.
 
-| Property   | Value        |
-|------------|--------------|
-| groupId    | my.company   |
-| artifactId | quickstart   |
-| version    | 1.0-SNAPSHOT |
-| classifier | distd        |
-| packaging  | tar.gz       |
+| Property     | Value          |
+|--------------|----------------|
+| `groupId`    | `my.company`   |
+| `artifactId` | `quickstart`   |
+| `version`    | `1.0-SNAPSHOT` |
+| `classifier` | `distd`        |
+| `packaging`  | `tar.gz`       |
 
 
 We will later use these Maven coordinates in the deployment step to retrieve the desired artifact from the artifact
@@ -176,9 +176,9 @@ relations, mappings, jobs and targets. These will not be of any direct use by yo
 how to implement your logic with the Flowman framework.
 
 You should focus on the following entities:
-* relations, which define the data sources and sinks
-* targets, which define the execution targets to be executed
-* jobs, which bundle multiple related targets into a single executable job
+* Relations, which define the data sources and sinks
+* Targets, which define the execution targets to be executed
+* Jobs, which bundle multiple related targets into a single executable job
   Moreover, you might want to adjust environment and connection settings in the `config` subdirectory.
 
 Once you have implemented your initial logic, you better remove all parts from the original skeleton, specifically you
@@ -189,15 +189,15 @@ should remove (or replace) all mappings, relations, jobs and targets.
 Once you have implemented your business logic and tidied up the original skeleton relations, mappings, etc., you should
 perform a first test on your local machine. In order to do so, you can either use a local installation of Flowman
 (a good approach on Linux machines) or run Flowman within a Docker container (the simplest method for all environments,
-like Linux, Windows and Mac OS).
+like Linux, Windows and macOS).
 
 ### Chose how to set up Flowman locally
 
 #### 1. Running with installed Flowman
-In order to run tests with a local Flowman installation, you first need to setup Flowman on your local machine
+In order to run tests with a local Flowman installation, you first need to set up Flowman on your local machine
 [as described in the documentation](../setup/installation.md).
 
-#### 2. Running wih Docker
+#### 2. Running with Docker
 A much simpler option than setting up a local Flowman development installation is to use the pre-built Docker
 images. This approach is recommended especially for Windows users, but is also very simple for Linux and Mac users.
 
@@ -231,32 +231,32 @@ artifacts:
 
 * The `jard` package will create a Maven artifact with coordinates `my.company:quickstart:1.0-SNAPSHOT:jar:jard`, i.e.
 
-  | Property   | Value        |
-  |------------|--------------|
-  | groupId    | my.company   |
-  | artifactId | quickstart   |
-  | version    | 1.0-SNAPSHOT |
-  | classifier | jard         |
-  | packaging  | jar          |
+  | Property     | Value          |
+  |--------------|----------------|
+  | `groupId`    | `my.company`   |
+  | `artifactId` | `quickstart`   |
+  | `version`    | `1.0-SNAPSHOT` |
+  | `classifier` | `jard`         |
+  | `packaging`  | `jar`          |
 
 * The `distd` package will create a Maven artifact with coordinates `my.company:quickstart:1.0-SNAPSHOT:tar.gz:distd`,
    i.e.
 
-  | Property   | Value        |
-  |------------|--------------|
-  | groupId    | my.company   |
-  | artifactId | quickstart   |
-  | version    | 1.0-SNAPSHOT |
-  | classifier | distd        |
-  | packaging  | tar.gz       |
+  | Property     | Value          |
+  |--------------|----------------|
+  | `groupId`    | `my.company`   |
+  | `artifactId` | `quickstart`   |
+  | `version`    | `1.0-SNAPSHOT` |
+  | `classifier` | `distd`        |
+  | `packaging`  | `tar.gz`       |
 
-What type of package is preferable (dist or fatjar) depends on your infrastructure and deployment pipelines. People
+What type of package is preferable (`dist` or `fatjar`) depends on your infrastructure and deployment pipelines. People
 with a dedicated Hadoop cluster (Cloudera, AWS EMR) will probably be happy with a `dist` package, while folks with a
 serverless infrastructure (Azure Synapse, AWS EMR serverless) will probably prefer a completely self-contained 
-`fatjar`package.
+`fatjar` package.
 
 > Note for Windows users: Maven will also execute all tests in your Flowman project. The Hadoop dependency will require
-the so-called *WinUtils* to be installed on your machine, please read more about
+the so-called *Winutils* to be installed on your machine, please read more about
 [setting up your Windows environment](../setup/windows.md).
 
 
@@ -282,7 +282,7 @@ You can use Maven again to retrieve the correct package via
 ```shell
 mvn dependency:get -Dartifact=<groupId>:<artifactId>:<version>:<packaging>:<classifier> -Ddest=<your-dest-directory>
 ```
-For example, for downloading the tar.gz package of our example into the `/tmp` directory, you would need to perform 
+For example, for downloading the `tar.gz` package of our example into the `/tmp` directory, you would need to perform
 the following command:
 ```shell
 mvn dependency:get -Dartifact=my.company:quickstart:1.0:tar.gz:distd -Ddest=/tmp

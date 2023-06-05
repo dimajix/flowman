@@ -23,8 +23,8 @@ relations:
 ```
 
 Since Flowman 0.18.0, you can also directly specify the relation inside the dataset definition. This saves you
-from having to create a separate relation definition in the `relations` section.  This is only recommeneded, if you
-do not access the target relation otherwise, such that a shared definition would not provide any benefir.
+from having to create a separate relation definition in the `relations` section.  This is only recommended, if you
+do not access the target relation otherwise, such that a shared definition would not provide any benefit.
 ```yaml
 mappings:
   measurements-raw:
@@ -62,7 +62,7 @@ mappings:
 
 * `columns` **(optional)** *(type: map:data_type)* *(default: empty):
   Specifies the list of columns and types to read from the relation. This schema will be applied to the records after
-  they have been read and interpreted by the underlying source. This schema will also be used as a subsitute for schema
+  they have been read and interpreted by the underlying source. This schema will also be used as a substitute for schema
   inference and therefore can be very helpful when using [`mock`](mock.md) mappings.
 
 * `filter` **(optional)** *(type: string)* *(default: empty)*:

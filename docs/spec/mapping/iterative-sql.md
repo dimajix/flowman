@@ -55,7 +55,7 @@ The SQL statement to execute
 The name of a file containing the SQL to execute.
 
 * `uri` **(optional)** *(type: string)* *(default: empty)*: 
-A url pointing to a resource containing the SQL to execute.
+A URL pointing to a resource containing the SQL to execute.
 
 * `maxIterations` **(optional)** *(type: int)* *(default: 99)*:
 The maximum of iterations. The mapping will fail if the number of actual iterations required to find the fix point 
@@ -67,7 +67,7 @@ exceeds this number.
 
 
 ## Description
-The `iterativeSql` mapping allows to execute recursive SQL statements, which refer to themselves.
+The `iterativeSql` mapping allows executing recursive SQL statements, which refer to themselves.
 
 Flowman also supports [`recursiveSql` mappings](recursive-sql.md), which provide similar functionality more along
 the lines of classical recursive SQL statements.

@@ -5,8 +5,8 @@ to classical build tools like `make`, `maven` is that Flowman builds *data* inst
 Flowman borrows many features from classical build tools, like support for [build phases](lifecycle.md), automatic
 dependency detection, clean console output, and more.
 
-But how can we instruct Flowman to build data? The input and output data is specified in declarative yaml files
-together with all transformations applied along the way from reading to writing data. At the core of these yaml
+But how can we instruct Flowman to build data? The input and output data is specified in declarative YAML files
+together with all transformations applied along the way from reading to writing data. At the core of these YAML
 files are the following entity types
 
 ![Flowman Entities](../images/flowman-entities.png)
@@ -16,7 +16,7 @@ files are the following entity types
 
 [*Relations*](../spec/relation/index.md) specify *physical manifestations of data* in external systems. A relation may
 refer to any data source (or sink) like a table or view in a MySQL database, a table in Hive or files on some
-distributed filesystem like HDFS or files stored in object store like S3. 
+distributed file system like HDFS or files stored in object store like S3.
 
 A relation can serve both as a data source or a data sink, or as both (this is when automatic dependency management 
 comes into play, which is required to determine the correct build order). Each relation typically has some important
@@ -102,7 +102,7 @@ other mappings as their input and thereby build a complex flow of data transform
 transformations are executed using Apache Spark.
 
 There are all kinds of mappings available, like simple [filter](../spec/mapping/filter.md) mappings, 
-[aggregate](../spec/mapping/aggregate.md) mappings and very powerful generic [sql](../spec/mapping/sql.md) mappings.
+[aggregate](../spec/mapping/aggregate.md) mappings and very powerful generic [SQL](../spec/mapping/sql.md) mappings.
 Again, each mapping is described using a specific set of properties depending on the selected kind.
 
 ### Examples
@@ -158,7 +158,7 @@ mappings:
 Now we have the two entity types *mapping* and *relation*, and we already saw how we can read from a relation using
 the `readRelation` mapping. But how can we store the result of a flow of transformations back into some relation? This
 is where *build targets* come into play. They kind of connect the output of a mapping with a relation and tell Flowman
-to write the results of a mapping into a relation. These targets are the entities which will be *build* by Flowman and
+to write the results of a mapping into a relation. These targets are the entities which will be *built* by Flowman and
 which support a lifecycle starting from creating a relation, migrating it to the newest schema, filling with data,
 verifying it etc.
 
@@ -191,7 +191,7 @@ date which selects only a subset of the available data for processing.
 
 ### Examples
 
-The following example defines a job called `main` with two build targets `stations` and `weather` . Moreover, the job
+The following example defines a job called `main` with two build targets `stations` and `weather`. Moreover, the job
 defines a mandatory parameter called `processing_date`, which can be referenced as a variable in all entities.
 ```yaml
 jobs:
@@ -210,7 +210,7 @@ jobs:
 ```
 
 ## Additional entities
-While these for types (relations, mappings, targets and jobs) form the basis of every Flowman project, there are some
+While these four types (relations, mappings, targets and jobs) form the basis of every Flowman project, there are some
 additional entities like [tests](../spec/test/index.md), [connections](../spec/connection/index.md) and more. You find an
 overview of all entity types in the [project specification documentation](../spec/index.md)
 

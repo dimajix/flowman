@@ -8,9 +8,9 @@ on the weather stations metadata and perform a technical format conversion from 
 ## 1. What to Expect
 
 ### Objectives
-* You will understand Flowmans philosophy and development workflow
+* You will understand Flowman's philosophy and development workflow
 * You will get known to the main entities in Flowman which make up a project
-* You will learn how to use Flowmans command line tool to execute a project
+* You will learn how to use Flowman's command line tool to execute a project
 
 You can find the full source code of this lesson [on GitHub](https://github.com/dimajix/flowman-tutorial/tree/develop/lessons/01-basics) 
 
@@ -89,7 +89,7 @@ properties are documented on the Spark homepage, while additional Flowman specif
 the Flowman documentation.
 
 In this example we will access data stored in Amazon S3, so we need to provide some configurations like an 
-anonymous credentials provider, proxy settings and so on. In this example all these configurations settings are stored 
+anonymous credential provider, proxy settings and so on. In this example all these configurations settings are stored
 in the file `config/aws.yml`, but you can provide multiple `config` sections in multiple files.
 
 ```yaml
@@ -158,7 +158,7 @@ alternative to explicitly specify a schema.
 #### Target Relation
 We also need to specify a relation to hold the data written by Flowman. Again we use a `file` relation, but this time
 using Parquet as the file format. Also note that the location is using the `basedir` environment variable which has been
-defined the the `config/environment.yml` file. This way we can easily change the location of the output files either
+defined the `config/environment.yml` file. This way we can easily change the location of the output files either
 by changing the variable definition directly inside the file, or - more elegantly - via a command line parameter at
 execution time.
 ```yaml
@@ -320,5 +320,5 @@ flowexec -f lessons/01-basics job build main --force
 
 ## 5. Next Lessons
 In the next lessons, we will have a closer look at explicit schema definitions, more complex transformations than only 
-reading data and we will also learn how to use job parameters and the effect of multiple build targets within a single
+reading data, and we will also learn how to use job parameters and the effect of multiple build targets within a single
 job.

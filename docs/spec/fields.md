@@ -1,7 +1,7 @@
 # Fields, Data Types & Values
 
 In various places, Flowman makes use of data type definitions. These are used for describing the layout of
-data sources and sinks like CSV files but they are also used for describing external tables like Hive 
+data sources and sinks like CSV files, but they are also used for describing external tables like Hive
 
 ## Supported Data Types
 
@@ -11,16 +11,16 @@ The following simple data types are supported by Flowman
 |---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `STRING`, `TEXT`    | text and strings of arbitrary length                                                                                                                                                                                          |
 | `BINARY`            | binary data of arbitrary length                                                                                                                                                                                               |
-| `TINYINT`, `BYTE`   | 8 bit signed numbers                                                                                                                                                                                                          |
-| `SMALLINT`, `SHORT` | 16 bit signed numbers                                                                                                                                                                                                         |
-| `INT`, `INTEGER`    | 32 bit signed numbers                                                                                                                                                                                                         |
-| `BIGINT`, `LONG`    | 64 bit signed numbers                                                                                                                                                                                                         |
+| `TINYINT`, `BYTE`   | 8-bit signed numbers                                                                                                                                                                                                          |
+| `SMALLINT`, `SHORT` | 16-bit signed numbers                                                                                                                                                                                                         |
+| `INT`, `INTEGER`    | 32-bit signed numbers                                                                                                                                                                                                         |
+| `BIGINT`, `LONG`    | 64-bit signed numbers                                                                                                                                                                                                         |
 | `BOOLEAN`, `BOOL`   | true or false                                                                                                                                                                                                                 |
-| `FLOAT`             | 32 bit floating point number                                                                                                                                                                                                  |
-| `DOUBLE`            | 64 bit floating point number                                                                                                                                                                                                  |
+| `FLOAT`             | 32-bit floating point number                                                                                                                                                                                                  |
+| `DOUBLE`            | 64-bit floating point number                                                                                                                                                                                                  |
 | `DECIMAL(A,B)`      |                                                                                                                                                                                                                               |
-| `VARCHAR(N)`        | text with up to `n`characters. Note that this data type is only supported for specifying input or output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length.   |
-| `CHAR(N)`           | text with exactly `n`characters. Note that this data type is only supported for specifying input or output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length. |
+| `VARCHAR(N)`        | text with up to `n` characters. Note that this data type is only supported for specifying input or output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length.   |
+| `CHAR(N)`           | text with exactly `n` characters. Note that this data type is only supported for specifying input or output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length. |
 | `DATE`              | date type                                                                                                                                                                                                                     |
 | `TIMESTAMP`         | timestamp type (date and time)                                                                                                                                                                                                |
 | `DURATION`          | duration type                                                                                                                                                                                                                 |
@@ -29,7 +29,7 @@ Note that Spark itself does not fully support `VARCHAR(n)` and `CHAR(n)`, which 
 data types in [`sql` mappings](mapping/sql.md) and SQL expressions. But Flowman well supports these data types for
 all [schema definitions](schema/index.md) and in [`cast` mappings](mapping/cast.md). The main use case of these 
 extended character types is to define data schemas for physical tables managed by Flowman (i.e. mainly for 
-[`jdbcTable` relation](relation/jdbcTable.md).
+[`jdbcTable` relation](relation/jdbcTable.md)).
 
 
 ## Specifying Fields

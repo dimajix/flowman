@@ -1,6 +1,6 @@
 # Inline Schema
 
-The `inline` schema is (as the name already suggests) directly embedded into the corresponding yml file.
+The `inline` schema is (as the name already suggests) directly embedded into the corresponding YAML file.
 
 ## Example
 
@@ -51,17 +51,17 @@ The following simple data types are supported by Flowman
 
 * `string`, `text` - text and strings of arbitrary length
 * `binary` - binary data of arbitrary length
-* `tinyint`, `byte` - 8 bit signed numbers
-* `smallint`, `short` - 16 bit signed numbers
-* `int`, `integer` - 32 bit signed numbers
-* `bigint`, `long` - 64 bit signed numbers
+* `tinyint`, `byte` - 8-bit signed numbers
+* `smallint`, `short` - 16-bit signed numbers
+* `int`, `integer` - 32-bit signed numbers
+* `bigint`, `long` - 64-bit signed numbers
 * `boolean` - true or false
-* `float` - 32 bit floating point number
-* `double` - 64 bit floating point number
+* `float` - 32-bit floating point number
+* `double` - 64-bit floating point number
 * `decimal(a,b)`
-* `varchar(n)` - text with up to `n`characters. Note that this data type is only supported for specifying input or
+* `varchar(n)` - text with up to `n` characters. Note that this data type is only supported for specifying input or
 output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length.
-* `char(n)` - text with exactly `n`characters. Note that this data type is only supported for specifying input or
+* `char(n)` - text with exactly `n` characters. Note that this data type is only supported for specifying input or
   output data types. Internally Spark and therefore Flowman convert these columns to a `string` column of arbitrary length.
 * `date` - date type
 * `timestamp` - timestamp type (date and time)

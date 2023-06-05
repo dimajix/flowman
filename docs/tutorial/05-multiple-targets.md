@@ -10,7 +10,7 @@ correspond to having multiple build targets.
 * You will learn how to create multiple build targets
 * You will understand how Flowman builds all targets in the correct order
 * You will learn how to build only individual targets via CLI
-* You will gather experience with more transformations like JOINs
+* You will gather experience with more transformations like joins
 
 You can find the full source code of this lesson [on GitHub](https://github.com/dimajix/flowman-tutorial/tree/develop/lessons/05-multiple-targets)
 
@@ -361,7 +361,7 @@ each target and execute the targets in a correct order.
 
 ## 3. Execution
 
-With these entities in place we ca now execute the project as follows:
+With these entities in place we can now execute the project as follows:
 
 ```shell
 cd /opt/flowman

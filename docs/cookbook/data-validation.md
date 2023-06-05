@@ -41,7 +41,7 @@ jobs:
       - some_output_target
 ```
 The example above will validate assumptions on `some_table` mapping, which reads from some relation also called
-`some_table` (for example tha could be a Hive table or a JDBC table). The first assertion validates that the column
+`some_table` (for example that could be a Hive table or a JDBC table). The first assertion validates that the column
 `campaign` only contains unique values while the second assertion validates that the column doesn't contain any
 `NULL` values.
 
@@ -52,9 +52,9 @@ building invalid data.
 
 ## Verification
 
-In addition to *validating* data quality before a FLowman job starts its main work later in the `CREATE` and
+In addition to *validating* data quality before a Flowman job starts its main work later in the `CREATE` and
 `BUILD` phase, Flowman also provides the ability to *verify* the results of all data transformations after the
-the `BUILD` execution phase, namely in the `VERIFY` phase. In order to implement a verification, you simply need
+`BUILD` execution phase, namely in the `VERIFY` phase. In order to implement a verification, you simply need
 to use a [verify](../spec/target/verify.md) target, which works precisely like the `validate` target with the only
 difference that it is executed after the `BUILD` phase.
 

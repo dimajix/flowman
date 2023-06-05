@@ -1,6 +1,6 @@
 # Script Expressions
 
-Flowman allows to use *expressions* at many places in the YAML specification files. For example, you can reference 
+Flowman allows using *expressions* at many places in the YAML specification files. For example, you can reference
 variables defined in the `environment` section or also access a set of predefined objects inside values.
 
 Flowman uses [Apache Velocity](https://velocity.apache.org/) as the template engine. Please also read 

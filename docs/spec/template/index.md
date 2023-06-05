@@ -4,8 +4,8 @@ Since version 0.18.0 Flowman supports a new mechanism for defining templates, i.
 for relations, mappings and targets. The basic idea is that once a template is defined, it can be used in a very
 similar way as built in entities (like mappings, relations and targets).
 
-There are some differences when creating an instance of a template as opposed to normal entites:
-1. Currently templates only support simple parameters like strings, integers and so on. Templates do not support
+There are some differences when creating an instance of a template as opposed to normal entities:
+1. Currently, templates only support simple parameters like strings, integers and so on. Templates do not support
    more sophisticated data types like nested structs, maps or arrays.
 2. The `kind` of a template instance always starts with `template/` for technical reasons.
 3. Parameters of template instances are validated once the instance is used and not at parsing time.

@@ -1,6 +1,6 @@
 # SFTP Upload Target
 The SFTP upload target is used for uploading data which resides either on the local machine or
-in a Hadoop compatible filesystem (HDFS, S3, ...) to an external SFTP server.
+in a Hadoop compatible file system (HDFS, S3, ...) to an external SFTP server.
 
 ## Plugin
 The `sftpUpload` target is provided by the [SFTP Plugin](../../plugins/sftp.md), which needs to be enabled in your
@@ -56,7 +56,7 @@ jobs:
 A textual description of the build target.
 
 * `source` **(mandatory)** *(type: string)*:
-Specifies the source location in the Hadoop compatible filesystem. This may be either a single
+Specifies the source location in the Hadoop compatible file system. This may be either a single
 file or a whole directory.
 
 * `target` **(mandatory)** *(type: string)*:
@@ -76,7 +76,7 @@ Specifies an optional delimiter, which should be used between files when they ar
 when `merge` is set to `true`. Has no effect otherwise.
 
 * `overwrite` **(optional)** *(type: boolean)* *(default: true)*:
-Set to `true` in order to overwrite existing files on the SFTP server. Otherwise an existing
+Set to `true` in order to overwrite existing files on the SFTP server. Otherwise, an existing
 file will result in an error.
 
 ## Description

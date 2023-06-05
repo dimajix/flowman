@@ -2,7 +2,7 @@
 
 The `drop` target is used for dropping relations, i.e. dropping tables in relational database,
 dropping tables in Hive or removing output directories. The target can be used for cleaning up tables which are not
-used any more.
+used anymore.
 
 ## Example
 
@@ -58,7 +58,7 @@ during the `DESTROY` phase.
 
 ## Supported Execution Phases
 * `CREATE` - This will drop  the target relation or migrate it to the newest schema (if possible).
-* `VERIFY` - This will verify that the target relation does not exist any more
+* `VERIFY` - This will verify that the target relation does not exist anymore.
 * `DESTROY` - This will also drop the relation itself and all its content.
 
 Read more about [execution phases](../../concepts/lifecycle.md).

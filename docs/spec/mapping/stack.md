@@ -4,7 +4,7 @@ Stacking is the operation of transposing specific columns into rows. Let's take 
 
 | product | EN Text | German Text | fr  |
 |---------|---------|-------------|-----|
-| 0001    | Shoes   | Shuhe       | ... |
+| 0001    | Shoes   | Schuhe      | ... |
 | 0002    | T-Shirt | T-Shirt     | ... |
 | 0003    | ....    |             |     |
 
@@ -14,7 +14,7 @@ provided the `land` as the name of the new `nameColumn` and `text` as the name o
 | product | lang | text    |
 |---------|------|---------|
 | 0001    | en   | Shoes   |
-| 0001    | de   | Shuhe   |
+| 0001    | de   | Schuhe  |
 | 0001    | fr   | ...     |
 | 0002    | en   | T-Shirt |
 | 0002    | de   | T-Shirt |

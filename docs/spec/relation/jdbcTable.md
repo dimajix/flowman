@@ -1,7 +1,7 @@
 # JDBC Table Relations
 
 The `jdbcTable` relation allows you to access databases using a JDBC driver. Note that you need to put an appropriate 
-JDBC driver onto the classpath of Flowman. This can be done by using an appropriate plugin.
+JDBC driver onto the class path of Flowman. This can be done by using an appropriate plugin.
 
 
 ## Example
@@ -56,7 +56,7 @@ relations:
 For most cases, it is recommended not to embed the connection, since this prevents reusing the same connection in
 multiple places.
 
-The schema is still optional in this case, but it will help [mocking](mock.md) the relation for unittests.
+The schema is still optional in this case, but it will help [mock](mock.md) the relation for unit tests.
 
 
 ### Embedding SQL
@@ -89,7 +89,7 @@ relations:
 In this case, Flowman will only use the SQL statement for creating the table. This gives you full control, but at the
 same time, completely disables automatic migrations.
 
-Again, the schema is optional in this case, but it will help [mocking](mock.md) the relation for unittests.
+Again, the schema is optional in this case, but it will help [mock](mock.md) the relation for unit tests.
 
 
 ## Fields
@@ -117,13 +117,13 @@ as the fallback for merge/upsert operations, when no `mergeKey` and no explicit 
  * `database` **(optional)** *(type: string)* *(default: empty)*: 
  Defines the Hive database where the table is defined. When no database is specified, the
  table is accessed without any specific qualification, meaning that the default database
- will be used or the one specified in the connection.
+ will be used, or the one specified in the connection.
 
  * `table` **(optional)** *(type: string)*:
  Specifies the name of the table (or view) in the relational database.
 
  * `stagingTable` **(optional)** *(type: string)*:
-   Specifies the name of an optional staging table in the relational database. This table will be used as an 
+   Specifies the name of an optional staging table in the relational database. This table will be used as a
 temporary, intermediate target for write/update/merge operations. During output operations this table will be
 created first, then populated with new records and then within a database transaction all records will be pushed into
 the real JDBC table and the temporary table will be dropped.
@@ -152,7 +152,7 @@ Flowman for SQL Server and Azure SQL.
 ## Staging Tables
 Flowman supports using temporary staging tables when writing to a SQL database. In this mode, Flowman will first
 create this special staging table (which technically is just a normal table, but without any index or primary key),
-and then copy the table into the real target table. Afterwards, the staging table will be dropped. This approach
+and then copy the table into the real target table. Afterward, the staging table will be dropped. This approach
 helps to ensure consistency, since the copy process is performed within a single SQL transaction. Moreover, since
 no primary key or index is present in the staging table, this will also avoid locks on the database server side,
 which may lead to timeouts or other failures during the parallel write process that Spark uses under the hood.
@@ -199,7 +199,7 @@ In addition, the `jdbcTable` relation also supports complex merge operations in 
 
 
 ## Connectors
-In order to connect to a SQL database, you need to load a corresponding plugin providing the JDBC driver. Currently
+In order to connect to a SQL database, you need to load a corresponding plugin providing the JDBC driver. Currently,
 Flowman provides the following plugins
 
 | Plugin                                              | Database                 |
@@ -218,7 +218,7 @@ whole lifecycle for you. This means that
 * JDBC tables will be created and migrated during `CREATE` phase, but only if a schema is provided
 * JDBC tables will be populated with records and partitions will be added during `BUILD` phase, but only if the 
   `relation` target contains a mapping.
-* JDBC tables will be truncated or individual partitions will be dropped during `TRUNCATE` phase
+* JDBC tables will be truncated, or individual partitions will be dropped during `TRUNCATE` phase
 * JDBC tables will be removed during `DESTROY` phase
 
 This means that you can

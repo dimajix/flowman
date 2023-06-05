@@ -1,7 +1,7 @@
 # JDBC View Relations
 
-The `jdbcView` relation allows you to access and manage VIEWs in relational databases using a JDBC driver. Note that 
-you need to put an appropriate JDBC driver onto the classpath of Flowman. This can be done by using an appropriate 
+The `jdbcView` relation allows you to access and manage views in relational databases using a JDBC driver. Note that
+you need to put an appropriate JDBC driver onto the class path of Flowman. This can be done by using an appropriate
 plugin.
 
 ## Example
@@ -61,7 +61,7 @@ multiple places.
 * `database` **(optional)** *(type: string)* *(default: empty)*:
   Defines the Hive database where the table is defined. When no database is specified, the
   table is accessed without any specific qualification, meaning that the default database
-  will be used or the one specified in the connection.
+  will be used, or the one specified in the connection.
 
 * `view` **(optional)** *(type: string)*:
   Specifies the name of the view in the relational database.
@@ -104,4 +104,4 @@ The migration strategy `ALTER`, `ALTER_REPLACE` and `REPLACE` supports the follo
 ## Remarks
 
 Not all databases support retrieving the original SQL definition of a view. In this case it is impossible for Flowman
-to check if the view definition is different from the users specification, and will always migrate the view.
+to check if the view definition is different from the user specification, and will always migrate the view.

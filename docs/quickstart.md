@@ -1,6 +1,6 @@
-# Flowman Quickstart Guide
+# Flowman Quick Start Guide
 
-This quickstart guide will walk you through the first steps working with Flowman. We will be using Flowman in Docker
+This quick start guide will walk you through the first steps working with Flowman. We will be using Flowman in Docker
 to save setup and configuration of Spark and Flowman.
 
 Of course running Flowman inside Docker will probably prevent a proper integration with any existing Hadoop environment
@@ -86,7 +86,7 @@ flowman:weather/main> mapping show measurements_raw
 flowman:weather/main> mapping show measurements_extracted
 flowman:weather/main> mapping show stations_raw
 ```
-Finally we'd like to leave the job context again.
+Finally, we'd like to leave the job context again.
 ```
 flowman:weather/main> job leave
 ```
@@ -114,7 +114,7 @@ flowman:weather> history target search -P weather
 ### Generating Documentation
 
 Flowman cannot only execute all the data transformations specified in the example project, it can also generate
-a documentation, which will be stored as an html file
+a documentation, which will be stored as an HTML file
 ```
 flowman:weather> documentation generate
 ```
@@ -134,7 +134,7 @@ flowman:weather> quit
 
 So far we have only used the Flowman shell for interactive work with projects. Actually, the shell was developed as a
 second step to help to analyze problems and debugging data flows. The primary command for working with Flowman projects 
-is `flowexec` which is used for non-interactive batch execution, for example within cron-jobs.
+is `flowexec` which is used for non-interactive batch execution, for example within cron jobs.
 
 It shares a lot of code with the Flowman shell, so the commands are often exactly the same. The main difference is 
 that with `flowexec` you specify the commands on the command line while `flowshell` provides its own prompt.
@@ -147,6 +147,6 @@ flowexec -f examples/weather job build main year=2014
 
 ## 4. Congratulations!
 
-A very special *Thank You!* goes to all of you who try to follow the example hands-on on your local machine. If you have 
+A very special "Thank You!" goes to all of you who try to follow the example hands-on on your local machine. If you have
 problems with following the example, please leave me a note — it’s always difficult to streamline such a process, and 
 I might have overseen some issues.

@@ -1,5 +1,5 @@
 # SQL Mapping
-The `sql` mapping allows to execute any SQL transformation which contains Spark SQL code. You can reference other
+The `sql` mapping allows executing any SQL transformation which contains Spark SQL code. You can reference other
 mappings in `FROM` clauses by the mappings names. Note that you cannot reference any Hive tables, since Flowman will
 interpret all tables names as references to Flowman mappings.
 
@@ -59,7 +59,7 @@ cannot reference Hive tables within the SQL statement, as Flowman will interpret
 The name of a file containing the SQL to execute.
 
 * `uri` **(optional)** *(type: string)* *(default: empty)*: 
-A url pointing to a resource containing the SQL to execute.
+A URL pointing to a resource containing the SQL to execute.
 
 
 ## Outputs

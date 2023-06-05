@@ -19,7 +19,7 @@ The full lifecycle consists out of specific execution phases, as follows:
    This will create all relations (tables and directories) specified as targets. The tables will not contain any data,
    they only provide an empty hull. If a target already exists, a migration will be started instead. This will migrate a
    relation (table or directory) to a new schema, if required. Note that this is not supported by all target types, and
-   even if a target supports migration in general, it may not be possible due to unmigratable changes.
+   even if a target supports migration in general, it may not be possible due to nonmigratable changes.
 
 3. **BUILD**.
    The *build* phase will actually create all records and fill them into the specified relations.
@@ -34,7 +34,7 @@ The full lifecycle consists out of specific execution phases, as follows:
 
 6. **DESTROY**.
    The final phase *destroy* is used to physically remove relations including their data. This will also remove table
-   definitions, views and directories. It performs the opposite operation than the *create* phase.
+   definitions, views and directories. It performs the opposite operation than the *CREATE* phase.
 
 
 ## Dependencies
@@ -42,7 +42,7 @@ When executing a specific job, Flowman first builds a dependency tree of all tar
 in an order such that all dependencies of each target have to be built before the target in question itself is being
 built.
 
-For building the dependency tree, Flowman examines the physical entities required or produced by each target. Therefore
+For building the dependency tree, Flowman examines the physical entities required or produced by each target. Therefore,
 in most cases, you do not need to manually specify dependencies yourself (although this is possible).
 
 ### Automatic Dependencies

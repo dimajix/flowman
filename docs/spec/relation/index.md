@@ -1,7 +1,7 @@
 # Relations
 
-Physical data sources (like Hive tables, relational SQL databases, files etc) are specified
-using so called *relations*. Data flows can read and write from and to relations via 
+Physical data sources (like Hive tables, relational SQL databases, files etc.) are specified
+using so-called *relations*. Data flows can read and write from and to relations via
 appropriate mappings ([Read Mapping](../mapping/relation.md)) or build targets ([Relation
 Target](../target/relation.md)).
 
@@ -59,18 +59,18 @@ configured using the `columnMismatchPolicy` as follows. Basically the idea is th
 The second aspect is the conversion of data types. Again this can be configured using the `typeMismatchPolicy` as
 follows:
 
-| Type Mismatch Policy        | Input vs Requested Data Type         | Result           |
-|-----------------------------|--------------------------------------|------------------|
-| `IGNORE`                    | Source can be cast to dest           | Input Data Type  |
-| `IGNORE`                    | Source cannot be safely cast to dest | Input Data Type  |
-| `ERROR`                     | Source can be cast to dest           | build error      |
-| `ERROR`                     | Source cannot be safely cast to dest | build error      |
-| `CAST_COMPATIBLE_OR_ERROR`  | Source can be cast to dest           | Target Data Type |
-| `CAST_COMPATIBLE_OR_ERROR`  | Source cannot be safely cast to dest | build error      |
-| `CAST_COMPATIBLE_OR_IGNORE` | Source can be safely cast to dest    | Target Data Type |
-| `CAST_COMPATIBLE_OR_IGNORE` | Source cannot be safely cast to dest | Input Data Type  |
-| `CAST_ALWAYS`               | Source can be safely cast to dest    | Target Data Type |
-| `CAST_ALWAYS`               | Source cannot be safely cast to dest | Target Data Type |
+| Type Mismatch Policy        | Input vs Requested Data Type                | Result           |
+|-----------------------------|---------------------------------------------|------------------|
+| `IGNORE`                    | Source can be cast to destination           | Input Data Type  |
+| `IGNORE`                    | Source cannot be safely cast to destination | Input Data Type  |
+| `ERROR`                     | Source can be cast to destination           | build error      |
+| `ERROR`                     | Source cannot be safely cast to destination | build error      |
+| `CAST_COMPATIBLE_OR_ERROR`  | Source can be cast to destination           | Target Data Type |
+| `CAST_COMPATIBLE_OR_ERROR`  | Source cannot be safely cast to destination | build error      |
+| `CAST_COMPATIBLE_OR_IGNORE` | Source can be safely cast to destination    | Target Data Type |
+| `CAST_COMPATIBLE_OR_IGNORE` | Source cannot be safely cast to destination | Input Data Type  |
+| `CAST_ALWAYS`               | Source can be safely cast to destination    | Target Data Type |
+| `CAST_ALWAYS`               | Source cannot be safely cast to destination | Target Data Type |
 
 The two options `flowman.default.relation.input.charVarcharPolicy` and `flowman.default.relation.output.charVarcharPolicy`
 control how Flowman will treat `VARCHAR(n)` and `CHAR(n)` data types. The possible values are

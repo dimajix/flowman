@@ -4,7 +4,7 @@ nested records from a JSON document. The mapping will only extract the data from
 column and will throw away any other input column.
 
 Since Flowman cannot infer the JSON schema in advance, you need to explicitly specify the
-schema of the JSONs to be extracted.
+schema of the JSON files to be extracted.
 
 ## Example
 ```yaml
@@ -75,7 +75,7 @@ than 32, including tab and line feed characters) or not.
 
 ## Outputs
 * `main` - the primary output of the mapping containing the parsed JSON records
-* `error` - the error output of the mapping containing all unparsable records
+* `error` - the error output of the mapping containing all not parsable records
 
 
 ## Description

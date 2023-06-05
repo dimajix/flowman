@@ -1,7 +1,7 @@
 # Local Relations
 In addition to working with file relations backed up by Hadoop compatible file systems (HDFS,
 S3, ...), Flowman also supports the local file system as backend for working with files. The
-implementation is independant of the normal Apache Spark data sources, therefore only a very
+implementation is independent of the normal Apache Spark data sources, therefore only a very
 limited set of file formats are supported.
 
 ## Example
@@ -34,7 +34,7 @@ relations:
  All options are passed directly to the reader/writer backend and are specific to each
  supported format.
  
- * `format` **(optional)** *(string)* *(default: csv)*:
+ * `format` **(optional)** *(string)* *(default: `csv`)*:
  This specifies the file format to use. Since the implementation of local file formats
  is separate from Apache Spark, only a limited number of formats are currently supported.
 
@@ -59,7 +59,7 @@ whole lifecycle of the directory for you. This means that
 * The directory specified in `location` will be created during `create` phase
 * The directory specified in `location` will be populated with records or partitioning subdirectories will be added
   during `build` phase
-* The directory specified in `location` will be truncated or individual partitions will be dropped during `clean` phase
+* The directory specified in `location` will be truncated, or individual partitions will be dropped during `clean` phase
 * The directory specified in `location` tables will be removed during `destroy` phase
 
 

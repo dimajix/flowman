@@ -2,7 +2,7 @@
 
 The different aspects of each test are execution in a specific order by Flowman. 
 
-1. A test environment is setup by adding or modifying any variable specified in the `environment` section
+1. A test environment is set up by adding or modifying any variable specified in the `environment` section
 2. All relations and mappings specified as overrides are created to replace and extend the original entities.
 3. All `targets` and `fixtures` are executed. Data dependencies are used to determine a correct execution order.
   The execution includes the `CREATE`, `BUILD` and `VERIFY` phases.

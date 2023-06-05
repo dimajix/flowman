@@ -105,7 +105,7 @@ relations:
 
 ### 2.2 Mappings
 Now since an explicit schema is provided with the CSV source relation with appropriate column names and data types,
-there is no need any more to transform the incoming columns within a `select` mapping. Therefore, we can completely
+there is no need anymore to transform the incoming columns within a `select` mapping. Therefore, we can completely
 remove the `stations_conformed` mapping.
 
 
@@ -173,5 +173,5 @@ flowexec -f lessons/02-schema job build main --force
 
 
 ## 4. Next Lessons
-In the next lessons, we will have a closer look at more complex transformations than only reading data and we will
+In the next lessons, we will have a closer look at more complex transformations than only reading data, and we will
 also learn how to use job parameters and the effect of multiple build targets within a single job.

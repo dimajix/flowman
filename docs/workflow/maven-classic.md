@@ -220,13 +220,13 @@ This `pom.xml` will instruct Maven to perform the following build steps:
 
 The final artifact of the example `pom.xml` above will have the following Maven coordinates
 
-| Property   | Value        |
-|------------|--------------|
-| groupId    | my.company   |
-| artifactId | quickstart   |
-| version    | 1.0-SNAPSHOT |
-| classifier | bin          |
-| packaging  | tar.gz       |
+| Property     | Value          |
+|--------------|----------------|
+| `groupId`    | `my.company`   |
+| `artifactId` | `quickstart`   |
+| `version`    | `1.0-SNAPSHOT` |
+| `classifier` | `bin`          |
+| `packaging`  | `tar.gz`       |
 
 
 This approach is very flexible (since it uses standard Maven plugins), but also a little bit conservative since you
@@ -239,9 +239,9 @@ relations, mappings, jobs and targets. These will not be of any direct use by yo
 how to implement your logic with the Flowman framework.
 
 You should focus on the following entities:
-* relations, which define the data sources and sinks
-* targets, which define the execution targets to be executed
-* jobs, which bundle multiple related targets into a single executable job
+* Relations, which define the data sources and sinks
+* Targets, which define the execution targets to be executed
+* Jobs, which bundle multiple related targets into a single executable job
   Moreover, you might want to adjust environment and connection settings in the `config` subdirectory.
 
 Once you have implemented your initial logic, you better remove all parts from the original skeleton, specifically you
@@ -252,15 +252,15 @@ should remove (or replace) all mappings, relations, jobs and targets.
 Once you have implemented your business logic and tidied up the original skeleton relations, mappings, etc., you should
 perform a first test on your local machine. In order to do so, you can either use a local installation of Flowman
 (a good approach on Linux machines) or run Flowman within a Docker container (the simplest method for all environments,
-like Linux, Windows and Mac OS).
+like Linux, Windows and macOS).
 
 ### Chose how to set up Flowman locally
 
 #### 1. Running with installed Flowman
-In order to run tests with a local Flowman installation, you first need to setup Flowman on your local machine
+In order to run tests with a local Flowman installation, you first need to set up Flowman on your local machine
 [as described in the documentation](../setup/installation.md).
 
-#### 2. Running wih Docker
+#### 2. Running with Docker
 A much simpler option than setting up a local Flowman development installation is to use the pre-built Docker
 images. This approach is recommended especially for Windows users, but is also very simple for Linux and Mac users.
 
@@ -294,16 +294,16 @@ need to be provided by your environment.
 
 The `pom.xml` of the example will create an artifact with the following Maven coordinates:
 
-| Property   | Value        |
-|------------|--------------|
-| groupId    | my.company   |
-| artifactId | quickstart   |
-| version    | 1.0-SNAPSHOT |
-| classifier | bin          |
-| packaging  | tar.gz       |
+| Property     | Value          |
+|--------------|----------------|
+| `groupId`    | `my.company`   |
+| `artifactId` | `quickstart`   |
+| `version`    | `1.0-SNAPSHOT` |
+| `classifier` | `bin`          |
+| `packaging`  | `tar.gz`       |
 
 > Note for Windows users: Maven will also execute all tests in your Flowman project. The Hadoop dependency will require
-the so-called *WinUtils* to be installed on your machine, please read more about
+the so-called *Winutils* to be installed on your machine, please read more about
 [setting up your Windows environment](../setup/windows.md).
 
 

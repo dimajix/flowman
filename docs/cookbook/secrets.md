@@ -2,9 +2,9 @@
 
 Most Flowman projects need to provide some sort of secrets (database credentials, S3 secrets, ...) to external
 systems for being able to access them. This opens the question about a best practice how to provide those secrets
-to a Flowman project in a secure manner.
+to a Flowman project securely.
 
-In order to securely provide secrets to Flowman, there are two ways:
+In order to provide secrets to Flowman, there are two ways:
 1. Provide secrets via system environment variables, which then can be accessed in Flowman
 2. Provide secrets stored in an external file, which then can be read by Flowman
 
@@ -57,7 +57,7 @@ but can also be used in many other scenarios.
 ## Using external files
 
 Another viable approach is to provide secrets via files. Flowman can read any file via the template function
-`$File.read`, which will simply return the files content. Moreover by using the template function `$JSON.path` you
+`$File.read`, which will simply return the files content. Moreover, by using the template function `$JSON.path` you
 can parse any JSON content. An example might look as follows:
 
 ```yaml

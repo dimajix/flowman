@@ -60,7 +60,7 @@ simple environment variable.
 ### 2.2 Relations
 Again we define two relations: One source relation containing the raw weather measurements stored in text file and one 
 target relation which contains the extracted and transformed measurements stored as Parquet files. There is one 
-important difference to the last lesson, though: This time both the source and the target relation define a so called
+important difference to the last lesson, though: This time both the source and the target relation define a so-called
 *partition column* which represents large chunks of data stored in different directories. In our example, data will
 be stored in different partitions for each year of measurement. This physical organization of data enables to 
 selectively process only individual years. Also query tools like Hive, Impala or Trino can make use of partition columns

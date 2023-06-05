@@ -108,7 +108,7 @@ relations:
 
  * `partitions` **(optional)** *(list:partition)* *(default: empty)*:
  Specifies all partition columns. This is used both for creating Hive tables, but also for  writing and reading to and 
-   from them. Therefore if you are working with partitioned Hive  tables **you have to specify partition columns, even 
+   from them. Therefore, if you are working with partitioned Hive  tables **you have to specify partition columns, even
    if Flowman is not used for creating the table**. You *may* also include the partition column in the schema, although
    this is not considered to be best practice. But it turns out to be quite useful in combination with dynamically
    writing to multiple partitions.
@@ -122,7 +122,7 @@ relations:
  Flowman supports two different mechanisms for writing to a Hive table. In `hive` mode
  Spark uses Hive libraries to write to the table. In `spark` mode, Flowman will use
  the `location` and write the files itself. This does not always result in the same 
- files and can be used to workaround some bugs in the Hive backend.
+ files and can be used to work around some bugs in the Hive backend.
 
 * `migrationPolicy` **(optional)** *(string)* *(default: empty)*
   Can be one of `RELAXED` or `STRICT`. If left empty, then the value of the Flowman configuration property
@@ -171,7 +171,7 @@ whole lifecycle for you. This means that
 * Hive tables will be created and migrated during `CREATE` phase, but only if a schema is provided
 * Hive tables will be populated with records and partitions will be added during `BUILD` phase, but only if the
   `relation` target contains a mapping.
-* Hive tables will be truncated or individual partitions will be dropped during `TRUNCATE` phase
+* Hive tables will be truncated, or individual partitions will be dropped during `TRUNCATE` phase
 * Hive tables will be removed during `DESTROY` phase
 
 This means that you can

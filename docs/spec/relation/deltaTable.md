@@ -1,7 +1,7 @@
 # Delta Table Relations
 
 The `deltaTable` relation is used for creating [Delta Lake](https://delta.io) tables stored in the Hive metastore. If
-you want to use a Delta Lake table, but not store its meta data in Hive, then use the [`deltaFile` relation](deltaFile.md)
+you want to use a Delta Lake table, but not store its metadata in Hive, then use the [`deltaFile` relation](deltaFile.md)
 instead.
 
 ## Plugin
@@ -68,7 +68,7 @@ relations:
 
 * `partitions` **(optional)** *(list:partition)* *(default: empty)*:
   Specifies all partition columns. This is used both for creating Hive tables, but also for writing and reading to and
-  from them. Therefore if you are working with partitioned Hive tables **you have to specify partition columns, even 
+  from them. Therefore, if you are working with partitioned Hive tables **you have to specify partition columns, even
   if Flowman is not used for creating the table**. Normally the partition columns are separate from the
   schema, but you *may* also include the partition column in the schema, although this is not considered to be best
   practice. But it turns out to be quite useful in combination with dynamically writing to multiple partitions.
@@ -136,7 +136,7 @@ In addition to batch writing, the Delta table relation also supports stream writ
 
 | Output Mode | Supported | Comments                                                                      |
 |-------------|-----------|-------------------------------------------------------------------------------|
-| `append`    | yes       | Append new records from the streaming process once they don't change any more |
+| `append`    | yes       | Append new records from the streaming process once they don't change anymore. |
 | `update`    | yes       | Append records every time they are updated                                    |
 | `complete`  | yes       | -                                                                             |
 
@@ -157,5 +157,5 @@ Beside explicitly writing to a single Hive partition, Flowman also supports to w
 the records need to contain values for the partition columns. Note that currently Delta table do not support the
 relation output mode `dynamic_overwrite` with dynamic partitions, instead you can only use `append` and `overwrite`. 
 This means, that whenever you write to a partitioned Delta table without explicitly specifying the target partition 
-in the [relation target](../target/relation.md), then the table is truncated first and all normally unchanged partitions 
+in the [relation target](../target/relation.md), then the table is truncated first, and all normally unchanged partitions
 will be lost.

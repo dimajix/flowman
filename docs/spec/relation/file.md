@@ -55,7 +55,7 @@ relations:
  Options are passed directly to Spark for reading and/or writing data. Options are specific
  to the selected file format. Best is to refer to the Apache Spark Documentation.
  
- * `format` **(optional)** *(string)* *(default: csv)*:
+ * `format` **(optional)** *(string)* *(default: `csv`)*:
  This specifies the file format to use. All formats supported by Apache Spark can be used,
  for example `csv`, `parquet`, `orc`, `avro` and `json`
   
@@ -104,7 +104,7 @@ In addition to batch writing, the file relation also supports stream writing via
 
 | Output Mode | Supported | Comments                                                                      |
 |-------------|-----------|-------------------------------------------------------------------------------|
-| `append`    | yes       | Append new records from the streaming process once they don't change any more |
+| `append`    | yes       | Append new records from the streaming process once they don't change anymore. |
 | `update`    | yes       | Append records every time they are updated                                    |
 | `complete`  | no        | -                                                                             |
 

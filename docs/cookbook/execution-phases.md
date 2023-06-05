@@ -9,7 +9,7 @@ Flowman offers some ways to influence this logic, which are described in detail 
 
 ## Range Execution
 
-Flowmans primary command line application [`flowexec`](../cli/flowexec/index.md) allows to execute a job for a range
+Flowman's primary command line application [`flowexec`](../cli/flowexec/index.md) allows executing a job for a range
 of parameter values. Imagine for example, that your job contained a parameter called `processing_date`, which would
 control what data would be transformed within each run in Flowman. This is typical for incremental transformation
 pipelines, which only pick up new data, and leave other data unchanged.
@@ -127,7 +127,7 @@ targets should be executed. Each entry of the list has three attributes
 This means that the example above will eventually change the execution of the job as follows:
 * `VALIDATE` (not listed) - will never be executed
 * `CREATE` - will be executed only for the first date of `processing_date`, but again for all targets
-* `BUILD` - will be executed for every date of `processing_date` for all targets ending with "_full". Moreover
+* `BUILD` - will be executed for every date of `processing_date` for all targets ending with "_full". Moreover,
 during the last execution, all targets ending with "_daily" will be processed in addition.
 * `VERIFY` - will be executed only for the last date of `processing_date` and only for the `documentation` target.
 

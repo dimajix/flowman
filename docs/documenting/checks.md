@@ -1,7 +1,7 @@
 # Checking Model Properties
 
 In addition to provide pure descriptions of model entities, the documentation framework in Flowman also provides
-the ability to specify model properties (like unique values in a column, not null etc). These properties will not only
+the ability to specify model properties (like unique values in a column, not null etc.). These properties will not only
 be part of the documentation, they will also be verified as part of generating the documentation.
 
 
@@ -80,7 +80,7 @@ mappings:
 
 ## Column Checks
 
-Flowman implements a couple of different check types on a per column basis. 
+Flowman implements a couple of different check types on a per-column basis.
 
 ### Not NULL
 
@@ -255,10 +255,10 @@ The first type of supported SQL queries returns multiple records, each having tw
 first column should be a boolean indicating if the test succeeded, while the second column should be an integer 
 containing the number of records. The names of the columns are irrelevant.
 
-| Column | Data Type | Remark                                                |
-|--------|-----------|-------------------------------------------------------|
-| 1.     | `BOOL`    | Either`TRUE` or `FALSE` indicating success or failure |
-| 2.     | `LONG`    | Number of records with `TRUE` or `FALSE` test result  |
+| Column | Data Type | Remark                                                 |
+|--------|-----------|--------------------------------------------------------|
+| 1.     | `BOOL`    | Either `TRUE` or `FALSE` indicating success or failure |
+| 2.     | `LONG`    | Number of records with `TRUE` or `FALSE` test result   |
 
 Typically, a result set would contain two records, one with the first column `TRUE` and the second column holding the
 number of records which passed the test and the second record having `FALSE` in the first column and the number of 

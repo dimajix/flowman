@@ -1,6 +1,6 @@
 # Tests
 
-Flowman supports test cases as first order entities. These are used for creating self contained unittests to verify
+Flowman supports test cases as first order entities. These are used for creating self-contained unit tests to verify
 the correctness of the specified data flow. Flowman provides mocking capabilities for mappings and relations such that
 physical relations can be replaced by mocked virtual relations and mappings.
 
@@ -64,10 +64,10 @@ tests:
 
 * `fixtures`: **(optional)** *(type: map:target)*:
   List of additional targets to be executed as *test fixtures*. These targets are defined directly within the test case
-  and are typically used to produce phyiscal data, which then is pciked up by some test cases.
+  and are typically used to produce physical data, which then is picked up by some test cases.
   
 * `overrideMappings`: **(optional)** *(type: map:mapping)*:
-  This section allows you to override existing mappings with new definitions. Typically this is used for mocking the
+  This section allows you to override existing mappings with new definitions. Typically, this is used for mocking the
   output of some mappings by replacing those with [`values`](../mapping/values.md) or [`mock`](../mapping/mock.md) 
   mappings. You can also specify new mappings in this section.
   

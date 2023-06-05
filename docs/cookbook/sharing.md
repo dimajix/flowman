@@ -2,7 +2,7 @@
 
 In bigger projects, it makes sense to organize data transformations like Flowman projects into separate subprojects,
 so they can be maintained independently by possibly different teams. A classical example would be to have a different
-Flowman project per source system (let it be your CRM system, your financial transaction processing system etc).
+Flowman project per source system (let it be your CRM system, your financial transaction processing system etc.).
 In a data lake environment, you probably want to implement independent Flowman projects to perform the first
 technical transformations for each of these source systems. Then in the next layer, you want to create a more
 complex and integrated data model built on top of these independent models.

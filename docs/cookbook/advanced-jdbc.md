@@ -16,7 +16,7 @@ Flowman offers support for these two scenarios.
 ## Full Control for `CREATE TABLE` Statements
 
 Starting with Flowman 0.27.0, you can now explicitly specify the `CREATE TABLE` statement(s) in a [`jdbcTable`](../spec/relation/jdbcTable.md)
-relation, which will be used instead of Flowmans standard mechanism for assembling the SQL statements:
+relation, which will be used instead of Flowman's standard mechanism for assembling the SQL statements:
 
 ```yaml
 relations:
@@ -51,7 +51,7 @@ same time, completely disables automatic migrations.
 In addition to giving you more control over the `CREATE TABLE` statement, since version 0.27.0 Flowman has also 
 implemented a generic [`jdbcCommand` target](../spec/target/jdbcCommand.md) for executing arbitrary SQL statements.
 
-The following example will create and manage a MS SQL Server full text catalog and index:
+The following example will create and manage an MS SQL Server full text catalog and index:
 ```yaml
 targets:
   fulltext-catalog:
@@ -121,5 +121,5 @@ targets:
 ```
 As you can see, the `jdbcCommand` target supports different SQL commands for each lifecycle phase
 (`CREATE`, `BUILD`, ...) and you can also specify an optional `condition` which serves as a precondition when the
-corresponding SQL should be executed or not. This way you can avoid creating tables multiple times etc by first
+corresponding SQL should be executed or not. This way you can avoid creating tables multiple times etc. by first
 checking if the table already exists.

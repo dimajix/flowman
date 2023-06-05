@@ -2,12 +2,12 @@
 
 The `jdbcCommand` target is a generic and flexible execution target which allows you to execute arbitrary SQL
 statements in the syntax of the target database. This way you can use database features, which are currently not
-directly supported by Flowman. We highly recommend to use this only as a workaround for mitigating missing
+directly supported by Flowman. We highly recommend using this target only as a workaround for mitigating missing
 Flowman features or for using exotic database features, since Flowman has no way of understanding what you are
 doing.
 
 ## Example
-The following example will create and manage a MS SQL Server full text catalog and index:
+The following example will create and manage an MS SQL Server full text catalog and index:
 ```yaml
 targets:
   fulltext-catalog:
@@ -70,7 +70,7 @@ targets:
 ```
 As you can see, the `jdbcCommand` target supports different SQL commands for each lifecycle phase 
 (`CREATE`, `BUILD`, ...) and you can also specify an optional `condition` which serves as a precondition when the
-corresponding SQL should be executed or not. This way you can avoid creating tables multiple times etc by first 
+corresponding SQL should be executed or not. This way you can avoid creating tables multiple times etc. by first
 checking if the table already exists.
 
 

@@ -16,7 +16,7 @@ Moreover, managed Spark environments like AWS EMR or Azure Synapse are supported
 
 
 ## Supported Spark Environments
-Flowman is available for a large number of different Spark/Hadoop environments. Flowman provides different packages
+Flowman is available for many different Spark/Hadoop environments. Flowman provides different packages
 for each of these environments to ensure a high degree of compatibility. Each variant is identified by its suffix
 appended to the Flowman version, i.e. `<flowman-version>-<flowman-variant>`. So for example, the full version tag
 of Flowman 0.30.0 for Cloudera CDP 7.1 and Spark 3.3 would be `0.30.0-cdp7-spark3.3-hadoop3.1`.

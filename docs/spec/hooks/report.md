@@ -1,7 +1,7 @@
 # Report Hook
 
 The `report` will create a textual report file containing information on the execution. As with all hooks, it can be
-either added on the namespace level or on the job leve.
+either added on the namespace level or on the job level.
 
 ## Example
 ```yaml

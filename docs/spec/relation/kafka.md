@@ -1,6 +1,6 @@
 # Kafka Relations
 
-The Kafak relation is provided via the `flowman-kafka` plugin. It allows you to access Kafka topics both in batch
+The Kafka relation is provided via the `flowman-kafka` plugin. It allows you to access Kafka topics both in batch
 and in stream processing, both as sources and as sinks
 
 ## Plugin
@@ -76,6 +76,6 @@ In addition to batch writing, the Kafka relation also supports stream writing vi
 
 | Output Mode | Supported | Comments                                                                      |
 |-------------|-----------|-------------------------------------------------------------------------------|
-| `append`    | yes       | Append new records from the streaming process once they don't change any more |
+| `append`    | yes       | Append new records from the streaming process once they don't change anymore. |
 | `update`    | yes       | Append records every time they are updated                                    |
 | `complete`  | no        | -                                                                             |

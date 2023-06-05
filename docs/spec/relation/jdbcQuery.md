@@ -1,7 +1,7 @@
 # JDBC Query Relations
 
 The `jdbcQuery` relation allows you to access databases using a JDBC driver. Note that you need to put an appropriate JDBC
-driver onto the classpath of Flowman. This can be done by using an appropriate plugin.
+driver onto the class path of Flowman. This can be done by using an appropriate plugin.
 
 
 ## Example
@@ -68,7 +68,7 @@ relations:
 For most cases, it is recommended not to embed the connection, since this prevents reusing the same connection in
 multiple places.
 
-The schema is still optional in this case, but it will help [mocking](mock.md) the relation for unittests.
+The schema is still optional in this case, but it will help [mock](mock.md) the relation for unit tests.
 
 
 ## Fields

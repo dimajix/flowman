@@ -19,7 +19,7 @@ flowexec target <validate|create|build|verify|truncate|destroy> <target_name>
 This will execute an individual target by executing the desired lifecycle for the `main` job. Additional parameters are
 * `-h` displays help
 * `-f` or `--force` force execution of the project, even if the output targets already exist.
-* `-nl` or `--no-lifecycle` only execute the specified lifecycle phase, without all preceeding phases. For example
+* `-nl` or `--no-lifecycle` only execute the specified lifecycle phase, without all preceding phases. For example
   the whole lifecycle for `verify` includes the phases `create` and `build` and these phases would be executed before
   `verify`. If this is not what you want, then use the option `-nl`
 

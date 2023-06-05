@@ -8,8 +8,8 @@ the [Flowman namespace](../spec/namespace.md).
 
 ## Configuration
 The history database needs to be configured in the `default-namespace.yml` file and also (if used) in the
-`history-server.yml` file. The first configuration will be used by [flowexec](flowexec/index.md) and 
-[flowshell](flowshell/index.md) while the second file will be picked up by the Flowman History Server.
+`history-server.yml` file. The first configuration will be used by [`flowexec`](flowexec/index.md) and
+[`flowshell`](flowshell/index.md) while the second file will be picked up by the Flowman History Server.
 
 ```yaml
 # The following definition provides a "run history" stored in a database. If nothing else is specified, the database
@@ -38,7 +38,7 @@ plugins:
 Note that this configuration falls back to a Derby database when no other database is provided via the system 
 environment variables `FLOWMAN_HISTORY_*`. This setup is not recommended except for experimentation, as a Derby 
 database can only be accessed by a single client at a time (which prevents running the History Server and 
-flowexec/flowshell at the same time).
+`flowexec`/`flowshell` at the same time).
 
 A more useful setup might look as follows:
 ```yaml

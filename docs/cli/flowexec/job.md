@@ -1,5 +1,5 @@
 # Job Commands
-THis command group operates on the level of individual jobs with different names than `main`. 
+This command group operates on the level of individual jobs with different names than `main`.
 
 
 ## `list` - List all Jobs
@@ -41,7 +41,7 @@ Additional parameters can be specified before or after `<args>` and are as follo
 * `-k` or `--keep-going` proceed with execution, in case of errors.
 * `-j <n>` runs multiple job instances in parallel. This is very useful for running a job for a whole range of dates.
 * `--dry-run` only simulate execution
-* `-nl` or `--no-lifecycle` only execute the specified lifecycle phase, without all preceeding phases. For example
+* `-nl` or `--no-lifecycle` only execute the specified lifecycle phase, without all preceding phases. For example
   the whole lifecycle for `verify` includes the phases `create` and `build` and these phases would be executed before
   `verify`. If this is not what you want, then use the option `-nl`
 
@@ -63,7 +63,7 @@ flowexec -f examples/weather job build main year=2018 -nl
 
 ### Executing Parameter Ranges
 The following example will only execute the `BUILD` phase of the job `daily`, which defines a parameter
-`processing_datetime` with type datetime. The job will be executed for the whole date range from 2021-06-01 until
+`processing_datetime` with type `datetime`. The job will be executed for the whole date range from 2021-06-01 until
 2021-08-10 with a step size of one day. Flowman will execute up to four jobs in parallel (`-j 4`).
 
 ```shell

@@ -16,7 +16,7 @@ documentation will override any automatically inferred information.
 
 ### Generating Documentation via Command Line
 
-Generating the documentation is as easy as running [flowexec](../cli/flowexec/index.md) as follows:
+Generating the documentation is as easy as running [`flowexec`](../cli/flowexec/index.md) as follows:
 
 ```shell
 flowexec -f my_project_directory documentation generate
@@ -34,7 +34,7 @@ If no job is specified, Flowman will use the `main` job
 
 ### Generating Documentation via Build Target
 
-The section above descirbes how to explicitly generate the project documentation by invoking 
+The section above describes how to explicitly generate the project documentation by invoking
 `flowexec documentation generate`. As an alternative, Flowman offers a [document](../spec/target/document.md)
 targets, which allows one to generate the documentation during the `VERIFY` phase (after the `BUILD` phase has
 finished) of a normal Flowman project.

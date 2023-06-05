@@ -3,7 +3,7 @@
 As with other entities, Flowman tries to automatically infer a meaningful documentation for mappings, especially
 for the schema of all mappings outputs. But of course this is not always possible especially when mappings perform
 complex transformations such that a single output column depends on multiple input columns. Probably the most
-complex example is the [SQL](../spec/mapping/sql.md) mapping which allows to implement most complex transformations.
+complex example is the [SQL](../spec/mapping/sql.md) mapping which allows implementing most complex transformations.
 
 In order to mitigate this issue, you can explicitly provide additional documentation for mappings via the
 `documentation` tag, which is supported by all mappings.

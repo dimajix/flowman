@@ -1,7 +1,7 @@
 # Unit Mapping
 
-A `unit` mapping encapsualtes a whole block of multiple mappings with a local name resolution scope. This helps to
-prevent having multiple mappings with the same name at a global scope. Moreover the `unit` mapping is often very
+A `unit` mapping encapsulates a whole block of multiple mappings with a local name resolution scope. This helps to
+prevent having multiple mappings with the same name at a global scope. Moreover, the `unit` mapping is often very
 useful in combination with the [Template Mapping](template.md) to create complex macro-like chains of mappings.
 
 ## Example

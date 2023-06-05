@@ -83,7 +83,7 @@ as the fallback for merge/upsert operations, when no `mergeKey` and no explicit 
  
  * `database` **(optional)** *(type: string)* *(default: empty)*: 
  Defines the Hive database where the table is defined. When no database is specified, the table is accessed without any 
-specific qualification, meaning that the default database will be used or the one specified in the connection.
+specific qualification, meaning that the default database will be used, or the one specified in the connection.
 
  * `table` **(mandatory)** *(type: string)*:
  Specifies the name of the table in the relational database.
@@ -120,9 +120,9 @@ then Flowman will use a global temporary table.
 
 
 ## Staging Tables
-When using the `sqlserver?`relation, Flowman will always use staging tables when writing to a SQL database. This
+When using the `sqlserver` relation, Flowman will always use staging tables when writing to a SQL database. This
 means, Flowman will first create this special staging table (which technically is just a normal table, but without any 
-index or primary key), and then copy the table into the real target table. Afterwards, the staging table will be dropped. 
+index or primary key), and then copy the table into the real target table. Afterward, the staging table will be dropped.
 This approach helps to ensure consistency, since the copy process is performed within a single SQL transaction. Moreover, 
 since no primary key or index is present in the staging table, this will also avoid locks on the database server side,
 which may lead to timeouts or other failures during the parallel write process that Spark uses under the hood.
@@ -178,7 +178,7 @@ whole lifecycle for you. This means that
 * SQL Server tables will be created and migrated during `CREATE` phase, but only if a schema is provided
 * SQL Server tables will be populated with records and partitions will be added during `BUILD` phase, but only if the
   `relation` target contains a mapping.
-* SQL Server tables will be truncated or individual partitions will be dropped during `TRUNCATE` phase
+* SQL Server tables will be truncated, or individual partitions will be dropped during `TRUNCATE` phase
 * SQL Server tables will be removed during `DESTROY` phase
 
 This means that you can

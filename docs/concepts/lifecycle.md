@@ -17,7 +17,7 @@ check preconditions on data sources which are a hard requirement.
 This will create all relations (tables and directories) specified as targets. The tables will not contain any data,
 they only provide an empty hull. If a target already exists, a migration will be started instead. This will migrate a 
 relation (table or directory) to a new schema, if required. Note that this is not supported by all target types, and 
-even if a target supports migration in general, it may not be possible due to unmigratable changes.
+even if a target supports migration in general, it may not be possible due to not migratable changes.
 
 3. **BUILD**.
 The *build* phase will actually create all records and fill them into the specified relations.
@@ -32,7 +32,7 @@ tables (i.e. it will delete data), but it will keep tables alive.
 
 6. **DESTROY**.
 The final phase *destroy* is used to physically remove relations including their data. This will also remove table
-definitions, views and directories. It performs the opposite operation than the *create* phase.
+definitions, views and directories. It performs the opposite operation than the *CREATE* phase.
 
 
 ## Built In Lifecycles
@@ -92,7 +92,7 @@ or via the [Flowman config](../setup/config.md) `flowman.default.target.buildPol
 * `IF_EMPTY`: The target is considered to be dirty, if the specified target partition does not exist (or is empty).
 * `IF_TAINTED`: The target is considered to be dirty, only if it is tainted by a dirty dependency.
 * `SMART`: The target is considered to be dirty, if the target partition is empty, or when the output mode is set to `APPEND` or when no partition is specified (full overwrite)
-* `COMPAT`: The target is considered to be dirty, if the target is empty, or when the output mode is set to `APPEND`. This setting provides the same behaviour as Flowman before version 0.30.0.
+* `COMPAT`: The target is considered to be dirty, if the target is empty, or when the output mode is set to `APPEND`. This setting provides the same behavior as Flowman before version 0.30.0.
 The exact details always depend on the specific type of the [target](../spec/target/index.md).
 
 Note that Flowman also cascades dirtiness during the execution. This means that if target B depends on target A, and

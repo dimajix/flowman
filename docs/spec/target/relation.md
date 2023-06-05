@@ -101,7 +101,7 @@ Spark executors to produce the output. If `parallelism` is set to zero or to a n
 coalesce any partitions and generate as many files as Spark partitions. The default value is controlled by the
 Flowman [config variable](../../setup/config.md) `floman.default.target.parallelism`.
 
-* `rebalance` **(optional)** *(type: bool)* *(default=false)*:
+* `rebalance` **(optional)** *(type: boolean)* *(default=false)*:
 Enables rebalancing the size of all partitions by introducing an additional internal shuffle operation. Each partition 
 and output file will contain approximately the same number of records. The default value is controlled by the
 Flowman [config variable](../../setup/config.md) `floman.default.target.rebalance`.

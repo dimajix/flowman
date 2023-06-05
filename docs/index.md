@@ -7,18 +7,18 @@
 ## What is Flowman
 
 [Flowman](https://flowman.io) is a Spark based *data build tool* that simplifies
-the act of writing data transformation application. Flowman can be seen as a ETL
+the act of writing data transformation application. Flowman can be seen as an ETL
 tool, with a strong focus on transformation and schema management.
 
 The main idea is that developers define all input/output tables and the whole transformation logic in purely 
 declarative YAML files instead of writing complex Spark jobs in Scala or Python. The main advantage of this approach 
-is that many technical details of a correct and robust implementation are encapsulated and the user can concentrate on 
+is that many technical details of a correct and robust implementation are encapsulated, and the user can concentrate on
 the data transformations themselves.
 
 In addition to writing and executing data transformations, Flowman can also be used for managing physical data models, 
 i.e. Hive tables but also JDBC tables. Flowman will create such tables from a specification with the correct schema, 
 and Flowman also provides mechanisms to automatically migrate these tables when the schema changes due to updated
-transformation logic (i.e. new columns are added, data types are changed, etc).
+transformation logic (i.e. new columns are added, data types are changed, etc.).
 
 This helps to keep all aspects (like transformations and schema information) in a single place managed by a single 
 application.
@@ -40,7 +40,7 @@ managed Spark clusters like [AWS EMR](setup/emr.md) and [Azure Synapse](setup/sy
 * Declarative syntax in [YAML files](spec/index.md)
 * Full lifecycle management of data models (create, migrate and destroy Hive tables, JDBC tables or file based storage)
 * Flexible expression language
-* Jobs for managing build targets (like copying files or uploading data via sftp)
+* Jobs for managing build targets (like copying files or uploading data via SFTP)
 * Automatic dependency analysis to build targets in the correct order
 * Powerful yet simple [command line tool for batch execution](cli/flowexec/index.md)
 * Powerful [Command line tool for interactive data flow analysis](cli/flowshell/index.md)
@@ -51,15 +51,15 @@ managed Spark clusters like [AWS EMR](setup/emr.md) and [Azure Synapse](setup/sy
 
 ## Where to go from here
 
-### Quickstart & Tutorial
-A small [quickstart guide](quickstart.md) will lead you through a simple example. 
+### Quick Start & Tutorial
+A small [quick start guide](quickstart.md) will lead you through a simple example.
 
 
 ```eval_rst
 .. toctree::
    :maxdepth: 1
    :glob:
-   :caption: Quickstart Guide
+   :caption: Quick Start Guide
 
    quickstart
 ```   
@@ -67,7 +67,7 @@ A small [quickstart guide](quickstart.md) will lead you through a simple example
 
 ### Core Concepts
 
-In order to successfully implement your projects with Flowman, you need to get a basic understanding of Flowmans 
+In order to successfully implement your projects with Flowman, you need to get a basic understanding of Flowman's
 [core concepts](concepts/index.md) and abstractions.
 
 ```eval_rst

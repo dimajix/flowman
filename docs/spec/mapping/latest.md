@@ -2,7 +2,7 @@
 # Latest Mapping
 
 The `latest` mapping keeps only the latest (newest) record per ID. This is useful
-when working with streams of change events and you only want to keep the newest
+when working with streams of change events, and you only want to keep the newest
 event for each ID.
 
 ## Example

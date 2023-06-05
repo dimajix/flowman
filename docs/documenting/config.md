@@ -36,7 +36,7 @@ generators:
 
 ## Collectors
 
-Flowman uses so called *collectors* which create an internal model of the documentation from the core entities like
+Flowman uses so-called *collectors* which create an internal model of the documentation from the core entities like
 relations, mappings and build targets. The default configuration uses the four collectors `relations`, `mappings`, 
 `targets` and `checks`, with each of them being responsible for one entity type and the last one will execute all
 data quality checks. If you really do not require documentation for one of these targets, you may want to simply 
@@ -50,11 +50,11 @@ differently configured documentations.
 
 * `kind` **(mandatory)** *(type: string)*: `file` 
 
-* `template` **(optional)** *(type: string)* *(default: html)*:
+* `template` **(optional)** *(type: string)* *(default: `html`)*:
 Specifies the template to use. Currently, Flowman provides three predefined templates
-  * text - Single file plain text documentation
-  * html - Single file HTML page with inline CSS 
-  * html+css - Single file HTML page with additional CSS file
+  * `text` - Single file plain text documentation
+  * `html` - Single file HTML page with inline CSS
+  * `html+css` - Single file HTML page with additional CSS file
 
 * `location` **(mandatory)** *(type: string)*: Specifies the output location 
 

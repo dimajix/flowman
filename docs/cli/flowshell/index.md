@@ -6,7 +6,7 @@
 * `-h` displays help
 * `-f <project_directory>` specifies a different directory than the current for locating a Flowman project
 * `-P <profile_name>` activates a profile as being defined in the Flowman project
-* `-D <key>=<value>` Sets a environment variable
+* `-D <key>=<value>` Sets an environment variable
 * `--conf <key>=<value>` Sets a Flowman or Spark configuration variable
 * `--info` Dumps the active configuration to the console
 * `--spark-logging <level>` Sets the log level for Spark 
@@ -34,12 +34,12 @@ config:
   - spark.hadoop.fs.s3a.secret.key=$System.getenv('AWS_SECRET_ACCESS_KEY')
 ```
 The recommendation is not to add this file to source control (like git). Instead, developers should maintain their
-private copy of this file containing their specific configuration settings (like credentials, local directories etc).
+private copy of this file containing their specific configuration settings (like credentials, local directories etc.).
 
 
 ## Commands
 
-All commands within the Flowman Shell mimic the commands of [flowexec](../flowexec/index.md). The main difference to multiple
+All commands within the Flowman Shell mimic the commands of [`flowexec`](../flowexec/index.md). The main difference to multiple
 invocations of `flowexec` is the fact that the project is loaded only once and some additional commands are provided.
 
 The commands are organized in command groups

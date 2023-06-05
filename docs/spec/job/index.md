@@ -136,7 +136,7 @@ jobs:
 
 * `name` **(mandatory)** *(type: string)*: The name of the parameter.
 * `type` **(optional)** *(type: datatype)* *(default: string)*: The data type of the parameter. See 
-[Fields and Datatypes](../fields.md) for a complete list of supported data types
+[Fields and Data Types](../fields.md) for a complete list of supported data types
 * `description` **(optional)** *(type: string)*: A description of the parameter
 * `default` **(optional)** *(type: object)*: Provides a default value of the parameter.
 * `granularity` **(optional)** *(type: integer)* *(default: 1)*: Defines the step size of the parameter.

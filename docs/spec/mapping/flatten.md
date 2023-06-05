@@ -1,7 +1,7 @@
 
 # Flatten Mapping
 The `flatten` mapping flattens all nested structure into a flat list of simple columns. The columns have their original
-path encoded into their name, such that conflicts between same names in different sub trees are avoided. You can also
+path encoded into their name, such that conflicts between same names in different subtrees are avoided. You can also
 specify which naming schema to use when new column names are generated.
 
 ## Example

@@ -1,7 +1,7 @@
 # Installation Guide
 
-This setup guide will walk you to a installation of Apache Spark and Flowman on your local Linux box. If you
-are using Windows, you will find some hints for setting up the required "Hadoop WinUtils", but we generally recommend
+This setup guide will walk you to an installation of Apache Spark and Flowman on your local Linux box. If you
+are using Windows, you will find some hints for setting up the required "Hadoop Winutils", but we generally recommend
 to use Linux. You can also run a [Flowman Docker image](docker.md), which is the simplest way to get up to speed.
 
 
@@ -44,7 +44,7 @@ It might be a good idea to add a corresponding line to your `.bashrc` or `.profi
 ### Download & Install Hadoop Utils for Windows
 
 If you are trying to run Flowman on Windows, you also need the *Hadoop Winutils*, which is a set of
-DLLs required for the Hadoop libraries to be working. You can get a copy at https://github.com/kontext-tech/winutils .
+DLLs required for the Hadoop libraries to be working. You can get a copy at https://github.com/kontext-tech/winutils.
 Once you downloaded the appropriate version, you need to place the DLLs into a directory `$HADOOP_HOME/bin`, where
 `HADOOP_HOME` refers to some arbitrary location of your choice on your Windows PC. You also need to set the following
 environment variables:
@@ -74,7 +74,7 @@ https://github.com/dimajix/flowman/releases/download/1.0.0/flowman-dist-1.0.0-os
 ```
 
 ### Supported Spark Environments
-Flowman is available for a large number of different Spark/Hadoop environments. The following variants are available:
+Flowman is available for many different Spark/Hadoop environments. The following variants are available:
 
 | Distribution     | Spark | Hadoop | Java | Scala | Variant                       |
 |------------------|-------|--------|------|-------|-------------------------------|
@@ -184,7 +184,7 @@ The `flowman-env.sh` script sets up an execution environment on a system level. 
 and Hadoop properties can be configured, like for example
 * `SPARK_HOME`, `HADOOP_HOME` and related environment variables
 * `KRB_PRINCIPAL` and `KRB_KEYTAB` for using Kerberos
-* Generic Java options like http proxy and more
+* Generic Java options like HTTP proxy and more
 
 #### Example
 ```shell
@@ -259,7 +259,7 @@ fi
 ```
 
 ### `system.yml`
-After the execution environment has been setup, the `system.yml` is the first configuration file processed by the Java
+After the execution environment has been set up, the `system.yml` is the first configuration file processed by the Java
 application. Its main purpose is to load some fundamental plugins, which are already required by the next level of 
 configuration 
 

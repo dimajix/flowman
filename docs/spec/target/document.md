@@ -3,7 +3,7 @@
 The `document` (or equivalently `documentation`) target is used to build a documentation of the current project.
 You can find more details about that feature in the [documentation section](../../documenting/index.md). You can either
 generate the project documentation via `flowexec documentation generate`, or you also generate the documentation via
-this special target, which will be executed as part of the `VERIFY` phsae (after the `BUILD` phase has finished).
+this special target, which will be executed as part of the `VERIFY` phase (after the `BUILD` phase has finished).
 
 ## Example
 
@@ -51,7 +51,7 @@ targets:
 
 When no explicit configuration is provided via `generators` or `collectors`, then Flowman will use the
 [documentation configuration](../../documenting/config.md) provided in `documentation.yml`. If that file does not
-exist, Flowman will fall back to some default configuration, which creates a html based documentation in a
+exist, Flowman will fall back to some default configuration, which creates an HTML based documentation in a
 subdirectory `generated-documentation` within the projects base directory.
 
 

@@ -22,4 +22,4 @@ SPARK_OPTS="--conf spark.executor.extraClassPath=mssql-jdbc-9.2.1.jre8.jar --con
 ```
 The first line will explicitly add the plugin jar to the list of jars as passed to `spark-submit`. But this is still
 not enough, we also have to set `spark.executor.extraClassPath` and `spark.driver.extraClassPath` which will *prepend* the specified jars to the
-classpath of the executor.
+class path of the executor.

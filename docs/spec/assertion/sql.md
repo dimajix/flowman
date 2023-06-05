@@ -57,5 +57,5 @@ targets:
   
 * `tests` **(optional)** *(type: map:test)*:
   An optional map of individual test cases, each containing a `query` and a `expected` field. Note that you can
-  use the fields `query` together with `expected` for specifying a single check or you can specify multiple tests
+  use the fields `query` together with `expected` for specifying a single check, or you can specify multiple tests
   in this list. You can also use a combination of both, although that might look strange.

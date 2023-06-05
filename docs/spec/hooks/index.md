@@ -1,6 +1,6 @@
 # Execution Hooks
 
-Flowman provides the ability to specify so called *hooks*, which are called during lifecycle execution for every job
+Flowman provides the ability to specify so-called *hooks*, which are called during lifecycle execution for every job
 and target. For example by using the `web` hook, you can inform an external system about successful processing of
 jobs and targets.
 

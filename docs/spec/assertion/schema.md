@@ -89,5 +89,5 @@ test, which is typically conducted only as part of a continuous integration (CI)
   Ignore upper/lower case of field names.
 
 * `ignoreOrder` **(optional)** *(type: boolean)* *(default: false)*:
-  Ignore the order of fields. The schema matches the given schema as long as all fields are present. Otherwise the
+  Ignore the order of fields. The schema matches the given schema as long as all fields are present. Otherwise, the
   order of all fields also has to match (which is the default) 

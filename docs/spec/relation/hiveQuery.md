@@ -28,7 +28,7 @@ relations:
 ```
 
 ### External SQL
-You can also specify the name of an external file containing the sql by using the `file` propery instead as follows:
+You can also specify the name of an external file containing the SQL by using the `file` property instead as follows:
 ```yaml
 relations:
   transaction_latest:

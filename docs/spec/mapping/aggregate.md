@@ -52,7 +52,7 @@ An optional SQL filter expression that is applied *after* aggregation, which cor
 
 ## Description
 Essentially the `aggregate` mapping performs a SQL `SELECT ... GROUP BY ...` operations. The
-example above would be equivalent to the following SQL statemtn:
+example above would be equivalent to the following SQL statement:
 ```
 SELECT
     country,

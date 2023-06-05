@@ -73,15 +73,15 @@ The easiest way to execute tests is to use the [Flowman Shell](../cli/flowshell/
 `test run`, which will run all tests defined in your project.
 
 
-## Java/Scala Unittests
+## Java/Scala Unit Tests
 
-Flowman now also includes a `flowman-testing` library which allows one to write lightweight unittests using either Scala
+Flowman now also includes a `flowman-testing` library which allows one to write lightweight unit tests using either Scala
 or Java. The library provides some simple test runner for executing tests and jobs specified as usual in YAML files. 
 
 
 ## Data Quality Tests
 
-The testing framework above is meant for implementing unittests (i.e. self-contained tests without any dependency to
+The testing framework above is meant for implementing unit tests (i.e. self-contained tests without any dependency to
 external systems like databases for additional files). If you want to assess the data quality of either the source tables
 or the generated tables, you may want to have a look at [documenting with Flowman](../documenting/index.md) and
 the [validation](../spec/target/validate.md) and [verify](../spec/target/verify.md) targets.

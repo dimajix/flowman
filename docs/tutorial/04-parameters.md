@@ -39,7 +39,7 @@ environment:
 ```
 
 ### 2.2 Job
-We now add a execution parameter `year` to the job definition which replaces the environment variable which we just 
+We now add an execution parameter `year` to the job definition which replaces the environment variable which we just
 removed
 
 ```yaml
@@ -47,7 +47,7 @@ jobs:
   # Define the 'main' job, which implicitly is used whenever you build the whole project
   main:
     # Add a parameter for selecting the year to process. This will create an environment variable `$year` which
-    # can be accessed from within other entities like mappings, relations, etc
+    # can be accessed from within other entities like mappings, relations, etc.
     parameters:
       - name: year
         type: Integer
@@ -73,7 +73,7 @@ will actually validate the parameter and if we didn't provide a default value in
 raise an error that this parameter was missing on the command line.
 
 ### 3.1 Range Processing
-Sometimes it is required to process a whole range of parameters. This is also well supported by Flowman. For example
+Sometimes it is required to process a whole range of parameters. This is also well-supported by Flowman. For example
 in order to process all years from 2013 until 2017 (exclusive), you simply need to execute
 
 ```shell
@@ -92,7 +92,7 @@ flowexec -f lessons/04-parameters job build main year:start=2014 year:end=2017 -
 
 Note that processing multiple data partitions in parallel does not always really speed up processing, since both 
 executions are fighting for the same resources. But in cases of big initialization overhead (like listing directories
-etc) in relation to small amounts of data, there can be a significant benefit of running two partitions in parallel.
+etc.) in relation to small amounts of data, there can be a significant benefit of running two partitions in parallel.
 
 
 ## 4. Next Lesson

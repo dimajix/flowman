@@ -39,7 +39,7 @@ jobs:
     ...
 ```
 Each top level entry may appear at most once in every file, but multiple files can have the same top level entries. 
-This again helps to split up the whole specifications into multiple files in order to help organizing your data flow.
+This again helps to split up the whole specifications into multiple files in order to help organize your data flow.
 
 
 ## Module Sections
@@ -73,14 +73,14 @@ All Spark config properties are passed to Spark when the Spark session is create
 ### `environment` Section
 
 The `environment` section contains key-value-pairs which can be accessed via [*expression evaluation*](expressions.md) 
-in almost any value definition in the specification files. A typical `environment`section may look as follows
+in almost any value definition in the specification files. A typical `environment` section may look as follows
 ```yaml
 environment:
   - start_year=2007
   - end_year=2014
   - export_location=hdfs://export/weather-data
 ```
-All values specified in the environment can be overriden either by [profiles](profiles.md) or by explicitly setting 
+All values specified in the environment can be overridden either by [profiles](profiles.md) or by explicitly setting
 them as property definitions on the [command line](../cli/flowexec/index.md).
 
 Note the difference between `environment` and `config`. While the first provides user defined variables to be used
@@ -136,7 +136,7 @@ connections:
     knownHosts: "$System.getProperty('user.home')/.ssh/known_hosts"
 ```
 This will declare a connection called `my-sftp-server` of kind `sftp` which referenced in
-specific mappings or tasks (for example inside a sftp upload task). Detailed descriptions 
+specific mappings or tasks (for example inside a SFTP upload task). Detailed descriptions
 of all supported connections is provided in the [Connections](connection/index.md) 
 documentation.
 
@@ -184,15 +184,15 @@ You can read all about build targets in the [Targets](target/index.md) section.
 
 
 ### `tests` Section
-Flowman also provides a built in test framework for creating unit tests for your logic. The test framework is able
+Flowman also provides a built-in test framework for creating unit tests for your logic. The test framework is able
 to replace relations and mappings by mocked data, so the tests do not require any external data sources.
 
 
 ### `jobs` Section
 
-Finally there is the `jobs` section which contains one or multiple named job specifications,
+Finally, there is the `jobs` section which contains one or multiple named job specifications,
 which contain lists of tasks to be executed. Jobs sit one layer above the data flow itself,
-they are used to build complex processing pipelines which may also require additional
+they are used to building complex processing pipelines which may also require additional
 actions like uploading files via SFTP.
 
 A typical job specification may look as follows:

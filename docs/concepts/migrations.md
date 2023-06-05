@@ -5,15 +5,15 @@ from their current state (in the sense of column names, data types, indexes etc.
 important topic, since it would be naive to assume that your data schema will never change. Every project eventually
 will face the challenge of modifying the existing schema due to new business requirements.
 
-There are different approaches to this topic, a very common is to use frameworks like LiquiBase or Alembic, which
+There are different approaches to this topic, a very common is to use frameworks like Liquibase or Alembic, which
 would execute SQL scripts provided by developers to perform schema migrations. Flowman on the other hand offers
 automatic schema migrations, where the current schema is compared with the desired schema (as specified in the
 [relations](../spec/relation/index.md) of a Flowman project) and infers the required changes automatically. 
 
-The clear advantage of Flowmans approach is its simplicity from a developers point of view. The clear disadvantage
+The clear advantage of Flowman's approach is its simplicity from a developers point of view. The clear disadvantage
 is that Flowman conceptually cannot capture all desired changes. For example, Flowman cannot detect the intention
 of renaming an existing column, instead Flowman will drop the existing column and add a new one with the new name.
-Nevertheless, Flowmans approach already turns out to be a good solution for many scenarios, where backward compatibility
+Nevertheless, Flowman's approach already turns out to be a good solution for many scenarios, where backward compatibility
 of the data schema is an important thing. This is true for Data Lakes, Data Meshes and other shared databases.
 
 Automatic migrations are not supported by all relation types, since not all really support changing an existing
@@ -29,7 +29,7 @@ schema migration, for example
 
 Within each of these relation types, you can specify a *migration policy* and a *migration strategy*. If you omit
 these parameters, then the Flowman configuration properties `flowman.default.relation.migrationPolicy` and
-`flowman.default.relation.migrationStrategy`, see [configuration](../setup/config.md) for more details) will
+`flowman.default.relation.migrationStrategy` (see [configuration](../setup/config.md) for more details) will
 be used instead.
 
 

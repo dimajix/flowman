@@ -2,7 +2,7 @@
 
 Flowman uses the notion of *mappings* in order to specify the data flow and all data 
 transformations. A mapping somewhat corresponds to a temporary view in the SQL world: You 
-give a name to a mapping and specify its logic. Afterwards it is available for subsequent
+give a name to a mapping and specify its logic. Afterward it is available for subsequent
 operations like `SELECT`. Like a temporary view, a mapping itself does not persist any data
 and is only valid within a single run of Flowman.
 

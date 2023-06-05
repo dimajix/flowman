@@ -55,6 +55,11 @@
                     <artifactId>aws-java-sdk-s3</artifactId>
                     <version>${aws.version}</version>
                 </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
             </dependencies>
         </profile>
 
@@ -70,6 +75,18 @@
                     <version>${aws.version}</version>
                 </dependency>
             </dependencies>
+            <build>
+                <plugins>
+                    <!-- Exclude support for AWS secrets, since the AWS SDK is too old -->
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <configuration>
+                            <excludes>com/dimajix/flowman/templating/**</excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
         <profile>
@@ -84,6 +101,18 @@
                     <version>${aws.version}</version>
                 </dependency>
             </dependencies>
+            <build>
+                <plugins>
+                    <!-- Exclude support for AWS secrets, since the AWS SDK is too old -->
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <configuration>
+                            <excludes>com/dimajix/flowman/templating/**</excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
         <profile>
@@ -113,12 +142,25 @@
                     <version>${aws.version}</version>
                 </dependency>
             </dependencies>
+            <build>
+                <plugins>
+                    <!-- Exclude support for AWS secrets, since the AWS SDK is too old -->
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <configuration>
+                            <excludes>com/dimajix/flowman/templating/**</excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
         <profile>
             <id>hadoop-2.9</id>
             <properties>
-                <aws.version>1.11.199</aws.version>
+                <!-- Update AWS SDK from 1.11.199 to 1.11.309 for supporting secrets -->
+                <aws.version>1.11.309</aws.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -139,6 +181,11 @@
                 <dependency>
                     <groupId>com.amazonaws</groupId>
                     <artifactId>aws-java-sdk-s3</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
                     <version>${aws.version}</version>
                 </dependency>
             </dependencies>
@@ -147,7 +194,8 @@
         <profile>
             <id>hadoop-3.1</id>
             <properties>
-                <aws.version>1.11.271</aws.version>
+                <!-- Update AWS SDK from 1.11.271 to 1.11.309 for supporting secrets -->
+                <aws.version>1.11.309</aws.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -168,6 +216,11 @@
                 <dependency>
                     <groupId>com.amazonaws</groupId>
                     <artifactId>aws-java-sdk-s3</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
                     <version>${aws.version}</version>
                 </dependency>
             </dependencies>
@@ -199,6 +252,11 @@
                     <artifactId>aws-java-sdk-s3</artifactId>
                     <version>${aws.version}</version>
                 </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
             </dependencies>
         </profile>
 
@@ -226,6 +284,11 @@
                 <dependency>
                     <groupId>com.amazonaws</groupId>
                     <artifactId>aws-java-sdk-s3</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
                     <version>${aws.version}</version>
                 </dependency>
             </dependencies>
@@ -261,6 +324,11 @@
                     <version>${aws.version}</version>
                     <scope>provided</scope>
                 </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
+                    <version>${aws.version}</version>
+                </dependency>
             </dependencies>
         </profile>
 
@@ -293,6 +361,11 @@
                     <artifactId>aws-java-sdk-s3</artifactId>
                     <version>${aws.version}</version>
                     <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-secretsmanager</artifactId>
+                    <version>${aws.version}</version>
                 </dependency>
             </dependencies>
         </profile>

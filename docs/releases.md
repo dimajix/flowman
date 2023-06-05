@@ -38,6 +38,7 @@ changes over time.
 * github-402: Support Spark 3.4
 * github-417: Fix URL to flowman.io in all Maven modules
 * github-416: Support specifying multiple targets separated by commas on CLI
+* github-414: Support AWS Secrets Manager for retrieving secrets
 
 
 ### Version 1.0.1

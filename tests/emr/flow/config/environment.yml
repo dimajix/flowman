@@ -1,3 +1,7 @@
 environment:
   - basedir=file:///tmp/weather
   - srcdir=$System.getenv('WEATHER_SRCDIR', 's3a://dimajix-training/data/weather')
+
+  - secretsManagerValue=$AwsSecretsManager.getSecret('my-test-secret', 'eu-central-1')
+  - secretsManagerUsername=$AwsSecretsManager.getSecret('my-test-secret', 'username', 'eu-central-1')
+  - secretsManagerPassword=$AwsSecretsManager.getSecret('my-test-secret', 'password', 'eu-central-1')

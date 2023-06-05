@@ -60,7 +60,7 @@ mappings:
 * `relation` **(mandatory)** *(type: string)*:
   Specifies the name of the relation to read from.
 
-* `columns` **(optional)** *(type: map:data_type)* *(default: empty):
+* `columns` **(optional)** *(type: map:data_type)* *(default: empty)*:
   Specifies the list of columns and types to read from the relation. This schema will be applied to the records after
   they have been read and interpreted by the underlying source. This schema will also be used as a substitute for schema
   inference and therefore can be very helpful when using [`mock`](mock.md) mappings.

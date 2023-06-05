@@ -104,4 +104,4 @@ The migration strategy `ALTER`, `ALTER_REPLACE` and `REPLACE` supports the follo
 ## Remarks
 
 Not all databases support retrieving the original SQL definition of a view. In this case it is impossible for Flowman
-to check if the view definition is different from the user specification, and will always migrate the view.
+to check if the view definition is different from the user's specification, and will always migrate the view.

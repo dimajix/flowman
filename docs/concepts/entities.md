@@ -156,7 +156,7 @@ mappings:
 ## Targets
 
 Now we have the two entity types *mapping* and *relation*, and we already saw how we can read from a relation using
-the `readRelation` mapping. But how can we store the result of a flow of transformations back into some relation? This
+the `relation` mapping. But how can we store the result of a flow of transformations back into some relation? This
 is where *build targets* come into play. They kind of connect the output of a mapping with a relation and tell Flowman
 to write the results of a mapping into a relation. These targets are the entities which will be *built* by Flowman and
 which support a lifecycle starting from creating a relation, migrating it to the newest schema, filling with data,

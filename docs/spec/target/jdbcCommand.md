@@ -2,7 +2,7 @@
 
 The `jdbcCommand` target is a generic and flexible execution target which allows you to execute arbitrary SQL
 statements in the syntax of the target database. This way you can use database features, which are currently not
-directly supported by Flowman. We highly recommend using this only as a workaround for mitigating missing
+directly supported by Flowman. We highly recommend using this target only as a workaround for mitigating missing
 Flowman features or for using exotic database features, since Flowman has no way of understanding what you are
 doing.
 

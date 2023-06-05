@@ -120,7 +120,7 @@ then Flowman will use a global temporary table.
 
 
 ## Staging Tables
-When using the `sqlserver?` relation, Flowman will always use staging tables when writing to a SQL database. This
+When using the `sqlserver` relation, Flowman will always use staging tables when writing to a SQL database. This
 means, Flowman will first create this special staging table (which technically is just a normal table, but without any 
 index or primary key), and then copy the table into the real target table. Afterward, the staging table will be dropped.
 This approach helps to ensure consistency, since the copy process is performed within a single SQL transaction. Moreover, 

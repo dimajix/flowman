@@ -122,6 +122,7 @@
         <jsr305.version>3.0.0</jsr305.version>
         <libthrift.version>0.12.0</libthrift.version>
         <log4j.version>2.19.0</log4j.version>
+        <log4j.slf4j-impl>log4j-slf4j2-impl</log4j.slf4j-impl>
         <lz4.version>1.8.0</lz4.version>
         <netty-all.version>4.1.87.Final</netty-all.version>
         <netty-all.exclusion>none</netty-all.exclusion>
@@ -227,6 +228,7 @@
                 <jsr305.version>1.3.9</jsr305.version>
                 <libthrift.version>0.9.3-1</libthrift.version>
                 <log4j.version>2.8.2</log4j.version>
+                <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
                 <lz4.version>1.4.0</lz4.version>
                 <netty-all.version>4.1.42.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
@@ -308,6 +310,7 @@
                 <jsr305.version>1.3.9</jsr305.version>
                 <libthrift.version>0.16.0</libthrift.version>
                 <log4j.version>2.17.1</log4j.version>
+                <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
                 <lz4.version>1.4.0</lz4.version>
                 <netty-all.version>4.1.68.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
@@ -380,6 +383,7 @@
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.13.0</libthrift.version>
                 <log4j.version>2.17.1</log4j.version>
+                <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
                 <lz4.version>1.7.1</lz4.version>
                 <netty-all.version>4.1.63.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
@@ -452,6 +456,7 @@
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.16.0</libthrift.version>
                 <log4j.version>2.17.1</log4j.version>
+                <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
                 <lz4.version>1.8.0</lz4.version>
                 <netty-all.version>4.1.68.Final</netty-all.version>
                 <netty-all.exclusion>none</netty-all.exclusion>
@@ -524,6 +529,7 @@
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.12.0</libthrift.version>
                 <log4j.version>2.17.2</log4j.version>
+                <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
                 <lz4.version>1.8.0</lz4.version>
                 <netty-all.version>4.1.74.Final</netty-all.version>
                 <netty-all.exclusion>none</netty-all.exclusion>
@@ -585,6 +591,7 @@
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.12.0</libthrift.version>
                 <log4j.version>2.17.2</log4j.version>
+                <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
                 <lz4.version>1.8.0</lz4.version>
                 <netty-all.version>4.1.74.Final</netty-all.version>
                 <netty-all.exclusion>none</netty-all.exclusion>
@@ -643,6 +650,7 @@
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.9.3</libthrift.version>
                 <log4j.version>2.17.2</log4j.version>
+                <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
                 <lz4.version>1.4.0</lz4.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
@@ -696,6 +704,7 @@
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.12.0</libthrift.version>
                 <log4j.version>2.17.2</log4j.version>
+                <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
                 <lz4.version>1.7.1</lz4.version>
                 <netty-all.version>4.1.47.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
@@ -749,6 +758,7 @@
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.12.0</libthrift.version>
                 <log4j.version>2.17.2</log4j.version>
+                <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
                 <lz4.version>1.7.1</lz4.version>
                 <netty-all.version>4.1.51.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
@@ -803,6 +813,7 @@
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.12.0</libthrift.version>
                 <log4j.version>2.17.2</log4j.version>
+                <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
                 <lz4.version>1.7.1</lz4.version>
                 <netty-all.version>4.1.68.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
@@ -857,6 +868,7 @@
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.12.0</libthrift.version>
                 <log4j.version>2.17.2</log4j.version>
+                <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
                 <lz4.version>1.8.0</lz4.version>
                 <netty-all.version>4.1.74.Final</netty-all.version>
                 <netty-all.exclusion>none</netty-all.exclusion>
@@ -911,6 +923,7 @@
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.12.0</libthrift.version>
                 <log4j.version>2.19.0</log4j.version>
+                <log4j.slf4j-impl>log4j-slf4j2-impl</log4j.slf4j-impl>
                 <lz4.version>1.8.0</lz4.version>
                 <netty-all.version>4.1.87.Final</netty-all.version>
                 <netty-all.exclusion>none</netty-all.exclusion>
@@ -2377,7 +2390,7 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-slf4j-impl</artifactId>
+                <artifactId>${log4j.slf4j-impl}</artifactId>
                 <version>${log4j.version}</version>
                 <scope>provided</scope>
             </dependency>

@@ -136,7 +136,7 @@
         <slf4j-api.version>2</slf4j-api.version>
         <snakeyaml.version>1.33</snakeyaml.version>
         <snakeyaml.scope>provided</snakeyaml.scope>
-        <snappy.version>1.1.9.1</snappy.version>
+        <snappy.version>1.1.10.1</snappy.version>
 
         <!-- gRPC related versions -->
         <grpc.version>1.53.0</grpc.version>

@@ -124,7 +124,7 @@
         <log4j.version>2.19.0</log4j.version>
         <log4j.slf4j-impl>log4j-slf4j2-impl</log4j.slf4j-impl>
         <lz4.version>1.8.0</lz4.version>
-        <netty-all.version>4.1.87.Final</netty-all.version>
+        <netty-all.version>4.1.94.Final</netty-all.version>
         <netty-all.exclusion>none</netty-all.exclusion>
         <netty-extras.scope>provided</netty-extras.scope>
         <paranamer.version>2.8</paranamer.version>

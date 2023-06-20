@@ -34,6 +34,8 @@ import javax.ws.rs.Path
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.Category
+import com.dimajix.flowman.history.Edge
+import com.dimajix.flowman.history.Node
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.TargetColumn
 import com.dimajix.flowman.history.TargetOrder
@@ -212,7 +214,19 @@ class TargetHistoryService(history:StateStore) {
     def getTargetGraph(@ApiParam(hidden = true) targetId:String) : server.Route = {
         val state = history.getTargetState(targetId)
         val jobGraph = history.getJobGraph(state.jobId.get)
-        val targetGraph = jobGraph.map(g => g.subgraph(g.nodes.filter(n => n.category == Category.TARGET && n.name == state.target).head))
+        val targetGraph = jobGraph.map { g =>
+            val targetNode = g.nodes.filter(n => n.category == Category.TARGET && n.name == state.target).head
+            def incomingFilter(edge:Edge) : Boolean = {
+                val node = edge.input
+                node.category != Category.TARGET
+            }
+            def outgoingFilter(edge: Edge): Boolean = {
+                val node = edge.input
+                node.category != Category.TARGET
+            }
+
+            g.subgraph(targetNode, incomingFilter, outgoingFilter)
+        }
         complete(targetGraph.map(Converter.ofSpec))
     }
 

@@ -173,7 +173,7 @@ object Graph {
 }
 
 final case class Graph(nodes:Seq[Node], edges:Seq[Edge]) {
-    def subgraph(node:Node): Graph = {
+    def subgraph(node:Node, incomingPredicate:Edge => Boolean, outgoingPredicate:Edge => Boolean): Graph = {
         val builder = Graph.builder()
         val nodesById = mutable.Map[Int,Node]()
         // IDs of processed nodes
@@ -189,9 +189,11 @@ final case class Graph(nodes:Seq[Node], edges:Seq[Edge]) {
                 builder.addNode(newNode)
                 incomingIds.add(newNode.id)
                 node.incoming.foreach { e =>
-                    val input = replaceIncoming(e.input)
-                    val edge = e.withNodes(input, newNode)
-                    builder.addEdge(edge)
+                    if (incomingPredicate(e)) {
+                        val input = replaceIncoming(e.input)
+                        val edge = e.withNodes(input, newNode)
+                        builder.addEdge(edge)
+                    }
                 }
                 newNode
             }
@@ -206,9 +208,11 @@ final case class Graph(nodes:Seq[Node], edges:Seq[Edge]) {
                 builder.addNode(newNode)
                 outgoingIds.add(newNode.id)
                 node.outgoing.foreach { e =>
-                    val output = replaceOutgoing(e.output)
-                    val edge = e.withNodes(newNode, output)
-                    builder.addEdge(edge)
+                    if (outgoingPredicate(e)) {
+                        val output = replaceOutgoing(e.output)
+                        val edge = e.withNodes(newNode, output)
+                        builder.addEdge(edge)
+                    }
                 }
                 newNode
             }

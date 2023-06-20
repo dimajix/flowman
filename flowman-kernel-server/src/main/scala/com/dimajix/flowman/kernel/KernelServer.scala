@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.kernel
 
+import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.net.SocketAddress
 
 import scala.collection.JavaConverters._
@@ -45,6 +47,7 @@ object KernelServer {
 
         private var workspaceManager: WorkspaceManager = null
         private var serverName = "flowman-kernel"
+        private var address:Option[String] = None
         private var port:Int = 8088
         private var serverFactory: () => GrpcServerBuilder = createInprocessServer
 
@@ -52,7 +55,11 @@ object KernelServer {
             GrpcServerBuilder.forName(serverName)
         }
         private def createNettyServer() : GrpcServerBuilder = {
-            GrpcServerBuilder.forPort(port)
+            val adr = address match {
+                case Some(hostname) => new InetSocketAddress(InetAddress.getByName(hostname), port)
+                case None => new InetSocketAddress(port)
+            }
+            GrpcServerBuilder.forAddress(adr)
         }
 
         def withWorkspaceManager(workspaceManager: WorkspaceManager): Builder = {
@@ -76,6 +83,10 @@ object KernelServer {
             this
         }
 
+        def withAddress(address:String) : Builder = {
+            this.address = Some(address)
+            this
+        }
         def withPort(port:Int) : Builder = {
             this.port = port
             this

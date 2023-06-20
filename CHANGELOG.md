@@ -27,6 +27,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-417: Fix URL to flowman.io in all Maven modules
 * github-416: Support specifying multiple targets separated by commas on CLI
 * github-414: Support AWS Secrets Manager for retrieving secrets
+* github-419: Add a command line option to kernel server to listen on specific address
 
 
 ## Version 1.0.1

@@ -31,6 +31,8 @@ class Arguments(args:Array[String]) {
     var version: Boolean = false
     @Option(name = "-w", aliases = Array("--workspace"), usage = "workspace root directory", metaVar = "<workspace_directory>")
     var workspace: String = ""
+    @Option(name = "-a", aliases = Array("--address"), usage = "address to listen on", metaVar = "<server_address>")
+    var address: String = ""
     @Option(name = "-p", aliases = Array("--port"), usage = "port to listen on", metaVar = "<server_port>")
     var port: Int = 8088
     @Option(name = "-X", aliases = Array("--verbose"), usage = "Produce execution output at info level.")

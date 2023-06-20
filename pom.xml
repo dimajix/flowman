@@ -139,9 +139,9 @@
         <snappy.version>1.1.9.1</snappy.version>
 
         <!-- gRPC related versions -->
-        <grpc.version>1.53.0</grpc.version>
-        <grpc-protobuf.version>3.22.2</grpc-protobuf.version>
-        <grpc-guava.version>31.1-jre</grpc-guava.version>
+        <grpc.version>1.56.0</grpc.version>
+        <grpc-protobuf.version>3.22.3</grpc-protobuf.version>
+        <grpc-guava.version>32.0.1-jre</grpc-guava.version>
 
         <!-- Flowman version -->
         <flowman.version>${project.version}</flowman.version>

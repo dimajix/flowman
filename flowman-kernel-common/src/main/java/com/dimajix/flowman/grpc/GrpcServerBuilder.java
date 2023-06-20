@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.grpc;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.LinkedList;
 
 import io.grpc.ServerBuilder;
@@ -36,8 +38,8 @@ public class GrpcServerBuilder {
         ServerBuilder<?> build();
     }
 
-    static public GrpcServerBuilder forPort(int port) {
-        Builder builder = () -> NettyServerBuilder.forPort(port);
+    static public GrpcServerBuilder forAddress(SocketAddress address) {
+        Builder builder = () -> NettyServerBuilder.forAddress(address);
         return new GrpcServerBuilder(builder);
     }
     static public GrpcServerBuilder forName(String name) {

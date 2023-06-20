@@ -16,18 +16,20 @@
 
 package com.dimajix.flowman.grpc;
 
+import java.net.SocketAddress;
+
 import io.grpc.ServerBuilder;
 
 
 public class NettyServerBuilder {
 
-    public static ServerBuilder<?> forPort(int port) {
+    public static ServerBuilder<?> forAddress(SocketAddress address) {
         try {
-            return ShadedNettyServerImpl.createBuilder(port);
+            return ShadedNettyServerImpl.createBuilder(address);
         }
         catch (ClassNotFoundException|NoClassDefFoundError ex) {
             try {
-                return NettyServerImpl.createBuilder(port);
+                return NettyServerImpl.createBuilder(address);
             }
             catch (ClassNotFoundException|NoClassDefFoundError ex2) {
                 throw new RuntimeException("No Netty binding found for gRPC", ex2);
@@ -41,9 +43,9 @@ final class NettyServerImpl {
     private NettyServerImpl() {
     }
 
-    static ServerBuilder<?> createBuilder(int port) throws ClassNotFoundException, NoClassDefFoundError {
+    static ServerBuilder<?> createBuilder(SocketAddress address) throws ClassNotFoundException, NoClassDefFoundError {
         return io.grpc.netty.NettyServerBuilder
-            .forPort(port)
+            .forAddress(address)
             .permitKeepAliveWithoutCalls(true);
     }
 }
@@ -53,9 +55,9 @@ final class ShadedNettyServerImpl {
     private ShadedNettyServerImpl() {
     }
 
-    static ServerBuilder<?> createBuilder(int port) throws ClassNotFoundException, NoClassDefFoundError {
+    static ServerBuilder<?> createBuilder(SocketAddress address) throws ClassNotFoundException, NoClassDefFoundError {
         return io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
-            .forPort(port)
+            .forAddress(address)
             .permitKeepAliveWithoutCalls(true);
     }
 }

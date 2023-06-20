@@ -117,11 +117,15 @@ final class Kernel(args:Arguments) extends Tool {
         args.sparkName,
         additionalConfigs = splitSettings(args.config).toMap
     )
-    lazy val server: KernelServer = KernelServer.builder(rootSession, pluginManager)
-        .withWorkspaceManager(workspaceManager)
-        .withPort(args.port)
-        .withSocketServer()
-        .build()
+    lazy val server: KernelServer =  {
+        val builder = KernelServer.builder(rootSession, pluginManager)
+            .withWorkspaceManager(workspaceManager)
+            .withPort(args.port)
+            .withSocketServer()
+        if (args.address.nonEmpty)
+            builder.withAddress(args.address)
+        builder.build()
+    }
 
     /**
      * Main method for running this command

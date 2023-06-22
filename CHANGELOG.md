@@ -29,6 +29,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-414: Support AWS Secrets Manager for retrieving secrets
 * github-419: Add a command line option to kernel server to listen on specific address
 * github-326: Truncate target graphs at sinks
+* github-410: Support relative paths in project imports
 
 
 ## Version 1.0.1

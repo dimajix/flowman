@@ -45,6 +45,9 @@ class SessionTest extends AnyFlatSpec with Matchers {
         val contextB = rootContext.getProjectContext("project-b")
         contextB should not be (null)
 
+        val contextC = rootContext.getProjectContext("project-c")
+        contextC should not be (null)
+
         val contextImports = rootContext.getProjectContext("project-imports")
         contextImports should not be (null)
     }

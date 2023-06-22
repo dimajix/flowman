@@ -9,3 +9,5 @@ modules:
 imports:
   - project: project-b
     location: ${project.basedir}/../project-b
+  - project: project-c
+    location: ../project-c

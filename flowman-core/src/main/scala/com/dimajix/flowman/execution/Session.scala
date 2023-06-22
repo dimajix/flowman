@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.execution
 
+import java.lang
+
 import scala.collection.mutable
 
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
@@ -445,8 +447,12 @@ final class Session private[execution](
                 val location = context.evaluate(location0)
 
                 logger.info(s"Importing project '$name' from '$location' as a dependency of project '${parent.name}'")
-                val file = context.fs.file(location)
-                Project.read.file(file)
+                val file0 = context.fs.file(location)
+                val file = if (file0.isAbsolute()) file0 else (parent.basedir.getOrElse(throw new RuntimeException(s"Cannot resolve relative project location '$location' for project '$name' imported by project '${parent.name}'")) / location)
+                val prj = Project.read.file(file)
+                if (prj.name != name)
+                    throw new IllegalArgumentException(s"Project '${prj.name}' at '${location}' imported by project ${parent.name} with wrong name ${name}")
+                prj
             }
             .getOrElse {
                 logger.info(s"Importing project '$name' as a dependency of project '${parent.name}'")

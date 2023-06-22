@@ -1,0 +1,11 @@
+name: project-c
+version: 1.0
+
+modules:
+ - config
+ - relation
+
+
+imports:
+  - project: project-a
+    location: ../project-a

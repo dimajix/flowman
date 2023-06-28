@@ -18,9 +18,18 @@ package com.dimajix.flowman.model
 
 import scala.collection.JavaConverters._
 
+import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.templating.FileWrapper
 
+
+final case class SessionWrapper(session:Session) {
+    def getProject() : ProjectWrapper = ProjectWrapper(session.project)
+    def getBasedir() : FileWrapper = FileWrapper(session.project.flatMap(_.basedir).getOrElse(File.empty))
+    def getName() : String = session.project.map(_.name).getOrElse("")
+
+    override def toString: String = getName()
+}
 
 object ProjectWrapper {
     def apply(project: Project) : ProjectWrapper = ProjectWrapper(Some(project))

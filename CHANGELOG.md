@@ -18,7 +18,7 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
-## Version 1.1.0
+## Version 1.1.0 - Upcoming
 
 * github-413: Support Azure Key Vault for retrieving secrets
 * github-415: Improve documentation for Velocity templating
@@ -30,9 +30,10 @@ Breaking changes will be documented in this changelog file for each version.
 * github-419: Add a command line option to kernel server to listen on specific address
 * github-326: Truncate target graphs at sinks
 * github-410: Support relative paths in project imports
+* github-421: Provide new 'session' environment variable
 
 
-## Version 1.0.1
+## Version 1.0.1 - Upcoming
 
 * github-411: [BUG] commons-text has wrong groupId in pom.xml
 

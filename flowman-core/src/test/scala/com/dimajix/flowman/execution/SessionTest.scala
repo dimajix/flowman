@@ -23,8 +23,12 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobIdentifier
 import com.dimajix.flowman.model.Module
+import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.NamespaceWrapper
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.ProjectWrapper
 import com.dimajix.flowman.model.Prototype
+import com.dimajix.flowman.model.SessionWrapper
 import com.dimajix.flowman.storage.AbstractStore
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -46,6 +50,37 @@ class SessionTest extends AnyFlatSpec with Matchers with MockFactory with LocalS
 
         context should not be (null)
         context.execution should be (session.execution)
+
+        context.environment.toMap should be(Map(
+            "session" -> SessionWrapper(session),
+            "namespace" -> NamespaceWrapper(None)
+        ))
+
+        session.shutdown()
+    }
+
+    it should "contain a ProjectWrapper" in {
+        val ns = Namespace("default")
+        val module = Module(
+            environment = Map("x" -> "y"),
+            config = Map("spark.lala" -> "lala.project", "spark.lili" -> "lili.project")
+        )
+        val project = module.toProject("project")
+        val session = Session.builder()
+            .withProject(project)
+            .withNamespace(ns)
+            .disableSpark()
+            .build()
+        val context = session.context
+
+        context should not be (null)
+        context.execution should be(session.execution)
+
+        context.environment.toMap should be(Map(
+            "project" -> ProjectWrapper(project),
+            "session" -> SessionWrapper(session),
+            "namespace" -> NamespaceWrapper(ns)
+        ))
 
         session.shutdown()
     }

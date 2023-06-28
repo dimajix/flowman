@@ -33,8 +33,8 @@ import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Unknown
-import com.dimajix.common.text.TimeFormatter
 import com.dimajix.common.text.ConsoleColors._
+import com.dimajix.common.text.TimeFormatter
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.StateStoreAdaptorListener
@@ -45,7 +45,6 @@ import com.dimajix.flowman.model.JobResult
 import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.LifecycleResult
 import com.dimajix.flowman.model.MappingIdentifier
-import com.dimajix.flowman.model.ProjectWrapper
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Result
@@ -755,8 +754,6 @@ final class Runner(
                 val rootContext = RootContext.builder(job.context.root)
                     .withEnvironment("force", force)
                     .withEnvironment("dryRun", dryRun)
-                    // Override any project variable
-                    .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.SCOPE_OVERRIDE)
                     // Override any job variable
                     .withEnvironment("job", JobWrapper(job), SettingLevel.SCOPE_OVERRIDE)
                     .withEnvironment(arguments, SettingLevel.SCOPE_OVERRIDE)
@@ -772,8 +769,6 @@ final class Runner(
                 ScopeContext.builder(job.context)
                     .withEnvironment("force", force)
                     .withEnvironment("dryRun", dryRun)
-                    // Override any project variable
-                    .withEnvironment("project", ProjectWrapper(job.project), SettingLevel.SCOPE_OVERRIDE)
                     // Override any job variable
                     .withEnvironment("job", JobWrapper(job), SettingLevel.SCOPE_OVERRIDE)
                     .build()
@@ -796,17 +791,18 @@ final class Runner(
         val rootContext = RootContext.builder(test.context.root)
             .withEnvironment("force", false)
             .withEnvironment("dryRun", dryRun)
-            .withEnvironment("project", ProjectWrapper(test.project), SettingLevel.JOB_OVERRIDE)
-            .withEnvironment("test", TestWrapper(test), SettingLevel.JOB_OVERRIDE)
+            // Override any test variable
+            .withEnvironment("test", TestWrapper(test), SettingLevel.SCOPE_OVERRIDE)
             .withEnvironment(test.environment, SettingLevel.JOB_OVERRIDE)
             .withExecution(execution)
             .overrideRelations(test.overrideRelations.map(kv => RelationIdentifier(kv._1, project) -> kv._2))
             .overrideMappings(test.overrideMappings.map(kv => MappingIdentifier(kv._1, project) -> kv._2))
             .build()
-        val projectContext = if (test.context.project.nonEmpty)
-            rootContext.getProjectContext(test.context.project.get)
-        else
-            rootContext
+
+        val projectContext = test.context.project match {
+            case Some(project) => rootContext.getProjectContext(project)
+            case None => rootContext
+        }
         fn(projectContext)
     }
 

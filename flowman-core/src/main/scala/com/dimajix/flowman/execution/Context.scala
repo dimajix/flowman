@@ -44,11 +44,12 @@ case class SettingLevel(
     level:Int
 )
 object SettingLevel {
-    val SCOPE_OVERRIDE = new SettingLevel(500)
-    val GLOBAL_OVERRIDE = new SettingLevel(400)
-    val JOB_OVERRIDE = new SettingLevel(300)
-    val PROJECT_PROFILE = new SettingLevel(250)
-    val PROJECT_SETTING = new SettingLevel(200)
+    val SCOPE_OVERRIDE = new SettingLevel(600)
+    val GLOBAL_OVERRIDE = new SettingLevel(500)
+    val JOB_OVERRIDE = new SettingLevel(400)
+    val PROJECT_PROFILE = new SettingLevel(350)
+    val PROJECT_SETTING = new SettingLevel(300)
+    val SESSION_OVERRIDE = new SettingLevel(200)
     val NAMESPACE_PROFILE = new SettingLevel(150)
     val NAMESPACE_SETTING = new SettingLevel(100)
     val NONE = new SettingLevel(0)

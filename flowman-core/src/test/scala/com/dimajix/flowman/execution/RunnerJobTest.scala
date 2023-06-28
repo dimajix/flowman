@@ -39,12 +39,13 @@ import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.model.NamespaceWrapper
 import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.ProjectWrapper
-import com.dimajix.flowman.model.Target
-import com.dimajix.flowman.model.TargetIdentifier
-import com.dimajix.flowman.model.TargetDigest
-import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.ResourceIdentifier
+import com.dimajix.flowman.model.SessionWrapper
+import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetDigest
+import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.types.StringType
 import com.dimajix.spark.testing.LocalSparkSession
 
@@ -114,6 +115,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
                 "force" -> false,
                 "dryRun" -> false,
                 "project" -> ProjectWrapper(project),
+                "session" -> SessionWrapper(session),
                 "namespace" -> NamespaceWrapper(None)
             ))
         }
@@ -130,6 +132,7 @@ class RunnerJobTest extends AnyFlatSpec with MockFactory with Matchers with Loca
                 "dryRun" -> false,
                 "phase" -> "BUILD",
                 "project" -> ProjectWrapper(project),
+                "session" -> SessionWrapper(session),
                 "namespace" -> NamespaceWrapper(None)
             ))
         }

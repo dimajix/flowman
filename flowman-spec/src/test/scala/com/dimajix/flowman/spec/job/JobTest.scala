@@ -34,6 +34,7 @@ import com.dimajix.flowman.model.JobWrapper
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.NamespaceWrapper
 import com.dimajix.flowman.model.ProjectWrapper
+import com.dimajix.flowman.model.SessionWrapper
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.spec.annotation.TargetType
@@ -126,6 +127,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         GrabEnvironmentTarget.environment should be (Map(
             "job" -> JobWrapper(job),
             "project" -> ProjectWrapper(project),
+            "session" -> SessionWrapper(session),
             "namespace" -> NamespaceWrapper(None),
             "p1" -> "v1",
             "p2" -> "v2",
@@ -138,6 +140,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         GrabEnvironmentTarget.environment should be (Map(
             "job" -> JobWrapper(job),
             "project" -> ProjectWrapper(project),
+            "session" -> SessionWrapper(session),
             "namespace" -> NamespaceWrapper(None),
             "p1" -> "v1",
             "p2" -> "vx",
@@ -180,6 +183,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         GrabEnvironmentTarget.environment should be (Map(
             "job" -> JobWrapper(job),
             "project" -> ProjectWrapper(project),
+            "session" -> SessionWrapper(session),
             "namespace" -> NamespaceWrapper(None),
             "p1" -> "2",
             "force" -> false,
@@ -219,6 +223,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         GrabEnvironmentTarget.environment should be (Map(
             "job" -> JobWrapper(job),
             "project" -> ProjectWrapper(project),
+            "session" -> SessionWrapper(session),
             "namespace" -> NamespaceWrapper(None),
             "p1" -> 2,
             "force" -> false,
@@ -352,6 +357,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         GrabEnvironmentTarget.environment should be (Map(
             "job" -> JobWrapper(job),
             "project" -> ProjectWrapper(project),
+            "session" -> SessionWrapper(session),
             "namespace" -> NamespaceWrapper(None),
             "p1" -> "v1",
             "p2" -> "v1",
@@ -409,6 +415,7 @@ class JobTest extends AnyFlatSpec with Matchers with MockFactory with LocalSpark
         GrabEnvironmentTarget.environment should be (Map(
             "job" -> JobWrapper(job),
             "project" -> ProjectWrapper(project),
+            "session" -> SessionWrapper(session),
             "namespace" -> NamespaceWrapper(None),
             "p1" -> "v1",
             "p2" -> "v1",

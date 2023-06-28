@@ -16,8 +16,6 @@
 
 package com.dimajix.flowman.execution
 
-import java.lang
-
 import scala.collection.mutable
 
 import org.apache.hadoop.conf.{Configuration => HadoopConf}
@@ -30,7 +28,6 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.Configuration
 import com.dimajix.flowman.config.FlowmanConf
-import com.dimajix.flowman.documentation.Documenter
 import com.dimajix.flowman.execution.Session.builder
 import com.dimajix.flowman.fs.FileSystem
 import com.dimajix.flowman.history.NullStateStore
@@ -38,8 +35,11 @@ import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.model.Hook
 import com.dimajix.flowman.model.Namespace
+import com.dimajix.flowman.model.NamespaceWrapper
 import com.dimajix.flowman.model.Project
+import com.dimajix.flowman.model.ProjectWrapper
 import com.dimajix.flowman.model.Prototype
+import com.dimajix.flowman.model.SessionWrapper
 import com.dimajix.flowman.spi.LogFilter
 import com.dimajix.flowman.spi.SparkExtension
 import com.dimajix.flowman.spi.UdfProvider
@@ -492,6 +492,9 @@ final class Session private[execution](
             .withExecution(rootExecution)
             .withLoggerFactory(loggerFactory)
             .withProjects(loadProjects())
+            // Inject session variable
+            .withEnvironment("session", SessionWrapper(this), SettingLevel.SESSION_OVERRIDE)
+
         _project.foreach { prj =>
             // github-155: Apply project configuration to session
             _profiles.foreach(p => prj.profiles.get(p).foreach { profile =>
@@ -499,6 +502,8 @@ final class Session private[execution](
                 builder.withConfig(profile.config, SettingLevel.PROJECT_PROFILE)
             })
             builder.withConfig(prj.config, SettingLevel.PROJECT_SETTING)
+            // Inject project variable
+            builder.withEnvironment("project", ProjectWrapper(prj), SettingLevel.SESSION_OVERRIDE)
         }
         builder.build()
     }

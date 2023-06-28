@@ -39,9 +39,13 @@ changes over time.
 * github-417: Fix URL to flowman.io in all Maven modules
 * github-416: Support specifying multiple targets separated by commas on CLI
 * github-414: Support AWS Secrets Manager for retrieving secrets
+* github-419: Add a command line option to kernel server to listen on specific address
+* github-326: Truncate target graphs at sinks
+* github-410: Support relative paths in project imports
+* github-421: Provide new 'session' environment variable
 
 
-### Version 1.0.1
+### Version 1.0.1 - Upcoming
 
 * github-411: [BUG] commons-text has wrong groupId in pom.xml
 

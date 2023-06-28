@@ -39,6 +39,7 @@ import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
 import com.dimajix.flowman.model.Prototype
+import com.dimajix.flowman.model.SessionWrapper
 import com.dimajix.flowman.model.Test
 import com.dimajix.flowman.model.TestWrapper
 import com.dimajix.spark.testing.LocalSparkSession
@@ -82,6 +83,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
                 "dryRun" -> false,
                 "test" -> TestWrapper(test),
                 "project" -> ProjectWrapper(project),
+                "session" -> SessionWrapper(session),
                 "namespace" -> NamespaceWrapper(None)
             ))
         }
@@ -96,6 +98,7 @@ class RunnerTestTest extends AnyFlatSpec with MockFactory with Matchers with Loc
                 "dryRun" -> false,
                 "test" -> TestWrapper(test),
                 "project" -> ProjectWrapper(project),
+                "session" -> SessionWrapper(session),
                 "namespace" -> NamespaceWrapper(None)
             ))
         }

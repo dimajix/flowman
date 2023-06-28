@@ -31,6 +31,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-326: Truncate target graphs at sinks
 * github-410: Support relative paths in project imports
 * github-421: Provide new 'session' environment variable
+* github-422: Upgrade Spark to 3.4.1
 
 
 ## Version 1.0.1 - Upcoming

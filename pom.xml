@@ -88,7 +88,7 @@
         <!-- Default Spark version (3.4) -->
         <scala.version>2.12.17</scala.version>
         <scala.api_version>2.12</scala.api_version>
-        <spark.version>3.4.0</spark.version>
+        <spark.version>3.4.1</spark.version>
         <spark-api.version>3.4</spark-api.version>
         <hive.version>2.3.9</hive.version>
         <hive-storage-api.version>2.8.1</hive-storage-api.version>
@@ -136,7 +136,7 @@
         <slf4j-api.version>2</slf4j-api.version>
         <snakeyaml.version>1.33</snakeyaml.version>
         <snakeyaml.scope>provided</snakeyaml.scope>
-        <snappy.version>1.1.9.1</snappy.version>
+        <snappy.version>1.1.10.1</snappy.version>
 
         <!-- gRPC related versions -->
         <grpc.version>1.56.0</grpc.version>
@@ -889,7 +889,7 @@
             <properties>
                 <scala.version>2.12.17</scala.version>
                 <scala.api_version>2.12</scala.api_version>
-                <spark.version>3.4.0</spark.version>
+                <spark.version>3.4.1</spark.version>
                 <spark-api.version>3.4</spark-api.version>
                 <hive.version>2.3.9</hive.version>
                 <hive-storage-api.version>2.8.1</hive-storage-api.version>
@@ -936,7 +936,7 @@
                 <slf4j.version>2.0.6</slf4j.version>
                 <slf4j-api.version>2</slf4j-api.version>
                 <snakeyaml.version>1.33</snakeyaml.version>
-                <snappy.version>1.1.9.1</snappy.version>
+                <snappy.version>1.1.10.1</snappy.version>
             </properties>
         </profile>
 

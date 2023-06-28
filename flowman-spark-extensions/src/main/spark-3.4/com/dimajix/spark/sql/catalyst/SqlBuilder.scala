@@ -603,12 +603,13 @@ class SqlBuilder private(
 
     object ConstructSubqueryExpressions extends Rule[LogicalPlan] {
       def apply(tree: LogicalPlan): LogicalPlan = tree transformAllExpressions {
-        case ScalarSubquery(query, conditions, exprId, _, _) if conditions.nonEmpty =>
+        case sq:ScalarSubquery if sq.outerAttrs.nonEmpty =>
           def rewriteAggregate(a: Aggregate): Aggregate = {
+            val conditions = sq.outerAttrs
             val filter = Filter(conditions.reduce(And), addSubqueryIfNeeded(a.child))
             Aggregate(Nil, a.aggregateExpressions.take(1), filter)
           }
-          val cleaned = query match {
+          val cleaned = sq.plan match {
             case Project(_, child) => child
             case child => child
           }
@@ -618,7 +619,7 @@ class SqlBuilder private(
             case Filter(c, a: Aggregate) =>
               Filter(c, rewriteAggregate(a))
           }
-          ScalarSubquery(rewrite, Seq.empty, exprId)
+          ScalarSubquery(rewrite, Seq.empty, sq.exprId)
 /*
         case PredicateSubquery(query, conditions, false, exprId) =>
           val subquery = addSubqueryIfNeeded(query)

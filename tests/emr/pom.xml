@@ -23,7 +23,7 @@
             <plugin>
                 <groupId>com.dimajix.flowman.maven</groupId>
                 <artifactId>flowman-maven-plugin</artifactId>
-                <version>0.1.0</version>
+                <version>0.2.0</version>
                 <extensions>true</extensions>
                 <configuration>
                     <deploymentDescriptor>deployment.yml</deploymentDescriptor>

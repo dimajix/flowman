@@ -32,6 +32,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-410: Support relative paths in project imports
 * github-421: Provide new 'session' environment variable
 * github-422: Upgrade Spark to 3.4.1
+* github-423: Migrating a MariaDB/MySQL table from a text type to a numeric type fails
 
 
 ## Version 1.0.1 - Upcoming

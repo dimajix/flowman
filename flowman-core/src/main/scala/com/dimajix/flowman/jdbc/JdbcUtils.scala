@@ -37,7 +37,6 @@ import org.apache.spark.sql.SparkShim
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 import org.apache.spark.sql.jdbc.JdbcDialects
-import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{types => st}
 import org.slf4j.LoggerFactory
 
@@ -65,6 +64,7 @@ import com.dimajix.flowman.execution.MergeClause
 import com.dimajix.flowman.types.CharType
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.types.VarcharType
 
@@ -97,7 +97,7 @@ object JdbcUtils {
         def combineFields(dataField:st.StructField, tableField:Field) : Field = {
             val ftype = dataField.dataType match {
                 // Try to keep original types for Sparks generic String type
-                case StringType =>
+                case st.StringType =>
                     tableField.ftype match {
                         case t:VarcharType => t
                         case t:CharType => t
@@ -737,12 +737,17 @@ object JdbcUtils {
             case u:UpdateColumnType =>
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))
                 val dataType = dialect.getJdbcType(u.dataType)
-                val charset = u.charset.map(c => s" CHARACTER SET $c").getOrElse("")
-                val collation = u.collation.map(c => s" COLLATE $c").getOrElse("")
-                currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(typeName=dataType.databaseTypeDefinition))
+                val (charset,collation) = u.dataType match {
+                    case StringType|CharType(_)|VarcharType(_) => (
+                        u.charset.map(c => s" CHARACTER SET $c").orElse(current.charset),
+                        u.collation.map(c => s" COLLATE $c").orElse(current.collation)
+                    )
+                    case _ => (None, None)
+                }
+                currentFields.put(u.column.toLowerCase(Locale.ROOT), current.copy(typeName=dataType.databaseTypeDefinition, collation=collation, charset=charset))
                 Some((stmt:Statement) => {
-                    logger.info(s"Changing column '${u.column}' type from '${current.typeName}' to '${dataType.databaseTypeDefinition}${charset}${collation}' (${u.dataType.sqlType}) in JDBC table $table")
-                    commands.updateColumnType(stmt, table, u.column, dataType.databaseTypeDefinition, current.nullable, charset=u.charset.orElse(current.charset), collation=u.collation.orElse(current.collation), current.description)
+                    logger.info(s"Changing column '${u.column}' type from '${current.typeName}' to '${dataType.databaseTypeDefinition}${charset.getOrElse("")}${collation.getOrElse("")}' (${u.dataType.sqlType}) in JDBC table $table")
+                    commands.updateColumnType(stmt, table, u.column, dataType.databaseTypeDefinition, current.nullable, charset, collation, current.description)
                 })
             case u:UpdateColumnNullability =>
                 val current = currentFields(u.column.toLowerCase(Locale.ROOT))

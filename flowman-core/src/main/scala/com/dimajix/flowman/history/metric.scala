@@ -16,41 +16,41 @@
 
 package com.dimajix.flowman.history
 
-import java.sql.Timestamp
 import java.time.Clock
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.metric.GaugeMetric
 import com.dimajix.flowman.metric.Metric
 
 
 object Measurement {
-    def ofMetrics(metrics:Seq[Metric]) : Seq[Measurement] = {
-        val now = new Timestamp(Clock.systemDefaultZone().instant().toEpochMilli)
+    def ofMetrics(metrics: Seq[Metric]): Seq[Measurement] = {
+        val now = Clock.systemDefaultZone().instant().atZone(ZoneId.systemDefault()).truncatedTo(ChronoUnit.MILLIS)
         metrics.flatMap {
-            case gauge:GaugeMetric => Some(Measurement(gauge.name, "", now.toInstant.atZone(ZoneId.of("UTC")), gauge.labels, gauge.value))
+            case gauge: GaugeMetric => Some(Measurement(gauge.name, "", now, gauge.labels, gauge.value))
             case _ => None
         }
     }
 }
+
 final case class Measurement(
-    name:String,
-    jobId:String,
-    ts:ZonedDateTime,
-    labels:Map[String,String],
-    value:Double
+    name: String,
+    jobId: String,
+    ts: ZonedDateTime,
+    labels: Map[String, String],
+    value: Double
 )
 
 
 final case class MetricSeries(
-    metric:String,
-    namespace:String,
-    project:String,
-    job:String,
-    phase:Phase,
-    labels:Map[String,String],
-    measurements:Seq[Measurement]
+    metric: String,
+    namespace: String,
+    project: String,
+    job: String,
+    phase: Phase,
+    labels: Map[String, String],
+    measurements: Seq[Measurement]
 )

@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.spec.history
 
+import java.security.MessageDigest
 import java.sql.Timestamp
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -28,6 +29,7 @@ import scala.concurrent.duration.Duration
 import scala.language.higherKinds
 import scala.util.control.NonFatal
 
+import javax.xml.bind.DatatypeConverter
 import org.slf4j.LoggerFactory
 import slick.jdbc.JdbcProfile
 
@@ -54,9 +56,11 @@ import com.dimajix.flowman.history.TargetState
 import com.dimajix.flowman.history.WriteRelation
 import com.dimajix.flowman.jdbc.SlickUtils
 import com.dimajix.flowman.model.Category
+import com.dimajix.flowman.model.JobDigest
+import com.dimajix.flowman.model.TargetDigest
 
 
-private[history] object JdbcStateRepository {
+object JdbcStateRepository {
     private val logger = LoggerFactory.getLogger(classOf[JdbcStateRepository])
 
     case class JobRun(
@@ -165,9 +169,8 @@ private[history] object JdbcStateRepository {
 }
 
 
-private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection, val profile:JdbcProfile) {
+class JdbcStateRepository(connection: JdbcStateStore.Connection, val profile:JdbcProfile) extends StateRepository {
     import profile.api._
-
     import JdbcStateRepository._
 
     private lazy val db = {
@@ -399,28 +402,28 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         }
     }
 
-    def getJobState(run:JobRun) : Option[JobState] = {
+    override def getJobState(job:JobDigest) : Option[JobState] = {
         val latestId = jobRuns
-            .filter(r => r.namespace === run.namespace
-                && r.project === run.project
-                && r.job === run.job
-                && r.args_hash === run.args_hash
+            .filter(r => r.namespace === job.namespace
+                && r.project === job.project
+                && r.job === job.job
+                && r.args_hash === hashMap(job.args)
                 && r.status =!= Status.SKIPPED.toString
             ).map(_.id)
             .max
 
         val qj = jobRuns.filter(_.id === latestId)
-        val job = Await.result(db.run(qj.result), Duration.Inf)
+        val job0 = Await.result(db.run(qj.result), Duration.Inf)
             .headOption
 
         // Retrieve job arguments
-        val qa = job.map(j => jobArgs.filter(_.job_id === j.id))
+        val qa = job0.map(j => jobArgs.filter(_.job_id === j.id))
         val args = qa.toSeq.flatMap(q =>
             Await.result(db.run(q.result), Duration.Inf)
                 .map(a => (a.name, a.value))
         ).toMap
 
-        job.map(state => JobState(
+        job0.map(state => JobState(
             state.id.toString,
             state.namespace,
             state.project,
@@ -429,37 +432,53 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             Phase.ofString(state.phase),
             args,
             Status.ofString(state.status),
-            state.start_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
-            state.end_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
+            state.start_ts.map(_.toInstant.atZone(ZoneId.systemDefault())),
+            state.end_ts.map(_.toInstant.atZone(ZoneId.systemDefault())),
             state.error
         ))
     }
 
-    def setJobStatus(run:JobRun) : Unit = {
-        val q = jobRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status, r.error)).update((run.end_ts, run.status, run.error.map(_.take(1021))))
+    override def updateJobState(state:JobState) : Unit = {
+        val q = jobRuns.filter(_.id === state.id.toLong)
+            .map(r => (r.end_ts, r.status, r.error))
+            .update((state.endDateTime.map(ts => new Timestamp(ts.toInstant.toEpochMilli)), state.status.upper, state.error.map(_.take(1021))))
         Await.result(db.run(q), Duration.Inf)
     }
 
-    def insertJobRun(run:JobRun, args:Map[String,String], envs:Map[String,String]) : JobRun = {
+    override def insertJobState(state:JobState, env:Map[String,String]) : JobState = {
+        val run = JobRun(
+            0,
+            state.namespace,
+            state.project,
+            state.project,
+            state.job,
+            state.phase.upper,
+            hashMap(state.args),
+            state.startDateTime.map(st => new Timestamp(st.toInstant.toEpochMilli)),
+            state.endDateTime.map(st => new Timestamp(st.toInstant.toEpochMilli)),
+            state.status.upper,
+            None
+        )
+
         val runQuery = (jobRuns returning jobRuns.map(_.id) into((run, id) => run.copy(id=id))) += run
         val runResult = Await.result(db.run(runQuery), Duration.Inf)
 
-        val runArgs = args.map(kv => JobArgument(runResult.id, kv._1, kv._2))
+        val runArgs = state.args.map(kv => JobArgument(runResult.id, kv._1, kv._2))
         val argsQuery = jobArgs ++= runArgs
         Await.result(db.run(argsQuery), Duration.Inf)
 
-        val runEnvs = envs.map(kv => JobEnvironment(runResult.id, kv._1, kv._2))
+        val runEnvs = env.map(kv => JobEnvironment(runResult.id, kv._1, kv._2))
         val envsQuery = jobEnvironments ++= runEnvs
         Await.result(db.run(envsQuery), Duration.Inf)
 
-        runResult
+        state.copy(id = runResult.id.toString)
     }
 
-    def insertJobMetrics(jobId:Long, metrics:Seq[Measurement]) : Unit = {
+    override def insertJobMetrics(jobId:String, metrics:Seq[Measurement]) : Unit = {
         implicit val ec = db.executor.executionContext
 
         val result = metrics.map { m =>
-            val jobMetric = JobMetric(0, jobId, m.name, new Timestamp(m.ts.toInstant.toEpochMilli), m.value)
+            val jobMetric = JobMetric(0, jobId.toLong, m.name, new Timestamp(m.ts.toInstant.toEpochMilli), m.value)
             val jmQuery = (jobMetrics returning jobMetrics.map(_.id) into((jm,id) => jm.copy(id=id))) += jobMetric
             db.run(jmQuery).flatMap { metric =>
                 val labels = m.labels.map(l => JobMetricLabel(metric.id, l._1, l._2))
@@ -471,39 +490,39 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         Await.result(Future.sequence(result), Duration.Inf)
     }
 
-    def getJobMetrics(jobId:Long) : Seq[Measurement] = {
+    override def getJobMetrics(jobId:String) : Seq[Measurement] = {
         // Ensure that job actually exists
-        val jq = jobRuns.filter(_.id === jobId)
+        val jq = jobRuns.filter(_.id === jobId.toLong)
         Await.result(db.run(jq.result), Duration.Inf).head
 
         // Now query metrics
-        val q = jobMetrics.filter(_.job_id === jobId)
+        val q = jobMetrics.filter(_.job_id === jobId.toLong)
             .joinLeft(jobMetricLabels).on(_.id === _.metric_id)
         Await.result(db.run(q.result), Duration.Inf)
             .groupBy(_._1.id)
             .map { g =>
                 val metric = g._2.head._1
                 val labels = g._2.flatMap(_._2).map(kv => kv.name -> kv.value).toMap
-                Measurement(metric.name, metric.job_id.toString, metric.ts.toInstant.atZone(ZoneId.of("UTC")), labels, metric.value)
+                Measurement(metric.name, metric.job_id.toString, metric.ts.toInstant.atZone(ZoneId.systemDefault()), labels, metric.value)
             }
             .toSeq
     }
 
-    def getJobEnvironment(jobId:Long) : Map[String,String] = {
+    override def getJobEnvironment(jobId:String) : Map[String,String] = {
         // Ensure that job actually exists
-        val jq = jobRuns.filter(_.id === jobId)
+        val jq = jobRuns.filter(_.id === jobId.toLong)
         Await.result(db.run(jq.result), Duration.Inf).head
 
         // Now query metrics
-        val q = jobEnvironments.filter(_.job_id === jobId)
+        val q = jobEnvironments.filter(_.job_id === jobId.toLong)
         Await.result(db.run(q.result), Duration.Inf)
             .map(e => e.name -> e.value)
             .toMap
     }
 
-    def insertJobGraph(jobId:Long, graph:Graph) : Unit = {
+    override def insertJobGraph(jobId:String, graph:Graph) : Unit = {
         // Step 1: Insert nodes
-        val dbNodes = graph.nodes.map(n => GraphNode(-1, jobId, n.category.lower, n.kind, n.name))
+        val dbNodes = graph.nodes.map(n => GraphNode(-1, jobId.toLong, n.category.lower, n.kind, n.name))
         val nodesQuery = (graphNodes returning graphNodes.map(_.id)) ++= dbNodes
         val nodeIds = Await.result(db.run(nodesQuery), Duration.Inf)
         val nodeIdToDbId = graph.nodes.map(_.id).zip(nodeIds).toMap
@@ -532,13 +551,13 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         Await.result(db.run(resourcePartitionsQuery), Duration.Inf)
     }
 
-    def getJobGraph(jobId:Long) : Option[Graph] = {
+    override def getJobGraph(jobId:String) : Option[Graph] = {
         // Ensure that job actually exists
-        val jq = jobRuns.filter(_.id === jobId)
+        val jq = jobRuns.filter(_.id === jobId.toLong)
         Await.result(db.run(jq.result), Duration.Inf).head
 
         // Now retrieve graph nodes
-        val qn = graphNodes.filter(_.job_id === jobId)
+        val qn = graphNodes.filter(_.job_id === jobId.toLong)
         val dbNodes = Await.result(db.run(qn.result), Duration.Inf)
 
         // Only build graph if nodes are present, otherwise return None
@@ -617,7 +636,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .optionalFilter(query.to)((e,v) => e.start_ts.getOrElse(new Timestamp(0)) <= Timestamp.from(v.toInstant))
     }
 
-    def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = {
+    override def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState] = {
         def mapOrderColumn(order:JobOrder) : JobRuns => Rep[_] = {
             order.column match {
                 case JobColumn.DATETIME => t => t.start_ts
@@ -675,8 +694,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                     Phase.ofString(state.phase),
                     args.map(a => a.name -> a.value).toMap,
                     Status.ofString(state.status),
-                    state.start_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
-                    state.end_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
+                    state.start_ts.map(_.toInstant.atZone(ZoneId.systemDefault())),
+                    state.end_ts.map(_.toInstant.atZone(ZoneId.systemDefault())),
                     state.error
                 )
             }
@@ -684,14 +703,14 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .sortWith(ordering)
     }
 
-    def countJobs(query:JobQuery) : Int = {
+    override def countJobs(query:JobQuery) : Int = {
         val q = queryJobs(query)
             .length
 
         Await.result(db.run(q.result), Duration.Inf)
     }
 
-    def countJobs(query:JobQuery, grouping:JobColumn) : Seq[(String,Int)] = {
+    override def countJobs(query:JobQuery, grouping:JobColumn) : Seq[(String,Int)] = {
         def mapGroupingColumn(column:JobColumn) : JobRuns => Rep[String] = {
             column match {
                 case JobColumn.DATETIME => t => t.start_ts.asColumnOf[String]
@@ -710,24 +729,24 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         Await.result(db.run(q.result), Duration.Inf)
     }
 
-    def getTargetState(target:TargetRun, partitions:Map[String,String]) : Option[TargetState] = {
+    override def getTargetState(target:TargetDigest) : Option[TargetState] = {
         val q = targetRuns
             .filter(tr => tr.namespace === target.namespace
                 && tr.project === target.project
                 && tr.target === target.target
-                && tr.partitions_hash === target.partitions_hash
+                && tr.partitions_hash === hashMap(target.partitions)
                 && tr.status =!= Status.SKIPPED.toString
             )
             .map(_.id)
             .max
 
         Await.result(db.run(q.result), Duration.Inf)
-            .map { id => getTargetState(id) }
+            .map { id => getTargetState(id.toString) }
     }
 
-    def getTargetState(targetId:Long) : TargetState = {
+    override def getTargetState(targetId:String) : TargetState = {
         // Finally select the run with the calculated ID
-        val q = targetRuns.filter(r => r.id === targetId)
+        val q = targetRuns.filter(r => r.id === targetId.toLong)
         val state = Await.result(db.run(q.result), Duration.Inf)
             .head
 
@@ -747,26 +766,43 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             parts,
             Phase.ofString(state.phase),
             Status.ofString(state.status),
-            state.start_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
-            state.end_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
+            state.start_ts.map(_.toInstant.atZone(ZoneId.systemDefault())),
+            state.end_ts.map(_.toInstant.atZone(ZoneId.systemDefault())),
             state.error
         )
     }
 
-    def setTargetStatus(run:TargetRun) : Unit = {
-        val q = targetRuns.filter(_.id === run.id).map(r => (r.end_ts, r.status, r.error)).update((run.end_ts, run.status, run.error.map(_.take(1021))))
+    override def updateTargetState(run:TargetState) : Unit = {
+        val q = targetRuns.filter(_.id === run.id.toLong)
+            .map(r => (r.end_ts, r.status, r.error))
+            .update((run.endDateTime.map(ts => new Timestamp(ts.toInstant.toEpochMilli)), run.status.upper, run.error.map(_.take(1021))))
         Await.result(db.run(q), Duration.Inf)
     }
 
-    def insertTargetRun(run:TargetRun, partitions:Map[String,String]) : TargetRun = {
+    override def insertTargetState(state:TargetState) : TargetState = {
+        val run = TargetRun(
+            0,
+            state.jobId.map(_.toLong),
+            state.namespace,
+            state.project,
+            state.project,
+            state.target,
+            state.phase.upper,
+            hashMap(state.partitions),
+            state.startDateTime.map(ts => new Timestamp(ts.toInstant.toEpochMilli)),
+            state.endDateTime.map(ts => new Timestamp(ts.toInstant.toEpochMilli)),
+            state.status.upper,
+            state.error
+        )
+
         val runQuery = (targetRuns returning targetRuns.map(_.id) into((run, id) => run.copy(id=id))) += run
         val runResult = Await.result(db.run(runQuery), Duration.Inf)
 
-        val runPartitions = partitions.map(kv => TargetPartition(runResult.id, kv._1, kv._2))
+        val runPartitions = state.partitions.map(kv => TargetPartition(runResult.id, kv._1, kv._2))
         val argsQuery = targetPartitions ++= runPartitions
         Await.result(db.run(argsQuery), Duration.Inf)
 
-        runResult
+        state.copy(id=runResult.id.toString)
     }
 
     private def queryTargets(query:TargetQuery) : Query[TargetRuns, TargetRun, Seq] = {
@@ -799,7 +835,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
     }
 
 
-    def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = {
+    override def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState] = {
         def mapOrderDirection(order:TargetOrder) : slick.ast.Ordering = {
             if (order.isAscending)
                 slick.ast.Ordering(slick.ast.Ordering.Asc)
@@ -849,8 +885,8 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                     partitions.map(t => t.name -> t.value).toMap,
                     Phase.ofString(state.phase),
                     Status.ofString(state.status),
-                    state.start_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
-                    state.end_ts.map(_.toInstant.atZone(ZoneId.of("UTC"))),
+                    state.start_ts.map(_.toInstant.atZone(ZoneId.systemDefault())),
+                    state.end_ts.map(_.toInstant.atZone(ZoneId.systemDefault())),
                     state.error
                 )
             }
@@ -858,14 +894,14 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             .sortWith(ordering)
     }
 
-    def countTargets(query:TargetQuery) : Int = {
+    override def countTargets(query:TargetQuery) : Int = {
         val q = queryTargets(query)
             .length
 
         Await.result(db.run(q.result), Duration.Inf)
     }
 
-    def countTargets(query:TargetQuery, grouping:TargetColumn) : Seq[(String,Int)] = {
+    override def countTargets(query:TargetQuery, grouping:TargetColumn) : Seq[(String,Int)] = {
         def mapGroupingColumn(column:TargetColumn) : TargetRuns => Rep[String] = {
             column match {
                 case TargetColumn.DATETIME => t => t.start_ts.asColumnOf[String]
@@ -885,7 +921,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
         Await.result(db.run(q.result), Duration.Inf)
     }
 
-    def findMetrics(jobQuery: JobQuery, groupings:Seq[String]) : Seq[MetricSeries] = {
+    override def findMetrics(jobQuery: JobQuery, groupings:Seq[String]) : Seq[MetricSeries] = {
         // Select metrics according to jobQuery
         val q0 = queryJobs(jobQuery)
             .join(jobMetrics).on(_.id === _.job_id)
@@ -916,7 +952,7 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
                     .map { m =>
                         val metric = m.head._1
                         val labels = m.map(l => l._2.name -> l._2.value).toMap
-                        Measurement(metric.name, metric.job_id.toString, metric.ts.toInstant.atZone(ZoneId.of("UTC")), labels, metric.value)
+                        Measurement(metric.name, metric.job_id.toString, metric.ts.toInstant.atZone(ZoneId.systemDefault()), labels, metric.value)
                     }
                 // Group by groupings
                 series.groupBy(m => groupings.map(m.labels))
@@ -954,5 +990,12 @@ private[history] class JdbcStateRepository(connection: JdbcStateStore.Connection
             -1
         else
             1
+    }
+
+    private def hashMap(map: Map[String, String]): String = {
+        val strArgs = map.map(kv => kv._1 + "=" + kv._2).mkString(",")
+        val bytes = strArgs.getBytes("UTF-8")
+        val digest = MessageDigest.getInstance("MD5").digest(bytes)
+        DatatypeConverter.printHexBinary(digest).toUpperCase()
     }
 }

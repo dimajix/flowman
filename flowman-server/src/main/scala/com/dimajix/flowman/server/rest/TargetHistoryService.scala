@@ -35,20 +35,19 @@ import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.Category
 import com.dimajix.flowman.history.Edge
-import com.dimajix.flowman.history.Node
-import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.TargetColumn
 import com.dimajix.flowman.history.TargetOrder
 import com.dimajix.flowman.history.TargetQuery
 import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
-import com.dimajix.flowman.server.model.TargetStateCounts
 import com.dimajix.flowman.server.model.TargetStateList
+import com.dimajix.flowman.server.model.TargetStateCounts
+import com.dimajix.flowman.spec.history.StateRepository
 
 
 @Api(value = "/history", produces = "application/json", consumes = "application/json")
 @Path("/history")
-class TargetHistoryService(history:StateStore) {
+class TargetHistoryService(history:StateRepository) {
     import akka.http.scaladsl.server.Directives._
 
     import com.dimajix.flowman.server.model.JsonSupport._
@@ -184,7 +183,7 @@ class TargetHistoryService(history:StateStore) {
             case "phase" => TargetColumn.PHASE
         }
         val count = history.countTargets(query, g)
-        complete(TargetStateCounts(count))
+        complete(TargetStateCounts(count.toMap))
     }
 
     @Path("/target")

@@ -18,9 +18,7 @@ package com.dimajix.flowman.server.rest
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContextExecutor
-import scala.concurrent.Promise
 
-import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes.Found
@@ -33,6 +31,8 @@ import org.slf4j.LoggerFactory
 import com.dimajix.common.net.SocketUtils
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.history.JobQuery
+import com.dimajix.flowman.server.Configuration
+import com.dimajix.flowman.spec.history.RepositoryStateStore
 
 
 class Server(
@@ -50,10 +50,18 @@ class Server(
         implicit val materializer: ActorMaterializer = ActorMaterializer()
         implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
+        val repository = session.history match {
+            case store:RepositoryStateStore => store.repository
+            case _ => throw new IllegalArgumentException("Unsupported history backend")
+        }
+
+        // Ensure that repository actually exists
+        repository.create()
+
         val namespaceService = new NamespaceService(session.namespace.get)
-        val jobHistoryService = new JobHistoryService(session.history)
-        val targetHistoryService = new TargetHistoryService(session.history)
-        val metricService = new MetricService(session.history)
+        val jobHistoryService = new JobHistoryService(repository)
+        val targetHistoryService = new TargetHistoryService(repository)
+        val metricService = new MetricService(repository)
 
         val apiRoute = pathPrefix("api") (
                 SwaggerDocService.routes

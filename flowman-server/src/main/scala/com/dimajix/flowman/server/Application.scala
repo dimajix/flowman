@@ -22,7 +22,6 @@ import com.dimajix.flowman.Tool
 import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.model.Namespace
-import com.dimajix.flowman.server.rest.Configuration
 import com.dimajix.flowman.server.rest.Server
 
 
@@ -66,7 +65,7 @@ class Application extends Tool {
             disableSpark = true
         )
 
-        val conf = Configuration.loadDefaults()
+        val conf = new Configuration(session.flowmanConf)
         val server = new Server(conf, session)
         server.run()
 

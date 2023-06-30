@@ -17,12 +17,15 @@
 package com.dimajix.flowman.spec.history
 
 import java.security.MessageDigest
+import java.sql.SQLRecoverableException
+import java.sql.SQLTransientException
 import java.sql.Timestamp
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.Locale
 import java.util.Properties
 
+import scala.annotation.tailrec
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
@@ -31,10 +34,10 @@ import scala.util.control.NonFatal
 
 import javax.xml.bind.DatatypeConverter
 import org.slf4j.LoggerFactory
-import slick.jdbc.JdbcProfile
 
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.StateStoreException
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.Action
 import com.dimajix.flowman.history.Graph
@@ -169,8 +172,11 @@ object JdbcStateRepository {
 }
 
 
-class JdbcStateRepository(connection: JdbcStateStore.Connection, val profile:JdbcProfile) extends StateRepository {
+final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:Int=3, timeout:Int=1000) extends StateRepository {
+    val profile = SlickUtils.getProfile(connection.driver)
+
     import profile.api._
+
     import JdbcStateRepository._
 
     private lazy val db = {
@@ -369,7 +375,7 @@ class JdbcStateRepository(connection: JdbcStateStore.Connection, val profile:Jdb
         }
     }
 
-    def create() : Unit = {
+    override def create() : Unit = {
         import scala.concurrent.ExecutionContext.Implicits.global
         val tables = Seq(
             jobRuns,
@@ -399,6 +405,25 @@ class JdbcStateRepository(connection: JdbcStateStore.Connection, val profile:Jdb
         }
         catch {
             case NonFatal(ex) => logger.error(s"Cannot create tables of JDBC history database at '${connection.url}':\n  ${reasons(ex)}")
+        }
+    }
+
+    override def withRetry[T](fn: => T): T = {
+        def retry[T](n: Int)(fn: => T): T = {
+            try {
+                fn
+            } catch {
+                case e@(_: SQLRecoverableException | _: SQLTransientException) if n > 1 =>
+                    logger.warn("Retrying after error while executing SQL: {}", e.getMessage)
+                    Thread.sleep(timeout)
+                    retry(n - 1)(fn)
+                case ex: Throwable =>
+                    throw new StateStoreException("Error accessing JDBC state store repository", ex)
+            }
+        }
+
+        retry(retries) {
+            fn
         }
     }
 

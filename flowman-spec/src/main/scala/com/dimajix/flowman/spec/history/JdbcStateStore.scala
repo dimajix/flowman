@@ -16,12 +16,6 @@
 
 package com.dimajix.flowman.spec.history
 
-import java.sql.SQLRecoverableException
-import java.sql.SQLTransientException
-
-import com.dimajix.flowman.execution.StateStoreException
-import com.dimajix.flowman.jdbc.SlickUtils
-
 
 
 object JdbcStateStore {
@@ -36,44 +30,7 @@ object JdbcStateStore {
 
 
 case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeout:Int=1000) extends RepositoryStateStore {
-
-
-    /**
-      * Performs some a task with a JDBC session, also automatically performing retries and timeouts
-      *
-      * @param query
-      * @tparam T
-      * @return
-      */
-    override protected def withRepository[T](query: JdbcStateRepository => T) : T = {
-        def retry[T](n:Int)(fn: => T) : T = {
-            try {
-                fn
-            } catch {
-                case e @(_:SQLRecoverableException|_:SQLTransientException) if n > 1 =>
-                    logger.warn("Retrying after error while executing SQL: {}", e.getMessage)
-                    Thread.sleep(timeout)
-                    retry(n - 1)(fn)
-                case ex:Throwable =>
-                    throw new StateStoreException("Error accessing JDBC state store repository", ex)
-            }
-        }
-
-        retry(retries) {
-            ensureTables()
-            query(repository)
-        }
-    }
-
-    private var tablesCreated:Boolean = false
-    private lazy val repository = new JdbcStateRepository(connection, SlickUtils.getProfile(connection.driver))
-
-    private def ensureTables() : Unit = {
-        // Create Database if not exists
-        if (!tablesCreated) {
-            repository.create()
-            tablesCreated = true
-        }
-    }
-
+    override lazy val repository : StateRepository = new RetryingStateRepository(
+            new JdbcStateRepository(connection, retries, timeout)
+        )
 }

@@ -277,7 +277,7 @@ abstract class RepositoryStateStore extends AbstractStateStore {
       * @param offset
       * @return
       */
-    override def findTargets(query:TargetQuery, order:Seq[TargetOrder]=Seq(), limit:Int=10000, offset:Int=0) : Seq[TargetState] = {
+    override def findTargets(query:TargetQuery, order:Seq[TargetOrder]=Seq.empty, limit:Int=10000, offset:Int=0) : Seq[TargetState] = {
         withRepository { repository =>
             repository.findTargets(query, order, limit, offset)
         }
@@ -301,6 +301,8 @@ abstract class RepositoryStateStore extends AbstractStateStore {
         }
     }
 
+    def repository : StateRepository
+
     /**
       * Performs some a task with a JDBC session, also automatically performing retries and timeouts
       *
@@ -308,5 +310,18 @@ abstract class RepositoryStateStore extends AbstractStateStore {
       * @tparam T
       * @return
       */
-    protected def withRepository[T](query: JdbcStateRepository => T) : T
+    protected def withRepository[T](query: StateRepository => T): T = {
+        ensureTables()
+        query(repository)
+    }
+
+    private var tablesCreated: Boolean = false
+
+    private def ensureTables(): Unit = {
+        // Create Database if not exists
+        if (!tablesCreated) {
+            repository.create()
+            tablesCreated = true
+        }
+    }
 }

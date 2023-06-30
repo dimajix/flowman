@@ -32,15 +32,15 @@ import javax.ws.rs.Path
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history.JobQuery
-import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
 import com.dimajix.flowman.server.model.MetricSeriesList
+import com.dimajix.flowman.spec.history.StateRepository
 
 
 @Api(value = "/history", produces = "application/json", consumes = "application/json")
 @Path("/history")
-class MetricService(history:StateStore) {
+class MetricService(history:StateRepository) {
     import akka.http.scaladsl.server.Directives._
 
     import com.dimajix.flowman.server.model.JsonSupport._
@@ -87,7 +87,7 @@ class MetricService(history:StateStore) {
             phase=split(phase).map(Phase.ofString),
             status=split(status).map(Status.ofString)
         )
-        val metrics = history.findJobMetrics(query, split(grouping))
+        val metrics = history.findMetrics(query, split(grouping))
         complete(MetricSeriesList(metrics.map(j => Converter.ofSpec(j))))
     }
 

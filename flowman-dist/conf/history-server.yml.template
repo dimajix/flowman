@@ -22,3 +22,9 @@ plugins:
   - flowman-mysql
   - flowman-mssqlserver
   - flowman-oracle
+
+
+config:
+  - flowman.history.request.timeout=120
+  - flowman.history.bind.host=0.0.0.0
+  - flowman.history.bind.port=8080

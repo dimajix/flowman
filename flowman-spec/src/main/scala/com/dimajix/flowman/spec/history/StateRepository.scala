@@ -32,6 +32,10 @@ import com.dimajix.flowman.model.TargetDigest
 
 
 abstract class StateRepository {
+    def create() : Unit
+
+    def withRetry[T](fn: => T) : T
+
     def getJobState(job:JobDigest) : Option[JobState]
     def insertJobState(state:JobState, env:Map[String,String]) : JobState
     def updateJobState(state:JobState) : Unit
@@ -40,7 +44,7 @@ abstract class StateRepository {
     def getJobEnvironment(jobId:String) : Map[String,String]
     def insertJobGraph(jobId:String, graph:Graph) : Unit
     def getJobGraph(jobId:String) : Option[Graph]
-    def findJobs(query:JobQuery, order:Seq[JobOrder], limit:Int, offset:Int) : Seq[JobState]
+    def findJobs(query:JobQuery, order:Seq[JobOrder]=Seq.empty, limit:Int=10000, offset:Int=0) : Seq[JobState]
     def countJobs(query:JobQuery) : Int
     def countJobs(query:JobQuery, grouping:JobColumn) : Seq[(String,Int)]
 
@@ -48,7 +52,7 @@ abstract class StateRepository {
     def getTargetState(targetId:String) : TargetState
     def insertTargetState(state:TargetState) : TargetState
     def updateTargetState(state:TargetState) : Unit
-    def findTargets(query:TargetQuery, order:Seq[TargetOrder], limit:Int, offset:Int) : Seq[TargetState]
+    def findTargets(query:TargetQuery, order:Seq[TargetOrder]=Seq.empty, limit:Int=10000, offset:Int=0) : Seq[TargetState]
     def countTargets(query:TargetQuery) : Int
     def countTargets(query:TargetQuery, grouping:TargetColumn) : Seq[(String,Int)]
 

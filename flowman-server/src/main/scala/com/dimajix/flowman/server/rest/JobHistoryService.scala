@@ -42,11 +42,12 @@ import com.dimajix.flowman.server.model.Converter
 import com.dimajix.flowman.server.model.JobEnvironment
 import com.dimajix.flowman.server.model.JobStateCounts
 import com.dimajix.flowman.server.model.JobStateList
+import com.dimajix.flowman.spec.history.StateRepository
 
 
 @Api(value = "/history", produces = "application/json", consumes = "application/json")
 @Path("/history")
-class JobHistoryService(history:StateStore) {
+class JobHistoryService(history:StateRepository) {
     import akka.http.scaladsl.server.Directives._
 
     import com.dimajix.flowman.server.model.JsonSupport._
@@ -165,7 +166,7 @@ class JobHistoryService(history:StateStore) {
             case "phase" => JobColumn.PHASE
         }
         val count = history.countJobs(query, g)
-        complete(JobStateCounts(count))
+        complete(JobStateCounts(count.toMap))
     }
 
     @Path("/job")

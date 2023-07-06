@@ -18,8 +18,6 @@ package com.dimajix.flowman.server.rest
 
 import scala.language.postfixOps
 
-import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Route
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiImplicitParam
 import io.swagger.annotations.ApiImplicitParams
@@ -27,7 +25,13 @@ import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
+import javax.inject.Inject
+import javax.ws.rs.GET
 import javax.ws.rs.Path
+import javax.ws.rs.Produces
+import javax.ws.rs.QueryParam
+import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
@@ -38,26 +42,12 @@ import com.dimajix.flowman.server.model.MetricSeriesList
 import com.dimajix.flowman.spec.history.StateRepository
 
 
-@Api(value = "/history", produces = "application/json", consumes = "application/json")
+@Api(value = "metrics", produces = "application/json", consumes = "application/json")
 @Path("/history")
-class MetricService(history:StateRepository) {
-    import akka.http.scaladsl.server.Directives._
-
-    import com.dimajix.flowman.server.model.JsonSupport._
-
-    def routes : Route = (
-        pathPrefix("metrics") {(
-            pathEnd {
-                get {
-                    parameters(('project.?, 'job.?, 'phase.?, 'status.?, 'grouping ?)) { (project, job, phase, status, grouping) =>
-                        findJobMetrics(project, job, phase, status, grouping)
-                    }
-                }
-            }
-        )}
-    )
-
+class MetricService @Inject()(history:StateRepository) {
     @Path("/metrics")
+    @GET
+    @Produces(Array(MediaType.APPLICATION_JSON))
     @ApiOperation(value = "Retrieve metrics for jobs", nickname = "findJobMetrics", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "project", value = "Project name", required = false,
@@ -75,12 +65,12 @@ class MetricService(history:StateRepository) {
         new ApiResponse(code = 200, message = "Job metrics", response = classOf[model.MetricSeriesList])
     ))
     def findJobMetrics(
-        @ApiParam(hidden = true) project:Option[String],
-        @ApiParam(hidden = true) job:Option[String],
-        @ApiParam(hidden = true) phase:Option[String],
-        @ApiParam(hidden = true) status:Option[String],
-        @ApiParam(hidden = true) grouping:Option[String]
-    ) : server.Route = {
+        @ApiParam(hidden = true) @QueryParam("project") project:Option[String],
+        @ApiParam(hidden = true) @QueryParam("job") job:Option[String],
+        @ApiParam(hidden = true) @QueryParam("phase") phase:Option[String],
+        @ApiParam(hidden = true) @QueryParam("status") status:Option[String],
+        @ApiParam(hidden = true) @QueryParam("grouping") grouping:Option[String]
+    ) : Response = {
         val query = JobQuery(
             project=split(project),
             job=split(job),
@@ -88,7 +78,7 @@ class MetricService(history:StateRepository) {
             status=split(status).map(Status.ofString)
         )
         val metrics = history.findMetrics(query, split(grouping))
-        complete(MetricSeriesList(metrics.map(j => Converter.ofSpec(j))))
+        Response.ok(MetricSeriesList(metrics.map(j => Converter.ofSpec(j)))).build()
     }
 
     private def split(arg:Option[String]) : Seq[String] = {

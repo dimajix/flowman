@@ -417,8 +417,6 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
                     logger.warn("Retrying after error while executing SQL: {}", e.getMessage)
                     Thread.sleep(timeout)
                     retry(n - 1)(fn)
-                case ex: Throwable =>
-                    throw new StateStoreException("Error accessing JDBC state store repository", ex)
             }
         }
 
@@ -517,8 +515,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
     override def getJobMetrics(jobId:String) : Seq[Measurement] = {
         // Ensure that job actually exists
-        val jq = jobRuns.filter(_.id === jobId.toLong)
-        Await.result(db.run(jq.result), Duration.Inf).head
+        ensureJobExists(jobId)
 
         // Now query metrics
         val q = jobMetrics.filter(_.job_id === jobId.toLong)
@@ -535,8 +532,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
     override def getJobEnvironment(jobId:String) : Map[String,String] = {
         // Ensure that job actually exists
-        val jq = jobRuns.filter(_.id === jobId.toLong)
-        Await.result(db.run(jq.result), Duration.Inf).head
+        ensureJobExists(jobId)
 
         // Now query metrics
         val q = jobEnvironments.filter(_.job_id === jobId.toLong)
@@ -578,8 +574,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
     override def getJobGraph(jobId:String) : Option[Graph] = {
         // Ensure that job actually exists
-        val jq = jobRuns.filter(_.id === jobId.toLong)
-        Await.result(db.run(jq.result), Duration.Inf).head
+        ensureJobExists(jobId)
 
         // Now retrieve graph nodes
         val qn = graphNodes.filter(_.job_id === jobId.toLong)
@@ -771,9 +766,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
     override def getTargetState(targetId:String) : TargetState = {
         // Finally select the run with the calculated ID
-        val q = targetRuns.filter(r => r.id === targetId.toLong)
-        val state = Await.result(db.run(q.result), Duration.Inf)
-            .head
+        val state = ensureTargetExists(targetId)
 
         // Retrieve target partitions
         val qp = targetPartitions.filter(_.target_id === state.id)
@@ -1022,5 +1015,22 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         val bytes = strArgs.getBytes("UTF-8")
         val digest = MessageDigest.getInstance("MD5").digest(bytes)
         DatatypeConverter.printHexBinary(digest).toUpperCase()
+    }
+
+    private def ensureJobExists(jobId:String) : JobRun = {
+        val jq = jobRuns.filter(_.id === jobId.toLong)
+        Await.result(db.run(jq.result), Duration.Inf).headOption match {
+            case Some(state) => state
+            case None => throw new NoSuchElementException(s"Job run with id $jobId does not exist")
+
+        }
+    }
+
+    private def ensureTargetExists(targetId:String) : TargetRun = {
+        val q = targetRuns.filter(r => r.id === targetId.toLong)
+        Await.result(db.run(q.result), Duration.Inf).headOption match {
+            case Some(state) => state
+            case None => throw new NoSuchElementException(s"Target run with id $targetId does not exist")
+        }
     }
 }

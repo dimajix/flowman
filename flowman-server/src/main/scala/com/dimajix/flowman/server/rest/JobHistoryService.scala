@@ -18,10 +18,6 @@ package com.dimajix.flowman.server.rest
 
 import java.util.Locale
 
-import scala.language.postfixOps
-
-import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Route
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiImplicitParam
 import io.swagger.annotations.ApiImplicitParams
@@ -29,14 +25,21 @@ import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
+import javax.inject.Inject
+import javax.ws.rs.DefaultValue
+import javax.ws.rs.GET
 import javax.ws.rs.Path
+import javax.ws.rs.PathParam
+import javax.ws.rs.Produces
+import javax.ws.rs.QueryParam
+import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history.JobColumn
 import com.dimajix.flowman.history.JobOrder
 import com.dimajix.flowman.history.JobQuery
-import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
 import com.dimajix.flowman.server.model.JobEnvironment
@@ -45,52 +48,12 @@ import com.dimajix.flowman.server.model.JobStateList
 import com.dimajix.flowman.spec.history.StateRepository
 
 
-@Api(value = "/history", produces = "application/json", consumes = "application/json")
+@Api(value = "jobs", produces = "application/json", consumes = "application/json")
 @Path("/history")
-class JobHistoryService(history:StateRepository) {
-    import akka.http.scaladsl.server.Directives._
-
-    import com.dimajix.flowman.server.model.JsonSupport._
-
-    def routes : Route = (
-        pathPrefix("job") {(
-            pathPrefix(Segment) { job => (
-                pathEnd {
-                    get {
-                        getJobState(job)
-                    }
-                }
-                ~
-                path("env") {
-                    get {
-                        getJobEnvironment(job)
-                    }
-                }
-            )}
-        )}
-        ~
-        pathPrefix("job-counts") {(
-            pathEnd {
-                get {
-                    parameters(('project.?, 'job.?, 'phase.?, 'status.?, 'grouping)) { (project, job, phase, status, grouping) =>
-                        countJobs(project, job, phase, status, grouping)
-                    }
-                }
-            }
-        )}
-        ~
-        pathPrefix("jobs") {(
-            pathEnd {
-                get {
-                    parameters(('project.?, 'job.?, 'phase.?, 'status.?, 'limit.as[Int].?, 'offset.as[Int].?)) { (project, job, phase, status, limit, offset) =>
-                        listJobStates(project, job, phase, status, limit, offset)
-                    }
-                }
-            }
-        )}
-    )
-
+class JobHistoryService @Inject()(history:StateRepository) {
     @Path("/jobs")
+    @GET
+    @Produces(Array(MediaType.APPLICATION_JSON))
     @ApiOperation(value = "Retrieve general information about multiple job runs", nickname = "listJobStates", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "project", value = "Project name", required = false,
@@ -110,25 +73,27 @@ class JobHistoryService(history:StateRepository) {
         new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobStateList])
     ))
     def listJobStates(
-        @ApiParam(hidden = true) project:Option[String],
-        @ApiParam(hidden = true) job:Option[String],
-        @ApiParam(hidden = true) phase:Option[String],
-        @ApiParam(hidden = true) status:Option[String],
-        @ApiParam(hidden = true) limit:Option[Int],
-        @ApiParam(hidden = true) offset:Option[Int]
-    ) : server.Route = {
+        @ApiParam(hidden = true) @QueryParam("project") project: Option[String],
+        @ApiParam(hidden = true) @QueryParam("job") job: Option[String],
+        @ApiParam(hidden = true) @QueryParam("phase") phase: Option[String],
+        @ApiParam(hidden = true) @QueryParam("status") status: Option[String],
+        @ApiParam(hidden = true) @QueryParam("limit") @DefaultValue("1000") limit: Int,
+        @ApiParam(hidden = true) @QueryParam("offset") @DefaultValue("0") offset: Int
+    ) : JobStateList  = {
         val query = JobQuery(
-            project=split(project),
-            job=split(job),
-            phase=split(phase).map(Phase.ofString),
-            status=split(status).map(Status.ofString)
+            project = split(project),
+            job = split(job),
+            phase = split(phase).map(Phase.ofString),
+            status = split(status).map(Status.ofString)
         )
-        val jobs = history.findJobs(query, Seq(JobOrder.BY_DATETIME.desc()), limit.getOrElse(1000), offset.getOrElse(0))
+        val jobs = history.findJobs(query, Seq(JobOrder.BY_DATETIME.desc()), limit, offset)
         val count = history.countJobs(query)
-        complete(JobStateList(jobs.map(j => Converter.ofSpec(j)),count))
+        JobStateList(jobs.map(j => Converter.ofSpec(j)), count)
     }
 
     @Path("/job-counts")
+    @GET
+    @Produces(Array(MediaType.APPLICATION_JSON))
     @ApiOperation(value = "Retrieve grouped job counts", nickname = "countJobs", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "project", value = "Project name", required = false,
@@ -146,12 +111,12 @@ class JobHistoryService(history:StateRepository) {
         new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobStateList])
     ))
     def countJobs(
-        @ApiParam(hidden = true) project:Option[String],
-        @ApiParam(hidden = true) job:Option[String],
-        @ApiParam(hidden = true) phase:Option[String],
-        @ApiParam(hidden = true) status:Option[String],
-        @ApiParam(hidden = true) grouping:String
-    ) : server.Route = {
+        @ApiParam(hidden = true) @QueryParam("project") project:Option[String],
+        @ApiParam(hidden = true) @QueryParam("job") job:Option[String],
+        @ApiParam(hidden = true) @QueryParam("phase") phase:Option[String],
+        @ApiParam(hidden = true) @QueryParam("status") status:Option[String],
+        @ApiParam(hidden = true) @QueryParam("grouping") grouping:String
+    ) : JobStateCounts = {
         val query = JobQuery(
             project=split(project),
             job=split(job),
@@ -166,40 +131,53 @@ class JobHistoryService(history:StateRepository) {
             case "phase" => JobColumn.PHASE
         }
         val count = history.countJobs(query, g)
-        complete(JobStateCounts(count.toMap))
+        JobStateCounts(count.toMap)
     }
 
-    @Path("/job")
+    @Path("/job/{job}")
+    @GET
+    @Produces(Array(MediaType.APPLICATION_JSON))
     @ApiOperation(value = "Retrieve general information about a job run", nickname = "getJobState", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "job", value = "Job ID", required = true,
             dataType = "string", paramType = "path")
     ))
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobState])
+        new ApiResponse(code = 200, message = "Job information", response = classOf[model.JobState]),
+        new ApiResponse(code = 404, message = "Job not found")
     ))
-    def getJobState(@ApiParam(hidden = true) jobId:String) : server.Route = {
+    def getJobState(
+        @ApiParam(hidden = true) @PathParam("job") jobId:String
+    ) : Response = {
         val query = JobQuery(id=Seq(jobId))
         val job = history.findJobs(query).headOption
-        complete(job.map { j =>
+        job.map { j =>
             val metrics = history.getJobMetrics(j.id)
-            Converter.ofSpec(j, metrics)
-        })
+            Response.ok(Converter.ofSpec(j, metrics)).build()
+        }.getOrElse(Response.status(Response.Status.NOT_FOUND).build())
     }
 
     @Path("/job/{job}/env")
+    @GET
+    @Produces(Array(MediaType.APPLICATION_JSON))
     @ApiOperation(value = "Retrieve execution environment of a job run", nickname = "getJobEnvironment", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "job", value = "Job ID", required = true,
             dataType = "string", paramType = "path")
     ))
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Job environment", response = classOf[model.JobEnvironment])
+        new ApiResponse(code = 200, message = "Job environment", response = classOf[model.JobEnvironment]),
+        new ApiResponse(code = 404, message = "Job not found")
     ))
-    def getJobEnvironment(@ApiParam(hidden = true) jobId:String) : server.Route = {
-        complete{
+    def getJobEnvironment(
+        @ApiParam(hidden = true) @PathParam("job") jobId:String
+    ) : Response = {
+        try {
             val env = history.getJobEnvironment(jobId)
-            JobEnvironment(env)
+            Response.ok(JobEnvironment(env)).build()
+        }
+        catch {
+            case _:NoSuchElementException => Response.status(Response.Status.NOT_FOUND).build()
         }
     }
 

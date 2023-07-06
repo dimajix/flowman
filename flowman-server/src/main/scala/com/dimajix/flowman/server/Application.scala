@@ -23,6 +23,7 @@ import com.dimajix.flowman.common.Logging
 import com.dimajix.flowman.common.ToolConfig
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.server.rest.Server
+import com.dimajix.flowman.server.rest.Server
 
 
 object Application {

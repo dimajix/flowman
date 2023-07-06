@@ -16,123 +16,126 @@
 
 package com.dimajix.flowman.server.rest
 
-import scala.concurrent.Await
-import scala.concurrent.ExecutionContextExecutor
+import java.net.URI
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.StatusCodes.Found
-import akka.http.scaladsl.settings.ServerSettings
-import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Sink
+import io.swagger.jaxrs.config.BeanConfig
+import io.swagger.jaxrs.listing.ApiListingResource
+import io.swagger.jaxrs.listing.SwaggerSerializers
+import org.eclipse.jetty.server.CustomRequestLog
+import org.eclipse.jetty.server.Slf4jRequestLogWriter
+import org.eclipse.jetty.server.handler.HandlerCollection
+import org.eclipse.jetty.server.handler.RequestLogHandler
+import org.eclipse.jetty.servlet.DefaultServlet
+import org.eclipse.jetty.servlet.ServletContextHandler
+import org.eclipse.jetty.servlet.ServletHolder
+import org.glassfish.hk2.utilities.binding.AbstractBinder
+import org.glassfish.jersey.jetty.JettyHttpContainerFactory
+import org.glassfish.jersey.server.ResourceConfig
+import org.glassfish.jersey.servlet.ServletContainer
 import org.slf4j.LoggerFactory
 
-import com.dimajix.common.net.SocketUtils
+import com.dimajix.common.Resources
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.history.JobQuery
+import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.server.Configuration
+import com.dimajix.flowman.server.config.JacksonConfig
+import com.dimajix.flowman.server.config.OptionParamConverterProvider
 import com.dimajix.flowman.spec.history.RepositoryStateStore
+import com.dimajix.flowman.spec.history.StateRepository
 
 
 class Server(
-                conf:Configuration,
-                session:Session
-            ) {
-    import akka.http.scaladsl.server.Directives._
-
+    conf:Configuration,
+    session:Session
+) {
     private val logger = LoggerFactory.getLogger(classOf[Server])
 
-    implicit val system: ActorSystem = ActorSystem("flowman")
+    private val repository = session.history match {
+        case store: RepositoryStateStore => store.repository
+        case _ => throw new IllegalArgumentException("Unsupported history backend")
+    }
 
     def run(): Unit = {
-        import scala.concurrent.duration._
-        implicit val materializer: ActorMaterializer = ActorMaterializer()
-        implicit val executionContext: ExecutionContextExecutor = system.dispatcher
-
-        val repository = session.history match {
-            case store:RepositoryStateStore => store.repository
-            case _ => throw new IllegalArgumentException("Unsupported history backend")
-        }
-
         // Ensure that repository actually exists
         repository.create()
-
-        val namespaceService = new NamespaceService(session.namespace.get)
-        val jobHistoryService = new JobHistoryService(repository)
-        val targetHistoryService = new TargetHistoryService(repository)
-        val metricService = new MetricService(repository)
-
-        val apiRoute = pathPrefix("api") (
-                SwaggerDocService.routes
-                ~
-                namespaceService.routes
-                ~
-                pathPrefix("history") {
-                    (
-                        jobHistoryService.routes
-                            ~
-                            targetHistoryService.routes
-                            ~
-                            metricService.routes
-                        )
-                }
-            )
-        val swaggerUiRoute = pathPrefix("swagger") (
-                pathEndOrSingleSlash {
-                    redirectToTrailingSlashIfMissing(Found) {
-                        get {
-                            getFromResource("swagger/index.html")
-                        }
-                    }
-                }
-                ~
-                get {
-                    getFromResourceDirectory("META-INF/resources/webjars/swagger-ui/4.1.3")
-                }
-            )
-        val flowmanUiRoute = (
-                pathEndOrSingleSlash {
-                    get {
-                        getFromResource("META-INF/resources/webjars/flowman-server-ui/index.html")
-                    }
-                }
-                ~
-                get {
-                    getFromResourceDirectory("META-INF/resources/webjars/flowman-server-ui")
-                }
-            )
-        val route = extractRequestContext { ctx =>
-            extractClientIP { ip =>
-                logger.info(s"Client ${ip} ${ctx.request.method.value} ${ctx.request.uri.path}")
-                apiRoute ~
-                swaggerUiRoute ~
-                flowmanUiRoute
-            }
-        }
 
         logger.info("Connecting to history backend")
         session.history.countJobs(JobQuery())
 
         logger.info("Starting http server")
+        initSwagger()
 
-        val settings = ServerSettings(system)
-            .withVerboseErrorMessages(true)
-            .withRemoteAddressHeader(true)
-
-        val (binding,server) = Http().bind(conf.getBindHost(), conf.getBindPort(), akka.http.scaladsl.ConnectionContext.noEncryption(), settings)
-            .toMat(Sink.foreach { connection =>
-                connection.handleWith(
-                    route
-                )
-            })(Keep.both)
-            .run()
-
-        binding.foreach { binding =>
-            val listenUrl = SocketUtils.toURL("http", binding.localAddress, true)
-            logger.info(s"Flowman Server online at $listenUrl")
+        val binder = new AbstractBinder {
+            override def configure(): Unit = {
+                bind(session.namespace.get).to(classOf[Namespace])
+                bind(repository).to(classOf[StateRepository])
+            }
         }
 
-        Await.ready(server, Duration.Inf)
+        val apiResources = new ResourceConfig()
+            .registerInstances(binder)
+            .register(classOf[OptionParamConverterProvider])
+            .register(classOf[JacksonConfig])
+            .register(classOf[JobHistoryService])
+            .register(classOf[MetricService])
+            .register(classOf[NamespaceService])
+            .register(classOf[TargetHistoryService])
+            .register(classOf[ApiListingResource])
+            .register(classOf[SwaggerSerializers])
+
+        val handler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS)
+
+        val apiServlet = new ServletHolder(new ServletContainer(apiResources))
+        handler.addServlet(apiServlet, "/api/*")
+
+        val swaggerIndexServlet = new ServletHolder(new DefaultServlet())
+        swaggerIndexServlet.setInitParameter("resourceBase", Resources.getURL("swagger/index.html").toString)
+        swaggerIndexServlet.setInitParameter("dirAllowed", "true")
+        swaggerIndexServlet.setInitParameter("pathInfoOnly", "true")
+        swaggerIndexServlet.setInitParameter("redirectWelcome", "false")
+        handler.addServlet(swaggerIndexServlet, "/swagger/index.html")
+
+        val swaggerUiServlet = new ServletHolder(new DefaultServlet())
+        swaggerUiServlet.setInitParameter("resourceBase", Resources.getURL("META-INF/resources/webjars/swagger-ui/4.1.3/").toString)
+        swaggerUiServlet.setInitParameter("dirAllowed","true")
+        swaggerUiServlet.setInitParameter("pathInfoOnly","true")
+        swaggerUiServlet.setInitParameter("redirectWelcome", "true")
+        handler.addServlet(swaggerUiServlet, "/swagger/*")
+
+        val serverUiServlet = new ServletHolder(new DefaultServlet())
+        serverUiServlet.setInitParameter("resourceBase", Resources.getURL("META-INF/resources/webjars/flowman-server-ui/").toString)
+        serverUiServlet.setInitParameter("dirAllowed", "true")
+        serverUiServlet.setInitParameter("pathInfoOnly", "true")
+        serverUiServlet.setInitParameter("redirectWelcome", "true")
+        handler.addServlet(serverUiServlet, "/*")
+
+        val requestLogHandler = new RequestLogHandler
+        val requestLog = new CustomRequestLog(new Slf4jRequestLogWriter, CustomRequestLog.NCSA_FORMAT)
+        requestLogHandler.setRequestLog(requestLog)
+
+        // Start Jetty Server
+        val handlers = new HandlerCollection
+        handlers.setHandlers(Array(handler, requestLogHandler))
+
+        val bindUri = new URI("http", null, conf.getBindHost(), conf.getBindPort(), null, null, null)
+        val server = JettyHttpContainerFactory.createServer(bindUri, false)
+        server.setHandler(handlers)
+        server.start()
+        server.join()
+    }
+
+    private def initSwagger() : Unit = {
+        // Init Swagger
+        val config2 = new BeanConfig()
+        config2.setTitle("Flowman History Server")
+        config2.setVersion("v1")
+        config2.setSchemes(Array("http", "https"))
+        config2.setHost("localhost:8080")
+        config2.setBasePath("/api")
+        config2.setUsePathBasedConfig(false)
+        config2.setResourcePackage("com.dimajix.flowman.server.rest")
+        config2.setPrettyPrint(true)
+        config2.setScan(true);
     }
 }

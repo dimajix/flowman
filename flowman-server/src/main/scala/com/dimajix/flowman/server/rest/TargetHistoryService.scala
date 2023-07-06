@@ -18,10 +18,6 @@ package com.dimajix.flowman.server.rest
 
 import java.util.Locale
 
-import scala.language.postfixOps
-
-import akka.http.scaladsl.server
-import akka.http.scaladsl.server.Route
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiImplicitParam
 import io.swagger.annotations.ApiImplicitParams
@@ -29,7 +25,14 @@ import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
+import javax.inject.Inject
+import javax.ws.rs.DefaultValue
+import javax.ws.rs.GET
 import javax.ws.rs.Path
+import javax.ws.rs.PathParam
+import javax.ws.rs.Produces
+import javax.ws.rs.QueryParam
+import javax.ws.rs.core.MediaType
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Status
@@ -40,58 +43,19 @@ import com.dimajix.flowman.history.TargetOrder
 import com.dimajix.flowman.history.TargetQuery
 import com.dimajix.flowman.server.model
 import com.dimajix.flowman.server.model.Converter
-import com.dimajix.flowman.server.model.TargetStateList
 import com.dimajix.flowman.server.model.TargetStateCounts
+import com.dimajix.flowman.server.model.TargetStateList
 import com.dimajix.flowman.spec.history.StateRepository
 
 
-@Api(value = "/history", produces = "application/json", consumes = "application/json")
+@Api(value = "targets", produces = "application/json", consumes = "application/json")
 @Path("/history")
-class TargetHistoryService(history:StateRepository) {
-    import akka.http.scaladsl.server.Directives._
-
-    import com.dimajix.flowman.server.model.JsonSupport._
-
-    def routes : Route = (
-        pathPrefix("target") {(
-            pathPrefix(Segment) { target => (
-                pathEnd {
-                    get {
-                        getTargetState(target)
-                    }
-                }
-                ~
-                path("graph") {
-                    get {
-                        getTargetGraph(target)
-                    }
-                }
-            )}
-        )}
-        ~
-        pathPrefix("target-counts") {(
-            pathEnd {
-                get {
-                    parameters(('project.?, 'job.?, 'jobId.?, 'target.?, 'phase.?, 'status.?, 'grouping)) { (project, job, jobId, target, phase, status, grouping) =>
-                        countTargets(project, job, target, jobId, phase, status, grouping)
-                    }
-                }
-            }
-        )}
-        ~
-        pathPrefix("targets") {(
-            pathEnd {
-                get {
-                    parameters(('project.?, 'job.?, 'jobId.?, 'target.?, 'phase.?, 'status.?, 'limit.as[Int].?, 'offset.as[Int].?)) { (project, job, jobId, target, phase, status, limit, offset) =>
-                        listTargetStates(project, job, target, jobId, phase, status, limit, offset)
-                    }
-                }
-            }
-        )}
-    )
+class TargetHistoryService @Inject()(history:StateRepository) {
 
     @Path("/targets")
-    @ApiOperation(value = "Retrieve general information about a job", nickname = "getAllTaretStates", httpMethod = "GET")
+    @GET
+    @Produces(Array(MediaType.APPLICATION_JSON))
+    @ApiOperation(value = "Retrieve general information about a job", nickname = "getAllTargetStates", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "project", value = "Project name", required = false,
             dataType = "string", paramType = "query"),
@@ -114,15 +78,15 @@ class TargetHistoryService(history:StateRepository) {
         new ApiResponse(code = 200, message = "Target information", response = classOf[model.TargetStateList])
     ))
     def listTargetStates(
-        @ApiParam(hidden = true) project:Option[String],
-        @ApiParam(hidden = true) job:Option[String],
-        @ApiParam(hidden = true) target:Option[String],
-        @ApiParam(hidden = true) jobId:Option[String],
-        @ApiParam(hidden = true) phase:Option[String],
-        @ApiParam(hidden = true) status:Option[String],
-        @ApiParam(hidden = true) limit:Option[Int],
-        @ApiParam(hidden = true) offset:Option[Int]
-    ) : server.Route = {
+        @ApiParam(hidden = true) @QueryParam("project") project:Option[String],
+        @ApiParam(hidden = true) @QueryParam("job") job:Option[String],
+        @ApiParam(hidden = true) @QueryParam("target") target:Option[String],
+        @ApiParam(hidden = true) @QueryParam("jobId") jobId:Option[String],
+        @ApiParam(hidden = true) @QueryParam("phase") phase:Option[String],
+        @ApiParam(hidden = true) @QueryParam("status") status:Option[String],
+        @ApiParam(hidden = true) @QueryParam("limit") @DefaultValue("1000") limit: Int,
+        @ApiParam(hidden = true) @QueryParam("offset") @DefaultValue("0") offset: Int
+    ) : TargetStateList = {
         val query = TargetQuery(
             project=split(project),
             job=split(job),
@@ -131,12 +95,14 @@ class TargetHistoryService(history:StateRepository) {
             phase=split(phase).map(Phase.ofString),
             status=split(status).map(Status.ofString)
         )
-        val targets = history.findTargets(query, Seq(TargetOrder.BY_DATETIME.desc()), limit.getOrElse(1000), offset.getOrElse(0))
+        val targets = history.findTargets(query, Seq(TargetOrder.BY_DATETIME.desc()), limit, offset)
         val count = history.countTargets(query)
-        complete(TargetStateList(targets.map(Converter.ofSpec), count))
+        TargetStateList(targets.map(Converter.ofSpec), count)
     }
 
     @Path("/target-counts")
+    @GET
+    @Produces(Array(MediaType.APPLICATION_JSON))
     @ApiOperation(value = "Retrieve grouped target counts", nickname = "countTargets", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "project", value = "Project name", required = false,
@@ -158,14 +124,14 @@ class TargetHistoryService(history:StateRepository) {
         new ApiResponse(code = 200, message = "Target information", response = classOf[model.TargetStateList])
     ))
     def countTargets(
-        @ApiParam(hidden = true) project:Option[String],
-        @ApiParam(hidden = true) job:Option[String],
-        @ApiParam(hidden = true) target:Option[String],
-        @ApiParam(hidden = true) jobId:Option[String],
-        @ApiParam(hidden = true) phase:Option[String],
-        @ApiParam(hidden = true) status:Option[String],
-        @ApiParam(hidden = true) grouping:String
-    ) : server.Route = {
+        @ApiParam(hidden = true) @QueryParam("project") project: Option[String],
+        @ApiParam(hidden = true) @QueryParam("job") job: Option[String],
+        @ApiParam(hidden = true) @QueryParam("target") target: Option[String],
+        @ApiParam(hidden = true) @QueryParam("jobId") jobId: Option[String],
+        @ApiParam(hidden = true) @QueryParam("phase") phase: Option[String],
+        @ApiParam(hidden = true) @QueryParam("status") status: Option[String],
+        @ApiParam(hidden = true) @QueryParam("grouping") grouping:String
+    ) : TargetStateCounts = {
         val query = TargetQuery(
             project=split(project),
             target=split(target),
@@ -183,10 +149,12 @@ class TargetHistoryService(history:StateRepository) {
             case "phase" => TargetColumn.PHASE
         }
         val count = history.countTargets(query, g)
-        complete(TargetStateCounts(count.toMap))
+        TargetStateCounts(count.toMap)
     }
 
-    @Path("/target")
+    @Path("/target/{target}")
+    @GET
+    @Produces(Array(MediaType.APPLICATION_JSON))
     @ApiOperation(value = "Retrieve general information about a target run", nickname = "getTargetState", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "target", value = "Target ID", required = true,
@@ -195,26 +163,31 @@ class TargetHistoryService(history:StateRepository) {
     @ApiResponses(Array(
         new ApiResponse(code = 200, message = "Target information", response = classOf[model.TargetState])
     ))
-    def getTargetState(@ApiParam(hidden = true) targetId:String) : server.Route = {
+    def getTargetState(
+        @PathParam("target") @ApiParam(hidden = true) targetId:String
+    ) : Option[model.TargetState] = {
         val query = TargetQuery(id=Seq(targetId))
         val target = history.findTargets(query).headOption
-        complete(target.map(Converter.ofSpec))
+        target.map(Converter.ofSpec)
     }
 
     @Path("/target/{target}/graph")
+    @GET
+    @Produces(Array(MediaType.APPLICATION_JSON))
     @ApiOperation(value = "Retrieve a target graph", nickname = "getTargetGraph", httpMethod = "GET")
     @ApiImplicitParams(Array(
         new ApiImplicitParam(name = "target", value = "Target ID", required = true,
             dataType = "string", paramType = "path")
     ))
     @ApiResponses(Array(
-        new ApiResponse(code = 200, message = "Target graph", response = classOf[model.TargetState])
+        new ApiResponse(code = 200, message = "Target graph", response = classOf[model.Graph])
     ))
-    def getTargetGraph(@ApiParam(hidden = true) targetId:String) : server.Route = {
+    def getTargetGraph(
+        @PathParam("target") @ApiParam(hidden = true) targetId:String
+    ) : Option[model.Graph] = {
         val state = history.getTargetState(targetId)
         val jobGraph = history.getJobGraph(state.jobId.get)
-        val targetGraph = jobGraph.map { g =>
-            val targetNode = g.nodes.filter(n => n.category == Category.TARGET && n.name == state.target).head
+        val targetGraph = jobGraph.flatMap { g =>
             def incomingFilter(edge:Edge) : Boolean = {
                 val node = edge.input
                 node.category != Category.TARGET
@@ -224,9 +197,13 @@ class TargetHistoryService(history:StateRepository) {
                 node.category != Category.TARGET
             }
 
-            g.subgraph(targetNode, incomingFilter, outgoingFilter)
+            val targetNode = g.nodes.find(n => n.category == Category.TARGET && n.name == state.target)
+            targetNode match {
+                case Some(targetNode) => Some(g.subgraph(targetNode, incomingFilter, outgoingFilter))
+                case None => None
+            }
         }
-        complete(targetGraph.map(Converter.ofSpec))
+        targetGraph.map(Converter.ofSpec)
     }
 
     private def split(arg:Option[String]) : Seq[String] = {

@@ -46,6 +46,7 @@ changes over time.
 * github-422: Upgrade Spark to 3.4.1
 * github-423: Migrating a MariaDB/MySQL table from a text type to a numeric type fails
 * github-425: Support building and running Flowman with Java 17
+* github-388: Replace Akka http with Jersey/Jetty in Flowman History Server
 
 
 ### Version 1.0.1 - Upcoming

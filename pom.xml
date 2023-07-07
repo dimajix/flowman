@@ -73,7 +73,6 @@
         <commons-validator.version>1.6</commons-validator.version>
         <h2.version>2.1.210</h2.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
-        <jetty.version>9.4.51.v20230217</jetty.version>
         <junit.version>5.8.2</junit.version>
         <netty.version>3.9.9.Final</netty.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -111,14 +110,20 @@
         <dropwizard.version>4.2.0</dropwizard.version>
         <gson.version>2.2.4</gson.version>
         <guava.version>14.0.1</guava.version>
+        <hk2.version>2.6.1</hk2.version>
         <httpclient.version>4.5.14</httpclient.version>
         <httpcore.version>4.4.16</httpcore.version>
         <ivy.version>2.5.1</ivy.version>
-        <jackson-api.version>2.14</jackson-api.version>
-        <jackson.databind.version>2.14.2</jackson.databind.version>
-        <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
         <jackson.version>2.14.2</jackson.version>
+        <jackson-api.version>2.14</jackson-api.version>
+        <jackson-databind.version>2.14.2</jackson-databind.version>
+        <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
+        <jackson-jaxb.scope>compile</jackson-jaxb.scope>
+        <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+        <javassist.version>3.25.0-GA</javassist.version>
         <jersey.version>2.36</jersey.version>
+        <jetty.provider>spark</jetty.provider>
+        <jetty.version>9.4.51.v20230217</jetty.version>
         <joda-time.version>2.12.2</joda-time.version>
         <json4s.version>3.7.0-M11</json4s.version>
         <jsr305.version>3.0.0</jsr305.version>
@@ -238,13 +243,19 @@
                 <dropwizard.version>3.1.5</dropwizard.version>
                 <gson.version>2.2.4</gson.version>
                 <guava.version>14.0.1</guava.version>
+                <hk2.version>2.4.0-b34</hk2.version>
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.10</httpcore.version>
                 <ivy.version>2.4.0</ivy.version>
-                <jackson-api.version>2.9</jackson-api.version>
-                <jackson.databind.version>2.9.10.1</jackson.databind.version>
                 <jackson.version>2.9.10</jackson.version>
+                <jackson-api.version>2.9</jackson-api.version>
+                <jackson-databind.version>2.9.10.1</jackson-databind.version>
+                <jackson-jaxb.scope>provided</jackson-jaxb.scope>
+                <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <javassist.version>3.18.1-GA</javassist.version>
                 <jersey.version>2.22.2</jersey.version>
+                <jetty.provider>mortbay</jetty.provider>
+                <jetty.version>6.1.26</jetty.version>
                 <joda-time.version>2.9.9</joda-time.version>
                 <json4s.version>3.5.3</json4s.version>
                 <jsr305.version>1.3.9</jsr305.version>
@@ -321,13 +332,19 @@
                 <dropwizard.version>3.1.5</dropwizard.version>
                 <gson.version>2.2.4</gson.version>
                 <guava.version>28.1-jre</guava.version>
+                <hk2.version>2.4.0-b34</hk2.version>
                 <httpclient.version>4.5.13</httpclient.version>
                 <httpcore.version>4.4.13</httpcore.version>
                 <ivy.version>2.4.0</ivy.version>
-                <jackson-api.version>2.10</jackson-api.version>
-                <jackson.databind.version>2.10.5.1</jackson.databind.version>
                 <jackson.version>2.10.5</jackson.version>
+                <jackson-api.version>2.10</jackson-api.version>
+                <jackson-databind.version>2.10.5.1</jackson-databind.version>
+                <jackson-jaxb.scope>provided</jackson-jaxb.scope>
+                <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <javassist.version>3.18.1-GA</javassist.version>
                 <jersey.version>2.22.2</jersey.version>
+                <jetty.provider>eclipse</jetty.provider>
+                <jetty.version>9.4.43.v20210629</jetty.version>
                 <joda-time.version>2.9.9</joda-time.version>
                 <json4s.version>3.5.3</json4s.version>
                 <jsr305.version>1.3.9</jsr305.version>
@@ -396,12 +413,18 @@
                 <gson.version>2.2.4</gson.version>
                 <guava.version>28.1-jre</guava.version>
                 <ivy.version>2.5.0</ivy.version>
+                <hk2.version>2.6.1</hk2.version>
                 <httpclient.version>4.5.13</httpclient.version>
                 <httpcore.version>4.4.13</httpcore.version>
-                <jackson-api.version>2.10</jackson-api.version>
-                <jackson.databind.version>2.10.5.1</jackson.databind.version>
                 <jackson.version>2.10.5</jackson.version>
+                <jackson-api.version>2.10</jackson-api.version>
+                <jackson-databind.version>2.10.5.1</jackson-databind.version>
+                <jackson-jaxb.scope>compile</jackson-jaxb.scope>
+                <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <javassist.version>3.25.0-GA</javassist.version>
                 <jersey.version>2.34</jersey.version>
+                <jetty.provider>spark</jetty.provider>
+                <jetty.version>9.4.40.v20210413</jetty.version>
                 <joda-time.version>2.9.9</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -469,13 +492,19 @@
                 <dropwizard.version>4.2.7</dropwizard.version>
                 <gson.version>2.2.4</gson.version>
                 <guava.version>28.1-jre</guava.version>
+                <hk2.version>2.6.1</hk2.version>
                 <httpclient.version>4.5.13</httpclient.version>
                 <httpcore.version>4.4.15</httpcore.version>
                 <ivy.version>2.5.0</ivy.version>
-                <jackson-api.version>2.10</jackson-api.version>
-                <jackson.databind.version>2.10.5.1</jackson.databind.version>
                 <jackson.version>2.10.5</jackson.version>
+                <jackson-api.version>2.10</jackson-api.version>
+                <jackson-databind.version>2.10.5.1</jackson-databind.version>
+                <jackson-jaxb.scope>compile</jackson-jaxb.scope>
+                <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <javassist.version>3.25.0-GA</javassist.version>
                 <jersey.version>2.36</jersey.version>
+                <jetty.provider>spark</jetty.provider>
+                <jetty.version>9.4.43.v20210629</jetty.version>
                 <joda-time.version>2.9.9</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -543,13 +572,20 @@
                 <dropwizard.version>4.2.0</dropwizard.version>
                 <gson.version>2.2.4</gson.version>
                 <guava.version>14.0.1</guava.version>
+                <hk2.version>2.6.1</hk2.version>
                 <httpclient.version>4.5.13</httpclient.version>
                 <httpcore.version>4.4.11</httpcore.version>
                 <ivy.version>2.5.0</ivy.version>
-                <jackson-api.version>2.13</jackson-api.version>
-                <jackson.databind.version>2.13.4.1</jackson.databind.version>
                 <jackson.version>2.13.4</jackson.version>
+                <jackson-api.version>2.13</jackson-api.version>
+                <jackson-databind.version>2.13.4.1</jackson-databind.version>
+                <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
+                <jackson-jaxb.scope>compile</jackson-jaxb.scope>
+                <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <javassist.version>3.25.0-GA</javassist.version>
                 <jersey.version>2.36</jersey.version>
+                <jetty.provider>spark</jetty.provider>
+                <jetty.version>9.4.43.v20210629</jetty.version>
                 <joda-time.version>2.10.13</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -606,13 +642,19 @@
                 <gson.version>2.8.6</gson.version>
                 <guava.version>14.0.1</guava.version>
                 <ivy.version>2.5.1</ivy.version>
+                <hk2.version>2.6.1</hk2.version>
                 <httpclient.version>4.5.13</httpclient.version>
                 <httpcore.version>4.4.14</httpcore.version>
-                <jackson-api.version>2.13</jackson-api.version>
-                <jackson.databind.version>2.13.4.2</jackson.databind.version>
-                <jackson-dataformat-yaml.scope>compile</jackson-dataformat-yaml.scope>
                 <jackson.version>2.13.4</jackson.version>
+                <jackson-api.version>2.13</jackson-api.version>
+                <jackson-databind.version>2.13.4.2</jackson-databind.version>
+                <jackson-dataformat-yaml.scope>compile</jackson-dataformat-yaml.scope>
+                <jackson-jaxb.scope>compile</jackson-jaxb.scope>
+                <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <javassist.version>3.25.0-GA</javassist.version>
                 <jersey.version>2.36</jersey.version>
+                <jetty.provider>spark</jetty.provider>
+                <jetty.version>9.4.43.v20210629</jetty.version>
                 <joda-time.version>2.10.13</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -666,13 +708,19 @@
                 <derby.version>10.12.1.1</derby.version>
                 <dropwizard.version>3.1.5</dropwizard.version>
                 <guava.version>14.0.1</guava.version>
+                <hk2.version>2.6.1</hk2.version>
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.10</httpcore.version>
                 <ivy.version>2.4.0</ivy.version>
-                <jackson-api.version>2.6</jackson-api.version>
-                <jackson.databind.version>2.6.7.3</jackson.databind.version>
                 <jackson.version>2.6.7</jackson.version>
+                <jackson-api.version>2.6</jackson-api.version>
+                <jackson-databind.version>2.6.7.3</jackson-databind.version>
+                <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
+                <jackson-jaxb.scope>compile</jackson-jaxb.scope>
+                <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <javassist.version>3.18.1-GA</javassist.version>
                 <jersey.version>2.22.2</jersey.version>
+                <jetty.provider>mortbay</jetty.provider>
                 <joda-time.version>2.9.3</joda-time.version>
                 <json4s.version>3.5.3</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -722,13 +770,19 @@
                 <derby.version>10.12.1.1</derby.version>
                 <dropwizard.version>4.1.1</dropwizard.version>
                 <guava.version>14.0.1</guava.version>
+                <hk2.version>2.6.1</hk2.version>
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.12</httpcore.version>
                 <ivy.version>2.4.0</ivy.version>
-                <jackson-api.version>2.10</jackson-api.version>
-                <jackson.databind.version>2.10.0</jackson.databind.version>
                 <jackson.version>2.10.0</jackson.version>
+                <jackson-api.version>2.10</jackson-api.version>
+                <jackson-databind.version>2.10.0</jackson-databind.version>
+                <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
+                <jackson-jaxb.scope>provided</jackson-jaxb.scope>
+                <jackson-jaxrs.scope>provided</jackson-jaxrs.scope>
+                <javassist.version>3.25.0-GA</javassist.version>
                 <jersey.version>2.30</jersey.version>
+                <jetty.provider>spark</jetty.provider>
                 <joda-time.version>2.10.5</joda-time.version>
                 <json4s.version>3.6.6</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -778,13 +832,19 @@
                 <derby.version>10.12.1.1</derby.version>
                 <dropwizard.version>4.1.1</dropwizard.version>
                 <guava.version>14.0.1</guava.version>
+                <hk2.version>2.6.1</hk2.version>
                 <httpclient.version>4.5.6</httpclient.version>
                 <httpcore.version>4.4.12</httpcore.version>
                 <ivy.version>2.4.0</ivy.version>
-                <jackson-api.version>2.10</jackson-api.version>
-                <jackson.databind.version>2.10.0</jackson.databind.version>
                 <jackson.version>2.10.0</jackson.version>
+                <jackson-api.version>2.10</jackson-api.version>
+                <jackson-databind.version>2.10.0</jackson-databind.version>
+                <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
+                <jackson-jaxb.scope>provided</jackson-jaxb.scope>
+                <jackson-jaxrs.scope>provided</jackson-jaxrs.scope>
+                <javassist.version>3.25.0-GA</javassist.version>
                 <jersey.version>2.30</jersey.version>
+                <jetty.provider>spark</jetty.provider>
                 <joda-time.version>2.10.5</joda-time.version>
                 <json4s.version>3.7.0-M5</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -835,13 +895,19 @@
                 <derby.version>10.14.2.0</derby.version>
                 <dropwizard.version>4.2.0</dropwizard.version>
                 <guava.version>14.0.1</guava.version>
+                <hk2.version>2.6.1</hk2.version>
                 <httpclient.version>4.5.13</httpclient.version>
                 <httpcore.version>4.4.14</httpcore.version>
                 <ivy.version>2.5.0</ivy.version>
-                <jackson-api.version>2.12</jackson-api.version>
-                <jackson.databind.version>2.12.3</jackson.databind.version>
                 <jackson.version>2.12.3</jackson.version>
+                <jackson-api.version>2.12</jackson-api.version>
+                <jackson-databind.version>2.12.3</jackson-databind.version>
+                <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
+                <jackson-jaxb.scope>compile</jackson-jaxb.scope>
+                <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <javassist.version>3.25.0-GA</javassist.version>
                 <jersey.version>2.34</jersey.version>
+                <jetty.provider>spark</jetty.provider>
                 <joda-time.version>2.10.10</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -892,13 +958,19 @@
                 <derby.version>10.14.2.0</derby.version>
                 <dropwizard.version>4.2.0</dropwizard.version>
                 <guava.version>14.0.1</guava.version>
+                <hk2.version>2.6.1</hk2.version>
                 <httpclient.version>4.5.13</httpclient.version>
                 <httpcore.version>4.4.14</httpcore.version>
                 <ivy.version>2.5.1</ivy.version>
-                <jackson-api.version>2.13</jackson-api.version>
-                <jackson.databind.version>2.13.4.2</jackson.databind.version>
                 <jackson.version>2.13.4</jackson.version>
+                <jackson-api.version>2.13</jackson-api.version>
+                <jackson-databind.version>2.13.4.2</jackson-databind.version>
+                <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
+                <jackson-jaxb.scope>compile</jackson-jaxb.scope>
+                <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <javassist.version>3.25.0-GA</javassist.version>
                 <jersey.version>2.36</jersey.version>
+                <jetty.provider>spark</jetty.provider>
                 <joda-time.version>2.10.13</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -949,13 +1021,19 @@
                 <derby.version>10.14.2.0</derby.version>
                 <dropwizard.version>4.2.0</dropwizard.version>
                 <guava.version>14.0.1</guava.version>
+                <hk2.version>2.6.1</hk2.version>
                 <httpclient.version>4.5.14</httpclient.version>
                 <httpcore.version>4.4.16</httpcore.version>
                 <ivy.version>2.5.1</ivy.version>
-                <jackson-api.version>2.14</jackson-api.version>
-                <jackson.databind.version>2.14.2</jackson.databind.version>
                 <jackson.version>2.14.2</jackson.version>
+                <jackson-api.version>2.14</jackson-api.version>
+                <jackson-databind.version>2.14.2</jackson-databind.version>
+                <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
+                <jackson-jaxb.scope>compile</jackson-jaxb.scope>
+                <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <javassist.version>3.25.0-GA</javassist.version>
                 <jersey.version>2.36</jersey.version>
+                <jetty.provider>spark</jetty.provider>
                 <joda-time.version>2.12.2</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -984,6 +1062,8 @@
                 <hadoop.version>2.6.5</hadoop.version>
                 <hadoop-api.version>2.6</hadoop-api.version>
                 <commons-codec.version>1.10</commons-codec.version>
+                <jetty.provider>mortbay</jetty.provider>
+                <jetty.version>6.1.26</jetty.version>
             </properties>
         </profile>
         <profile>
@@ -992,6 +1072,8 @@
                 <hadoop.version>2.7.7</hadoop.version>
                 <hadoop-api.version>2.7</hadoop-api.version>
                 <commons-codec.version>1.10</commons-codec.version>
+                <jetty.provider>mortbay</jetty.provider>
+                <jetty.version>6.1.26</jetty.version>
             </properties>
         </profile>
         <profile>
@@ -1000,6 +1082,8 @@
                 <hadoop.version>2.8.5</hadoop.version>
                 <hadoop-api.version>2.8</hadoop-api.version>
                 <commons-codec.version>1.10</commons-codec.version>
+                <jetty.provider>mortbay</jetty.provider>
+                <jetty.version>6.1.26</jetty.version>
             </properties>
         </profile>
         <profile>
@@ -1008,6 +1092,8 @@
                 <hadoop.version>2.9.2</hadoop.version>
                 <hadoop-api.version>2.9</hadoop-api.version>
                 <commons-codec.version>1.10</commons-codec.version>
+                <jetty.provider>mortbay</jetty.provider>
+                <jetty.version>6.1.26</jetty.version>
             </properties>
         </profile>
         <profile>
@@ -1016,6 +1102,8 @@
                 <hadoop.version>3.1.2</hadoop.version>
                 <hadoop-api.version>3.1</hadoop-api.version>
                 <commons-codec.version>1.11</commons-codec.version>
+                <jetty.provider>eclipse</jetty.provider>
+                <jetty.version>9.4.20.v20190813</jetty.version>
             </properties>
         </profile>
         <profile>
@@ -1024,6 +1112,8 @@
                 <hadoop.version>3.2.0</hadoop.version>
                 <hadoop-api.version>3.2</hadoop-api.version>
                 <commons-codec.version>1.11</commons-codec.version>
+                <jetty.provider>eclipse</jetty.provider>
+                <jetty.version>9.3.24.v20180605</jetty.version>
             </properties>
         </profile>
         <profile>
@@ -1032,6 +1122,8 @@
                 <hadoop.version>3.3.4</hadoop.version>
                 <hadoop-api.version>3.3</hadoop-api.version>
                 <commons-codec.version>1.15</commons-codec.version>
+                <jetty.provider>eclipse</jetty.provider>
+                <jetty.version>9.4.43.v20210629</jetty.version>
             </properties>
         </profile>
     </profiles>
@@ -2083,6 +2175,16 @@
                 <artifactId>hadoop-mapreduce-client-core</artifactId>
                 <version>${hadoop.version}</version>
                 <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.eclipse.jetty</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.mortbay.jetty</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
@@ -2096,11 +2198,27 @@
                     </exclusion>
                     <exclusion>
                         <groupId>com.sun.jersey</groupId>
-                        <artifactId>jersey-core</artifactId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-yarn-client</artifactId>
+                <version>${hadoop.version}</version>
+                <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.eclipse.jetty</groupId>
+                        <artifactId>*</artifactId>
                     </exclusion>
                     <exclusion>
-                        <groupId>com.sun.jersey</groupId>
-                        <artifactId>jersey-client</artifactId>
+                        <groupId>org.eclipse.jetty.websocket</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.mortbay.jetty</groupId>
+                        <artifactId>*</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -2113,6 +2231,14 @@
                     <exclusion>
                         <groupId>io.netty</groupId>
                         <artifactId>netty</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.eclipse.jetty</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.mortbay.jetty</groupId>
+                        <artifactId>*</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -2135,6 +2261,10 @@
                         <artifactId>*</artifactId>
                     </exclusion>
                     <exclusion>
+                        <groupId>org.mortbay.jetty</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
                         <groupId>javax.servlet</groupId>
                         <artifactId>servlet-api</artifactId>
                     </exclusion>
@@ -2149,6 +2279,10 @@
                     <exclusion>
                         <groupId>net.minidev</groupId>
                         <artifactId>json-smart</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>jakarta.activation</groupId>
+                        <artifactId>jakarta.activation-api</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -2204,42 +2338,23 @@
             </dependency>
 
             <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-client</artifactId>
-                <version>${jetty.version}</version>
-                <scope>compile</scope>
+                <groupId>org.glassfish.hk2</groupId>
+                <artifactId>hk2-api</artifactId>
+                <version>${hk2.version}</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-http</artifactId>
-                <version>${jetty.version}</version>
-                <scope>compile</scope>
+                <groupId>org.glassfish.hk2</groupId>
+                <artifactId>hk2-locator</artifactId>
+                <version>${hk2.version}</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-security</artifactId>
-                <version>${jetty.version}</version>
-                <scope>compile</scope>
+                <groupId>org.glassfish.hk2</groupId>
+                <artifactId>hk2-utils</artifactId>
+                <version>${hk2.version}</version>
+                <scope>provided</scope>
             </dependency>
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-server</artifactId>
-                <version>${jetty.version}</version>
-                <scope>compile</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-servlet</artifactId>
-                <version>${jetty.version}</version>
-                <scope>compile</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-util</artifactId>
-                <version>${jetty.version}</version>
-                <scope>compile</scope>
-            </dependency>
-
             <dependency>
                 <groupId>org.glassfish.jersey.core</groupId>
                 <artifactId>jersey-client</artifactId>
@@ -2275,6 +2390,12 @@
                 <artifactId>jersey-container-jetty-http</artifactId>
                 <version>${jersey.version}</version>
                 <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jersey.media</groupId>
+                <artifactId>jersey-media-jaxb</artifactId>
+                <version>${jersey.version}</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.glassfish.jersey.media</groupId>
@@ -2424,6 +2545,13 @@
                 <artifactId>netty-transport-native-kqueue</artifactId>
                 <version>${netty-all.version}</version>
                 <classifier>osx-aarch_64</classifier>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.javassist</groupId>
+                <artifactId>javassist</artifactId>
+                <version>${javassist.version}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -2590,7 +2718,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${jackson.databind.version}</version>
+                <version>${jackson-databind.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -2621,19 +2749,25 @@
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-jaxb-annotations</artifactId>
                 <version>${jackson.version}</version>
-                <scope>provided</scope>
+                <scope>${jackson-jaxb.scope}</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>jakarta.activation</groupId>
+                        <artifactId>jakarta.activation-api</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.jaxrs</groupId>
                 <artifactId>jackson-jaxrs-json-provider</artifactId>
                 <version>${jackson.version}</version>
-                <scope>provided</scope>
+                <scope>${jackson-jaxrs.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.jaxrs</groupId>
                 <artifactId>jackson-jaxrs-base</artifactId>
                 <version>${jackson.version}</version>
-                <scope>provided</scope>
+                <scope>${jackson-jaxrs.scope}</scope>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.dataformat</groupId>
@@ -2905,25 +3039,31 @@
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-core</artifactId>
-                <version>1.6.3</version>
+                <version>1.6.11</version>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-models</artifactId>
-                <version>1.6.3</version>
+                <version>1.6.11</version>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-annotations</artifactId>
-                <version>1.6.3</version>
+                <version>1.6.11</version>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-jaxrs</artifactId>
-                <version>1.6.3</version>
+                <version>1.6.11</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-jersey2-jaxrs</artifactId>
+                <version>1.6.11</version>
                 <scope>compile</scope>
             </dependency>
             <dependency>

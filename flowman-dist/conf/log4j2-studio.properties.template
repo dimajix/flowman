@@ -29,9 +29,13 @@ logger.flowman.name = com.dimajix.flowman
 logger.flowman.level = info
 
 # Settings to quiet third party logs that are too verbose
-logger.jetty1.name = org.sparkproject.jetty
-logger.jetty1.level = warn
-logger.jetty2.name = org.sparkproject.jetty.util.component.AbstractLifeCycle
+logger.sparkproject.name = org.sparkproject
+logger.sparkproject.level = warn
+logger.spark_project.name = org.spark_project
+logger.spark_project.level = warn
+logger.jetty1.name = org.sparkproject.jetty.util.component.AbstractLifeCycle
+logger.jetty1.level = error
+logger.jetty2.name = org.spark_project.jetty.util.component.AbstractLifeCycle
 logger.jetty2.level = error
 
 # Set Spark general logging to WARN
@@ -43,6 +47,14 @@ logger.hadoop.name = org.apache.hadoop
 logger.hadoop.level = warn
 logger.hive.name = org.apache.hadoop.hive
 logger.hive.level = warn
+
+# Set Kafka related logging to WARN
+logger.kafka1.name = kafka
+logger.kafka1.level = warn
+logger.kafka2.name = org.apache.kafka
+logger.kafka2.level = warn
+logger.zookeeper.name = org.apache.zookeeper
+logger.zookeeper.level = warn
 
 # Parquet related logging
 logger.parquet1.name = org.apache.parquet

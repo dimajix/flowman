@@ -23,10 +23,14 @@ log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss.SSS} %p: %m
 
 
 # Settings to quiet third party logs that are too verbose
-log4j.logger.org.sparkproject.jetty=WARN
-log4j.logger.org.sparkproject.jetty.util.component.AbstractLifeCycle=ERROR
-log4j.logger.org.spark_project.jetty=WARN
-log4j.logger.org.spark_project.jetty.util.component.AbstractLifeCycle=ERROR
+logger.sparkproject.name = org.sparkproject
+logger.sparkproject.level = warn
+logger.spark_project.name = org.spark_project
+logger.spark_project.level = warn
+logger.jetty1.name = org.sparkproject.jetty.util.component.AbstractLifeCycle
+logger.jetty1.level = error
+logger.jetty2.name = org.spark_project.jetty.util.component.AbstractLifeCycle
+logger.jetty2.level = error
 
 # Set Spark general logging to WARN
 log4j.logger.org.apache.spark=WARN
@@ -34,6 +38,11 @@ log4j.logger.org.apache.spark=WARN
 # Set Hadoop related logging to WARN
 log4j.logger.org.apache.hadoop=WARN
 log4j.logger.org.apache.hadoop.hive=WARN
+
+# Set Kafka related logging to WARN
+log4j.logger.kafka=WARN
+log4j.logger.org.apache.kafka=WARN
+log4j.logger.org.apache.zookeeper=WARN
 
 # SPARK-9183: Settings to avoid annoying messages when looking up nonexistent UDFs in SparkSQL with Hive support
 log4j.logger.org.apache.hadoop.hive.metastore.RetryingHMSHandler=FATAL

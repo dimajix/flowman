@@ -120,10 +120,22 @@
         <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
         <jackson-jaxb.scope>compile</jackson-jaxb.scope>
         <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+        <jakarta.activation-api.version>1.2.1</jakarta.activation-api.version>
+        <jakarta.activation-api.scope>provided</jakarta.activation-api.scope>
+        <jakarta.annotation-api.version>1.3.5</jakarta.annotation-api.version>
+        <jakarta.annotation-api.scope>provided</jakarta.annotation-api.scope>
+        <jakarta.inject.version>2.6.1</jakarta.inject.version>
+        <jakarta.inject.scope>provided</jakarta.inject.scope>
+        <jakarta.validation-api.version>2.0.2</jakarta.validation-api.version>
+        <jakarta.validation-api.scope>provided</jakarta.validation-api.scope>
+        <jakarta.ws.rs-api.version>2.1.6</jakarta.ws.rs-api.version>
+        <jakarta.ws.rs-api.scope>provided</jakarta.ws.rs-api.scope>
+        <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
+        <jakarta.xml.bind-api.scope>provided</jakarta.xml.bind-api.scope>
+        <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
+        <jaxb-runtime.scope>provided</jaxb-runtime.scope>
         <javassist.version>3.25.0-GA</javassist.version>
         <jersey.version>2.36</jersey.version>
-        <jetty.provider>spark</jetty.provider>
-        <jetty.version>9.4.51.v20230217</jetty.version>
         <joda-time.version>2.12.2</joda-time.version>
         <json4s.version>3.7.0-M11</json4s.version>
         <jsr305.version>3.0.0</jsr305.version>
@@ -252,10 +264,22 @@
                 <jackson-databind.version>2.9.10.1</jackson-databind.version>
                 <jackson-jaxb.scope>provided</jackson-jaxb.scope>
                 <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <jakarta.activation-api.version>1.2.1</jakarta.activation-api.version>
+                <jakarta.activation-api.scope>compile</jakarta.activation-api.scope>
+                <jakarta.annotation-api.version>1.3.5</jakarta.annotation-api.version>
+                <jakarta.annotation-api.scope>compile</jakarta.annotation-api.scope>
+                <jakarta.inject.version>2.6.1</jakarta.inject.version>
+                <jakarta.inject.scope>compile</jakarta.inject.scope>
+                <jakarta.validation-api.version>2.0.2</jakarta.validation-api.version>
+                <jakarta.validation-api.scope>compile</jakarta.validation-api.scope>
+                <jakarta.ws.rs-api.version>2.1.6</jakarta.ws.rs-api.version>
+                <jakarta.ws.rs-api.scope>compile</jakarta.ws.rs-api.scope>
+                <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
+                <jakarta.xml.bind-api.scope>compile</jakarta.xml.bind-api.scope>
                 <javassist.version>3.18.1-GA</javassist.version>
+                <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
+                <jaxb-runtime.scope>compile</jaxb-runtime.scope>
                 <jersey.version>2.22.2</jersey.version>
-                <jetty.provider>mortbay</jetty.provider>
-                <jetty.version>6.1.26</jetty.version>
                 <joda-time.version>2.9.9</joda-time.version>
                 <json4s.version>3.5.3</json4s.version>
                 <jsr305.version>1.3.9</jsr305.version>
@@ -341,10 +365,22 @@
                 <jackson-databind.version>2.10.5.1</jackson-databind.version>
                 <jackson-jaxb.scope>provided</jackson-jaxb.scope>
                 <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <jakarta.activation-api.version>1.2.1</jakarta.activation-api.version>
+                <jakarta.activation-api.scope>compile</jakarta.activation-api.scope>
+                <jakarta.annotation-api.version>1.3.5</jakarta.annotation-api.version>
+                <jakarta.annotation-api.scope>compile</jakarta.annotation-api.scope>
+                <jakarta.inject.version>2.6.1</jakarta.inject.version>
+                <jakarta.inject.scope>compile</jakarta.inject.scope>
+                <jakarta.validation-api.version>2.0.2</jakarta.validation-api.version>
+                <jakarta.validation-api.scope>compile</jakarta.validation-api.scope>
+                <jakarta.ws.rs-api.version>2.1.6</jakarta.ws.rs-api.version>
+                <jakarta.ws.rs-api.scope>compile</jakarta.ws.rs-api.scope>
+                <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
+                <jakarta.xml.bind-api.scope>compile</jakarta.xml.bind-api.scope>
                 <javassist.version>3.18.1-GA</javassist.version>
+                <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
+                <jaxb-runtime.scope>compile</jaxb-runtime.scope>
                 <jersey.version>2.22.2</jersey.version>
-                <jetty.provider>eclipse</jetty.provider>
-                <jetty.version>9.4.43.v20210629</jetty.version>
                 <joda-time.version>2.9.9</joda-time.version>
                 <json4s.version>3.5.3</json4s.version>
                 <jsr305.version>1.3.9</jsr305.version>
@@ -421,10 +457,22 @@
                 <jackson-databind.version>2.10.5.1</jackson-databind.version>
                 <jackson-jaxb.scope>compile</jackson-jaxb.scope>
                 <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <jakarta.activation-api.version>1.2.1</jakarta.activation-api.version>
+                <jakarta.activation-api.scope>compile</jakarta.activation-api.scope>
+                <jakarta.annotation-api.version>1.3.5</jakarta.annotation-api.version>
+                <jakarta.annotation-api.scope>provided</jakarta.annotation-api.scope>
+                <jakarta.inject.version>2.6.1</jakarta.inject.version>
+                <jakarta.inject.scope>provided</jakarta.inject.scope>
+                <jakarta.validation-api.version>2.0.2</jakarta.validation-api.version>
+                <jakarta.validation-api.scope>provided</jakarta.validation-api.scope>
+                <jakarta.ws.rs-api.version>2.1.6</jakarta.ws.rs-api.version>
+                <jakarta.ws.rs-api.scope>provided</jakarta.ws.rs-api.scope>
+                <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
+                <jakarta.xml.bind-api.scope>provided</jakarta.xml.bind-api.scope>
                 <javassist.version>3.25.0-GA</javassist.version>
+                <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
+                <jaxb-runtime.scope>provided</jaxb-runtime.scope>
                 <jersey.version>2.34</jersey.version>
-                <jetty.provider>spark</jetty.provider>
-                <jetty.version>9.4.40.v20210413</jetty.version>
                 <joda-time.version>2.9.9</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -501,10 +549,22 @@
                 <jackson-databind.version>2.10.5.1</jackson-databind.version>
                 <jackson-jaxb.scope>compile</jackson-jaxb.scope>
                 <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <jakarta.activation-api.version>1.2.1</jakarta.activation-api.version>
+                <jakarta.activation-api.scope>compile</jakarta.activation-api.scope>
+                <jakarta.annotation-api.version>1.3.5</jakarta.annotation-api.version>
+                <jakarta.annotation-api.scope>provided</jakarta.annotation-api.scope>
+                <jakarta.inject.version>2.6.1</jakarta.inject.version>
+                <jakarta.inject.scope>provided</jakarta.inject.scope>
+                <jakarta.validation-api.version>2.0.2</jakarta.validation-api.version>
+                <jakarta.validation-api.scope>provided</jakarta.validation-api.scope>
+                <jakarta.ws.rs-api.version>2.1.6</jakarta.ws.rs-api.version>
+                <jakarta.ws.rs-api.scope>provided</jakarta.ws.rs-api.scope>
+                <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
+                <jakarta.xml.bind-api.scope>provided</jakarta.xml.bind-api.scope>
                 <javassist.version>3.25.0-GA</javassist.version>
+                <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
+                <jaxb-runtime.scope>provided</jaxb-runtime.scope>
                 <jersey.version>2.36</jersey.version>
-                <jetty.provider>spark</jetty.provider>
-                <jetty.version>9.4.43.v20210629</jetty.version>
                 <joda-time.version>2.9.9</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -583,9 +643,9 @@
                 <jackson-jaxb.scope>compile</jackson-jaxb.scope>
                 <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
                 <javassist.version>3.25.0-GA</javassist.version>
+                <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
+                <jaxb-runtime.scope>provided</jaxb-runtime.scope>
                 <jersey.version>2.36</jersey.version>
-                <jetty.provider>spark</jetty.provider>
-                <jetty.version>9.4.43.v20210629</jetty.version>
                 <joda-time.version>2.10.13</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -652,9 +712,9 @@
                 <jackson-jaxb.scope>compile</jackson-jaxb.scope>
                 <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
                 <javassist.version>3.25.0-GA</javassist.version>
+                <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
+                <jaxb-runtime.scope>provided</jaxb-runtime.scope>
                 <jersey.version>2.36</jersey.version>
-                <jetty.provider>spark</jetty.provider>
-                <jetty.version>9.4.43.v20210629</jetty.version>
                 <joda-time.version>2.10.13</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -718,9 +778,22 @@
                 <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
                 <jackson-jaxb.scope>compile</jackson-jaxb.scope>
                 <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <jakarta.activation-api.version>1.2.1</jakarta.activation-api.version>
+                <jakarta.activation-api.scope>compile</jakarta.activation-api.scope>
+                <jakarta.annotation-api.version>1.3.5</jakarta.annotation-api.version>
+                <jakarta.annotation-api.scope>compile</jakarta.annotation-api.scope>
+                <jakarta.inject.version>2.6.1</jakarta.inject.version>
+                <jakarta.inject.scope>compile</jakarta.inject.scope>
+                <jakarta.validation-api.version>2.0.2</jakarta.validation-api.version>
+                <jakarta.validation-api.scope>compile</jakarta.validation-api.scope>
+                <jakarta.ws.rs-api.version>2.1.6</jakarta.ws.rs-api.version>
+                <jakarta.ws.rs-api.scope>compile</jakarta.ws.rs-api.scope>
+                <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
+                <jakarta.xml.bind-api.scope>compile</jakarta.xml.bind-api.scope>
                 <javassist.version>3.18.1-GA</javassist.version>
+                <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
+                <jaxb-runtime.scope>compile</jaxb-runtime.scope>
                 <jersey.version>2.22.2</jersey.version>
-                <jetty.provider>mortbay</jetty.provider>
                 <joda-time.version>2.9.3</joda-time.version>
                 <json4s.version>3.5.3</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -780,9 +853,22 @@
                 <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
                 <jackson-jaxb.scope>provided</jackson-jaxb.scope>
                 <jackson-jaxrs.scope>provided</jackson-jaxrs.scope>
+                <jakarta.activation-api.version>1.2.1</jakarta.activation-api.version>
+                <jakarta.activation-api.scope>compile</jakarta.activation-api.scope>
+                <jakarta.annotation-api.version>1.3.5</jakarta.annotation-api.version>
+                <jakarta.annotation-api.scope>provided</jakarta.annotation-api.scope>
+                <jakarta.inject.version>2.6.1</jakarta.inject.version>
+                <jakarta.inject.scope>provided</jakarta.inject.scope>
+                <jakarta.validation-api.version>2.0.2</jakarta.validation-api.version>
+                <jakarta.validation-api.scope>provided</jakarta.validation-api.scope>
+                <jakarta.ws.rs-api.version>2.1.6</jakarta.ws.rs-api.version>
+                <jakarta.ws.rs-api.scope>provided</jakarta.ws.rs-api.scope>
+                <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
+                <jakarta.xml.bind-api.scope>provided</jakarta.xml.bind-api.scope>
                 <javassist.version>3.25.0-GA</javassist.version>
+                <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
+                <jaxb-runtime.scope>provided</jaxb-runtime.scope>
                 <jersey.version>2.30</jersey.version>
-                <jetty.provider>spark</jetty.provider>
                 <joda-time.version>2.10.5</joda-time.version>
                 <json4s.version>3.6.6</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -842,9 +928,22 @@
                 <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
                 <jackson-jaxb.scope>provided</jackson-jaxb.scope>
                 <jackson-jaxrs.scope>provided</jackson-jaxrs.scope>
+                <jakarta.activation-api.version>1.2.1</jakarta.activation-api.version>
+                <jakarta.activation-api.scope>provided</jakarta.activation-api.scope>
+                <jakarta.annotation-api.version>1.3.5</jakarta.annotation-api.version>
+                <jakarta.annotation-api.scope>provided</jakarta.annotation-api.scope>
+                <jakarta.inject.version>2.6.1</jakarta.inject.version>
+                <jakarta.inject.scope>provided</jakarta.inject.scope>
+                <jakarta.validation-api.version>2.0.2</jakarta.validation-api.version>
+                <jakarta.validation-api.scope>provided</jakarta.validation-api.scope>
+                <jakarta.ws.rs-api.version>2.1.6</jakarta.ws.rs-api.version>
+                <jakarta.ws.rs-api.scope>provided</jakarta.ws.rs-api.scope>
+                <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
+                <jakarta.xml.bind-api.scope>provided</jakarta.xml.bind-api.scope>
                 <javassist.version>3.25.0-GA</javassist.version>
+                <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
+                <jaxb-runtime.scope>provided</jaxb-runtime.scope>
                 <jersey.version>2.30</jersey.version>
-                <jetty.provider>spark</jetty.provider>
                 <joda-time.version>2.10.5</joda-time.version>
                 <json4s.version>3.7.0-M5</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -905,9 +1004,22 @@
                 <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
                 <jackson-jaxb.scope>compile</jackson-jaxb.scope>
                 <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <jakarta.activation-api.version>1.2.1</jakarta.activation-api.version>
+                <jakarta.activation-api.scope>compile</jakarta.activation-api.scope>
+                <jakarta.annotation-api.version>1.3.5</jakarta.annotation-api.version>
+                <jakarta.annotation-api.scope>provided</jakarta.annotation-api.scope>
+                <jakarta.inject.version>2.6.1</jakarta.inject.version>
+                <jakarta.inject.scope>provided</jakarta.inject.scope>
+                <jakarta.validation-api.version>2.0.2</jakarta.validation-api.version>
+                <jakarta.validation-api.scope>provided</jakarta.validation-api.scope>
+                <jakarta.ws.rs-api.version>2.1.6</jakarta.ws.rs-api.version>
+                <jakarta.ws.rs-api.scope>provided</jakarta.ws.rs-api.scope>
+                <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
+                <jakarta.xml.bind-api.scope>provided</jakarta.xml.bind-api.scope>
                 <javassist.version>3.25.0-GA</javassist.version>
+                <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
+                <jaxb-runtime.scope>provided</jaxb-runtime.scope>
                 <jersey.version>2.34</jersey.version>
-                <jetty.provider>spark</jetty.provider>
                 <joda-time.version>2.10.10</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -968,9 +1080,22 @@
                 <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
                 <jackson-jaxb.scope>compile</jackson-jaxb.scope>
                 <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <jakarta.activation-api.version>1.2.1</jakarta.activation-api.version>
+                <jakarta.activation-api.scope>compile</jakarta.activation-api.scope>
+                <jakarta.annotation-api.version>1.3.5</jakarta.annotation-api.version>
+                <jakarta.annotation-api.scope>provided</jakarta.annotation-api.scope>
+                <jakarta.inject.version>2.6.1</jakarta.inject.version>
+                <jakarta.inject.scope>provided</jakarta.inject.scope>
+                <jakarta.validation-api.version>2.0.2</jakarta.validation-api.version>
+                <jakarta.validation-api.scope>provided</jakarta.validation-api.scope>
+                <jakarta.ws.rs-api.version>2.1.6</jakarta.ws.rs-api.version>
+                <jakarta.ws.rs-api.scope>provided</jakarta.ws.rs-api.scope>
+                <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
+                <jakarta.xml.bind-api.scope>provided</jakarta.xml.bind-api.scope>
                 <javassist.version>3.25.0-GA</javassist.version>
+                <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
+                <jaxb-runtime.scope>provided</jaxb-runtime.scope>
                 <jersey.version>2.36</jersey.version>
-                <jetty.provider>spark</jetty.provider>
                 <joda-time.version>2.10.13</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -1031,9 +1156,22 @@
                 <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
                 <jackson-jaxb.scope>compile</jackson-jaxb.scope>
                 <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <jakarta.activation-api.version>1.2.1</jakarta.activation-api.version>
+                <jakarta.activation-api.scope>provided</jakarta.activation-api.scope>
+                <jakarta.annotation-api.version>1.3.5</jakarta.annotation-api.version>
+                <jakarta.annotation-api.scope>provided</jakarta.annotation-api.scope>
+                <jakarta.inject.version>2.6.1</jakarta.inject.version>
+                <jakarta.inject.scope>provided</jakarta.inject.scope>
+                <jakarta.validation-api.version>2.0.2</jakarta.validation-api.version>
+                <jakarta.validation-api.scope>provided</jakarta.validation-api.scope>
+                <jakarta.ws.rs-api.version>2.1.6</jakarta.ws.rs-api.version>
+                <jakarta.ws.rs-api.scope>provided</jakarta.ws.rs-api.scope>
+                <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
+                <jakarta.xml.bind-api.scope>provided</jakarta.xml.bind-api.scope>
                 <javassist.version>3.25.0-GA</javassist.version>
+                <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
+                <jaxb-runtime.scope>provided</jaxb-runtime.scope>
                 <jersey.version>2.36</jersey.version>
-                <jetty.provider>spark</jetty.provider>
                 <joda-time.version>2.12.2</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
@@ -1062,8 +1200,6 @@
                 <hadoop.version>2.6.5</hadoop.version>
                 <hadoop-api.version>2.6</hadoop-api.version>
                 <commons-codec.version>1.10</commons-codec.version>
-                <jetty.provider>mortbay</jetty.provider>
-                <jetty.version>6.1.26</jetty.version>
             </properties>
         </profile>
         <profile>
@@ -1072,8 +1208,6 @@
                 <hadoop.version>2.7.7</hadoop.version>
                 <hadoop-api.version>2.7</hadoop-api.version>
                 <commons-codec.version>1.10</commons-codec.version>
-                <jetty.provider>mortbay</jetty.provider>
-                <jetty.version>6.1.26</jetty.version>
             </properties>
         </profile>
         <profile>
@@ -1082,8 +1216,6 @@
                 <hadoop.version>2.8.5</hadoop.version>
                 <hadoop-api.version>2.8</hadoop-api.version>
                 <commons-codec.version>1.10</commons-codec.version>
-                <jetty.provider>mortbay</jetty.provider>
-                <jetty.version>6.1.26</jetty.version>
             </properties>
         </profile>
         <profile>
@@ -1092,8 +1224,6 @@
                 <hadoop.version>2.9.2</hadoop.version>
                 <hadoop-api.version>2.9</hadoop-api.version>
                 <commons-codec.version>1.10</commons-codec.version>
-                <jetty.provider>mortbay</jetty.provider>
-                <jetty.version>6.1.26</jetty.version>
             </properties>
         </profile>
         <profile>
@@ -1102,8 +1232,6 @@
                 <hadoop.version>3.1.2</hadoop.version>
                 <hadoop-api.version>3.1</hadoop-api.version>
                 <commons-codec.version>1.11</commons-codec.version>
-                <jetty.provider>eclipse</jetty.provider>
-                <jetty.version>9.4.20.v20190813</jetty.version>
             </properties>
         </profile>
         <profile>
@@ -1112,8 +1240,6 @@
                 <hadoop.version>3.2.0</hadoop.version>
                 <hadoop-api.version>3.2</hadoop-api.version>
                 <commons-codec.version>1.11</commons-codec.version>
-                <jetty.provider>eclipse</jetty.provider>
-                <jetty.version>9.3.24.v20180605</jetty.version>
             </properties>
         </profile>
         <profile>
@@ -1122,8 +1248,6 @@
                 <hadoop.version>3.3.4</hadoop.version>
                 <hadoop-api.version>3.3</hadoop-api.version>
                 <commons-codec.version>1.15</commons-codec.version>
-                <jetty.provider>eclipse</jetty.provider>
-                <jetty.version>9.4.43.v20210629</jetty.version>
             </properties>
         </profile>
     </profiles>
@@ -1135,6 +1259,7 @@
         <module>flowman-spark-extensions</module>
         <module>flowman-common-java</module>
         <module>flowman-common</module>
+        <module>flowman-common-jersey</module>
         <module>flowman-core</module>
         <module>flowman-spec</module>
         <module>flowman-dsl</module>
@@ -1634,6 +1759,11 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-common-jersey</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -2356,6 +2486,18 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
+                <groupId>org.glassfish.hk2.external</groupId>
+                <artifactId>jakarta.inject</artifactId>
+                <version>${jakarta.inject.version}</version>
+                <scope>${jakarta.inject.scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>${jaxb-runtime.version}</version>
+                <scope>${jaxb-runtime.scope}</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.glassfish.jersey.core</groupId>
                 <artifactId>jersey-client</artifactId>
                 <version>${jersey.version}</version>
@@ -2402,6 +2544,37 @@
                 <artifactId>jersey-media-json-jackson</artifactId>
                 <version>${jersey.version}</version>
                 <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>jakarta.activation</groupId>
+                <artifactId>jakarta.activation-api</artifactId>
+                <version>${jakarta.activation-api.version}</version>
+                <scope>${jakarta.activation-api.scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.annotation</groupId>
+                <artifactId>jakarta.annotation-api</artifactId>
+                <version>${jakarta.annotation-api.version}</version>
+                <scope>${jakarta.annotation-api.scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.validation</groupId>
+                <artifactId>jakarta.validation-api</artifactId>
+                <version>${jakarta.validation-api.version}</version>
+                <scope>${jakarta.validation-api.scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.ws.rs</groupId>
+                <artifactId>jakarta.ws.rs-api</artifactId>
+                <version>${jakarta.ws.rs-api.version}</version>
+                <scope>${jakarta.ws.rs-api.scope}</scope>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>${jakarta.xml.bind-api.version}</version>
+                <scope>${jakarta.xml.bind-api.scope}</scope>
             </dependency>
 
             <dependency>

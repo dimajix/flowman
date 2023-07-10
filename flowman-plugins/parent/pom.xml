@@ -71,6 +71,12 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-common-jersey</artifactId>
+                <version>${flowman.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-core</artifactId>
                 <version>${flowman.version}</version>
                 <scope>provided</scope>

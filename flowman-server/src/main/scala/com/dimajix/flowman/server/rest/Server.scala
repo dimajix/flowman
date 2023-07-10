@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.server.rest
 
+import java.net.URL
+
 import io.swagger.jaxrs.config.BeanConfig
 import io.swagger.jaxrs.listing.ApiListingResource
 import io.swagger.jaxrs.listing.SwaggerSerializers
@@ -24,13 +26,13 @@ import org.glassfish.jersey.server.ResourceConfig
 import org.glassfish.jersey.servlet.ServletContainer
 import org.slf4j.LoggerFactory
 
+import com.dimajix.flowman.common.jersey.JacksonConfig
+import com.dimajix.flowman.common.jersey.OptionParamConverterProvider
+import com.dimajix.flowman.common.jetty.JettyServer
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.history.JobQuery
-import com.dimajix.flowman.jersey.OptionParamConverterProvider
-import com.dimajix.flowman.jetty.JettyServer
 import com.dimajix.flowman.model.Namespace
 import com.dimajix.flowman.server.Configuration
-import com.dimajix.flowman.server.config.JacksonConfig
 import com.dimajix.flowman.spec.history.RepositoryStateStore
 import com.dimajix.flowman.spec.history.StateRepository
 
@@ -76,7 +78,7 @@ class Server(
 
         val server = JettyServer.builder()
             .addServlet(new ServletContainer(apiResources), "/api/*")
-            .addStaticFile("swagger/index.html", "/swagger/index.html")
+            .addStaticFile("com/dimajix/flowman/server", "/swagger/index.html", false)
             .addStaticFiles("META-INF/resources/webjars/swagger-ui/4.1.3/", "/swagger/*")
             .addStaticFiles("META-INF/resources/webjars/flowman-server-ui/", "/*")
             .bind(conf.getBindHost(), conf.getBindPort())

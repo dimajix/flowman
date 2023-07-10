@@ -319,6 +319,12 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-common-jersey</artifactId>
+                <version>${flowman.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-core</artifactId>
                 <version>${flowman.version}</version>
                 <scope>compile</scope>
@@ -1030,7 +1036,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${jackson.databind.version}</version>
+                <version>${jackson-databind.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>

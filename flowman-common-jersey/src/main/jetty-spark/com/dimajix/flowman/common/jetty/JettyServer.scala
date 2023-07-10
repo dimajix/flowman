@@ -1,6 +1,23 @@
-package com.dimajix.flowman.jetty
+/*
+ * Copyright (C) 2023 The Flowman Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.dimajix.flowman.common.jetty
 
 import java.net.URI
+import java.net.URL
 
 import javax.servlet.Servlet
 import org.glassfish.jersey.server.spi.Container
@@ -35,23 +52,31 @@ class JettyServerBuilder {
         this
     }
 
-    def addStaticFile(file:String, pathSpec:String) : JettyServerBuilder = {
-        val url = Resources.getURL(file).toString
+    def addStaticFile(file:String, pathSpec:String, relativeRequestPath:Boolean=true) : JettyServerBuilder = {
+        val url = Resources.getURL(file)
+        addStaticFile(url, pathSpec, relativeRequestPath)
+    }
+
+    def addStaticFile(url: URL, pathSpec: String, relativeRequestPath:Boolean): JettyServerBuilder = {
         val swaggerIndexServlet = new ServletHolder(new DefaultServlet())
-        swaggerIndexServlet.setInitParameter("resourceBase", url)
-        swaggerIndexServlet.setInitParameter("dirAllowed", "true")
-        swaggerIndexServlet.setInitParameter("pathInfoOnly", "true")
+        swaggerIndexServlet.setInitParameter("resourceBase", url.toString)
+        swaggerIndexServlet.setInitParameter("dirAllowed", "false")
+        swaggerIndexServlet.setInitParameter("pathInfoOnly", relativeRequestPath.toString)
         swaggerIndexServlet.setInitParameter("redirectWelcome", "false")
         handler.addServlet(swaggerIndexServlet, pathSpec)
         this
     }
 
-    def addStaticFiles(directory: String, pathSpec: String): JettyServerBuilder = {
-        val url = Resources.getURL(directory).toString
+    def addStaticFiles(directory: String, pathSpec: String, relativeRequestPath:Boolean=true): JettyServerBuilder = {
+        val url = Resources.getURL(directory)
+        addStaticFiles(url, pathSpec, relativeRequestPath)
+    }
+
+    def addStaticFiles(url: URL, pathSpec: String, relativeRequestPath:Boolean): JettyServerBuilder = {
         val swaggerIndexServlet = new ServletHolder(new DefaultServlet())
-        swaggerIndexServlet.setInitParameter("resourceBase", url)
+        swaggerIndexServlet.setInitParameter("resourceBase", url.toString)
         swaggerIndexServlet.setInitParameter("dirAllowed", "true")
-        swaggerIndexServlet.setInitParameter("pathInfoOnly", "true")
+        swaggerIndexServlet.setInitParameter("pathInfoOnly", relativeRequestPath.toString)
         swaggerIndexServlet.setInitParameter("redirectWelcome", "true")
         handler.addServlet(swaggerIndexServlet, pathSpec)
         this

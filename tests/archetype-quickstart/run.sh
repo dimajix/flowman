@@ -12,7 +12,7 @@ mvn archetype:generate \
     -B \
     -DarchetypeGroupId=com.dimajix.flowman.maven \
     -DarchetypeArtifactId=flowman-archetype-quickstart \
-    -DarchetypeVersion=0.2.1 \
+    -DarchetypeVersion=0.3.0 \
     -DgroupId=test \
     -DartifactId=quickstart-test \
     -Dversion=1.0-SNAPSHOT \

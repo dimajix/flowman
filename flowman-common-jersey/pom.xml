@@ -24,7 +24,7 @@
             <id>spark-2.4</id>
             <properties>
                 <jetty.provider>eclipse</jetty.provider>
-                <jetty.version>9.4.43.v20210629</jetty.version>
+                <jetty.version>9.4.48.v20220622</jetty.version>
             </properties>
             <dependencies>
                 <dependency>

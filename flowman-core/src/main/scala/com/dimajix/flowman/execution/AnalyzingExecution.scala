@@ -72,13 +72,6 @@ final class AnalyzingExecution(context: Context) extends CachingExecution(None, 
         throw new IllegalStateException("No active or default Spark session found")))
 
     /**
-     * Returns true if a SparkSession is already available
-     *
-     * @return
-     */
-    override def sparkRunning: Boolean = true
-
-    /**
      * Returns the FlowmanConf object, which contains all Flowman settings.
      * @return
      */

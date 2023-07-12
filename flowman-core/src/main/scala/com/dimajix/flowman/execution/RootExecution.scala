@@ -72,12 +72,6 @@ final class RootExecution(val session:Session) extends CachingExecution(None, tr
     override def spark: SparkSession = session.spark
 
     /**
-     * Returns true if a SparkSession is already available
-     * @return
-     */
-    override def sparkRunning: Boolean = session.sparkRunning
-
-    /**
      * Returns the FlowmanConf object, which contains all Flowman settings.
      * @return
      */
@@ -109,7 +103,7 @@ final class RootExecution(val session:Session) extends CachingExecution(None, tr
      * Releases any temporary tables
      */
     override def cleanup() : Unit = {
-        if (sparkRunning) {
+        if (session.sparkRunning) {
             logger.info("Cleaning up cached Spark tables")
             val catalog = spark.catalog
             catalog.clearCache()

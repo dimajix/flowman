@@ -63,13 +63,6 @@ final class MonitorExecution(parent:Execution, override val listeners:Seq[(Execu
     override def flowmanConf: FlowmanConf = parent.flowmanConf
 
     /**
-     * Returns true if a SparkSession is already available
-     *
-     * @return
-     */
-    override def sparkRunning: Boolean = parent.sparkRunning
-
-    /**
      * Returns the table catalog used for managing Hive table instances. The HiveCatalog will take care of many
      * technical details, like refreshing additional external catalogs like Impala.
      *

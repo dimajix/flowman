@@ -69,12 +69,6 @@ final class ScopedExecution(parent:Execution, isolated:Boolean=true) extends Cac
     override def spark: SparkSession = parent.spark
 
     /**
-     * Returns true if a SparkSession is already available
-     * @return
-     */
-    override def sparkRunning: Boolean = parent.sparkRunning
-
-    /**
      * Returns the table catalog used for managing table instances
      * @return
      */

@@ -92,12 +92,6 @@ abstract class Execution {
     def spark: SparkSession
 
     /**
-     * Returns true if a SparkSession is already available
-     * @return
-     */
-    def sparkRunning: Boolean
-
-    /**
      * Returns the FlowmanConf object, which contains all Flowman settings.
      * @return
      */

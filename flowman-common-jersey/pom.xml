@@ -24,7 +24,7 @@
             <id>spark-2.4</id>
             <properties>
                 <jetty.provider>eclipse</jetty.provider>
-                <jetty.version>9.4.43.v20210629</jetty.version>
+                <jetty.version>9.4.51.v20230217</jetty.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -63,7 +63,7 @@
             <id>CDH-6.3</id>
             <properties>
                 <jetty.provider>eclipse</jetty.provider>
-                <jetty.version>9.4.43.v20210629</jetty.version>
+                <jetty.version>9.4.51.v20230217</jetty.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -102,7 +102,7 @@
             <id>CDP-7.1</id>
             <properties>
                 <jetty.provider>eclipse</jetty.provider>
-                <jetty.version>9.4.43.v20210629</jetty.version>
+                <jetty.version>9.4.51.v20230217</jetty.version>
             </properties>
             <dependencies>
                 <dependency>

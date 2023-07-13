@@ -179,7 +179,7 @@ object SwaggerSchemaUtils {
         jsonNode match {
             case obj:ObjectNode =>
                 if (obj.has("required") && obj.get("required").isNull()) {
-                    obj.without("required")
+                    obj.remove("required")
                 }
             case _:JsonNode =>
         }

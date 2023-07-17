@@ -153,6 +153,7 @@
                         <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                         <junitxml>.</junitxml>
                         <filereports>TestSuite.txt</filereports>
+                        <argLine>-ea -Xmx4g -Xss4m -XX:MaxMetaspaceSize=4g -XX:ReservedCodeCacheSize=${CodeCacheSize} ${extraJavaTestArgs} -Dio.netty.tryReflectionSetAccessible=true</argLine>
                         <systemProperties>
                             <derby.system.durability>test</derby.system.durability>
                             <spark.ui.enabled>false</spark.ui.enabled>

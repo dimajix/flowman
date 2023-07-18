@@ -12,12 +12,12 @@
 
 <script>
 import PieChart from "@/charts/PieChart.js";
-import Filter from "@/mixins/Filter.js";
 import Gradient from "javascript-color-gradient";
+import Filter from "@/mixins/Filter.js";
 
 export default {
-  mixins: [Filter],
   name: 'JobNameChart',
+  mixins: [Filter],
   components: { PieChart },
 
   props: {
@@ -40,7 +40,7 @@ export default {
 
   methods: {
     getData() {
-      this.$api.getJobCounts('job', this.filter.projects, this.filter.jobs, this.filter.phases, this.filter.status)
+      this.$api.getJobCounts('job', this.projectFilter, this.filter.jobs, this.filter.phases, this.filter.status)
         .then(response => {
           let entries = Object.entries(response.data).sort((l,r) => l[1] <= r[1])
           if (entries.length > 9) {

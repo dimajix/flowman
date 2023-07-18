@@ -1,19 +1,9 @@
 <template>
   <v-navigation-drawer
     app
-    floating
-    permanent
+    clipped
+    :mini-variant="!expand"
   >
-    <v-list-item>
-      <v-list-item-content>
-        <v-list-item-title class="title">
-          Flowman History Server
-        </v-list-item-title>
-      </v-list-item-content>
-    </v-list-item>
-
-    <v-divider></v-divider>
-
     <v-list nav>
       <v-list-item :to="{name: 'home'}">
         <v-list-item-action>
@@ -24,7 +14,7 @@
         </v-list-item-title>
       </v-list-item>
 
-      <v-list-item :to="{name: 'job-history'}">
+      <v-list-item :to="{name: 'job-history', params: { project: project }}">
         <v-list-item-action>
           <v-icon>history</v-icon>
         </v-list-item-action>
@@ -33,7 +23,7 @@
         </v-list-item-title>
       </v-list-item>
 
-      <v-list-item :to="{name: 'target-history'}">
+      <v-list-item :to="{name: 'target-history', params: { project: project }}">
         <v-list-item-action>
           <v-icon>history</v-icon>
         </v-list-item-action>
@@ -42,7 +32,7 @@
         </v-list-item-title>
       </v-list-item>
 
-      <v-list-item :to="{name: 'metrics'}">
+      <v-list-item :to="{name: 'metrics', params: { project: project }}">
         <v-list-item-action>
           <v-icon>timeline</v-icon>
         </v-list-item-action>
@@ -58,6 +48,17 @@
   export default {
     name: 'MainNavigationDrawer',
 
+    props: {
+      expand: {
+        type: Boolean,
+        default: () => true
+      },
+      project: {
+        type: String,
+        default: () => ""
+      }
+    },
+
     data() {
       return {
       }
@@ -65,8 +66,5 @@
 
     mounted() {
     },
-
-    methods: {
-    }
   }
 </script>

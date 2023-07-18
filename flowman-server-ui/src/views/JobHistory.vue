@@ -6,7 +6,8 @@
       <v-col cols="12">
         <v-card shaped outlined elevation="2">
           <job-charts
-            v-model="filter"
+            @input='filter = $event'
+            :project="project"
           />
         </v-card>
       </v-col>
@@ -14,7 +15,7 @@
       <v-col cols="12">
         <v-card shaped outlined elevation="2">
           <v-card-title>
-            Job History
+            Job History {{this.project}}
             <v-btn text rounded icon
                    @click="refresh"
             >
@@ -71,18 +72,21 @@
 <script>
   import JobDetails from "@/components/JobDetails";
   import JobCharts from "@/components/JobCharts";
-  import Filter from "@/mixins/Filter.js";
   import Status from '@/components/Status.vue'
   import Phase from '@/components/Phase.vue'
   import moment from "moment"
 
   export default {
     name: "JobHistory",
-    mixins: [Filter],
     components: {JobCharts, JobDetails,Phase,Status},
 
     data() {
       return {
+        filter: {
+          jobs: [],
+          phases: [],
+          status: []
+        },
         jobs: [],
         expanded: [],
         options: {},
@@ -104,12 +108,28 @@
       }
     },
 
+    props: {
+      project: {
+        type: String,
+        default: () => ""
+      }
+    },
+
     watch: {
       options: {
         handler () {
           this.getData()
         },
         deep: true,
+      },
+      filter: {
+        handler () {
+          this.getData()
+        },
+        deep: true,
+      },
+      project: function () {
+        this.refresh()
       },
     },
 
@@ -133,7 +153,7 @@
         const offset = (page-1)*itemsPerPage
 
         this.loading = true
-        this.$api.getJobsHistory(this.filter.projects, this.filter.jobs, this.filter.phases, this.filter.status, offset, itemsPerPage)
+        this.$api.getJobsHistory([this.project], this.filter.jobs, this.filter.phases, this.filter.status, offset, itemsPerPage)
           .then(response => {
             let dateFormat = 'MMM D, YYYY HH:mm:ss'
             response.data.forEach(item => {
@@ -143,7 +163,6 @@
               item.endDateTime = end.format(dateFormat)
               item.duration = moment.duration(end.diff(start)).humanize()
             })
-            this.title = "Job History"
             this.jobs = response.data
             this.total = response.total
             this.expanded = []

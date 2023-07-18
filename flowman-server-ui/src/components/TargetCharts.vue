@@ -1,20 +1,7 @@
 <template>
   <v-container fluid>
     <v-row dense no-gutters>
-      <v-col cols="3">
-        <v-row>
-          <target-project-chart
-            :filter="filter"
-          />
-        </v-row>
-        <v-row>
-          <project-selector
-            v-model="filter.projects"
-            @input='$emit("input", filter)'
-          />
-        </v-row>
-      </v-col>
-      <v-col cols="3">
+      <v-col cols="4">
         <v-row>
           <target-name-chart
             :filter="filter"
@@ -23,12 +10,12 @@
         <v-row>
           <target-selector
             v-model="filter.targets"
-            :projects="filter.projects"
+            :project="project"
             @input='$emit("input", filter)'
           />
         </v-row>
       </v-col>
-      <v-col cols="3">
+      <v-col cols="4">
         <v-row>
         <target-phase-chart
           :filter="filter"
@@ -41,7 +28,7 @@
           />
         </v-row>
       </v-col>
-      <v-col cols="3">
+      <v-col cols="4">
         <v-row>
           <target-status-chart
             :filter="filter"
@@ -61,9 +48,7 @@
 <script>
 import TargetNameChart from "@/charts/TargetNameChart.vue";
 import TargetPhaseChart from "@/charts/TargetPhaseChart.vue";
-import TargetProjectChart from "@/charts/TargetProjectChart.vue";
 import TargetStatusChart from "@/charts/TargetStatusChart.vue";
-import ProjectSelector from "@/components/ProjectSelector";
 import TargetSelector from "@/components/TargetSelector";
 import PhaseSelector from "@/components/PhaseSelector";
 import StatusSelector from "@/components/StatusSelector";
@@ -71,21 +56,30 @@ import StatusSelector from "@/components/StatusSelector";
 export default {
   name: 'TargetCharts',
   components: {
-    ProjectSelector,
     TargetSelector,
     PhaseSelector,
     StatusSelector,
     TargetStatusChart,
     TargetNameChart,
     TargetPhaseChart,
-    TargetProjectChart
+  },
+
+  props: {
+    project: {
+      type: String,
+      default: () => ""
+    }
+  },
+
+  watch: {
+    project: function () { this.filter.projects = [this.project] },
   },
 
   data() {
     return {
       filter: {
         jobs: [],
-        projects: [],
+        projects: [this.project],
         targets: [],
         phases: [],
         status: [],

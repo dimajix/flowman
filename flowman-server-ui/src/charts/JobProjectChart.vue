@@ -40,7 +40,7 @@ export default {
 
   methods: {
     getData() {
-      this.$api.getJobCounts('project', this.filter.projects, this.filter.jobs, this.filter.phases, this.filter.status)
+      this.$api.getJobCounts('project', this.projectFilter, this.filter.jobs, this.filter.phases, this.filter.status)
         .then(response => {
           let entries = Object.entries(response.data).sort((l,r) => l[1] <= r[1])
           if (entries.length > 9) {

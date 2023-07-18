@@ -19,7 +19,7 @@
     "vue-apexcharts": "^1.6.2",
     "vue-chartjs": "^3.5.1",
     "vue-router": "^3.6.5",
-    "vuetify": "^2.6.12"
+    "vuetify": "^2.7.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^5.0.8",

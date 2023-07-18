@@ -25,19 +25,22 @@ export default new Router({
       component: System
     },
     {
-      path: '/job-history',
+      path: '/job-history/:project',
       name: 'job-history',
-      component: JobHistory
+      component: JobHistory,
+      props: route => ({ project: route.params.project })
     },
     {
-      path: '/target-history',
+      path: '/target-history/:project',
       name: 'target-history',
-      component: TargetHistory
+      component: TargetHistory,
+      props: route => ({ project: route.params.project })
     },
     {
-      path: '/metrics',
+      path: '/metrics/:project',
       name: 'metrics',
-      component: Metrics
+      component: Metrics,
+      props: route => ({ project: route.params.project })
     }
   ]
 })

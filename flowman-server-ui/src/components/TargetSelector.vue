@@ -26,14 +26,14 @@ export default {
   name: 'TargetSelector',
 
   props: {
-    projects: {
-      type: Array,
-      default: () => []
+    project: {
+      type: String,
+      default: () => ""
     }
   },
 
   watch: {
-    projects: function() { this.getData() }
+    project: function() { this.getData() }
   },
 
   data() {
@@ -49,7 +49,7 @@ export default {
 
   methods: {
     getData() {
-      this.$api.getTargetCounts('target', this.projects)
+      this.$api.getTargetCounts('target', [this.project])
         .then(response => {
           this.targets =  Object.keys(response.data).sort()
           this.value.splice(0, this.value.length)

@@ -5,17 +5,7 @@
         <v-card outlined elevation="2">
           <v-card-text>
             <v-row justify="space-around">
-              <v-col cols="3">
-                <v-card-subtitle class="text-h6">Project</v-card-subtitle>
-                <v-select
-                  v-model="selectedProject"
-                  :items="projects"
-                  solo
-                  label="Project Name"
-                  append-icon="expand_more"
-                ></v-select>
-              </v-col>
-              <v-col cols="3">
+              <v-col cols="4">
                 <v-card-subtitle class="text-h6">Job</v-card-subtitle>
                 <v-select
                   v-model="selectedJob"
@@ -25,7 +15,7 @@
                   append-icon="expand_more"
                 ></v-select>
               </v-col>
-              <v-col cols="3">
+              <v-col cols="4">
                 <v-card-subtitle class="text-h6">Execution Phase</v-card-subtitle>
                 <v-select
                   v-model="selectedPhase"
@@ -35,7 +25,7 @@
                   label="Execution Phase"
                 ></v-select>
               </v-col>
-              <v-col cols="3">
+              <v-col cols="4">
                 <v-card-subtitle class="text-h6">Execution Status</v-card-subtitle>
                 <v-select
                   v-model="selectedStatus"
@@ -87,9 +77,7 @@ export default {
   data() {
     return {
       loading: false,
-      projects: [],
       jobs: [],
-      selectedProject: "",
       selectedJob: "",
       selectedPhase: "BUILD",
       selectedStatus: [],
@@ -97,11 +85,14 @@ export default {
     };
   },
 
+  props: {
+    project: {
+      type: String,
+      default: () => ""
+    }
+  },
+
   watch: {
-    selectedProject: function() {
-      this.getJobList()
-      this.getMetricData()
-    },
     selectedJob: function() {
       this.getMetricData()
     },
@@ -111,24 +102,20 @@ export default {
     selectedStatus: function() {
       this.getMetricData()
     },
+    project: function () {
+      this.getJobList()
+      this.getMetricData()
+    },
   },
 
   mounted() {
-    this.getProjectList()
     this.getJobList()
     //this.getMetricData()
   },
 
   methods: {
-    getProjectList() {
-      this.$api.getJobCounts('project')
-        .then(response => {
-          this.projects =  Object.keys(response.data).sort()
-          this.selectedProject = this.projects[0]
-        })
-    },
     getJobList() {
-      this.$api.getJobCounts('job', [this.selectedProject])
+      this.$api.getJobCounts('job', [this.project])
         .then(response => {
           this.jobs =  Object.keys(response.data).sort()
           this.selectedJob = this.jobs[0]
@@ -198,7 +185,7 @@ export default {
 
     getMetricData() {
       this.loading = true
-      this.$api.getJobsMetrics([this.selectedProject], [this.selectedJob], [this.selectedPhase], this.selectedStatus, ['category','kind','name'])
+      this.$api.getJobsMetrics([this.project], [this.selectedJob], [this.selectedPhase], this.selectedStatus, ['category','kind','name'])
         .then(response => {
           this.metrics = response.data
           this.loading = false

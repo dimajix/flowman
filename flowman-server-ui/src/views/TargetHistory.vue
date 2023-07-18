@@ -7,6 +7,7 @@
         <v-card shaped outlined elevation="2">
           <target-charts
             v-model="filter"
+            :project="project"
           />
         </v-card>
       </v-col>
@@ -72,18 +73,22 @@
 <script>
   import TargetCharts from "@/components/TargetCharts";
   import TargetDetails from "@/components/TargetDetails";
-  import Filter from "@/mixins/Filter.js";
   import Status from '@/components/Status.vue'
   import Phase from '@/components/Phase.vue'
   import moment from "moment";
 
   export default {
     name: "TargetHistory",
-    mixins: [Filter],
     components: {TargetCharts,TargetDetails,Phase,Status},
 
     data() {
       return {
+        filter: {
+          jobs: [],
+          targets: [],
+          phases: [],
+          status: []
+        },
         targets: [],
         expanded: [],
         total: 0,
@@ -106,6 +111,13 @@
       }
     },
 
+    props: {
+      project: {
+        type: String,
+        default: () => ""
+      }
+    },
+
     watch: {
       options: {
         handler () {
@@ -113,6 +125,13 @@
         },
         deep: true,
       },
+      filter: {
+        handler () {
+          this.getData()
+        },
+        deep: true,
+      },
+      project: function () { this.refresh() },
     },
 
     methods: {
@@ -135,7 +154,7 @@
         const offset = (page-1)*itemsPerPage
 
         this.loading = true
-        this.$api.getTargetsHistory(this.filter.projects, this.filter.jobs, this.filter.targets, this.filter.phases, this.filter.status, offset, itemsPerPage)
+        this.$api.getTargetsHistory([this.project], this.filter.jobs, this.filter.targets, this.filter.phases, this.filter.status, offset, itemsPerPage)
           .then(response => {
             let dateFormat = 'MMM D, YYYY HH:mm:ss'
             response.data.forEach(item => {

@@ -39,7 +39,7 @@ export default {
 
   methods: {
     getData() {
-      this.$api.getJobCounts('status', this.filter.projects, this.filter.jobs, this.filter.phases, this.filter.status)
+      this.$api.getJobCounts('status', this.projectFilter, this.filter.jobs, this.filter.phases, this.filter.status)
         .then(response => {
           this.status = {
             title: "Status",

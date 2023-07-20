@@ -29,6 +29,12 @@ log4j.logger.org.spark_project=WARN
 log4j.logger.org.sparkproject.jetty.util.component.AbstractLifeCycle=ERROR
 log4j.logger.org.spark_project.jetty.util.component.AbstractLifeCycle=ERROR
 
+# Gluten / Velox
+log4j.logger.io.glutenproject.shaded=WARN
+log4j.logger.io.glutenproject.utils=WARN
+log4j.logger.io.glutenproject.vectorized.JniLibLoader=WARN
+log4j.logger.io.glutenproject.vectorized.JniWorkspace=WARN
+
 # Set Spark general logging to WARN
 log4j.logger.org.apache.spark=WARN
 

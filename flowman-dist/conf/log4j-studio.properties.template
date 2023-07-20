@@ -31,6 +31,12 @@ log4j.logger.org.spark_project.jetty.util.component.AbstractLifeCycle=ERROR
 # Set Spark general logging to WARN
 log4j.logger.org.apache.spark=WARN
 
+# Gluten / Velox
+log4j.logger.io.glutenproject.shaded=WARN
+log4j.logger.io.glutenproject.utils=WARN
+log4j.logger.io.glutenproject.vectorized.JniLibLoader=WARN
+log4j.logger.io.glutenproject.vectorized.JniWorkspace=WARN
+
 # Set Hadoop related logging to WARN
 log4j.logger.org.apache.hadoop=WARN
 log4j.logger.org.apache.hadoop.hive=WARN

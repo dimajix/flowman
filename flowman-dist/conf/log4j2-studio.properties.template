@@ -42,6 +42,16 @@ logger.jetty2.level = error
 logger.spark.name = org.apache.spark
 logger.spark.level = warn
 
+# Gluten / Velox
+logger.gluten1.name = io.glutenproject.utils
+logger.gluten1.level = warn
+logger.gluten2.name = io.glutenproject.vectorized.JniLibLoader
+logger.gluten2.level = warn
+logger.gluten3.name = io.glutenproject.vectorized.JniWorkspace
+logger.gluten3.level = warn
+logger.gluten4.name = io.glutenproject.shaded
+logger.gluten4.level = warn
+
 # Set Hadoop related logging to WARN
 logger.hadoop.name = org.apache.hadoop
 logger.hadoop.level = warn

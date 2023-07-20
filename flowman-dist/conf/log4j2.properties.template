@@ -38,6 +38,16 @@ logger.jetty1.level = error
 logger.jetty2.name = org.spark_project.jetty.util.component.AbstractLifeCycle
 logger.jetty2.level = error
 
+# Gluten / Velox
+logger.gluten1.name = io.glutenproject.utils
+logger.gluten1.level = warn
+logger.gluten2.name = io.glutenproject.vectorized.JniLibLoader
+logger.gluten2.level = warn
+logger.gluten3.name = io.glutenproject.vectorized.JniWorkspace
+logger.gluten3.level = warn
+logger.gluten4.name = io.glutenproject.shaded
+logger.gluten4.level = warn
+
 # Set Spark general logging to WARN
 logger.spark.name = org.apache.spark
 logger.spark.level = warn

@@ -15,10 +15,10 @@ fi
 
 # Add log4j config
 if [ -f "$FLOWMAN_CONF_DIR/log4j.properties" ]; then
-    SPARK_DRIVER_LOGGING_OPTS="-Dlog4j.configuration=$FLOWMAN_CONF_DIR/log4j.properties"
+    SPARK_DRIVER_LOGGING_OPTS="$SPARK_DRIVER_LOGGING_OPTS -Dlog4j.configuration=$FLOWMAN_CONF_DIR/log4j.properties"
 fi
 if [ -f "$FLOWMAN_CONF_DIR/log4j2.properties" ]; then
-    SPARK_DRIVER_LOGGING_OPTS="-Dlog4j.configurationFile=$FLOWMAN_CONF_DIR/log4j2.properties"
+    SPARK_DRIVER_LOGGING_OPTS="$SPARK_DRIVER_LOGGING_OPTS -Dlog4j.configurationFile=$FLOWMAN_CONF_DIR/log4j2.properties"
 fi
 
 

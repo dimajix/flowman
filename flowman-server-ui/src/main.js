@@ -1,10 +1,10 @@
 import Vue from 'vue'
-import './plugins/axios'
-import vuetify from './plugins/vuetify'
-import Api from './services/api'
-import App from './App.vue'
+import '@/plugins/axios'
+import vuetify from '@/plugins/vuetify'
+import Api from '@/services/api'
+import App from '@/App.vue'
 import VueApexCharts from 'vue-apexcharts'
-import router from './router'
+import router from '@/router'
 
 Vue.config.productionTip = false
 

@@ -4,14 +4,19 @@
       app
       fixed
       clipped-left
+      class="brand-blue white--text"
     >
       <v-app-bar-nav-icon
         @click.stop="expand = !expand"
       >
-        <v-icon>menu</v-icon>
+        <v-icon class="white--text">menu</v-icon>
       </v-app-bar-nav-icon>
 
-      <v-toolbar-title>Flowman History Server</v-toolbar-title>
+      <v-toolbar-title
+      >
+        <img src="@/assets/flowman-logo.png" alt="Flowman"/>
+        History Server
+      </v-toolbar-title>
 
       <v-layout
         fill-height
@@ -21,22 +26,27 @@
           <v-col cols="1">
             <v-spacer/>
           </v-col>
-          <v-col cols="1">
-            <v-subheader>
-              Project
-            </v-subheader>
-          </v-col>
 
           <v-col cols="4">
-            <v-select
-              v-model="project"
-              :items="projects"
-              solo
-              label="Project Name"
-              append-icon="expand_more"
-              clear-icon="clear"
-            >
-            </v-select>
+            <v-layout>
+              <v-flex shrink>
+                <v-list-item-content class="white--text">
+                  Project&nbsp;&nbsp;
+                </v-list-item-content>
+              </v-flex>
+              <v-flex>
+                <v-select
+                  v-model="project"
+                  :items="projects"
+                  solo
+                  label="Project Name"
+                  append-icon="expand_more"
+                  clear-icon="clear"
+                  background-color="indigo"
+                >
+                </v-select>
+              </v-flex>
+            </v-layout>
           </v-col>
         </v-row>
       </v-layout>
@@ -71,7 +81,7 @@ export default {
 
   data() {
     return {
-      expand: false,
+      expand: true,
       project: "",
       projects: [],
     };
@@ -89,8 +99,8 @@ export default {
     getData() {
       this.$api.getJobCounts('project')
         .then(response => {
-          this.projects =  Object.keys(response.data).sort((l,r) => l >= r)
-          //this.project = this.projects[0]
+          this.projects =  Object.keys(response.data).sort((l,r) => l >= r).filter(l => l.trim() !== "")
+          this.project = this.projects[0]
         })
     },
 

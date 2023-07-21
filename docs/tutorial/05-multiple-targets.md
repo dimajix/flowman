@@ -1,4 +1,4 @@
-# Lesson 5 - Multiple Build Targets
+# Lesson 5 — Multiple Build Targets
 
 Many projects require that multiple related data sinks need to be updated with new data. In Flowman, this would
 correspond to having multiple build targets.
@@ -12,7 +12,7 @@ correspond to having multiple build targets.
 * You will learn how to build only individual targets via CLI
 * You will gather experience with more transformations like joins
 
-You can find the full source code of this lesson [on GitHub](https://github.com/dimajix/flowman-tutorial/tree/develop/lessons/05-multiple-targets)
+You can find the full source code of this lesson [on GitHub](https://github.com/dimajix/flowman-tutorial/tree/main/lessons/05-multiple-targets)
 
 ### Description
 Again, we will read in the raw measurement data, which contains many weather measurements per weather stations

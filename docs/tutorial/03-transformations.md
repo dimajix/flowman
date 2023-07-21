@@ -1,4 +1,4 @@
-# Lesson 3 - Transformations
+# Lesson 3 — Transformations
 
 In this next installment of the Flowman tutorial we will work with a new data set, namely the weather measurements
 themselves. These are stored in a proprietary, ASCII based text format. Therefore, we cannot simply use a CSV reader
@@ -11,7 +11,7 @@ like we did before, instead we need to parse the lines using SQL `SUBSTR` operat
 * You will learn an elegant way to let Flowman automatically generate the correct schema for outgoing relations
 * You will learn how to use data partitions
 
-You can find the full source code of this lesson [on GitHub](https://github.com/dimajix/flowman-tutorial/tree/develop/lessons/03-transformations)
+You can find the full source code of this lesson [on GitHub](https://github.com/dimajix/flowman-tutorial/tree/main/lessons/03-transformations)
 
 ### Description
 This time we will read in the raw measurement data, which contains many weather measurements per weather stations

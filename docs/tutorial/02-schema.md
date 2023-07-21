@@ -1,7 +1,7 @@
-# Lesson 2 - Schema Definitions
+# Lesson 2 — Schema Definitions
 
-In the first lesson we saw a simple example for reading and writing data in order to perform a technical format
-conversion from CSV to Parquet. But we also saw some issues, especially with CSV files, which do not contain a precise
+In the first lesson, we saw a simple example for reading and writing data in order to perform a technical format
+conversion from CSV to Parquet. But we also saw some issues, especially with CSV files, which do not contain precise
 schema information. This lesson will present a remedy to improve the situation by explicitly providing a schema 
 definition in each relation.
 
@@ -11,7 +11,7 @@ definition in each relation.
 * You will understand the benefits of explicitly providing schema definitions
 * You will learn how to provide a schema definition
 
-You can find the full source code of this lesson [on GitHub](https://github.com/dimajix/flowman-tutorial/tree/develop/lessons/02-schema)
+You can find the full source code of this lesson [on GitHub](https://github.com/dimajix/flowman-tutorial/tree/main/lessons/02-schema)
 
 ### Description
 Similar to the first lesson, we will read in a CSV file from S3 containing the list of all available weather stations 
@@ -28,7 +28,7 @@ So we will perform the following steps:
 ## 2. Implementation
 
 ### 2.1 Relations
-The only change required for the Flowman project is to provide schema definitions - for input and output relations.  
+The only change required for the Flowman project is to provide schema definitions — for input and output relations.  
 
 #### Source Relation
 Most relations support a `schema` property, which contains the description of the data, i.e. the column names and data

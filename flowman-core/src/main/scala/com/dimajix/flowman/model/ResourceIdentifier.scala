@@ -97,7 +97,14 @@ abstract class ResourceIdentifier extends Product with Serializable {
      * Provides a nice textual representation of the ResourceIdentifier used for console output
      * @return
      */
-    def text : String = s"$category:$name[${partition.map(kv => kv._1 + "=" + kv._2).mkString(",")}]"
+    def text : String = {
+        val part =
+            if (partition.nonEmpty)
+                partition.map(kv => kv._1 + "=" + kv._2).mkString("[",",","]")
+            else
+                ""
+        s"$category:$name$part"
+    }
 
     /**
       * Create new ResourceIdentifiers by exploding the powerset of all partitions

@@ -154,6 +154,9 @@ the `pom.xml` file. Each package is created as a separate classifier:
 | `classifier` | `jard`         |
 | `packaging`  | `jar`          |
 
+The jar file is a so-called "fat jar" and contains both all Flowman code and your project files. This self-contained 
+file can be directly with `spark-submit`.
+
 * The `distd` package will create a Maven artifact with coordinates `my.company:quickstart:1.0-SNAPSHOT:tar.gz:distd`,
 i.e.
 
@@ -165,6 +168,9 @@ i.e.
 | `classifier` | `distd`        |
 | `packaging`  | `tar.gz`       |
 
+The `dist` package will create a `tar.gz` file, which contains all Flowman libraries, executables and plugins along
+with your project. For running Flowman from this package, you first need to unpack the `tar.gz` file, and then use
+the Flowman binaries like `flowexec.`
 
 We will later use these Maven coordinates in the deployment step to retrieve the desired artifact from the artifact
 repository (like Nexus).

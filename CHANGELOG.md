@@ -35,7 +35,8 @@ Breaking changes will be documented in this changelog file for each version.
 * github-423: Migrating a MariaDB/MySQL table from a text type to a numeric type fails
 * github-425: Support building and running Flowman with Java 17
 * github-388: Replace Akka http with Jersey/Jetty in Flowman History Server
-
+* github-385: Update Flowman Tutorial
+* github-412: Create tutorial for using Flowman Maven Plugin
 
 ## Version 1.0.1 - Upcoming
 

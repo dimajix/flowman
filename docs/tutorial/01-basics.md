@@ -1,4 +1,4 @@
-# Lesson 1 - Flowman Basics
+# Lesson 1 — Flowman Basics
 
 Welcome to the first lesson for learning how to develop data transformation pipelines with Flowman. This first lesson
 will guide you through the basic core concepts of Flowman and will learn how to use the Flowman command line tools.
@@ -12,7 +12,7 @@ on the weather stations metadata and perform a technical format conversion from 
 * You will get known to the main entities in Flowman which make up a project
 * You will learn how to use Flowman's command line tool to execute a project
 
-You can find the full source code of this lesson [on GitHub](https://github.com/dimajix/flowman-tutorial/tree/develop/lessons/01-basics) 
+You can find the full source code of this lesson [on GitHub](https://github.com/dimajix/flowman-tutorial/tree/main/lessons/01-basics) 
 
 ### Description
 As described above, this first lesson will perform a technical format conversion. We will read in a CSV file from

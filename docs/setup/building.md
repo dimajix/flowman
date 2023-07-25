@@ -108,7 +108,7 @@ using the correct version. The following profiles are available:
 * hadoop-3.1
 * hadoop-3.2
 * hadoop-3.3
-* EMR-6.10
+* EMR-6.12
 * synapse-3.3
 * CDH-6.3
 * CDP-7.1
@@ -204,13 +204,15 @@ mvn clean install -PCDP-7.1-spark-3.3 -DskipTests
 
 ### Building for AWS EMR
 
-The Maven project also contains preconfigured profiles for AWS EMR 6.10.
+The Maven project also contains preconfigured profiles for AWS EMR 6.12. Note that you should use Java 8 for building,
+since EMR will use Java 8 per default.
 ```shell
-mvn clean install -PEMR-6.10 -DskipTests
+mvn clean install -PEMR-6.12 -DskipTests
 ```
 
 ### Building for Azure Synapse
-Flowman also provides a build profile for Azure Synapse 3.3:
+Flowman also provides a build profile for Azure Synapse 3.3. Note that you should use Java 8 for building,
+since Synapse will use Java 8 per default.
 ```shell
 mvn clean install -Psynapase-3.3 -DskipTests
 ```

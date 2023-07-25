@@ -5,7 +5,7 @@ to provide a high degree of compatibility with EMR, Flowman provides special bui
 identified via the term "emr" in their version.
 
 For example, the Flowman version `1.0.0-emr6.10-spark3.3-hadoop3.3` contains a build specifically crafted for EMR
-version 6.9, which contains Spark 3.3 and Hadoop 3.3. You should always use a Flowman version which matches your
+version 6.10, which contains Spark 3.3 and Hadoop 3.3. You should always use a Flowman version which matches your
 EMR version (or the other way round) in order to avoid incompatibilities between libraries.
 
 Basically, there are two possibilities for running Flowman in AWS EMR: Either use shell access with a traditional

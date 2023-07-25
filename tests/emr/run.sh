@@ -43,7 +43,7 @@ wait_emr_job() {
 
 
 # Build package
-#mvn clean install -Dflowman.version=$FLOWMAN_VERSION
+mvn clean install -Dflowman.version=$FLOWMAN_VERSION
 mvn flowman:deploy -DskipTests
 
 # Execute tests via spark-submit
@@ -52,7 +52,7 @@ mvn flowman:deploy -DskipTests
 
 # Deploy an run in AWS
 EMR_APPLICATION_ID=$(aws emr-serverless create-application \
-    --release-label emr-6.10.0 \
+    --release-label emr-6.12.0 \
     --type "SPARK" \
     --name "Flowman-$FLOWMAN_VERSION" \
     | jq -r .applicationId)

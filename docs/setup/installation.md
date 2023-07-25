@@ -90,6 +90,7 @@ Flowman is available for many different Spark/Hadoop environments. The following
 | Open Source      | 3.3.2 | 3.3    | 11   | 2.12  | oss-spark3.3-hadoop3.3        |
 | Open Source      | 3.4.0 | 3.3    | 11   | 2.12  | oss-spark3.4-hadoop3.3        |
 | AWS EMR 6.10     | 3.3.1 | 3.3    | 1.8  | 2.12  | emr6.10-spark3.3-hadoop3.3    |
+| AWS EMR 6.12     | 3.4.0 | 3.3    | 1.8  | 2.12  | emr6.12-spark3.4-hadoop3.3    |
 | Azure Synapse    | 3.3.1 | 3.3    | 1.8  | 2.12  | synapse3.3-spark3.3-hadoop3.3 |
 | Cloudera CDH 6.3 | 2.4.0 | 3.0    | 1.8  | 2.11  | cdh6-spark2.4-hadoop3.0       |
 | Cloudera CDP 7.1 | 2.4.8 | 3.1    | 1.8  | 2.11  | cdp7-spark2.4-hadoop3.1       |

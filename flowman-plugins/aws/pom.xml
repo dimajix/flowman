@@ -295,9 +295,9 @@
         </profile>
 
         <profile>
-            <id>EMR-6.10</id>
+            <id>EMR-6.12</id>
             <properties>
-                <aws.version>1.12.397</aws.version>
+                <aws.version>1.12.490</aws.version>
             </properties>
             <dependencies>
                 <dependency>

@@ -109,9 +109,9 @@
             </build>
         </profile>
         <profile>
-            <id>EMR-6.10</id>
+            <id>EMR-6.12</id>
             <properties>
-                <delta.version>2.2.0</delta.version>
+                <delta.version>2.4.0</delta.version>
                 <delta.scope>provided</delta.scope>
             </properties>
         </profile>

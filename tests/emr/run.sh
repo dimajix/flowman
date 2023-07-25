@@ -3,8 +3,9 @@
 set -e
 
 EMR_RUNTIME_ROLE="arn:aws:iam::874361956431:role/flowman-emr-role"
-EMR_APPLICATION_PREFIX="s3://flowman-test/integration-tests/emr"
-EMR_APPLICATION_JAR="$EMR_APPLICATION_PREFIX/emr-test-1.0-SNAPSHOT-emr.jar"
+EMR_APPLICATION_PREFIX="s3://flowman-test/integration-tests"
+EMR_APPLICATION_JAR="$EMR_APPLICATION_PREFIX/apps/emr-test-1.0-SNAPSHOT-emr.jar"
+EMR_APPLICATION_LOG="$EMR_APPLICATION_PREFIX/logs"
 
 # Get current Flowman version
 FLOWMAN_VERSION=$(mvn -f ../.. -q -N help:evaluate -Dexpression=project.version -DforceStdout)
@@ -42,7 +43,7 @@ wait_emr_job() {
 
 
 # Build package
-mvn clean install -Dflowman.version=$FLOWMAN_VERSION
+#mvn clean install -Dflowman.version=$FLOWMAN_VERSION
 mvn flowman:deploy -DskipTests
 
 # Execute tests via spark-submit
@@ -62,13 +63,20 @@ wait_emr_application "CREATED"
 EMR_JOB_RUN_ID=$(aws emr-serverless start-job-run \
     --application-id "$EMR_APPLICATION_ID" \
     --execution-role-arn "$EMR_RUNTIME_ROLE" \
-    --name job-run-name \
+    --name "Flowman Test" \
     --job-driver "{
         \"sparkSubmit\": {
           \"entryPoint\": \"$EMR_APPLICATION_JAR\",
-          \"entryPointArguments\": [\"-B\", \"-f\", \"flow\", \"job\", \"build\", \"main\"],
+          \"entryPointArguments\": [\"-B\", \"-f\", \"flow\", \"job\", \"build\", \"main\", \"--force\"],
           \"sparkSubmitParameters\": \"--conf spark.executor.cores=2 --conf spark.executor.memory=4g --conf spark.driver.cores=1 --conf spark.driver.memory=2g --conf spark.executor.instances=1\"
         }
+    }" \
+    --configuration-overrides "{
+        \"monitoringConfiguration\": {
+          \"s3MonitoringConfiguration\": {
+            \"logUri\": \"$EMR_APPLICATION_LOG\"
+          }
+       } \
     }" \
     | jq -r .jobRunId)
 echo "Started EMR Serverless job, jobId=$EMR_JOB_RUN_ID"

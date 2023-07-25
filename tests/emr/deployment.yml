@@ -26,4 +26,4 @@ deployments:
   aws:
     kind: copy
     package: emr
-    location: s3://flowman-test/integration-tests/emr
+    location: s3://flowman-test/integration-tests/apps

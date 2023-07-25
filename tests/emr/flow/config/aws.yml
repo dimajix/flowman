@@ -11,3 +11,5 @@ config:
   - spark.hadoop.fs.s3a.proxy.password=
   - spark.hadoop.fs.s3a.endpoint=s3.eu-central-1.amazonaws.com
   - spark.hadoop.fs.s3a.signature_version=s3v4
+  # Optional: Use Glue as Metastore
+  - spark.hadoop.hive.metastore.client.factory.class=com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory

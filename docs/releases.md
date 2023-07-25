@@ -49,6 +49,7 @@ changes over time.
 * github-388: Replace Akka http with Jersey/Jetty in Flowman History Server
 * github-385: Update Flowman Tutorial
 * github-412: Create tutorial for using Flowman Maven Plugin
+* github-371: Automate EMR integration test via AWS CLI
 
 
 ### Version 1.0.1 - Upcoming

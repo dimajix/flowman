@@ -120,6 +120,8 @@ name: "default"
 config:
   - spark.executor.cores=$System.getenv('SPARK_EXECUTOR_CORES', '8')
   - spark.executor.memory=$System.getenv('SPARK_EXECUTOR_MEMORY', '16g')
+  # Use Glue as Metastore
+  - spark.hadoop.hive.metastore.client.factory.class=com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory
 
 plugins:
   - flowman-aws

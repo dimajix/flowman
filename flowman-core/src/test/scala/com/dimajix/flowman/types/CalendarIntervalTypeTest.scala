@@ -28,6 +28,12 @@ import com.dimajix.util.DateTimeUtils
 class CalendarIntervalTypeTest extends AnyFlatSpec with Matchers {
     "A CalendarIntervalType" should "be deserializable" in {
         ObjectMapper.parse[FieldType]("calendarinterval") should be(CalendarIntervalType)
+        ObjectMapper.parse[FieldType]("INTERVAL") should be(CalendarIntervalType)
+    }
+
+    it should "parseable from a SQL string" in {
+        FieldType.of("calendarinterval") should be(CalendarIntervalType)
+        FieldType.of("INTERVAL") should be(CalendarIntervalType)
     }
 
     it should "parse strings" in {
@@ -39,8 +45,8 @@ class CalendarIntervalTypeTest extends AnyFlatSpec with Matchers {
     }
 
     it should "provide the correct SQL type" in {
-        CalendarIntervalType.sqlType should be ("calendarinterval")
         CalendarIntervalType.typeName should be ("calendarinterval")
+        CalendarIntervalType.sqlType should be ("CALENDARINTERVAL")
         if (SPARK_VERSION_MAJOR <= 2)
             CalendarIntervalType.sparkType.sql should be ("CALENDARINTERVAL")
         else

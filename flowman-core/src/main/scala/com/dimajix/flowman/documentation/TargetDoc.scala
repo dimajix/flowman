@@ -37,11 +37,11 @@ final case class TargetPhaseReference(
 
 
 final case class TargetPhaseDoc(
-    parent:Option[Reference],
-    phase:Phase,
-    description:Option[String] = None,
-    provides:Seq[ResourceIdentifier] = Seq.empty,
-    requires:Seq[ResourceIdentifier] = Seq.empty
+    parent: Option[Reference],
+    phase: Phase,
+    description: Option[String] = None,
+    provides: Seq[ResourceIdentifier] = Seq.empty,
+    requires: Seq[ResourceIdentifier] = Seq.empty
 ) extends Fragment {
     override def reference: Reference = TargetPhaseReference(parent, phase)
     override def fragments: Seq[Fragment] = Seq()
@@ -65,13 +65,36 @@ final case class TargetReference(
 }
 
 
+object TargetDoc {
+    def apply(
+        parent: Option[Reference],
+        target: Option[Target] = None,
+        description: Option[String] = None,
+        phases: Seq[TargetPhaseDoc] = Seq.empty,
+        inputs: Seq[Reference] = Seq.empty,
+        outputs: Seq[Reference] = Seq.empty
+    ) : TargetDoc = {
+        TargetDoc(
+            target,
+            parent,
+            target.map(_.kind).getOrElse(""),
+            target.map(_.identifier).getOrElse(TargetIdentifier.empty),
+            description,
+            phases,
+            inputs,
+            outputs
+        )
+    }
+}
 final case class TargetDoc(
-    parent:Option[Reference],
-    target:Option[Target] = None,
-    description:Option[String] = None,
-    phases:Seq[TargetPhaseDoc] = Seq.empty,
-    inputs:Seq[Reference] = Seq.empty,
-    outputs:Seq[Reference] = Seq.empty
+    target: Option[Target],
+    parent: Option[Reference],
+    kind: String,
+    identifier: TargetIdentifier,
+    description: Option[String],
+    phases: Seq[TargetPhaseDoc],
+    inputs: Seq[Reference],
+    outputs: Seq[Reference]
 ) extends EntityDoc {
     override def reference: TargetReference = TargetReference(parent, name)
     override def fragments: Seq[Fragment] = phases
@@ -84,18 +107,13 @@ final case class TargetDoc(
     }
 
     /**
-     * Returns the name of the project of this mapping
+     * Returns the name of the project of this relation
      * @return
      */
-    def project : Option[String] = target.flatMap(_.project.map(_.name))
+    def project: Option[String] = identifier.project
 
-    /**
-     * Returns the name of this mapping
-     * @return
-     */
-    def name : String = target.map(_.name).getOrElse("")
-
-    def identifier:TargetIdentifier = target.map(_.identifier).getOrElse(TargetIdentifier.empty)
+    override def category: Category = Category.TARGET
+    override def name: String = identifier.name
 
     /**
      * Merge this schema documentation with another target documentation. Note that while documentation attributes
@@ -112,11 +130,13 @@ final case class TargetDoc(
      * @param other
      */
     def merge(other:TargetDoc) : TargetDoc = {
-        val tgt = target.orElse(other.target)
+        val tgt = this.target.orElse(other.target)
+        val id = if (this.identifier.isEmpty) other.identifier else this.identifier
+        val kind = if (this.kind.isEmpty) other.kind else this.kind
         val desc = other.description.orElse(this.description)
         val in = inputs.toSet ++ other.inputs.toSet
         val out = outputs.toSet ++ other.outputs.toSet
-        val result = copy(target=tgt, description=desc, inputs=in.toSeq, outputs=out.toSeq)
+        val result = copy(target=tgt, kind=kind, identifier=id, description=desc, inputs=in.toSeq, outputs=out.toSeq)
         parent.orElse(other.parent)
             .map(result.reparent)
             .getOrElse(result)

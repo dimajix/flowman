@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.history
 
+import com.dimajix.flowman.documentation.Documenter
+import com.dimajix.flowman.documentation.EntityDoc
 import com.dimajix.flowman.execution
 import com.dimajix.flowman.execution.AbstractExecutionListener
 import com.dimajix.flowman.execution.Context
@@ -25,6 +27,7 @@ import com.dimajix.flowman.history
 import com.dimajix.flowman.model
 import com.dimajix.flowman.model.AbstractInstance
 import com.dimajix.flowman.model.Category
+import com.dimajix.flowman.model.DocumenterResult
 import com.dimajix.flowman.model.Instance
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobDigest
@@ -39,6 +42,7 @@ import com.dimajix.flowman.model.TargetResult
 
 abstract class JobToken
 abstract class TargetToken
+abstract class DocumenterToken
 
 
 object StateStore {
@@ -109,7 +113,7 @@ trait StateStore extends Instance {
      * @param token The token returned by startJob
      * @param status
      */
-    def finishJob(token: JobToken, result: JobResult, metrics: Seq[Measurement] = Seq()): Unit
+    def finishJob(token: JobToken, result: JobResult, metrics: Seq[Measurement]=Seq.empty): Unit
 
     /**
      * Returns the state of a specific target on its last run, or None if no information is available
@@ -137,6 +141,22 @@ trait StateStore extends Instance {
     def finishTarget(token: TargetToken, result: TargetResult): Unit
 
     /**
+     * Starts the run and returns a token, which can be anything
+     *
+     * @param documenter
+     * @return
+     */
+    def startDocumenter(documenter: Documenter, parent: Option[JobToken]): DocumenterToken
+
+    /**
+     * Sets the status of a job after it has been started
+     *
+     * @param token The token returned by startJob
+     * @param status
+     */
+    def finishDocumenter(token: DocumenterToken, result: DocumenterResult): Unit
+
+    /**
      * Returns a list of job matching the query criteria
      *
      * @param query
@@ -148,6 +168,8 @@ trait StateStore extends Instance {
 
     def countJobs(query: JobQuery): Int
     def countJobs(query: JobQuery, grouping: JobColumn): Map[String, Int]
+
+    def findJobMetrics(query: JobQuery, groupings: Seq[String]): Seq[MetricSeries]
 
     /**
      * Returns a list of job matching the query criteria
@@ -162,7 +184,7 @@ trait StateStore extends Instance {
     def countTargets(query: TargetQuery): Int
     def countTargets(query: TargetQuery, grouping: TargetColumn): Map[String, Int]
 
-    def findJobMetrics(jobQuery: JobQuery, groupings: Seq[String]): Seq[MetricSeries]
+    def findDocumentation(query: DocumentationQuery) : Seq[EntityDoc]
 }
 
 
@@ -173,7 +195,8 @@ abstract class AbstractStateStore extends AbstractInstance with StateStore {
 
 object StateStoreAdaptorListener {
     final case class StateStoreJobToken(token:history.JobToken) extends execution.JobToken
-    final case class StateStoreTargetToken(token:history.TargetToken) extends execution.TargetToken
+    final case class StateStoreTargetToken(parent:Option[history.JobToken], token:history.TargetToken) extends execution.TargetToken
+    final case class StateStoreDocumenterToken(parent:Option[history.JobToken], token:history.DocumenterToken) extends execution.DocumenterToken
 }
 final class StateStoreAdaptorListener(store:StateStore) extends AbstractExecutionListener {
     import StateStoreAdaptorListener._
@@ -188,12 +211,30 @@ final class StateStoreAdaptorListener(store:StateStore) extends AbstractExecutio
         val state = token.asInstanceOf[StateStoreJobToken]
         store.finishJob(state.token, result, metrics)
     }
+
     override def startTarget(execution:Execution, target:Target, instance: TargetDigest, parent: Option[com.dimajix.flowman.execution.Token]): com.dimajix.flowman.execution.TargetToken = {
-        val t = parent.map(_.asInstanceOf[StateStoreJobToken].token)
-        StateStoreTargetToken(store.startTarget(target, instance, t))
+        val p = parent.flatMap {
+            case t:StateStoreJobToken => Some(t.token)
+            case _ => None
+        }
+        val t = store.startTarget(target, instance, p)
+        StateStoreTargetToken(p, t)
     }
     override def finishTarget(execution:Execution, token: com.dimajix.flowman.execution.TargetToken, result:TargetResult): Unit = {
         val t = token.asInstanceOf[StateStoreTargetToken].token
         store.finishTarget(t, result)
+    }
+
+    override def startDocumenter(execution: Execution, documenter: Documenter, parent: Option[Token]): com.dimajix.flowman.execution.DocumenterToken = {
+        val p = parent.flatMap {
+            case t: StateStoreTargetToken => t.parent
+            case t: StateStoreJobToken => Some(t.token)
+        }
+        val t = store.startDocumenter(documenter, p)
+        StateStoreDocumenterToken(p, t)
+    }
+    override def finishDocumenter(execution: Execution, token: com.dimajix.flowman.execution.DocumenterToken, result: DocumenterResult): Unit = {
+        val t = token.asInstanceOf[StateStoreDocumenterToken].token
+        store.finishDocumenter(t, result)
     }
 }

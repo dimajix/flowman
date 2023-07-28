@@ -35,6 +35,10 @@ class TimestampTypeTest extends AnyFlatSpec with Matchers {
         ObjectMapper.parse[FieldType]("timestamp") should be(TimestampType)
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("timestamp") should be(TimestampType)
+    }
+
     it should "parse strings" in {
         TimestampType.parse("2017-12-01T12:21:20").toTimestamp should be (parseDateTime("2017-12-01T12:21:20"))
         TimestampType.parse("2017-12-01T12:21:20Z").toTimestamp should be (parseDateTime("2017-12-01T12:21:20"))
@@ -175,7 +179,8 @@ class TimestampTypeTest extends AnyFlatSpec with Matchers {
     }
 
     it should "provide the correct SQL type" in {
-        TimestampType.sqlType should be ("timestamp")
+        TimestampType.typeName should be ("timestamp")
+        TimestampType.sqlType should be ("TIMESTAMP")
         TimestampType.sparkType.sql should be ("TIMESTAMP")
     }
 }

@@ -22,6 +22,6 @@ import org.apache.spark.sql.types.DataType
 case object ByteType extends IntegralType[Byte] {
     protected def parseRaw(value:String) : Byte = value.toByte
 
-    override def sqlType: String = "tinyint"
+    override def sqlType: String = "TINYINT"
     override def sparkType : DataType = org.apache.spark.sql.types.ByteType
 }

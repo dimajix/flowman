@@ -23,6 +23,8 @@ import org.scalatest.matchers.should.Matchers
 import com.dimajix.flowman.model.Mapping
 import com.dimajix.flowman.model.MappingIdentifier
 import com.dimajix.flowman.model.MappingOutputIdentifier
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.StringType
 
 
 class ProjectDocTest extends AnyFlatSpec with MockFactory with Matchers {
@@ -32,7 +34,8 @@ class ProjectDocTest extends AnyFlatSpec with MockFactory with Matchers {
         )
         val projectRef = project.reference
         val map0 = mock[Mapping]
-        (map0.name _).expects().atLeastOnce().returns("m1")
+        (map0.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m1"))
+        (map0.kind _).expects().atLeastOnce().returns("sql")
         val mapping = MappingDoc(
             parent = Some(projectRef),
             mapping = Some(map0)
@@ -44,17 +47,24 @@ class ProjectDocTest extends AnyFlatSpec with MockFactory with Matchers {
         )
         val outputRef = output.reference
         val schema = SchemaDoc(
-            parent = Some(outputRef)
+            parent = Some(outputRef),
         )
         val schemaRef = schema.reference
+        val column = ColumnDoc(
+            parent = Some(schemaRef),
+            field = Field("some_field", StringType, false)
+        )
+        val columnRef = column.reference
 
-        val finalOutput = output.copy(schema = Some(schema))
+        val finalSchema = schema.copy(columns = Seq(column))
+        val finalOutput = output.copy(schema = Some(finalSchema))
         val finalMapping = mapping.copy(outputs = Seq(finalOutput))
         val finalProject = project.copy(mappings = Seq(finalMapping))
 
         finalProject.resolve(projectRef) should be (Some(finalProject))
         finalProject.resolve(mappingRef) should be (Some(finalMapping))
         finalProject.resolve(outputRef) should be (Some(finalOutput))
-        finalProject.resolve(schemaRef) should be (Some(schema))
+        finalProject.resolve(schemaRef) should be (Some(finalSchema))
+        finalProject.resolve(columnRef) should be (Some(column))
     }
 }

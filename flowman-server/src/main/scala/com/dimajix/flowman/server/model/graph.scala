@@ -27,6 +27,7 @@ final case class Node(
     id:Int,
     category:String,
     kind:String,
+    project:String,
     name:String,
     provides:Seq[Resource],
     requires:Seq[Resource]

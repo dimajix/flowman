@@ -29,6 +29,10 @@ class DurationTypeTest extends AnyFlatSpec with Matchers {
         ObjectMapper.parse[FieldType]("duration") should be(DurationType)
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("duration") should be(DurationType)
+    }
+
     it should "parse strings" in {
         DurationType.parse("P2D") should be (Duration.ofDays(2))
         DurationType.parse("PT3H") should be (Duration.ofHours(3))
@@ -81,7 +85,8 @@ class DurationTypeTest extends AnyFlatSpec with Matchers {
     }
 
     it should "provide the correct SQL type" in {
-        DurationType.sqlType should be ("duration")
         DurationType.typeName should be ("duration")
+        DurationType.sqlType should be ("DURATION")
+        //DurationType.sparkType.sql should be ("DURATION")
     }
 }

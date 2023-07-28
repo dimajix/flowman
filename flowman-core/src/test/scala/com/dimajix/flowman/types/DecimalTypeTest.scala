@@ -36,6 +36,10 @@ class DecimalTypeTest extends AnyFlatSpec with Matchers {
         result.asInstanceOf[DecimalType].scale should be (4)
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("decimal(10,4)") should be(DecimalType(10,4))
+    }
+
     it should "provide the correct Spark type" in {
         val ftype = DecimalType(10,4)
         ftype.sparkType should be (org.apache.spark.sql.types.DecimalType(10,4))
@@ -43,8 +47,9 @@ class DecimalTypeTest extends AnyFlatSpec with Matchers {
 
     it should "provide the correct SQL type" in {
         val ftype = DecimalType(10,4)
-        ftype.sqlType should be ("decimal(10,4)")
         ftype.typeName should be ("decimal(10,4)")
+        ftype.sqlType should be ("DECIMAL(10,4)")
+        ftype.sparkType.sql should be ("DECIMAL(10,4)")
     }
 
     it should "support parsing" in {

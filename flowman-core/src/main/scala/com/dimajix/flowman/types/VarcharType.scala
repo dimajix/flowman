@@ -28,7 +28,7 @@ final case class VarcharType(length: Int) extends FieldType {
     override def typeName: String = s"varchar($length)"
     override def sparkType : DataType = org.apache.spark.sql.types.StringType
     override def catalogType : DataType = org.apache.spark.sql.types.VarcharType(length)
-    override def sqlType : String = s"varchar($length)"
+    override def sqlType : String = s"VARCHAR($length)"
 
     override def parse(value:String, granularity:Option[String]=None) : String = {
         if (granularity.nonEmpty)

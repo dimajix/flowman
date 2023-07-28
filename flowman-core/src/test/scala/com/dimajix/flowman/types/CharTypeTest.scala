@@ -27,6 +27,10 @@ class CharTypeTest extends AnyFlatSpec with Matchers {
         ObjectMapper.parse[FieldType]("char(14)") should be (CharType(14))
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("char(14)") should be(CharType(14))
+    }
+
     it should "parse strings" in {
         CharType(100).parse("lala") should be ("lala")
     }
@@ -48,8 +52,8 @@ class CharTypeTest extends AnyFlatSpec with Matchers {
 
     it should "provide the correct SQL type" in {
         val ftype = CharType(10)
-        ftype.sqlType should be ("char(10)")
         ftype.typeName should be ("char(10)")
+        ftype.sqlType should be ("CHAR(10)")
         ftype.sparkType.sql should be ("STRING")
     }
 

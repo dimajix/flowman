@@ -62,7 +62,7 @@ class MappingCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
 
         (mappingTemplate1.instantiate _).expects(context,None).returns(mapping1)
         (mapping1.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m1"))
-        (mapping1.name _).expects().atLeastOnce().returns("m1")
+        (mapping1.kind _).expects().atLeastOnce().returns("sql")
         (mapping1.context _).expects().atLeastOnce().returns(context)
         (mapping1.outputs _).expects().atLeastOnce().returns(Set("main"))
         (mapping1.inputs _).expects().returns(Set(MappingOutputIdentifier("m2")))
@@ -71,7 +71,7 @@ class MappingCollectorTest extends AnyFlatSpec with Matchers with MockFactory {
 
         (mappingTemplate2.instantiate _).expects(context,None).returns(mapping2)
         (mapping2.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m2"))
-        (mapping2.name _).expects().atLeastOnce().returns("m2")
+        (mapping2.kind _).expects().atLeastOnce().returns("sql")
         (mapping2.context _).expects().atLeastOnce().returns(context)
         (mapping2.outputs _).expects().atLeastOnce().returns(Set("main"))
         (mapping2.inputs _).expects().atLeastOnce().returns(Set())

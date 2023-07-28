@@ -28,6 +28,11 @@ class NullTypeTest extends AnyFlatSpec with Matchers {
         ObjectMapper.parse[FieldType]("\"null\"") should be(NullType)
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("null") should be(NullType)
+        FieldType.of("void") should be(NullType)
+    }
+
     it should "not support parsing" in {
         an[NotImplementedError] should be thrownBy (NullType.parse(""))
         an[NotImplementedError] should be thrownBy (NullType.interpolate(SingleValue("")))
@@ -38,11 +43,11 @@ class NullTypeTest extends AnyFlatSpec with Matchers {
     }
 
     it should "provide the correct SQL type" in {
-        NullType.sqlType should be ("null")
+        NullType.typeName should be ("null")
+        NullType.sqlType should be ("NULL")
         if (SPARK_VERSION >= "3.2")
             NullType.sparkType.sql should be ("VOID")
         else
             NullType.sparkType.sql should be ("NULL")
-        NullType.typeName should be ("null")
     }
 }

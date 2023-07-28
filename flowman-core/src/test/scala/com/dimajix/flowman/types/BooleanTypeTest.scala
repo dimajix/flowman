@@ -27,6 +27,11 @@ class BooleanTypeTest extends AnyFlatSpec with Matchers {
         ObjectMapper.parse[FieldType]("boolean") should be(BooleanType)
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("bool") should be (BooleanType)
+        FieldType.of("boolean") should be (BooleanType)
+    }
+
     it should "parse strings" in {
         BooleanType.parse("true") should be (true)
         BooleanType.parse("false") should be (false)
@@ -47,7 +52,8 @@ class BooleanTypeTest extends AnyFlatSpec with Matchers {
     }
 
     it should "provide the correct SQL type" in {
-        BooleanType.sqlType should be ("boolean")
+        BooleanType.typeName should be ("boolean")
+        BooleanType.sqlType should be ("BOOLEAN")
         BooleanType.sparkType.sql should be ("BOOLEAN")
     }
 }

@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.history
 
+import com.dimajix.flowman.documentation.Documenter
+import com.dimajix.flowman.documentation.EntityDoc
+import com.dimajix.flowman.model.DocumenterResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobResult
@@ -27,6 +30,7 @@ import com.dimajix.flowman.model.TargetResult
 object NullStateStore {
     private case class DummyJobToken() extends JobToken
     private case class DummyTargetToken() extends TargetToken
+    private case class DummyDocumenterToken() extends DocumenterToken
 }
 
 
@@ -76,11 +80,29 @@ class NullStateStore extends AbstractStateStore {
       * @param token
       * @param status
       */
-    override def finishJob(token:JobToken, result:JobResult, metrics:Seq[Measurement]=Seq()) : Unit = {}
+    override def finishJob(token:JobToken, result:JobResult, metrics:Seq[Measurement]=Seq.empty) : Unit = {}
+
+
+    /**
+     * Starts the run and returns a token, which can be anything
+     *
+     * @param documenter
+     * @return
+     */
+    override def startDocumenter(documenter: Documenter, parent: Option[JobToken]): DocumenterToken = DummyDocumenterToken()
+
+    /**
+     * Sets the status of a job after it has been started
+     *
+     * @param token The token returned by startJob
+     * @param status
+     */
+    override def finishDocumenter(token: DocumenterToken, result: DocumenterResult): Unit = {}
 
     /**
       * Returns the state of a target
-      * @param target
+     *
+     * @param target
       * @return
       */
     override def getTargetState(target:TargetDigest) : Option[TargetState] = None
@@ -112,6 +134,8 @@ class NullStateStore extends AbstractStateStore {
     override def countJobs(query:JobQuery) : Int = 0
     override def countJobs(query:JobQuery, grouping:JobColumn) : Map[String,Int] = Map()
 
+    override def findJobMetrics(query: JobQuery, groupings: Seq[String]): Seq[MetricSeries] = Seq()
+
     /**
       * Returns a list of job matching the query criteria
       * @param query
@@ -124,5 +148,5 @@ class NullStateStore extends AbstractStateStore {
     override def countTargets(query: TargetQuery): Int = 0
     override def countTargets(query:TargetQuery, grouping:TargetColumn) : Map[String,Int] = Map()
 
-    override def findJobMetrics(jobQuery: JobQuery, groupings: Seq[String]): Seq[MetricSeries] = Seq()
+    override def findDocumentation(query: DocumentationQuery): Seq[EntityDoc] = Seq()
 }

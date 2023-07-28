@@ -59,7 +59,7 @@ final case class ArrayType @JsonCreator(mode = JsonCreator.Mode.DISABLED) (
       * @return
       */
     override def sqlType : String = {
-        "array<" + elementType.sqlType + ">"
+        "ARRAY<" + elementType.sqlType + ">"
     }
 
     override def parse(value:String, granularity:Option[String]=None) : Any = ???

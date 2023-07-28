@@ -50,15 +50,16 @@ object FieldType {
             StringType,
             CalendarIntervalType,
             DurationType
-        ).map(t => t.sqlType -> t).toMap ++
+        ).map(t => t.typeName -> t).toMap ++
             Map(
                 "void" -> NullType,
                 "bool" -> BooleanType,
-                "byte" -> ByteType,
-                "short" -> ShortType,
-                "long" -> LongType,
-                "integer" -> IntegerType,
-                "text" -> StringType
+                "tinyint" -> ByteType,
+                "smallint" -> ShortType,
+                "bigint" -> LongType,
+                "int" -> IntegerType,
+                "text" -> StringType,
+                "interval" -> CalendarIntervalType
             )
     }
 
@@ -227,7 +228,7 @@ abstract class FieldType extends Product with Serializable {
     def sqlType : String = {
         this.getClass.getSimpleName
         .stripSuffix("$").stripSuffix("Type")
-        .toLowerCase(Locale.ROOT)
+        .toUpperCase(Locale.ROOT)
     }
 
     /**

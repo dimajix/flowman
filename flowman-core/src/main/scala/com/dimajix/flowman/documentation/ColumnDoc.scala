@@ -74,7 +74,10 @@ final case class ColumnDoc(
         )
     }
 
-    def name : String = field.name
+    override def category: Category = Category.COLUMN
+    override def kind: String = Category.COLUMN.lower
+    override def name : String = field.name
+
     def fqName : String = reference.sql
     def description : Option[String] = field.description
     def nullable : Boolean = field.nullable

@@ -25,6 +25,10 @@ class DoubleTypeTest  extends AnyFlatSpec with Matchers {
         DoubleType.parse("1.0") should be (1.0)
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("double") should be(DoubleType)
+    }
+
     it should "support interpolation of SingleValues" in {
         DoubleType.interpolate(SingleValue("1.0"), None).head should be (1.0)
     }
@@ -75,7 +79,8 @@ class DoubleTypeTest  extends AnyFlatSpec with Matchers {
     }
 
     it should "provide the correct SQL type" in {
-        DoubleType.sqlType should be ("double")
+        DoubleType.typeName should be ("double")
+        DoubleType.sqlType should be ("DOUBLE")
         DoubleType.sparkType.sql should be ("DOUBLE")
     }
 }

@@ -19,7 +19,6 @@ package com.dimajix.flowman.types
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.util.ObjectMapper
 
 
@@ -81,6 +80,8 @@ class ArrayTypeTest extends AnyFlatSpec with Matchers {
     it should "provide the correct SQL type" in {
         val ftype = ArrayType(StringType, false)
 
-        ftype.sqlType should be ("array<string>")
+        ftype.typeName should be("array")
+        ftype.sqlType should be ("ARRAY<STRING>")
+        ftype.sparkType.sql should be ("ARRAY<STRING>")
     }
 }

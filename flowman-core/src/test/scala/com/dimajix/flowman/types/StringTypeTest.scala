@@ -25,6 +25,12 @@ import com.dimajix.flowman.util.ObjectMapper
 class StringTypeTest extends AnyFlatSpec with Matchers {
     "A StringType" should "be deserializable" in {
         ObjectMapper.parse[FieldType]("string") should be(StringType)
+        ObjectMapper.parse[FieldType]("text") should be(StringType)
+    }
+
+    it should "parseable from a SQL string" in {
+        FieldType.of("string") should be(StringType)
+        FieldType.of("text") should be(StringType)
     }
 
     it should "parse strings" in {
@@ -46,7 +52,8 @@ class StringTypeTest extends AnyFlatSpec with Matchers {
     }
 
     it should "provide the correct SQL type" in {
-        StringType.sqlType should be ("string")
+        StringType.typeName should be ("string")
+        StringType.sqlType should be ("STRING")
         StringType.sparkType.sql should be ("STRING")
     }
 

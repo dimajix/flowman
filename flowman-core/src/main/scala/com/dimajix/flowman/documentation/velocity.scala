@@ -43,6 +43,11 @@ class FragmentWrapper(fragment:Fragment) {
     def getDescription() : String = fragment.description.getOrElse("")
 }
 
+class EntityWrapper(entity:EntityDoc) extends FragmentWrapper(entity) {
+    def getCategory(): String = entity.category.upper
+    def getKind(): String = entity.kind
+}
+
 
 final case class CheckResultWrapper(result:CheckResult) extends FragmentWrapper(result) {
     override def toString: String = result.status.toString
@@ -112,7 +117,7 @@ final case class MappingOutputDocWrapper(output:MappingOutputDoc) extends Fragme
 }
 
 
-final case class MappingDocWrapper(mapping:MappingDoc) extends FragmentWrapper(mapping) {
+final case class MappingDocWrapper(mapping:MappingDoc) extends EntityWrapper(mapping) {
     override def toString: String = mapping.identifier.toString
 
     def getIdentifier() : String = mapping.identifier.toString
@@ -123,7 +128,7 @@ final case class MappingDocWrapper(mapping:MappingDoc) extends FragmentWrapper(m
 }
 
 
-final case class RelationDocWrapper(relation:RelationDoc) extends FragmentWrapper(relation) {
+final case class RelationDocWrapper(relation:RelationDoc) extends EntityWrapper(relation) {
     override def toString: String = relation.identifier.toString
 
     def getIdentifier() : String = relation.identifier.toString
@@ -144,7 +149,7 @@ final case class TargetPhaseDocWrapper(phase:TargetPhaseDoc) extends FragmentWra
 }
 
 
-final case class TargetDocWrapper(target:TargetDoc) extends FragmentWrapper(target) {
+final case class TargetDocWrapper(target:TargetDoc) extends EntityWrapper(target) {
     override def toString: String = target.identifier.toString
 
     def getIdentifier() : String = target.identifier.toString

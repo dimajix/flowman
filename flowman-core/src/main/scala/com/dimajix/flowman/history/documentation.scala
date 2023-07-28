@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.dimajix.flowman.types
+package com.dimajix.flowman.history
 
-import org.apache.spark.sql.types.DataType
+import com.dimajix.flowman.model.Category
 
 
-case object IntegerType extends IntegralType[Int] {
-    protected def parseRaw(value:String) : Int = value.toInt
-
-    override def sqlType: String = "INT"
-    override def sparkType : DataType = org.apache.spark.sql.types.IntegerType
-}
+final case class DocumentationQuery(
+    namespace: Seq[String] = Seq.empty,
+    project: Seq[String] = Seq.empty,
+    category: Seq[Category] = Seq.empty,
+    name: Seq[String] = Seq.empty
+)

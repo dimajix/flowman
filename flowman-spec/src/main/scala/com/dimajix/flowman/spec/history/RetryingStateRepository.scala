@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.spec.history
 
+import com.dimajix.flowman.documentation.EntityDoc
+import com.dimajix.flowman.documentation.ProjectDoc
+import com.dimajix.flowman.history.DocumentationQuery
 import com.dimajix.flowman.history.Graph
 import com.dimajix.flowman.history.JobColumn
 import com.dimajix.flowman.history.JobOrder
@@ -54,6 +57,14 @@ final class RetryingStateRepository(repository: StateRepository) extends StateRe
 
     override def insertJobMetrics(jobId: String, metrics: Seq[Measurement]): Unit = {
         repository.withRetry(repository.insertJobMetrics(jobId, metrics))
+    }
+
+    override def insertJobDocumentation(jobId: String, doc: ProjectDoc): Unit = {
+        repository.withRetry(repository.insertJobDocumentation(jobId, doc))
+    }
+
+    override def getJobDocumentation(jobId: String): Option[ProjectDoc] = {
+        repository.withRetry(repository.getJobDocumentation(jobId))
     }
 
     override def getJobMetrics(jobId: String): Seq[Measurement] = {
@@ -112,7 +123,11 @@ final class RetryingStateRepository(repository: StateRepository) extends StateRe
         repository.withRetry(repository.countTargets(query, grouping))
     }
 
-    override def findMetrics(jobQuery: JobQuery, groupings: Seq[String]): Seq[MetricSeries] = {
-        repository.withRetry(repository.findMetrics(jobQuery, groupings))
+    override def findMetrics(query: JobQuery, groupings: Seq[String]): Seq[MetricSeries] = {
+        repository.withRetry(repository.findMetrics(query, groupings))
+    }
+
+    override def findDocumentation(query: DocumentationQuery): Seq[EntityDoc] = {
+        repository.withRetry(repository.findDocumentation(query))
     }
 }

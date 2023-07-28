@@ -47,6 +47,9 @@ final case class ProjectDoc(
 
     override def reparent(parent: Reference): ProjectDoc = ???
 
+    override def category: Category = Category.PROJECT
+    override def kind: String = Category.PROJECT.lower
+
     def resolve(ref:Reference) : Option[Fragment] = {
         ref.path match {
             case head :: tail =>

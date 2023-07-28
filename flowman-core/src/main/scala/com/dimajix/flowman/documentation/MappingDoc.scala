@@ -45,8 +45,8 @@ final case class MappingOutputReference(
 
 final case class MappingOutputDoc(
     parent:Some[Reference],
-    identifier: MappingOutputIdentifier,
-    description: Option[String] = None,
+    identifier:MappingOutputIdentifier,
+    description:Option[String] = None,
     schema:Option[SchemaDoc] = None
 ) extends Fragment {
     override def reference: Reference = MappingOutputReference(parent, identifier.output)
@@ -131,13 +131,33 @@ final case class MappingReference(
     }
 }
 
-
+object MappingDoc {
+    def apply(
+        parent: Option[Reference] = None,
+        mapping: Option[Mapping] = None,
+        description: Option[String] = None,
+        inputs: Seq[Reference] = Seq.empty,
+        outputs: Seq[MappingOutputDoc] = Seq.empty
+    ) : MappingDoc = {
+        MappingDoc(
+            mapping,
+            parent,
+            mapping.map(_.kind).getOrElse(""),
+            mapping.map(_.identifier).getOrElse(MappingIdentifier.empty),
+            description,
+            inputs,
+            outputs
+        )
+    }
+}
 final case class MappingDoc(
-    parent:Option[Reference] = None,
-    mapping:Option[Mapping] = None,
-    description:Option[String] = None,
-    inputs:Seq[Reference] = Seq.empty,
-    outputs:Seq[MappingOutputDoc] = Seq.empty
+    mapping: Option[Mapping],
+    parent: Option[Reference],
+    kind: String,
+    identifier: MappingIdentifier,
+    description: Option[String],
+    inputs: Seq[Reference],
+    outputs: Seq[MappingOutputDoc]
 ) extends EntityDoc {
     override def reference: MappingReference = MappingReference(parent, name)
     override def fragments: Seq[Fragment] = outputs
@@ -148,20 +168,14 @@ final case class MappingDoc(
             outputs=outputs.map(_.reparent(ref))
         )
     }
+    override def category: Category = Category.MAPPING
+    override def name: String = identifier.name
 
     /**
      * Returns the name of the project of this mapping
      * @return
      */
-    def project : Option[String] = mapping.flatMap(_.project.map(_.name))
-
-    /**
-     * Returns the name of this mapping
-     * @return
-     */
-    def name : String = mapping.map(_.name).getOrElse("")
-
-    def identifier : MappingIdentifier = mapping.map(_.identifier).getOrElse(MappingIdentifier.empty)
+    def project : Option[String] = identifier.project
 
     /**
      * Merge this schema documentation with another mapping documentation. Note that while documentation attributes
@@ -178,14 +192,16 @@ final case class MappingDoc(
      * @param other
      */
     def merge(other:MappingDoc) : MappingDoc = {
-        val map = mapping.orElse(other.mapping)
+        val map = this.mapping.orElse(other.mapping)
+        val id = if (this.identifier.isEmpty) other.identifier else this.identifier
+        val kind = if (this.kind.isEmpty) other.kind else this.kind
         val desc = other.description.orElse(this.description)
         val in = inputs.toSet ++ other.inputs.toSet
         val out = outputs.map { out =>
                 out.merge(other.outputs.find(_.identifier.output == out.identifier.output))
             } ++
             other.outputs.filter(out => !outputs.exists(_.identifier.output == out.identifier.output))
-        val result = copy(mapping=map, description=desc, inputs=in.toSeq, outputs=out)
+        val result = copy(mapping=map, kind=kind, identifier=id, description=desc, inputs=in.toSeq, outputs=out)
         parent.orElse(other.parent)
             .map(result.reparent)
             .getOrElse(result)

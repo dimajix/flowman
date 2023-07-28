@@ -27,6 +27,10 @@ class FloatTypeTest extends AnyFlatSpec with Matchers {
         ObjectMapper.parse[FieldType]("float") should be(FloatType)
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("float") should be(FloatType)
+    }
+
     it should "parse strings" in {
         FloatType.parse("1.0") should be (1.0)
     }
@@ -46,8 +50,8 @@ class FloatTypeTest extends AnyFlatSpec with Matchers {
     }
 
     it should "provide the correct SQL type" in {
-        FloatType.sqlType should be ("float")
-        FloatType.sparkType.sql should be ("FLOAT")
         FloatType.typeName should be ("float")
+        FloatType.sqlType should be ("FLOAT")
+        FloatType.sparkType.sql should be ("FLOAT")
     }
 }

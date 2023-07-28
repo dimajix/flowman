@@ -37,7 +37,7 @@ final case class DecimalType(precision: Int, scale: Int) extends NumericType[jav
 
     override def typeName : String = s"decimal($precision,$scale)"
     override def sparkType : DataType = org.apache.spark.sql.types.DecimalType(precision, scale)
-    override def sqlType : String = s"decimal($precision,$scale)"
+    override def sqlType : String = s"DECIMAL($precision,$scale)"
 
     override def parse(value:String, granularity: Option[String]=None) : java.math.BigDecimal = {
         if (granularity.nonEmpty)

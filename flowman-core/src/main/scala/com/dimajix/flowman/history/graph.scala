@@ -22,8 +22,12 @@ import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.graph.Action
 import com.dimajix.flowman.graph.Category
+import com.dimajix.flowman.model.Identifier
+import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.{graph => g}
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetIdentifier
 
 
 object Graph {
@@ -38,8 +42,8 @@ object Graph {
          * @param kind
          * @return
          */
-        def newMappingNode(name:String, kind:String, requires:Seq[Resource]) : MappingNode = {
-            val node = MappingNode(nextNodeId(), name, kind, Seq(), requires)
+        def newMappingNode(identifer:MappingIdentifier, kind:String, requires:Seq[Resource]) : MappingNode = {
+            val node = MappingNode(nextNodeId(), identifer, kind, Seq(), requires)
             addNode(node)
             node
         }
@@ -50,8 +54,8 @@ object Graph {
          * @param kind
          * @return
          */
-        def newTargetNode(name:String, kind:String, provides:Seq[Resource], requires:Seq[Resource]) : TargetNode = {
-            val node = TargetNode(nextNodeId(), name, kind, provides, requires)
+        def newTargetNode(identifer:TargetIdentifier, kind:String, provides:Seq[Resource], requires:Seq[Resource]) : TargetNode = {
+            val node = TargetNode(nextNodeId(), identifer, kind, provides, requires)
             addNode(node)
             node
         }
@@ -62,8 +66,8 @@ object Graph {
          * @param kind
          * @return
          */
-        def newRelationNode(name:String, kind:String, provides:Seq[Resource], requires:Seq[Resource]) : RelationNode = {
-            val node = RelationNode(nextNodeId(), name, kind, provides, requires)
+        def newRelationNode(identifer:RelationIdentifier, kind:String, provides:Seq[Resource], requires:Seq[Resource]) : RelationNode = {
+            val node = RelationNode(nextNodeId(), identifer, kind, provides, requires)
             addNode(node)
             node
         }
@@ -132,14 +136,14 @@ object Graph {
             case target:g.TargetRef =>
                 val provides = target.provides.map(r => Resource(r.category, r.name, r.partition)).toSeq
                 val requires = target.requires.map(r => Resource(r.category, r.name, r.partition)).toSeq
-                Some(target.id -> builder.newTargetNode(target.name, target.kind, provides, requires))
+                Some(target.id -> builder.newTargetNode(target.identifier, target.kind, provides, requires))
             case mapping:g.MappingRef =>
                 val requires = mapping.requires.map(r => Resource(r.category, r.name, r.partition)).toSeq
-                Some(mapping.id -> builder.newMappingNode(mapping.name, mapping.kind, requires))
+                Some(mapping.id -> builder.newMappingNode(mapping.identifier, mapping.kind, requires))
             case relation:g.RelationRef =>
                 val provides = relation.provides.map(r => Resource(r.category, r.name, r.partition)).toSeq
                 val requires = relation.requires.map(r => Resource(r.category, r.name, r.partition)).toSeq
-                Some(relation.id -> builder.newRelationNode(relation.name, relation.kind, provides, requires))
+                Some(relation.id -> builder.newRelationNode(relation.identifier, relation.kind, provides, requires))
             case _ => None
         }.toMap
 
@@ -248,7 +252,9 @@ sealed abstract class Node {
 
     def category : Category
     def kind : String
-    def name : String
+    def identifier : Identifier[_]
+    def project : String = identifier.project.getOrElse("")
+    def name : String = identifier.name
     def incoming: Seq[Edge] = _incoming
     def outgoing: Seq[Edge] = _outgoing
 
@@ -294,35 +300,35 @@ sealed abstract class Node {
 
 final case class TargetNode(
     override val id:Int,
-    override val name:String,
+    override val identifier:TargetIdentifier,
     override val kind:String,
     override val provides:Seq[Resource] = Seq(),
     override val requires:Seq[Resource] = Seq()
 ) extends Node {
     override def category: Category = Category.TARGET
-    override def withoutEdges : Node = TargetNode(id, name, kind, provides, requires)
+    override def withoutEdges : Node = TargetNode(id, identifier, kind, provides, requires)
 }
 
 final case class MappingNode(
     override val id:Int,
-    override val name:String,
+    override val identifier:MappingIdentifier,
     override val kind:String,
     override val provides:Seq[Resource] = Seq(),
     override val requires:Seq[Resource] = Seq()
 ) extends Node {
     override def category: Category = Category.MAPPING
-    override def withoutEdges : Node = MappingNode(id, name, kind, provides, requires)
+    override def withoutEdges : Node = MappingNode(id, identifier, kind, provides, requires)
 }
 
 final case class RelationNode(
     override val id:Int,
-    override val name:String,
+    override val identifier:RelationIdentifier,
     override val kind:String,
     override val provides:Seq[Resource] = Seq(),
     override val requires:Seq[Resource] = Seq()
 ) extends Node {
     override def category: Category = Category.RELATION
-    override def withoutEdges : Node = RelationNode(id, name, kind, provides, requires)
+    override def withoutEdges : Node = RelationNode(id, identifier, kind, provides, requires)
 }
 
 

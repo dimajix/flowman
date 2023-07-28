@@ -33,6 +33,7 @@ import com.dimajix.flowman.model.Prototype
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.model.Target
+import com.dimajix.flowman.model.TargetIdentifier
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.StructType
@@ -70,7 +71,7 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
     val context = session.getContext(project)
 
     (mappingTemplate1.instantiate _).expects(context, None).returns(mapping1)
-    (mapping1.identifier _).expects().returns(MappingIdentifier("project/m1"))
+    (mapping1.identifier _).expects().atLeastOnce().returns(MappingIdentifier("project/m1"))
     (mapping1.context _).expects().atLeastOnce().returns(context)
     (mapping1.inputs _).expects().returns(Set(MappingOutputIdentifier("m2")))
     (mapping1.outputs _).expects().atLeastOnce().returns(Set("main"))
@@ -106,27 +107,23 @@ class GraphTest extends AnyFlatSpec with Matchers with MockFactory {
 
     val graph = g.Graph.ofProject(session, project, Phase.BUILD)
 
-    (mapping1.name _).expects().atLeastOnce().returns("m1")
     (mapping1.kind _).expects().atLeastOnce().returns("m1_kind")
     (mapping1.requires _).expects().returns(Set())
-    (mapping2.name _).expects().atLeastOnce().returns("m2")
     (mapping2.kind _).expects().atLeastOnce().returns("m2_kind")
     (mapping2.requires _).expects().returns(Set())
 
-    (sourceRelation.name _).expects().atLeastOnce().returns("src")
     (sourceRelation.kind _).expects().atLeastOnce().returns("src_kind")
     (sourceRelation.provides _).expects(*,*).returns(Set())
     (sourceRelation.requires _).expects(*,*).returns(Set())
     (sourceRelation.partitions _).expects().returns(Seq(PartitionField("pcol", StringType)))
 
-    (targetRelation.name _).expects().atLeastOnce().returns("tgt")
     (targetRelation.kind _).expects().atLeastOnce().returns("tgt_kind")
     (targetRelation.provides _).expects(*,*).returns(Set())
     (targetRelation.requires _).expects(*,*).returns(Set())
 
     (target.provides _).expects(*).returns(Set.empty)
     (target.requires _).expects(*).returns(Set.empty)
-    (target.name _).expects().returns("tgt1")
+    (target.identifier _).expects().atLeastOnce().returns(TargetIdentifier("project/tgt1"))
     (target.kind _).expects().returns("tgt1_kind")
 
     val hgraph = Graph.ofGraph(graph)

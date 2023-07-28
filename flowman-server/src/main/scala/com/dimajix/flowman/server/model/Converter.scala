@@ -65,6 +65,7 @@ object Converter {
             node.id,
             node.category.lower,
             node.kind,
+            node.project,
             node.name,
             node.provides.map(r => ofSpec(r)),
             node.requires.map(r => ofSpec(r))

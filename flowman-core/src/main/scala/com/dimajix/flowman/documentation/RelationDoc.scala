@@ -51,16 +51,45 @@ final case class RelationReference(
 }
 
 
+object RelationDoc {
+    def apply(
+        parent: Option[Reference],
+        relation: Option[Relation] = None,
+        description: Option[String] = None,
+        schema: Option[SchemaDoc] = None,
+        inputs: Seq[Reference] = Seq.empty,
+        provides: Seq[ResourceIdentifier] = Seq.empty,
+        requires: Seq[ResourceIdentifier] = Seq.empty,
+        sources: Seq[ResourceIdentifier] = Seq.empty,
+        partitions: Map[String, FieldValue] = Map.empty
+    ) : RelationDoc = {
+        RelationDoc(
+            relation,
+            parent,
+            relation.map(_.kind).getOrElse(""),
+            relation.map(_.identifier).getOrElse(RelationIdentifier.empty),
+            description,
+            schema,
+            inputs,
+            provides,
+            requires,
+            sources,
+            partitions
+        )
+    }
+}
 final case class RelationDoc(
-    parent:Option[Reference],
-    relation:Option[Relation] = None,
-    description:Option[String] = None,
-    schema:Option[SchemaDoc] = None,
-    inputs:Seq[Reference] = Seq.empty,
-    provides:Seq[ResourceIdentifier] = Seq.empty,
-    requires:Seq[ResourceIdentifier] = Seq.empty,
-    sources:Seq[ResourceIdentifier] = Seq.empty,
-    partitions:Map[String,FieldValue] = Map.empty
+    relation: Option[Relation],
+    parent: Option[Reference],
+    kind: String,
+    identifier: RelationIdentifier,
+    description: Option[String],
+    schema: Option[SchemaDoc],
+    inputs: Seq[Reference],
+    provides: Seq[ResourceIdentifier],
+    requires: Seq[ResourceIdentifier],
+    sources: Seq[ResourceIdentifier],
+    partitions: Map[String,FieldValue]
 ) extends EntityDoc {
     override def reference: RelationReference = RelationReference(parent, name)
     override def fragments: Seq[Fragment] = schema.toSeq
@@ -72,18 +101,13 @@ final case class RelationDoc(
         )
     }
     /**
-     * Returns the name of the project of this mapping
+     * Returns the name of the project of this relation
      * @return
      */
-    def project : Option[String] = relation.flatMap(_.project.map(_.name))
+    def project : Option[String] = identifier.project
 
-    /**
-     * Returns the name of this mapping
-     * @return
-     */
-    def name : String = relation.map(_.name).getOrElse("")
-
-    def identifier:RelationIdentifier = relation.map(_.identifier).getOrElse(RelationIdentifier.empty)
+    override def category: Category = Category.RELATION
+    override def name : String = identifier.name
 
     /**
      * Merge this schema documentation with another relation documentation. Note that while documentation attributes
@@ -100,14 +124,16 @@ final case class RelationDoc(
      * @param other
      */
     def merge(other:RelationDoc) : RelationDoc = {
-        val rel = relation.orElse(other.relation)
+        val rel = this.relation.orElse(other.relation)
+        val id = if (this.identifier.isEmpty) other.identifier else this.identifier
+        val kind = if (this.kind.isEmpty) other.kind else this.kind
         val desc = other.description.orElse(this.description)
         val schm = schema.map(_.merge(other.schema)).orElse(other.schema)
         val prov = provides.toSet ++ other.provides.toSet
         val reqs = requires.toSet ++ other.requires.toSet
         val srcs = sources.toSet ++ other.sources.toSet
         val parts = other.partitions ++ partitions
-        val result = copy(relation=rel, description=desc, schema=schm, provides=prov.toSeq, requires=reqs.toSeq, sources=srcs.toSeq, partitions=parts)
+        val result = copy(relation=rel, kind=kind, identifier=id, description=desc, schema=schm, provides=prov.toSeq, requires=reqs.toSeq, sources=srcs.toSeq, partitions=parts)
         parent.orElse(other.parent)
             .map(result.reparent)
             .getOrElse(result)

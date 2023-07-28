@@ -16,6 +16,23 @@
 
 package com.dimajix.flowman.documentation
 
-abstract class EntityDoc extends Fragment {
 
+abstract class EntityDoc extends Fragment {
+    /**
+     * Returns the Category of this entity
+     * @return
+     */
+    def category: Category
+
+    /**
+     * Returns the kind of this entity
+     * @return
+     */
+    def kind: String
+
+    /**
+     * Returns the name of this entity
+     * @return
+     */
+    def name: String
 }

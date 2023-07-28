@@ -27,6 +27,10 @@ class VarcharTypeTest extends AnyFlatSpec with Matchers {
         ObjectMapper.parse[FieldType]("varchar(14)") should be (VarcharType(14))
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("varchar(14)") should be(VarcharType(14))
+    }
+
     it should "parse strings" in {
         VarcharType(100).parse("lala") should be ("lala")
     }
@@ -47,8 +51,8 @@ class VarcharTypeTest extends AnyFlatSpec with Matchers {
 
     it should "provide the correct SQL type" in {
         val ftype = VarcharType(10)
-        ftype.sqlType should be ("varchar(10)")
         ftype.typeName should be ("varchar(10)")
+        ftype.sqlType should be ("VARCHAR(10)")
         ftype.sparkType.sql should be ("STRING")
     }
 }

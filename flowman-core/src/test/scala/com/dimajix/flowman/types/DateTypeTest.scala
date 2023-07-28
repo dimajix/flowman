@@ -29,6 +29,10 @@ class DateTypeTest extends AnyFlatSpec with Matchers {
         ObjectMapper.parse[FieldType]("date") should be(DateType)
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("date") should be(DateType)
+    }
+
     it should "parse strings" in {
         DateType.parse("2017-12-01") should be (Date.valueOf("2017-12-01"))
     }
@@ -88,7 +92,8 @@ class DateTypeTest extends AnyFlatSpec with Matchers {
     }
 
     it should "provide the correct SQL type" in {
-        DateType.sqlType should be ("date")
+        DateType.typeName should be ("date")
+        DateType.sqlType should be ("DATE")
         DateType.sparkType.sql should be ("DATE")
     }
 }

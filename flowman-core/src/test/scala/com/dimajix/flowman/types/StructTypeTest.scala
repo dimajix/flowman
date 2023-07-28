@@ -23,17 +23,20 @@ import org.scalatest.matchers.should.Matchers
 class StructTypeTest extends AnyFlatSpec with Matchers {
     "A StructType" should "provide the correct SQL type (1)" in {
         val ftype = StructType(Seq())
-        ftype.sqlType should be ("struct<>")
+        ftype.typeName should be ("struct")
+        ftype.sqlType should be ("STRUCT<>")
         ftype.sparkType should be (org.apache.spark.sql.types.StructType(Seq()))
     }
 
     it should "provide the correct SQL type (2)" in {
         val ftype = StructType(Seq(Field("f0", StringType)))
-        ftype.sqlType should be ("struct<f0:string>")
+        ftype.typeName should be ("struct")
+        ftype.sqlType should be ("STRUCT<f0:STRING>")
     }
 
     it should "provide the correct SQL type (3)" in {
         val ftype = StructType(Seq(Field("f0", StringType), Field("f1", BooleanType)))
-        ftype.sqlType should be ("struct<f0:string,f1:boolean>")
+        ftype.typeName should be ("struct")
+        ftype.sqlType should be ("STRUCT<f0:STRING,f1:BOOLEAN>")
     }
 }

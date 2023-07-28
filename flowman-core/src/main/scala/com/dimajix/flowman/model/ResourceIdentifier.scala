@@ -31,6 +31,10 @@ import com.dimajix.flowman.fs.GlobPattern
 
 
 object ResourceIdentifier {
+    def apply(category: String, name: String, partition: Map[String, String]) : ResourceIdentifier = {
+        SimpleResourceIdentifier(category, name, partition)
+    }
+
     def ofFile(file:File): GlobbingResourceIdentifier =
         GlobbingResourceIdentifier("file", file.toString)
     def ofFile(file:Path): GlobbingResourceIdentifier =

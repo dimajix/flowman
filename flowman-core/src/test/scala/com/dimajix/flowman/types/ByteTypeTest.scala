@@ -28,6 +28,11 @@ class ByteTypeTest extends AnyFlatSpec with Matchers {
         ObjectMapper.parse[FieldType]("tinyint") should be(ByteType)
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("byte") should be(ByteType)
+        FieldType.of("tinyint") should be(ByteType)
+    }
+
     it should "parse strings" in {
         ByteType.parse("12") should be (12)
     }
@@ -67,8 +72,8 @@ class ByteTypeTest extends AnyFlatSpec with Matchers {
     }
 
     it should "provide the correct SQL type" in {
-        ByteType.sqlType should be ("tinyint")
         ByteType.typeName should be ("byte")
+        ByteType.sqlType should be ("TINYINT")
         ByteType.sparkType.sql should be ("TINYINT")
     }
 }

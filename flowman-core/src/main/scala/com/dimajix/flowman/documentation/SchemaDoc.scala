@@ -97,6 +97,10 @@ final case class SchemaDoc(
         )
     }
 
+    override def category: Category = Category.SCHEMA
+    override def kind: String = Category.SCHEMA.lower
+    override def name: String = ""
+
     /**
      * Convert this schema documentation to a Flowman struct
      */

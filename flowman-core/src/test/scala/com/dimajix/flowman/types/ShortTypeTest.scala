@@ -28,6 +28,11 @@ class ShortTypeTest extends AnyFlatSpec with Matchers {
         ObjectMapper.parse[FieldType]("smallint") should be(ShortType)
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("short") should be(ShortType)
+        FieldType.of("smallint") should be(ShortType)
+    }
+
     it should "parse strings" in {
         ShortType.parse("12") should be (12)
     }
@@ -93,8 +98,8 @@ class ShortTypeTest extends AnyFlatSpec with Matchers {
     }
 
     it should "provide the correct SQL type" in {
-        ShortType.sqlType should be ("smallint")
         ShortType.typeName should be ("short")
+        ShortType.sqlType should be ("SMALLINT")
         ShortType.sparkType.sql should be ("SMALLINT")
     }
 }

@@ -26,29 +26,29 @@ sealed abstract class Category extends Product with Serializable {
 
 object Category {
     case object ASSERTION extends Category
+    case object ASSERTION_TEST extends Category
+    case object CONFIG extends Category
     case object CONNECTION extends Category
     case object DATASET extends Category
+    case object DOCUMENTATION_COLLECTOR extends Category
+    case object DOCUMENTATION_GENERATOR extends Category
+    case object DOCUMENTER extends Category
+    case object ENVIRONMENT extends Category
+    case object EXTERNAL_CATALOG extends Category
+    case object HISTORY_STORE extends Category
     case object HOOK extends Category
     case object JOB extends Category
     case object MAPPING extends Category
     case object MEASURE extends Category
+    case object METRIC_BOARD extends Category
+    case object METRIC_SINK extends Category
+    case object PROFILE extends Category
+    case object PROJECT_STORE extends Category
     case object RELATION extends Category
     case object SCHEMA extends Category
     case object TARGET extends Category
     case object TEMPLATE extends Category
     case object TEST extends Category
-    case object ASSERTION_TEST extends Category
-    case object METRIC_SINK extends Category
-    case object METRIC_BOARD extends Category
-    case object HISTORY_STORE extends Category
-    case object EXTERNAL_CATALOG extends Category
-    case object PROJECT_STORE extends Category
-    case object DOCUMENTER extends Category
-    case object DOCUMENTATION_COLLECTOR extends Category
-    case object DOCUMENTATION_GENERATOR extends Category
-    case object CONFIG extends Category
-    case object ENVIRONMENT extends Category
-    case object PROFILE extends Category
 
     def ofString(category:String) : Category = {
         category.toLowerCase(Locale.ROOT) match {

@@ -40,6 +40,7 @@ class CheckExecutorTest extends AnyFlatSpec with Matchers with MockFactory with 
 
         val df = spark.createDataFrame(Seq((Some(1), 2), (None, 3)))
         val mapping = mock[Mapping]
+        (mapping.kind _).expects().atLeastOnce().returns("sql")
         (mapping.identifier _).expects().atLeastOnce().returns(MappingIdentifier("mapping"))
         (mapping.context _).expects().atLeastOnce().returns(context)
         (mapping.inputs _).expects().returns(Set.empty)
@@ -90,6 +91,7 @@ class CheckExecutorTest extends AnyFlatSpec with Matchers with MockFactory with 
 
         val df = spark.createDataFrame(Seq((Some(1), 2), (None, 3)))
         val mapping = mock[Mapping]
+        (mapping.kind _).expects().atLeastOnce().returns("sql")
         (mapping.identifier _).expects().atLeastOnce().returns(MappingIdentifier("mapping"))
         (mapping.context _).expects().atLeastOnce().returns(context)
         (mapping.inputs _).expects().returns(Set.empty)

@@ -52,7 +52,7 @@ final case class StructType(@JsonProperty(value = "fields") fields:Seq[Field]) e
      * @return
      */
     override def sqlType : String = {
-        "struct<" + fields.map(f => f.name + ":" + f.sqlType).mkString(",") + ">"
+        "STRUCT<" + fields.map(f => f.name + ":" + f.sqlType).mkString(",") + ">"
     }
     override def parse(value:String, granularity:Option[String]=None) : Any = ???
     override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Any] = ???

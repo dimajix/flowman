@@ -26,6 +26,7 @@ import java.util.Locale
 import java.util.Properties
 
 import scala.annotation.tailrec
+import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
@@ -36,10 +37,15 @@ import javax.xml.bind.DatatypeConverter
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
+import com.dimajix.common.IdentityHashMap
+import com.dimajix.flowman.documentation
+import com.dimajix.flowman.documentation.ColumnReference
+import com.dimajix.flowman.documentation.ProjectDoc
+import com.dimajix.flowman.documentation.Reference
 import com.dimajix.flowman.execution.Phase
-import com.dimajix.flowman.execution.StateStoreException
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.Action
+import com.dimajix.flowman.history.DocumentationQuery
 import com.dimajix.flowman.history.Graph
 import com.dimajix.flowman.history.InputMapping
 import com.dimajix.flowman.history.JobColumn
@@ -60,7 +66,17 @@ import com.dimajix.flowman.history.WriteRelation
 import com.dimajix.flowman.jdbc.SlickUtils
 import com.dimajix.flowman.model.Category
 import com.dimajix.flowman.model.JobDigest
+import com.dimajix.flowman.model.MappingIdentifier
+import com.dimajix.flowman.model.RelationIdentifier
+import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.TargetDigest
+import com.dimajix.flowman.model.TargetIdentifier
+import com.dimajix.flowman.types.ArrayType
+import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.FieldType
+import com.dimajix.flowman.types.MapType
+import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.StructType
 
 
 object JdbcStateRepository {
@@ -169,6 +185,52 @@ object JdbcStateRepository {
         name:String,
         value:String
     )
+
+    case class EntityDoc(
+        id:Long,
+        parent_id:Option[Long],
+        job_id:Long,
+        category:String,
+        kind:String,
+        identifier:String,
+        description:Option[String]
+    )
+    case class EntityResource(
+        id:Long,
+        entity_id:Long,
+        category:String,
+        kind:Char,
+        name:String
+    )
+    case class EntityResourcePartition(
+        resource_id:Long,
+        name:String,
+        value:String
+    )
+    case class EntityInput(
+        entity_id: Long,
+        input_id: Long
+    )
+
+    case class SchemaDoc(
+        id:Long,
+        entity_id:Long,
+        description:Option[String]
+    )
+    case class ColumnDoc(
+        id:Long,
+        schema_id:Long,
+        parent_id:Option[Long],
+        name:String,
+        data_type:String,
+        nullable:Boolean,
+        description:Option[String],
+        index:Int
+    )
+    case class ColumnInput(
+        column_id:Long,
+        input_id:Long
+    )
 }
 
 
@@ -191,22 +253,29 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         Database.forURL(url, driver=driver, prop=props, executor=SlickUtils.defaultExecutor)
     }
 
-    val jobRuns = TableQuery[JobRuns]
-    val jobArgs = TableQuery[JobArguments]
-    val jobEnvironments = TableQuery[JobEnvironments]
-    val jobMetrics = TableQuery[JobMetrics]
-    val jobMetricLabels = TableQuery[JobMetricLabels]
-    val targetRuns = TableQuery[TargetRuns]
-    val targetPartitions = TableQuery[TargetPartitions]
+    private val jobRuns = TableQuery[JobRuns]
+    private val jobArgs = TableQuery[JobArguments]
+    private val jobEnvironments = TableQuery[JobEnvironments]
+    private val jobMetrics = TableQuery[JobMetrics]
+    private val jobMetricLabels = TableQuery[JobMetricLabels]
+    private val targetRuns = TableQuery[TargetRuns]
+    private val targetPartitions = TableQuery[TargetPartitions]
 
-    val graphEdgeLabels = TableQuery[GraphEdgeLabels]
-    val graphEdges = TableQuery[GraphEdges]
-    val graphNodes = TableQuery[GraphNodes]
-    val graphResources = TableQuery[GraphResources]
-    val graphResourcePartitions = TableQuery[GraphResourcePartitions]
+    private val graphEdgeLabels = TableQuery[GraphEdgeLabels]
+    private val graphEdges = TableQuery[GraphEdges]
+    private val graphNodes = TableQuery[GraphNodes]
+    private val graphResources = TableQuery[GraphResources]
+    private val graphResourcePartitions = TableQuery[GraphResourcePartitions]
 
+    private val entityDocs = TableQuery[EntityDocs]
+    private val entityResources = TableQuery[EntityResources]
+    private val entityResourcePartitions = TableQuery[EntityResourcePartitions]
+    private val entityInputs = TableQuery[EntityInputs]
+    private val schemaDocs = TableQuery[SchemaDocs]
+    private val columnDocs = TableQuery[ColumnDocs]
+    private val columnInputs = TableQuery[ColumnInputs]
 
-    class JobRuns(tag:Tag) extends Table[JobRun](tag, "JOB_RUN") {
+    private class JobRuns(tag:Tag) extends Table[JobRun](tag, "JOB_RUN") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def namespace = column[String]("namespace", O.Length(64))
         def project = column[String]("project", O.Length(64))
@@ -224,7 +293,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def * = (id, namespace, project, version, job, phase, args_hash, start_ts, end_ts, status, error) <> (JobRun.tupled, JobRun.unapply)
     }
 
-    class JobArguments(tag: Tag) extends Table[JobArgument](tag, "JOB_ARGUMENT") {
+    private class JobArguments(tag: Tag) extends Table[JobArgument](tag, "JOB_ARGUMENT") {
         def job_id = column[Long]("job_id")
         def name = column[String]("name", O.Length(64))
         def value = column[String]("value", O.Length(1022))
@@ -235,7 +304,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def * = (job_id, name, value) <> (JobArgument.tupled, JobArgument.unapply)
     }
 
-    class JobEnvironments(tag: Tag) extends Table[JobEnvironment](tag, "JOB_ENVIRONMENT") {
+    private class JobEnvironments(tag: Tag) extends Table[JobEnvironment](tag, "JOB_ENVIRONMENT") {
         def job_id = column[Long]("job_id")
         def name = column[String]("name", O.Length(64))
         def value = column[String]("value", O.Length(1022))
@@ -246,7 +315,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def * = (job_id, name, value) <> (JobEnvironment.tupled, JobEnvironment.unapply)
     }
 
-    class JobMetrics(tag: Tag) extends Table[JobMetric](tag, "JOB_METRIC") {
+    private class JobMetrics(tag: Tag) extends Table[JobMetric](tag, "JOB_METRIC") {
         def id = column[Long]("metric_id", O.PrimaryKey, O.AutoInc)
         def job_id = column[Long]("job_id")
         def name = column[String]("name", O.Length(64))
@@ -258,7 +327,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def * = (id, job_id, name, ts, value) <> (JobMetric.tupled, JobMetric.unapply)
     }
 
-    class JobMetricLabels(tag: Tag) extends Table[JobMetricLabel](tag, "JOB_METRIC_LABEL") {
+    private class JobMetricLabels(tag: Tag) extends Table[JobMetricLabel](tag, "JOB_METRIC_LABEL") {
         def metric_id = column[Long]("metric_id")
         def name = column[String]("name", O.Length(64))
         def value = column[String]("value", O.Length(64))
@@ -270,7 +339,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def * = (metric_id, name, value) <> (JobMetricLabel.tupled, JobMetricLabel.unapply)
     }
 
-    class TargetRuns(tag: Tag) extends Table[TargetRun](tag, "TARGET_RUN") {
+    private class TargetRuns(tag: Tag) extends Table[TargetRun](tag, "TARGET_RUN") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def job_id = column[Option[Long]]("job_id")
         def namespace = column[String]("namespace", O.Length(64))
@@ -290,7 +359,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def * = (id, job_id, namespace, project, version, target, phase, partitions_hash, start_ts, end_ts, status, error) <> (TargetRun.tupled, TargetRun.unapply)
     }
 
-    class TargetPartitions(tag: Tag) extends Table[TargetPartition](tag, "TARGET_PARTITION") {
+    private class TargetPartitions(tag: Tag) extends Table[TargetPartition](tag, "TARGET_PARTITION") {
         def target_id = column[Long]("target_id")
         def name = column[String]("name", O.Length(64))
         def value = column[String]("value", O.Length(254))
@@ -301,7 +370,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def * = (target_id, name, value) <> (TargetPartition.tupled, TargetPartition.unapply)
     }
 
-    class GraphEdgeLabels(tag:Tag) extends Table[GraphEdgeLabel](tag, "GRAPH_EDGE_LABEL") {
+    private class GraphEdgeLabels(tag:Tag) extends Table[GraphEdgeLabel](tag, "GRAPH_EDGE_LABEL") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def edge_id = column[Long]("edge_id")
         def name = column[String]("name", O.Length(64))
@@ -312,7 +381,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def * = (id, edge_id, name, value) <> (GraphEdgeLabel.tupled, GraphEdgeLabel.unapply)
     }
 
-    class GraphEdges(tag:Tag) extends Table[GraphEdge](tag, "GRAPH_EDGE") {
+    private class GraphEdges(tag:Tag) extends Table[GraphEdge](tag, "GRAPH_EDGE") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def input_id = column[Long]("input_id")
         def output_id = column[Long]("output_id")
@@ -324,7 +393,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def * = (id, input_id, output_id, action) <> (GraphEdge.tupled, GraphEdge.unapply)
     }
 
-    class GraphNodes(tag:Tag) extends Table[GraphNode](tag, "GRAPH_NODE") {
+    private class GraphNodes(tag:Tag) extends Table[GraphNode](tag, "GRAPH_NODE") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def job_id = column[Long]("job_id")
         def category = column[String]("category", O.Length(16))
@@ -336,7 +405,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def * = (id, job_id, category, kind, name) <> (GraphNode.tupled, GraphNode.unapply)
     }
 
-    class GraphResources(tag:Tag) extends Table[GraphResource](tag, "GRAPH_RESOURCE") {
+    private class GraphResources(tag:Tag) extends Table[GraphResource](tag, "GRAPH_RESOURCE") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def node_id = column[Long]("node_id")
         def direction = column[Char]("direction")
@@ -348,7 +417,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def * = (id, node_id, direction, category, name) <> (GraphResource.tupled, GraphResource.unapply)
     }
 
-    class GraphResourcePartitions(tag:Tag) extends Table[GraphResourcePartition](tag, "GRAPH_RESOURCE_PARTITION") {
+    private class GraphResourcePartitions(tag:Tag) extends Table[GraphResourcePartition](tag, "GRAPH_RESOURCE_PARTITION") {
         def resource_id = column[Long]("resource_id")
         def name = column[String]("name", O.Length(64))
         def value = column[String]("value", O.Length(254))
@@ -359,8 +428,89 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def * = (resource_id, name, value) <> (GraphResourcePartition.tupled, GraphResourcePartition.unapply)
     }
 
+    private class EntityDocs(tag:Tag) extends Table[EntityDoc](tag, "ENTITY_DOC") {
+        def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+        def parent_id = column[Option[Long]]("parent_id")
+        def job_id = column[Long]("job_id")
 
-    implicit class QueryWrapper[E,U,C[_]] (query:Query[E, U, C]) {
+        def category = column[String]("category", O.Length(16))
+        def kind = column[String]("kind", O.Length(64))
+        def identifier = column[String]("identifier", O.Length(96))
+        def description = column[Option[String]]("description", O.Length(254))
+
+        def * = (id, parent_id, job_id, category, kind, identifier, description) <> (EntityDoc.tupled, EntityDoc.unapply)
+    }
+
+    private class EntityResources(tag:Tag) extends Table[EntityResource](tag, "ENTITY_RESOURCE") {
+        def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+
+        def entity_id = column[Long]("entity_id")
+        def category = column[String]("category", O.Length(16))
+        def kind = column[Char]("kind")
+        def name = column[String]("name", O.Length(254))
+
+        def entity = foreignKey("ENTITY_RESOURCE_ENTITY_FK", entity_id, entityDocs)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
+
+        def * = (id, entity_id, category, kind, name) <> (EntityResource.tupled, EntityResource.unapply)
+    }
+
+    private class EntityResourcePartitions(tag: Tag) extends Table[EntityResourcePartition](tag, "ENTITY_RESOURCE_PARTITION") {
+        def resource_id = column[Long]("resource_id")
+        def name = column[String]("name", O.Length(64))
+        def value = column[String]("value", O.Length(254))
+
+        def pk = primaryKey("ENTITY_RESOURCE_PARTITION_PK", (resource_id, name))
+        def resource = foreignKey("ENTITY_RESOURCE_PARTITION_RESOURCE_FK", resource_id, entityResources)(_.id, onUpdate = ForeignKeyAction.Restrict, onDelete = ForeignKeyAction.Cascade)
+
+        def * = (resource_id, name, value) <> (EntityResourcePartition.tupled, EntityResourcePartition.unapply)
+    }
+
+    private class EntityInputs(tag: Tag) extends Table[EntityInput](tag, "ENTITY_INPUT") {
+        def entity_id = column[Long]("entity_id")
+        def input_id = column[Long]("input_id")
+
+        def pk = primaryKey("ENTITY_INPUT_PK", (entity_id, input_id))
+
+        def * = (entity_id, input_id) <> (EntityInput.tupled, EntityInput.unapply)
+    }
+
+    private class SchemaDocs(tag: Tag) extends Table[SchemaDoc](tag, "SCHEMA_DOC") {
+        def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+        def entity_id = column[Long]("entity_id")
+        def description = column[Option[String]]("description", O.Length(254))
+
+        def entity = foreignKey("SCHEMA_DOC_SCHEMA_DOC_FK", entity_id, entityDocs)(_.id, onUpdate = ForeignKeyAction.Restrict, onDelete = ForeignKeyAction.Cascade)
+        def * = (id, entity_id, description) <> (SchemaDoc.tupled, SchemaDoc.unapply)
+    }
+
+    private class ColumnDocs(tag: Tag) extends Table[ColumnDoc](tag, "COLUMN_DOC") {
+        def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+        def schema_id = column[Long]("schema_id")
+        def parent_id = column[Option[Long]]("parent_id")
+
+        def name = column[String]("name", O.Length(64))
+        def data_type = column[String]("data_type", O.Length(64))
+        def nullable = column[Boolean]("nullable")
+        def index = column[Int]("index")
+        def description = column[Option[String]]("description", O.Length(254))
+
+        def entity = foreignKey("COLUMN_DOC_SCHEMA_DOC_FK", schema_id, entityDocs)(_.id, onUpdate = ForeignKeyAction.Restrict, onDelete = ForeignKeyAction.Cascade)
+        def parent = foreignKey("COLUMN_DOC_PARENT_FK", parent_id, columnDocs)(_.id.?, onUpdate = ForeignKeyAction.Restrict, onDelete = ForeignKeyAction.Cascade)
+
+        def * = (id, schema_id, parent_id, name, data_type, nullable, description, index) <> (ColumnDoc.tupled, ColumnDoc.unapply)
+    }
+
+    private class ColumnInputs(tag: Tag) extends Table[ColumnInput](tag, "COLUMN_INPUT") {
+        def column_id = column[Long]("column_id")
+        def input_id = column[Long]("input_id")
+
+        def pk = primaryKey("COLUMN_INPUT_PK", (column_id, input_id))
+
+        def * = (column_id, input_id) <> (ColumnInput.tupled, ColumnInput.unapply)
+    }
+
+
+    implicit private class QueryWrapper[E,U,C[_]] (query:Query[E, U, C]) {
         def optionalFilter[T](value:Option[T])(f:(E,T) => Rep[Boolean]) : Query[E,U,C] = {
             if (value.nonEmpty)
                 query.filter(v => f(v,value.get))
@@ -389,7 +539,13 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
             graphEdges,
             graphEdgeLabels,
             graphResources,
-            graphResourcePartitions
+            graphResourcePartitions,
+            entityDocs,
+            entityResources,
+            entityResourcePartitions,
+            schemaDocs,
+            columnDocs,
+            columnInputs
         )
 
         try {
@@ -473,7 +629,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
             0,
             state.namespace,
             state.project,
-            state.project,
+            state.version,
             state.job,
             state.phase.upper,
             hashMap(state.args),
@@ -543,7 +699,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
     override def insertJobGraph(jobId:String, graph:Graph) : Unit = {
         // Step 1: Insert nodes
-        val dbNodes = graph.nodes.map(n => GraphNode(-1, jobId.toLong, n.category.lower, n.kind, n.name))
+        val dbNodes = graph.nodes.map(n => GraphNode(-1, jobId.toLong, n.category.lower, n.kind, n.identifier.toString))
         val nodesQuery = (graphNodes returning graphNodes.map(_.id)) ++= dbNodes
         val nodeIds = Await.result(db.run(nodesQuery), Duration.Inf)
         val nodeIdToDbId = graph.nodes.map(_.id).zip(nodeIds).toMap
@@ -602,9 +758,9 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
                 val provides = resources.toSeq.flatMap(_._1)
                 val requires = resources.toSeq.flatMap(_._2)
                 val node = Category.ofString(r.category) match {
-                    case Category.MAPPING => graph.newMappingNode(r.name, r.kind, requires)
-                    case Category.TARGET => graph.newTargetNode(r.name, r.kind, provides, requires)
-                    case Category.RELATION => graph.newRelationNode(r.name, r.kind, provides, requires)
+                    case Category.MAPPING => graph.newMappingNode(MappingIdentifier(r.name), r.kind, requires)
+                    case Category.TARGET => graph.newTargetNode(TargetIdentifier(r.name), r.kind, provides, requires)
+                    case Category.RELATION => graph.newRelationNode(RelationIdentifier(r.name), r.kind, provides, requires)
                     case _ => throw new IllegalArgumentException(s"Unsupported tye ${r.category}")
                 }
                 r.id -> node
@@ -638,6 +794,252 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         else {
             None
         }
+    }
+
+    override def insertJobDocumentation(jobId: String, doc: ProjectDoc): Unit = {
+        def createEntityResources(entityId: Long, kind: Char, resources: Seq[ResourceIdentifier]): Seq[EntityResource] = {
+            resources.map(res => EntityResource(-1, entityId, res.category, kind, res.name))
+        }
+        def createObjectIndex[T](ids:Iterable[Long], entites:Iterable[T]) : IdentityHashMap[T,Long] = {
+            val entityToId = new IdentityHashMap[T, Long]()
+            entites.zip(ids).foreach(nid => entityToId.put(nid._1, nid._2))
+            entityToId
+        }
+
+        // Insert all relations
+        val dbRelations = doc.relations.map(n => EntityDoc(-1, None, jobId.toLong, n.category.lower, n.kind, n.identifier.toString, n.description))
+        val relationQuery = (entityDocs returning entityDocs.map(_.id)) ++= dbRelations
+        val relationIds = Await.result(db.run(relationQuery), Duration.Inf)
+        val relationToId = createObjectIndex(relationIds, doc.relations)
+
+        // Insert all resources
+        val dbResources = doc.relations.flatMap { rel =>
+            val relId = relationToId.getOrElse(rel, throw new IllegalStateException())
+            createEntityResources(relId, 'P', rel.provides) ++
+                createEntityResources(relId, 'R', rel.requires) ++
+                createEntityResources(relId, 'S', rel.sources)
+        }
+        val resourceQuery = (entityResources returning entityResources.map(_.id)) ++= dbResources
+        val resourceIds = Await.result(db.run(resourceQuery), Duration.Inf)
+        val resourcePartitions = doc.relations.flatMap { rel =>
+            (rel.provides ++ rel.requires ++ rel.sources)
+        }
+        val resourcePartitionQuery = entityResourcePartitions ++= resourcePartitions.zip(resourceIds).flatMap {
+            case (res, id) => res.partition.toSeq.map(kv => EntityResourcePartition(id, kv._1, kv._2))
+        }
+        Await.result(db.run(resourcePartitionQuery), Duration.Inf)
+
+        // Insert all schemas
+        val dbSchemas = doc.relations.flatMap { rel =>
+            val relId = relationToId.getOrElse(rel, throw new IllegalStateException())
+            rel.schema.map(s => SchemaDoc(-1, relId, s.description))
+        }
+        val schemaQuery = (schemaDocs returning schemaDocs.map(_.id)) ++= dbSchemas
+        val schemaIds = Await.result(db.run(schemaQuery), Duration.Inf)
+
+        val columnToId = new IdentityHashMap[com.dimajix.flowman.documentation.ColumnDoc, Long]()
+
+        @tailrec
+        def insertColumns(columns:Seq[(Long,Option[Long],com.dimajix.flowman.documentation.ColumnDoc)]) : Unit = {
+            val dbColumns = columns.map { case (schemaId, parentId, col) =>
+                ColumnDoc(-1, schemaId, parentId, col.name, col.typeName, col.nullable, col.description, col.index)
+            }
+            val columnQuery = (columnDocs returning columnDocs.map(_.id)) ++= dbColumns
+            val columnIds = Await.result(db.run(columnQuery), Duration.Inf)
+
+            val columnsWithId = columns.zip(columnIds)
+            columnsWithId.foreach { case ((_, _, col), columnId) =>
+                columnToId.put(col, columnId)
+            }
+            val newColumns = columnsWithId
+                .filter(_._1._3.children.nonEmpty)
+                .map { case((schemaId, parentId, col), id) => (schemaId, Some(id), col) }
+
+            if (newColumns.nonEmpty)
+                insertColumns(newColumns)
+        }
+
+        // Insert all columns
+        val allColumns = doc.relations.flatMap(_.schema).zip(schemaIds)
+            .flatMap { case(schema,schemaId) =>
+                schema.columns.map(col => (schemaId, None, col))
+            }
+        insertColumns(allColumns)
+
+        // Insert all column references
+        @tailrec
+        def createColumnInputs(columns:Seq[com.dimajix.flowman.documentation.ColumnDoc], other:Seq[ColumnInput]=Seq.empty) : Seq[ColumnInput] = {
+            val inputs = columns.flatMap { col =>
+                val colId = columnToId.getOrElse(col, throw new IllegalStateException())
+                col.inputs.flatMap { ref =>
+                    doc.resolve(ref) match {
+                        case Some(cr: com.dimajix.flowman.documentation.ColumnDoc) =>
+                            columnToId.get(cr).map(refId => ColumnInput(colId, refId))
+                        case _ => None
+                    }
+                }
+            }
+            val children = columns.flatMap(_.children)
+            if (children.isEmpty)
+                other ++ inputs
+            else
+                createColumnInputs(children, other ++ inputs)
+        }
+        val dbColumnInputs = doc.relations.flatMap(_.schema).flatMap(schema => createColumnInputs(schema.columns))
+        val columnInputQuery = columnInputs ++= dbColumnInputs
+        Await.result(db.run(columnInputQuery), Duration.Inf)
+
+        // Insert all partitions
+        //doc.relations.flatMap { rel =>
+        //    val dbId = relationToId.get(rel)
+        //}
+    }
+
+    private def getRelationDocumentation(projectRef:Reference, dbEntities:Seq[EntityDoc], resourcesById:Map[Long, Seq[(Char,ResourceIdentifier)]]) = {
+        // Create all relations
+        dbEntities.filter(_.category == com.dimajix.flowman.documentation.Category.RELATION.lower)
+            .map { rel =>
+                val resources = resourcesById.get(rel.id)
+                rel.id -> com.dimajix.flowman.documentation.RelationDoc(
+                    relation = None,
+                    parent = Some(projectRef),
+                    kind = rel.kind,
+                    identifier = RelationIdentifier(rel.identifier),
+                    description = rel.description,
+                    schema = None,
+                    inputs = Seq.empty,
+                    provides = resources.toSeq.flatMap(_.filter(_._1 == 'P').map(_._2)),
+                    requires = resources.toSeq.flatMap(_.filter(_._1 == 'R').map(_._2)),
+                    sources = resources.toSeq.flatMap(_.filter(_._1 == 'S').map(_._2)),
+                    partitions = Map.empty
+                )
+            }.toMap
+    }
+    private def getSchemaDocs(dbSchemas:Seq[SchemaDoc], dbColumns:Seq[ColumnDoc], dbColumnInputs:Map[Long,Seq[ColumnInput]], entitiesById:Map[Long,com.dimajix.flowman.documentation.EntityDoc]) = {
+        val schemasById = dbSchemas
+            .map { schema =>
+                val doc = com.dimajix.flowman.documentation.SchemaDoc(
+                    parent = entitiesById.get(schema.entity_id).map(_.reference),
+                    description = schema.description
+                )
+                schema.id -> ((schema.entity_id, doc))
+            }.toMap
+
+        val dbColumnsBySchema = dbColumns.filter(_.parent_id.isEmpty).groupBy(col => col.schema_id)
+        val dbColumnsByParent = dbColumns.groupBy(col => col.parent_id.getOrElse(-1))
+
+        val columnsByIdentity = new IdentityHashMap[com.dimajix.flowman.documentation.ColumnDoc, Long]()
+        val columnRefsById = mutable.Map[Long, ColumnReference]()
+
+        def buildColumn(col: ColumnDoc, parent: Option[Reference]): com.dimajix.flowman.documentation.ColumnDoc = {
+            val ftype = col.data_type.toLowerCase(Locale.ROOT) match {
+                case "map" => MapType(StringType, StringType)
+                case "struct" => StructType(Seq.empty)
+                case "array" => ArrayType(StringType)
+                case _ => FieldType.of(col.data_type)
+            }
+            val field0 = Field(col.name, ftype, col.nullable, description = col.description)
+            val column = com.dimajix.flowman.documentation.ColumnDoc(
+                parent,
+                field0,
+                Seq.empty,
+                Seq.empty,
+                Seq.empty,
+                col.index
+            )
+            val ref = column.reference
+
+            val children = dbColumnsByParent.get(col.id)
+                .toSeq
+                .flatMap(_.map(c => buildColumn(c, Some(ref))))
+                .sortBy(_.index)
+            val field = ftype match {
+                case _: MapType if children.nonEmpty => field0.copy(ftype = MapType(StringType, children.head.field.ftype))
+                case _: StructType => field0.copy(ftype = StructType(children.map(_.field)))
+                case _: ArrayType if children.nonEmpty => field0.copy(ftype = ArrayType(children.head.field.ftype))
+                case _ => field0
+            }
+
+            val result = column.copy(field = field, children = children)
+            columnsByIdentity.put(result, col.id)
+            columnRefsById.put(col.id, ref)
+            result
+        }
+
+        val columnsBySchema = dbColumnsBySchema
+            .flatMap { case (schemaId, cols) =>
+                schemasById.get(schemaId).map { case(_,schema) =>
+                    val parent = Some(schema.reference)
+                    val docs = cols
+                        .map { col =>
+                            buildColumn(col, parent)
+                        }
+                        .sortBy(_.index)
+                    schemaId -> docs
+                }
+            }
+
+        def connectColumn(col: com.dimajix.flowman.documentation.ColumnDoc): com.dimajix.flowman.documentation.ColumnDoc = {
+            val children = col.children.map(connectColumn)
+            val id = columnsByIdentity.getOrElse(col, throw new IllegalStateException())
+            val inputs = dbColumnInputs.get(id)
+                .toSeq
+                .flatMap(_.flatMap(inputId => columnRefsById.get(inputId.input_id)))
+            col.copy(children = children, inputs = inputs)
+        }
+
+        columnsBySchema.map { case (schemaId, cols) =>
+            val (entityId,schema) = schemasById.getOrElse(schemaId, throw new IllegalStateException())
+            entityId -> schema.copy(columns = cols.map(connectColumn))
+        }
+    }
+
+    def getJobDocumentation(jobId:String) : Option[ProjectDoc] = {
+        // Ensure that job actually exists
+        val jobRun = ensureJobExists(jobId)
+        val project = com.dimajix.flowman.documentation.ProjectDoc(
+            jobRun.project,
+            Some(jobRun.version).filter(_.nonEmpty)
+        )
+        val projectRef = project.reference
+
+        // Now retrieve entities
+        val qn = entityDocs.filter(_.job_id === jobId.toLong)
+        val dbEntities = Await.result(db.run(qn.result), Duration.Inf)
+
+        val qr = entityResources.filter(r => r.entity_id.in(qn.map(_.id).distinct))
+            .joinLeft(entityResourcePartitions).on(_.id === _.resource_id)
+        val dbResources = Await.result(db.run(qr.result), Duration.Inf)
+        val resourcesByEntityId = dbResources.groupBy(_._1.entity_id).map { case (entityId, res) =>
+            val resources = res.groupBy(_._1.id).toSeq.map { case (resourceId, parts) =>
+                val resource = parts.head._1
+                val partitions = parts.flatMap(p => p._2).map(kv => kv.name -> kv.value).toMap
+                resource.kind -> ResourceIdentifier(resource.category, resource.name, partitions)
+            }
+            entityId -> resources
+        }
+
+        // Create all relations
+        val relations0 = getRelationDocumentation(projectRef, dbEntities, resourcesByEntityId)
+
+        // Retrieve schemas
+        val qs = schemaDocs.filter(r => r.entity_id.in(qn.map(_.id).distinct))
+        val dbSchemas = Await.result(db.run(qs.result), Duration.Inf)
+        val qc = columnDocs.filter(r => r.schema_id.in(qs.map(_.id).distinct))
+        val dbColumns = Await.result(db.run(qc.result), Duration.Inf)
+        val qci = columnInputs.filter(r => r.column_id.in(qc.map(_.id).distinct))
+        val dbColumnInputs = Await.result(db.run(qci.result), Duration.Inf)
+            .groupBy(_.column_id)
+
+        val schemas = getSchemaDocs(dbSchemas, dbColumns, dbColumnInputs, relations0)
+
+        val relations = relations0.map { case(id,rel) =>
+            schemas.get(id).map(schema => rel.copy(schema = Some(schema))).getOrElse(rel)
+        }
+
+        Some(project.copy(
+            relations = relations.toSeq
+        ))
     }
 
     private def queryJobs(query:JobQuery) : Query[JobRuns,JobRun,Seq]  = {
@@ -980,7 +1382,11 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
                     }
             }
             .toSeq
+    }
 
+
+    override def findDocumentation(query: DocumentationQuery): Seq[documentation.EntityDoc] = {
+        ???
     }
 
     private def cmpOpt[T](l:Option[T],r:Option[T])(lt:(T,T) => Int) : Int = {

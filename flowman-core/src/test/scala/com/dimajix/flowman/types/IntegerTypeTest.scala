@@ -28,6 +28,11 @@ class IntegerTypeTest extends AnyFlatSpec with Matchers {
         ObjectMapper.parse[FieldType]("integer") should be(IntegerType)
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("int") should be(IntegerType)
+        FieldType.of("integer") should be(IntegerType)
+    }
+
     it should "parse strings" in {
         IntegerType.parse("12") should be (12)
     }
@@ -102,8 +107,8 @@ class IntegerTypeTest extends AnyFlatSpec with Matchers {
     }
 
     it should "provide the correct SQL type" in {
-        IntegerType.sqlType should be ("int")
-        IntegerType.sparkType.sql should be ("INT")
         IntegerType.typeName should be ("integer")
+        IntegerType.sqlType should be ("INT")
+        IntegerType.sparkType.sql should be ("INT")
     }
 }

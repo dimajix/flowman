@@ -103,7 +103,8 @@ class ColumnDocTest extends AnyFlatSpec with MockFactory with Matchers {
 
     it should "support sql with a relation parent" in {
         val rel = mock[Relation]
-        (rel.name _).expects().returns("rel1")
+        (rel.kind _).expects().returns("hive")
+        (rel.identifier _).expects().returns(RelationIdentifier("rel1"))
         val doc0 = RelationDoc(
             None,
             Some(rel)
@@ -133,7 +134,8 @@ class ColumnDocTest extends AnyFlatSpec with MockFactory with Matchers {
 
     it should "support sql with a relation parent and a project" in {
         val rel = mock[Relation]
-        (rel.name _).expects().returns("rel1")
+        (rel.kind _).expects().returns("hive")
+        (rel.identifier _).expects().returns(RelationIdentifier("project/rel1"))
         val doc0 = ProjectDoc("project")
         val doc1 = RelationDoc(
             Some(doc0.reference),
@@ -167,7 +169,8 @@ class ColumnDocTest extends AnyFlatSpec with MockFactory with Matchers {
 
     it should "support sql with a mapping parent and a no project" in {
         val map = mock[Mapping]
-        (map.name _).expects().returns("map1")
+        (map.kind _).expects().returns("sql")
+        (map.identifier _).expects().returns(MappingIdentifier("project/map1"))
         val doc1 = MappingDoc(
             None,
             Some(map)
@@ -204,7 +207,8 @@ class ColumnDocTest extends AnyFlatSpec with MockFactory with Matchers {
 
     it should "support sql with a mapping parent and a project" in {
         val map = mock[Mapping]
-        (map.name _).expects().returns("map1")
+        (map.kind _).expects().returns("sql")
+        (map.identifier _).expects().returns(MappingIdentifier("project/map1"))
         val doc0 = ProjectDoc("project")
         val doc1 = MappingDoc(
             Some(doc0.reference),

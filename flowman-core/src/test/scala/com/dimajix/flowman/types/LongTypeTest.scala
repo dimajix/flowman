@@ -28,6 +28,11 @@ class LongTypeTest extends AnyFlatSpec with Matchers {
         ObjectMapper.parse[FieldType]("bigint") should be(LongType)
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("long") should be(LongType)
+        FieldType.of("bigint") should be(LongType)
+    }
+
     it should "parse strings" in {
         LongType.parse("12") should be (12)
     }
@@ -93,8 +98,8 @@ class LongTypeTest extends AnyFlatSpec with Matchers {
     }
 
     it should "provide the correct SQL type" in {
-        LongType.sqlType should be ("bigint")
         LongType.typeName should be ("long")
+        LongType.sqlType should be ("BIGINT")
         LongType.sparkType.sql should be ("BIGINT")
     }
 }

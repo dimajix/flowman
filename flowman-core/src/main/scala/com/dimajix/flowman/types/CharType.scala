@@ -28,7 +28,7 @@ final case class CharType(length: Int) extends FieldType {
     override def typeName: String = s"char($length)"
     override def sparkType : DataType = org.apache.spark.sql.types.StringType
     override def catalogType : DataType = org.apache.spark.sql.types.CharType(length)
-    override def sqlType : String = s"char($length)"
+    override def sqlType : String = s"CHAR($length)"
 
     override def parse(value:String, granularity:Option[String]=None) : String = {
         if (granularity.nonEmpty)

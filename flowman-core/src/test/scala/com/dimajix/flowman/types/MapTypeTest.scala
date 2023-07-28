@@ -32,6 +32,7 @@ class MapTypeTest extends AnyFlatSpec with Matchers {
             """.stripMargin
 
         val result = ObjectMapper.parse[FieldType](spec)
+        result should be (MapType(StringType, StringType))
         result shouldBe an[MapType]
         result.sparkType shouldBe a[org.apache.spark.sql.types.MapType]
         result.sparkType should be (org.apache.spark.sql.types.MapType(org.apache.spark.sql.types.StringType, org.apache.spark.sql.types.StringType, true))
@@ -46,6 +47,7 @@ class MapTypeTest extends AnyFlatSpec with Matchers {
             """.stripMargin
 
         val result = ObjectMapper.parse[FieldType](spec)
+        result should be (MapType(StringType, StringType, true))
         result shouldBe an[MapType]
         result.sparkType shouldBe a[org.apache.spark.sql.types.MapType]
         result.sparkType should be (org.apache.spark.sql.types.MapType(org.apache.spark.sql.types.StringType, org.apache.spark.sql.types.StringType, true))
@@ -60,6 +62,7 @@ class MapTypeTest extends AnyFlatSpec with Matchers {
             """.stripMargin
 
         val result = ObjectMapper.parse[FieldType](spec)
+        result should be (MapType(StringType, StringType, false))
         result shouldBe an[MapType]
         result.sparkType shouldBe a[org.apache.spark.sql.types.MapType]
         result.sparkType should be (org.apache.spark.sql.types.MapType(org.apache.spark.sql.types.StringType, org.apache.spark.sql.types.StringType, false))
@@ -77,8 +80,15 @@ class MapTypeTest extends AnyFlatSpec with Matchers {
 
         val result = ObjectMapper.parse[FieldType](spec)
         result shouldBe an[MapType]
+        result should be (MapType(StringType, ArrayType(StringType), false))
         result.sparkType shouldBe a[org.apache.spark.sql.types.MapType]
         result.sparkType should be (org.apache.spark.sql.types.MapType(org.apache.spark.sql.types.StringType, org.apache.spark.sql.types.ArrayType(org.apache.spark.sql.types.StringType, true), false))
     }
 
+    it should "provide the correct SQL type" in {
+        val ftype = MapType(StringType, ArrayType(StringType), false)
+        ftype.typeName should be("map")
+        ftype.sqlType should be("MAP<STRING,ARRAY<STRING>>")
+        ftype.sparkType.sql should be ("MAP<STRING, ARRAY<STRING>>")
+    }
 }

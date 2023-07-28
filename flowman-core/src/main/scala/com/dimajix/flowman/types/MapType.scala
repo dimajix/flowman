@@ -49,6 +49,15 @@ final case class MapType(
         org.apache.spark.sql.types.MapType(keyType.catalogType, valueType.catalogType, containsNull)
     }
 
+    /**
+     * Short Type Name as used in SQL and in YAML specification files
+     *
+     * @return
+     */
+    override def sqlType: String = {
+        "MAP<" + keyType.sqlType + "," + valueType.sqlType + ">"
+    }
+
     override def parse(value:String, granularity:Option[String]=None) : Any = ???
     override def interpolate(value: FieldValue, granularity:Option[String]=None) : Iterable[Any] = ???
 }

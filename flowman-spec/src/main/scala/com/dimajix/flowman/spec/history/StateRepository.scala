@@ -16,6 +16,9 @@
 
 package com.dimajix.flowman.spec.history
 
+import com.dimajix.flowman.documentation.EntityDoc
+import com.dimajix.flowman.documentation.ProjectDoc
+import com.dimajix.flowman.history.DocumentationQuery
 import com.dimajix.flowman.history.Graph
 import com.dimajix.flowman.history.JobColumn
 import com.dimajix.flowman.history.JobOrder
@@ -44,6 +47,8 @@ abstract class StateRepository {
     def getJobEnvironment(jobId:String) : Map[String,String]
     def insertJobGraph(jobId:String, graph:Graph) : Unit
     def getJobGraph(jobId:String) : Option[Graph]
+    def insertJobDocumentation(jobId:String, doc:ProjectDoc) : Unit
+    def getJobDocumentation(jobId:String) : Option[ProjectDoc]
     def findJobs(query:JobQuery, order:Seq[JobOrder]=Seq.empty, limit:Int=10000, offset:Int=0) : Seq[JobState]
     def countJobs(query:JobQuery) : Int
     def countJobs(query:JobQuery, grouping:JobColumn) : Seq[(String,Int)]
@@ -56,5 +61,6 @@ abstract class StateRepository {
     def countTargets(query:TargetQuery) : Int
     def countTargets(query:TargetQuery, grouping:TargetColumn) : Seq[(String,Int)]
 
-    def findMetrics(jobQuery: JobQuery, groupings:Seq[String]) : Seq[MetricSeries]
+    def findMetrics(query: JobQuery, groupings:Seq[String]) : Seq[MetricSeries]
+    def findDocumentation(query:DocumentationQuery) : Seq[EntityDoc]
 }

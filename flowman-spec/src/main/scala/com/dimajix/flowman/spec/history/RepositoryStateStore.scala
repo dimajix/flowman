@@ -22,9 +22,14 @@ import java.time.ZoneId
 import org.slf4j.LoggerFactory
 
 import com.dimajix.common.ExceptionUtils.reasons
+import com.dimajix.flowman.documentation.Documenter
+import com.dimajix.flowman.documentation.EntityDoc
+import com.dimajix.flowman.documentation.ProjectDoc
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.GraphBuilder
 import com.dimajix.flowman.history.AbstractStateStore
+import com.dimajix.flowman.history.DocumentationQuery
+import com.dimajix.flowman.history.DocumenterToken
 import com.dimajix.flowman.history.Graph
 import com.dimajix.flowman.history.JobColumn
 import com.dimajix.flowman.history.JobOrder
@@ -38,6 +43,7 @@ import com.dimajix.flowman.history.TargetOrder
 import com.dimajix.flowman.history.TargetQuery
 import com.dimajix.flowman.history.TargetState
 import com.dimajix.flowman.history.TargetToken
+import com.dimajix.flowman.model.DocumenterResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobResult
@@ -49,6 +55,10 @@ import com.dimajix.flowman.spi.LogFilter
 
 
 object RepositoryStateStore {
+    case class RepositoryDocumenterToken(
+        parent:Option[RepositoryJobToken]
+    ) extends DocumenterToken
+
     case class RepositoryTargetToken(
         run:TargetState,
         parent:Option[RepositoryJobToken]
@@ -154,7 +164,7 @@ abstract class RepositoryStateStore extends AbstractStateStore {
       *
       * @param token
       */
-    override def finishJob(token:JobToken, result: JobResult, metrics:Seq[Measurement]=Seq()) : Unit = {
+    override def finishJob(token:JobToken, result: JobResult, metrics:Seq[Measurement]=Seq.empty) : Unit = {
         val status = result.status
         val jdbcToken = token.asInstanceOf[RepositoryJobToken]
         val run = jdbcToken.run
@@ -243,8 +253,36 @@ abstract class RepositoryStateStore extends AbstractStateStore {
     }
 
     /**
+     * Starts the run and returns a token, which can be anything
+     *
+     * @param documenter
+     * @return
+     */
+    override def startDocumenter(documenter: Documenter, parent: Option[JobToken]): DocumenterToken = {
+        val parentRun = parent.map(_.asInstanceOf[RepositoryJobToken])
+        RepositoryDocumenterToken(parentRun)
+    }
+
+    /**
+     * Sets the status of a job after it has been started
+     *
+     * @param token The token returned by startJob
+     * @param status
+     */
+    override def finishDocumenter(token: DocumenterToken, result: DocumenterResult): Unit = {
+        result.documentation.foreach { doc =>
+            token.asInstanceOf[RepositoryDocumenterToken].parent.foreach { parent =>
+                withRepository { repository =>
+                    repository.insertJobDocumentation(parent.run.id, doc)
+                }
+            }
+        }
+    }
+
+    /**
       * Returns a list of job matching the query criteria
-      * @param query
+     *
+     * @param query
       * @param limit
       * @param offset
       * @return
@@ -266,6 +304,12 @@ abstract class RepositoryStateStore extends AbstractStateStore {
     override def countJobs(query: JobQuery, grouping: JobColumn): Map[String, Int] = {
         withRepository { repository =>
             repository.countJobs(query, grouping).toMap
+        }
+    }
+
+    override def findJobMetrics(jobQuery: JobQuery, groupings: Seq[String]): Seq[MetricSeries] = {
+        withRepository { repository =>
+            repository.findMetrics(jobQuery, groupings)
         }
     }
 
@@ -295,9 +339,10 @@ abstract class RepositoryStateStore extends AbstractStateStore {
         }
     }
 
-    override def findJobMetrics(jobQuery: JobQuery, groupings: Seq[String]): Seq[MetricSeries] = {
+
+    override def findDocumentation(query: DocumentationQuery): Seq[EntityDoc] = {
         withRepository { repository =>
-            repository.findMetrics(jobQuery, groupings)
+            repository.findDocumentation(query)
         }
     }
 

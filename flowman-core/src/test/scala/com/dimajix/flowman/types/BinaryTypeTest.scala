@@ -27,6 +27,11 @@ class BinaryTypeTest extends AnyFlatSpec with Matchers {
         ObjectMapper.parse[FieldType]("binary") should be(BinaryType)
     }
 
+    it should "parseable from a SQL string" in {
+        FieldType.of("binary") should be(BinaryType)
+        FieldType.of("BINARY") should be(BinaryType)
+    }
+
     it should "not support parsing" in {
         an[NotImplementedError] should be thrownBy (BinaryType.parse(""))
         an[NotImplementedError] should be thrownBy (BinaryType.interpolate(SingleValue("")))
@@ -37,8 +42,8 @@ class BinaryTypeTest extends AnyFlatSpec with Matchers {
     }
 
     it should "provide the correct SQL type" in {
-        BinaryType.sqlType should be ("binary")
-        BinaryType.sparkType.sql should be ("BINARY")
+        BinaryType.sqlType should be ("BINARY")
         BinaryType.typeName should be ("binary")
+        BinaryType.sparkType.sql should be ("BINARY")
     }
 }

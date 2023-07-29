@@ -181,6 +181,30 @@ class JobHistoryService @Inject()(history:StateRepository) {
         }
     }
 
+    @Path("/job/{job}/documentation")
+    @GET
+    @Produces(Array(MediaType.APPLICATION_JSON))
+    @ApiOperation(value = "Retrieve documentation of a job run", nickname = "getJobDocumentation", httpMethod = "GET")
+    @ApiImplicitParams(Array(
+        new ApiImplicitParam(name = "job", value = "Job ID", required = true,
+            dataType = "string", paramType = "path")
+    ))
+    @ApiResponses(Array(
+        new ApiResponse(code = 200, message = "Job environment", response = classOf[model.ProjectDocumentation]),
+        new ApiResponse(code = 404, message = "Job not found")
+    ))
+    def getJobDocumentation(
+        @ApiParam(hidden = true) @PathParam("job") jobId:String
+    ) : Response = {
+        try {
+            val doc = history.getJobDocumentation(jobId).getOrElse(throw new NoSuchElementException())
+            Response.ok(Converter.ofSpec(doc)).build()
+        }
+        catch {
+            case _: NoSuchElementException => Response.status(Response.Status.NOT_FOUND).build()
+        }
+    }
+
     private def split(arg:Option[String]) : Seq[String] = {
         arg.toSeq.flatMap(_.split(',')).map(_.trim).filter(_.nonEmpty)
     }

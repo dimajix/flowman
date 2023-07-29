@@ -23,5 +23,7 @@ final case class DocumentationQuery(
     namespace: Seq[String] = Seq.empty,
     project: Seq[String] = Seq.empty,
     category: Seq[Category] = Seq.empty,
-    name: Seq[String] = Seq.empty
+    name: Seq[String] = Seq.empty,
+    job: Seq[String] = Seq.empty,
+    jobId: Seq[String] = Seq.empty
 )

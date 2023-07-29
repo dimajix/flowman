@@ -35,17 +35,17 @@ import com.dimajix.flowman.execution.Status
   * @param partitions
   */
 final case class TargetQuery(
-    id:Seq[String] = Seq(),
-    namespace:Seq[String] = Seq(),
-    project:Seq[String] = Seq(),
-    target:Seq[String] = Seq(),
-    status:Seq[Status] = Seq(),
-    phase:Seq[Phase] = Seq(),
-    job:Seq[String] = Seq(),
-    jobId:Seq[String] = Seq(),
+    id:Seq[String] = Seq.empty,
+    namespace:Seq[String] = Seq.empty,
+    project:Seq[String] = Seq.empty,
+    target:Seq[String] = Seq.empty,
+    status:Seq[Status] = Seq.empty,
+    phase:Seq[Phase] = Seq.empty,
+    job:Seq[String] = Seq.empty,
+    jobId:Seq[String] = Seq.empty,
     from:Option[ZonedDateTime] = None,
     to:Option[ZonedDateTime] = None,
-    partitions:Map[String,String] = Map()
+    partitions:Map[String,String] = Map.empty
 )
 
 

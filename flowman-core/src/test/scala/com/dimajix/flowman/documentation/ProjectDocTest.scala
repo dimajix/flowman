@@ -47,7 +47,7 @@ class ProjectDocTest extends AnyFlatSpec with MockFactory with Matchers {
         )
         val outputRef = output.reference
         val schema = SchemaDoc(
-            parent = Some(outputRef),
+            parent = Some(outputRef)
         )
         val schemaRef = schema.reference
         val column = ColumnDoc(

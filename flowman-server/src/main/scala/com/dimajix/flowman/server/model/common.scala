@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Flowman Authors
+ * Copyright (C) 2023 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,14 @@
 package com.dimajix.flowman.server.model
 
 
-final case class Node(
-    id:Int,
+final case class Resource(
     category:String,
-    kind:String,
-    project:String,
     name:String,
-    identifier:Identifier,
-    provides:Seq[Resource],
-    requires:Seq[Resource]
+    partition:Map[String,String]
 )
 
-final case class Edge(
-    input:Int,
-    output:Int,
-    action:String,
-    labels:Map[String,Seq[String]]
-)
 
-final case class Graph(
-    nodes:Seq[Node],
-    edges:Seq[Edge]
+final case class Identifier(
+    project:Option[String],
+    name:String
 )

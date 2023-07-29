@@ -127,7 +127,7 @@ final class RetryingStateRepository(repository: StateRepository) extends StateRe
         repository.withRetry(repository.findMetrics(query, groupings))
     }
 
-    override def findDocumentation(query: DocumentationQuery): Seq[EntityDoc] = {
+    override def findDocumentation(query: DocumentationQuery, limit:Int, offset:Int): Seq[EntityDoc] = {
         repository.withRetry(repository.findDocumentation(query))
     }
 }

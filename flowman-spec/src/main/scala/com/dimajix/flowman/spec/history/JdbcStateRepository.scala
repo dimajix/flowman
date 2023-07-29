@@ -57,7 +57,6 @@ import com.dimajix.flowman.history.Measurement
 import com.dimajix.flowman.history.MetricSeries
 import com.dimajix.flowman.history.ReadRelation
 import com.dimajix.flowman.history.RelationNode
-import com.dimajix.flowman.history.Resource
 import com.dimajix.flowman.history.TargetColumn
 import com.dimajix.flowman.history.TargetOrder
 import com.dimajix.flowman.history.TargetQuery
@@ -192,6 +191,7 @@ object JdbcStateRepository {
         job_id:Long,
         category:String,
         kind:String,
+        direction:Char,
         identifier:String,
         description:Option[String]
     )
@@ -435,10 +435,11 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
         def category = column[String]("category", O.Length(16))
         def kind = column[String]("kind", O.Length(64))
+        def direction = column[Char]("direction")
         def identifier = column[String]("identifier", O.Length(96))
         def description = column[Option[String]]("description", O.Length(254))
 
-        def * = (id, parent_id, job_id, category, kind, identifier, description) <> (EntityDoc.tupled, EntityDoc.unapply)
+        def * = (id, parent_id, job_id, category, kind, direction, identifier, description) <> (EntityDoc.tupled, EntityDoc.unapply)
     }
 
     private class EntityResources(tag:Tag) extends Table[EntityResource](tag, "ENTITY_RESOURCE") {
@@ -745,7 +746,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
                 val resources = res.groupBy(_._1.id).toSeq.map { case (resourceId,parts) =>
                     val resource = parts.head._1
                     val partitions = parts.flatMap(p => p._2).map(kv => kv.name -> kv.value).toMap
-                    resource.direction -> Resource(resource.category, resource.name, partitions)
+                    resource.direction -> ResourceIdentifier(resource.category, resource.name, partitions)
                 }
                 val provides = resources.filter(_._1 == 'O').map(_._2)
                 val requires = resources.filter(_._1 == 'I').map(_._2)
@@ -807,7 +808,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         }
 
         // Insert all relations
-        val dbRelations = doc.relations.map(n => EntityDoc(-1, None, jobId.toLong, n.category.lower, n.kind, n.identifier.toString, n.description))
+        val dbRelations = doc.relations.map(n => EntityDoc(-1, None, jobId.toLong, n.category.lower, n.kind, '?', n.identifier.toString, n.description))
         val relationQuery = (entityDocs returning entityDocs.map(_.id)) ++= dbRelations
         val relationIds = Await.result(db.run(relationQuery), Duration.Inf)
         val relationToId = createObjectIndex(relationIds, doc.relations)
@@ -853,7 +854,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
             }
             val newColumns = columnsWithId
                 .filter(_._1._3.children.nonEmpty)
-                .map { case((schemaId, parentId, col), id) => (schemaId, Some(id), col) }
+                .flatMap { case((schemaId, parentId, col), id) => col.children.map(child => (schemaId, Some(id), child)) }
 
             if (newColumns.nonEmpty)
                 insertColumns(newColumns)
@@ -1385,7 +1386,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
     }
 
 
-    override def findDocumentation(query: DocumentationQuery): Seq[documentation.EntityDoc] = {
+    override def findDocumentation(query: DocumentationQuery, limit:Int, offset:Int): Seq[documentation.EntityDoc] = {
         ???
     }
 

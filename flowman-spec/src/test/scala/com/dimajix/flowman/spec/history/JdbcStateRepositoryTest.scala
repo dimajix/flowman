@@ -30,7 +30,9 @@ import com.dimajix.flowman.history.JobState
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.RelationIdentifier
 import com.dimajix.flowman.types.Field
+import com.dimajix.flowman.types.IntegerType
 import com.dimajix.flowman.types.StringType
+import com.dimajix.flowman.types.StructType
 import com.dimajix.spark.testing.LocalTempDir
 
 
@@ -78,7 +80,7 @@ class JdbcStateRepositoryTest extends AnyFlatSpec with Matchers with LocalTempDi
         )
         val relation0Ref = relation0.reference
         val schema0 = SchemaDoc(
-            parent = Some(relation0Ref),
+            parent = Some(relation0Ref)
         )
         val schema0Ref = schema0.reference
         val column0 = ColumnDoc(
@@ -92,7 +94,7 @@ class JdbcStateRepositoryTest extends AnyFlatSpec with Matchers with LocalTempDi
         )
         val relation1Ref = relation1.reference
         val schema1 = SchemaDoc(
-            parent = Some(relation1Ref),
+            parent = Some(relation1Ref)
         )
         val schema1Ref = schema1.reference
         val column1 = ColumnDoc(
@@ -100,10 +102,25 @@ class JdbcStateRepositoryTest extends AnyFlatSpec with Matchers with LocalTempDi
             field = Field("some_other_field", StringType, false),
             inputs = Seq(column0.reference)
         )
+        val column1Ref = column1.reference
+        val column1_a = ColumnDoc(
+            parent = Some(column1Ref),
+            field = Field("child_a", StringType, false),
+            inputs = Seq(column0.reference)
+        )
+        val column1_b = ColumnDoc(
+            parent = Some(column1Ref),
+            field = Field("child_b", IntegerType, true),
+            inputs = Seq(column0.reference)
+        )
+        val finalColumn1 = column1.copy(
+            field = Field("some_other_field", StructType(Seq(Field("child_a", StringType, false), Field("child_b", IntegerType, true)))),
+            children = Seq(column1_a, column1_b)
+        )
 
         val finalSchema0 = schema0.copy(columns = Seq(column0))
         val finalRelation0 = relation0.copy(schema = Some(finalSchema0))
-        val finalSchema1 = schema1.copy(columns = Seq(column1))
+        val finalSchema1 = schema1.copy(columns = Seq(finalColumn1))
         val finalRelation1 = relation1.copy(schema = Some(finalSchema1))
         val finalProject = project.copy(relations = Seq(finalRelation0, finalRelation1))
 

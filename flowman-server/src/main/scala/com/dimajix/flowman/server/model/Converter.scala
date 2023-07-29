@@ -20,6 +20,7 @@ import java.time.Duration
 
 import com.dimajix.flowman.history
 import com.dimajix.flowman.model
+import com.dimajix.flowman.documentation
 
 
 object Converter {
@@ -56,7 +57,11 @@ object Converter {
         )
     }
 
-    def ofSpec(resource:history.Resource) : Resource = {
+    def ofSpec(identifier: model.Identifier[_]): Identifier = {
+        Identifier(identifier.project, identifier.name)
+    }
+
+    def ofSpec(resource: model.ResourceIdentifier): Resource = {
         Resource(resource.category, resource.name, resource.partition)
     }
 
@@ -67,6 +72,7 @@ object Converter {
             node.kind,
             node.project,
             node.name,
+            ofSpec(node.identifier),
             node.provides.map(r => ofSpec(r)),
             node.requires.map(r => ofSpec(r))
         )
@@ -121,6 +127,52 @@ object Converter {
             state.endDateTime,
             state.endDateTime.map(dt => Duration.between(state.startDateTime.getOrElse(dt), dt)),
             state.error
+        )
+    }
+
+    def ofSpec(doc:documentation.ProjectDoc) : ProjectDocumentation = {
+        ProjectDocumentation(
+            doc.name,
+            doc.version,
+            doc.description,
+            doc.relations.map(ofSpec)
+        )
+    }
+
+    def ofSpec(doc:documentation.RelationDoc) : RelationDocumentation = {
+        RelationDocumentation(
+            doc.parent.map(_.toString),
+            doc.kind,
+            ofSpec(doc.identifier),
+            doc.description,
+            doc.schema.map(ofSpec),
+            doc.inputs.map(_.toString),
+            doc.provides.map(ofSpec),
+            doc.requires.map(ofSpec),
+            doc.sources.map(ofSpec)
+        )
+    }
+
+    def ofSpec(doc:documentation.SchemaDoc) : SchemaDocumentation = {
+        SchemaDocumentation(
+            doc.parent.map(_.toString),
+            doc.description,
+            doc.columns.map(ofSpec)
+        )
+    }
+
+    def ofSpec(doc:documentation.ColumnDoc) : ColumnDocumentation = {
+        ColumnDocumentation(
+            doc.parent.map(_.toString),
+            doc.name,
+            doc.fqName,
+            doc.typeName,
+            doc.sqlType,
+            doc.nullable,
+            doc.description,
+            doc.children.map(ofSpec),
+            doc.inputs.map(_.toString),
+            doc.index
         )
     }
 }

@@ -49,7 +49,7 @@ abstract class StateRepository {
     def getJobGraph(jobId:String) : Option[Graph]
     def insertJobDocumentation(jobId:String, doc:ProjectDoc) : Unit
     def getJobDocumentation(jobId:String) : Option[ProjectDoc]
-    def findJobs(query:JobQuery, order:Seq[JobOrder]=Seq.empty, limit:Int=10000, offset:Int=0) : Seq[JobState]
+    def findJobs(query:JobQuery, order:Seq[JobOrder]=Seq.empty, limit:Int=1000, offset:Int=0) : Seq[JobState]
     def countJobs(query:JobQuery) : Int
     def countJobs(query:JobQuery, grouping:JobColumn) : Seq[(String,Int)]
 
@@ -57,10 +57,10 @@ abstract class StateRepository {
     def getTargetState(targetId:String) : TargetState
     def insertTargetState(state:TargetState) : TargetState
     def updateTargetState(state:TargetState) : Unit
-    def findTargets(query:TargetQuery, order:Seq[TargetOrder]=Seq.empty, limit:Int=10000, offset:Int=0) : Seq[TargetState]
+    def findTargets(query:TargetQuery, order:Seq[TargetOrder]=Seq.empty, limit:Int=1000, offset:Int=0) : Seq[TargetState]
     def countTargets(query:TargetQuery) : Int
     def countTargets(query:TargetQuery, grouping:TargetColumn) : Seq[(String,Int)]
 
-    def findMetrics(query: JobQuery, groupings:Seq[String]) : Seq[MetricSeries]
-    def findDocumentation(query:DocumentationQuery) : Seq[EntityDoc]
+    def findMetrics(query:JobQuery, groupings:Seq[String]) : Seq[MetricSeries]
+    def findDocumentation(query:DocumentationQuery, limit:Int=100, offset:Int=0) : Seq[EntityDoc]
 }

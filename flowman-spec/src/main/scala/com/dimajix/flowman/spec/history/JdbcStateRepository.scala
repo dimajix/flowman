@@ -253,6 +253,19 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         Database.forURL(url, driver=driver, prop=props, executor=SlickUtils.defaultExecutor)
     }
 
+    private val NAME_LENGTH = 64
+    private val ENV_NAME_LENGTH = 64
+    private val ENV_VALUE_LENGTH = 1022
+    private val IDENTIFIER_LENGTH = 96
+    private val VERSION_LENGTH = 32
+    private val METRIC_LABEL_LENGTH = 64
+    private val EDGE_LABEL_LENGTH = 254
+    private val HASH_LENGTH = 32
+    private val DESCRIPTION_LENGTH = 254
+    private val RESOURCE_LENGTH = 254
+    private val PARTITION_NAME_LENGTH = 64
+    private val PARTITION_VALUE_LENGTH = 254
+
     private val jobRuns = TableQuery[JobRuns]
     private val jobArgs = TableQuery[JobArguments]
     private val jobEnvironments = TableQuery[JobEnvironments]
@@ -277,12 +290,12 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
     private class JobRuns(tag:Tag) extends Table[JobRun](tag, "JOB_RUN") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-        def namespace = column[String]("namespace", O.Length(64))
-        def project = column[String]("project", O.Length(64))
-        def version = column[String]("version", O.Length(32))
-        def job = column[String]("job", O.Length(64))
+        def namespace = column[String]("namespace", O.Length(NAME_LENGTH))
+        def project = column[String]("project", O.Length(NAME_LENGTH))
+        def version = column[String]("version", O.Length(VERSION_LENGTH))
+        def job = column[String]("job", O.Length(NAME_LENGTH))
         def phase = column[String]("phase", O.Length(64))
-        def args_hash = column[String]("args_hash", O.Length(32))
+        def args_hash = column[String]("args_hash", O.Length(HASH_LENGTH))
         def start_ts = column[Option[Timestamp]]("start_ts")
         def end_ts = column[Option[Timestamp]]("end_ts")
         def status = column[String]("status", O.Length(20))
@@ -295,8 +308,8 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
     private class JobArguments(tag: Tag) extends Table[JobArgument](tag, "JOB_ARGUMENT") {
         def job_id = column[Long]("job_id")
-        def name = column[String]("name", O.Length(64))
-        def value = column[String]("value", O.Length(1022))
+        def name = column[String]("name", O.Length(ENV_NAME_LENGTH))
+        def value = column[String]("value", O.Length(ENV_VALUE_LENGTH))
 
         def pk = primaryKey("JOB_ARGUMENT_PK", (job_id, name))
         def job = foreignKey("JOB_ARGUMENT_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
@@ -306,8 +319,8 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
     private class JobEnvironments(tag: Tag) extends Table[JobEnvironment](tag, "JOB_ENVIRONMENT") {
         def job_id = column[Long]("job_id")
-        def name = column[String]("name", O.Length(64))
-        def value = column[String]("value", O.Length(1022))
+        def name = column[String]("name", O.Length(ENV_NAME_LENGTH))
+        def value = column[String]("value", O.Length(ENV_VALUE_LENGTH))
 
         def pk = primaryKey("JOB_ENVIRONMENT_PK", (job_id, name))
         def job = foreignKey("JOB_ENVIRONMENT_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
@@ -318,7 +331,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
     private class JobMetrics(tag: Tag) extends Table[JobMetric](tag, "JOB_METRIC") {
         def id = column[Long]("metric_id", O.PrimaryKey, O.AutoInc)
         def job_id = column[Long]("job_id")
-        def name = column[String]("name", O.Length(64))
+        def name = column[String]("name", O.Length(NAME_LENGTH))
         def ts = column[Timestamp]("ts")
         def value = column[Double]("value")
 
@@ -329,8 +342,8 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
     private class JobMetricLabels(tag: Tag) extends Table[JobMetricLabel](tag, "JOB_METRIC_LABEL") {
         def metric_id = column[Long]("metric_id")
-        def name = column[String]("name", O.Length(64))
-        def value = column[String]("value", O.Length(64))
+        def name = column[String]("name", O.Length(NAME_LENGTH))
+        def value = column[String]("value", O.Length(METRIC_LABEL_LENGTH))
 
         def pk = primaryKey("JOB_METRIC_LABEL_PK", (metric_id, name))
         def metric = foreignKey("JOB_METRIC_LABEL_JOB_METRIC_FK", metric_id, jobMetrics)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
@@ -342,12 +355,12 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
     private class TargetRuns(tag: Tag) extends Table[TargetRun](tag, "TARGET_RUN") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def job_id = column[Option[Long]]("job_id")
-        def namespace = column[String]("namespace", O.Length(64))
-        def project = column[String]("project", O.Length(64))
-        def version = column[String]("version", O.Length(32))
-        def target = column[String]("target", O.Length(64))
+        def namespace = column[String]("namespace", O.Length(NAME_LENGTH))
+        def project = column[String]("project", O.Length(NAME_LENGTH))
+        def version = column[String]("version", O.Length(VERSION_LENGTH))
+        def target = column[String]("target", O.Length(NAME_LENGTH))
         def phase = column[String]("phase", O.Length(12))
-        def partitions_hash = column[String]("partitions_hash", O.Length(32))
+        def partitions_hash = column[String]("partitions_hash", O.Length(HASH_LENGTH))
         def start_ts = column[Option[Timestamp]]("start_ts")
         def end_ts = column[Option[Timestamp]]("end_ts")
         def status = column[String]("status", O.Length(20))
@@ -361,8 +374,8 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
     private class TargetPartitions(tag: Tag) extends Table[TargetPartition](tag, "TARGET_PARTITION") {
         def target_id = column[Long]("target_id")
-        def name = column[String]("name", O.Length(64))
-        def value = column[String]("value", O.Length(254))
+        def name = column[String]("name", O.Length(PARTITION_NAME_LENGTH))
+        def value = column[String]("value", O.Length(PARTITION_VALUE_LENGTH))
 
         def pk = primaryKey("TARGET_PARTITION_PK", (target_id, name))
         def target = foreignKey("TARGET_PARTITION_TARGET_RUN_FK", target_id, targetRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
@@ -373,8 +386,8 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
     private class GraphEdgeLabels(tag:Tag) extends Table[GraphEdgeLabel](tag, "GRAPH_EDGE_LABEL") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def edge_id = column[Long]("edge_id")
-        def name = column[String]("name", O.Length(64))
-        def value = column[String]("value", O.Length(254))
+        def name = column[String]("name", O.Length(NAME_LENGTH))
+        def value = column[String]("value", O.Length(EDGE_LABEL_LENGTH))
 
         def edge = foreignKey("GRAPH_EDGE_LABEL_EDGE_FK", edge_id, graphEdges)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
@@ -398,7 +411,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def job_id = column[Long]("job_id")
         def category = column[String]("category", O.Length(16))
         def kind = column[String]("kind", O.Length(64))
-        def name = column[String]("name", O.Length(64))
+        def name = column[String]("name", O.Length(NAME_LENGTH))
 
         def job = foreignKey("GRAPH_NODE_JOB_FK", job_id, jobRuns)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
@@ -410,7 +423,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def node_id = column[Long]("node_id")
         def direction = column[Char]("direction")
         def category = column[String]("category", O.Length(32))
-        def name = column[String]("name", O.Length(254))
+        def name = column[String]("name", O.Length(RESOURCE_LENGTH))
 
         def node = foreignKey("GRAPH_RESOURCE_NODE_FK", node_id, graphNodes)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
@@ -419,8 +432,8 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
     private class GraphResourcePartitions(tag:Tag) extends Table[GraphResourcePartition](tag, "GRAPH_RESOURCE_PARTITION") {
         def resource_id = column[Long]("resource_id")
-        def name = column[String]("name", O.Length(64))
-        def value = column[String]("value", O.Length(254))
+        def name = column[String]("name", O.Length(PARTITION_NAME_LENGTH))
+        def value = column[String]("value", O.Length(PARTITION_VALUE_LENGTH))
 
         def pk = primaryKey("GRAPH_RESOURCE_PARTITION_PK", (resource_id, name))
         def resource = foreignKey("GRAPH_RESOURCE_PARTITION_RESOURCE_FK", resource_id, graphResources)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
@@ -436,8 +449,8 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def category = column[String]("category", O.Length(16))
         def kind = column[String]("kind", O.Length(64))
         def direction = column[Char]("direction")
-        def identifier = column[String]("identifier", O.Length(96))
-        def description = column[Option[String]]("description", O.Length(254))
+        def identifier = column[String]("identifier", O.Length(IDENTIFIER_LENGTH))
+        def description = column[Option[String]]("description", O.Length(DESCRIPTION_LENGTH))
 
         def * = (id, parent_id, job_id, category, kind, direction, identifier, description) <> (EntityDoc.tupled, EntityDoc.unapply)
     }
@@ -446,9 +459,9 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
 
         def entity_id = column[Long]("entity_id")
-        def category = column[String]("category", O.Length(16))
+        def category = column[String]("category", O.Length(32))
         def kind = column[Char]("kind")
-        def name = column[String]("name", O.Length(254))
+        def name = column[String]("name", O.Length(DESCRIPTION_LENGTH))
 
         def entity = foreignKey("ENTITY_RESOURCE_ENTITY_FK", entity_id, entityDocs)(_.id, onUpdate=ForeignKeyAction.Restrict, onDelete=ForeignKeyAction.Cascade)
 
@@ -457,8 +470,8 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
     private class EntityResourcePartitions(tag: Tag) extends Table[EntityResourcePartition](tag, "ENTITY_RESOURCE_PARTITION") {
         def resource_id = column[Long]("resource_id")
-        def name = column[String]("name", O.Length(64))
-        def value = column[String]("value", O.Length(254))
+        def name = column[String]("name", O.Length(PARTITION_NAME_LENGTH))
+        def value = column[String]("value", O.Length(PARTITION_VALUE_LENGTH))
 
         def pk = primaryKey("ENTITY_RESOURCE_PARTITION_PK", (resource_id, name))
         def resource = foreignKey("ENTITY_RESOURCE_PARTITION_RESOURCE_FK", resource_id, entityResources)(_.id, onUpdate = ForeignKeyAction.Restrict, onDelete = ForeignKeyAction.Cascade)
@@ -478,7 +491,7 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
     private class SchemaDocs(tag: Tag) extends Table[SchemaDoc](tag, "SCHEMA_DOC") {
         def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
         def entity_id = column[Long]("entity_id")
-        def description = column[Option[String]]("description", O.Length(254))
+        def description = column[Option[String]]("description", O.Length(DESCRIPTION_LENGTH))
 
         def entity = foreignKey("SCHEMA_DOC_SCHEMA_DOC_FK", entity_id, entityDocs)(_.id, onUpdate = ForeignKeyAction.Restrict, onDelete = ForeignKeyAction.Cascade)
         def * = (id, entity_id, description) <> (SchemaDoc.tupled, SchemaDoc.unapply)
@@ -489,11 +502,11 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         def schema_id = column[Long]("schema_id")
         def parent_id = column[Option[Long]]("parent_id")
 
-        def name = column[String]("name", O.Length(64))
+        def name = column[String]("name", O.Length(NAME_LENGTH))
         def data_type = column[String]("data_type", O.Length(64))
         def nullable = column[Boolean]("nullable")
         def index = column[Int]("index")
-        def description = column[Option[String]]("description", O.Length(254))
+        def description = column[Option[String]]("description", O.Length(DESCRIPTION_LENGTH))
 
         def entity = foreignKey("COLUMN_DOC_SCHEMA_DOC_FK", schema_id, entityDocs)(_.id, onUpdate = ForeignKeyAction.Restrict, onDelete = ForeignKeyAction.Cascade)
         def parent = foreignKey("COLUMN_DOC_PARENT_FK", parent_id, columnDocs)(_.id.?, onUpdate = ForeignKeyAction.Restrict, onDelete = ForeignKeyAction.Cascade)
@@ -628,10 +641,10 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
     override def insertJobState(state:JobState, env:Map[String,String]) : JobState = {
         val run = JobRun(
             0,
-            state.namespace,
-            state.project,
-            state.version,
-            state.job,
+            state.namespace.take(NAME_LENGTH),
+            state.project.take(NAME_LENGTH),
+            state.version.take(VERSION_LENGTH),
+            state.job.take(NAME_LENGTH),
             state.phase.upper,
             hashMap(state.args),
             state.startDateTime.map(st => new Timestamp(st.toInstant.toEpochMilli)),
@@ -643,11 +656,19 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         val runQuery = (jobRuns returning jobRuns.map(_.id) into((run, id) => run.copy(id=id))) += run
         val runResult = Await.result(db.run(runQuery), Duration.Inf)
 
-        val runArgs = state.args.map(kv => JobArgument(runResult.id, kv._1, kv._2))
+        val runArgs = state.args.map(kv => JobArgument(
+            runResult.id,
+            kv._1.take(ENV_NAME_LENGTH),
+            kv._2.take(ENV_VALUE_LENGTH)
+        ))
         val argsQuery = jobArgs ++= runArgs
         Await.result(db.run(argsQuery), Duration.Inf)
 
-        val runEnvs = env.map(kv => JobEnvironment(runResult.id, kv._1, kv._2))
+        val runEnvs = env.map(kv => JobEnvironment(
+            runResult.id,
+            kv._1.take(ENV_NAME_LENGTH),
+            kv._2.take(ENV_VALUE_LENGTH)
+        ))
         val envsQuery = jobEnvironments ++= runEnvs
         Await.result(db.run(envsQuery), Duration.Inf)
 
@@ -658,10 +679,20 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         implicit val ec = db.executor.executionContext
 
         val result = metrics.map { m =>
-            val jobMetric = JobMetric(0, jobId.toLong, m.name, new Timestamp(m.ts.toInstant.toEpochMilli), m.value)
+            val jobMetric = JobMetric(
+                0,
+                jobId.toLong,
+                m.name.take(NAME_LENGTH),
+                new Timestamp(m.ts.toInstant.toEpochMilli),
+                m.value
+            )
             val jmQuery = (jobMetrics returning jobMetrics.map(_.id) into((jm,id) => jm.copy(id=id))) += jobMetric
             db.run(jmQuery).flatMap { metric =>
-                val labels = m.labels.map(l => JobMetricLabel(metric.id, l._1, l._2))
+                val labels = m.labels.map(l => JobMetricLabel(
+                    metric.id,
+                    l._1.take(NAME_LENGTH),
+                    l._2.take(METRIC_LABEL_LENGTH)
+                ))
                 val mlQuery = jobMetricLabels ++= labels
                 db.run(mlQuery)
             }
@@ -700,31 +731,57 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
     override def insertJobGraph(jobId:String, graph:Graph) : Unit = {
         // Step 1: Insert nodes
-        val dbNodes = graph.nodes.map(n => GraphNode(-1, jobId.toLong, n.category.lower, n.kind, n.identifier.toString))
+        val dbNodes = graph.nodes.map(n => GraphNode(
+            -1,
+            jobId.toLong,
+            n.category.lower,
+            n.kind,
+            n.identifier.toString
+        ))
         val nodesQuery = (graphNodes returning graphNodes.map(_.id)) ++= dbNodes
         val nodeIds = Await.result(db.run(nodesQuery), Duration.Inf)
         val nodeIdToDbId = graph.nodes.map(_.id).zip(nodeIds).toMap
 
         // Step 2: Insert edges
-        val dbEdges = graph.edges.map(e => GraphEdge(-1, nodeIdToDbId(e.input.id), nodeIdToDbId(e.output.id), e.action.upper))
+        val dbEdges = graph.edges.map(e => GraphEdge(
+            -1,
+            nodeIdToDbId(e.input.id),
+            nodeIdToDbId(e.output.id),
+            e.action.upper
+        ))
         val edgesQuery = (graphEdges returning graphEdges.map(_.id)) ++= dbEdges
         val edgeIds = Await.result(db.run(edgesQuery), Duration.Inf)
 
         // Step 3: Insert edge labels
-        val dbLabels = graph.edges.zip(edgeIds).flatMap { case (e,id) => e.labels.flatMap(l => l._2.map(v => GraphEdgeLabel(-1, id, l._1, v))) }
+        val dbLabels = graph.edges.zip(edgeIds)
+            .flatMap { case (e,id) => e.labels.flatMap(l => l._2.map(v => GraphEdgeLabel(-1, id, l._1.take(NAME_LENGTH), v.take(EDGE_LABEL_LENGTH)))) }
         val labelsQuery = graphEdgeLabels ++= dbLabels
         Await.result(db.run(labelsQuery), Duration.Inf)
 
         // Step 4: Insert node resources
         val dbResources = graph.nodes.flatMap { n =>
-               n.provides.map(r => (GraphResource(-1, nodeIdToDbId(n.id), 'O', r.category, r.name), r.partition)) ++
-                   n.requires.map(r => (GraphResource(-1, nodeIdToDbId(n.id), 'I', r.category, r.name), r.partition))
+               n.provides.map(r => (GraphResource(
+                   -1,
+                   nodeIdToDbId(n.id),
+                   'O',
+                   r.category,
+                   r.name.take(RESOURCE_LENGTH)),
+                   r.partition
+               )) ++
+               n.requires.map(r => (GraphResource(
+                   -1,
+                   nodeIdToDbId(n.id),
+                   'I',
+                   r.category,
+                   r.name.take(RESOURCE_LENGTH)),
+                   r.partition
+               ))
             }
         val resourceQuery = (graphResources returning graphResources.map(_.id)) ++= dbResources.map(_._1)
         val resourceIds = Await.result(db.run(resourceQuery), Duration.Inf)
 
         // Step 5: Insert node resource partitions
-        val dbResourcePartitions = dbResources.map(_._2).zip(resourceIds).flatMap(r => r._1.map(kv => GraphResourcePartition(r._2, kv._1, kv._2)))
+        val dbResourcePartitions = dbResources.map(_._2).zip(resourceIds).flatMap(r => r._1.map(kv => GraphResourcePartition(r._2, kv._1.take(PARTITION_NAME_LENGTH), kv._2.take(PARTITION_VALUE_LENGTH))))
         val resourcePartitionsQuery = graphResourcePartitions ++= dbResourcePartitions
         Await.result(db.run(resourcePartitionsQuery), Duration.Inf)
     }
@@ -799,7 +856,13 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
 
     override def insertJobDocumentation(jobId: String, doc: ProjectDoc): Unit = {
         def createEntityResources(entityId: Long, kind: Char, resources: Seq[ResourceIdentifier]): Seq[EntityResource] = {
-            resources.map(res => EntityResource(-1, entityId, res.category, kind, res.name))
+            resources.map(res => EntityResource(
+                -1,
+                entityId,
+                res.category,
+                kind,
+                res.name.take(RESOURCE_LENGTH)
+            ))
         }
         def createObjectIndex[T](ids:Iterable[Long], entites:Iterable[T]) : IdentityHashMap[T,Long] = {
             val entityToId = new IdentityHashMap[T, Long]()
@@ -808,7 +871,16 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         }
 
         // Insert all relations
-        val dbRelations = doc.relations.map(n => EntityDoc(-1, None, jobId.toLong, n.category.lower, n.kind, '?', n.identifier.toString, n.description))
+        val dbRelations = doc.relations.map(n => EntityDoc(
+            -1,
+            None,
+            jobId.toLong,
+            n.category.lower,
+            n.kind,
+            '?',
+            n.identifier.toString.take(IDENTIFIER_LENGTH),
+            n.description.map(_.take(DESCRIPTION_LENGTH))
+        ))
         val relationQuery = (entityDocs returning entityDocs.map(_.id)) ++= dbRelations
         val relationIds = Await.result(db.run(relationQuery), Duration.Inf)
         val relationToId = createObjectIndex(relationIds, doc.relations)
@@ -826,14 +898,22 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
             (rel.provides ++ rel.requires ++ rel.sources)
         }
         val resourcePartitionQuery = entityResourcePartitions ++= resourcePartitions.zip(resourceIds).flatMap {
-            case (res, id) => res.partition.toSeq.map(kv => EntityResourcePartition(id, kv._1, kv._2))
+            case (res, id) => res.partition.toSeq.map(kv => EntityResourcePartition(
+                id,
+                kv._1.take(PARTITION_NAME_LENGTH),
+                kv._2.take(PARTITION_VALUE_LENGTH)
+            ))
         }
         Await.result(db.run(resourcePartitionQuery), Duration.Inf)
 
         // Insert all schemas
         val dbSchemas = doc.relations.flatMap { rel =>
             val relId = relationToId.getOrElse(rel, throw new IllegalStateException())
-            rel.schema.map(s => SchemaDoc(-1, relId, s.description))
+            rel.schema.map(s => SchemaDoc(
+                -1,
+                relId,
+                s.description.map(_.take(DESCRIPTION_LENGTH))
+            ))
         }
         val schemaQuery = (schemaDocs returning schemaDocs.map(_.id)) ++= dbSchemas
         val schemaIds = Await.result(db.run(schemaQuery), Duration.Inf)
@@ -843,7 +923,16 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         @tailrec
         def insertColumns(columns:Seq[(Long,Option[Long],com.dimajix.flowman.documentation.ColumnDoc)]) : Unit = {
             val dbColumns = columns.map { case (schemaId, parentId, col) =>
-                ColumnDoc(-1, schemaId, parentId, col.name, col.typeName, col.nullable, col.description, col.index)
+                ColumnDoc(
+                    -1,
+                    schemaId,
+                    parentId,
+                    col.name.take(NAME_LENGTH),
+                    col.typeName,
+                    col.nullable,
+                    col.description.map(_.take(DESCRIPTION_LENGTH)),
+                    col.index
+                )
             }
             val columnQuery = (columnDocs returning columnDocs.map(_.id)) ++= dbColumns
             val columnIds = Await.result(db.run(columnQuery), Duration.Inf)
@@ -1204,10 +1293,10 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         val run = TargetRun(
             0,
             state.jobId.map(_.toLong),
-            state.namespace,
-            state.project,
-            state.project,
-            state.target,
+            state.namespace.take(NAME_LENGTH),
+            state.project.take(NAME_LENGTH),
+            state.version.take(VERSION_LENGTH),
+            state.target.take(NAME_LENGTH),
             state.phase.upper,
             hashMap(state.partitions),
             state.startDateTime.map(ts => new Timestamp(ts.toInstant.toEpochMilli)),
@@ -1219,7 +1308,11 @@ final class JdbcStateRepository(connection: JdbcStateStore.Connection, retries:I
         val runQuery = (targetRuns returning targetRuns.map(_.id) into((run, id) => run.copy(id=id))) += run
         val runResult = Await.result(db.run(runQuery), Duration.Inf)
 
-        val runPartitions = state.partitions.map(kv => TargetPartition(runResult.id, kv._1, kv._2))
+        val runPartitions = state.partitions.map(kv => TargetPartition(
+            runResult.id,
+            kv._1.take(PARTITION_NAME_LENGTH),
+            kv._2.take(PARTITION_VALUE_LENGTH)
+        ))
         val argsQuery = targetPartitions ++= runPartitions
         Await.result(db.run(argsQuery), Duration.Inf)
 

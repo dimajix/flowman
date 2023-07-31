@@ -168,13 +168,15 @@ abstract class RepositoryStateStore extends AbstractStateStore {
         val status = result.status
         val jdbcToken = token.asInstanceOf[RepositoryJobToken]
         val run = jdbcToken.run
-        logger.info(s"Mark '${run.phase}' job '${run.job}' as $status in history database")
 
         val now = Clock.systemDefaultZone().instant().atZone(ZoneId.systemDefault())
         val graph = Graph.ofGraph(jdbcToken.graph.build())
         withRepository { repository =>
+            logger.info(s"Mark '${run.phase}' job '${run.job}' as $status in history database")
             repository.updateJobState(run.copy(endDateTime=Some(now), status=status, error=result.exception.map(reasons)))
+            logger.info(s"Storing execution metrics of '${run.phase}' job '${run.job}' in history database")
             repository.insertJobMetrics(run.id, metrics)
+            logger.info(s"Storing execution graph of '${run.phase}' job '${run.job}' in history database")
             repository.insertJobGraph(run.id, graph)
         }
     }
@@ -273,6 +275,7 @@ abstract class RepositoryStateStore extends AbstractStateStore {
         result.documentation.foreach { doc =>
             token.asInstanceOf[RepositoryDocumenterToken].parent.foreach { parent =>
                 withRepository { repository =>
+                    logger.info(s"Storing documentation of '${parent.run.phase}' job '${parent.run.job}' in history database")
                     repository.insertJobDocumentation(parent.run.id, doc)
                 }
             }

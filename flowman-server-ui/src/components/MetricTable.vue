@@ -16,7 +16,7 @@
       </thead>
       <tbody>
       <tr
-        v-for="item in metrics.entries()"
+        v-for="item in sortMetrics(metrics).entries()"
         :key="hash(item[0])"
       >
         <td>{{ item[1].name }}</td>
@@ -46,6 +46,11 @@ export default {
   },
 
   methods: {
+    sortMetrics(items) {
+      let items2 = items.slice()
+      items2.sort((a,b) => a.name.localeCompare(b.name))
+      return items2
+    },
     hash(obj) {
       return hash(obj)
     }

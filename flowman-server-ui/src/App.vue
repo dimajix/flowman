@@ -100,7 +100,10 @@ export default {
       this.$api.getJobCounts('project')
         .then(response => {
           this.projects =  Object.keys(response.data).sort((l,r) => l >= r).filter(l => l.trim() !== "")
-          this.project = this.projects[0]
+          if (this.projects.length > 0)
+            this.project = this.projects[0]
+          else
+            this.project = ""
         })
     },
 

@@ -24,7 +24,7 @@ import com.dimajix.flowman.history.StateStore
 class NullHistorySpec extends HistorySpec {
     def instantiate(context:Context, properties:Option[StateStore.Properties] = None): StateStore = {
         new NullStateStore(
-            instanceProperties(context, properties),
+            instanceProperties(context, properties)
         )
     }
 }

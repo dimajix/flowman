@@ -20,7 +20,7 @@ import java.time.Instant
 
 import scala.util.control.NonFatal
 
-import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.documentation.Documenter
@@ -42,7 +42,7 @@ import com.dimajix.flowman.util.withShutdownHook
 
 
 abstract class AbstractExecution extends Execution {
-    private val logger = LoggerFactory.getLogger(classOf[MonitorExecution])
+    protected val logger:Logger
 
     /**
      * Invokes a function with a new [[Executor]] that with additional [[ExecutionListener]].

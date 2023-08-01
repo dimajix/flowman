@@ -18,10 +18,21 @@ package com.dimajix.flowman.metric
 
 import java.util.concurrent.atomic.AtomicReference
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Status
 
 
-class CollectingMetricSink extends AbstractMetricSink {
+object CollectingMetricSink {
+    def apply(context:Context) : CollectingMetricSink = {
+        CollectingMetricSink(
+            MetricSink.Properties(context, "collect")
+        )
+    }
+}
+
+case class CollectingMetricSink(
+    override val instanceProperties:MetricSink.Properties
+) extends AbstractMetricSink {
     private val currentMetrics = new AtomicReference[Seq[Metric]](Seq())
 
     def metrics = currentMetrics.get()

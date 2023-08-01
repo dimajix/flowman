@@ -45,7 +45,7 @@ class NullStateStoreTest extends AnyFlatSpec with Matchers with MockFactory {
             Map()
         )
 
-        val monitor = new NullStateStore
+        val monitor = NullStateStore(context)
         monitor.getJobState(instance) should be (None)
         val token = monitor.startJob(job, instance)
         monitor.getJobState(instance) should be (None)
@@ -54,6 +54,7 @@ class NullStateStoreTest extends AnyFlatSpec with Matchers with MockFactory {
     }
 
     it should "support targets" in {
+        val context = RootContext.builder().build()
         val instance = TargetDigest(
             "default",
             "project",
@@ -64,7 +65,7 @@ class NullStateStoreTest extends AnyFlatSpec with Matchers with MockFactory {
         val target = mock[Target]
         (target.digest _).expects(Phase.BUILD).anyNumberOfTimes().returns(instance)
 
-        val monitor = new NullStateStore
+        val monitor = NullStateStore(context)
         monitor.getTargetState(instance) should be (None)
         val token = monitor.startTarget(target, instance)
         monitor.getTargetState(instance) should be (None)

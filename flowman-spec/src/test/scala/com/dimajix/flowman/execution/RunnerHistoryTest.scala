@@ -70,11 +70,12 @@ object RunnerHistoryTest {
 
 class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with LocalSparkSession {
     "The Runner with History" should "work with empty jobs" in {
+        val context = RootContext.builder().build()
         val db = tempDir.toPath.resolve("mydb")
         val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
-            history = Some(JdbcStateStore(connection))
+            history = Some(JdbcStateStore(context, connection))
         )
         val session = Session.builder()
             .withNamespace(ns)
@@ -94,11 +95,12 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
     }
 
     it should "be used in a Session" in {
+        val context = RootContext.builder().build()
         val db = tempDir.toPath.resolve("mydb")
         val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
-            history = Some(JdbcStateStore(connection))
+            history = Some(JdbcStateStore(context, connection))
         )
         val session = Session.builder()
             .withNamespace(ns)
@@ -119,11 +121,12 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
     }
 
     it should "work with non-empty jobs" in {
+        val context = RootContext.builder().build()
         val db = tempDir.toPath.resolve("mydb")
         val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
-            history = Some(JdbcStateStore(connection))
+            history = Some(JdbcStateStore(context, connection))
         )
         val project = Project(
             name = "default",
@@ -176,11 +179,12 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
                 .build()
         }
 
+        val context = RootContext.builder().build()
         val db = tempDir.toPath.resolve("mydb")
         val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
-            history = Some(JdbcStateStore(connection))
+            history = Some(JdbcStateStore(context, connection))
         )
         val project = Project(
             name = "default",
@@ -230,11 +234,12 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
     }
 
     it should "catch exceptions" in {
+        val context = RootContext.builder().build()
         val db = tempDir.toPath.resolve("mydb")
         val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
-            history = Some(JdbcStateStore(connection))
+            history = Some(JdbcStateStore(context, connection))
         )
         val session = Session.builder()
             .withSparkSession(spark)
@@ -253,11 +258,12 @@ class RunnerHistoryTest extends AnyFlatSpec with MockFactory with Matchers with 
     }
 
     it should "support parameters in targets" in {
+        val context = RootContext.builder().build()
         val db = tempDir.toPath.resolve("mydb")
         val connection = JdbcStateStore.Connection("jdbc:derby:"+db+";create=true", driver="org.apache.derby.jdbc.EmbeddedDriver")
         val ns = Namespace(
             name = "default",
-            history = Some(JdbcStateStore(connection))
+            history = Some(JdbcStateStore(context, connection))
         )
         val project = Project(
             name = "default",

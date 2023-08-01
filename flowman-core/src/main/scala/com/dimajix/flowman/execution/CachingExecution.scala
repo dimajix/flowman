@@ -46,7 +46,6 @@ import com.dimajix.flowman.types.StructType
 
 
 abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) extends AbstractExecution {
-    protected val logger:Logger
     private lazy val taskSupport:TaskSupport = {
         parent match {
             case Some(ce:CachingExecution) if !isolated =>

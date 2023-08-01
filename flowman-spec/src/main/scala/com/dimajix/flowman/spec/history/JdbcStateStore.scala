@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.history
 
+import com.dimajix.flowman.execution.Context
+import com.dimajix.flowman.history.StateStore
 
 
 object JdbcStateStore {
@@ -26,10 +28,22 @@ object JdbcStateStore {
         password:Option[String] = None,
         properties: Map[String,String] = Map()
     )
+
+    def apply(context: Context, connection: Connection): JdbcStateStore = {
+        JdbcStateStore(
+            StateStore.Properties(context, "jdbc"),
+            connection
+        )
+    }
 }
 
 
-case class JdbcStateStore(connection:JdbcStateStore.Connection, retries:Int=3, timeout:Int=1000) extends RepositoryStateStore {
+case class JdbcStateStore(
+    override val instanceProperties:StateStore.Properties,
+    connection:JdbcStateStore.Connection,
+    retries:Int=3,
+    timeout:Int=1000
+) extends RepositoryStateStore {
     override lazy val repository : StateRepository = new RetryingStateRepository(
             new JdbcStateRepository(connection, retries, timeout)
         )

@@ -16,9 +16,20 @@
 
 package com.dimajix.flowman.metric
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Status
 
 
-class NullMetricSink extends AbstractMetricSink {
+object NullMetricSink {
+    def apply(context:Context) : NullMetricSink = {
+        NullMetricSink(
+            MetricSink.Properties(context, "none")
+        )
+    }
+}
+
+case class NullMetricSink(
+    override val instanceProperties:MetricSink.Properties
+) extends AbstractMetricSink {
     override def commit(board:MetricBoard, status:Status) : Unit = {}
 }

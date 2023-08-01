@@ -18,6 +18,7 @@ package com.dimajix.flowman.history
 
 import com.dimajix.flowman.documentation.Documenter
 import com.dimajix.flowman.documentation.EntityDoc
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.model.DocumenterResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobDigest
@@ -28,13 +29,20 @@ import com.dimajix.flowman.model.TargetResult
 
 
 object NullStateStore {
+    def apply(context:Context) : NullStateStore = {
+        NullStateStore(
+            StateStore.Properties(context, "none")
+        )
+    }
     private case class DummyJobToken() extends JobToken
     private case class DummyTargetToken() extends TargetToken
     private case class DummyDocumenterToken() extends DocumenterToken
 }
 
 
-class NullStateStore extends AbstractStateStore {
+case class NullStateStore(
+    override val instanceProperties:StateStore.Properties
+) extends AbstractStateStore {
     import NullStateStore._
 
     /**

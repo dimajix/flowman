@@ -29,6 +29,7 @@ import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.metric.FixedGaugeMetric
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSelection
+import com.dimajix.flowman.metric.MetricSink
 import com.dimajix.flowman.metric.MetricSystem
 import com.dimajix.flowman.metric.Selector
 import com.dimajix.flowman.model.Connection
@@ -89,6 +90,7 @@ class JdbcMetricSinkTest extends AnyFlatSpec with Matchers with MockFactory with
         (connectionPrototype.instantiate _).expects(context, None).returns(connection)
 
         val sink = new JdbcMetricSink(
+            MetricSink.Properties(context, "jdbc"),
             ConnectionReference.apply(context, connectionPrototype),
             Map("project" -> s"${project.name}")
         )
@@ -119,6 +121,7 @@ class JdbcMetricSinkTest extends AnyFlatSpec with Matchers with MockFactory with
         (connectionPrototype.instantiate _).expects(context, None).returns(connection)
 
         val sink = new JdbcMetricSink(
+            MetricSink.Properties(context, "jdbc"),
             ConnectionReference.apply(context, connectionPrototype)
         )
 

@@ -23,6 +23,6 @@ import com.dimajix.flowman.metric.NullMetricSink
 
 class NullMetricSinkSpec extends MetricSinkSpec {
     override def instantiate(context: Context, properties:Option[MetricSink.Properties] = None) : MetricSink = {
-        new NullMetricSink()
+        new NullMetricSink(instanceProperties(context, properties))
     }
 }

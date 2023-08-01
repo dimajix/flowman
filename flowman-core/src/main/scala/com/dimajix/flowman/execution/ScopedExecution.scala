@@ -18,6 +18,7 @@ package com.dimajix.flowman.execution
 
 import org.apache.spark.sql.SparkSession
 import org.slf4j.ILoggerFactory
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.HiveCatalog
@@ -35,7 +36,7 @@ import com.dimajix.flowman.metric.MetricSystem
  * @param isolated
  */
 final class ScopedExecution(parent:Execution, isolated:Boolean=true) extends CachingExecution(Some(parent), isolated) {
-    override protected val logger = parent.loggerFactory.getLogger(classOf[ScopedExecution].getName)
+    override protected val logger: Logger = parent.loggerFactory.getLogger(classOf[ScopedExecution].getName)
     private val operationsManager = new ActivityManager(parent.activities)
 
     /**

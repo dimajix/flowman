@@ -26,6 +26,7 @@ import scala.collection.JavaConverters._
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.ExternalCatalog
+import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.metric.ConsoleMetricSink
 import com.dimajix.flowman.metric.MetricSink
@@ -35,9 +36,10 @@ import com.dimajix.flowman.storage.Store
 
 object Namespace {
     private lazy val loader = ServiceLoader.load(classOf[NamespaceReader]).iterator().asScala.toSeq
+    private lazy val context = RootContext.builder().build()
     private lazy val defaultNamespace = Namespace(
         name = "default",
-        metrics = Seq(Prototype.of(new ConsoleMetricSink()))
+        metrics = Seq(Prototype.of(ConsoleMetricSink(context)))
     )
 
     class Reader {

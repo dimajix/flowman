@@ -28,9 +28,9 @@ import com.dimajix.flowman.model.Project
 
 object MetricSink {
     final case class Properties(
+        context:Context,
         kind:String
     ) extends model.Properties[Properties] {
-        override val context : Context = null
         override val namespace : Option[Namespace] = None
         override val project : Option[Project] = None
         override val name : String = ""

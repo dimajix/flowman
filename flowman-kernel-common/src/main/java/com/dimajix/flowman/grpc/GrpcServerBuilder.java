@@ -82,6 +82,7 @@ public class GrpcServerBuilder {
 
         serverBuilder
             .maxInboundMetadataSize(1024*1024)
+            .maxInboundMessageSize(4194304)
             .executor(newExecutor());
 
         for (val service : services)

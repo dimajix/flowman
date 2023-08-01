@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.history
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonProperty.Access
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
@@ -31,13 +33,30 @@ object HistorySpec extends TypeRegistry[HistorySpec] {
 }
 
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "none", value = classOf[NullHistorySpec]),
     new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcHistorySpec])
 ))
 abstract class HistorySpec extends Spec[StateStore] {
+    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required = true) protected var kind: String = _
+
     def instantiate(context:Context, properties:Option[StateStore.Properties] = None): StateStore
+
+    /**
+     * Returns a set of common properties
+     *
+     * @param context
+     * @return
+     */
+    protected def instanceProperties(context: Context, properties: Option[StateStore.Properties]): StateStore.Properties = {
+        require(context != null)
+        val props = StateStore.Properties(
+            context,
+            kind
+        )
+        props
+    }
 }
 
 

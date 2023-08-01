@@ -88,17 +88,20 @@ public final class WorkspaceClient extends AbstractClient {
         val rootPath = globber.getRootPath();
         logger.info("Uploading local directory '" + rootPath + "' to workspace '" + workspaceId + "'...");
 
+        val maxMessageSize = 4194304;
         val iter = globber.glob()
-            .map(file -> uploadFile(rootPath, file))
+            .map(file -> uploadFile(rootPath, file, maxMessageSize))
             .iterator();
         stream(asyncStub::uploadFiles, iter);
     }
 
-    private UploadFilesRequest uploadFile(Path root, Path src) {
+    private UploadFilesRequest uploadFile(Path root, Path src, int maxMessageSize) {
         val filename = root.relativize(src).toString();
         val result = UploadFilesRequest.newBuilder()
                 .setWorkspaceId(workspaceId)
                 .setFileName(filename);
+
+        val msgSize = result.build().toByteArray().length;
         val srcFile = src.toFile();
         if (srcFile.isDirectory()) {
             logger.info("Uploading directory'" + src + "' as '" + filename + "' to kernel...");
@@ -107,6 +110,12 @@ public final class WorkspaceClient extends AbstractClient {
         else if (srcFile.isFile()) {
             logger.debug("Uploading file '" + src + "' as '" + filename + "' to kernel...");
             try {
+                val fileSize = srcFile.length();
+                if (fileSize + msgSize + 1024 > maxMessageSize) {
+                    val msg = "File '" + src + "' is too big to transfer to Flowman kernel workspace, " + fileSize + " bytes. You can exclude files in .flowman-ignore";
+                    logger.error(msg);
+                    throw new IllegalArgumentException(msg);
+                }
                 val content = Files.toByteArray(srcFile);
                 result.setFileType(FileType.FILE);
                 result.setFileContent(ByteString.copyFrom(content));

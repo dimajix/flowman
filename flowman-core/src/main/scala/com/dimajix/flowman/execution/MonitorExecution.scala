@@ -19,6 +19,7 @@ package com.dimajix.flowman.execution
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkSession
 import org.slf4j.ILoggerFactory
+import org.slf4j.Logger
 
 import com.dimajix.flowman.catalog.HiveCatalog
 import com.dimajix.flowman.config.FlowmanConf
@@ -33,6 +34,8 @@ import com.dimajix.flowman.types.StructType
 
 
 final class MonitorExecution(parent:Execution, override val listeners:Seq[(ExecutionListener,Option[Token])], override val metricBoard:Option[MetricBoard]) extends AbstractExecution {
+    override protected val logger:Logger = parent.loggerFactory.getLogger(classOf[MonitorExecution].getName)
+
     /**
      * Returns the MetricRegistry of this execution
      *

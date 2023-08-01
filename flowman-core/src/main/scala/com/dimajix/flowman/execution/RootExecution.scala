@@ -18,6 +18,7 @@ package com.dimajix.flowman.execution
 
 import org.apache.spark.sql.SparkSession
 import org.slf4j.ILoggerFactory
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.HiveCatalog
@@ -37,7 +38,7 @@ import com.dimajix.flowman.model.TargetResult
 
 
 final class RootExecution(val session:Session) extends CachingExecution(None, true) {
-    override protected val logger = session.loggerFactory.getLogger(classOf[RootExecution].getName)
+    override protected val logger: Logger = session.loggerFactory.getLogger(classOf[RootExecution].getName)
 
     /**
      * Returns the MetricRegistry of this execution

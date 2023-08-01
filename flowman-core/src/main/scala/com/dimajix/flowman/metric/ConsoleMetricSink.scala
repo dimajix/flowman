@@ -16,10 +16,21 @@
 
 package com.dimajix.flowman.metric
 
+import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Status
 
 
-class ConsoleMetricSink extends AbstractMetricSink {
+object ConsoleMetricSink {
+    def apply(context:Context) : ConsoleMetricSink = {
+        ConsoleMetricSink(
+            MetricSink.Properties(context, "console")
+        )
+    }
+}
+
+case class ConsoleMetricSink(
+    override val instanceProperties:MetricSink.Properties
+) extends AbstractMetricSink {
     override def commit(board:MetricBoard, status:Status): Unit = {
         println("Collected metrics")
         board.metrics(catalog(board), status).sortBy(_.name).foreach{ metric =>

@@ -20,6 +20,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.SparkSession.getActiveSession
 import org.apache.spark.sql.SparkSession.getDefaultSession
 import org.slf4j.ILoggerFactory
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import com.dimajix.flowman.catalog.HiveCatalog
@@ -41,7 +42,7 @@ import com.dimajix.flowman.model.TargetResult
 
 
 final class AnalyzingExecution(context: Context) extends CachingExecution(None, true) {
-    override protected val logger = LoggerFactory.getLogger(classOf[AnalyzingExecution])
+    override protected val logger: Logger = context.loggerFactory.getLogger(classOf[AnalyzingExecution].getName)
     private lazy val _metricSystem = new MetricSystem
 
     /**
@@ -116,7 +117,7 @@ final class AnalyzingExecution(context: Context) extends CachingExecution(None, 
      */
     override def activities: ActivityManager = throw new UnsupportedOperationException
 
-    override def loggerFactory: ILoggerFactory = ???
+    override def loggerFactory: ILoggerFactory = context.loggerFactory
 
     override def cleaner : SessionCleaner = throw new UnsupportedOperationException
 

@@ -29,6 +29,7 @@ import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.history.JobQuery
 import com.dimajix.flowman.history.Measurement
+import com.dimajix.flowman.history.StateStore
 import com.dimajix.flowman.history.TargetQuery
 import com.dimajix.flowman.metric.FixedGaugeMetric
 import com.dimajix.flowman.model.Job
@@ -53,16 +54,18 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
     }
 
     private def newStateStore() = {
+        val context = RootContext.builder().build()
         val db = tempDir.resolve("mydb")
         val connection = JdbcStateStore.Connection(
             url = "jdbc:derby:" + db + ";create=true",
             driver = "org.apache.derby.jdbc.EmbeddedDriver"
         )
 
-        new JdbcStateStore(connection)
+        new JdbcStateStore(StateStore.Properties(context, "none"), connection)
     }
 
     "The JdbcStateStore" should "create tables once" in {
+        val context = RootContext.builder().build()
         val db = tempDir.resolve("mydb")
         val connection = JdbcStateStore.Connection(
             url = "jdbc:derby:" + db + ";create=true",
@@ -71,9 +74,9 @@ class JdbcStateStoreTest extends AnyFlatSpec with Matchers with BeforeAndAfter w
 
         val target = TargetDigest("default", "p1", "j1", Phase.BUILD)
 
-        val store1 = new JdbcStateStore(connection)
+        val store1 = new JdbcStateStore(StateStore.Properties(context, "none"), connection)
         store1.getTargetState(target) should be(None)
-        val store2 = new JdbcStateStore(connection)
+        val store2 = new JdbcStateStore(StateStore.Properties(context, "none"), connection)
         store2.getTargetState(target) should be(None)
     }
 

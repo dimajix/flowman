@@ -542,7 +542,7 @@ final class Session private[execution](
     private lazy val _history = {
         _namespace.flatMap(_.history)
             .map(_.instantiate(namespaceContext))
-            .getOrElse(new NullStateStore())
+            .getOrElse(NullStateStore(namespaceContext))
     }
     private lazy val _hooks = {
         _namespace.toSeq.flatMap(_.hooks)

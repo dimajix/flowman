@@ -184,7 +184,7 @@ case class ReportHook(
         // Add collecting metric sink, only if no metrics board is specified
         val metricSink =
             if (metrics.isEmpty) {
-                val sink = new CollectingMetricSink
+                val sink = CollectingMetricSink(context)
                 execution.metricSystem.addSink(sink)
                 Some(sink)
             }

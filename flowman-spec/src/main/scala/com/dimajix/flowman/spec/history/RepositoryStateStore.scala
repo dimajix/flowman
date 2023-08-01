@@ -19,12 +19,9 @@ package com.dimajix.flowman.spec.history
 import java.time.Clock
 import java.time.ZoneId
 
-import org.slf4j.LoggerFactory
-
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.flowman.documentation.Documenter
 import com.dimajix.flowman.documentation.EntityDoc
-import com.dimajix.flowman.documentation.ProjectDoc
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.graph.GraphBuilder
 import com.dimajix.flowman.history.AbstractStateStore
@@ -47,6 +44,7 @@ import com.dimajix.flowman.model.DocumenterResult
 import com.dimajix.flowman.model.Job
 import com.dimajix.flowman.model.JobDigest
 import com.dimajix.flowman.model.JobResult
+import com.dimajix.flowman.model.Logging
 import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.model.TargetDigest
 import com.dimajix.flowman.model.TargetResult
@@ -71,10 +69,9 @@ object RepositoryStateStore {
 }
 
 
-abstract class RepositoryStateStore extends AbstractStateStore {
+abstract class RepositoryStateStore extends AbstractStateStore with Logging {
     import RepositoryStateStore._
 
-    protected val logger = LoggerFactory.getLogger(classOf[JdbcStateStore])
     private val logFilters = LogFilter.filters
 
     /**

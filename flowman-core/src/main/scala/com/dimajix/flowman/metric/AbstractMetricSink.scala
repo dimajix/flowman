@@ -25,8 +25,6 @@ import com.dimajix.flowman.model.AbstractInstance
 abstract class AbstractMetricSink extends AbstractInstance with MetricSink {
     private val metricBoards : mutable.Map[MetricBoard,MetricCatalog] = IdentityHashMap()
 
-    override protected def instanceProperties: MetricSink.Properties = MetricSink.Properties(kind)
-
     /**
       * Adds a MetricBundle to be published by this sink. Publishing could happen on a periodic base in the background
       * or via an explicit call to commit

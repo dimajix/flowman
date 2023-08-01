@@ -18,10 +18,9 @@ package com.dimajix.flowman.graph
 
 import scala.util.control.NonFatal
 
-import org.slf4j.LoggerFactory
-
 import com.dimajix.common.ExceptionUtils.reasons
 import com.dimajix.common.IdentityHashMap
+import com.dimajix.common.text.ConsoleColors.yellow
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
@@ -36,11 +35,10 @@ import com.dimajix.flowman.types.FieldType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.MapType
 import com.dimajix.flowman.types.StructType
-import com.dimajix.common.text.ConsoleColors.yellow
 
 
 final class GraphBuilder(context:Context, phase:Phase) {
-    private val logger = LoggerFactory.getLogger(getClass)
+    private val logger = context.loggerFactory.getLogger(getClass.getName)
     private val mappings:IdentityHashMap[Mapping,MappingRef] = IdentityHashMap()
     private val relations:IdentityHashMap[Relation,RelationRef] = IdentityHashMap()
     private val targets:IdentityHashMap[Target,TargetRef] = IdentityHashMap()

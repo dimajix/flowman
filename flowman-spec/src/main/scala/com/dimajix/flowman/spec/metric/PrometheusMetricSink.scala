@@ -36,15 +36,15 @@ import com.dimajix.flowman.metric.AbstractMetricSink
 import com.dimajix.flowman.metric.GaugeMetric
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSink
+import com.dimajix.flowman.model.Logging
 
 
 class PrometheusMetricSink(
+    override val instanceProperties:MetricSink.Properties,
     url:String,
     labels:Map[String,String]
 )
-extends AbstractMetricSink {
-    private val logger = LoggerFactory.getLogger(classOf[PrometheusMetricSink])
-
+extends AbstractMetricSink with Logging {
     override def commit(board:MetricBoard, status:Status) : Unit = {
         val rawLabels = Seq(
             "job" -> this.labels.getOrElse("job","flowman"),
@@ -117,6 +117,7 @@ class PrometheusMetricSinkSpec extends MetricSinkSpec {
 
     override def instantiate(context: Context, properties:Option[MetricSink.Properties] = None): MetricSink = {
         new PrometheusMetricSink(
+            instanceProperties(context, properties),
             context.evaluate(url),
             labels
         )

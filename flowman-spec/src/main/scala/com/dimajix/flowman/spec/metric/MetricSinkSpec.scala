@@ -16,6 +16,8 @@
 
 package com.dimajix.flowman.spec.metric
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonProperty.Access
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
@@ -30,15 +32,32 @@ import com.dimajix.flowman.spi.ClassAnnotationHandler
 object MetricSinkSpec extends TypeRegistry[MetricSinkSpec] {
 }
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind", visible = true)
 @JsonSubTypes(value = Array(
     new JsonSubTypes.Type(name = "console", value = classOf[ConsoleMetricSinkSpec]),
     new JsonSubTypes.Type(name = "jdbc", value = classOf[JdbcMetricSinkSpec]),
-    new JsonSubTypes.Type(name = "null", value = classOf[NullMetricSinkSpec]),
+    new JsonSubTypes.Type(name = "none", value = classOf[NullMetricSinkSpec]),
     new JsonSubTypes.Type(name = "prometheus", value = classOf[PrometheusMetricSinkSpec])
 ))
 abstract class MetricSinkSpec extends Spec[MetricSink] {
+    @JsonProperty(value="kind", access=Access.WRITE_ONLY, required = true) protected var kind: String = _
+
     def instantiate(context:Context, properties:Option[MetricSink.Properties] = None) : MetricSink
+
+    /**
+     * Returns a set of common properties
+     *
+     * @param context
+     * @return
+     */
+    protected def instanceProperties(context: Context, properties: Option[MetricSink.Properties]): MetricSink.Properties = {
+        require(context != null)
+        val props = MetricSink.Properties(
+            context,
+            kind
+        )
+        props
+    }
 }
 
 

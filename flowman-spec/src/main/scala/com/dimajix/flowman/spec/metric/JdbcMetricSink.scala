@@ -30,17 +30,18 @@ import com.dimajix.flowman.metric.GaugeMetric
 import com.dimajix.flowman.metric.MetricBoard
 import com.dimajix.flowman.metric.MetricSink
 import com.dimajix.flowman.model.Connection
+import com.dimajix.flowman.model.Logging
 import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.spec.connection.ConnectionReferenceSpec
 import com.dimajix.flowman.spec.connection.JdbcConnection
 
 
 class JdbcMetricSink(
+    override val instanceProperties:MetricSink.Properties,
     connection: Reference[Connection],
     labels: Map[String,String] = Map(),
     tablePrefix: String = "flowman_"
-) extends AbstractMetricSink {
-    private val logger = LoggerFactory.getLogger(getClass)
+) extends AbstractMetricSink with Logging {
     private val retries:Int = 3
     private val timeout:Int = 1000
 
@@ -109,6 +110,7 @@ class JdbcMetricSinkSpec extends MetricSinkSpec {
 
     override def instantiate(context: Context, properties:Option[MetricSink.Properties] = None): MetricSink = {
         new JdbcMetricSink(
+            instanceProperties(context, properties),
             connection.instantiate(context),
             labels,
             context.evaluate(tablePrefix)

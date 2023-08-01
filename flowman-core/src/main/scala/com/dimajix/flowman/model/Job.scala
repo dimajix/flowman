@@ -450,7 +450,7 @@ final case class Job(
         require(args != null)
 
         val jobArgs = arguments(args)
-        val jobRunner = new Runner(executor, new NullStateStore)
+        val jobRunner = new Runner(executor, NullStateStore(context))
         jobRunner.executeJob(this, Seq(phase), jobArgs, targets, force=force, dryRun=dryRun, isolated=true)
     }
 }

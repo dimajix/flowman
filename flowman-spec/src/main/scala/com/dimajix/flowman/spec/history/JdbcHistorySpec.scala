@@ -41,6 +41,11 @@ class JdbcHistorySpec extends HistorySpec {
             con.password,
             con.properties
         )
-        new JdbcStateStore(connection, retries, timeout)
+        new JdbcStateStore(
+            instanceProperties(context, properties),
+            connection,
+            retries,
+            timeout
+        )
     }
 }

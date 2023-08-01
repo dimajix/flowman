@@ -47,15 +47,15 @@ abstract class DocumenterToken
 
 object StateStore {
     final case class Properties(
+        context:Context,
         kind:String
     ) extends model.Properties[Properties] {
-        override val context : Context = null
-        override val namespace : Option[Namespace] = None
-        override val project : Option[Project] = None
+        override val namespace: Option[Namespace] = context.namespace
+        override val project: Option[Project] = context.project
         override val name : String = ""
         override val metadata : Metadata = Metadata(name="", category=model.Category.HISTORY_STORE.lower, kind=kind)
 
-        override def withName(name: String): Properties = ???
+        override def withName(name: String): Properties = this
     }
 }
 
@@ -189,7 +189,7 @@ trait StateStore extends Instance {
 
 
 abstract class AbstractStateStore extends AbstractInstance with StateStore {
-    override protected def instanceProperties: StateStore.Properties = StateStore.Properties(kind)
+    override protected def instanceProperties : StateStore.Properties
 }
 
 

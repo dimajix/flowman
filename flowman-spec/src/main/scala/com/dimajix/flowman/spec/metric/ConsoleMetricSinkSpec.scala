@@ -23,6 +23,6 @@ import com.dimajix.flowman.metric.MetricSink
 
 class ConsoleMetricSinkSpec extends MetricSinkSpec {
     override def instantiate(context: Context, properties:Option[MetricSink.Properties] = None): MetricSink = {
-        new ConsoleMetricSink()
+        new ConsoleMetricSink(instanceProperties(context, properties))
     }
 }

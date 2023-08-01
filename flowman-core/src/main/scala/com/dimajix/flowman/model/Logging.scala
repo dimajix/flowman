@@ -28,9 +28,9 @@ import com.dimajix.flowman.execution.Execution
   */
 trait Logging { this:Instance =>
     /**
-      * Returns an appropriate logger, using getClass to find out the current class
-      */
-    protected lazy val logger = context.loggerFactory.getLogger(getClass.getName)
+     * Returns an appropriate logger, using getClass to find out the current class
+     */
+    protected lazy val logger: Logger = context.loggerFactory.getLogger(getClass.getName)
 
     /**
       * Returns a logger from the LoggerFactory provided by the execution. The method will ask for a logger for the

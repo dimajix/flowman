@@ -312,3 +312,73 @@ executable. The following settings are required:
 | Script arguments  | Parameters passed to Flowman  | `["-B", "-f", "flow", "job", "build", "main"]`                            |
 
 Once you submit the job, and all settings are correct, AWS should spin up a temporary Spark cluster and start Flowman.
+
+
+### 4. Using AWS CLI
+
+Of course, for running the Flowman application in EMR serverless, you can also use the AWS command line interface.
+This works as follows:
+
+#### 4.1 Create an EMR serverless application
+
+```shell
+aws emr-serverless create-application \
+    --release-label emr-6.12.0 \
+    --type "SPARK" \
+    --name "My-Flowman-application-name"
+```
+This command will return a JSON document containing the application id, which is required in the next step.
+
+
+#### 4.2 Start job in application
+
+The following code snippet will use several environment variables:
+* `EMR_APPLICATION_ID` - contains the EMR serverless application id, returned by the last command
+* `EMR_RUNTIME_ROLE` - a suitable AWS runtime role in the format `arn:aws:iam::123456789012:role/emr-role-name`. The role needs appropriate access to resources (like S3 or Glue).
+* `EMR_APPLICATION_JAR` - the location in S3 of the jar. That would be `s3://flowman-test/integration-tests/emr/my-project-1.0-SNAPSHOT-emr.jar` in this example
+* `EMR_APPLICATION_LOG` - the location in S3 where logs should be stored.
+
+```shell
+aws emr-serverless start-job-run \
+    --application-id "$EMR_APPLICATION_ID" \
+    --execution-role-arn "$EMR_RUNTIME_ROLE" \
+    --name "Flowman Test" \
+    --job-driver "{
+        \"sparkSubmit\": {
+          \"entryPoint\": \"$EMR_APPLICATION_JAR\",
+          \"entryPointArguments\": [\"-B\", \"-f\", \"flow\", \"job\", \"build\", \"main\", \"--force\"],
+          \"sparkSubmitParameters\": \"--conf spark.executor.cores=2 --conf spark.executor.memory=4g --conf spark.driver.cores=1 --conf spark.driver.memory=2g --conf spark.executor.instances=1\"
+        }
+    }" \
+    --configuration-overrides "{
+        \"monitoringConfiguration\": {
+          \"s3MonitoringConfiguration\": {
+            \"logUri\": \"$EMR_APPLICATION_LOG\"
+          }
+       } \
+    }"
+```
+The command will return a JSON document with a *job run id*, which is required for retrieving the status
+
+
+#### 4.3 Wait for job
+
+Optionally, we can now wait for the job to finish. This can be done with the following command.
+```shell
+aws emr-serverless get-job-run \
+            --application-id "$EMR_APPLICATION_ID" \
+            --job-run-id "$EMR_JOB_RUN_ID"
+```
+
+#### 4.4 Stop application
+
+After the job has finished, it might be a good idea to stop the application, such that any resources (virtual
+machines) are released:
+
+```shell
+aws emr-serverless stop-application \
+    --application-id "$EMR_APPLICATION_ID"
+```
+
+If you forget to explicitly stop the application, AWS will shut it down automatically after some grace period of 
+inactivity (15 minutes per default. The interval can be adjusted when creating the application).

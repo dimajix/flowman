@@ -47,11 +47,6 @@ import org.apache.spark.sql.types.NullType
 import com.dimajix.util.Reflection
 
 
-object SqlBuilder {
-    // Helper method for creating API compatibility for Spark 2.3 and Spark 2.4
-    private implicit def optionToSeq[T](o:Option[T]) : Seq[T] = o.toList
-}
-
 /**
  * A builder class used to convert a resolved logical plan into a SQL query string.  Note that not
  * all resolved logical plan are convertible.  They either don't have corresponding SQL
@@ -65,8 +60,6 @@ class SqlBuilder private(
     exprIdMap: Map[Long, Long]) extends Logging {
   require(logicalPlan.resolved,
     "SQLBuilder only supports resolved logical query plans. Current plan:\n" + logicalPlan)
-
-  import SqlBuilder.optionToSeq
 
   def this(logicalPlan: LogicalPlan) =
     this(logicalPlan, new AtomicLong(0), new AtomicLong(0), Map.empty[Long, Long])
@@ -94,7 +87,7 @@ class SqlBuilder private(
     // Canonicalizer will remove all naming information, we should add it back by adding an extra
     // Project and alias the outputs.
     val aliasedOutput = canonicalizedPlan.output.zip(outputNames).map {
-      case (attr, name) => Alias(attr.withQualifier(None), name)()
+      case (attr, name) => Alias(attr.withQualifier(Seq.empty), name)()
     }
     //val finalPlan = Project(aliasedOutput, SubqueryAlias(finalName, canonicalizedPlan))
     val finalPlan = Simplifier.execute(Project(aliasedOutput, canonicalizedPlan))
@@ -491,9 +484,9 @@ class SqlBuilder private(
 
       private def normalizeAttributes(plan: LogicalPlan): LogicalPlan = plan.transformExpressions {
         case a: AttributeReference =>
-          AttributeReference(normalizedName(a), a.dataType)(exprId = a.exprId, qualifier = None)
+          AttributeReference(normalizedName(a), a.dataType)(exprId = a.exprId, qualifier = Seq.empty)
         case a: Alias =>
-          Alias(a.child, normalizedName(a))(exprId = a.exprId, qualifier = None)
+          Alias(a.child, normalizedName(a))(exprId = a.exprId, qualifier = Seq.empty)
       }
     }
 
@@ -752,15 +745,15 @@ class SqlBuilder private(
         Some(SQLTable(
           catalogTable.identifier.database.get,
           catalogTable.identifier.table,
-          l.output.map(_.withQualifier(None))))
+          l.output.map(_.withQualifier(Seq.empty))))
 
       case view: View =>
-        val  m = view.desc
-        Some(SQLTable(m.database, m.identifier.table, view.output.map(_.withQualifier(None))))
+        val m = view.desc
+        Some(SQLTable(m.database, m.identifier.table, view.output.map(_.withQualifier(Seq.empty))))
 
       case relation: HiveTableRelation =>
         val m = relation.tableMeta
-        Some(SQLTable(m.database, m.identifier.table, relation.output.map(_.withQualifier(None))))
+        Some(SQLTable(m.database, m.identifier.table, relation.output.map(_.withQualifier(Seq.empty))))
 
       case _ => None
     }

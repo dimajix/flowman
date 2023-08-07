@@ -96,6 +96,7 @@ plugins:
   - flowman-postgresql
   - flowman-sftp
   - flowman-swagger
+  - flowman-trino
   - flowman-openapi
   - flowman-json
   - flowman-delta

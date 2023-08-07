@@ -482,6 +482,12 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-trino</artifactId>
+                <version>${flowman.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-openapi</artifactId>
                 <version>${flowman.version}</version>
                 <scope>compile</scope>

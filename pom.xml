@@ -1277,6 +1277,7 @@
         <module>flowman-plugins/oracle</module>
         <module>flowman-plugins/sftp</module>
         <module>flowman-plugins/swagger</module>
+        <module>flowman-plugins/trino</module>
         <module>flowman-plugins/openapi</module>
         <module>flowman-plugins/json</module>
         <module>flowman-plugins/delta</module>
@@ -1897,6 +1898,11 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-plugin-swagger</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.dimajix.flowman</groupId>
+                <artifactId>flowman-plugin-trino</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -52,6 +52,7 @@ changes over time.
 * github-371: Automate EMR integration test via AWS CLI
 * github-431: Update EMR build profil to 6.12
 * github-428: Move project selector into top bar in Flowman History Server
+* github-433: Add Trino JDBC driver as plugin
 
 
 ### Version 1.0.1 - Upcoming

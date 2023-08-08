@@ -41,6 +41,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-431: Update EMR build profil to 6.12
 * github-428: Move project selector into top bar in Flowman History Server
 * github-433: Add Trino JDBC driver as plugin
+* github-434: Use sshj instead of ganymed for sftp
 
 
 ## Version 1.0.1 - Upcoming

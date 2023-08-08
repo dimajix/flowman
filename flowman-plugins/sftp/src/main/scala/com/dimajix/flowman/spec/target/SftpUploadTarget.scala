@@ -16,31 +16,30 @@
 
 package com.dimajix.flowman.spec.target
 
-import java.io.File
 import java.io.IOException
-import java.net.URL
+import java.net.URI
 import java.nio.charset.Charset
 
-import ch.ethz.ssh2.InteractiveCallback
-import ch.ethz.ssh2.KnownHosts
-import ch.ethz.ssh2.SFTPException
-import ch.ethz.ssh2.SFTPOutputStream
-import ch.ethz.ssh2.SFTPv3Client
-import ch.ethz.ssh2.ServerHostKeyVerifier
+import scala.collection.JavaConverters._
+
 import com.fasterxml.jackson.annotation.JsonProperty
+import net.schmizz.sshj.SSHClient
+import net.schmizz.sshj.sftp.OpenMode
+import net.schmizz.sshj.sftp.SFTPClient
+import net.schmizz.sshj.transport.verification.OpenSSHKnownHosts
+import net.schmizz.sshj.transport.verification.PromiscuousVerifier
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.IOUtils
-import org.slf4j.LoggerFactory
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
-import com.dimajix.common.Unknown
 import com.dimajix.common.tryWith
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.BaseTarget
 import com.dimajix.flowman.model.Connection
+import com.dimajix.flowman.model.ConnectionReference
 import com.dimajix.flowman.model.Reference
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Target
@@ -50,22 +49,16 @@ import com.dimajix.flowman.spec.connection.SshConnection
 
 
 object SftpUploadTarget {
-    private val logger = LoggerFactory.getLogger(classOf[SftpUploadTarget])
-    /**
-      * The current implementation of @see KnownHosts does not support
-      * known_hosts entries that use a non-default port.
-      * If we encounter such an entry we wrap it into the known_hosts
-      * format before looking it up.
-      */
-    private class PortAwareKnownHosts(val knownHosts: File) extends KnownHosts(knownHosts) {
-        def verifyHostkey(hostname: String, port: Int, serverHostKeyAlgorithm: String, serverHostKey: Array[Byte]): Int = {
-            logger.debug(s"Verifying remote server $hostname:$port with algorithm $serverHostKeyAlgorithm")
-            val finalHostname = if (port != 22)
-                s"[$hostname]:$port"
-            else
-                hostname
-            super.verifyHostkey(finalHostname, serverHostKeyAlgorithm, serverHostKey)
-        }
+    def apply(context: Context, connection: Connection, source: Path, target: Path): SftpUploadTarget = {
+        new SftpUploadTarget(
+            Target.Properties(context, "sftp", "sftp"),
+            source,
+            target,
+            ConnectionReference(context, connection),
+            false,
+            None,
+            true
+        )
     }
 }
 
@@ -75,16 +68,18 @@ final case class SftpUploadTarget(
     target:Path,
     connection: Reference[Connection],
     merge:Boolean,
-    delimiter:String,
+    delimiter:Option[String],
     overwrite:Boolean
 ) extends BaseTarget {
-    import SftpUploadTarget._
+    private lazy val sshCredentials = connection.value.asInstanceOf[SshConnection]
+    private lazy val sshHost = sshCredentials.host
+    private lazy val sshPort = if (sshCredentials.port > 0) sshCredentials.port else 22
 
     /**
      * Returns all phases which are implemented by this target in the execute method
      * @return
      */
-    override def phases : Set[Phase] = Set(Phase.BUILD)
+    override def phases : Set[Phase] = Set(Phase.CREATE, Phase.BUILD)
 
     /**
       * Returns a list of physical resources produced by this target
@@ -93,11 +88,17 @@ final case class SftpUploadTarget(
       */
     override def provides(phase: Phase): Set[ResourceIdentifier] = {
         phase match {
+            case Phase.CREATE =>
+                val src = context.fs.file(source)
+                if (!src.exists()) {
+                    Set()
+                }
+                else {
+                    val dst = if (src.isDirectory() && !merge) target else target.getParent
+                    Set(ResourceIdentifier.ofURI(new URI("sftp", null, sshHost, sshPort, dst.toString, null, null)))
+                }
             case Phase.BUILD =>
-                val credentials = connection.value.asInstanceOf[SshConnection]
-                val host = credentials.host
-                val port = Some(credentials.port).filter(_ > 0).getOrElse(22)
-                Set(ResourceIdentifier.ofURL(new URL("sftp", host, port, target.toString)))
+                Set(ResourceIdentifier.ofURI(new URI("sftp", null, sshHost, sshPort, target.toString, null, null)))
             case _ => Set()
         }
     }
@@ -124,86 +125,119 @@ final case class SftpUploadTarget(
      * @return
      */
     override def dirty(execution: Execution, phase: Phase): Trilean = {
+        val src = execution.fs.file(source)
+
         phase match {
-            case Phase.BUILD => Unknown
+            case Phase.CREATE =>
+                if (!src.exists()) {
+                    No
+                }
+                else {
+                    val dst = if (src.isDirectory() && !merge) target else target.getParent
+                    withClient { client =>
+                        !exists(client, dst)
+                    }
+                }
+            case Phase.BUILD =>
+                if (!src.exists()) {
+                    No
+                }
+                else {
+                    withClient { client =>
+                        if (src.isDirectory() && !merge) {
+                            isEmpty(client, target)
+                        }
+                        else {
+                            !exists(client, target)
+                        }
+                    }
+                }
             case _ => No
         }
     }
 
-    override protected def build(executor:Execution) : Unit = {
-        val credentials = this.connection.value.asInstanceOf[SshConnection]
-        val host = credentials.host
-        val port = Some(credentials.port).filter(_ > 0).getOrElse(22)
-        val fs = executor.fs
-        val src = fs.file(source)
+
+    /**
+     * Creates the resource associated with this target. This may be a Hive table or a JDBC table. This method
+     * will not provide the data itself, it will only create the container. This method may throw an exception, which
+     * will be caught an wrapped in the final [[TargetResult.]]
+     *
+     * @param execution
+     */
+    override protected def create(execution: Execution): Unit = {
+        val src = execution.fs.file(source)
+        if (src.exists()) {
+            withClient { client =>
+                if (src.isDirectory() && !merge) {
+                    ensureDirectory(client, target)
+                }
+                else {
+                    ensureDirectory(client, target.getParent)
+                }
+            }
+        }
+    }
+
+    override protected def build(execution:Execution) : Unit = {
+        val src = execution.fs.file(source)
         val dst = target
-        val delimiter = Option(this.delimiter).filter(_.nonEmpty).map(_.getBytes(Charset.forName("UTF-8")))
-        logger.info(s"Uploading '$src' to remote destination 'sftp://$host:$port/$dst' (overwrite=$overwrite)")
+        val delimiter = this.delimiter.map(_.getBytes(Charset.forName("UTF-8")))
+        logger.info(s"Uploading '$src' to remote destination 'sftp://$sshHost:$sshPort/$dst' (overwrite=$overwrite)")
 
         if (!src.exists()) {
             logger.error(s"Source '$src' does not exist")
             throw new IOException(s"Source '$src' does not exist")
         }
 
-        val connection = connect(host, port, credentials)
-        try {
-            val client = new SFTPv3Client(connection)
-            try {
-                if (!overwrite && exists(client, dst)) {
-                    logger.error(s"Target file already exists at 'sftp://$host:$port/$dst'")
-                    throw new IOException(s"Target file already exists at 'sftp://$host:$port/$dst'")
-                }
+        withClient { client =>
+            if (!overwrite && exists(client, dst)) {
+                logger.error(s"Target file already exists at 'sftp://$sshHost:$sshPort/$dst'")
+                throw new IOException(s"Target file already exists at 'sftp://$sshHost:$sshPort/$dst'")
+            }
 
-                if (src.isDirectory()) {
-                    if (merge)
-                        uploadMergedFile(client, src, dst, delimiter)
-                    else
-                        uploadDirectory(client, src, dst)
-                }
-                else {
-                    uploadSingleFile(client, src, dst)
-                }
+            if (src.isDirectory()) {
+                if (merge)
+                    uploadMergedFile(client, src, dst, delimiter)
+                else
+                    uploadDirectory(client, src, dst)
             }
-            finally {
-                client.close()
+            else {
+                uploadSingleFile(client, src, dst)
             }
-        }
-        finally {
-            connection.close()
         }
     }
 
-    private def uploadSingleFile(client:SFTPv3Client, src:com.dimajix.flowman.fs.File, dst:Path) : Unit = {
+    private def uploadSingleFile(client:SFTPClient, src:com.dimajix.flowman.fs.File, dst:Path) : Unit = {
         logger.info(s"Uploading file '$src' to sftp remote destination '$dst'")
         ensureDirectory(client, dst.getParent)
         tryWith(src.open()) { input =>
-            val handle = client.createFile(dst.toString)
-            tryWith(new SFTPOutputStream(handle)) { output =>
-                IOUtils.copyBytes(input, output, 16384)
+            tryWith(client.open(dst.toString, Set(OpenMode.CREAT, OpenMode.TRUNC, OpenMode.WRITE).asJava)) { file =>
+                tryWith(new file.RemoteFileOutputStream()) { output =>
+                    IOUtils.copyBytes(input, output, 16384)
+                }
             }
-            client.closeFile(handle)
         }
     }
 
-    private def uploadMergedFile(client:SFTPv3Client, src:com.dimajix.flowman.fs.File, dst:Path, delimiter:Option[Array[Byte]]) : Unit = {
+    private def uploadMergedFile(client:SFTPClient, src:com.dimajix.flowman.fs.File, dst:Path, delimiter:Option[Array[Byte]]) : Unit = {
         logger.info(s"Uploading merged directory '$src' to sftp remote destination '$dst'")
         ensureDirectory(client, dst.getParent)
-        val handle = client.createFile(dst.toString)
-        tryWith(new SFTPOutputStream(handle)) { output =>
-            src.list()
-                .filter(_.isFile())
-                .sortBy(_.toString)
-                .foreach { file =>
-                    tryWith(file.open()) { input =>
-                        IOUtils.copyBytes(input, output, 16384)
-                        delimiter.foreach(output.write)
+        tryWith(client.open(dst.toString, Set(OpenMode.CREAT, OpenMode.TRUNC, OpenMode.WRITE).asJava)) { file =>
+            tryWith(new file.RemoteFileOutputStream()) { output =>
+                src.list()
+                    .filter(_.isFile())
+                    .sortBy(_.toString)
+                    .foreach { file =>
+                        tryWith(file.open()) { input =>
+                            IOUtils.copyBytes(input, output, 16384)
+                            delimiter.foreach(output.write)
+                        }
                     }
-                }
+            }
         }
-        client.closeFile(handle)
     }
 
-    private def uploadDirectory(client:SFTPv3Client, src:com.dimajix.flowman.fs.File, dst:Path) : Unit = {
+    private def uploadDirectory(client:SFTPClient, src:com.dimajix.flowman.fs.File, dst:Path) : Unit = {
         logger.info(s"Uploading directory '$src' to sftp remote destination '$dst'")
         ensureDirectory(client, dst)
         src.list()
@@ -213,94 +247,74 @@ final case class SftpUploadTarget(
             })
     }
 
-    private def ensureDirectory(client: SFTPv3Client, path: Path) : Unit = {
+    private def ensureDirectory(client: SFTPClient, path: Path) : Unit = {
         if (!exists(client, path)) {
-            if (!path.getParent().isRoot) {
-                ensureDirectory(client, path.getParent)
-            }
-            client.mkdir(path.toString, BigInt("700",8).intValue())
+            client.mkdirs(path.toString)
         }
     }
 
-    private def exists(client:SFTPv3Client, file:Path) : Boolean = {
-        import ch.ethz.ssh2.sftp.ErrorCodes
-        try {
-            client.stat(file.toString)
-            true
-        } catch {
-            case e: SFTPException =>
-                if (e.getServerErrorCode == ErrorCodes.SSH_FX_NO_SUCH_FILE)
-                    false
-                else
-                    throw e
+    private def isEmpty(client: SFTPClient, file: Path): Boolean = {
+        !exists(client, file) || client.ls(file.toString).isEmpty
+    }
+
+
+    private def exists(client:SFTPClient, file:Path) : Boolean = {
+        client.statExistence(file.toString) != null
+    }
+
+    private def withClient[T](fn:SFTPClient => T) : T= {
+        withConnection { sshClient =>
+            val sftpClient = sshClient.newSFTPClient()
+            try {
+                fn(sftpClient)
+            }
+            finally {
+                sftpClient.close()
+            }
         }
     }
 
-    private def connect(host:String, port:Int, credentials:SshConnection) : ch.ethz.ssh2.Connection = {
-        val username = credentials.username
-        val password = credentials.password
-        val keyFile = credentials.keyFile
-        val keyPassword = credentials.keyPassword
+    private def withConnection[T](fn:SSHClient => T) : T= {
+        val username = sshCredentials.username
+        val password = sshCredentials.password
+        val keyFile = sshCredentials.keyFile
+        val keyPassword = sshCredentials.keyPassword
 
-        logger.info(s"Connecting via SFTP to $host:$port")
-        val connection = new ch.ethz.ssh2.Connection(host, port)
-        connection.connect(hostKeyVerifier(credentials))
+        val hostKeyVerifier = sshCredentials.knownHosts match {
+            case Some(kh) => new OpenSSHKnownHosts(kh)
+            case None => new PromiscuousVerifier
+        }
 
-        if (password != null && password.nonEmpty) {
-            if (connection.isAuthMethodAvailable(username, "password")) {
-                logger.debug(s"Using non-interactive password authentication for connecting to $host:$port")
-                connection.authenticateWithPassword(username, password)
-            }
-            else if (connection.isAuthMethodAvailable(username, "keyboard-interactive")) {
-                logger.debug(s"Using interactive password authentication for connecting to $host:$port")
-                connection.authenticateWithKeyboardInteractive(username, new InteractiveCallback() {
-                    @throws[Exception]
-                    override def replyToChallenge(name: String, instruction: String, numPrompts: Int, prompt: Array[String], echo: Array[Boolean]): Array[String] = {
-                        prompt.length match {
-                            case 0 =>
-                                return new Array[String](0)
-                            case 1 =>
-                                return Array[String](password)
-                        }
-                        logger.error(s"Cannot proceed with keyboard-interactive authentication to $host:$port. Server requested " + prompt.length + " challenges, we only support 1.")
-                        throw new IOException(s"Cannot proceed with keyboard-interactive authentication to $host:$port. Server requested " + prompt.length + " challenges, we only support 1.")
-                    }
-                })
+        logger.debug(s"Connecting via SFTP to $sshHost:$sshPort")
+        val client = new SSHClient()
+        client.addHostKeyVerifier(hostKeyVerifier)
+        client.connect(sshHost, sshPort)
+        val authMethods = client.getUserAuth.getAllowedMethods.asScala.toSet
+
+        if (password.nonEmpty) {
+            if (authMethods.contains("password")) {
+                logger.debug(s"Using non-interactive password authentication for connecting to $sshHost:$sshPort")
+                client.authPassword(username, password.orNull)
             }
             else {
-                logger.error(s"Server at $host:$port does not support any of our supported password authentication methods")
-                throw new IOException(s"Server at $host:$port does not support any of our supported password authentication methods")
+                logger.error(s"Server at $sshHost:$sshPort does not support any of our supported password authentication methods")
+                throw new IOException(s"Server at $sshHost:$sshPort does not support any of our supported password authentication methods")
             }
         }
         else {
-            logger.debug(s"Using private key authentication for connecting to $host:$port")
-            connection.authenticateWithPublicKey(username, keyFile, keyPassword)
+            logger.debug(s"Using private key authentication for connecting to $sshHost:$sshPort")
+            val keyProvider = keyPassword match {
+                case Some(kpwd) => client.loadKeys(keyFile.map(_.toString).orNull, kpwd)
+                case None => client.loadKeys(keyFile.map(_.toString).orNull)
+            }
+            client.authPublickey(username, keyProvider)
         }
 
-        connection
-    }
-
-    private def hostKeyVerifier(credentials:SshConnection) : ServerHostKeyVerifier = {
-        val knownHosts = credentials.knownHosts
-        if (knownHosts != null) {
-            val verifier = new PortAwareKnownHosts(knownHosts)
-            new ServerHostKeyVerifier {
-                @throws[Exception]
-                def verifyServerHostKey(hostname: String, port: Int, serverHostKeyAlgorithm: String, serverHostKey: Array[Byte]): Boolean = {
-                    if (verifier.verifyHostkey(hostname, port, serverHostKeyAlgorithm, serverHostKey) == KnownHosts.HOSTKEY_IS_OK) {
-                        true
-                    }
-                    else {
-                        logger.error(s"Couldn't verify host key for $hostname:$port")
-                        throw new IOException(s"Couldn't verify host key for $hostname:$port")
-                    }
-                }
-            }
+        try {
+            fn(client)
         }
-        else {
-            new ServerHostKeyVerifier {
-                override def verifyServerHostKey(s: String, i: Int, s1: String, bytes: Array[Byte]): Boolean = true
-            }
+        finally {
+            client.close()
         }
     }
 }
@@ -314,7 +328,7 @@ class SftpUploadTargetSpec extends TargetSpec {
     @JsonProperty(value = "target", required = true) private var target: String = ""
     @JsonProperty(value = "connection", required = true) private var connection: ConnectionReferenceSpec = _
     @JsonProperty(value = "merge", required = false) private var merge: String = "false"
-    @JsonProperty(value = "delimiter", required = true) private var delimiter: String = _
+    @JsonProperty(value = "delimiter", required = true) private var delimiter: Option[String] = None
     @JsonProperty(value = "overwrite", required = false) private var overwrite: String = "true"
 
     override def instantiate(context: Context, properties:Option[Target.Properties] = None): SftpUploadTarget = {

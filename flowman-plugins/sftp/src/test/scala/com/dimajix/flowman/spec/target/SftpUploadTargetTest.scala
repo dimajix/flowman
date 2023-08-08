@@ -16,11 +16,17 @@
 
 package com.dimajix.flowman.spec.target
 
+import org.apache.hadoop.fs.Path
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.model.Connection
+import com.dimajix.flowman.model.GlobbingResourceIdentifier
+import com.dimajix.flowman.model.RegexResourceIdentifier
 import com.dimajix.flowman.spec.ObjectMapper
+import com.dimajix.flowman.spec.connection.SshConnection
 
 
 class SftpUploadTargetTest extends AnyFlatSpec with Matchers {
@@ -43,5 +49,37 @@ class SftpUploadTargetTest extends AnyFlatSpec with Matchers {
         instance shouldBe a[SftpUploadTarget]
 
         session.shutdown()
+    }
+
+    it should "correctly return requires/provides" in {
+        val session = Session.builder().disableSpark().build()
+        val context = session.context
+
+        val connection = SshConnection(
+            Connection.Properties(context),
+            "some.host",
+            22
+        )
+
+        val target = SftpUploadTarget(
+            context,
+            connection,
+            new Path("/some/source/path"),
+            new Path("/some/target/path")
+        )
+
+        target.requires(Phase.VALIDATE) should be(Set.empty)
+        target.requires(Phase.CREATE) should be(Set.empty)
+        target.requires(Phase.BUILD) should be(Set(GlobbingResourceIdentifier("file","/some/source/path")))
+        target.requires(Phase.VERIFY) should be(Set.empty)
+        target.requires(Phase.TRUNCATE) should be(Set.empty)
+        target.requires(Phase.DESTROY) should be(Set.empty)
+
+        target.provides(Phase.VALIDATE) should be(Set.empty)
+        target.provides(Phase.CREATE) should be(Set.empty)
+        target.provides(Phase.BUILD) should be(Set(RegexResourceIdentifier("url","sftp://some.host:22/some/target/path")))
+        target.provides(Phase.VERIFY) should be(Set.empty)
+        target.provides(Phase.TRUNCATE) should be(Set.empty)
+        target.provides(Phase.DESTROY) should be(Set.empty)
     }
 }

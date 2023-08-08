@@ -78,6 +78,10 @@ logger.databricks1.level = warn
 logger.databricks2.name = shaded
 logger.databricks2.level = warn
 
+# sshj logging
+logger.sshj.name = net.schmizz.sshj
+logger.sshj.level = warn
+
 # Slick logging
 logger.slick.name = slick.jdbc.JdbcBackend.statement
 logger.slick.level = warn

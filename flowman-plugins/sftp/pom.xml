@@ -65,9 +65,9 @@
         </dependency>
 
         <dependency>
-            <groupId>ch.ethz.ganymed</groupId>
-            <artifactId>ganymed-ssh2</artifactId>
-            <version>262</version>
+            <groupId>com.hierynomus</groupId>
+            <artifactId>sshj</artifactId>
+            <version>0.35.0</version>
         </dependency>
 
         <dependency>

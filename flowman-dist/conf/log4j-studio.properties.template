@@ -56,6 +56,9 @@ log4j.logger.parquet=WARN
 log4j.logger.org.apache.parquet.CorruptStatistics=ERROR
 log4j.logger.parquet.CorruptStatistics=ERROR
 
+# sshj logging
+log4j.logger.net.schmizz.sshj=WARN
+
 # Slick logging
 log4j.logger.slick.jdbc.JdbcBackend.statement=WARN
 

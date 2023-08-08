@@ -16,6 +16,7 @@
 
 package com.dimajix.flowman.model
 
+import java.net.URI
 import java.net.URL
 import java.util.Locale
 import java.util.regex.Pattern
@@ -78,7 +79,9 @@ object ResourceIdentifier {
     def ofJdbcTablePartition(table:String, database:Option[String], partition:Map[String,Any]): RegexResourceIdentifier =
         RegexResourceIdentifier("jdbcTablePartition", fqTable(table, database), partition.map { case(k,v) => k -> v.toString })
     def ofURL(url:URL): RegexResourceIdentifier =
-        RegexResourceIdentifier("url", url.toString)
+        RegexResourceIdentifier("url", url.toURI.normalize().toURL.toString)
+    def ofURI(uri:URI): RegexResourceIdentifier =
+        RegexResourceIdentifier("url", uri.normalize().toString)
 
     private def fqTable(table:String, database:Option[String]) : String = database.filter(_.nonEmpty).map(_ + ".").getOrElse("") + table
 }

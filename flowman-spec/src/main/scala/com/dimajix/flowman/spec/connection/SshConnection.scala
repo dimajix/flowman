@@ -29,23 +29,23 @@ case class SshConnection(
     instanceProperties:Connection.Properties,
     host:String,
     port:Int,
-    keyFile:File,
-    keyPassword:String,
-    username:String,
-    password:String,
-    knownHosts: File
+    keyFile:Option[File] = None,
+    keyPassword:Option[String] = None,
+    username:String = "",
+    password:Option[String] = None,
+    knownHosts:Option[File] = None
 )
 extends BaseConnection {}
 
 
 class SshConnectionSpec extends ConnectionSpec {
     @JsonProperty(value="host", required=true) private var host:String = _
-    @JsonProperty(value="port", required=false) private var port:String = _
-    @JsonProperty(value="keyFile", required=false) private var keyFile:String = _
-    @JsonProperty(value="keyPassword", required=false) private var keyPassword:String = _
+    @JsonProperty(value="port", required=false) private var port:String = "22"
+    @JsonProperty(value="keyFile", required=false) private var keyFile:Option[String] = None
+    @JsonProperty(value="keyPassword", required=false) private var keyPassword:Option[String] = None
     @JsonProperty(value="username", required=true) private var username:String = _
-    @JsonProperty(value="password", required=false) private var password:String = _
-    @JsonProperty(value="knownHosts", required=false) private var knownHosts:String = _
+    @JsonProperty(value="password", required=false) private var password:Option[String] = None
+    @JsonProperty(value="knownHosts", required=false) private var knownHosts:Option[String] = None
 
     /**
       * Creates the instance of the specified Connection with all variable interpolation being performed
@@ -56,12 +56,12 @@ class SshConnectionSpec extends ConnectionSpec {
         SshConnection(
             instanceProperties(context, properties),
             context.evaluate(host),
-            Option(context.evaluate(port)).map(_.toInt).getOrElse(22),
-            Option(context.evaluate(keyFile)).filter(_.nonEmpty).map(f => new File(f)).orNull,
+            context.evaluate(port).toInt,
+            context.evaluate(keyFile).filter(_.nonEmpty).map(f => new File(f)),
             context.evaluate(keyPassword),
             context.evaluate(username),
             context.evaluate(password),
-            Option(context.evaluate(knownHosts)).filter(_.nonEmpty).map(f => new File(f)).orNull
+            context.evaluate(knownHosts).filter(_.nonEmpty).map(f => new File(f))
         )
     }
 }

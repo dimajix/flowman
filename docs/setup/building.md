@@ -24,15 +24,30 @@ https://github.com/dimajix/flowman/releases/download/0.24.1/flowman-dist-0.24.1-
 
 ## Build with Maven
 
+The whole project is built using Maven. The build also includes a Docker image, which requires that Docker
+is installed on the build machine.
+
+### Prerequisites
+
 When you decide against downloading a prebuilt Flowman distribution, you can simply build it yourself with Maven. As
 a prerequisite, you need
-    * Java (1.8 for Spark ≤ 2.4 and 11 for Spark ≥ 3.0)
-    * Apache Maven
-    * On Windows: Hadoop libraries
+* Java (1.8 for Spark ≤ 2.4 and 11 for Spark ≥ 3.0)
+* Apache Maven (install via package manager download from https://maven.apache.org/download.cgi)
+* npm (install via package manager or download from https://www.npmjs.com/get-npm)
+* Docker (the creation of the Docker image can be skipped via `-Ddockerfile.skip`)
+* gpg (signing can be disabled via `-Dgpg.skip`)
+* Windows users also need Hadoop winutils installed. Those can be retrieved from https://github.com/cdarlint/winutils
+  and later. See some additional details for building on Windows below.
+
+For running the integration tests in the `tests` directory, you will need some additional components installed:
+* xmlstarlet
+
+### Build with Maven
 
 Building Flowman with the default settings (i.e. Hadoop and Spark version) is as easy as
-
-    mvn clean install
+```shell
+mvn clean install
+```
 
 ### Skip Tests
 
@@ -55,7 +70,10 @@ mvn clean install -Ddockerfile.skip
 
 The main artifacts will be a Docker image `dimajix/flowman` and additionally a `tar.gz` file containing a runnable
 version of Flowman for direct installation in cases where Docker is not available or when you want to run Flowman 
-in a complex environment with Kerberos. You can find the `tar.gz` file in the directory `flowman-dist/target`
+in a complex environment with Kerberos. You can find the `tar.gz` file in the directory `flowman-dist/target`.
+
+This `tar.gz` file contains all executables and libraries. You can install Flowman from this archive by simply
+extracting its contents using `tar`.
 
 
 ## Custom Builds

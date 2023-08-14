@@ -1,13 +1,18 @@
 # Using Flowman Maven Plugin
 
 This documentation describes a more streamlined development workflow using [Apache Maven](https://maven.apache.org/) as 
-the deployment tool. Maven was chosen simply because one can assume that this is present in a Big Data environment, so no
-additional installation on developer machines or CI/CD infrastructure is required.
+the deployment tool. Maven was chosen simply because one can assume that this is present in a Big Data environment, so 
+no additional installation on developer machines or CI/CD infrastructure is required.
 
 ![Flowman Development Workflow](../images/flowman-workflow.png)
 
 In contrast to the more conservative approach described in [Classic Workflow with Maven](maven-classic.md), we will use
 the Flowman Maven plugin, which will significantly reduce the complexity of the Maven `pom.xml`.
+
+
+## 0. Prerequisites
+Obviously, you need Java (JDK 11 or later) and Maven (version 3.6.3 or later).
+
 
 ## 1. Creating a new project from a Maven Archetype
 First, you need to create a new Flowman project. You can either copy/paste from one of the official Flowman examples,

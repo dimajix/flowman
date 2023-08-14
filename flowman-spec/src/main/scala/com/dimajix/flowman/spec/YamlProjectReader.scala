@@ -44,7 +44,19 @@ class YamlProjectReader extends ProjectReader {
     @throws[JsonMappingException]
     override def file(file:File) : Project = {
         if (file.isDirectory()) {
-            this.file(file / "project.yml")
+            val yml = file / "project.yml"
+            if (yml.exists()) {
+                this.file(yml)
+            }
+            else {
+                val yaml = file / "project.yaml"
+                if (yaml.exists()) {
+                    this.file(yaml)
+                }
+                else {
+                    throw new IOException(s"Neither 'project.yml' not 'project.yaml' found in directory '$file'")
+                }
+            }
         }
         else {
             val prj = ObjectMapper.read[ProjectSpec](file).instantiate()

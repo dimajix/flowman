@@ -7,6 +7,10 @@ additional installation on developer machines or CI/CD infrastructure is require
 ![Flowman Development Workflow](../images/flowman-workflow.png)
 
 
+## 0. Prerequisites
+Obviously, you need Java (JDK 11 or later) and Maven (version 3.6.3 or later).
+
+
 ## 1. Creating a new project from a Maven Archetype
 First, you need to create a new Flowman project. You can either copy/paste from one of the official Flowman examples,
 or you can create a new project from a Maven archetype provided. This can be done as follows:

@@ -42,6 +42,8 @@ Breaking changes will be documented in this changelog file for each version.
 * github-428: Move project selector into top bar in Flowman History Server
 * github-433: Add Trino JDBC driver as plugin
 * github-434: Use sshj instead of ganymed for sftp
+* github-435: Flowman should also load a project.yaml (with an 'a' in the extension)
+* github-436: Document minimum Maven version of Flowman-maven-plugin
 
 
 ## Version 1.0.1 - Upcoming

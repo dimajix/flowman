@@ -44,6 +44,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-434: Use sshj instead of ganymed for sftp
 * github-435: Flowman should also load a project.yaml (with an 'a' in the extension)
 * github-436: Document minimum Maven version of Flowman-maven-plugin
+* github-438: Empty or non-existing module directories should not lead to an error
 
 
 ## Version 1.0.1 - Upcoming

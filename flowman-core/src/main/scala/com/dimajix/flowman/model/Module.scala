@@ -88,7 +88,11 @@ object Module {
         @throws[ModelException]
         private def readFiles(file: File): Seq[(File,Module)] = {
             wrapExceptions(file.toString) {
-                if (file.isDirectory()) {
+                if (!file.exists()) {
+                    logger.warn(s"Module directory ${file.toString} does not exist, skipping")
+                    Seq.empty
+                }
+                else if (file.isDirectory()) {
                     logger.info(s"Reading all module files in directory ${file.toString}")
                     val patterns = reader.globPatterns.map(GlobPattern(_))
                     file.list()

@@ -88,7 +88,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>3.3.1</version>
                     <configuration>
                         <propertiesEncoding>ISO-8859-1</propertiesEncoding>
                     </configuration>
@@ -97,7 +97,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.10.1</version>
+                    <version>3.11.0</version>
                     <configuration>
                         <source>${maven.compiler.source}</source>
                         <target>${maven.compiler.target}</target>
@@ -107,7 +107,7 @@
                     <inherited>true</inherited>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>4.8.0</version>
+                    <version>4.8.1</version>
                     <configuration>
                         <scalaVersion>${scala.version}</scalaVersion>
                         <scalaCompatVersion>${scala.api_version}</scalaCompatVersion>
@@ -554,6 +554,7 @@
                 <groupId>org.scala-lang.modules</groupId>
                 <artifactId>scala-collection-compat_${scala.api_version}</artifactId>
                 <version>${scala-collection-compat.version}</version>
+                <scope>${scala-collection-compat.scope}</scope>
             </dependency>
 
             <dependency>

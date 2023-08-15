@@ -96,6 +96,25 @@
             <artifactId>hadoop-common</artifactId>
             <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-xml_${scala.api_version}</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-parser-combinators_${scala.api_version}</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <!--
+        <dependency>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-collection-compat_${scala.api_version}</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        -->
+
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.api_version}</artifactId>

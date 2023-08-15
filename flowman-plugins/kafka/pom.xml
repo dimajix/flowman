@@ -93,6 +93,7 @@
         </dependency>
 
         <dependency>
+            <!-- We need a newer version of the scala-collection-compat library for tests -->
             <groupId>org.scala-lang.modules</groupId>
             <artifactId>scala-collection-compat_${scala.api_version}</artifactId>
             <version>2.2.0</version>

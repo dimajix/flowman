@@ -16,22 +16,24 @@
 
 package com.dimajix.flowman.execution
 
+import java.util.concurrent.TimeUnit
+
+import scala.annotation.tailrec
+import scala.concurrent.TimeoutException
 import scala.collection.mutable
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.TaskSupport
 import scala.concurrent.Await
+import scala.concurrent.Awaitable
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.concurrent.duration.Duration
-import scala.util.Failure
-import scala.util.Success
 import scala.util.Try
 import scala.util.control.NonFatal
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.broadcast
 import org.apache.spark.storage.StorageLevel
-import org.slf4j.Logger
 
 import com.dimajix.common.IdentityHashMap
 import com.dimajix.common.SynchronizedMap
@@ -56,6 +58,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         }
     }
     private lazy val parallelism = flowmanConf.getConf(FlowmanConf.EXECUTION_MAPPING_PARALLELISM)
+    private lazy val timeout = flowmanConf.getConf(FlowmanConf.EXECUTION_WAIT_TIMEOUT)
     private lazy val useMappingSchemaCache = flowmanConf.getConf(FlowmanConf.EXECUTION_MAPPING_SCHEMA_CACHE)
     private lazy val useRelationSchemaCache = flowmanConf.getConf(FlowmanConf.EXECUTION_RELATION_SCHEMA_CACHE)
 
@@ -124,6 +127,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      *
      * @param mapping
      */
+    @throws[InstantiateMappingFailedException]
     override def instantiate(mapping:Mapping) : Map[String,DataFrame] = {
         require(mapping != null)
 
@@ -134,22 +138,27 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
             // Check if the returned future is the one we passed in. If that is the case, the current thread
             // is responsible for fulfilling the promise
             if (f eq p.future) {
-                // Do not use Scalas Try, since this will only catch NonFatal errors. This will lead to a dead-lock
-                // in case of Fatal errors
-                val tables = try {
-                    createTables(mapping)
-                }
-                catch {
-                    case ex:Throwable =>
-                        p.failure(ex)
-                        throw ex
-                }
-                p.success(tables)
-                tables
+                fullfill(p, createTables(mapping))
             }
             else {
                 // Other threads simply wait for the promise to be fulfilled.
-                Await.result(f, Duration.Inf)
+                def info : String = {
+                    val futuresWithoutCache = (frameCacheFutures.keys -- frameCache.keys).toSeq
+                        .map(m => " - " + m.identifier.toString)
+                        .sorted
+                        .mkString("\n")
+                    val uncompletedFutures = frameCacheFutures.toSeq
+                        .filter(f => !f._2.isCompleted)
+                        .map(f => " - " + f._1.identifier.toString)
+                        .sorted
+                        .mkString("\n")
+                    s"""Instantiating mapping '${mapping.identifier}'.
+                       |List of mappings with futures without cache entry:
+                       |$futuresWithoutCache
+                       |List of mappings with uncompleted futures:
+                       |$uncompletedFutures""".stripMargin
+                }
+                await(f, info)
             }
         }
 
@@ -160,9 +169,9 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      * Returns the schema for a specific output created by a specific mapping. Note that not all mappings support
      * schema analysis beforehand. In such cases, None will be returned.
      * @param mapping
-     * @param output
      * @return
      */
+    @throws[DescribeMappingFailedException]
     override def describe(mapping:Mapping) : Map[String,StructType] = {
         // We do not simply call getOrElseUpdate, since the creation of the Schema might be slow
         def createOrWait() : Map[String,StructType] = {
@@ -171,22 +180,11 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
             // Check if the returned future is the one we passed in. If that is the case, the current thread
             // is responsible for fulfilling the promise
             if (f eq p.future) {
-                // Do not use Scalas Try, since this will only catch NonFatal errors. This will lead to a dead-lock
-                // in case of Fatal errors
-                val tables = try {
-                    describeMapping(mapping)
-                }
-                catch {
-                    case ex: Throwable =>
-                        p.failure(ex)
-                        throw ex
-                }
-                p.success(tables)
-                tables
+                fullfill(p, describeMapping(mapping))
             }
             else {
                 // Other threads simply wait for the promise to be fulfilled.
-                Await.result(f, Duration.Inf)
+                await(f, s"Describing mapping '${mapping.identifier}'")
             }
         }
 
@@ -198,21 +196,28 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         }
     }
 
+    @throws[DescribeMappingFailedException]
     private def describeMapping(mapping:Mapping) : Map[String,StructType] = {
         val context = mapping.context
 
-        val inputs = mapping.inputs.toSeq
-        val deps = if (inputs.size > 1 && parallelism > 1) {
-            val parInputs = inputs.par
-            parInputs.tasksupport = taskSupport
-            parInputs.map(id => id -> describe(context.getMapping(id.mapping), id.output))
-                .seq
-                .toMap
+        def dep(input: MappingOutputIdentifier) = {
+            require(input.mapping.nonEmpty)
+
+            val mapping = context.getMapping(input.mapping)
+            val structs = describe(mapping, input.output)
+            (input, structs)
         }
-        else {
-            inputs
-                .map(id => id -> describe(context.getMapping(id.mapping), id.output))
-                .toMap
+
+        val dependencies = {
+            val inputs = mapping.inputs.toSeq
+            if (inputs.size > 1 && parallelism > 1) {
+                val parInputs = inputs.par
+                parInputs.tasksupport = taskSupport
+                parInputs.map(dep).seq.toMap
+            }
+            else {
+                inputs.map(dep).toMap
+            }
         }
 
         // Transform any non-fatal exception in a DescribeMappingFailedException
@@ -223,7 +228,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
                     l._1.describeMapping(this, mapping, l._2)
                 }
             }
-            mapping.describe(this, deps)
+            mapping.describe(this, dependencies)
         }
         catch {
             case NonFatal(e) => throw new DescribeMappingFailedException(mapping.identifier, e)
@@ -236,6 +241,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      * @param partitions
      * @return
      */
+    @throws[DescribeRelationFailedException]
     override def describe(relation:Relation, partitions:Map[String,FieldValue] = Map()) : StructType = {
         // We do not simply call getOrElseUpdate, since the creation of the Schema might be slow
         def createOrWait() : StructType = {
@@ -244,13 +250,11 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
             // Check if the returned future is the one we passed in. If that is the case, the current thread
             // is responsible for fulfilling the promise
             if (f eq p.future) {
-                val schema = Try(describeRelation(relation, partitions))
-                p.complete(schema)
-                schema.get
+                fullfill(p, describeRelation(relation, partitions))
             }
             else {
                 // Other threads simply wait for the promise to be fulfilled.
-                Await.result(f, Duration.Inf)
+                await(f, s"Describing relation '${relation.identifier}'")
             }
         }
 
@@ -269,6 +273,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         }
     }
 
+    @throws[DescribeRelationFailedException]
     private def describeRelation(relation:Relation, partitions:Map[String,FieldValue] = Map()) : StructType = {
         try {
             logger.info(s"Describing relation '${relation.identifier}'")
@@ -325,8 +330,11 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         if (!sharedCache) {
             frameCache.values.foreach(_.values.foreach(_.unpersist(true)))
             frameCache.clear()
+            frameCacheFutures.clear()
             mappingSchemaCache.clear()
+            mappingSchemaCacheFutures.clear()
             relationSchemaCache.clear()
+            relationSchemaCacheFutures.clear()
             resources.clear()
         }
     }
@@ -337,6 +345,8 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      * @param mapping
      * @return
      */
+    @throws[NoSuchMappingOutputException]
+    @throws[InstantiateMappingFailedException]
     private def createTables(mapping:Mapping): Map[String,DataFrame] = {
         val context = mapping.context
 
@@ -366,6 +376,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         frameCache.getOrElseUpdate(mapping, createTables(mapping, dependencies))
     }
 
+    @throws[InstantiateMappingFailedException]
     private def createTables(mapping: Mapping, dependencies:Map[MappingOutputIdentifier, DataFrame]) : Map[String,DataFrame] = {
         // Process table and register result as temp table
         val doBroadcast = mapping.broadcast
@@ -380,36 +391,67 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
         }
 
         // Transform any non-fatal exception in a InstantiateMappingFailedException
-        val instances = {
-            try {
-                mapping.execute(this, dependencies)
-            }
-            catch {
-                case NonFatal(e) => throw new InstantiateMappingFailedException(mapping.identifier, e)
-            }
-        }
+        try {
+            val instances = mapping.execute(this, dependencies)
 
-        // Optionally checkpoint DataFrame
-        val df1 = if (doCheckpoint)
-            instances.map { case (name,df) => (name, df.checkpoint(false)) }
-        else
-            instances
-
-        // Optionally cache the DataFrames, before potentially marking them as broadcast candidates
-        if (cacheLevel != null && cacheLevel != StorageLevel.NONE) {
-            // If one of the DataFrame is called 'cache', then only cache that one, otherwise all will be cached
-            if (df1.keySet.contains("cache"))
-                df1("cache").persist(cacheLevel)
+            // Optionally checkpoint DataFrame
+            val df1 = if (doCheckpoint)
+                instances.map { case (name, df) => (name, df.checkpoint(false)) }
             else
-                df1.values.foreach(_.persist(cacheLevel))
+                instances
+
+            // Optionally cache the DataFrames, before potentially marking them as broadcast candidates
+            if (cacheLevel != null && cacheLevel != StorageLevel.NONE) {
+                // If one of the DataFrame is called 'cache', then only cache that one, otherwise all will be cached
+                if (df1.keySet.contains("cache"))
+                    df1("cache").persist(cacheLevel)
+                else
+                    df1.values.foreach(_.persist(cacheLevel))
+            }
+
+            // Optionally mark DataFrame to be broadcasted
+            val df2 = if (doBroadcast)
+                df1.map { case (name, df) => (name, broadcast(df)) }
+            else
+                df1
+
+            df2
         }
+        catch {
+            case NonFatal(e) => throw new InstantiateMappingFailedException(mapping.identifier, e)
+        }
+    }
 
-        // Optionally mark DataFrame to be broadcasted
-        val df2 = if (doBroadcast)
-            df1.map { case (name,df) => (name, broadcast(df)) }
-        else
-            df1
+    private def fullfill[T](promise:Promise[T], fn: => T) : T = {
+        // Do not use Scalas Try, since this will only catch NonFatal errors. This will lead to a dead-lock
+        // in case of Fatal errors
+        val result = try {
+            fn
+        }
+        catch {
+            case ex: Throwable =>
+                promise.failure(ex)
+                throw ex
+        }
+        promise.success(result)
+        result
+    }
 
-        df2
+    private def await[T](awaitable: Awaitable[T], description: => String) : T = {
+        await(awaitable, Duration.Zero, description)
+    }
+
+    @tailrec
+    private def await[T](awaitable: Awaitable[T], totalDuration:Duration, description: => String): T = {
+        val timeout = Duration(this.timeout, TimeUnit.SECONDS)
+        try {
+            Await.result(awaitable, timeout)
+        }
+        catch {
+            case _: TimeoutException =>
+                val newTotalDuration = totalDuration + timeout
+                logger.warn(s"Already waiting ${newTotalDuration.toSeconds} seconds for: $description")
+                await(awaitable, newTotalDuration, description)
+        }
     }
 }

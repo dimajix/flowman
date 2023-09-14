@@ -74,6 +74,9 @@ Turn on/off caching of schema information of relations. Caching this information
  speed up schema inference, which is used for `relation` schemas and when creating the documentation of relations and
  mappings. Turning off the cache is mainly for debugging purposes.
 
+- `flowman.execution.wait.timeout` *(type: int)* *(default: 180)* (since Flowman 1.1.0)
+The number of seconds Flowman waits for schema inference, mapping instantiation etc. before a warning is displayed.
+ 
 - `flowman.execution.scheduler.class` *(type: class)* *(default: `com.dimajix.flowman.execution.DependencyScheduler`)* (since Flowman 0.16.0)
   Configure the scheduler to use, which essentially decides which target to build next.
   - The default `DependencyScheduler` will sort all targets according to their dependency.

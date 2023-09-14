@@ -16,7 +16,6 @@
 
 package com.dimajix.common
 
-import scala.collection.Iterable
 import scala.collection.mutable
 
 

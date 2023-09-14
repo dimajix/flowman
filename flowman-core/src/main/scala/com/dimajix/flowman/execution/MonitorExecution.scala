@@ -92,6 +92,7 @@ final class MonitorExecution(parent:Execution, override val listeners:Seq[(Execu
      *
      * @param mapping
      */
+    @throws[InstantiateMappingFailedException]
     override def instantiate(mapping: Mapping): Map[String, DataFrame] = parent.instantiate(mapping)
 
     /**
@@ -99,6 +100,7 @@ final class MonitorExecution(parent:Execution, override val listeners:Seq[(Execu
      *
      * @param mapping
      */
+    @throws[InstantiateMappingFailedException]
     override def instantiate(mapping: Mapping, output: String): DataFrame = parent.instantiate(mapping, output)
 
     /**
@@ -107,6 +109,7 @@ final class MonitorExecution(parent:Execution, override val listeners:Seq[(Execu
      * @param mapping
      * @return
      */
+    @throws[DescribeMappingFailedException]
     override def describe(mapping: Mapping): Map[String, StructType] = parent.describe(mapping)
 
     /**
@@ -117,6 +120,8 @@ final class MonitorExecution(parent:Execution, override val listeners:Seq[(Execu
      * @param output
      * @return
      */
+    @throws[DescribeMappingFailedException]
+    @throws[NoSuchMappingOutputException]
     override def describe(mapping: Mapping, output: String): StructType = parent.describe(mapping, output)
 
     /**
@@ -125,6 +130,7 @@ final class MonitorExecution(parent:Execution, override val listeners:Seq[(Execu
      * @param partitions
      * @return
      */
+    @throws[DescribeRelationFailedException]
     override def describe(relation:Relation, partitions:Map[String,FieldValue] = Map()) : StructType = parent.describe(relation, partitions)
 
     override def addResource(key:ResourceIdentifier)(refresh: => Unit) : Unit = parent.addResource(key)(refresh)

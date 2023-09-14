@@ -22,34 +22,44 @@ import org.scalatest.matchers.should.Matchers
 
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.model.Mapping
+import com.dimajix.flowman.model.Project
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.Target
 
 
 class NodeTest extends AnyFlatSpec with Matchers with MockFactory {
     "A Node" should "generate a nice tree" in {
+        val project = Project(name="p1")
         val srcRelation = mock[Relation]
+        (srcRelation.project _).expects().atLeastOnce().returns(Some(project))
         (srcRelation.kind _).expects().atLeastOnce().returns("files")
         (srcRelation.name _).expects().atLeastOnce().returns("source")
         val readMapping = mock[Mapping]
+        (readMapping.project _).expects().atLeastOnce().returns(Some(project))
         (readMapping.kind _).expects().atLeastOnce().returns("read")
         (readMapping.name _).expects().atLeastOnce().returns("read_source")
         val mapping1 = mock[Mapping]
+        (mapping1.project _).expects().atLeastOnce().returns(Some(project))
         (mapping1.kind _).expects().atLeastOnce().returns("select")
         (mapping1.name _).expects().atLeastOnce().returns("extract_data")
         val mapping2 = mock[Mapping]
+        (mapping2.project _).expects().atLeastOnce().returns(Some(project))
         (mapping2.kind _).expects().atLeastOnce().returns("filter")
         (mapping2.name _).expects().atLeastOnce().returns("filter_data")
         val mapping3 = mock[Mapping]
+        (mapping3.project _).expects().atLeastOnce().returns(Some(project))
         (mapping3.kind _).expects().atLeastOnce().returns("extend")
         (mapping3.name _).expects().atLeastOnce().returns("extend_data")
         val unionMapping = mock[Mapping]
+        (unionMapping.project _).expects().atLeastOnce().returns(Some(project))
         (unionMapping.kind _).expects().atLeastOnce().returns("union")
         (unionMapping.name _).expects().atLeastOnce().returns("union_all")
         val target = mock[Target]
+        (target.project _).expects().atLeastOnce().returns(Some(project))
         (target.kind _).expects().atLeastOnce().returns("relation")
         (target.name _).expects().atLeastOnce().returns("write_facts")
         val tgtRelation = mock[Relation]
+        (tgtRelation.project _).expects().atLeastOnce().returns(Some(project))
         (tgtRelation.kind _).expects().atLeastOnce().returns("hive")
         (tgtRelation.name _).expects().atLeastOnce().returns("facts")
 

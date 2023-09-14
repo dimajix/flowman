@@ -133,6 +133,7 @@ abstract class Execution {
       *
       * @param mapping
       */
+    @throws[InstantiateMappingFailedException]
     def instantiate(mapping:Mapping) : Map[String,DataFrame]
 
     /**
@@ -140,6 +141,7 @@ abstract class Execution {
       *
       * @param mapping
       */
+    @throws[InstantiateMappingFailedException]
     def instantiate(mapping:Mapping, output:String) : DataFrame = {
         if (!mapping.outputs.contains(output))
             throw new NoSuchMappingOutputException(MappingOutputIdentifier(mapping.identifier.name, output, mapping.identifier.project))
@@ -207,6 +209,8 @@ abstract class Execution {
      * @param output
      * @return
      */
+    @throws[DescribeMappingFailedException]
+    @throws[NoSuchMappingOutputException]
     def describe(mapping:Mapping, output:String) : StructType = {
         if (!mapping.outputs.contains(output))
             throw new NoSuchMappingOutputException(mapping.identifier, output)
@@ -219,6 +223,7 @@ abstract class Execution {
      * @param mapping
      * @return
      */
+    @throws[DescribeMappingFailedException]
     def describe(mapping:Mapping) : Map[String, StructType] = {
         val context = mapping.context
         val deps = mapping.inputs
@@ -234,6 +239,7 @@ abstract class Execution {
      * @param partitions
      * @return
      */
+    @throws[DescribeRelationFailedException]
     def describe(relation:Relation, partitions:Map[String,FieldValue] = Map()) : StructType
 
     /**

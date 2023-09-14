@@ -117,6 +117,10 @@ object FlowmanConf {
         .doc("Cache schema information of relation instances")
         .booleanConf
         .createWithDefault(true)
+    val EXECUTION_WAIT_TIMEOUT = buildConf("flowman.execution.wait.timeout")
+        .doc("Timeout (in seconds) of concurrent operations within the execution")
+        .intConf
+        .createWithDefault(3*60)
 
     val DEFAULT_RELATION_MIGRATION_POLICY = buildConf("flowman.default.relation.migrationPolicy")
         .doc("Default migration policy. Allowed values are 'relaxed' and 'strict'")

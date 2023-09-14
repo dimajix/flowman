@@ -188,11 +188,11 @@ class UnionMappingTest  extends AnyFlatSpec with Matchers with MockFactory with 
         mapCols.map(_.name).sorted should be (Seq("col1", "col2", "col3"))
 
         val col1 = mapCols.find(_.name == "col1").get
-        col1.incoming.map(_.input.fqName).sorted should be (Seq("[m1:main].col1","[m2:main].col1"))
+        col1.incoming.map(_.input.fqName).sorted should be (Seq("[project/m1:main].col1","[project/m2:main].col1"))
         val col2 = mapCols.find(_.name == "col2").get
-        col2.incoming.map(_.input.fqName) should be (Seq("[m1:main].col2"))
+        col2.incoming.map(_.input.fqName) should be (Seq("[project/m1:main].col2"))
         val col3 = mapCols.find(_.name == "col3").get
-        col3.incoming.map(_.input.fqName) should be (Seq("[m2:main].col3"))
+        col3.incoming.map(_.input.fqName) should be (Seq("[project/m2:main].col3"))
 
         session.shutdown()
     }

@@ -54,7 +54,8 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
               | - query: SELECT * FROM lolo
               |   expected:
               |     - [A,1]
-              |     - [B,2]
+              |     - [B,""]
+              |     - [C,null]
               |""".stripMargin
 
         val assertionSpec = ObjectMapper.parse[AssertionSpec](spec)
@@ -90,7 +91,7 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
             ),
             SqlAssertion.Case(
                 query = "SELECT * FROM lolo",
-                expected = Seq(Array("A", "1"), Array("B", "2"))
+                expected = Seq(Array("A", "1"), Array("B", ""), Array("C", null))
             )
         ))
         assertion.inputs should be (Set(MappingOutputIdentifier("lala"), MappingOutputIdentifier("lolo")))
@@ -258,6 +259,46 @@ class SqlAssertionTest extends AnyFlatSpec with Matchers with LocalSparkSession 
                 assertion,
                 Seq(
                     AssertionTestResult("SELECT COUNT(*),SUM(id) FROM mx", None, false)
+                )
+            ).withoutTime
+        )
+
+        session.shutdown()
+    }
+
+    it should "support empty strings and NULL values" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val context = session.context
+        val execution = session.execution
+
+        val spec =
+            """
+              |kind: sql
+              |tests:
+              | - query: SELECT _1, _2 FROM mx
+              |   expected:
+              |     - [A,1]
+              |     - [B,""]
+              |     - [C,null]
+              |""".stripMargin
+
+        val assertionSpec = ObjectMapper.parse[AssertionSpec](spec)
+        assertionSpec shouldBe a[SqlAssertionSpec]
+
+        val assertion = assertionSpec.instantiate(context).asInstanceOf[SqlAssertion]
+
+        val mx = execution.spark.createDataFrame(Seq(
+            ("A", "1"),
+            ("B", ""),
+            ("C", null)
+        ))
+
+        val result = assertion.execute(execution, Map(MappingOutputIdentifier("mx") -> mx))
+        result.withoutTime should be(
+            AssertionResult(
+                assertion,
+                Seq(
+                    AssertionTestResult("SELECT _1, _2 FROM mx", None, true)
                 )
             ).withoutTime
         )

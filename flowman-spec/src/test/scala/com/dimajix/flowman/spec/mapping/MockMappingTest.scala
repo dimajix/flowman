@@ -227,7 +227,8 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
             Seq(
                 ArrayRecord("lala","12"),
                 ArrayRecord("lolo","13"),
-                ArrayRecord("",null)
+                ArrayRecord("",""),
+                ArrayRecord(null,null)
             )
         )
 
@@ -247,6 +248,7 @@ class MockMappingTest extends AnyFlatSpec with Matchers with MockFactory with Lo
         df.collect() should be (Seq(
             Row("lala", 12),
             Row("lolo", 13),
+            Row("",null),
             Row(null,null)
         ))
 

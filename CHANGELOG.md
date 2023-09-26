@@ -45,6 +45,14 @@ Breaking changes will be documented in this changelog file for each version.
 * github-435: Flowman should also load a project.yaml (with an 'a' in the extension)
 * github-436: Document minimum Maven version of Flowman-maven-plugin
 * github-438: Empty or non-existing module directories should not lead to an error
+* github-452: [BUG] SQL assertions do not support empty strings as expected values
+
+### Breaking changes
+
+This version introduces some (minor) breaking changes:
+* When providing sample records (for example, via the `values` mapping, or in the expected outcome of `sql` assertions),
+  empty strings will be interpreted as empty strings. Older versions interpreted empty strings as SQL NULL values. In
+  case you still need a NULL value, you can simply use the YAML `null` value.
 
 
 ## Version 1.0.1 - Upcoming

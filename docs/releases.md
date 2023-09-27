@@ -55,6 +55,14 @@ changes over time.
 * github-433: Add Trino JDBC driver as plugin
 * github-434: Use sshj instead of ganymed for sftp
 * github-452: [BUG] SQL assertions do not support empty strings as expected values
+* github-450: Update Spark to 3.3.3
+
+### Breaking changes
+
+This version introduces some (minor) breaking changes:
+* When providing sample records (for example, via the `values` mapping, or in the expected outcome of `sql` assertions),
+  empty strings will be interpreted as empty strings. Older versions interpreted empty strings as SQL NULL values. In
+  case you still need a NULL value, you can simply use the YAML `null` value.
 
 
 ### Version 1.0.1 - Upcoming

@@ -46,6 +46,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-436: Document minimum Maven version of Flowman-maven-plugin
 * github-438: Empty or non-existing module directories should not lead to an error
 * github-452: [BUG] SQL assertions do not support empty strings as expected values
+* github-450: Update Spark to 3.3.3
 
 ### Breaking changes
 

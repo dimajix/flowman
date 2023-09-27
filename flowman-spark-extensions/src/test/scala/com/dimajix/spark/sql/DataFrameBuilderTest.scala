@@ -56,7 +56,7 @@ class DataFrameBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSess
         df.collect() should be (Seq(
             Row(1,"lala",2.3, new java.math.BigDecimal("3.400000"), Date.valueOf("2019-02-01"),new Timestamp(DateTimeUtils.stringToTime("2019-02-01T12:34:00").getTime)),
             Row(2,"lolo",3.4, new java.math.BigDecimal("4.500000"), Date.valueOf("2019-02-02"),new Timestamp(DateTimeUtils.stringToTime("2019-02-01T12:34:00").getTime)),
-            Row(null,null,null,null,null,null),
+            Row(null,"",null,null,null,null),
             Row(null,null,null,null,null,null)
         ))
         df.schema should be (schema)

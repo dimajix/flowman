@@ -54,6 +54,7 @@ changes over time.
 * github-428: Move project selector into top bar in Flowman History Server
 * github-433: Add Trino JDBC driver as plugin
 * github-434: Use sshj instead of ganymed for sftp
+* github-452: [BUG] SQL assertions do not support empty strings as expected values
 
 
 ### Version 1.0.1 - Upcoming

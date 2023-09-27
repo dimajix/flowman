@@ -55,7 +55,7 @@ object RowParser {
                  ) : Options = {
             val timeZone = DateTimeUtils.getTimeZone("UTC")
             Options(
-                nullValue = "",
+                nullValue = null,
                 nanValue = "NaN",
                 negativeInf = "Inf",
                 positiveInf = "-Inf",
@@ -160,8 +160,13 @@ class RowParser(schema: StructType, options:RowParser.Options) {
                 java.sql.Date.valueOf(datum)
             }
 
-        case _: StringType => (d: String) =>
-            nullSafeDatum(d, name, nullable) { datum =>
+        case _: StringType => (datum: String) =>
+            if (datum == options.nullValue || datum == null) {
+                if (!nullable) {
+                    throw new RuntimeException(s"null value found but field $name is not nullable.")
+                }
+                null
+            } else {
                 datum
             }
 
@@ -173,7 +178,7 @@ class RowParser(schema: StructType, options:RowParser.Options) {
         datum: String,
         name: String,
         nullable: Boolean)(converter: ValueConverter): Any = {
-        if (datum == options.nullValue || datum == null) {
+        if (datum == options.nullValue || datum == null || datum.isEmpty) {
             if (!nullable) {
                 throw new RuntimeException(s"null value found but field $name is not nullable.")
             }

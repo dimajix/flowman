@@ -156,7 +156,8 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
             records = Seq(
                 ArrayRecord("lala","12"),
                 ArrayRecord("lolo","13"),
-                ArrayRecord("",null)
+                ArrayRecord("",""),
+                ArrayRecord(null,null)
             )
         )
 
@@ -172,6 +173,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
         df.collect() should be (Seq(
             Row("lala", 12),
             Row("lolo", 13),
+            Row("",null),
             Row(null,null)
         ))
 
@@ -202,7 +204,8 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
             records = Seq(
                 ArrayRecord("lala","12"),
                 ArrayRecord("lolo","13"),
-                ArrayRecord("",null)
+                ArrayRecord("",""),
+                ArrayRecord(null,null)
             )
         )
 
@@ -218,6 +221,7 @@ class ValuesMappingTest extends AnyFlatSpec with Matchers with MockFactory with 
         df.collect() should be (Seq(
             Row("lala", 12),
             Row("lolo", 13),
+            Row("",null),
             Row(null,null)
         ))
 

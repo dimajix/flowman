@@ -64,7 +64,7 @@ class RowParserTest extends AnyFlatSpec with Matchers {
         result should be (Seq(
             Row(1,"lala",2.3, new java.math.BigDecimal("3.400000"), Date.valueOf("2019-02-01"),localTime("2019-02-01T12:34:00")),
             Row(2,"lolo",3.4, new java.math.BigDecimal("4.500000"), Date.valueOf("2019-02-02"),localTime("2019-02-01T12:34:00")),
-            Row(null,null,null,null,null,null),
+            Row(null,"",null,null,null,null),
             Row(null,null,null,null,null,null)
         ))
     }
@@ -112,7 +112,7 @@ class RowParserTest extends AnyFlatSpec with Matchers {
 
         result should be (Seq(
             Row(1,"lala",null),
-            Row(null,null,null)
+            Row(null,"",null)
         ))
     }
 

@@ -120,7 +120,8 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
             records = Seq(
                 ArrayRecord("lala","12"),
                 ArrayRecord("lolo","13"),
-                ArrayRecord("",null)
+                ArrayRecord("",""),
+                ArrayRecord(null,null)
             )
         )
 
@@ -136,6 +137,7 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         df.collect() should be (Seq(
             Row("lala", 12),
             Row("lolo", 13),
+            Row("",null),
             Row(null,null)
         ))
 
@@ -158,7 +160,8 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
             records = Seq(
                 ArrayRecord("lala","12"),
                 ArrayRecord("lolo","13"),
-                ArrayRecord("",null)
+                ArrayRecord("",""),
+                ArrayRecord(null,null)
             )
         )
 
@@ -174,6 +177,7 @@ class ValuesDatasetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         df.collect() should be (Seq(
             Row("lala", 12),
             Row("lolo", 13),
+            Row("",null),
             Row(null,null)
         ))
 

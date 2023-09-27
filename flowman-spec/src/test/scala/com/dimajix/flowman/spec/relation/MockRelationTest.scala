@@ -268,7 +268,8 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
             Seq(
                 ArrayRecord("lala","12"),
                 ArrayRecord("lolo","13"),
-                ArrayRecord("",null)
+                ArrayRecord("",""),
+                ArrayRecord(null,null)
             )
         )
         val schema = InlineSchema(
@@ -290,6 +291,7 @@ class MockRelationTest extends AnyFlatSpec with Matchers with MockFactory with L
         df.collect() should be (Seq(
             Row("lala", 12),
             Row("lolo", 13),
+            Row("",null),
             Row(null,null)
         ))
 

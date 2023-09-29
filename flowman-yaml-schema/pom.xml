@@ -17,7 +17,8 @@
     </parent>
 
     <properties>
-        <jackson.version>2.13.4</jackson.version>
+        <jackson.version>2.15.2</jackson.version>
+        <snakeyaml.version>2.0</snakeyaml.version>
     </properties>
 
     <build>
@@ -69,6 +70,11 @@
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-scala_${scala.api_version}</artifactId>
             <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>${snakeyaml.version}</version>
         </dependency>
         <dependency>
             <groupId>jakarta.validation</groupId>

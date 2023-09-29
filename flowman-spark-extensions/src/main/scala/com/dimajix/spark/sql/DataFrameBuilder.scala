@@ -22,7 +22,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.catalyst.encoders.RowEncoder
+import org.apache.spark.sql.SparkShim.expressionEncoderFor
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.types.StructType
 
@@ -81,7 +81,7 @@ object DataFrameBuilder {
     def ofRows(sparkSession: SparkSession, logicalPlan: LogicalPlan): DataFrame = {
         val qe = sparkSession.sessionState.executePlan(logicalPlan)
         qe.assertAnalyzed()
-        new Dataset[Row](sparkSession, logicalPlan, RowEncoder(qe.analyzed.schema))
+        new Dataset[Row](sparkSession, logicalPlan, expressionEncoderFor(qe.analyzed.schema))
     }
 
     /**
@@ -93,7 +93,7 @@ object DataFrameBuilder {
      */
     def singleRow(sparkSession: SparkSession, schema: StructType): DataFrame = {
         val logicalPlan = PlanUtils.singleRowPlan(schema)
-        new Dataset[Row](sparkSession, logicalPlan, RowEncoder(schema))
+        new Dataset[Row](sparkSession, logicalPlan, expressionEncoderFor(schema))
     }
 
     /**
@@ -105,6 +105,6 @@ object DataFrameBuilder {
      */
     def namedAttributes(sparkSession: SparkSession, schema: StructType): DataFrame = {
         val logicalPlan = PlanUtils.namedAttributePlan(schema)
-        new Dataset[Row](sparkSession, logicalPlan, RowEncoder(schema))
+        new Dataset[Row](sparkSession, logicalPlan, expressionEncoderFor(schema))
     }
 }

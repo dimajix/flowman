@@ -51,6 +51,7 @@ import com.dimajix.flowman.model.PartitionSchema
 import com.dimajix.flowman.model.Relation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.spark.sql.delta.DeltaShim
 import com.dimajix.flowman.spec.annotation.RelationType
 import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
@@ -232,7 +233,7 @@ final case class DeltaFileRelation(
                     val sourceTable = TableDefinition(
                         TableIdentifier.empty,
                         columns = sourceSchema.fields,
-                        partitionColumnNames = table.snapshot.metadata.partitionColumns
+                        partitionColumnNames = DeltaShim.snapshot(table).metadata.partitionColumns
                     )
                     val targetTable = TableDefinition(
                         TableIdentifier.empty,

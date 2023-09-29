@@ -33,16 +33,19 @@ import org.apache.spark.sql.catalyst.catalog.CatalogTablePartition
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.catalyst.catalog.CatalogTypes.TablePartitionSpec
 import org.apache.spark.sql.catalyst.catalog.SessionCatalog
+import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.catalyst.expressions.Alias
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.expressions.NamedExpression
 import org.apache.spark.sql.catalyst.plans.logical.GroupingSets
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.util.BadRecordException
 import org.apache.spark.sql.catalyst.util.IntervalUtils
 import org.apache.spark.sql.execution.ExtendedMode
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.SQLExecution
 import org.apache.spark.sql.execution.SimpleMode
+import org.apache.spark.sql.execution.columnar.InMemoryRelation
 import org.apache.spark.sql.execution.command.AlterViewAsCommand
 import org.apache.spark.sql.execution.command.CreateDatabaseCommand
 import org.apache.spark.sql.execution.command.CreateViewCommand
@@ -60,9 +63,13 @@ import org.apache.spark.sql.types.Metadata
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.unsafe.types.CalendarInterval
 import org.apache.spark.unsafe.types.UTF8String
+import org.slf4j.LoggerFactory
 
 
+class SparkShim
 object SparkShim {
+    private val logger = LoggerFactory.getLogger(classOf[SparkShim])
+
     def getHadoopConf(sparkConf:SparkConf) :org.apache.hadoop.conf.Configuration = SparkHadoopUtil.get.newConfiguration(sparkConf)
 
     def parseCalendarInterval(str:String) : CalendarInterval = IntervalUtils.stringToInterval(UTF8String.fromString(str))
@@ -152,6 +159,27 @@ object SparkShim {
     }
 
     def toPath(path:String) : Path = new Path(path)
+
+    def rowEncoderFor(schema: StructType) : Encoder[Row] = RowEncoder(schema)
+    def expressionEncoderFor(schema: StructType) : Encoder[Row] = RowEncoder(schema)
+
+    def newBadRecordException(cause: Throwable): BadRecordException = {
+        throw BadRecordException(
+            () => new UTF8String(),
+            () => None,
+            cause
+        )
+    }
+
+    def extractInMemoryRelation(plan: LogicalPlan): Option[InMemoryRelation] = {
+        plan match {
+            case c: InMemoryRelation => Some(c)
+            // The next case should not happen
+            case _ =>
+                logger.warn("Found wrong child type in EagerCache.")
+                None
+        }
+    }
 
     def explainString[T](ds: Dataset[T], extended: Boolean): String = {
         val mode = if (extended) ExtendedMode else SimpleMode

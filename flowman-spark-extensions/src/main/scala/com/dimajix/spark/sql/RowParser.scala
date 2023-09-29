@@ -27,6 +27,8 @@ import scala.util.control.NonFatal
 
 import org.apache.commons.lang3.time.FastDateFormat
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.SparkShim.newBadRecordException
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.catalyst.util.BadRecordException
 import org.apache.spark.sql.types.BooleanType
@@ -202,10 +204,9 @@ class RowParser(schema: StructType, options:RowParser.Options) {
         if ((tokens.length < schema.length && !options.addExtraColumns) ||
             (tokens.length > schema.length && !options.removeExtraColumns)
         ) {
-            throw BadRecordException(
-                () => new UTF8String(),
-                () => None,
-                new RuntimeException(s"Malformed record. Expected ${schema.length} columns, but only got ${tokens.length} columns. Offending record:\n${line.getOrElse(tokens.mkString(","))}"))
+            throw newBadRecordException(
+                new RuntimeException(s"Malformed record. Expected ${schema.length} columns, but only got ${tokens.length} columns. Offending record:\n${line.getOrElse(tokens.mkString(","))}")
+            )
         }
 
         val checkedTokens = if (schema.length > tokens.length) {
@@ -222,7 +223,8 @@ class RowParser(schema: StructType, options:RowParser.Options) {
             new GenericRowWithSchema(values.toArray, schema)
         } catch {
             case NonFatal(e) =>
-                throw BadRecordException(() => new UTF8String(), () => None, e)
+                throw newBadRecordException(e)
         }
     }
 }
+

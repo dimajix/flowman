@@ -20,6 +20,8 @@ Breaking changes will be documented in this changelog file for each version.
 
 ## Version 1.2.0 - Upcoming
 
+* github-447: Support Spark 3.5.0
+
 
 ## Version 1.1.0 - 2023-10-10
 

@@ -18,11 +18,9 @@ package com.dimajix.spark.sql.catalyst.plans.logical
 
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.execution.SparkPlan
-import org.apache.spark.sql.execution.columnar.InMemoryRelation
 
 
-case class EagerCache(child: LogicalPlan, caches: Seq[InMemoryRelation]) extends LogicalPlan {
+case class EagerCache(child: LogicalPlan, caches: Seq[LogicalPlan]) extends LogicalPlan {
     override def children: Seq[LogicalPlan] = child +: caches
     override def maxRows: Option[Long] = child.maxRows
     override def output: Seq[Attribute] = child.output
@@ -31,5 +29,5 @@ case class EagerCache(child: LogicalPlan, caches: Seq[InMemoryRelation]) extends
         //copy(child=child.canonicalized, caches=caches.map(_.canonicalized.asInstanceOf[InMemoryRelation]))
 
     /*override*/ protected def withNewChildrenInternal(newChildren: IndexedSeq[LogicalPlan]): LogicalPlan =
-        copy(child=newChildren.head, caches=newChildren.tail.map(_.asInstanceOf[InMemoryRelation]))
+        copy(child=newChildren.head, caches=newChildren.tail)
 }

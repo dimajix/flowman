@@ -19,7 +19,29 @@
         <plugin.name>flowman-openapi</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
+        <swagger-parser.version>2.1.16</swagger-parser.version>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>CDH-6.3</id>
+            <properties>
+                <swagger-parser.version>2.0.27</swagger-parser.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>CDP-7.1</id>
+            <properties>
+                <swagger-parser.version>2.0.27</swagger-parser.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-2.4</id>
+            <properties>
+                <swagger-parser.version>2.0.27</swagger-parser.version>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <resources>
@@ -71,7 +93,7 @@
         <dependency>
             <groupId>io.swagger.parser.v3</groupId>
             <artifactId>swagger-parser</artifactId>
-            <version>2.0.27</version>
+            <version>${swagger-parser.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>io.swagger.parser.v3</groupId>

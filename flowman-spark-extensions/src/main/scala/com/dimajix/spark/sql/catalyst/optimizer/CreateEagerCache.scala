@@ -27,12 +27,16 @@ import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.execution.columnar.InMemoryRelation
 import org.apache.spark.sql.execution.columnar.InMemoryTableScanExec
+import org.slf4j.LoggerFactory
 
 import com.dimajix.spark.sql.catalyst.plans.logical.EagerCache
 import com.dimajix.spark.sql.execution.EagerCacheExec
 
 
+class CreateEagerCache
 object CreateEagerCache extends Rule[LogicalPlan] with PredicateHelper {
+    private val logger = LoggerFactory.getLogger(classOf[CreateEagerCache])
+
     def apply(plan: LogicalPlan): LogicalPlan = {
         val cacheCounts = new util.IdentityHashMap[SparkPlan,(InMemoryRelation,Int)]()
 
@@ -58,7 +62,9 @@ object CreateEagerCache extends Rule[LogicalPlan] with PredicateHelper {
                 case EagerCacheExec(_, caches) =>
                     // Mark this plan not to be cached again, since there already is an eager cache
                     caches.foreach { c =>
-                        c.collectFirst { case ex:InMemoryTableScanExec => ex }
+                        c.collectFirst {
+                                case ex:InMemoryTableScanExec => ex
+                            }
                             .foreach(scan => disallowCache(scan.relation))
                     }
                 case _ =>
@@ -71,7 +77,8 @@ object CreateEagerCache extends Rule[LogicalPlan] with PredicateHelper {
                     countSubCaches(relation)
                 case EagerCache(_, caches) =>
                     // Mark this plan not to be cached again, since there already is an eager cache
-                    caches.foreach(c => disallowCache(c))
+                    caches.flatMap(SparkShim.extractInMemoryRelation)
+                        .foreach(c => disallowCache(c))
                 case _ =>
             }
         }

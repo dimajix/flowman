@@ -56,6 +56,7 @@ changes over time.
 * github-434: Use sshj instead of ganymed for sftp
 * github-452: [BUG] SQL assertions do not support empty strings as expected values
 * github-450: Update Spark to 3.3.3
+* github-454: Fix scope of netty-codec
 
 ### Breaking changes
 

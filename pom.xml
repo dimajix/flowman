@@ -2647,7 +2647,7 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-codec</artifactId>
                 <version>${netty-all.version}</version>
-                <scope>${netty-extras.scope}</scope>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>

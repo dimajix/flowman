@@ -57,6 +57,7 @@ changes over time.
 * github-452: [BUG] SQL assertions do not support empty strings as expected values
 * github-450: Update Spark to 3.3.3
 * github-454: Fix scope of netty-codec
+* github-446: Fix deadlock when running targets in parallel
 
 ### Breaking changes
 

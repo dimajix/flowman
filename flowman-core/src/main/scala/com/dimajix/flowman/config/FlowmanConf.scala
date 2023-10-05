@@ -109,10 +109,6 @@ object FlowmanConf {
         .doc("Parallelism of data quality check execution")
         .intConf
         .createWithDefault(1)
-    val EXECUTION_MAPPING_SCHEMA_CACHE = buildConf("flowman.execution.mapping.schemaCache")
-        .doc("Cache schema information of mapping instances")
-        .booleanConf
-        .createWithDefault(true)
     val EXECUTION_RELATION_SCHEMA_CACHE = buildConf("flowman.execution.relation.schemaCache")
         .doc("Cache schema information of relation instances")
         .booleanConf

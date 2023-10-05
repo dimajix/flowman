@@ -138,6 +138,18 @@ case class SynchronizedMap[K,V](impl:mutable.Map[K,V]) {
         }
     }
 
+    def getOrElseUpdateSynchronized(key: K, op: => V): V = {
+        synchronized {
+            impl.get(key)
+            match {
+                case Some(result) => result
+                case None =>
+                    val result = op
+                    impl.getOrElseUpdate(key, result)
+            }
+        }
+    }
+
     /** Converts this $coll to a sequence.
      *
      * ```Note```: assumes a fast `size` method.  Subclasses should override if this is not true.

@@ -64,11 +64,6 @@ The number of mappings to be processed in parallel. Increasing this number may h
 relations are read from, and their initial setup is slow (for example due to slow directory listings). With the
 default value of 1, the parallelism is completely disabled and a non-threaded code path is used instead.
 
-- `flowman.execution.mapping.schemaCache` *(type: boolean)* *(default: true)* (since Flowman 0.22.0)
-Turn on/off caching of schema information of mappings. Caching this information (which is enabled per default) can
- speed up schema inference, which is used for `mapping` schemas and when creating the documentation of mappings. Turning
- off the cache is mainly for debugging purposes.
-
 - `flowman.execution.relation.schemaCache` *(type: boolean)* *(default: true)* (since Flowman 0.22.0)
 Turn on/off caching of schema information of relations. Caching this information (which is enabled per default) can
  speed up schema inference, which is used for `relation` schemas and when creating the documentation of relations and

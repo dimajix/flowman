@@ -19,14 +19,13 @@ package com.dimajix.flowman.execution
 import java.util.concurrent.TimeUnit
 
 import scala.annotation.tailrec
-import scala.concurrent.TimeoutException
 import scala.collection.mutable
-import scala.collection.parallel.ForkJoinTaskSupport
-import scala.collection.parallel.TaskSupport
 import scala.concurrent.Await
 import scala.concurrent.Awaitable
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.Promise
+import scala.concurrent.TimeoutException
 import scala.concurrent.duration.Duration
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -48,18 +47,17 @@ import com.dimajix.flowman.types.StructType
 
 
 abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) extends AbstractExecution {
-    private lazy val taskSupport:TaskSupport = {
+    private lazy val executionContext: ExecutionContext = {
         parent match {
             case Some(ce:CachingExecution) if !isolated =>
-                ce.taskSupport
+                ce.executionContext
             case _ =>
                 val tp = ThreadUtils.newForkJoinPool("execution", parallelism)
-                new ForkJoinTaskSupport(tp)
+                ExecutionContext.fromExecutor(tp)
         }
     }
     private lazy val parallelism = flowmanConf.getConf(FlowmanConf.EXECUTION_MAPPING_PARALLELISM)
     private lazy val timeout = flowmanConf.getConf(FlowmanConf.EXECUTION_WAIT_TIMEOUT)
-    private lazy val useMappingSchemaCache = flowmanConf.getConf(FlowmanConf.EXECUTION_MAPPING_SCHEMA_CACHE)
     private lazy val useRelationSchemaCache = flowmanConf.getConf(FlowmanConf.EXECUTION_RELATION_SCHEMA_CACHE)
 
     private val frameCache:SynchronizedMap[Mapping,Map[String,DataFrame]] = {
@@ -131,38 +129,45 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
     override def instantiate(mapping:Mapping) : Map[String,DataFrame] = {
         require(mapping != null)
 
+        def info: String = {
+            val futuresWithoutCache = (frameCacheFutures.keys -- frameCache.keys).toSeq
+                .map(m => " - " + m.identifier.toString)
+                .sorted
+                .mkString("\n")
+            val uncompletedFutures = frameCacheFutures.toSeq
+                .filter(f => !f._2.isCompleted)
+                .map(f => " - " + f._1.identifier.toString)
+                .sorted
+                .mkString("\n")
+            s"""Instantiating mapping '${mapping.identifier}'.
+               |List of mappings with futures without cache entry:
+               |$futuresWithoutCache
+               |List of mappings with uncompleted futures:
+               |$uncompletedFutures""".stripMargin
+        }
+
         // We do not simply call getOrElseUpdate, since the creation of the DataFrame might be slow
-        def createOrWait() : Map[String,DataFrame] = {
-            val p = Promise[Map[String,DataFrame]]()
-            val f = frameCacheFutures.getOrElseUpdate(mapping, p.future)
-            // Check if the returned future is the one we passed in. If that is the case, the current thread
-            // is responsible for fulfilling the promise
-            if (f eq p.future) {
-                fullfill(p, createTables(mapping))
+        def createOrWait : Map[String,DataFrame] = {
+            if (parallelism > 1) {
+                val f = instantiateMappingAsync(mapping)
+                await(f, info)
             }
             else {
-                // Other threads simply wait for the promise to be fulfilled.
-                def info : String = {
-                    val futuresWithoutCache = (frameCacheFutures.keys -- frameCache.keys).toSeq
-                        .map(m => " - " + m.identifier.toString)
-                        .sorted
-                        .mkString("\n")
-                    val uncompletedFutures = frameCacheFutures.toSeq
-                        .filter(f => !f._2.isCompleted)
-                        .map(f => " - " + f._1.identifier.toString)
-                        .sorted
-                        .mkString("\n")
-                    s"""Instantiating mapping '${mapping.identifier}'.
-                       |List of mappings with futures without cache entry:
-                       |$futuresWithoutCache
-                       |List of mappings with uncompleted futures:
-                       |$uncompletedFutures""".stripMargin
+                val p = Promise[Map[String, DataFrame]]()
+                val f = frameCacheFutures.getOrElseUpdate(mapping, p.future)
+                // Check if the returned future is the one we passed in. If that is the case, the current thread
+                // is responsible for fulfilling the promise
+                if (f eq p.future) {
+                    fullfill(p, instantiateMappingSync(mapping))
                 }
-                await(f, info)
+                else {
+                    // Other threads simply wait for the promise to be fulfilled.
+                    await(f, info)
+                }
             }
         }
 
-        frameCache.getOrElseUpdate(mapping, createOrWait())
+        frameCache.getOrElseUpdate(mapping, createOrWait)
     }
 
     /**
@@ -173,53 +178,86 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      */
     @throws[DescribeMappingFailedException]
     override def describe(mapping:Mapping) : Map[String,StructType] = {
+        def info = s"Describing mapping '${mapping.identifier}'"
+
         // We do not simply call getOrElseUpdate, since the creation of the Schema might be slow
-        def createOrWait() : Map[String,StructType] = {
-            val p = Promise[Map[String,StructType]]()
-            val f = mappingSchemaCacheFutures.getOrElseUpdate(mapping, p.future)
-            // Check if the returned future is the one we passed in. If that is the case, the current thread
-            // is responsible for fulfilling the promise
-            if (f eq p.future) {
-                fullfill(p, describeMapping(mapping))
+        def createOrWait : Map[String,StructType] = {
+            if (parallelism > 1) {
+                val f = describeMappingAsync(mapping)
+                await(f, info)
             }
             else {
-                // Other threads simply wait for the promise to be fulfilled.
-                await(f, s"Describing mapping '${mapping.identifier}'")
+                val p = Promise[Map[String, StructType]]()
+                val f = mappingSchemaCacheFutures.getOrElseUpdate(mapping, p.future)
+                // Check if the returned future is the one we passed in. If that is the case, the current thread
+                // is responsible for fulfilling the promise
+                if (f eq p.future) {
+                    fullfill(p, describeMappingSync(mapping))
+                }
+                else {
+                    // Other threads simply wait for the promise to be fulfilled.
+                    await(f, info)
+                }
             }
         }
 
-        if (useMappingSchemaCache) {
-            mappingSchemaCache.getOrElseUpdate(mapping, createOrWait())
-        }
-        else {
-            describeMapping(mapping)
-        }
+        mappingSchemaCache.getOrElseUpdate(mapping, createOrWait)
     }
 
     @throws[DescribeMappingFailedException]
-    private def describeMapping(mapping:Mapping) : Map[String,StructType] = {
+    private def describeMappingAsync(mapping: Mapping): Future[Map[String, StructType]] = {
         val context = mapping.context
 
         def dep(input: MappingOutputIdentifier) = {
             require(input.mapping.nonEmpty)
 
             val mapping = context.getMapping(input.mapping)
-            val structs = describe(mapping, input.output)
-            (input, structs)
+            // Do NOT call "describe" directly in order to make best use of Futures
+            describeMappingAsync(mapping)
         }
 
-        val dependencies = {
-            val inputs = mapping.inputs.toSeq
-            if (inputs.size > 1 && parallelism > 1) {
-                val parInputs = inputs.par
-                parInputs.tasksupport = taskSupport
-                parInputs.map(dep).seq.toMap
-            }
-            else {
-                inputs.map(dep).toMap
-            }
+        def create = {
+            implicit val ec = executionContext
+            // Starting with a Future is a hack in order to create the Future as fast as possible to
+            // ensure that it gets inserted into the mappingSchemaCacheFutures table almost immediately
+            Future {
+                val inputs = mapping.inputs.toSeq
+                val futures = inputs.map(i => dep(i))
+                Future.sequence(futures).map { dfs =>
+                    val deps = dfs.zip(inputs)
+                        .map { case (dfs, in) => in -> dfs(in.output) }
+                        .toMap
+                    mappingSchemaCache.getOrElseUpdate(mapping, describeMapping(mapping, deps))
+                }
+            }.flatMap(identity)
         }
 
+        mappingSchemaCacheFutures.getOrElseUpdateSynchronized(mapping, create)
+    }
+
+
+    @throws[DescribeMappingFailedException]
+    private def describeMappingSync(mapping:Mapping) : Map[String,StructType] = {
+        val context = mapping.context
+        val inputs = mapping.inputs.toSeq
+
+        def dep(input: MappingOutputIdentifier) = {
+            require(input.mapping.nonEmpty)
+
+            val mapping = context.getMapping(input.mapping)
+            // Recursively call synchronous "describe", which will also inspect cache
+            describe(mapping)
+        }
+
+        val deps = inputs.map(i => i -> dep(i))
+            .map { case (in, dfs) => in -> dfs(in.output) }
+            .toMap
+
+        mappingSchemaCache.getOrElseUpdate(mapping, describeMapping(mapping, deps))
+    }
+
+    @throws[DescribeMappingFailedException]
+    private def describeMapping(mapping: Mapping, dependencies:Map[MappingOutputIdentifier,StructType]): Map[String, StructType] = {
         // Transform any non-fatal exception in a DescribeMappingFailedException
         try {
             logger.info(s"Describing mapping '${mapping.identifier}'")
@@ -244,7 +282,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
     @throws[DescribeRelationFailedException]
     override def describe(relation:Relation, partitions:Map[String,FieldValue] = Map()) : StructType = {
         // We do not simply call getOrElseUpdate, since the creation of the Schema might be slow
-        def createOrWait() : StructType = {
+        def createOrWait : StructType = {
             val p = Promise[StructType]()
             val f = relationSchemaCacheFutures.getOrElseUpdate(relation, p.future)
             // Check if the returned future is the one we passed in. If that is the case, the current thread
@@ -260,7 +298,7 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
 
         if (useRelationSchemaCache) {
             try {
-                relationSchemaCache.getOrElseUpdate(relation, createOrWait())
+                relationSchemaCache.getOrElseUpdate(relation, createOrWait)
             }
             finally {
                 // Remove relation from Futures, so we have another chance when the relation is described again
@@ -347,37 +385,62 @@ abstract class CachingExecution(parent:Option[Execution], isolated:Boolean) exte
      */
     @throws[NoSuchMappingOutputException]
     @throws[InstantiateMappingFailedException]
-    private def createTables(mapping:Mapping): Map[String,DataFrame] = {
+    private def instantiateMappingAsync(mapping:Mapping): Future[Map[String,DataFrame]] = {
         val context = mapping.context
 
-        def dep(inputs:MappingOutputIdentifier) = {
+        def dep(inputs: MappingOutputIdentifier) = {
             require(inputs.mapping.nonEmpty)
 
             val mapping = context.getMapping(inputs.mapping)
             if (!mapping.outputs.contains(inputs.output))
                 throw new NoSuchMappingOutputException(mapping.identifier, inputs.output)
-            val instances = instantiate(mapping)
-            (inputs, instances(inputs.output))
+            // Do NOT call "instantiate" directly in order to make best use of Futures
+            instantiateMappingAsync(mapping)
         }
 
-        val dependencies = {
-            val inputs = mapping.inputs.toSeq
-            if (inputs.size > 1 && parallelism > 1) {
-                val parInputs = inputs.par
-                parInputs.tasksupport = taskSupport
-                parInputs.map(dep).seq.toMap
-            }
-            else {
-                inputs.map(dep).toMap
-            }
+        def create = {
+            implicit val ec = executionContext
+            // Starting with a Future is a hack in order to create the Future as fast as possible to
+            // ensure that it gets inserted into the frameCacheFutures table almost immediately
+            Future {
+                val inputs = mapping.inputs.toSeq
+                val futures = inputs.map(i => dep(i))
+                Future.sequence(futures).map { dfs =>
+                    val deps = dfs.zip(inputs)
+                        .map { case (dfs, in) => in -> dfs(in.output) }
+                        .toMap
+                    frameCache.getOrElseUpdate(mapping, instantiateMapping(mapping, deps))
+                }
+            }.flatMap(identity)
         }
 
-        // Retry cache (maybe it was inserted via dependencies)
-        frameCache.getOrElseUpdate(mapping, createTables(mapping, dependencies))
+        frameCacheFutures.getOrElseUpdateSynchronized(mapping, create)
+    }
+
+    @throws[NoSuchMappingOutputException]
+    @throws[InstantiateMappingFailedException]
+    private def instantiateMappingSync(mapping: Mapping): Map[String, DataFrame] = {
+        val context = mapping.context
+        val inputs = mapping.inputs.toSeq
+
+        def dep(inputs: MappingOutputIdentifier) = {
+            require(inputs.mapping.nonEmpty)
+
+            val mapping = context.getMapping(inputs.mapping)
+            if (!mapping.outputs.contains(inputs.output))
+                throw new NoSuchMappingOutputException(mapping.identifier, inputs.output)
+            // Recursively call synchronous "instantiate", which will also inspect cache
+            instantiate(mapping)
+        }
+
+        val deps = inputs.map(i => i -> dep(i))
+            .map { case (in, dfs) => in -> dfs(in.output) }
+            .toMap
+        frameCache.getOrElseUpdate(mapping, instantiateMapping(mapping, deps))
     }
 
     @throws[InstantiateMappingFailedException]
-    private def createTables(mapping: Mapping, dependencies:Map[MappingOutputIdentifier, DataFrame]) : Map[String,DataFrame] = {
+    private def instantiateMapping(mapping: Mapping, dependencies:Map[MappingOutputIdentifier, DataFrame]) : Map[String,DataFrame] = {
         // Process table and register result as temp table
         val doBroadcast = mapping.broadcast
         val doCheckpoint = mapping.checkpoint

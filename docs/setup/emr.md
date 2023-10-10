@@ -29,13 +29,13 @@ opening firewall ports, providing your public ssh key and more. You can read det
 Once you successfully logged in to the master node, you need to download an EMR optimized version of Flowman using
 `wget` or `curl`:
 ```shell
-wget https://github.com/dimajix/flowman/releases/download/1.0.0/flowman-dist-1.0.0-emr6.10-spark3.3-hadoop3.3-bin.tar.gz
+wget https://github.com/dimajix/flowman/releases/download/1.1.0/flowman-dist-1.0.0-emr6.12-spark3.4-hadoop3.3-bin.tar.gz
 ```
 Next you unpack Flowman as follows:
 ```shell
-tar xvzf flowman-dist-1.0.0-emr6.10-spark3.3-hadoop3.3-bin.tar.gz
+tar xvzf flowman-dist-1.1.0-emr6.12-spark3.4-hadoop3.3-bin.tar.gz
 ```
-This will create a directory `flowman-1.0.0-emr6.10-spark3.3-hadoop3.3` which contains all executables and libraries
+This will create a directory `flowman-1.1.0-emr6.12-spark3.4-hadoop3.3` which contains all executables and libraries
 of Flowman.
 
 #### Directory Layout
@@ -191,7 +191,7 @@ In this case, we need a small `pom.xml` file (this is the build descriptor for M
             <plugin>
                 <groupId>com.dimajix.flowman.maven</groupId>
                 <artifactId>flowman-maven-plugin</artifactId>
-                <version>0.1.0</version>
+                <version>0.4.0</version>
                 <extensions>true</extensions>
                 <configuration>
                     <deploymentDescriptor>deployment.yml</deploymentDescriptor>
@@ -216,7 +216,7 @@ This deployment descriptor contains all required information
 ```yaml
 flowman:
   # Specify the Flowman version to use
-  version: 1.0.0-emr6.10-spark3.3-hadoop3.3
+  version: 1.1.0-emr6.12-spark3.4-hadoop3.3
   plugins:
     # Specify the list of plugins to use
     - flowman-avro

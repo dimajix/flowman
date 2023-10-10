@@ -45,7 +45,7 @@ In this case, we need a small `pom.xml` file (this is the build descriptor for M
             <plugin>
                 <groupId>com.dimajix.flowman.maven</groupId>
                 <artifactId>flowman-maven-plugin</artifactId>
-                <version>0.1.0</version>
+                <version>0.4.0</version>
                 <extensions>true</extensions>
                 <configuration>
                     <deploymentDescriptor>deployment.yml</deploymentDescriptor>
@@ -70,7 +70,7 @@ This deployment descriptor contains all required information
 ```yaml
 flowman:
   # Specify the Flowman version to use
-  version: 1.0.0-synapse3.3-spark3.3-hadoop3.3
+  version: 1.1.0-synapse3.3-spark3.3-hadoop3.3
   plugins:
     # Specify the list of plugins to use
     - flowman-avro

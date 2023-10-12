@@ -18,6 +18,9 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
+## Version 1.1.1 - Upcoming
+
+
 ## Version 1.1.0 - 2023-10-10
 
 * github-413: Support Azure Key Vault for retrieving secrets

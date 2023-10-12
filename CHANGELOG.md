@@ -18,7 +18,7 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
-## Version 1.1.1 - Upcoming
+## Version 1.2.0 - Upcoming
 
 
 ## Version 1.1.0 - 2023-10-10

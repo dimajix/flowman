@@ -106,7 +106,7 @@
         <commons-text.version>1.10.0</commons-text.version>
         <curator-client.version>2.13.0</curator-client.version>
         <curator.version>2.13.0</curator.version>
-        <derby.version>10.14.2.0</derby.version>
+        <derby.version>10.17.1.0</derby.version>
         <dropwizard.version>4.2.0</dropwizard.version>
         <gson.version>2.2.4</gson.version>
         <guava.version>14.0.1</guava.version>

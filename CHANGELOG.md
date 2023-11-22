@@ -20,6 +20,8 @@ Breaking changes will be documented in this changelog file for each version.
 
 ## Version 1.2.0 - Upcoming
 
+* github-464: Upgrade Cloudera CDP 7.1 to Hotfix 16
+
 
 ## Version 1.1.0 - 2023-10-10
 

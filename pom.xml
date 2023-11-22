@@ -330,7 +330,7 @@
             </repositories>
             <properties>
                 <hadoop.dist>cdp7</hadoop.dist>
-                <cdp.version>7.1.8.0-801</cdp.version>
+                <cdp.version>7.1.8.50-2</cdp.version>
                 <java.version>1.8</java.version>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
@@ -358,32 +358,32 @@
                 <curator.version>4.3.0.${cdp.version}</curator.version>
                 <derby.version>10.14.2.0</derby.version>
                 <dropwizard.version>3.1.5</dropwizard.version>
-                <gson.version>2.2.4</gson.version>
+                <gson.version>2.9.0</gson.version>
                 <guava.version>28.1-jre</guava.version>
-                <hk2.version>2.4.0-b34</hk2.version>
+                <hk2.version>2.6.1</hk2.version>
                 <httpclient.version>4.5.13</httpclient.version>
                 <httpcore.version>4.4.13</httpcore.version>
-                <ivy.version>2.4.0</ivy.version>
-                <jackson.version>2.10.5</jackson.version>
-                <jackson-api.version>2.10</jackson-api.version>
-                <jackson-databind.version>2.10.5.1</jackson-databind.version>
+                <ivy.version>2.5.1</ivy.version>
+                <jackson.version>2.12.7</jackson.version>
+                <jackson-api.version>2.12</jackson-api.version>
+                <jackson-databind.version>2.12.7.1</jackson-databind.version>
                 <jackson-jaxb.scope>provided</jackson-jaxb.scope>
-                <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
+                <jackson-jaxrs.scope>provided</jackson-jaxrs.scope>
                 <jakarta.activation-api.version>1.2.1</jakarta.activation-api.version>
-                <jakarta.activation-api.scope>compile</jakarta.activation-api.scope>
+                <jakarta.activation-api.scope>provided</jakarta.activation-api.scope>
                 <jakarta.annotation-api.version>1.3.5</jakarta.annotation-api.version>
-                <jakarta.annotation-api.scope>compile</jakarta.annotation-api.scope>
+                <jakarta.annotation-api.scope>provided</jakarta.annotation-api.scope>
                 <jakarta.inject.version>2.6.1</jakarta.inject.version>
-                <jakarta.inject.scope>compile</jakarta.inject.scope>
+                <jakarta.inject.scope>provided</jakarta.inject.scope>
                 <jakarta.validation-api.version>2.0.2</jakarta.validation-api.version>
-                <jakarta.validation-api.scope>compile</jakarta.validation-api.scope>
+                <jakarta.validation-api.scope>provided</jakarta.validation-api.scope>
                 <jakarta.ws.rs-api.version>2.1.6</jakarta.ws.rs-api.version>
-                <jakarta.ws.rs-api.scope>compile</jakarta.ws.rs-api.scope>
+                <jakarta.ws.rs-api.scope>provided</jakarta.ws.rs-api.scope>
                 <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
-                <jakarta.xml.bind-api.scope>compile</jakarta.xml.bind-api.scope>
-                <javassist.version>3.18.1-GA</javassist.version>
+                <jakarta.xml.bind-api.scope>provided</jakarta.xml.bind-api.scope>
+                <javassist.version>3.25.0-GA</javassist.version>
                 <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
-                <jaxb-runtime.scope>compile</jaxb-runtime.scope>
+                <jaxb-runtime.scope>provided</jaxb-runtime.scope>
                 <jersey.version>2.22.2</jersey.version>
                 <joda-time.version>2.9.9</joda-time.version>
                 <json4s.version>3.5.3</json4s.version>
@@ -392,20 +392,20 @@
                 <log4j.version>2.17.1</log4j.version>
                 <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
                 <lz4.version>1.4.0</lz4.version>
-                <netty-all.version>4.1.68.Final</netty-all.version>
+                <netty-all.version>4.1.86.Final</netty-all.version>
                 <netty-all.exclusion>*</netty-all.exclusion>
                 <netty-extras.scope>provided</netty-extras.scope>
                 <protobuf.version>2.5.0</protobuf.version>
                 <scala-collection-compat.version>2.1.1</scala-collection-compat.version>
                 <scala-collection-compat.scope>compile</scala-collection-compat.scope>
                 <scala-parser-combinators.version>1.1.0</scala-parser-combinators.version>
-                <scala-xml.version>1.0.5</scala-xml.version>
+                <scala-xml.version>1.2.0</scala-xml.version>
                 <scalatest-api.version>3.0</scalatest-api.version>
                 <scalatest.version>3.0.8</scalatest.version>
-                <slf4j.version>1.7.30</slf4j.version>
+                <slf4j.version>1.7.36</slf4j.version>
                 <slf4j-api.version>1</slf4j-api.version>
-                <snakeyaml.version>1.26</snakeyaml.version>
-                <snappy.version>1.1.7.5</snappy.version>
+                <snakeyaml.version>1.32</snakeyaml.version>
+                <snappy.version>1.1.7.7</snappy.version>
             </properties>
         </profile>
         <profile>
@@ -1602,7 +1602,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.4.1</version>
+                    <version>3.5.1</version>
                     <configuration>
                         <shadedArtifactAttached>false</shadedArtifactAttached>
                         <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
@@ -1624,7 +1624,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.4.2</version>
+                    <version>3.6.0</version>
                     <configuration>
                         <tarLongFileMode>posix</tarLongFileMode>
                         <archiverConfig>
@@ -1653,7 +1653,7 @@
                     <inherited>true</inherited>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>flatten-maven-plugin</artifactId>
-                    <version>1.3.0</version>
+                    <version>1.5.0</version>
                     <configuration>
                         <flattenMode>ossrh</flattenMode>
                         <embedBuildProfileDependencies>true</embedBuildProfileDependencies>
@@ -1681,7 +1681,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.0.0-M7</version>
+                    <version>3.2.2</version>
                     <executions>
                         <execution>
                             <id>default-test</id>

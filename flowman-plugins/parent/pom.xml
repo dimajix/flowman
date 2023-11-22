@@ -163,6 +163,19 @@
                 <version>${netty-all.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-resolver-dns-native-macos</artifactId>
+                <version>${netty-all.version}</version>
+                <classifier>osx-x86_64</classifier>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-resolver-dns-classes-macos</artifactId>
+                <version>${netty-all.version}</version>
+                <scope>provided</scope>
+            </dependency>
 
             <!-- Commons -->
             <dependency>

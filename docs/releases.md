@@ -33,6 +33,7 @@ changes over time.
 ## Version 1.2.0 - Upcoming
 
 * github-464: Upgrade Cloudera CDP 7.1 to Hotfix 16
+* github-465: Fix parsing of Swagger schema files
 
 
 ### Version 1.1.0 - 2023-10-10

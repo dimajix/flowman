@@ -164,7 +164,7 @@ object Reflection {
       * @tparam R
       * @return
       */
-    def invoke[T <: AnyRef,R](src:T, methodName:String, rc:Class[R],args:Map[String,Any]) : R = {
+    def invoke[T <: AnyRef,R](src:T, methodName:String, rc:Class[R], args:Map[String,Any]) : R = {
         val argNames = args.keySet
         val clazz = src.getClass
 
@@ -182,7 +182,6 @@ object Reflection {
             .lastOption
             .getOrElse(throw new NoSuchMethodError(s"No appropriate method '$methodName' found in class ${clazz.getName}"))
 
-
         val params = method.getParameters
         val pvals = params.map(p => createParameterOrDefault(p, args))
         try {
@@ -192,6 +191,45 @@ object Reflection {
             case ex:InvocationTargetException =>
                 throw ex.getTargetException
         }
+    }
+
+    def invokeIfExists[T <: AnyRef](src: T, methodName: String, args: AnyRef*) : Unit = {
+        val clazz = src.getClass
+
+        val method = try {
+            Some(clazz.getMethod(methodName, args.map(_.getClass):_*))
+        }
+        catch {
+            case _:NoSuchMethodException => None
+        }
+
+        method.foreach { method =>
+            try {
+                method.invoke(src, args: _*)
+            }
+            catch {
+                case ex: InvocationTargetException =>
+                    throw ex.getTargetException
+            }
+        }
+    }
+
+    private def findMethod[T <: AnyRef](src: T, methodName: String, args: Map[String, Any]) : Option[Method] = {
+        val argNames = args.keySet
+        val clazz = src.getClass
+
+        // Only allow methods with correct name and where all parameters can be fullfilled
+        def score(method: Method): Int = {
+            val paramNames = method.getParameters.map(_.getName).toSet
+            paramNames.intersect(argNames).size - argNames.diff(paramNames).size - paramNames.diff(argNames).size
+        }
+
+        val superClazz = if (clazz.getSuperclass != classOf[Object]) Seq(clazz.getSuperclass) else Seq.empty[Class[_]]
+        val allClazzes = Seq(clazz) ++ superClazz ++ clazz.getInterfaces.toSeq
+        allClazzes.flatMap(_.getDeclaredMethods())
+            .filter(_.getName == methodName)
+            .sortBy(m => score(m))
+            .lastOption
     }
 
     private def createParameterOrDefault(param: Parameter, args: Map[String, Any]): AnyRef = {

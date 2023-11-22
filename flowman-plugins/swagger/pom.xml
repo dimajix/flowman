@@ -19,6 +19,7 @@
         <plugin.name>flowman-swagger</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
+        <swagger.version>1.0.68</swagger.version>
     </properties>
 
     <build>
@@ -71,8 +72,7 @@
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-parser</artifactId>
-            <version>1.0.68</version>
-            <scope>compile</scope>
+            <version>${swagger.version}</version>
         </dependency>
 
         <dependency>

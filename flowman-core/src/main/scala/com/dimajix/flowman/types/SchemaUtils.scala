@@ -277,7 +277,7 @@ object SchemaUtils {
             coerce(existingField.ftype, newField.ftype)
         }
         catch {
-            case _:TypeCoerceException => throw new FieldMergeException(existingField, newField)
+            case ex:TypeCoerceException => throw new FieldMergeException(existingField, newField, ex)
         }
         val description = existingField.description.orElse(newField.description)
         val default = existingField.default.orElse(newField.default)

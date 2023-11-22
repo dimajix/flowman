@@ -18,7 +18,17 @@
         <plugin.name>flowman-openapi</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
+        <swagger.v3.version>2.1.18</swagger.v3.version>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>spark-2.4</id>
+            <properties>
+                <swagger.v3.version>2.0.30</swagger.v3.version>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <resources>
@@ -69,7 +79,7 @@
         <dependency>
             <groupId>io.swagger.parser.v3</groupId>
             <artifactId>swagger-parser</artifactId>
-            <version>2.1.22</version>
+            <version>${swagger.v3.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>io.swagger.parser.v3</groupId>

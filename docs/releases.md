@@ -14,6 +14,11 @@ The following gives an (incomplete) list of past releases of the last 12 months.
 changes over time.
 
 
+### Version 0.30.3 - 2024-08-06
+
+* github-465: (backport) Fix parsing of Swagger schema files
+
+
 ### Version 0.30.2 - 2024-07-29
 
 * github-496: updated build profile for CDP 7.1.9 platform version

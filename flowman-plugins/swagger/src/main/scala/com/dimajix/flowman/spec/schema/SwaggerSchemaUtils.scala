@@ -64,6 +64,7 @@ import com.dimajix.flowman.types.StringType
 import com.dimajix.flowman.types.StructType
 import com.dimajix.flowman.types.TimestampType
 import com.dimajix.flowman.types.VarcharType
+import com.dimajix.util.Reflection
 
 
 object SwaggerSchemaUtils {
@@ -129,6 +130,8 @@ object SwaggerSchemaUtils {
             mapper.readTree(data)
         }
         else {
+            val opts = DeserializationUtils.getOptions
+            Reflection.invokeIfExists(opts, "setMaxYamlCodePoints", Integer.valueOf(128 * 1024 * 1024))
             DeserializationUtils.readYamlTree(data, null)
         }
 
@@ -137,6 +140,7 @@ object SwaggerSchemaUtils {
         val entities = definitions.elements().asScala.toSeq
         entities.foreach(replaceAllOf)
         entities.foreach(fixRequired)
+        entities.foreach(fixAdditionalProperties)
 
         val result = new SwaggerDeserializer().deserialize(rootNode)
         val convertValue = result.getSwagger
@@ -173,6 +177,21 @@ object SwaggerSchemaUtils {
 
             case _: JsonNode =>
         }
+    }
+
+    private def fixAdditionalProperties(jsonNode: JsonNode) : Unit = {
+        jsonNode match {
+            case obj: ObjectNode =>
+                val additionalProperties = obj.get("additionalProperties")
+                if (additionalProperties != null &&
+                    additionalProperties.isBoolean &&
+                    additionalProperties.asBoolean() == false) {
+                    obj.remove("additionalProperties")
+                }
+            case _: JsonNode =>
+        }
+        jsonNode.elements().asScala.foreach(fixAdditionalProperties)
+
     }
 
     private def fixRequired(jsonNode: JsonNode) : Unit = {

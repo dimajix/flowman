@@ -18,9 +18,6 @@ package com.dimajix.flowman.spec.schema
 
 import scala.collection.JavaConverters._
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.databind.node.TextNode
 import io.swagger.v3.core.util.Json
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.media.ArraySchema
@@ -125,61 +122,21 @@ object OpenApiSchemaUtils {
             mapper.readTree(data)
         }
         else {
+            try {
+                val opts = classOf[DeserializationUtils].getMethod("getOptions").invoke(null)
+                Class.forName("io.swagger.v3.parser.util.DeserializationUtils$Options").getMethod("setMaxYamlCodePoints", classOf[Integer]).invoke(opts, Integer.valueOf(128 * 1024 * 1024))
+            }
+            catch {
+                case _:NoSuchMethodException =>
+                case _:ClassNotFoundException =>
+            }
+
             DeserializationUtils.readYamlTree(data)
         }
-
-        // Fix nested "allOf" nodes, which have to be in "definitions->[Entity]->[Definition]"
-        //val definitions = rootNode.path("components").path("schemas")
-        //val entities = definitions.elements().asScala.toSeq
-        //entities.foreach(replaceAllOf)
-        //entities.foreach(fixRequired)
 
         val result = new OpenAPIDeserializer().deserialize(rootNode)
         val convertValue = result.getOpenAPI
         convertValue
-    }
-
-    /**
-      * This helper method transforms the Json tree such that "allOf" inline elements will be replaced by an
-      * adequate object definition, because Swagger will not parse inline allOf elements correctly
-      * @param jsonNode
-      */
-    private def replaceAllOf(jsonNode: JsonNode) : Unit = {
-        jsonNode match {
-            case obj: ObjectNode if obj.get("allOf") != null =>
-                val children = obj.get("allOf").elements().asScala.toSeq
-                children.foreach(replaceAllOf)
-
-                val properties = children.flatMap(c => Option(c.get("properties")).toSeq
-                    .flatMap(_.fields().asScala))
-                val required = children.flatMap(c => Option(c.get("required")).toSeq.flatMap(_.elements().asScala))
-                val desc = children.flatMap(c => Option(c.get("description"))).headOption
-                obj.without("allOf")
-                obj.set("type", TextNode.valueOf("object"))
-                obj.withArray("required").addAll(required.asJava)
-                properties.foreach(x => obj.`with`("properties").set(x.getKey, x.getValue): AnyRef)
-                // Use ObjectNode.replace instead of ObjectNode.set since set has changed its signature in newer Jackson versions
-                desc.foreach(d => obj.replace("description", d))
-
-            case obj: ObjectNode if obj.get("items") != null =>
-                replaceAllOf(obj.get("items"))
-
-            case obj: ObjectNode if obj.get("properties") != null =>
-                obj.get("properties").elements().asScala.foreach(replaceAllOf)
-
-            case _: JsonNode =>
-        }
-    }
-
-    private def fixRequired(jsonNode: JsonNode) : Unit = {
-        jsonNode match {
-            case obj:ObjectNode =>
-                if (obj.has("required") && obj.get("required").isNull()) {
-                    obj.without("required")
-                }
-            case _:JsonNode =>
-        }
-        jsonNode.elements().asScala.foreach(fixRequired)
     }
 
     private def fromOpenApiObject(properties:Seq[(String,Schema[_])], prefix:String, required:Set[String], nullable:Boolean) : StructType = {

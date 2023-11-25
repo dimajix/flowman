@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkConf
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.internal.config.ConfigEntry
+import org.apache.spark.paths.SparkPath
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
 import org.apache.spark.sql.catalyst.analysis.ViewType
@@ -35,6 +36,7 @@ import org.apache.spark.sql.catalyst.catalog.CatalogTablePartition
 import org.apache.spark.sql.catalyst.catalog.CatalogTableType
 import org.apache.spark.sql.catalyst.catalog.CatalogTypes.TablePartitionSpec
 import org.apache.spark.sql.catalyst.catalog.SessionCatalog
+import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.catalyst.expressions.Alias
 import org.apache.spark.sql.catalyst.expressions.Expression
@@ -48,6 +50,7 @@ import org.apache.spark.sql.execution.ExtendedMode
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.SQLExecution
 import org.apache.spark.sql.execution.SimpleMode
+import org.apache.spark.sql.execution.adaptive.LogicalQueryStage
 import org.apache.spark.sql.execution.columnar.InMemoryRelation
 import org.apache.spark.sql.execution.command.AlterViewAsCommand
 import org.apache.spark.sql.execution.command.CreateDatabaseCommand
@@ -136,6 +139,115 @@ object SparkShim {
     def newAlterViewCommand(table:TableIdentifier, select:String, plan:LogicalPlan) : AlterViewAsCommand = {
         AlterViewAsCommand(table, select, plan, isAnalyzed=true)
     }
+    def newCreateDatabaseCommand(database:String, catalog:String, path:Option[String], comment:Option[String], ignoreIfExists:Boolean) : CreateDatabaseCommand = {
+        try {
+            CreateDatabaseCommand(database, ignoreIfExists, path, comment, Map())
+        }
+        catch {
+            case _:NoSuchMethodError | _:NoSuchMethodException =>
+                logger.warn("Falling back to reflection for CreateDatabaseCommand::new. This is an indication that you are using forked Spark libraries.")
+                Reflection.construct(classOf[CreateDatabaseCommand], Map(
+                    "databaseName" -> database,
+                    "catalog" -> catalog,
+                    "ifNotExists" -> ignoreIfExists,
+                    "path" -> path,
+                    "comment" -> comment)
+                )
+        }
+    }
+    def newInsertIntoHiveTable(
+        table: CatalogTable,
+        partition: Map[String, Option[String]],
+        query: LogicalPlan,
+        overwrite: Boolean,
+        ifPartitionNotExists: Boolean,
+        outputColumnNames: Seq[String]): InsertIntoHiveTable = {
+        try {
+            InsertIntoHiveTable(
+                table, partition, query, overwrite, ifPartitionNotExists, outputColumnNames
+            )
+        }
+        catch {
+            case _: NoSuchMethodError | _: NoSuchMethodException =>
+                logger.warn("Falling back to reflection for InsertIntoHiveTable::new. This is an indication that you are using forked Spark libraries.")
+                Reflection.construct(classOf[InsertIntoHiveTable], Map(
+                    "table" -> table,
+                    "partition" -> partition,
+                    "query" -> query,
+                    "overwrite" -> overwrite,
+                    "ifPartitionNotExists" -> ifPartitionNotExists,
+                    "outputColumnNames" -> outputColumnNames
+                ))
+        }
+    }
+    def newCatalogTable(
+        identifier: TableIdentifier,
+        tableType: CatalogTableType,
+        storage: CatalogStorageFormat,
+        schema: StructType,
+        provider: Option[String] = None,
+        partitionColumnNames: Seq[String] = Seq.empty,
+        bucketSpec: Option[BucketSpec] = None,
+        properties: Map[String, String] = Map.empty,
+        comment: Option[String] = None) : CatalogTable = {
+        try {
+            CatalogTable(
+                identifier = identifier,
+                tableType = tableType,
+                storage = storage,
+                schema = schema,
+                provider = provider,
+                partitionColumnNames = partitionColumnNames,
+                bucketSpec = bucketSpec,
+                properties = properties,
+                comment = comment
+            )
+        }
+        catch {
+            case _:NoSuchMethodError | _:NoSuchMethodException =>
+                logger.warn("Falling back to reflection for CatalogTable::new. This is an indication that you are using forked Spark libraries.")
+                Reflection.construct(classOf[CatalogTable], Map(
+                    "identifier" -> identifier,
+                    "tableType" -> tableType,
+                    "storage" -> storage,
+                    "schema" -> schema,
+                    "provider" -> provider,
+                    "partitionColumnNames" -> partitionColumnNames,
+                    "bucketSpec" -> bucketSpec,
+                    "createTime" -> System.currentTimeMillis,
+                    "lastAccessTime" -> -1L,
+                    "properties" -> properties,
+                    "comment" -> comment,
+                    "tracksPartitionsInCatalog" -> false,
+                    "schemaPreservesCase" -> true
+                ))
+        }
+    }
+    def withNewSchema(table:CatalogTable, schema:StructType) : CatalogTable = {
+        try {
+            table.copy(schema = schema)
+        }
+        catch {
+            case _: NoSuchMethodError | _: NoSuchMethodException =>
+                logger.warn("Falling back to reflection for CatalogTable::copy. This is an indication that you are using forked Spark libraries.")
+                Reflection.copy(table, Map("schema" -> schema))
+        }
+    }
+
+    def listPartitions(catalog:SessionCatalog, tableName: TableIdentifier, partialSpec: Option[TablePartitionSpec] = None) : Seq[CatalogTablePartition] = {
+        try {
+            catalog.listPartitions(tableName, partialSpec)
+        }
+        catch {
+            case _: NoSuchMethodError | _: NoSuchMethodException =>
+                logger.warn("Falling back to reflection for SessionCatalog::listPartitions. This is an indication that you are using forked Spark libraries.")
+                Reflection.invoke(catalog, "listPartitions", classOf[Seq[CatalogTablePartition]], Map(
+                    "tableName" -> tableName,
+                    "partialSpec" -> partialSpec,
+                    "limit" -> 0
+                ))
+        }
+    }
 
     def createConnectionFactory(dialect: JdbcDialect, options: JDBCOptions) :  Int => Connection = {
         dialect.createConnectionFactory(options)
@@ -163,32 +275,33 @@ object SparkShim {
         qe.observedMetrics
     }
 
-    def toPath(path:String) : Path = new Path(path)
+    def toPath(path:SparkPath) : Path = path.toPath
 
-    def rowEncoderFor(schema: StructType) : Encoder[Row] = RowEncoder(schema)
-    def expressionEncoderFor(schema: StructType) : Encoder[Row] = RowEncoder(schema)
+    def rowEncoderFor(schema: StructType) : Encoder[Row] = RowEncoder.encoderFor(schema)
+    def expressionEncoderFor(schema: StructType) : Encoder[Row] = ExpressionEncoder(schema)
 
-    def newBadRecordException(cause: Throwable): BadRecordException = {
+    def newBadRecordException(cause: Throwable) : BadRecordException = {
         throw BadRecordException(
             () => new UTF8String(),
-            () => None,
+            () => Array.empty,
             cause
         )
-    }
-
-    def extractInMemoryRelation(plan: LogicalPlan): Option[InMemoryRelation] = {
-        plan match {
-            case c: InMemoryRelation => Some(c)
-            // The next case should not happen
-            case _ =>
-                logger.warn("Found wrong child type in EagerCache.")
-                None
-        }
     }
 
     def explainString[T](ds:Dataset[T], extended:Boolean) : String = {
         val mode = if (extended) ExtendedMode else SimpleMode
         ds.queryExecution.explainString(mode)
+    }
+
+    def extractInMemoryRelation(plan:LogicalPlan) : Option[InMemoryRelation] = {
+        plan match {
+            case c: InMemoryRelation => Some(c)
+            case LogicalQueryStage(c: InMemoryRelation, _) => Some(c)
+            // The next case should not happen
+            case _ =>
+                logger.warn("Found wrong child type in EagerCache.")
+                None
+        }
     }
 
     val LocalTempView : ViewType = org.apache.spark.sql.catalyst.analysis.LocalTempView

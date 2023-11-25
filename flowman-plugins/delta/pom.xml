@@ -20,6 +20,7 @@
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
         <delta.version>2.4.0</delta.version>
+        <delta.artifact>delta-core</delta.artifact>
         <delta.scope>compile</delta.scope>
     </properties>
 
@@ -28,6 +29,7 @@
             <id>CDH-6.3</id>
             <properties>
                 <delta.version>0.6.1</delta.version>
+                <delta.artifact>delta-core</delta.artifact>
             </properties>
             <build>
                 <pluginManagement>
@@ -49,6 +51,7 @@
             <id>CDP-7.1</id>
             <properties>
                 <delta.version>0.6.1</delta.version>
+                <delta.artifact>delta-core</delta.artifact>
             </properties>
             <build>
                 <pluginManagement>
@@ -70,6 +73,7 @@
             <id>CDP-7.1-spark-3.2</id>
             <properties>
                 <delta.version>2.0.0</delta.version>
+                <delta.artifact>delta-core</delta.artifact>
             </properties>
             <build>
                 <pluginManagement>
@@ -91,6 +95,7 @@
             <id>CDP-7.1-spark-3.3</id>
             <properties>
                 <delta.version>2.2.0</delta.version>
+                <delta.artifact>delta-core</delta.artifact>
             </properties>
             <build>
                 <pluginManagement>
@@ -112,6 +117,7 @@
             <id>EMR-6.12</id>
             <properties>
                 <delta.version>2.4.0</delta.version>
+                <delta.artifact>delta-core</delta.artifact>
                 <delta.scope>provided</delta.scope>
             </properties>
         </profile>
@@ -119,6 +125,7 @@
             <id>synapse-3.3</id>
             <properties>
                 <delta.version>2.2.0</delta.version>
+                <delta.artifact>delta-core</delta.artifact>
                 <delta.scope>provided</delta.scope>
             </properties>
         </profile>
@@ -126,6 +133,7 @@
             <id>spark-2.4</id>
             <properties>
                 <delta.version>0.6.1</delta.version>
+                <delta.artifact>delta-core</delta.artifact>
             </properties>
             <build>
                 <pluginManagement>
@@ -147,24 +155,28 @@
             <id>spark-3.0</id>
             <properties>
                 <delta.version>0.8.0</delta.version>
+                <delta.artifact>delta-core</delta.artifact>
             </properties>
         </profile>
         <profile>
             <id>spark-3.1</id>
             <properties>
                 <delta.version>1.0.0</delta.version>
+                <delta.artifact>delta-core</delta.artifact>
             </properties>
         </profile>
         <profile>
             <id>spark-3.2</id>
             <properties>
                 <delta.version>2.0.0</delta.version>
+                <delta.artifact>delta-core</delta.artifact>
             </properties>
         </profile>
         <profile>
             <id>spark-3.3</id>
             <properties>
                 <delta.version>2.3.0</delta.version>
+                <delta.artifact>delta-core</delta.artifact>
             </properties>
         </profile>
         <profile>
@@ -174,6 +186,14 @@
             </activation>
             <properties>
                 <delta.version>2.4.0</delta.version>
+                <delta.artifact>delta-core</delta.artifact>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-3.5</id>
+            <properties>
+                <delta.version>3.0.0</delta.version>
+                <delta.artifact>delta-spark</delta.artifact>
             </properties>
         </profile>
     </profiles>
@@ -254,7 +274,7 @@
 
         <dependency>
             <groupId>io.delta</groupId>
-            <artifactId>delta-core_${scala.api_version}</artifactId>
+            <artifactId>${delta.artifact}_${scala.api_version}</artifactId>
             <version>${delta.version}</version>
             <scope>${delta.scope}</scope>
         </dependency>

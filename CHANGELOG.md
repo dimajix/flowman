@@ -22,6 +22,7 @@ Breaking changes will be documented in this changelog file for each version.
 
 * github-464: Upgrade Cloudera CDP 7.1 to Hotfix 16
 * github-465: Fix parsing of Swagger schema files
+* github-447: Support Spark 3.5.0
 
 
 ## Version 1.1.0 - 2023-10-10

@@ -53,6 +53,7 @@ import com.dimajix.flowman.model.PartitionedRelation
 import com.dimajix.flowman.model.ResourceIdentifier
 import com.dimajix.flowman.model.SchemaRelation
 import com.dimajix.flowman.spark.sql.delta.AlterTableChangeColumnDeltaCommand
+import com.dimajix.flowman.spark.sql.delta.DeltaShim
 import com.dimajix.flowman.spark.sql.delta.QualifiedColumn
 
 
@@ -149,7 +150,7 @@ abstract class DeltaRelation(options: Map[String,String], mergeKey: Seq[String])
         val sourceTable = TableDefinition(
             TableIdentifier.empty,
             columns = sourceSchema.fields,
-            partitionColumnNames = table.snapshot.metadata.partitionColumns
+            partitionColumnNames = DeltaShim.snapshot(table).metadata.partitionColumns
         )
         val targetTable = TableDefinition(
             TableIdentifier.empty,

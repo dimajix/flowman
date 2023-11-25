@@ -344,12 +344,6 @@
             </dependency>
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-dsl</artifactId>
-                <version>${flowman.version}</version>
-                <scope>compile</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-kernel-api</artifactId>
                 <version>${flowman.version}</version>
                 <scope>compile</scope>

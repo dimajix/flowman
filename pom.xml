@@ -1378,7 +1378,6 @@
         <module>flowman-common-jersey</module>
         <module>flowman-core</module>
         <module>flowman-spec</module>
-        <module>flowman-dsl</module>
         <module>flowman-plugins/parent</module>
         <module>flowman-plugins/avro</module>
         <module>flowman-plugins/aws</module>
@@ -1890,11 +1889,6 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-spec</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-dsl</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

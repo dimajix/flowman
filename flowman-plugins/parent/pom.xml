@@ -93,12 +93,6 @@
                 <version>${flowman.version}</version>
                 <scope>provided</scope>
             </dependency>
-            <dependency>
-                <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-dsl</artifactId>
-                <version>${flowman.version}</version>
-                <scope>provided</scope>
-            </dependency>
 
             <!-- FasterXML Jackson -->
             <dependency>

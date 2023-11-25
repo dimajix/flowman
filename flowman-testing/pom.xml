@@ -53,10 +53,6 @@
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-spec</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-dsl</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>org.scalatest</groupId>

@@ -110,10 +110,6 @@
         </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-dsl</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-studio-ui</artifactId>
         </dependency>
         <dependency>

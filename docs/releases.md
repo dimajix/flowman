@@ -36,6 +36,7 @@ changes over time.
 * github-465: Fix parsing of Swagger schema files
 * github-447: Support Spark 3.5.0
 * github-444: Remove Flowman Hub
+* github-443: Remove Flowman DSL
 
 
 ### Version 1.1.0 - 2023-10-10

@@ -110,10 +110,6 @@
         </dependency>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-dsl</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-scalatest-compat</artifactId>
         </dependency>
 

@@ -120,13 +120,21 @@
         <profile>
             <id>spark-3.3</id>
             <properties>
-                <spark-mssql-connector.group>com.solytic</spark-mssql-connector.group>
-                <spark-mssql-connector.version>1.4.0</spark-mssql-connector.version>
+                <spark-mssql-connector.group>com.microsoft.azure</spark-mssql-connector.group>
+                <spark-mssql-connector.version>1.3.0</spark-mssql-connector.version>
                 <spark-mssql-connector.suffix>_${scala.api_version}</spark-mssql-connector.suffix>
             </properties>
         </profile>
         <profile>
             <id>spark-3.4</id>
+            <properties>
+                <spark-mssql-connector.group>com.microsoft.azure</spark-mssql-connector.group>
+                <spark-mssql-connector.version>1.4.0</spark-mssql-connector.version>
+                <spark-mssql-connector.suffix>_${scala.api_version}</spark-mssql-connector.suffix>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-3.5</id>
             <properties>
                 <spark-mssql-connector.group>com.solytic</spark-mssql-connector.group>
                 <spark-mssql-connector.version>1.4.0</spark-mssql-connector.version>

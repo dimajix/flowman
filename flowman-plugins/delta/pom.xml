@@ -181,9 +181,6 @@
         </profile>
         <profile>
             <id>spark-3.4</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <delta.version>2.4.0</delta.version>
                 <delta.artifact>delta-core</delta.artifact>
@@ -191,6 +188,9 @@
         </profile>
         <profile>
             <id>spark-3.5</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <properties>
                 <delta.version>3.0.0</delta.version>
                 <delta.artifact>delta-spark</delta.artifact>

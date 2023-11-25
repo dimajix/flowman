@@ -49,11 +49,18 @@
         </profile>
         <profile>
             <id>spark-3.4</id>
+            <properties>
+                <!-- The Spark 3.4 archives have a generic Hadoop version-->
+                <spark-hadoop-archive.version>3</spark-hadoop-archive.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>spark-3.5</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <!-- The Spark 3.4 archives have a generic Hadoop version-->
+                <!-- The Spark 3.5 archives have a generic Hadoop version-->
                 <spark-hadoop-archive.version>3</spark-hadoop-archive.version>
             </properties>
         </profile>

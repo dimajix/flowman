@@ -83,24 +83,24 @@
         <!-- Default Hadoop version (3.3) -->
         <hadoop.version>3.3.4</hadoop.version>
         <hadoop-api.version>3.3</hadoop-api.version>
-        <commons-codec.version>1.15</commons-codec.version>
+        <commons-codec.version>1.16.0</commons-codec.version>
 
         <!-- Default Spark version (3.4) -->
         <scala.version>2.12.17</scala.version>
         <scala.api_version>2.12</scala.api_version>
-        <spark.version>3.4.1</spark.version>
-        <spark-api.version>3.4</spark-api.version>
+        <spark.version>3.5.0</spark.version>
+        <spark-api.version>3.5</spark-api.version>
         <hive.version>2.3.9</hive.version>
         <hive-storage-api.version>2.8.1</hive-storage-api.version>
-        <kafka.version>3.3.2</kafka.version>
+        <kafka.version>3.4.1</kafka.version>
         <zookeeper.version>3.6.3</zookeeper.version>
         <antlr4.version>4.9.3</antlr4.version>
         <avro.version>1.11.1</avro.version>
         <commons-cli.version>1.5.0</commons-cli.version>
         <commons-collections.version>3.2.2</commons-collections.version>
         <commons-compiler.version>3.1.9</commons-compiler.version>
-        <commons-compress.version>1.22</commons-compress.version>
-        <commons-io.version>2.11.0</commons-io.version>
+        <commons-compress.version>1.23.0</commons-compress.version>
+        <commons-io.version>2.13.0</commons-io.version>
         <commons-lang3.version>3.12.0</commons-lang3.version>
         <commons-math3.version>3.6.1</commons-math3.version>
         <commons-text.version>1.10.0</commons-text.version>
@@ -114,9 +114,9 @@
         <httpclient.version>4.5.14</httpclient.version>
         <httpcore.version>4.4.16</httpcore.version>
         <ivy.version>2.5.1</ivy.version>
-        <jackson.version>2.14.2</jackson.version>
-        <jackson-api.version>2.14</jackson-api.version>
-        <jackson-databind.version>2.14.2</jackson-databind.version>
+        <jackson.version>2.15.2</jackson.version>
+        <jackson-api.version>2.15</jackson-api.version>
+        <jackson-databind.version>2.15.2</jackson-databind.version>
         <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>
         <jackson-jaxb.scope>compile</jackson-jaxb.scope>
         <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
@@ -132,30 +132,30 @@
         <jakarta.ws.rs-api.scope>provided</jakarta.ws.rs-api.scope>
         <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
         <jakarta.xml.bind-api.scope>provided</jakarta.xml.bind-api.scope>
+        <javassist.version>3.29.2-GA</javassist.version>
         <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
         <jaxb-runtime.scope>provided</jaxb-runtime.scope>
-        <javassist.version>3.25.0-GA</javassist.version>
-        <jersey.version>2.36</jersey.version>
-        <joda-time.version>2.12.2</joda-time.version>
+        <jersey.version>2.40</jersey.version>
+        <joda-time.version>2.12.5</joda-time.version>
         <json4s.version>3.7.0-M11</json4s.version>
         <jsr305.version>3.0.0</jsr305.version>
         <libthrift.version>0.12.0</libthrift.version>
-        <log4j.version>2.19.0</log4j.version>
+        <log4j.version>2.20.0</log4j.version>
         <log4j.slf4j-impl>log4j-slf4j2-impl</log4j.slf4j-impl>
         <lz4.version>1.8.0</lz4.version>
-        <netty-all.version>4.1.87.Final</netty-all.version>
+        <netty-all.version>4.1.96.Final</netty-all.version>
         <netty-all.exclusion>none</netty-all.exclusion>
         <netty-extras.scope>provided</netty-extras.scope>
         <paranamer.version>2.8</paranamer.version>
-        <scala-collection-compat.version>2.1.1</scala-collection-compat.version>
+        <scala-collection-compat.version>2.7.0</scala-collection-compat.version>
         <scala-collection-compat.scope>provided</scala-collection-compat.scope>
-        <scala-parser-combinators.version>2.1.1</scala-parser-combinators.version>
+        <scala-parser-combinators.version>2.3.0</scala-parser-combinators.version>
         <scala-xml.version>2.1.0</scala-xml.version>
         <scalatest-api.version>3.2</scalatest-api.version>
         <scalatest.version>3.2.9</scalatest.version>
-        <slf4j.version>2.0.6</slf4j.version>
+        <slf4j.version>2.0.7</slf4j.version>
         <slf4j-api.version>2</slf4j-api.version>
-        <snakeyaml.version>1.33</snakeyaml.version>
+        <snakeyaml.version>2.0</snakeyaml.version>
         <snakeyaml.scope>provided</snakeyaml.scope>
         <snappy.version>1.1.10.1</snappy.version>
 
@@ -302,6 +302,7 @@
                 <slf4j.version>1.7.25</slf4j.version>
                 <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.23</snakeyaml.version>
+                <snakeyaml.scope>provided</snakeyaml.scope>
                 <snappy.version>1.1.7.3</snappy.version>
             </properties>
             <dependencyManagement>
@@ -405,6 +406,7 @@
                 <slf4j.version>1.7.36</slf4j.version>
                 <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.32</snakeyaml.version>
+                <snakeyaml.scope>provided</snakeyaml.scope>
                 <snappy.version>1.1.7.7</snappy.version>
             </properties>
         </profile>
@@ -499,6 +501,7 @@
                 <slf4j.version>1.7.30</slf4j.version>
                 <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.26</snakeyaml.version>
+                <snakeyaml.scope>provided</snakeyaml.scope>
                 <snappy.version>1.1.8.4</snappy.version>
             </properties>
         </profile>
@@ -593,6 +596,7 @@
                 <slf4j.version>1.7.32</slf4j.version>
                 <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.26</snakeyaml.version>
+                <snakeyaml.scope>provided</snakeyaml.scope>
                 <snappy.version>1.1.8.4</snappy.version>
             </properties>
         </profile>
@@ -677,6 +681,7 @@
                 <slf4j.version>2.0.6</slf4j.version>
                 <slf4j-api.version>2</slf4j-api.version>
                 <snakeyaml.version>1.33</snakeyaml.version>
+                <snakeyaml.scope>provided</snakeyaml.scope>
                 <snappy.version>1.1.10.1</snappy.version>
             </properties>
         </profile>
@@ -828,6 +833,7 @@
                 <slf4j.version>1.7.16</slf4j.version>
                 <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.15</snakeyaml.version>
+                <snakeyaml.scope>provided</snakeyaml.scope>
                 <snappy.version>1.1.7.3</snappy.version>
             </properties>
         </profile>
@@ -905,6 +911,7 @@
                 <slf4j.version>1.7.30</slf4j.version>
                 <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.24</snakeyaml.version>
+                <snakeyaml.scope>provided</snakeyaml.scope>
                 <snappy.version>1.1.8.2</snappy.version>
             </properties>
         </profile>
@@ -982,6 +989,7 @@
                 <slf4j.version>1.7.30</slf4j.version>
                 <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.24</snakeyaml.version>
+                <snakeyaml.scope>provided</snakeyaml.scope>
                 <snappy.version>1.1.8.2</snappy.version>
             </properties>
         </profile>
@@ -1060,6 +1068,7 @@
                 <slf4j.version>1.7.30</slf4j.version>
                 <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.27</snakeyaml.version>
+                <snakeyaml.scope>provided</snakeyaml.scope>
                 <snappy.version>1.1.8.4</snappy.version>
             </properties>
         </profile>
@@ -1138,6 +1147,7 @@
                 <slf4j.version>1.7.32</slf4j.version>
                 <slf4j-api.version>1</slf4j-api.version>
                 <snakeyaml.version>1.31</snakeyaml.version>
+                <snakeyaml.scope>provided</snakeyaml.scope>
                 <snappy.version>1.1.8.4</snappy.version>
             </properties>
         </profile>
@@ -1216,6 +1226,7 @@
                 <slf4j.version>2.0.6</slf4j.version>
                 <slf4j-api.version>2</slf4j-api.version>
                 <snakeyaml.version>1.33</snakeyaml.version>
+                <snakeyaml.scope>provided</snakeyaml.scope>
                 <snappy.version>1.1.10.1</snappy.version>
             </properties>
         </profile>
@@ -1294,6 +1305,7 @@
                 <slf4j.version>2.0.7</slf4j.version>
                 <slf4j-api.version>2</slf4j-api.version>
                 <snakeyaml.version>2.0</snakeyaml.version>
+                <snakeyaml.scope>provided</snakeyaml.scope>
                 <snappy.version>1.1.10.3</snappy.version>
             </properties>
         </profile>

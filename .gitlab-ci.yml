@@ -169,6 +169,15 @@ build-hadoop3.3-spark3.4:
       - flowman-dist/target/flowman-dist-*-bin.tar.gz
     expire_in: 5 days
 
+build-hadoop3.3-spark3.5:
+  stage: build
+  script: 'mvn ${MAVEN_CLI_OPTS} clean package -Phadoop-3.3 -Pspark-3.5 -Dhadoop.version=3.3.4 -Ddockerfile.skip'
+  artifacts:
+    name: "flowman-dist-hadoop3.3-spark3.4"
+    paths:
+      - flowman-dist/target/flowman-dist-*-bin.tar.gz
+    expire_in: 5 days
+
 build-cdh6.3:
   stage: build
   image: dimajix/maven-npm:jdk-1.8

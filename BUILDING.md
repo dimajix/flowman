@@ -105,6 +105,7 @@ using the correct version. The following profiles are available:
 * spark-3.2
 * spark-3.3
 * spark-3.4
+* spark-3.5
 * hadoop-2.6
 * hadoop-2.7
 * hadoop-2.8
@@ -211,6 +212,12 @@ mvn clean install -Pspark-3.3 -Phadoop-3.3 -Dhadoop.version=3.3.2 -DskipTests
 
 ```shell
 mvn clean install -Pspark-3.4 -Phadoop-3.3 -Dhadoop.version=3.3.4 -DskipTests
+```
+
+#### Spark 3.5 and Hadoop 3.3
+
+```shell
+mvn clean install -Pspark-3.5 -Phadoop-3.3 -Dhadoop.version=3.3.4 -DskipTests
 ```
 
 

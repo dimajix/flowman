@@ -1407,7 +1407,6 @@
         <module>flowman-server</module>
         <module>flowman-studio-ui</module>
         <module>flowman-studio</module>
-        <module>flowman-hub</module>
         <module>flowman-yaml-schema</module>
         <module>flowman-parent</module>
         <module>flowman-dist</module>
@@ -1937,11 +1936,6 @@
             <dependency>
                 <groupId>com.dimajix.flowman</groupId>
                 <artifactId>flowman-server</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.dimajix.flowman</groupId>
-                <artifactId>flowman-hub</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

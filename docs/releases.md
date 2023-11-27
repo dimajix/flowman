@@ -37,6 +37,7 @@ changes over time.
 * github-447: Support Spark 3.5.0
 * github-444: Remove Flowman Hub
 * github-443: Remove Flowman DSL
+* github-466: Use frontend-maven-plugin for all npm packages
 
 
 ### Version 1.1.0 - 2023-10-10

@@ -1764,6 +1764,46 @@
                         </execution>
                     </executions>
                 </plugin>
+                <plugin>
+                    <inherited>true</inherited>
+                    <groupId>com.github.eirslett</groupId>
+                    <artifactId>frontend-maven-plugin</artifactId>
+                    <version>1.9.1</version>
+                    <executions>
+                        <execution>
+                            <id>install-npm</id>
+                            <phase>generate-sources</phase>
+                            <goals>
+                                <goal>install-node-and-npm</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>npm-install</id>
+                            <phase>generate-sources</phase>
+                            <goals>
+                                <goal>npm</goal>
+                            </goals>
+                            <configuration>
+                                <arguments>install --no-save</arguments>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>npm-run-build</id>
+                            <phase>generate-sources</phase>
+                            <goals>
+                                <goal>npm</goal>
+                            </goals>
+                            <configuration>
+                                <arguments>run build</arguments>
+                            </configuration>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <nodeVersion>v18.18.2</nodeVersion>
+                        <npmVersion>9.8.1</npmVersion>
+                        <installDirectory>target</installDirectory>
+                    </configuration>
+                </plugin>
                 <!-- Disable Surefire -->
                 <plugin>
                     <inherited>true</inherited>

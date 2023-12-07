@@ -28,6 +28,8 @@ import com.dimajix.common.Yes
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.Phase
 import com.dimajix.flowman.execution.Session
+import com.dimajix.flowman.metric.GaugeMetric
+import com.dimajix.flowman.metric.Selector
 import com.dimajix.flowman.model.Dataset
 import com.dimajix.flowman.model.Module
 import com.dimajix.flowman.model.RelationIdentifier
@@ -133,18 +135,23 @@ class CopyTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         target.requires(Phase.VERIFY) should be(Set())
         target.requires(Phase.TRUNCATE) should be(Set())
         target.requires(Phase.DESTROY) should be(Set())
+        session.metrics.findMetric(Selector(Some("target_records".r))).headOption should be (None)
 
         // == BUILD ===================================================================
+        session.metrics.resetMetrics()
         target.dirty(executor, Phase.BUILD) should be (Yes)
         target.execute(executor, Phase.BUILD)
         target.dirty(executor, Phase.BUILD) should be (No)
         targetFilename.exists() should be (true)
         targetFilename.isFile() should be (true)
+        session.metrics.findMetric(Selector(Some("target_records".r))).head.asInstanceOf[GaugeMetric].value should be (1)
 
         // == VERIFY ===================================================================
+        session.metrics.resetMetrics()
         target.dirty(executor, Phase.VERIFY) should be (Yes)
         target.execute(executor, Phase.VERIFY)
         target.dirty(executor, Phase.VERIFY) should be (Yes)
+        session.metrics.findMetric(Selector(Some("target_records".r))).headOption should be (None)
 
         // == TRUNCATE ===================================================================
         target.dirty(executor, Phase.TRUNCATE) should be (Yes)

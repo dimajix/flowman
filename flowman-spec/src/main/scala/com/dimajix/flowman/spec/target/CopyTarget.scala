@@ -114,18 +114,20 @@ final case class CopyTarget(
         logger.info(s"Copying dataset ${source.name} to ${target.name}")
 
         val dfIn = source.read(execution)
-        val data =
+        val dfOut =
             if (parallelism <= 0)
                 dfIn
             else if (rebalance)
                 dfIn.repartition(parallelism)
             else
                 dfIn.coalesce(parallelism)
-        target.write(execution, data, mode)
+
+        val dfCount = countRecords(execution, dfOut)
+        target.write(execution, dfCount, mode)
 
         schema.foreach { spec =>
             logger.info(s"Writing schema to file '${spec.file}'")
-            val schema = source.describe(execution).getOrElse(StructType.of(data.schema))
+            val schema = source.describe(execution).getOrElse(StructType.of(dfCount.schema))
             val file = context.fs.file(spec.file)
             new SchemaWriter(schema.fields).format(spec.format).save(file)
         }

@@ -26,6 +26,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-444: Remove Flowman Hub
 * github-443: Remove Flowman DSL
 * github-466: Use frontend-maven-plugin for all npm packages
+* github-467: Implement "target_records" metric for "copy" target
 
 
 ## Version 1.1.0 - 2023-10-10

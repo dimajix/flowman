@@ -34,7 +34,7 @@
                             </delimiters>
                             <useDefaultDelimiters>false</useDefaultDelimiters>
                             <outputDirectory>${project.build.directory}</outputDirectory>
-                            <filters>target/flowman-server-${project.version}-properties.properties,target/flowman-kernel-server-${project.version}-properties.properties,target/flowman-kernel-tools-${project.version}-properties.properties,target/flowman-tools-${project.version}-properties.properties,target/flowman-studio-${project.version}-properties.properties</filters>
+                            <filters>target/flowman-server-${project.version}-properties.properties,target/flowman-kernel-server-${project.version}-properties.properties,target/flowman-kernel-tools-${project.version}-properties.properties,target/flowman-tools-${project.version}-properties.properties</filters>
                             <resources>
                                 <resource>
                                     <directory>.</directory>
@@ -264,14 +264,6 @@
                                     <classifier>properties</classifier>
                                     <outputDirectory>${project.build.directory}</outputDirectory>
                                 </artifactItem>
-                                <artifactItem>
-                                    <groupId>com.dimajix.flowman</groupId>
-                                    <artifactId>flowman-studio</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>properties</type>
-                                    <classifier>properties</classifier>
-                                    <outputDirectory>${project.build.directory}</outputDirectory>
-                                </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>
@@ -315,10 +307,6 @@
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-server</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.dimajix.flowman</groupId>
-            <artifactId>flowman-studio</artifactId>
         </dependency>
 
         <!-- Explicitly add some dependencies with compile scope for pure Java applications -->

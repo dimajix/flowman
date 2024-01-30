@@ -27,6 +27,7 @@ Breaking changes will be documented in this changelog file for each version.
 * github-443: Remove Flowman DSL
 * github-466: Use frontend-maven-plugin for all npm packages
 * github-467: Implement "target_records" metric for "copy" target
+* github-474: Remove Flowman Studio
 
 
 ## Version 1.1.0 - 2023-10-10

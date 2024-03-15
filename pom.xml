@@ -71,7 +71,7 @@
         <commons-net.version>3.1</commons-net.version>
         <commons-pool.version>1.5.4</commons-pool.version>
         <commons-validator.version>1.6</commons-validator.version>
-        <h2.version>2.1.210</h2.version>
+        <h2.version>2.2.220</h2.version>
         <jackson_asl.version>1.9.13</jackson_asl.version>
         <junit.version>5.8.2</junit.version>
         <netty.version>3.9.9.Final</netty.version>

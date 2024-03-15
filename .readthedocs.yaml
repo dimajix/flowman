@@ -13,7 +13,9 @@ build:
       - poetry config virtualenvs.create false
     post_install:
       # Install dependencies
-      - poetry install --directory=docs
+      # VIRTUAL_ENV needs to be set manually for now.
+      # See https://github.com/readthedocs/readthedocs.org/pull/11152/
+      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install --directory=docs
 
 # Build from the docs/ directory with Sphinx
 sphinx:

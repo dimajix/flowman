@@ -40,6 +40,8 @@ changes over time.
 * github-466: Use frontend-maven-plugin for all npm packages
 * github-467: Implement "target_records" metric for "copy" target
 * github-474: Remove Flowman Studio
+* github-480: Upgrade Spark to 3.5.1
+* github-481: Fix Sphinx documentation
 
 
 ### Version 1.1.0 - 2023-10-10

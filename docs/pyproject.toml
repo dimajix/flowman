@@ -4,13 +4,14 @@ version = "1.0.0"
 description = "Documentation of Flowman"
 authors = ["The Flowman Authors <info@flowman.io>"]
 license = "Apache License 2.0"
+package-mode = false
 
 [tool.poetry.dependencies]
-furo = "^2023.5.20"
-myst-parser = "^1.0.0"
+furo = "^2024.1.29"
+myst-parser = "^2.0.0"
 python = "^3.10"
 recommonmark = "^0.7.1"
-Sphinx = "^6.2.1"
+Sphinx = "^7.2.6"
 sphinx-markdown-tables = "^0.0.17"
 sphinxcontrib-mermaid = "^0.9.2"
 

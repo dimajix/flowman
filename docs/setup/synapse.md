@@ -70,7 +70,7 @@ This deployment descriptor contains all required information
 ```yaml
 flowman:
   # Specify the Flowman version to use
-  version: 1.1.0-synapse3.3-spark3.3-hadoop3.3
+  version: 1.2.0-synapse3.3-spark3.3-hadoop3.3
   plugins:
     # Specify the list of plugins to use
     - flowman-avro

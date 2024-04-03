@@ -6,7 +6,7 @@ is installed on the build machine.
 ### Prerequisites
 
 You need the following tools installed on your machine:
-* JDK 11 or later - but not too new (Java 16 is currently not supported)
+* JDK 11 or later — but not too new (Java 16 is currently not supported)
 * Apache Maven (install via package manager download from https://maven.apache.org/download.cgi)
 * npm (install via package manager or download from https://www.npmjs.com/get-npm)
 * Docker (the creation of the Docker image can be skipped via `-Ddockerfile.skip`)

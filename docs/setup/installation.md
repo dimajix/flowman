@@ -21,7 +21,7 @@ needs to match the ones of your platform
 
 ### Download & Install Spark
 
-As of this writing, the latest release of Flowman is 1.1.0 and is available prebuilt for Spark 3.4.1 on the Spark
+As of this writing, the latest release of Flowman is 1.2.0 and is available prebuilt for Spark 3.4.1 on the Spark
 homepage. So we download the appropriate Spark distribution from the Apache archive and unpack it.
 
 ```shell
@@ -64,13 +64,13 @@ versions. The naming is straight forward:
 flowman-dist-<version>-oss-spark<spark-version>-hadoop<hadoop-version>-bin.tar.gz
 ```
 You simply have to use the package which fits to the Spark and Hadoop versions of your environment. For example, the
-package of Flowman 1.1.0 and for Spark 3.4 and Hadoop 3.3 would be
+package of Flowman 1.2.0 and for Spark 3.4 and Hadoop 3.3 would be
 ```
-flowman-dist-1.1.0-oss-spark3.4-hadoop3.3-bin.tar.gz
+flowman-dist-1.2.0-oss-spark3.4-hadoop3.3-bin.tar.gz
 ```
 and the full URL then would be
 ```
-https://github.com/dimajix/flowman/releases/download/1.1.0/flowman-dist-1.1.0-oss-spark3.4-hadoop3.3-bin.tar.gz
+https://github.com/dimajix/flowman/releases/download/1.2.0/flowman-dist-1.2.0-oss-spark3.4-hadoop3.3-bin.tar.gz
 ```
 
 ### Supported Spark Environments
@@ -89,8 +89,7 @@ Flowman is available for many different Spark/Hadoop environments. The following
 | Open Source      | 3.3.4 | 2.7    | 11   | 2.12  | oss-spark3.3-hadoop2.7        |
 | Open Source      | 3.3.3 | 3.3    | 11   | 2.12  | oss-spark3.3-hadoop3.3        |
 | Open Source      | 3.4.1 | 3.3    | 11   | 2.12  | oss-spark3.4-hadoop3.3        |
-| Open Source      | 3.5.0 | 3.3    | 11   | 2.12  | oss-spark3.5-hadoop3.3        |
-| AWS EMR 6.10     | 3.3.1 | 3.3    | 1.8  | 2.12  | emr6.10-spark3.3-hadoop3.3    |
+| Open Source      | 3.5.1 | 3.3    | 11   | 2.12  | oss-spark3.5-hadoop3.3        |
 | AWS EMR 6.12     | 3.4.0 | 3.3    | 1.8  | 2.12  | emr6.12-spark3.4-hadoop3.3    |
 | Azure Synapse    | 3.3.1 | 3.3    | 1.8  | 2.12  | synapse3.3-spark3.3-hadoop3.3 |
 | Cloudera CDH 6.3 | 2.4.0 | 3.0    | 1.8  | 2.11  | cdh6-spark2.4-hadoop3.0       |

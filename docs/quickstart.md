@@ -14,7 +14,7 @@ Of course, you need a working Docker installation, which should be quite easy. T
 containing Flowman via the following command:
 
 ```shell
-docker run --rm -ti dimajix/flowman:1.1.0-oss-spark3.4-hadoop3.3 bash   
+docker run --rm -ti dimajix/flowman:1.2.0-oss-spark3.4-hadoop3.3 bash   
 ```
 
 Note that this simply starts a bash shell, but Flowman is only away some fingertips. 
@@ -26,7 +26,7 @@ may want to make local data accessible to Flowman or you may simply want to exec
 on your local machine. This can be easily achieved as follows:
 
 ```shell
-docker run --rm -ti -v /home/kaya/flowman/example/weather:/home/flowman/local dimajix/flowman:1.1.0-oss-spark3.4-hadoop3.3 bash   
+docker run --rm -ti -v /home/kaya/flowman/example/weather:/home/flowman/local dimajix/flowman:1.2.0-oss-spark3.4-hadoop3.3 bash   
 ```
 
 This will mount the local directory `/home/kaya/flowman/example/weather` on your host computer into the Docker

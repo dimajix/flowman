@@ -18,7 +18,7 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
-## Version 1.2.0 - Upcoming
+## Version 1.2.0 - 2024-04-03
 
 * github-464: Upgrade Cloudera CDP 7.1 to Hotfix 16
 * github-465: Fix parsing of Swagger schema files

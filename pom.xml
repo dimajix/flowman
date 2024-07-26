@@ -234,7 +234,7 @@
             </dependencyManagement>
         </profile>
         <profile>
-            <id>CDP-7.1</id>
+            <id>CDP-7.1.9-SP1</id>
             <repositories>
                 <repository>
                     <id>cloudera</id>
@@ -249,7 +249,7 @@
             </repositories>
             <properties>
                 <hadoop.dist>cdp7</hadoop.dist>
-                <cdp.version>7.1.8.0-801</cdp.version>
+                <cdp.version>7.1.9.1000-103</cdp.version>
                 <java.version>1.8</java.version>
                 <scala.version>2.11.12</scala.version>
                 <scala.api_version>2.11</scala.api_version>
@@ -263,11 +263,11 @@
                 <hadoop-api.version>3.1</hadoop-api.version>
                 <hive.version>3.1.3000.${cdp.version}</hive.version>
                 <hive-storage-api.version>3.1.3000.${cdp.version}</hive-storage-api.version>
-                <hbase.version>2.4.6.${cdp.version}</hbase.version>
-                <kafka.version>2.4.1.7.1.5.0-257</kafka.version>
+                <hbase.version>2.4.17.${cdp.version}</hbase.version>
+                <kafka.version>3.4.1.${cdp.version}</kafka.version>
                 <derby.version>10.14.2.0</derby.version>
-                <zookeeper.version>3.5.5.${cdp.version}</zookeeper.version>
-                <avro.version>1.8.2.${cdp.version}</avro.version>
+                <zookeeper.version>3.8.1.${cdp.version}</zookeeper.version>
+                <avro.version>1.11.1.${cdp.version}</avro.version>
                 <json4s.version>3.5.3</json4s.version>
                 <json-smart.version>2.3</json-smart.version>
                 <guava.version>28.1-jre</guava.version>

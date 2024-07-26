@@ -234,7 +234,7 @@
             </dependencyManagement>
         </profile>
         <profile>
-            <id>CDP-7.1.9-SP1</id>
+            <id>CDP-7.1</id>
             <repositories>
                 <repository>
                     <id>cloudera</id>

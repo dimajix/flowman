@@ -16,7 +16,8 @@
     </parent>
 
     <properties>
-        <jackson.version>2.13.4</jackson.version>
+        <jackson.version>2.15.2</jackson.version>
+        <snakeyaml.version>2.0</snakeyaml.version>
     </properties>
 
     <build>

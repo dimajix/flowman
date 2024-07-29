@@ -285,8 +285,8 @@
                 <httpcore.version>4.4.13</httpcore.version>
                 <dropwizard.version>3.1.5</dropwizard.version>
                 <joda-time.version>2.9.9</joda-time.version>
-                <curator.version>4.3.0.${cdp.version}</curator.version>
-                <curator-client.version>4.3.0.${cdp.version}</curator-client.version>
+                <curator.version>5.4.0.${cdp.version}</curator.version>
+                <curator-client.version>5.4.0.${cdp.version}</curator-client.version>
                 <commons-cli.version>1.2</commons-cli.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
                 <commons-compiler.version>3.0.16</commons-compiler.version>

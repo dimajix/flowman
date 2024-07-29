@@ -162,6 +162,11 @@ by a different Flowman project, you now need to explicitly import the project in
 * The `kind` for schema definitions is now a mandatory attribute, Flowman will not fall back to a `inline` schema anymore. 
 
 
+## Version 0.30.2 - 2024-07-29
+
+* github-496: updated build profile for CDP 7.1.9 platform version
+
+
 ## Version 0.30.1 - 2023-04-12
 
 * github-379: [BUG] Parallel execution of multiple targets runs too many targets on Java 17

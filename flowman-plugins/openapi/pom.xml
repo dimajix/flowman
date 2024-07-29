@@ -19,7 +19,7 @@
         <plugin.name>flowman-openapi</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <swagger.v3.version>2.1.18</swagger.v3.version>
+        <swagger.v3.version>2.1.22</swagger.v3.version>
     </properties>
 
     <profiles>

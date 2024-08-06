@@ -19,7 +19,7 @@
         <plugin.name>flowman-swagger</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <swagger.version>1.0.68</swagger.version>
+        <swagger.version>1.0.71</swagger.version>
     </properties>
 
     <build>

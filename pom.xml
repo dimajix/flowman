@@ -81,7 +81,7 @@
         <scalamock.version>5.1.0</scalamock.version>
 
         <!-- Default Hadoop version (3.3) -->
-        <hadoop.version>3.3.4</hadoop.version>
+        <hadoop.version>3.4.0</hadoop.version>
         <hadoop-api.version>3.3</hadoop-api.version>
         <commons-codec.version>1.16.0</commons-codec.version>
 

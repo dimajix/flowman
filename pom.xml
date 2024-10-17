@@ -521,26 +521,26 @@
             </repositories>
             <properties>
                 <hadoop.dist>cdp7</hadoop.dist>
-                <cdp.version>7.1.9.0-387</cdp.version>
+                <cdp.version>7.1.9.1000-103</cdp.version>
                 <java.version>11</java.version>
                 <scala.version>2.12.15</scala.version>
                 <scala.api_version>2.12</scala.api_version>
-                <spark.version>3.3.2.3.3.7190.0-91</spark.version>
+                <spark.version>3.3.2.3.3.7191000.0-78</spark.version>
                 <spark-api.version>3.3</spark-api.version>
                 <hadoop.version>3.1.1.${cdp.version}</hadoop.version>
                 <hadoop-api.version>3.1</hadoop-api.version>
                 <hive.version>3.1.3000.${cdp.version}</hive.version>
                 <hive-storage-api.version>3.1.3000.${cdp.version}</hive-storage-api.version>
                 <hbase.version>2.2.3.${cdp.version}</hbase.version>
-                <kafka.version>3.1.1.${cdp.version}</kafka.version>
+                <kafka.version>3.4.1.${cdp.version}</kafka.version>
                 <zookeeper.version>3.8.1.${cdp.version}</zookeeper.version>
 
                 <antlr4.version>4.8</antlr4.version>
                 <avro.version>1.11.1.${cdp.version}</avro.version>
-                <commons-cli.version>1.2</commons-cli.version>
+                <commons-cli.version>1.5.0</commons-cli.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
-                <commons-compiler.version>3.0.16</commons-compiler.version>
-                <commons-compress.version>1.22</commons-compress.version>
+                <commons-compiler.version>3.1.10</commons-compiler.version>
+                <commons-compress.version>1.23.0</commons-compress.version>
                 <commons-io.version>2.11.0</commons-io.version>
                 <commons-lang3.version>3.12.0</commons-lang3.version>
                 <commons-math3.version>3.6.1</commons-math3.version>
@@ -550,18 +550,18 @@
                 <derby.version>10.14.2.0</derby.version>
                 <dropwizard.version>4.2.7</dropwizard.version>
                 <gson.version>2.9.0</gson.version>
-                <guava.version>28.2-jre</guava.version>
+                <guava.version>32.0.1-jre</guava.version>
                 <hk2.version>2.6.1</hk2.version>
                 <httpclient.version>4.5.13</httpclient.version>
-                <httpcore.version>4.4.15</httpcore.version>
-                <ivy.version>2.5.1</ivy.version>
-                <jackson.version>2.12.7</jackson.version>
-                <jackson-api.version>2.12</jackson-api.version>
-                <jackson-databind.version>2.12.7.1</jackson-databind.version>
+                <httpcore.version>4.4.13</httpcore.version>
+                <ivy.version>2.5.2</ivy.version>
+                <jackson.version>2.15.0</jackson.version>
+                <jackson-api.version>2.15</jackson-api.version>
+                <jackson-databind.version>2.15.0</jackson-databind.version>
                 <jackson-jaxb.scope>compile</jackson-jaxb.scope>
-                <jackson-jaxrs.scope>compile</jackson-jaxrs.scope>
-                <jakarta.activation-api.version>1.2.1</jakarta.activation-api.version>
-                <jakarta.activation-api.scope>compile</jakarta.activation-api.scope>
+                <jackson-jaxrs.scope>provided</jackson-jaxrs.scope>
+                <jakarta.activation-api.version>1.2.2</jakarta.activation-api.version>
+                <jakarta.activation-api.scope>provided</jakarta.activation-api.scope>
                 <jakarta.annotation-api.version>1.3.5</jakarta.annotation-api.version>
                 <jakarta.annotation-api.scope>provided</jakarta.annotation-api.scope>
                 <jakarta.inject.version>2.6.1</jakarta.inject.version>
@@ -576,14 +576,14 @@
                 <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
                 <jaxb-runtime.scope>provided</jaxb-runtime.scope>
                 <jersey.version>2.36</jersey.version>
-                <joda-time.version>2.10.3</joda-time.version>
+                <joda-time.version>2.9.9</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>
                 <libthrift.version>0.16.0</libthrift.version>
                 <log4j.version>2.18.0</log4j.version>
                 <log4j.slf4j-impl>log4j-slf4j-impl</log4j.slf4j-impl>
                 <lz4.version>1.8.0</lz4.version>
-                <netty-all.version>4.1.86.Final</netty-all.version>
+                <netty-all.version>4.1.100.Final</netty-all.version>
                 <netty-all.exclusion>none</netty-all.exclusion>
                 <netty-extras.scope>provided</netty-extras.scope>
                 <protobuf.version>2.5.0</protobuf.version>
@@ -595,9 +595,9 @@
                 <scalatest.version>3.2.9</scalatest.version>
                 <slf4j.version>1.7.32</slf4j.version>
                 <slf4j-api.version>1</slf4j-api.version>
-                <snakeyaml.version>1.26</snakeyaml.version>
+                <snakeyaml.version>2.0</snakeyaml.version>
                 <snakeyaml.scope>provided</snakeyaml.scope>
-                <snappy.version>1.1.10.1</snappy.version>
+                <snappy.version>1.1.10.5</snappy.version>
             </properties>
         </profile>
         <profile>

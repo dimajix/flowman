@@ -18,7 +18,7 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
-## Version 1.3.0
+## Version 1.3.0 - 2024-12-06
 
 * github-510: Upgrade Cloudera Spark 3.3 build profile
 

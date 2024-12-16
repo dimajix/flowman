@@ -182,7 +182,7 @@ class SqlBuilder private(
         case _: Aggregate => "HAVING"
         case _ => "WHERE"
       }
-      build(toSQL(child), whereOrHaving, condition.sql)
+      build(toSQL(child), whereOrHaving, SqlExpressionBuilder.toSql(condition))
 
     case p @ Distinct(u: Union) if u.children.length > 1 =>
       val childrenSql = u.children.map(c => s"${toSQL(c)}")
@@ -198,7 +198,7 @@ class SqlBuilder private(
     case p: Except =>
       build("(" + toSQL(p.left), ") EXCEPT (", toSQL(p.right) + ")")
 
-    case p: SubqueryAlias => build("(" + toSQL(p.child) + ")", "AS", p.alias)
+    case p: SubqueryAlias => build("(" + toSQL(p.child) + ")", "AS", quoteIdentifier(p.alias))
 
     case p: Join =>
       build(
@@ -206,7 +206,7 @@ class SqlBuilder private(
         p.joinType.sql,
         "JOIN",
         toSQL(p.right),
-        p.condition.map(" ON " + _.sql).getOrElse(""))
+        p.condition.map(" ON " + SqlExpressionBuilder.toSql(_)).getOrElse(""))
 
     case SQLTable(database, table, _, sample) =>
       val qualifiedName = s"${quoteIdentifier(database)}.${quoteIdentifier(table)}"
@@ -227,7 +227,7 @@ class SqlBuilder private(
 
     case Sort(orders, _, RepartitionByExpression(partitionExprs, child, _))
         if orders.map(_.child) == partitionExprs =>
-      build(toSQL(child), "CLUSTER BY", partitionExprs.map(_.sql).mkString(", "))
+      build(toSQL(child), "CLUSTER BY", partitionExprs.map(SqlExpressionBuilder.toSql).mkString(", "))
 
     case p: Sort =>
       build(
@@ -240,7 +240,7 @@ class SqlBuilder private(
       build(
         toSQL(p.child),
         "DISTRIBUTE BY",
-        p.partitionExpressions.map(_.sql).mkString(", ")
+        p.partitionExpressions.map(SqlExpressionBuilder.toSql).mkString(", ")
       )
 
     case p: ScriptTransformation =>
@@ -302,11 +302,14 @@ class SqlBuilder private(
   }
 
   private def aggregateToSQL(plan: Aggregate): String = {
-    val groupingSQL = plan.groupingExpressions.map(_.sql).mkString(", ")
+    val groupingSQL = plan.groupingExpressions.map(SqlExpressionBuilder.toSql).mkString(", ")
     build(
       "SELECT",
-      plan.aggregateExpressions.map(_.sql).mkString(", "),
-      plan.child match { case _:OneRowRelation => ""; case _ => "FROM" },
+      plan.aggregateExpressions.map(SqlExpressionBuilder.toSql).mkString(", "),
+      plan.child match {
+          case _:OneRowRelation => "";
+          case _ => "FROM"
+      },
       toSQL(plan.child),
       if (groupingSQL.isEmpty) "" else "GROUP BY",
       groupingSQL
@@ -314,7 +317,7 @@ class SqlBuilder private(
   }
 
   private def generateToSQL(g: Generate): String = {
-    val columnAliases = g.generatorOutput.map(_.sql).mkString(", ")
+    val columnAliases = g.generatorOutput.map(SqlExpressionBuilder.toSql).mkString(", ")
 
     val childSQL = g.child match {
         case _: OneRowRelation =>
@@ -559,6 +562,8 @@ class SqlBuilder private(
         case p @ Project(_, f @ Filter(_, _: Aggregate)) => p.copy(child = addSubquery(f))
 
         case w @ Window(_, _, _, f @ Filter(_, _: Aggregate)) => w.copy(child = addSubquery(f))
+
+        case a: Aggregate => a.copy(child = addSubqueryIfNeeded(a.child))
 
         case s: Sort => s.copy(child = addSubquery(s.child))
 

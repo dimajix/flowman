@@ -18,6 +18,11 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
+## Version 1.3.1 - 2024-12-16
+
+* github-514: Generated SQL code for views should quote all column names
+
+
 ## Version 1.3.0 - 2024-12-06
 
 * github-510: Upgrade Cloudera Spark 3.3 build profile

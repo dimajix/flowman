@@ -5,8 +5,8 @@ version number *major*.*minor*.*bugfix*. The meaning of the components is as fol
 
 * The *major* number is increased in two scenarios: Either Flowman has implemented a big new feature set, or some
 changes lead to incompatibility with previous versions (breaking changes).
-* The *minor* number is increased to indicating new features or slightly changed behaviour.
-* The *bugfix* number is increased for bugfixes. Otherwise, the behaviour and feature set of Flowman remain unchanged.
+* The *minor* number is increased to indicating new features or slightly changed behavior.
+* The *bugfix* number is increased for bugfixes. Otherwise, the behavior and feature set of Flowman remain unchanged.
 
 Generally, you can expect Flowman to be downwards compatible with older releases within the same major version. Some
 minor changes or bugfixes may change the behavior of some features, which have been changed intentionally (for example,
@@ -18,7 +18,7 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
-## Version 1.3.1 - 2024-12-16
+## Version 1.3.1 - 2024-12-19
 
 * github-514: Generated SQL code for views should quote all column names
 

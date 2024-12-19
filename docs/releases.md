@@ -30,7 +30,7 @@ Breaking changes will be documented in the changelog file for each version.
 The following gives an (incomplete) list of past releases of the last 12 months. This will help you to spot breaking 
 changes over time.
 
-### Version 1.3.1 - 2024-12-16
+### Version 1.3.1 - 2024-12-19
 
 * github-514: Generated SQL code for views should quote all column names
 

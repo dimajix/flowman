@@ -9,7 +9,7 @@ mappings:
     inputs:
       - transactions
       - enrichment
-    expression: "transactions.ext_id = enrichment.id"
+    condition: "transactions.ext_id = enrichment.id"
 ```
 
 ## Fields
@@ -30,9 +30,9 @@ Cache mode for the results of this mapping. Supported values are
 * `inputs` **(mandatory)** *(type: list:string)*:
 Specifies the names of the input mappings to be filtered.
 
-* `expression` **(optional)** *(type: string)* *(default: empty)*:
+* `condition` **(optional)** *(type: string)* *(default: empty)*:
 Specifies the join condition. You can reference the input mappings by their name. Note that
-for using an expression, the `join` mapping requires exactly two input mappings.
+for using a condition, the `join` mapping requires exactly two input mappings.
 
 * `columns` **(optional)** *(type: list:string)* *(default: empty)*:
 As an alternative to explicitly specifying a join condition, you can also specify a list
@@ -40,7 +40,7 @@ of column names to join on. These columns need to be existing in all input mappi
 
 * `mode` **(optional)** *(type: string)* *(default: left)*:
 Specifies the join mode. The following modes are supported:
-`inner`, `cross`, `outer`, `full`, `full_outer`, `left`, `left_outer`, `right`, `right_outer`.
+`inner`, `cross`, `outer`, `full`, `full_outer`, `left`, `left_outer`, `left_anti`, `left_semi`, `right`, `right_outer`.
 
 * `filter` **(optional)** *(type: string)* *(default: empty)*:
 An optional SQL filter expression that is applied *after* join operation.

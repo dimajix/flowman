@@ -18,10 +18,12 @@ package com.dimajix.flowman.spec.metric
 
 import java.io.IOException
 import java.net.URI
+import java.nio.charset.Charset
 
 import scala.util.control.NonFatal
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.http.Consts
 import org.apache.http.HttpResponse
 import org.apache.http.client.HttpResponseException
 import org.apache.http.client.ResponseHandler
@@ -90,9 +92,9 @@ extends AbstractMetricSink with Logging {
 
         val httpClient = HttpClients.createDefault()
         try {
-            val httpPost = new HttpPut(url)
-            httpPost.setEntity(new StringEntity(payload))
-            httpClient.execute(httpPost, handler)
+            val httpPut = new HttpPut(url)
+            httpPut.setEntity(new StringEntity(payload, Consts.UTF_8))
+            httpClient.execute(httpPut, handler)
         }
         catch {
             case ex:HttpResponseException =>

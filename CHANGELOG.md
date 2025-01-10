@@ -18,6 +18,12 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
+## Version 1.3.2
+
+* Fix documentation of SQL mapping
+*  
+
+
 ## Version 1.3.1 - 2024-12-19
 
 * github-514: Generated SQL code for views should quote all column names

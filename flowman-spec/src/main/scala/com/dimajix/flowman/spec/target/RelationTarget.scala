@@ -27,6 +27,7 @@ import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaInject
 
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
+import com.dimajix.common.Unknown
 import com.dimajix.common.Yes
 import com.dimajix.flowman.config.FlowmanConf
 import com.dimajix.flowman.config.FlowmanConf.DEFAULT_TARGET_BUILD_POLICY
@@ -224,6 +225,8 @@ final case class RelationTarget(
                     case BuildPolicy.SMART =>
                         if (mode == OutputMode.APPEND || partition.isEmpty)
                             Yes
+                        else if (mode == OutputMode.UPDATE)
+                            Unknown
                         else
                             !rel.loaded(execution, partition)
                     case BuildPolicy.COMPAT =>

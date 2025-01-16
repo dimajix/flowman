@@ -38,6 +38,7 @@ import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Execution
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
+import com.dimajix.flowman.execution.OutputMode.UPDATE
 import com.dimajix.flowman.fs.File
 import com.dimajix.flowman.fs.FileCollector
 import com.dimajix.flowman.fs.HadoopUtils
@@ -233,7 +234,7 @@ case class FileRelation(
             throw new IllegalArgumentException(s"Pattern not supported for 'file' relation '$identifier' with dynamic partitions")
 
         mode match {
-            // Since Flowman has a slightly different semantics of when data is available, we need to handle some
+            // Since Flowman has slightly different semantics of when data is available, we need to handle some
             // cases explicitly
             case OutputMode.IGNORE_IF_EXISTS =>
                 if (loaded(execution) == No) {
@@ -244,8 +245,10 @@ case class FileRelation(
                     throw new FileAlreadyExistsException(qualifiedLocation.toString)
                 }
                 doWriteDynamic(execution, df, OutputMode.OVERWRITE)
-            case m =>
+            case OutputMode.APPEND|OutputMode.OVERWRITE|OutputMode.OVERWRITE_DYNAMIC =>
                 doWriteDynamic(execution, df, mode)
+            case _ =>
+                throw new IllegalArgumentException(s"Unsupported output mode '$mode' for file relation $identifier")
         }
 
     }
@@ -278,7 +281,7 @@ case class FileRelation(
         requireAllPartitionKeys(partition)
 
         mode match {
-            // Since Flowman has a slightly different semantics of when data is available, we need to handle some
+            // Since Flowman has slightly different semantics of when data is available, we need to handle some
             // cases explicitly
             case OutputMode.IGNORE_IF_EXISTS =>
                 if (loaded(execution, partition) == No) {
@@ -289,8 +292,10 @@ case class FileRelation(
                     throw new FileAlreadyExistsException(outputPath.toString)
                 }
                 doWriteSinglePartition(execution, df, outputPath.path, OutputMode.OVERWRITE)
-            case m => m.batchMode
+            case OutputMode.APPEND|OutputMode.OVERWRITE|OutputMode.OVERWRITE_DYNAMIC =>
                 doWriteSinglePartition(execution, df, outputPath.path, mode)
+            case _ =>
+                throw new IllegalArgumentException(s"Unsupported output mode '$mode' for file relation $identifier")
         }
     }
     private def doWriteSinglePartition(execution:Execution, df:DataFrame, outputPath:Path, mode:OutputMode) : Unit = {

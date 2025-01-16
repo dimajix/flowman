@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import com.dimajix.flowman.common.ParserUtils
 import com.dimajix.flowman.execution.Context
 import com.dimajix.flowman.execution.Phase
+import com.dimajix.flowman.execution.RootContext
 import com.dimajix.flowman.execution.Session
 import com.dimajix.flowman.execution.Status
 import com.dimajix.flowman.model.MappingOutputIdentifier
@@ -55,17 +56,14 @@ class PhaseCommand(phase:Phase) extends Command {
         val toRun = relations.flatMap(_.split(",")).toSeq
         val partition = ParserUtils.parseDelimitedKeyValues(this.partition)
 
-        // Create a new project with appropriate build targets
-        val targets = toRun.map { rel => rel -> Prototype.of { context =>
+        // Create appropriate targets for all relations
+        val targets = toRun.map { rel => {
             val props = Target.Properties(context, rel, "relation")
             RelationTarget(props, RelationIdentifier(rel, project.name), MappingOutputIdentifier.empty, partition).asInstanceOf[Target]
         }}
-        val prj = project.copy(targets = project.targets ++ targets.toMap)
-        val ctx = context.root.getProjectContext(prj)
 
-        val targets2 = toRun.map { rel => ctx.getTarget(TargetIdentifier(rel)) }
         val runner = session.runner
-        runner.executeTargets(targets2, Seq(phase), jobName="cli-tools", force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
+        runner.executeTargets(targets, Seq(phase), jobName="cli-tools", force=force, keepGoing=keepGoing, dryRun=dryRun, isolated=false)
     }
 }
 

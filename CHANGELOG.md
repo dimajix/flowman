@@ -18,10 +18,11 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
-## Version 1.3.2
+## Version 1.3.2 - 2025-02-07
 
 * Fix documentation of SQL mapping
-*  
+* Fix skipping of execution targets with "update" mode
+* Use UTF-8 for pushing metrics to Prometheus
 
 
 ## Version 1.3.1 - 2024-12-19

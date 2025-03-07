@@ -30,6 +30,13 @@ Breaking changes will be documented in the changelog file for each version.
 The following gives an (incomplete) list of past releases of the last 12 months. This will help you to spot breaking 
 changes over time.
 
+### Version 1.3.2 - 2025-02-07
+
+* Fix documentation of SQL mapping
+* Fix skipping of execution targets with "update" mode
+* Use UTF-8 for pushing metrics to Prometheus
+
+
 ### Version 1.3.1 - 2024-12-19
 
 * github-514: Generated SQL code for views should quote all column names

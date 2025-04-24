@@ -28,8 +28,6 @@ import com.dimajix.flowman.server.rest.Server
 
 object Application {
     def main(args: Array[String]) : Unit = {
-        java.lang.System.setProperty("akka.http.server.remote-address-header", "true")
-
         Logging.init()
 
         val server = new Application()

@@ -140,7 +140,6 @@ public final class Logging {
         val upperCased = logLevel.toUpperCase(Locale.ENGLISH);
         val l = org.apache.log4j.Level.toLevel(upperCased);
         org.apache.log4j.Logger.getLogger("org").setLevel(l);
-        org.apache.log4j.Logger.getLogger("akka").setLevel(l);
         org.apache.log4j.Logger.getLogger("hive").setLevel(l);
     }
 

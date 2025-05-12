@@ -18,7 +18,7 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
-## Version 1.3.3
+## Version 1.3.3 - 2025-05-12
 
 * Upgrade SQL Server connector
 * Upgrade Spark to 3.3.4

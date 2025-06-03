@@ -319,4 +319,77 @@ class OpenApiSchemaTest extends AnyFlatSpec with Matchers  {
 
         session.shutdown()
     }
+
+    it should "support anchors and aliases" in {
+        val spec =
+            """
+              |kind: openApi
+              |entity: Pet
+              |spec: |
+              |    openapi: "3.0"
+              |    components:
+              |      schemas:
+              |        Pet:
+              |          required: &ref1
+              |            - name
+              |            - id
+              |          properties:
+              |            name:
+              |              type: string
+              |              description: The Pets name
+              |            id:
+              |              type: integer
+              |              format: int64
+              |              description: The Pets ID
+              |            obj:
+              |              type: "object"
+              |              required: *ref1
+              |              properties:
+              |                name:
+              |                  type: string
+              |                id:
+              |                  type: integer
+              |                xyz:
+              |                  type: integer
+              |""".stripMargin
+
+        val session = Session.builder().disableSpark().build()
+        val schemaSpec = ObjectMapper.parse[SchemaSpec](spec)
+        schemaSpec shouldBe an[OpenApiSchemaSpec]
+
+        val result = schemaSpec.instantiate(session.context)
+        result shouldBe an[OpenApiSchema]
+
+        val fields = result.fields
+        fields.size should be (3)
+
+        fields(0).nullable should be (false)
+        fields(0).name should be ("name")
+        fields(0).description should be (Some("The Pets name"))
+        fields(0).ftype should be (StringType)
+
+        fields(1).nullable should be (false)
+        fields(1).name should be ("id")
+        fields(1).description should be (Some("The Pets ID"))
+        fields(1).ftype should be (LongType)
+
+        fields(2).nullable should be (true)
+        fields(2).name should be ("obj")
+        //fields(2).ftype should be (StructType)
+
+        val ofields = fields(2).ftype.asInstanceOf[StructType].fields
+        ofields(0).nullable should be (false)
+        ofields(0).name should be ("name")
+        ofields(0).ftype should be (StringType)
+
+        ofields(1).nullable should be (false)
+        ofields(1).name should be ("id")
+        ofields(1).ftype should be (IntegerType)
+
+        ofields(2).nullable should be (true)
+        ofields(2).name should be ("xyz")
+        ofields(2).ftype should be (IntegerType)
+
+        session.shutdown()
+    }
 }

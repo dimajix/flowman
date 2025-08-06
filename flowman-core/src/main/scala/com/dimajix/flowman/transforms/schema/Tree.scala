@@ -17,9 +17,10 @@
 package com.dimajix.flowman.transforms.schema
 
 import java.util.Locale
-
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.flowman.transforms.NoSuchColumnException
+
+import scala.collection.immutable.ListMap
 
 
 object Path {
@@ -507,7 +508,7 @@ case class StructNode[T](name:String, value:Option[T], children:Seq[Node[T]], nu
             this
         }
         else {
-            val ht = paths.foldLeft(Map[String,Seq[Path]]()) { (map, path) =>
+            val ht = paths.foldLeft(ListMap[String,Seq[Path]]()) { (map, path) =>
                 val head = path.segments.head
                 if (contains(head)) {
                     val tail = path.tail

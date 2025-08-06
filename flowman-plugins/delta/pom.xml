@@ -19,8 +19,8 @@
         <plugin.name>flowman-delta</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <delta.version>2.4.0</delta.version>
-        <delta.artifact>delta-core</delta.artifact>
+        <delta.version>3.0.0</delta.version>
+        <delta.artifact>delta-spark</delta.artifact>
         <delta.scope>compile</delta.scope>
     </properties>
 

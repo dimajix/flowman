@@ -19,7 +19,7 @@
         <plugin.name>flowman-oracle</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <oracle.version>21.6.0.0.1</oracle.version>
+        <oracle.version>23.9.0.25.07</oracle.version>
     </properties>
 
     <build>

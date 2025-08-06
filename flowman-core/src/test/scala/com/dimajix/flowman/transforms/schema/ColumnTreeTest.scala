@@ -254,6 +254,49 @@ class ColumnTreeTest extends AnyFlatSpec with Matchers {
         columns.toString() should be (expected.toString())
     }
 
+    it should "support keeping paths in the correct order" in {
+        val inputSchema = StructType(Seq(
+            StructField("col1", StringType, false),
+            StructField("COL2", StructType(
+                Seq(
+                    StructField("nested1", StringType, false),
+                    StructField("nested3", FloatType, false)
+                )
+            ), false),
+            StructField("col3", IntegerType, false),
+            StructField("col4", IntegerType, false),
+            StructField("col5", IntegerType, false),
+            StructField("col6", IntegerType, false),
+            StructField("col7", IntegerType, false),
+            StructField("col8", IntegerType, false),
+            StructField("col9", IntegerType, false),
+        ))
+        val root = ColumnTree.ofSchema(inputSchema)
+            .keep(Seq(
+                Path("COL2.nested3"),
+                Path("col1"),
+                Path("col8"),
+                Path("col4"),
+                Path("col9"),
+                Path("col6")
+            ))
+        val columns = root.mkValue()
+
+        val expected = struct(
+            struct(col("COL2.nested3").alias("nested3")).alias("COL2"),
+            col("col1"),
+            col("col8"),
+            col("col4"),
+            col("col9"),
+            col("col6")
+        )
+
+        // This doesn't work:
+        //      columns should be (expected)
+        // therefore we compare string representation
+        columns.toString() should be (expected.toString())
+    }
+
     it should "support explode on simple arrays via NodeOps" in {
         val inputSchema = StructType(Seq(
             StructField("COL2", StructType(

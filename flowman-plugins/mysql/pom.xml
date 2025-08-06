@@ -19,7 +19,7 @@
         <plugin.name>flowman-mysql</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <mysql-connector-java.version>8.0.28</mysql-connector-java.version>
+        <mysql-connector-j.version>9.4.0</mysql-connector-j.version>
     </properties>
 
     <build>
@@ -39,9 +39,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>${mysql-connector-java.version}</version>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>${mysql-connector-j.version}</version>
         </dependency>
     </dependencies>
 </project>

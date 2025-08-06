@@ -19,7 +19,7 @@
         <plugin.name>flowman-postgresql</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <postgresql.version>42.4.4</postgresql.version>
+        <postgresql.version>42.7.7</postgresql.version>
     </properties>
 
     <build>

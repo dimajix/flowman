@@ -33,6 +33,7 @@ changes over time.
 ### Version 1.3.4 - 2025-08-06
 
 * Fix column order in explode mapping
+* Upgrade several dependencies
 
 
 ### Version 1.3.3 - 2025-05-12

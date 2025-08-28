@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Flowman Authors
+ * Copyright (C) 2019-2025 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.dimajix.flowman.spec.target
 
 import com.fasterxml.jackson.annotation.JsonProperty
-
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
 import com.dimajix.common.Yes
@@ -33,12 +32,18 @@ import com.dimajix.flowman.model.Target
 import com.dimajix.flowman.spec.dataset.DatasetSpec
 import com.dimajix.flowman.transforms.SchemaEnforcer
 import com.dimajix.spark.sql.DataFrameUtils
+import com.dimajix.spark.sql.SchemaUtils
 
 
 final case class CompareTarget(
     instanceProperties:Target.Properties,
     actual:Dataset,
-    expected:Dataset
+    expected:Dataset,
+    compareSchema:Boolean=false,
+    ignoreTypes:Boolean = false,
+    ignoreNullability:Boolean = true,
+    ignoreCase:Boolean = false,
+    ignoreOrder:Boolean = false
 ) extends BaseTarget {
     /**
      * Returns all phases which are implemented by this target in the execute method
@@ -90,7 +95,17 @@ final case class CompareTarget(
             case ex:Exception => throw new VerificationFailedException(this.identifier, ex)
         }
 
-        // TODO: Compare schemas
+        // First: Compare schemas
+        if (compareSchema) {
+            val actualSchema = actualDf.schema
+            val expectedSchema = expectedDf.schema
+            if (!SchemaUtils.compare(expectedSchema, actualSchema, ignoreTypes, ignoreNullability, ignoreOrder, ignoreCase)) {
+                logger.error(s"Dataset '${actual.name}' has different schema than the expected dataset '${expected.name}'.\nActual schema:\n${actualSchema.treeString}\nExpected schema:\n${expectedSchema.treeString}")
+                throw new VerificationFailedException(identifier, new ExecutionException(s"Dataset '${actual.name}' has different schema than the expected dataset '${expected.name}'"))
+            }
+        }
+
+        // If schemas match, then compare records
         val xfs = SchemaEnforcer(expectedDf.schema)
         val conformedDf = xfs.transform(actualDf)
 
@@ -110,12 +125,22 @@ final case class CompareTarget(
 class CompareTargetSpec extends TargetSpec {
     @JsonProperty(value = "actual", required = true) private var actual: DatasetSpec = _
     @JsonProperty(value = "expected", required = true) private var expected: DatasetSpec = _
+    @JsonProperty(value = "compareSchema", required = false) private var compareSchema: String = "false"
+    @JsonProperty(value = "ignoreTypes", required = false) private var ignoreTypes: String = "false"
+    @JsonProperty(value = "ignoreNullability", required = false) private var ignoreNullability: String = "false"
+    @JsonProperty(value = "ignoreCase", required = false) private var ignoreCase: String = "false"
+    @JsonProperty(value = "ignoreOrder", required = false) private var ignoreOrder: String = "false"
 
     override def instantiate(context: Context, properties:Option[Target.Properties] = None): CompareTarget = {
         CompareTarget(
             instanceProperties(context, properties),
             actual.instantiate(context),
-            expected.instantiate(context)
+            expected.instantiate(context),
+            context.evaluate(compareSchema).toBoolean,
+            context.evaluate(ignoreTypes).toBoolean,
+            context.evaluate(ignoreNullability).toBoolean,
+            context.evaluate(ignoreCase).toBoolean,
+            context.evaluate(ignoreOrder).toBoolean
         )
     }
 }

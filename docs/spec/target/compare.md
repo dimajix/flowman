@@ -19,6 +19,11 @@ targets:
       schema:
         kind: spark
         file: "${project.basedir}/test/data/results/${relation}/schema.json"
+    compareSchema: true
+    ignoreCase: true
+    ignoreOrder: false
+    ignoreTypes: false
+    ignoreNullability: false
 ```
 
 ## Fields
@@ -35,6 +40,24 @@ a mapping.
 * `expected` **(mandatory)** *(type: dataset)*: 
 Specifies the data set containing the expected data. In most cases you probably will use a file data set referencing
 some predefined results
+
+* `compareSchema` **(optional)** *(type: boolean)* *(default: false)* (since version 1.3.5):
+Also compare the schema of the two data sets. If comparison is enabled, and schemas don't match, then the records will
+not be compared any more, and the test fails.
+
+* `ignoreTypes` **(optional)** *(type: boolean)* *(default: false)* (since version 1.3.5):
+  Ignore types, only field names will be compared. Only effective, if `compareSchema` is set to `true`.
+
+* `ignoreNullability` **(optional)** *(type: boolean)* *(default: false)* (since version 1.3.5):
+  Ignore nullability of fields, only field names and types will be compared. Only effective, if `compareSchema` is set to `true`.
+
+* `ignoreCase` **(optional)** *(type: boolean)* *(default: false)* (since version 1.3.5):
+  Ignore upper/lower case of field names. Only effective, if `compareSchema` is set to `true`.
+
+* `ignoreOrder` **(optional)** *(type: boolean)* *(default: false)* (since version 1.3.5):
+  Ignore the order of fields. The schema matches the given schema as long as all fields are present. Otherwise, the
+  order of all fields also has to match (which is the default). Only effective, if `compareSchema` is set to `true`.
+
 
 ## Supported Execution Phases
 * `VERIFY` - Comparison will be performed in the *verify* build phase. If the comparison fails, the build will stop

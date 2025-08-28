@@ -30,6 +30,12 @@ Breaking changes will be documented in the changelog file for each version.
 The following gives an (incomplete) list of past releases of the last 12 months. This will help you to spot breaking 
 changes over time.
 
+
+### Version 1.3.5 - 2025-08-28
+
+* Add new `compareSchema` flag to `compare` target.
+
+
 ### Version 1.3.4 - 2025-08-06
 
 * Fix column order in explode mapping

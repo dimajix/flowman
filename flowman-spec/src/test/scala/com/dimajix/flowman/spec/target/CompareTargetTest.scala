@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2018-2025 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,11 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
               |actual:
               |  kind: file
               |  location: $basedir/data/data_1.csv
+              |compareSchema: true
+              |ignoreNullability: false
+              |ignoreTypes: true
+              |ignoreCase: true
+              |ignoreOrder: false
               |""".stripMargin
         val target = ObjectMapper.parse[TargetSpec](spec)
         target shouldBe a[CompareTargetSpec]
@@ -177,7 +182,8 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val target = CompareTarget(
             Target.Properties(context),
             FileDataset(Dataset.Properties(context), new Path(basedir, "data"), "csv"),
-            FileDataset(Dataset.Properties(context), new Path(basedir, "data/data_1.csv"), "csv")
+            FileDataset(Dataset.Properties(context), new Path(basedir, "data/data_1.csv"), "csv"),
+            compareSchema = true
         )
 
         val result = target.execute(executor, Phase.VERIFY)
@@ -202,7 +208,8 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         val target = CompareTarget(
             Target.Properties(context),
             FileDataset(Dataset.Properties(context), new Path(basedir, "data/actual"), "csv"),
-            FileDataset(Dataset.Properties(context), new Path(basedir, "data/expected"), "csv")
+            FileDataset(Dataset.Properties(context), new Path(basedir, "data/expected"), "csv"),
+            compareSchema = false
         )
 
         val result = target.execute(executor, Phase.VERIFY)
@@ -213,6 +220,32 @@ class CompareTargetTest extends AnyFlatSpec with Matchers with LocalSparkSession
         result.numFailures should be (0)
         result.numSuccesses should be (0)
         result.numExceptions should be (0)
+        result.children.size should be (0)
+
+        session.shutdown()
+    }
+
+    it should "fail on different schemas" in {
+        val basedir = new Path(Resources.getResource(".").toURI)
+        val session = Session.builder().withSparkSession(spark).build()
+        val executor = session.execution
+        val context = session.context
+
+        val target = CompareTarget(
+            Target.Properties(context),
+            FileDataset(Dataset.Properties(context), new Path(basedir, "data/actual"), "csv"),
+            FileDataset(Dataset.Properties(context), new Path(basedir, "data/expected"), "csv"),
+            compareSchema = true
+        )
+
+        val result = target.execute(executor, Phase.VERIFY)
+        result.target should be (target)
+        result.phase should be (Phase.VERIFY)
+        result.status should be (Status.FAILED)
+        result.exception should not be (None)
+        result.numFailures should be (0)
+        result.numSuccesses should be (0)
+        result.numExceptions should be (1)
         result.children.size should be (0)
 
         session.shutdown()

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2018-2025 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,9 @@
 package com.dimajix.spark.sql
 
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.ArrayType
-import org.apache.spark.sql.types.CharType
-import org.apache.spark.sql.types.DoubleType
-import org.apache.spark.sql.types.FloatType
-import org.apache.spark.sql.types.IntegerType
-import org.apache.spark.sql.types.LongType
-import org.apache.spark.sql.types.MapType
-import org.apache.spark.sql.types.MetadataBuilder
-import org.apache.spark.sql.types.StringType
-import org.apache.spark.sql.types.StructField
-import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.types.VarcharType
+import org.apache.spark.sql.types.{ArrayType, BooleanType, CharType, DoubleType, FloatType, IntegerType, LongType, MapType, MetadataBuilder, StringType, StructField, StructType, VarcharType}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
 import com.dimajix.spark.testing.LocalSparkSession
 import com.dimajix.spark.testing.QueryTest
 
@@ -376,5 +364,191 @@ class SchemaUtilsTest extends AnyFlatSpec with Matchers with LocalSparkSession w
             )).withComment(expectedComment)
         ))
         truncatedSchema should be (expectedSchema)
+    }
+
+    "SchemaUtils.compare" should "work" in {
+        val s1 = StructType(Seq(
+            StructField("col_2", IntegerType),
+            StructField("col_1", StringType),
+            StructField("map", MapType(StringType, DoubleType)),
+            StructField("array", ArrayType(BooleanType)),
+            StructField("struct", StructType(Seq(
+                StructField("nested_col_1", StringType),
+                StructField("nested_col_2", IntegerType)
+            )))))
+
+        SchemaUtils.compare(s1,s1) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=false, ignoreNullability=true, ignoreOrder=false, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=false, ignoreNullability=true, ignoreOrder=false, ignoreCase=false) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=false, ignoreNullability=true, ignoreOrder=true, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=false, ignoreNullability=true, ignoreOrder=true, ignoreCase=false) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=false, ignoreNullability=false, ignoreOrder=false, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=false, ignoreNullability=false, ignoreOrder=false, ignoreCase=false) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=false, ignoreNullability=false, ignoreOrder=true, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=false, ignoreNullability=false, ignoreOrder=true, ignoreCase=false) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=true, ignoreNullability=true, ignoreOrder=false, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=true, ignoreNullability=true, ignoreOrder=false, ignoreCase=false) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=true, ignoreNullability=true, ignoreOrder=true, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=true, ignoreNullability=true, ignoreOrder=true, ignoreCase=false) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=true, ignoreNullability=false, ignoreOrder=false, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=true, ignoreNullability=false, ignoreOrder=false, ignoreCase=false) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=true, ignoreNullability=false, ignoreOrder=true, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s1, ignoreTypes=true, ignoreNullability=false, ignoreOrder=true, ignoreCase=false) should be (true)
+    }
+
+    it should "ignore nullability if requested" in {
+        val s1 = StructType(Seq(
+            StructField("col_2", IntegerType, nullable=true),
+            StructField("col_1", StringType),
+            StructField("map", MapType(StringType, DoubleType)),
+            StructField("array", ArrayType(BooleanType)),
+            StructField("struct", StructType(Seq(
+                StructField("nested_col_1", StringType),
+                StructField("nested_col_2", IntegerType)
+            )))))
+        val s2 = StructType(Seq(
+            StructField("col_2", IntegerType, nullable=false),
+            StructField("col_1", StringType),
+            StructField("map", MapType(StringType, DoubleType)),
+            StructField("array", ArrayType(BooleanType)),
+            StructField("struct", StructType(Seq(
+                StructField("nested_col_1", StringType),
+                StructField("nested_col_2", IntegerType)
+            )))))
+
+        SchemaUtils.compare(s1,s2) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=false, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=false, ignoreCase=false) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=true, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=true, ignoreCase=false) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=false, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=false, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=true, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=true, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=false, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=false, ignoreCase=false) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=true, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=true, ignoreCase=false) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=false, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=false, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=true, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=true, ignoreCase=false) should be (false)
+    }
+
+    it should "ignore case if requested" in {
+        val s1 = StructType(Seq(
+            StructField("col_2", IntegerType, nullable=true),
+            StructField("col_1", StringType),
+            StructField("map", MapType(StringType, DoubleType)),
+            StructField("array", ArrayType(BooleanType)),
+            StructField("struct", StructType(Seq(
+                StructField("nested_col_1", StringType),
+                StructField("nested_col_2", IntegerType)
+            )))))
+        val s2 = StructType(Seq(
+            StructField("COL_2", IntegerType, nullable=false),
+            StructField("col_1", StringType),
+            StructField("MAP", MapType(StringType, DoubleType)),
+            StructField("array", ArrayType(BooleanType)),
+            StructField("struct", StructType(Seq(
+                StructField("nested_col_1", StringType),
+                StructField("nested_col_2", IntegerType)
+            )))))
+
+        SchemaUtils.compare(s1,s2) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=false, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=false, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=true, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=true, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=false, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=false, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=true, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=true, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=false, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=false, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=true, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=true, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=false, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=false, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=true, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=true, ignoreCase=false) should be (false)
+    }
+
+    it should "ignore field order if requested" in {
+        val s1 = StructType(Seq(
+            StructField("col_2", IntegerType, nullable=true),
+            StructField("col_1", StringType),
+            StructField("map", MapType(StringType, DoubleType)),
+            StructField("array", ArrayType(BooleanType)),
+            StructField("struct", StructType(Seq(
+                StructField("nested_col_1", StringType),
+                StructField("nested_col_2", IntegerType)
+            )))))
+        val s2 = StructType(Seq(
+            StructField("col_1", StringType),
+            StructField("COL_2", IntegerType, nullable=false),
+            StructField("MAP", MapType(StringType, DoubleType)),
+            StructField("array", ArrayType(BooleanType)),
+            StructField("struct", StructType(Seq(
+                StructField("nested_col_1", StringType),
+                StructField("nested_col_2", IntegerType)
+            )))))
+
+        SchemaUtils.compare(s1,s2) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=false, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=false, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=true, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=true, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=false, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=false, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=true, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=true, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=false, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=false, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=true, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=true, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=false, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=false, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=true, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=true, ignoreCase=false) should be (false)
+    }
+
+    it should "ignore types if requested" in {
+        val s1 = StructType(Seq(
+            StructField("col_2", BooleanType, nullable=true),
+            StructField("col_1", StringType),
+            StructField("map", MapType(StringType, DoubleType)),
+            StructField("array", ArrayType(BooleanType)),
+            StructField("struct", StructType(Seq(
+                StructField("nested_col_1", StringType),
+                StructField("nested_col_2", IntegerType)
+            )))))
+        val s2 = StructType(Seq(
+            StructField("col_1", StringType),
+            StructField("COL_2", DoubleType, nullable=false),
+            StructField("MAP", MapType(StringType, DoubleType)),
+            StructField("array", ArrayType(BooleanType)),
+            StructField("struct", StructType(Seq(
+                StructField("nested_col_1", StringType),
+                StructField("nested_col_2", IntegerType)
+            )))))
+
+        SchemaUtils.compare(s1,s2) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=false, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=false, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=true, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=true, ignoreOrder=true, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=false, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=false, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=true, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=false, ignoreNullability=false, ignoreOrder=true, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=false, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=false, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=true, ignoreCase=true) should be (true)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=true, ignoreOrder=true, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=false, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=false, ignoreCase=false) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=true, ignoreCase=true) should be (false)
+        SchemaUtils.compare(s1,s2, ignoreTypes=true, ignoreNullability=false, ignoreOrder=true, ignoreCase=false) should be (false)
     }
 }

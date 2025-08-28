@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Flowman Authors
+ * Copyright (C) 2018-2025 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -330,5 +330,71 @@ object SchemaUtils {
             case map:MapType => MapType(toLowerCase(map.keyType), toLowerCase(map.valueType), map.valueContainsNull)
             case dt:DataType => dt
         }
+    }
+
+    def compare(expected:StructType, actual:StructType, ignoreTypes:Boolean=false, ignoreNullability:Boolean=false, ignoreOrder:Boolean=false, ignoreCase:Boolean=true) : Boolean = {
+        def collectFields(struct:StructType) : Map[String,StructField] = {
+            if (ignoreCase)
+                struct.fields.map(f => f.name.toLowerCase(Locale.ROOT) -> f).toMap
+            else
+                struct.fields.map(f => f.name -> f).toMap
+        }
+        def compareStructs(actual:StructType, desired:StructType) : Boolean = {
+            if (ignoreOrder) {
+                val actualFields = collectFields(actual)
+                val desiredFields = collectFields(desired)
+                if (actualFields.keySet != desiredFields.keySet) {
+                    false
+                }
+                else {
+                    actualFields.forall { actual =>
+                        val desired = desiredFields(actual._1)
+                        compareFields(actual._2, desired)
+                    }
+                }
+            }
+            else {
+                if (actual.fields.length != desired.fields.length) {
+                    false
+                }
+                else {
+                    actual.fields.zip(desired.fields).forall { case(actual,desired) =>
+                        compareFields(actual, desired)
+                    }
+                }
+            }
+        }
+        def compareTypes(actual:DataType,desired:DataType) : Boolean = {
+            (actual, desired) match {
+                case (l:StructType,r:StructType) => compareStructs(l,r)
+                case (l:StructType,_) => false
+                case (_,r:StructType) => false
+                case (l:MapType,r:MapType) => compareTypes(l.keyType, r.keyType) && compareTypes(l.valueType, r.valueType)
+                case (l:MapType, _) => false
+                case (_,r:MapType) => false
+                case (l:ArrayType,r:ArrayType) => compareTypes(l.elementType, r.elementType)
+                case (l:ArrayType,_) => false
+                case (_,r:ArrayType) => false
+                case (l,r) if l == r => true
+                case (_,_) if ignoreTypes => true
+                case _ => false
+            }
+        }
+        def compareFields(actual:StructField, desired:StructField) : Boolean = {
+            if (!ignoreNullability && actual.nullable != desired.nullable) {
+                false
+            }
+            else if (!ignoreCase && actual.name != desired.name) {
+                false
+            }
+            else if (ignoreCase && actual.name.toLowerCase(Locale.ROOT) != desired.name.toLowerCase(Locale.ROOT)) {
+                false
+            }
+            else {
+                compareTypes(actual.dataType, desired.dataType)
+            }
+        }
+
+        compareStructs(actual, expected)
     }
 }

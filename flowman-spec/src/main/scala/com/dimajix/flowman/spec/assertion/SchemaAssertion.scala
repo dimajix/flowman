@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Flowman Authors
+ * Copyright (C) 2021-2025 The Flowman Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,34 +16,19 @@
 
 package com.dimajix.flowman.spec.assertion
 
-import java.util.Locale
-
-import scala.collection.immutable.ListMap
-
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types.ArrayType
-import org.apache.spark.sql.types.DataType
-import org.apache.spark.sql.types.MapType
-import org.apache.spark.sql.types.StructField
-import org.apache.spark.sql.types.StructType
-import org.slf4j.LoggerFactory
-
-import com.dimajix.jackson.ListMapDeserializer
-
-import com.dimajix.flowman.execution.Context
-import com.dimajix.flowman.execution.Execution
-import com.dimajix.flowman.model.Assertion
-import com.dimajix.flowman.model.AssertionResult
-import com.dimajix.flowman.model.AssertionTestResult
-import com.dimajix.flowman.model.BaseAssertion
-import com.dimajix.flowman.model.MappingOutputIdentifier
-import com.dimajix.flowman.model.ResourceIdentifier
-import com.dimajix.flowman.model.Schema
+import com.dimajix.flowman.execution.{Context, Execution}
+import com.dimajix.flowman.model._
 import com.dimajix.flowman.spec.schema.SchemaSpec
 import com.dimajix.flowman.types.Field
 import com.dimajix.flowman.{types => ftypes}
+import com.dimajix.jackson.ListMapDeserializer
+import com.dimajix.spark.sql.SchemaUtils
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import org.apache.spark.sql.DataFrame
+import org.slf4j.LoggerFactory
+
+import scala.collection.immutable.ListMap
 
 
 case class SchemaAssertion(
@@ -51,11 +36,11 @@ case class SchemaAssertion(
     mapping: MappingOutputIdentifier,
     columns:Seq[Field] = Seq(),
     schema:Option[Schema] = None,
-    ignoreTypes:Boolean = false,
-    ignoreNullability:Boolean = true,
-    ignoreCase:Boolean = false,
-    ignoreOrder:Boolean = false
-) extends BaseAssertion {
+    ignoreTypes: Boolean = false,
+    ignoreNullability: Boolean = true,
+    ignoreCase: Boolean = false,
+    ignoreOrder: Boolean = false
+                          ) extends BaseAssertion {
     private val logger = LoggerFactory.getLogger(classOf[SchemaAssertion])
 
     /**
@@ -84,74 +69,12 @@ case class SchemaAssertion(
         require(execution != null)
         require(input != null)
 
-        def collectFields(struct:StructType) : Map[String,StructField] = {
-            if (ignoreCase)
-                struct.fields.map(f => f.name.toLowerCase(Locale.ROOT) -> f).toMap
-            else
-                struct.fields.map(f => f.name -> f).toMap
-        }
-        def compareStructs(actual:StructType, desired:StructType) : Boolean = {
-            if (ignoreOrder) {
-                val actualFields = collectFields(actual)
-                val desiredFields = collectFields(desired)
-                if (actualFields.keySet != desiredFields.keySet) {
-                    false
-                }
-                else {
-                    actualFields.forall { actual =>
-                        val desired = desiredFields(actual._1)
-                        compareFields(actual._2, desired)
-                    }
-                }
-            }
-            else {
-                if (actual.fields.length != desired.fields.length) {
-                    false
-                }
-                else {
-                    actual.fields.zip(desired.fields).forall { case(actual,desired) =>
-                        compareFields(actual, desired)
-                    }
-                }
-            }
-        }
-        def compareTypes(actual:DataType,desired:DataType) : Boolean = {
-            (actual, desired) match {
-                case (l:StructType,r:StructType) => compareStructs(l,r)
-                case (l:StructType,_) => false
-                case (_,r:StructType) => false
-                case (l:MapType,r:MapType) => compareTypes(l.keyType, r.keyType) && compareTypes(l.valueType, r.valueType)
-                case (l:MapType, _) => false
-                case (_,r:MapType) => false
-                case (l:ArrayType,r:ArrayType) => compareTypes(l.elementType, r.elementType)
-                case (l:ArrayType,_) => false
-                case (_,r:ArrayType) => false
-                case (l,r) if l == r => true
-                case (_,_) if ignoreTypes => true
-                case _ => false
-            }
-        }
-        def compareFields(actual:StructField, desired:StructField) : Boolean = {
-            if (!ignoreNullability && actual.nullable != desired.nullable) {
-                false
-            }
-            else if (!ignoreCase && actual.name != desired.name) {
-                false
-            }
-            else if (ignoreCase && actual.name.toLowerCase(Locale.ROOT) != desired.name.toLowerCase(Locale.ROOT)) {
-                false
-            }
-            else {
-                compareTypes(actual.dataType, desired.dataType)
-            }
-        }
-
         AssertionResult.of(this) {
             val actualSchema = input(mapping).schema
             val desiredSchema = schema.map(_.sparkSchema).getOrElse(ftypes.StructType(columns).sparkType)
 
             Seq(AssertionTestResult.of(s"schema for '$mapping'") {
-                if (!compareStructs(actualSchema, desiredSchema)) {
+                if (!SchemaUtils.compare(actualSchema, desiredSchema, ignoreTypes, ignoreNullability, ignoreOrder, ignoreCase)) {
                     logger.error(s"""Mapping '$mapping' has wrong schema.\nActual schema:\n${actualSchema.treeString}\nExpected schema:\n${desiredSchema.treeString}""")
                     false
                 }

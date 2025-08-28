@@ -18,6 +18,11 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
+## Version 1.3.5 - 2025-08-28
+
+* Add new `compareSchema` flag to `compare` target.
+
+
 ## Version 1.3.4 - 2025-08-06
 
 * Fix column order in explode mapping

@@ -1448,7 +1448,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.2.8</version>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
@@ -1470,7 +1470,7 @@
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.13</version>
+                <version>1.6.14</version>
                 <extensions>true</extensions>
                 <configuration>
                     <serverId>${deployment.repository.id}</serverId>
@@ -1482,17 +1482,17 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
-                <version>3.12.1</version>
+                <version>3.21.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.9.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-help-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.5.1</version>
             </plugin>
         </plugins>
 
@@ -1502,7 +1502,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.3.2</version>
+                    <version>3.5.0</version>
                     <configuration>
                         <failOnError>false</failOnError>
                     </configuration>
@@ -1510,30 +1510,30 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>3.1.4</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>3.1.4</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>3.4.0</version>
+                    <version>3.6.1</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>3.6.2</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>3.5.0</version>
                     <configuration>
                         <excludes>
                             <exclude>plugin.yml</exclude>
@@ -1544,7 +1544,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.3.1</version>
+                    <version>3.4.0</version>
                     <configuration>
                         <propertiesEncoding>ISO-8859-1</propertiesEncoding>
                     </configuration>
@@ -1554,7 +1554,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.11.0</version>
+                    <version>3.14.1</version>
                     <configuration>
                         <source>${maven.compiler.source}</source>
                         <target>${maven.compiler.target}</target>
@@ -1574,7 +1574,7 @@
                     <inherited>true</inherited>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>4.8.1</version>
+                    <version>4.9.7</version>
                     <configuration>
                         <scalaVersion>${scala.version}</scalaVersion>
                         <scalaCompatVersion>${scala.api_version}</scalaCompatVersion>
@@ -1650,13 +1650,13 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.6.1</version>
+                    <version>3.9.0</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>3.4.0</version>
                     <configuration>
                         <attach>true</attach>
                     </configuration>
@@ -1674,7 +1674,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.6.2</version>
+                    <version>3.12.0</version>
                     <executions>
                         <execution>
                             <id>attach-javadocs</id>
@@ -1688,7 +1688,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.5.1</version>
+                    <version>3.6.1</version>
                     <configuration>
                         <shadedArtifactAttached>false</shadedArtifactAttached>
                         <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
@@ -1710,7 +1710,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.6.0</version>
+                    <version>3.8.0</version>
                     <configuration>
                         <tarLongFileMode>posix</tarLongFileMode>
                         <archiverConfig>
@@ -1739,7 +1739,7 @@
                     <inherited>true</inherited>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>flatten-maven-plugin</artifactId>
-                    <version>1.5.0</version>
+                    <version>1.7.3</version>
                     <configuration>
                         <flattenMode>ossrh</flattenMode>
                         <embedBuildProfileDependencies>true</embedBuildProfileDependencies>
@@ -1766,7 +1766,7 @@
                     <inherited>true</inherited>
                     <groupId>com.github.eirslett</groupId>
                     <artifactId>frontend-maven-plugin</artifactId>
-                    <version>1.9.1</version>
+                    <version>1.15.4</version>
                     <executions>
                         <execution>
                             <id>install-npm</id>
@@ -1807,7 +1807,7 @@
                     <inherited>true</inherited>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.2.2</version>
+                    <version>3.5.4</version>
                     <executions>
                         <execution>
                             <id>default-test</id>
@@ -1822,7 +1822,7 @@
                     <inherited>true</inherited>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
-                    <version>2.16.2</version>
+                    <version>2.20.1</version>
                 </plugin>
                 <plugin>
                     <inherited>true</inherited>
@@ -1839,12 +1839,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.9.0</version>
             </plugin>
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>4.8.1</version>
+                <version>4.9.7</version>
                 <configuration>
                     <jvmArgs>
                         <jvmArg>-Xms64m</jvmArg>

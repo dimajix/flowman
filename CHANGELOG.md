@@ -18,6 +18,13 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
+## Version 1.3.6 (upcoming)
+
+* Fix MySQL plugin configuration file
+* Fix handling of Hive tables with missing directory
+* Update several Maven plugin dependencies
+
+
 ## Version 1.3.5 - 2025-08-28
 
 * Add new `compareSchema` flag to `compare` target.

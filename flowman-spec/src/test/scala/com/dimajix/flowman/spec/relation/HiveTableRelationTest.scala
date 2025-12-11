@@ -2575,4 +2575,77 @@ class HiveTableRelationTest extends AnyFlatSpec with Matchers with LocalSparkSes
 
         session.shutdown()
     }
+
+    it should "create a missing directory" in {
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.context
+
+        val locFile = new File(tempDir, "hive/default/lala")
+        val loc = execution.fs.local(locFile.toURI)
+        val rel = HiveTableRelation(
+            Relation.Properties(context, "rel"),
+            schema = Some(InlineSchema(
+                Schema.Properties(context),
+                fields = Seq(
+                    Field("f1", com.dimajix.flowman.types.StringType),
+                    Field("f2", com.dimajix.flowman.types.IntegerType),
+                    Field("f3", com.dimajix.flowman.types.IntegerType)
+                )
+            )),
+            table = TableIdentifier("some_table", Some("default")),
+            format = Some("parquet"),
+            external = false,
+            location = Some(loc.path)
+        )
+
+        // == Create TABLE ============================================================================================
+        loc.exists() should be (false)
+        rel.exists(execution) should be (No)
+        rel.create(execution)
+        rel.exists(execution) should be (Yes)
+        loc.exists() should be (true)
+
+        // == Write ==================================================================================================
+        val schema = StructType(Seq(
+            StructField("f1", StringType),
+            StructField("f2", IntegerType),
+            StructField("f3", IntegerType)
+        ))
+        val rdd = spark.sparkContext.parallelize(Seq(
+            Row("v1", 23, 21)
+        ))
+        val df = spark.createDataFrame(rdd, schema)
+        rel.loaded(execution, Map()) should be (No)
+        rel.conforms(execution) should be (Yes)
+
+        // == Write ===================================================================================================
+        rel.write(execution, df)
+        rel.loaded(execution, Map()) should be (Yes)
+        rel.conforms(execution) should be (Yes)
+
+        // == Delete directory ========================================================================================
+        loc.delete(true)
+        loc.exists() should be (false)
+        rel.exists(execution) should be (Yes)
+        rel.conforms(execution) should be (No)
+        rel.loaded(execution, Map()) should be (No)
+
+        // == Write ===================================================================================================
+        an[AnalysisException] shouldBe thrownBy(rel.write(execution, df))
+
+        // == Migrate relation =========================================================================================
+        rel.migrate(execution)
+        rel.exists(execution) should be (Yes)
+        rel.conforms(execution) should be (Yes)
+
+        // == Write ===================================================================================================
+        rel.loaded(execution, Map()) should be (No)
+        rel.write(execution, df)
+        rel.loaded(execution, Map()) should be (Yes)
+
+        // == Destroy TABLE ===========================================================================================
+        rel.destroy(execution)
+        rel.exists(execution) should be (No)
+    }
 }

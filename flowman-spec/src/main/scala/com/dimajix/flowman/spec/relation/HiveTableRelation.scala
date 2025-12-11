@@ -17,9 +17,7 @@
 package com.dimajix.flowman.spec.relation
 
 import java.util.Locale
-
 import scala.util.control.NonFatal
-
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
@@ -35,7 +33,6 @@ import org.apache.spark.sql.types.CharType
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types.VarcharType
-
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
 import com.dimajix.common.Trilean
@@ -59,7 +56,7 @@ import com.dimajix.flowman.execution.MigrationStrategy
 import com.dimajix.flowman.execution.Operation
 import com.dimajix.flowman.execution.OutputMode
 import com.dimajix.flowman.execution.UnspecifiedSchemaException
-import com.dimajix.flowman.fs.HadoopUtils
+import com.dimajix.flowman.fs.{File, HadoopUtils}
 import com.dimajix.flowman.jdbc.HiveDialect
 import com.dimajix.flowman.model.MigratableRelation
 import com.dimajix.flowman.model.PartitionField
@@ -340,26 +337,32 @@ final case class HiveTableRelation(
     override def conforms(execution: Execution): Trilean = {
         val catalog = execution.catalog
         if (catalog.tableExists(table)) {
-            fullSchema match {
-                case Some(fullSchema) =>
-                    val table = catalog.getTable(this.table)
-                    if (table.tableType == CatalogTableType.VIEW) {
-                        false
-                    }
-                    else {
-                        val sourceTable = TableDefinition.ofTable(table)
-                        val targetSchema =  com.dimajix.flowman.types.StructType(fullSchema.fields)
-                        val targetTable = TableDefinition(
-                            this.table,
-                            TableType.TABLE,
-                            columns = targetSchema.fields,
-                            partitionColumnNames = partitions.map(_.name)
-                        )
+            val table = catalog.getTable(this.table)
+            val locationExists = table.storage.locationUri.forall(loc => execution.fs.file(loc).exists())
+            if (!locationExists) {
+                false
+            }
+            else {
+                fullSchema match {
+                    case Some(fullSchema) =>
+                        if (table.tableType == CatalogTableType.VIEW) {
+                            false
+                        }
+                        else {
+                            val sourceTable = TableDefinition.ofTable(table)
+                            val targetSchema = com.dimajix.flowman.types.StructType(fullSchema.fields)
+                            val targetTable = TableDefinition(
+                                this.table,
+                                TableType.TABLE,
+                                columns = targetSchema.fields,
+                                partitionColumnNames = partitions.map(_.name)
+                            )
 
-                        !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
-                    }
-                case None =>
-                    true
+                            !TableChange.requiresMigration(sourceTable, targetTable, migrationPolicy)
+                        }
+                    case None =>
+                        true
+                }
             }
         }
         else {
@@ -516,6 +519,11 @@ final case class HiveTableRelation(
                 migrateFromView(execution)
             }
             else {
+                // Ensure target directory exists
+                val location = execution.fs.file(curTable.location)
+                if (!location.exists()) {
+                    location.mkdirs()
+                }
                 migrateFromTable(execution, curTable)
             }
         }

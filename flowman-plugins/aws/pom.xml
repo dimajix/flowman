@@ -32,7 +32,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <aws.version>1.11.1026</aws.version>
+                <aws.version>1.12.794</aws.version>
             </properties>
             <dependencies>
                 <dependency>

@@ -22,18 +22,6 @@
 
     <profiles>
         <profile>
-            <id>CDH-6.3</id>
-            <properties>
-                <dockerfile.skip>true</dockerfile.skip>
-            </properties>
-        </profile>
-        <profile>
-            <id>CDP-7.1</id>
-            <properties>
-                <dockerfile.skip>true</dockerfile.skip>
-            </properties>
-        </profile>
-        <profile>
             <id>spark-3.2</id>
             <properties>
                 <!-- The Spark 3.2 archives continue to have a wrong file name -->

@@ -18,6 +18,11 @@ Breaking changes will be documented in this changelog file for each version.
 
 # Changelog
 
+## Version 1.4.0 (upcoming)
+* Remove support for Spark 2.x
+* Remove support for Hadoop 2.x
+
+
 ## Version 1.3.6 (upcoming)
 
 * Fix MySQL plugin configuration file

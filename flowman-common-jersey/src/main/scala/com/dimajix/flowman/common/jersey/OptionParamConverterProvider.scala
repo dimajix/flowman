@@ -16,23 +16,19 @@
 
 package com.dimajix.flowman.common.jersey
 
+import org.glassfish.jersey.internal.inject.{InjectionManager, Providers}
+import org.glassfish.jersey.internal.util.ReflectionHelper
+
 import java.lang.annotation.Annotation
 import java.lang.reflect.Type
-
-import javax.inject.Inject
-import javax.inject.Singleton
-import javax.ws.rs.ext.ParamConverter
-import javax.ws.rs.ext.ParamConverterProvider
-import javax.ws.rs.ext.Provider
-import org.glassfish.hk2.api.ServiceLocator
-import org.glassfish.jersey.internal.inject.Providers
-import org.glassfish.jersey.internal.util.ReflectionHelper
+import javax.inject.{Inject, Singleton}
+import javax.ws.rs.ext.{ParamConverter, ParamConverterProvider, Provider}
 
 
 @Provider
 @Singleton
 class OptionParamConverterProvider @Inject() (
-    serviceLocator: ServiceLocator
+    injectionManager: InjectionManager
 ) extends ParamConverterProvider {
     /**
      * {@inheritDoc }
@@ -55,7 +51,7 @@ class OptionParamConverterProvider @Inject() (
                 }
             }
 
-            val converterProviders = Providers.getProviders(serviceLocator, classOf[ParamConverterProvider])
+            val converterProviders = Providers.getProviders(injectionManager, classOf[ParamConverterProvider])
             import scala.collection.JavaConversions._
             for (provider <- converterProviders) {
                 val converter = provider.getConverter(ctp.rawClass, ctp.`type`, annotations)

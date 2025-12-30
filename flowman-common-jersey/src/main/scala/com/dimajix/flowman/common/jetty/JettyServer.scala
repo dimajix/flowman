@@ -16,29 +16,16 @@
 
 package com.dimajix.flowman.common.jetty
 
-import java.net.URI
-import java.net.URL
-
-import javax.servlet.Servlet
-import org.glassfish.jersey.server.spi.Container
-import org.eclipse.jetty.server.CustomRequestLog
-import org.eclipse.jetty.server.Handler
-import org.eclipse.jetty.server.HttpConfiguration
-import org.eclipse.jetty.server.HttpConnectionFactory
-import org.eclipse.jetty.server.SecureRequestCustomizer
-import org.eclipse.jetty.server.Server
-import org.eclipse.jetty.server.ServerConnector
-import org.eclipse.jetty.server.Slf4jRequestLogWriter
-import org.eclipse.jetty.server.SslConnectionFactory
-import org.eclipse.jetty.server.handler.HandlerCollection
-import org.eclipse.jetty.server.handler.RequestLogHandler
-import org.eclipse.jetty.servlet.DefaultServlet
-import org.eclipse.jetty.servlet.ServletContextHandler
-import org.eclipse.jetty.servlet.ServletHolder
-import org.eclipse.jetty.util.ssl.SslContextFactory
-import org.eclipse.jetty.util.thread.QueuedThreadPool
-
 import com.dimajix.common.Resources
+import org.glassfish.jersey.server.spi.Container
+import org.sparkproject.jetty.server._
+import org.sparkproject.jetty.server.handler.{HandlerCollection, RequestLogHandler}
+import org.sparkproject.jetty.servlet.{DefaultServlet, ServletContextHandler, ServletHolder}
+import org.sparkproject.jetty.util.ssl.SslContextFactory
+import org.sparkproject.jetty.util.thread.QueuedThreadPool
+
+import java.net.{URI, URL}
+import javax.servlet.Servlet
 
 
 class JettyServerBuilder {
@@ -52,12 +39,12 @@ class JettyServerBuilder {
         this
     }
 
-    def addStaticFile(file: String, pathSpec: String, relativeRequestPath: Boolean = true): JettyServerBuilder = {
+    def addStaticFile(file:String, pathSpec:String, relativeRequestPath:Boolean=true) : JettyServerBuilder = {
         val url = Resources.getURL(file)
         addStaticFile(url, pathSpec, relativeRequestPath)
     }
 
-    def addStaticFile(url: URL, pathSpec: String, relativeRequestPath: Boolean): JettyServerBuilder = {
+    def addStaticFile(url: URL, pathSpec: String, relativeRequestPath:Boolean): JettyServerBuilder = {
         val swaggerIndexServlet = new ServletHolder(new DefaultServlet())
         swaggerIndexServlet.setInitParameter("resourceBase", url.toString)
         swaggerIndexServlet.setInitParameter("dirAllowed", "false")
@@ -67,12 +54,12 @@ class JettyServerBuilder {
         this
     }
 
-    def addStaticFiles(directory: String, pathSpec: String, relativeRequestPath: Boolean = true): JettyServerBuilder = {
+    def addStaticFiles(directory: String, pathSpec: String, relativeRequestPath:Boolean=true): JettyServerBuilder = {
         val url = Resources.getURL(directory)
         addStaticFiles(url, pathSpec, relativeRequestPath)
     }
 
-    def addStaticFiles(url: URL, pathSpec: String, relativeRequestPath: Boolean): JettyServerBuilder = {
+    def addStaticFiles(url: URL, pathSpec: String, relativeRequestPath:Boolean): JettyServerBuilder = {
         val swaggerIndexServlet = new ServletHolder(new DefaultServlet())
         swaggerIndexServlet.setInitParameter("resourceBase", url.toString)
         swaggerIndexServlet.setInitParameter("dirAllowed", "true")

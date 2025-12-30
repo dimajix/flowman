@@ -113,24 +113,17 @@ as follows:
 Note that using profiles is the preferred way, as this guarantees that also dependencies are selected
 using the correct version. The following profiles are available:
 
-* spark-2.4
 * spark-3.0
 * spark-3.1
 * spark-3.2
 * spark-3.3
 * spark-3.4
 * spark-3.5
-* hadoop-2.6
-* hadoop-2.7
-* hadoop-2.8
-* hadoop-2.9
 * hadoop-3.1
 * hadoop-3.2
 * hadoop-3.3
 * EMR-6.12
 * synapse-3.3
-* CDH-6.3
-* CDP-7.1
 * CDP-7.1-spark-3.2
 * CDP-7.1-spark-3.3
 
@@ -139,9 +132,8 @@ With these profiles it is easy to build Flowman to match your environment.
 
 ### Building for specific Java Version
 
-If nothing else is set on the command line, Flowman will now build for Java 11 (except when building the profile
-CDH-6.3, where Java 1.8 is used). If you are still stuck on Java 1.8, you can simply override the Java version by
-specifying the property `java.version`
+If nothing else is set on the command line, Flowman will now build for Java 11. If you are still stuck on Java 1.8, 
+you can simply override the Java version by specifying the property `java.version`
 
 ```shell
 mvn install -Djava.version=1.8
@@ -149,26 +141,6 @@ mvn install -Djava.version=1.8
 
 
 ### Building for Open Source Hadoop and Spark
-
-#### Spark 2.4 and Hadoop 2.6:
-```shell
-mvn clean install -Pspark-2.4 -Phadoop-2.6 -DskipTests
-```
-
-#### Spark 2.4 and Hadoop 2.7:
-```shell
-mvn clean install -Pspark-2.4 -Phadoop-2.7 -DskipTests
-```
-
-#### Spark 2.4 and Hadoop 2.8:
-```shell
-mvn clean install -Pspark-2.4 -Phadoop-2.8 -DskipTests
-```
-
-#### Spark 2.4 and Hadoop 2.9:
-```shell
-mvn clean install -Pspark-2.4 -Phadoop-2.9 -DskipTests
-```
 
 #### Spark 3.0 and Hadoop 3.1
 ```shell
@@ -208,15 +180,8 @@ mvn clean install -Pspark-3.5 -Phadoop-3.3 -Phadoop.version=3.3.4 -DskipTests
 
 ### Building for Cloudera
 
-The Maven project also contains preconfigured profiles for Cloudera CDH 6.3 and for CDP 7.1 and also supports
+The Maven project also contains preconfigured profiles for Cloudera CDP 7.1 and also supports
 optional Spark 3.2 and Spark 3.3 parcels for CDP 7.1:
-```shell
-mvn clean install -PCDH-6.3 -DskipTests
-```
-
-```shell
-mvn clean install -PCDP-7.1 -DskipTests
-```
 
 ```shell
 mvn clean install -PCDP-7.1-spark-3.2 -DskipTests

@@ -26,50 +26,6 @@
 
     <profiles>
         <profile>
-            <id>CDH-6.3</id>
-            <properties>
-                <delta.version>0.6.1</delta.version>
-                <delta.artifact>delta-core</delta.artifact>
-            </properties>
-            <build>
-                <pluginManagement>
-                    <plugins>
-                        <!-- Disable compilation -->
-                        <plugin>
-                            <groupId>net.alchim31.maven</groupId>
-                            <artifactId>scala-maven-plugin</artifactId>
-                            <configuration>
-                                <sourceDir>no-source</sourceDir>
-                                <testSourceDir>no-test-source</testSourceDir>
-                            </configuration>
-                        </plugin>
-                    </plugins>
-                </pluginManagement>
-            </build>
-        </profile>
-        <profile>
-            <id>CDP-7.1</id>
-            <properties>
-                <delta.version>0.6.1</delta.version>
-                <delta.artifact>delta-core</delta.artifact>
-            </properties>
-            <build>
-                <pluginManagement>
-                    <plugins>
-                        <!-- Disable compilation -->
-                        <plugin>
-                            <groupId>net.alchim31.maven</groupId>
-                            <artifactId>scala-maven-plugin</artifactId>
-                            <configuration>
-                                <sourceDir>no-source</sourceDir>
-                                <testSourceDir>no-test-source</testSourceDir>
-                            </configuration>
-                        </plugin>
-                    </plugins>
-                </pluginManagement>
-            </build>
-        </profile>
-        <profile>
             <id>CDP-7.1-spark-3.2</id>
             <properties>
                 <delta.version>2.0.0</delta.version>
@@ -128,28 +84,6 @@
                 <delta.artifact>delta-core</delta.artifact>
                 <delta.scope>provided</delta.scope>
             </properties>
-        </profile>
-        <profile>
-            <id>spark-2.4</id>
-            <properties>
-                <delta.version>0.6.1</delta.version>
-                <delta.artifact>delta-core</delta.artifact>
-            </properties>
-            <build>
-                <pluginManagement>
-                    <plugins>
-                        <!-- Disable compilation -->
-                        <plugin>
-                            <groupId>net.alchim31.maven</groupId>
-                            <artifactId>scala-maven-plugin</artifactId>
-                            <configuration>
-                                <sourceDir>no-source</sourceDir>
-                                <testSourceDir>no-test-source</testSourceDir>
-                            </configuration>
-                        </plugin>
-                    </plugins>
-                </pluginManagement>
-            </build>
         </profile>
         <profile>
             <id>spark-3.0</id>

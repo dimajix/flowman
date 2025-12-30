@@ -24,17 +24,6 @@
         <azure-storage.version>2.2.0</azure-storage.version>
     </properties>
 
-    <profiles>
-        <!-- this is a hack, because there is no hadoop-azure for 2.6 -->
-        <profile>
-            <id>hadoop-2.6</id>
-            <properties>
-                <hadoop.version>2.7.7</hadoop.version>
-                <hadoop-api.version>2.7</hadoop-api.version>
-            </properties>
-        </profile>
-    </profiles>
-
     <build>
         <resources>
             <resource>

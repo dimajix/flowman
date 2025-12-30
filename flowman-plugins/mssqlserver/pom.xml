@@ -38,24 +38,6 @@
 
     <profiles>
         <profile>
-            <id>CDH-6.3</id>
-            <properties>
-                <mssqlserver-java-client.version>12.10.0.jre8</mssqlserver-java-client.version>
-                <spark-mssql-connector.group>com.microsoft.azure</spark-mssql-connector.group>
-                <spark-mssql-connector.version>1.0.2</spark-mssql-connector.version>
-                <spark-mssql-connector.suffix></spark-mssql-connector.suffix>
-            </properties>
-        </profile>
-        <profile>
-            <id>CDP-7.1</id>
-            <properties>
-                <mssqlserver-java-client.version>12.10.0.jre8</mssqlserver-java-client.version>
-                <spark-mssql-connector.group>com.microsoft.azure</spark-mssql-connector.group>
-                <spark-mssql-connector.version>1.0.2</spark-mssql-connector.version>
-                <spark-mssql-connector.suffix></spark-mssql-connector.suffix>
-            </properties>
-        </profile>
-        <profile>
             <id>CDP-7.1-spark-3.2</id>
             <properties>
                 <spark-mssql-connector.group>com.microsoft.azure</spark-mssql-connector.group>
@@ -87,15 +69,6 @@
                 <spark-mssql-connector.group>com.solytic</spark-mssql-connector.group>
                 <spark-mssql-connector.version>1.4.0</spark-mssql-connector.version>
                 <spark-mssql-connector.suffix>_${scala.api_version}</spark-mssql-connector.suffix>
-            </properties>
-        </profile>
-        <profile>
-            <id>spark-2.4</id>
-            <properties>
-                <mssqlserver-java-client.version>12.10.0.jre8</mssqlserver-java-client.version>
-                <spark-mssql-connector.group>com.microsoft.azure</spark-mssql-connector.group>
-                <spark-mssql-connector.version>1.0.2</spark-mssql-connector.version>
-                <spark-mssql-connector.suffix></spark-mssql-connector.suffix>
             </properties>
         </profile>
         <profile>

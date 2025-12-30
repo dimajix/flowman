@@ -99,24 +99,17 @@ mvn install -Dspark.version=2.4.3 -Dhadoop.version=2.7.3
 Note that using profiles is the preferred way, as this guarantees that also dependencies are selected
 using the correct version. The following profiles are available:
 
-* spark-2.4
 * spark-3.0
 * spark-3.1 
 * spark-3.2
 * spark-3.3
 * spark-3.4
 * spark-3.5
-* hadoop-2.6
-* hadoop-2.7
-* hadoop-2.8
-* hadoop-2.9
 * hadoop-3.1
 * hadoop-3.2
 * hadoop-3.3
 * EMR-6.12
 * synapse-3.3
-* CDH-6.3
-* CDP-7.1
 * CDP-7.1-spark-3.2
 * CDP-7.1-spark-3.3
 
@@ -136,29 +129,6 @@ mvn install -Djava.version=1.8
 
 ### Building for Open Source Hadoop and Spark
 
-#### Spark 2.4 and Hadoop 2.6:
-
-```shell
-mvn clean install -Pspark-2.4 -Phadoop-2.6 -DskipTests
-```
-
-#### Spark 2.4 and Hadoop 2.7:
-
-```shell
-mvn clean install -Pspark-2.4 -Phadoop-2.7 -DskipTests
-```
-
-#### Spark 2.4 and Hadoop 2.8:
-
-```shell
-mvn clean install -Pspark-2.4 -Phadoop-2.8 -DskipTests
-```
-
-#### Spark 2.4 and Hadoop 2.9:
-
-```shell
-mvn clean install -Pspark-2.4 -Phadoop-2.9 -DskipTests
-```
 
 #### Spark 3.0 and Hadoop 3.1
 
@@ -172,34 +142,16 @@ mvn clean install -Pspark-3.0 -Phadoop-3.1 -DskipTests
 mvn clean install -Pspark-3.0 -Phadoop-3.2 -DskipTests
 ```
 
-#### Spark 3.1 and Hadoop 2.7
-
-```shell
-mvn clean install -Pspark-3.1 -Phadoop-2.7 -DskipTests
-```
-
 #### Spark 3.1 and Hadoop 3.2
 
 ```shell
 mvn clean install -Pspark-3.1 -Phadoop-3.2 -DskipTests
 ```
 
-#### Spark 3.2 and Hadoop 2.7
-
-```shell
-mvn clean install -Pspark-3.2 -Phadoop-2.7 -DskipTests
-```
-
 #### Spark 3.2 and Hadoop 3.3
 
 ```shell
 mvn clean install -Pspark-3.2 -Phadoop-3.3 -Dhadoop.version=3.3.1 -DskipTests
-```
-
-#### Spark 3.3 and Hadoop 2.7
-
-```shell
-mvn clean install -Pspark-3.3 -Phadoop-2.7 -DskipTests
 ```
 
 #### Spark 3.3 and Hadoop 3.3
@@ -223,14 +175,8 @@ mvn clean install -Pspark-3.5 -Phadoop-3.3 -Dhadoop.version=3.3.4 -DskipTests
 
 ### Building for Cloudera
 
-The Maven project also contains preconfigured profiles for Cloudera CDH 6.3 and for Cloudera CDP 7.1 and also supports
-optional Spark 3.2 and Spark 3.3 parcels for CDP 7.1:
-```shell
-mvn clean install -PCDH-6.3 -DskipTests
-```
-```shell
-mvn clean install -PCDP-7.1 -DskipTests
-```
+The Maven project also contains preconfigured profiles for Cloudera CDP 7.1 and also supports
+Spark 3.2 and Spark 3.3 parcels for CDP 7.1:
 ```shell
 mvn clean install -PCDP-7.1-spark-3.2 -DskipTests
 ```

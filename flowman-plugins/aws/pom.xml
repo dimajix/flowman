@@ -21,7 +21,7 @@
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
 
         <!-- Dependency versions -->
-        <aws.version>1.11.1026</aws.version>
+        <aws.version>1.12.794</aws.version>
     </properties>
 
     <profiles>
@@ -32,7 +32,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <aws.version>1.11.1026</aws.version>
+                <aws.version>1.12.794</aws.version>
             </properties>
             <dependencies>
                 <dependency>
@@ -263,7 +263,7 @@
         <profile>
             <id>hadoop-3.3</id>
             <properties>
-                <aws.version>1.11.1026</aws.version>
+                <aws.version>1.12.794</aws.version>
             </properties>
             <dependencies>
                 <dependency>

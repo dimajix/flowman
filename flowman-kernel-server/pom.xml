@@ -115,6 +115,7 @@
                             <include>com.google.guava:guava</include>
                             <include>com.google.guava:failureaccess</include>
                             <include>io.grpc:grpc-core</include>
+                            <include>io.grpc:grpc-inprocess</include>
                             <include>io.grpc:grpc-api</include>
                             <include>io.grpc:grpc-stub</include>
                             <include>io.grpc:grpc-context</include>
@@ -236,6 +237,11 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-inprocess</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>

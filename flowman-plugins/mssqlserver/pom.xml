@@ -19,7 +19,7 @@
         <plugin.name>flowman-mssqlserver</plugin.name>
         <plugin.version>${project.version}</plugin.version>
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
-        <mssqlserver-java-client.version>12.10.0.jre11</mssqlserver-java-client.version>
+        <mssqlserver-java-client.version>13.2.1.jre11</mssqlserver-java-client.version>
         <spark-mssql-connector.group>com.solytic</spark-mssql-connector.group>
         <spark-mssql-connector.version>1.4.0</spark-mssql-connector.version>
         <spark-mssql-connector.suffix>_${scala.api_version}</spark-mssql-connector.suffix>

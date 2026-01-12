@@ -159,6 +159,14 @@
         <snakeyaml.scope>provided</snakeyaml.scope>
         <snappy.version>1.1.10.5</snappy.version>
 
+        <!-- Non-Spark library versions -->
+        <pure.commons-lang3.version>3.20.0</pure.commons-lang3.version>
+        <pure.commons-validator.version>1.10.1</pure.commons-validator.version>
+        <pure.gson.version>2.13.2</pure.gson.version>
+        <pure.log4j.version>2.25.3</pure.log4j.version>
+        <pure.velocity.version>2.4.1</pure.velocity.version>
+        <pure.snakeyaml.version>2.5</pure.snakeyaml.version>
+
         <!-- gRPC related versions -->
         <grpc.version>1.77.0</grpc.version>
         <grpc-protobuf.version>3.22.3</grpc-protobuf.version>
@@ -3338,6 +3346,28 @@
             </dependency>
 
             <dependency>
+                <groupId>org.jline</groupId>
+                <artifactId>jline-terminal</artifactId>
+                <version>3.30.6</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jline</groupId>
+                <artifactId>jline-reader</artifactId>
+                <version>3.30.6</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jline</groupId>
+                <artifactId>jline-native</artifactId>
+                <version>3.30.6</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.dirs</groupId>
+                <artifactId>directories</artifactId>
+                <version>26</version>
+            </dependency>
+
+            <dependency>
                 <groupId>com.typesafe.akka</groupId>
                 <artifactId>akka-http_${scala.api_version}</artifactId>
                 <version>10.1.14</version>
@@ -3371,31 +3401,31 @@
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-core</artifactId>
-                <version>1.6.15</version>
+                <version>1.6.16</version>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-models</artifactId>
-                <version>1.6.15</version>
+                <version>1.6.16</version>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-annotations</artifactId>
-                <version>1.6.15</version>
+                <version>1.6.16</version>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-jaxrs</artifactId>
-                <version>1.6.15</version>
+                <version>1.6.16</version>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>io.swagger</groupId>
                 <artifactId>swagger-jersey2-jaxrs</artifactId>
-                <version>1.6.15</version>
+                <version>1.6.16</version>
                 <scope>compile</scope>
             </dependency>
             <dependency>

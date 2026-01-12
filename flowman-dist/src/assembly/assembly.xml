@@ -51,6 +51,7 @@
                 <include>org.apache.logging.log4j:log4j-core</include>
                 <include>org.apache.logging.log4j:${log4j.slf4j-impl}</include>
                 <include>org.apache.commons:commons-lang3</include>
+                <include>commons-validator:commons-validator</include>
                 <include>org.yaml:snakeyaml</include>
             </includes>
             <outputDirectory>lib</outputDirectory>

@@ -21,10 +21,31 @@
         <plugin.jar>${project.build.finalName}.jar</plugin.jar>
 
         <!-- Dependency versions -->
-        <azure-storage.version>2.2.0</azure-storage.version>
+        <azure-storage.version>7.0.1</azure-storage.version>
         <azure-identity.version>1.18.1</azure-identity.version>
         <azure-security-keyvault-secrets.version>4.10.4</azure-security-keyvault-secrets.version>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>hadoop-3.1</id>
+            <properties>
+                <azure-storage.version>7.0.0</azure-storage.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>hadoop-3.2</id>
+            <properties>
+                <azure-storage.version>7.0.0</azure-storage.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>hadoop-3.3</id>
+            <properties>
+                <azure-storage.version>7.0.1</azure-storage.version>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <resources>

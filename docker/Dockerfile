@@ -1,4 +1,4 @@
-FROM openjdk:11 AS build
+FROM eclipse-temurin:11-jdk AS build
 MAINTAINER k.kupferschmidt@dimajix.de
 
 ARG DIST_FILE
@@ -32,8 +32,8 @@ RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/flowman-dist.tar.gz \
     && chmod a+r ${FLOWMAN_HOME}/conf/* \
     && chmod a+rx /opt/docker/bin/* /opt/docker/libexec/* \
     # Create new "flowman" user and group
-    && groupadd -g 1000 flowman \
-    && useradd -m -u 1000 -g 1000 -s /bin/bash flowman \
+    && groupadd -g 2000 flowman \
+    && useradd -m -u 2000 -g 2000 -s /bin/bash flowman \
     # Copy examples to flowmans home
     && cp -a /opt/flowman/examples ~flowman \
     && chown -R flowman:flowman ~flowman/examples \
@@ -46,7 +46,7 @@ RUN tar -C /opt --owner=root --group=root -xzf /tmp/repo/flowman-dist.tar.gz \
     && chown -R root:root $SPARK_HOME/jars
 
 
-FROM openjdk:11 AS final
+FROM eclipse-temurin:11-jdk AS final
 
 ENV FLOWMAN_HOME=/opt/flowman
 ENV SPARK_HOME=/opt/spark
@@ -57,8 +57,8 @@ USER root
 # Update OS
 RUN apt-get update && apt-get upgrade --yes && apt clean
 
-RUN groupadd -g 1000 flowman \
-    && useradd -m -u 1000 -g 1000 -s /bin/bash flowman
+RUN groupadd -g 2000 flowman \
+    && useradd -m -u 2000 -g 2000 -s /bin/bash flowman
 
 COPY --from=build $SPARK_HOME $SPARK_HOME
 COPY --from=build /opt/docker /opt/docker

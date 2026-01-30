@@ -61,7 +61,7 @@
         <antlr-st4.version>4.0.4</antlr-st4.version>
         <antlr.version>3.5.2</antlr.version>
         <args4j.version>2.33</args4j.version>
-        <assertj.version>3.21.0</assertj.version>
+        <assertj.version>3.27.7</assertj.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <commons-dbcp.version>1.4</commons-dbcp.version>
         <commons-digester.version>1.8.1</commons-digester.version>

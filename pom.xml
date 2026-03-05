@@ -114,7 +114,7 @@
         <httpclient.version>4.5.14</httpclient.version>
         <httpcore.version>4.4.16</httpcore.version>
         <ivy.version>2.5.1</ivy.version>
-        <jackson.version>2.15.2</jackson.version>
+        <jackson.version>2.18.6</jackson.version>
         <jackson-api.version>2.15</jackson-api.version>
         <jackson-databind.version>2.15.2</jackson-databind.version>
         <jackson-dataformat-yaml.scope>provided</jackson-dataformat-yaml.scope>

@@ -88,14 +88,14 @@
         <!-- Default Spark version (3.5) -->
         <scala.version>2.12.18</scala.version>
         <scala.api_version>2.12</scala.api_version>
-        <spark.version>3.5.6</spark.version>
+        <spark.version>3.5.8</spark.version>
         <spark-api.version>3.5</spark-api.version>
         <hive.version>2.3.9</hive.version>
         <hive-storage-api.version>2.8.1</hive-storage-api.version>
         <kafka.version>3.4.1</kafka.version>
         <zookeeper.version>3.6.3</zookeeper.version>
         <antlr4.version>4.9.3</antlr4.version>
-        <avro.version>1.11.4</avro.version>
+        <avro.version>1.11.5</avro.version>
         <commons-cli.version>1.5.0</commons-cli.version>
         <commons-collections.version>3.2.2</commons-collections.version>
         <commons-compiler.version>3.1.9</commons-compiler.version>
@@ -132,10 +132,10 @@
         <jakarta.ws.rs-api.scope>provided</jakarta.ws.rs-api.scope>
         <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
         <jakarta.xml.bind-api.scope>provided</jakarta.xml.bind-api.scope>
-        <javassist.version>3.29.2-GA</javassist.version>
+        <javassist.version>3.30.2-GA</javassist.version>
         <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
         <jaxb-runtime.scope>provided</jaxb-runtime.scope>
-        <jersey.version>2.40</jersey.version>
+        <jersey.version>2.47</jersey.version>
         <joda-time.version>2.12.5</joda-time.version>
         <json4s.version>3.7.0-M11</json4s.version>
         <jsr305.version>3.0.0</jsr305.version>
@@ -967,7 +967,7 @@
                 <java.version>11</java.version>
                 <scala.version>2.12.18</scala.version>
                 <scala.api_version>2.12</scala.api_version>
-                <spark.version>3.5.6</spark.version>
+                <spark.version>3.5.8</spark.version>
                 <spark-api.version>3.5</spark-api.version>
                 <hive.version>2.3.9</hive.version>
                 <hive-storage-api.version>2.8.1</hive-storage-api.version>
@@ -975,7 +975,7 @@
                 <zookeeper.version>3.6.3</zookeeper.version>
 
                 <antlr4.version>4.9.3</antlr4.version>
-                <avro.version>1.11.4</avro.version>
+                <avro.version>1.11.5</avro.version>
                 <commons-cli.version>1.5.0</commons-cli.version>
                 <commons-codec.version>1.16.1</commons-codec.version>
                 <commons-collections.version>3.2.2</commons-collections.version>
@@ -1012,10 +1012,10 @@
                 <jakarta.ws.rs-api.scope>provided</jakarta.ws.rs-api.scope>
                 <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
                 <jakarta.xml.bind-api.scope>provided</jakarta.xml.bind-api.scope>
-                <javassist.version>3.29.2-GA</javassist.version>
+                <javassist.version>3.30.2-GA</javassist.version>
                 <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
                 <jaxb-runtime.scope>provided</jaxb-runtime.scope>
-                <jersey.version>2.40</jersey.version>
+                <jersey.version>2.47</jersey.version>
                 <joda-time.version>2.12.5</joda-time.version>
                 <json4s.version>3.7.0-M11</json4s.version>
                 <jsr305.version>3.0.0</jsr305.version>

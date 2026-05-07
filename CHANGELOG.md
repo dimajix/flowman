@@ -25,7 +25,8 @@ Breaking changes will be documented in this changelog file for each version.
 
 ## Version 1.3.6 (upcoming)
 
-* Upgrade Spark to 3.5.6
+* Upgrade Spark to 3.5.8
+* Update several library dependencies
 
 
 ## Version 1.3.6 - 2026-01-19
@@ -33,7 +34,7 @@ Breaking changes will be documented in this changelog file for each version.
 * Fix MySQL plugin configuration file
 * Fix handling of Hive tables with missing directory
 * Update several Maven plugin dependencies
-* Update several library depdendencies
+* Update several library dependencies
 
 
 ## Version 1.3.5 - 2025-08-28

@@ -30,7 +30,11 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
         if (hiveSupported) {
             spark.sql(
                 """
-                  CREATE TABLE sql_builder_0(
+                  CREATE DATABASE test
+                """)
+            spark.sql(
+                """
+                  CREATE TABLE sql_builder_table(
                     col_0 INT,
                     col_1 STRING,
                     ts TIMESTAMP
@@ -38,8 +42,14 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
                 """)
             spark.sql(
                 """
-                  |CREATE VIEW sql_builder_1 AS
-                  |SELECT * FROM sql_builder_0
+                  |CREATE VIEW sql_builder_view AS
+                  |SELECT * FROM sql_builder_table
+                  |""".stripMargin
+            )
+            spark.sql(
+                """
+                  |CREATE VIEW test.sql_builder_view AS
+                  |SELECT * FROM default.sql_builder_table
                   |""".stripMargin
             )
         }
@@ -57,7 +67,7 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
 
     override def afterAll(): Unit = {
         if (hiveSupported) {
-            spark.sql("DROP TABLE sql_builder_0")
+            spark.sql("DROP TABLE sql_builder_table")
         }
 
         super.afterAll()
@@ -66,25 +76,25 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     behavior of "The SqlBuilder"
 
     it should "support basic selects" in (if (hiveSupported) {
-        val df1 = spark.sql("SELECT * FROM sql_builder_0")
+        val df1 = spark.sql("SELECT * FROM sql_builder_table")
         val sql1 = new SqlBuilder(df1.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql1))
-        sql1 should be ("SELECT `col_0`, `col_1`, `ts` FROM `default`.`sql_builder_0`")
+        sql1 should be ("SELECT `col_0`, `col_1`, `ts` FROM `default`.`sql_builder_table`")
 
-        val df2 = spark.sql("SELECT CONCAT(col_0, col_1) AS result FROM sql_builder_0")
+        val df2 = spark.sql("SELECT CONCAT(col_0, col_1) AS result FROM sql_builder_table")
         val sql2 = new SqlBuilder(df2.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql2))
-        sql2 should be ("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_0`")
+        sql2 should be ("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_table`")
 
-        val df3 = spark.sql("SELECT CONCAT(x.col_0, x.col_1) AS result FROM sql_builder_0 AS x")
+        val df3 = spark.sql("SELECT CONCAT(x.col_0, x.col_1) AS result FROM sql_builder_table AS x")
         val sql3 = new SqlBuilder(df3.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql3))
-        sql3 should be ("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_0`")
+        sql3 should be ("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_table`")
 
-        val df4 = spark.sql("SELECT CONCAT(x.col_0, x.col_1) AS result FROM sql_builder_0 AS x WHERE x.col_0 = 67")
+        val df4 = spark.sql("SELECT CONCAT(x.col_0, x.col_1) AS result FROM sql_builder_table AS x WHERE x.col_0 = 67")
         val sql4 = new SqlBuilder(df4.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql4))
-        sql4 should be ("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_0` WHERE (`col_0` = 67)")
+        sql4 should be ("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_table` WHERE (`col_0` = 67)")
     })
 
     it should "support basic arithmetics" in (if (hiveSupported) {
@@ -110,10 +120,18 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
     })
 
     it should "support VIEWs" in (if (hiveSupported) {
-        val df1 = spark.sql("SELECT * FROM sql_builder_1")
+        val df1 = spark.sql("SELECT x.* FROM test.sql_builder_view x WHERE x.col_0 IS NOT NULL")
         val sql1 = new SqlBuilder(df1.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql1))
-        sql1 should be ("SELECT `col_0`, `col_1`, `ts` FROM `default`.`sql_builder_1`")
+        sql1 should be ("SELECT `col_0`, `col_1`, `ts` FROM `test`.`sql_builder_view` WHERE `col_0` IS NOT NULL")
+    })
+
+    it should "support VIEWs (2)" in (if (hiveSupported) {
+        spark.sql("SELECT x.* FROM test.sql_builder_view x").createOrReplaceTempView("sql_temp_view")
+        val df1 = spark.sql("SELECT x.* FROM sql_temp_view x")
+        val sql1 = new SqlBuilder(df1.queryExecution.analyzed).toSQL
+        noException shouldBe thrownBy(spark.sql(sql1))
+        sql1 should be ("SELECT `col_0`, `col_1`, `ts` FROM `test`.`sql_builder_view`")
     })
 
     it should "support JOINs" in (if (hiveSupported) {
@@ -121,13 +139,13 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             """
               |SELECT
               |   CONCAT(x.col_0, y.col_1) AS result
-              |FROM sql_builder_0 AS x
-              |JOIN  sql_builder_0 AS y
+              |FROM sql_builder_table AS x
+              |JOIN  sql_builder_table AS y
               |  ON x.col_0 = y.col_0
               |WHERE x.col_1 = '67'""".stripMargin)
         val sql5 = new SqlBuilder(df5.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql5))
-        sql5 should be ("SELECT concat(CAST(`gen_attr_1` AS STRING), `gen_attr_2`) AS `result` FROM (SELECT `col_0` AS `gen_attr_1`, `col_1` AS `gen_attr_3`, `ts` AS `gen_attr_5` FROM `default`.`sql_builder_0`) AS `gen_subquery_0` INNER JOIN (SELECT `col_0` AS `gen_attr_4`, `col_1` AS `gen_attr_2`, `ts` AS `gen_attr_6` FROM `default`.`sql_builder_0`) AS `gen_subquery_1` ON (`gen_attr_1` = `gen_attr_4`) WHERE (`gen_attr_3` = '67')")
+        sql5 should be ("SELECT concat(CAST(`gen_attr_1` AS STRING), `gen_attr_2`) AS `result` FROM (SELECT `col_0` AS `gen_attr_1`, `col_1` AS `gen_attr_3`, `ts` AS `gen_attr_5` FROM `default`.`sql_builder_table`) AS `gen_subquery_0` INNER JOIN (SELECT `col_0` AS `gen_attr_4`, `col_1` AS `gen_attr_2`, `ts` AS `gen_attr_6` FROM `default`.`sql_builder_table`) AS `gen_subquery_1` ON (`gen_attr_1` = `gen_attr_4`) WHERE (`gen_attr_3` = '67')")
     })
 
     it should "support UNIONs without column names" in (if (hiveSupported) {
@@ -135,20 +153,20 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             """
               |SELECT
               |   CONCAT(x.col_0, x.col_1)
-              |FROM sql_builder_0 AS x
+              |FROM sql_builder_table AS x
               |
               |UNION ALL
               |
               |SELECT
               |   CONCAT(x.col_0, x.col_1)
-              |FROM sql_builder_0 AS x
+              |FROM sql_builder_table AS x
               |WHERE x.col_1 = '67'""".stripMargin)
         val sql3 = new SqlBuilder(df3.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql3))
         if (spark.version < "3.2")
-            sql3 should be("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `concat(CAST(col_0 AS STRING), col_1)` FROM `default`.`sql_builder_0` UNION ALL SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `concat(CAST(col_0 AS STRING), col_1)` FROM `default`.`sql_builder_0` WHERE (`col_1` = '67')")
+            sql3 should be("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `concat(CAST(col_0 AS STRING), col_1)` FROM `default`.`sql_builder_table` UNION ALL SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `concat(CAST(col_0 AS STRING), col_1)` FROM `default`.`sql_builder_table` WHERE (`col_1` = '67')")
         else
-            sql3 should be("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `concat(col_0, col_1)` FROM `default`.`sql_builder_0` UNION ALL SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `concat(col_0, col_1)` FROM `default`.`sql_builder_0` WHERE (`col_1` = '67')")
+            sql3 should be("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `concat(col_0, col_1)` FROM `default`.`sql_builder_table` UNION ALL SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `concat(col_0, col_1)` FROM `default`.`sql_builder_table` WHERE (`col_1` = '67')")
     })
 
     it should "support UNIONs with one attribute name" in (if (hiveSupported) {
@@ -156,17 +174,17 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             """
               |SELECT
               |   CONCAT(x.col_0, x.col_1) AS result
-              |FROM sql_builder_0 AS x
+              |FROM sql_builder_table AS x
               |
               |UNION ALL
               |
               |SELECT
               |   CONCAT(x.col_0, x.col_1)
-              |FROM sql_builder_0 AS x
+              |FROM sql_builder_table AS x
               |WHERE x.col_1 = '67'""".stripMargin)
         val sql4 = new SqlBuilder(df4.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql4))
-        sql4 should be ("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_0` UNION ALL SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_0` WHERE (`col_1` = '67')")
+        sql4 should be ("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_table` UNION ALL SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_table` WHERE (`col_1` = '67')")
     })
 
     it should "support UNIONs with different column names" in (if (hiveSupported) {
@@ -174,17 +192,17 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             """
               |SELECT
               |   CONCAT(x.col_0, x.col_1) AS result
-              |FROM sql_builder_0 AS x
+              |FROM sql_builder_table AS x
               |
               |UNION ALL
               |
               |SELECT
               |   CONCAT(x.col_0, x.col_1) AS result_2
-              |FROM sql_builder_0 AS x
+              |FROM sql_builder_table AS x
               |WHERE x.col_1 = '67'""".stripMargin)
         val sql5 = new SqlBuilder(df5.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql5))
-        sql5 should be ("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_0` UNION ALL SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_0` WHERE (`col_1` = '67')")
+        sql5 should be ("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_table` UNION ALL SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_table` WHERE (`col_1` = '67')")
     })
 
     it should "support UNIONs with matching column names" in (if (hiveSupported) {
@@ -192,17 +210,17 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
             """
               |SELECT
               |   CONCAT(x.col_0, x.col_1) AS result
-              |FROM sql_builder_0 AS x
+              |FROM sql_builder_table AS x
               |
               |UNION ALL
               |
               |SELECT
               |   CONCAT(x.col_0, x.col_1) AS result
-              |FROM sql_builder_0 AS x
+              |FROM sql_builder_table AS x
               |WHERE x.col_1 = '67'""".stripMargin)
         val sql6 = new SqlBuilder(df6.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql6))
-        sql6 should be ("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_0` UNION ALL SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_0` WHERE (`col_1` = '67')")
+        sql6 should be ("SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_table` UNION ALL SELECT concat(CAST(`col_0` AS STRING), `col_1`) AS `result` FROM `default`.`sql_builder_table` WHERE (`col_1` = '67')")
     })
 
     it should "support subquery UNIONs" in (if (hiveSupported) {
@@ -215,19 +233,19 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |        SELECT
               |            col_0 AS gen_attr_1,
               |            col_1 AS gen_attr_3
-              |        FROM sql_builder_0
+              |        FROM sql_builder_table
               |        UNION ALL
               |        SELECT
               |            col_0 AS gen_attr_11,
               |            col_1 AS gen_attr_31
-              |        FROM sql_builder_0
+              |        FROM sql_builder_table
               |) AS gen_subquery_2
               |WHERE gen_attr_1 != 7
               |""".stripMargin
         )
         val sql1 = new SqlBuilder(df1.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql1))
-        sql1 should be ("SELECT `gen_attr_1` AS `first`, `gen_attr_3` AS `second` FROM (SELECT `col_0` AS `gen_attr_1`, `col_1` AS `gen_attr_3` FROM `default`.`sql_builder_0` UNION ALL SELECT `col_0` AS `gen_attr_1`, `col_1` AS `gen_attr_3` FROM `default`.`sql_builder_0`) AS `gen_subquery_2` WHERE (NOT (`gen_attr_1` = 7))")
+        sql1 should be ("SELECT `gen_attr_1` AS `first`, `gen_attr_3` AS `second` FROM (SELECT `col_0` AS `gen_attr_1`, `col_1` AS `gen_attr_3` FROM `default`.`sql_builder_table` UNION ALL SELECT `col_0` AS `gen_attr_1`, `col_1` AS `gen_attr_3` FROM `default`.`sql_builder_table`) AS `gen_subquery_2` WHERE (NOT (`gen_attr_1` = 7))")
     })
 
     it should "support subquery UNIONs with partial column names" in (if (hiveSupported) {
@@ -240,18 +258,18 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |        SELECT
               |            col_0 AS gen_attr_1,
               |            col_1
-              |        FROM sql_builder_0
+              |        FROM sql_builder_table
               |        UNION ALL
               |        SELECT
               |            upper(col_0),
               |            col_1 AS gen_attr_31
-              |        FROM sql_builder_0
+              |        FROM sql_builder_table
               |) AS gen_subquery_2
               |""".stripMargin
         )
         val sql2 = new SqlBuilder(df2.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql2))
-        sql2 should be ("SELECT CAST(`col_0` AS STRING) AS `first`, `col_1` AS `second` FROM `default`.`sql_builder_0` UNION ALL SELECT upper(CAST(`col_0` AS STRING)) AS `first`, `col_1` AS `second` FROM `default`.`sql_builder_0`")
+        sql2 should be ("SELECT CAST(`col_0` AS STRING) AS `first`, `col_1` AS `second` FROM `default`.`sql_builder_table` UNION ALL SELECT upper(CAST(`col_0` AS STRING)) AS `first`, `col_1` AS `second` FROM `default`.`sql_builder_table`")
     })
 
     it should "support subquery UNIONs with partial column names and filters" in (if (hiveSupported) {
@@ -264,19 +282,19 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |        SELECT
               |            col_0 AS gen_attr_1,
               |            col_1
-              |        FROM sql_builder_0
+              |        FROM sql_builder_table
               |        UNION ALL
               |        SELECT
               |            upper(col_0),
               |            col_1 AS gen_attr_31
-              |        FROM sql_builder_0
+              |        FROM sql_builder_table
               |) AS gen_subquery_2
               |WHERE gen_attr_1 != 7
               |""".stripMargin
         )
         val sql2 = new SqlBuilder(df2.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql2))
-        sql2 should be ("SELECT `gen_attr_1` AS `first`, `gen_attr_3` AS `second` FROM (SELECT CAST(`col_0` AS STRING) AS `gen_attr_1`, `col_1` AS `gen_attr_3` FROM `default`.`sql_builder_0` UNION ALL SELECT upper(CAST(`col_0` AS STRING)) AS `gen_attr_1`, `col_1` AS `gen_attr_3` FROM `default`.`sql_builder_0`) AS `gen_subquery_2` WHERE (NOT (CAST(`gen_attr_1` AS INT) = 7))")
+        sql2 should be ("SELECT `gen_attr_1` AS `first`, `gen_attr_3` AS `second` FROM (SELECT CAST(`col_0` AS STRING) AS `gen_attr_1`, `col_1` AS `gen_attr_3` FROM `default`.`sql_builder_table` UNION ALL SELECT upper(CAST(`col_0` AS STRING)) AS `gen_attr_1`, `col_1` AS `gen_attr_3` FROM `default`.`sql_builder_table`) AS `gen_subquery_2` WHERE (NOT (CAST(`gen_attr_1` AS INT) = 7))")
     })
 
     it should "support subquery UNIONs without alias" in (if (hiveSupported) {
@@ -289,18 +307,18 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |        SELECT
               |            col_0 AS gen_attr_1,
               |            col_1
-              |        FROM sql_builder_0
+              |        FROM sql_builder_table
               |        UNION ALL
               |        SELECT
               |            upper(col_0),
               |            col_1 AS gen_attr_31
-              |        FROM sql_builder_0
+              |        FROM sql_builder_table
               |)
               |""".stripMargin
         )
         val sql3 = new SqlBuilder(df3.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql3))
-        sql3 should be ("SELECT CAST(`col_0` AS STRING) AS `first`, `col_1` AS `second` FROM `default`.`sql_builder_0` UNION ALL SELECT upper(CAST(`col_0` AS STRING)) AS `first`, `col_1` AS `second` FROM `default`.`sql_builder_0`")
+        sql3 should be ("SELECT CAST(`col_0` AS STRING) AS `first`, `col_1` AS `second` FROM `default`.`sql_builder_table` UNION ALL SELECT upper(CAST(`col_0` AS STRING)) AS `first`, `col_1` AS `second` FROM `default`.`sql_builder_table`")
     })
 
     it should "support subquery WINDOW functions" in (if (hiveSupported) {
@@ -314,12 +332,12 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |     col_0,
               |     col_1,
               |     row_number() OVER(PARTITION BY col_0 ORDER BY ts) AS rank
-              |  FROM sql_builder_0
+              |  FROM sql_builder_table
               |) AS x
               |WHERE x.rank = 1""".stripMargin)
         val sql7 = new SqlBuilder(df7.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql7))
-        sql7 should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1`, row_number() OVER (PARTITION BY `col_0` ORDER BY `ts` ASC) AS `gen_attr_2` FROM `default`.`sql_builder_0`) AS `x` WHERE (`gen_attr_2` = 1)")
+        sql7 should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1`, row_number() OVER (PARTITION BY `col_0` ORDER BY `ts` ASC) AS `gen_attr_2` FROM `default`.`sql_builder_table`) AS `x` WHERE (`gen_attr_2` = 1)")
     })
 
     it should "support plain WINDOW functions" in (if (hiveSupported) {
@@ -329,11 +347,11 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |   col_0,
               |   col_1,
               |   lead(col_1, 1) OVER(PARTITION BY col_0 ORDER BY ts) AS rank
-              |FROM sql_builder_0
+              |FROM sql_builder_table
               |""".stripMargin)
         val sql8 = new SqlBuilder(df8.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql8))
-        sql8 should be ("SELECT `col_0`, `col_1`, lead(`col_1`, 1, NULL) OVER (PARTITION BY `col_0` ORDER BY `ts` ASC) AS `rank` FROM `default`.`sql_builder_0`")
+        sql8 should be ("SELECT `col_0`, `col_1`, lead(`col_1`, 1, NULL) OVER (PARTITION BY `col_0` ORDER BY `ts` ASC) AS `rank` FROM `default`.`sql_builder_table`")
     })
 
     it should "support subquery WINDOW functions with range" in (if (hiveSupported) {
@@ -347,12 +365,12 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |     col_0,
               |     col_1,
               |     max(col_0) OVER(PARTITION BY col_1 ORDER BY ts ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS rank
-              |  FROM sql_builder_0
+              |  FROM sql_builder_table
               |) AS x
               |WHERE x.rank = 1""".stripMargin)
         val sql9 = new SqlBuilder(df9.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql9))
-        sql9 should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1`, max(`col_0`) OVER (PARTITION BY `col_1` ORDER BY `ts` ASC ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS `gen_attr_2` FROM `default`.`sql_builder_0`) AS `x` WHERE (`gen_attr_2` = 1)")
+        sql9 should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1`, max(`col_0`) OVER (PARTITION BY `col_1` ORDER BY `ts` ASC ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS `gen_attr_2` FROM `default`.`sql_builder_table`) AS `x` WHERE (`gen_attr_2` = 1)")
     })
 
     it should "support subquery WINDOW functions with DESC NULLS FIRST" in (if (hiveSupported) {
@@ -366,12 +384,12 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |     col_0,
               |     col_1,
               |     max(col_0) OVER(PARTITION BY col_1 ORDER BY ts DESC NULLS FIRST ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS rank
-              |  FROM sql_builder_0
+              |  FROM sql_builder_table
               |) AS x
               |WHERE x.rank = 1""".stripMargin)
         val sql10 = new SqlBuilder(df10.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql10))
-        sql10 should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1`, max(`col_0`) OVER (PARTITION BY `col_1` ORDER BY `ts` DESC NULLS FIRST ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS `gen_attr_2` FROM `default`.`sql_builder_0`) AS `x` WHERE (`gen_attr_2` = 1)")
+        sql10 should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1`, max(`col_0`) OVER (PARTITION BY `col_1` ORDER BY `ts` DESC NULLS FIRST ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS `gen_attr_2` FROM `default`.`sql_builder_table`) AS `x` WHERE (`gen_attr_2` = 1)")
     })
 
     it should "support GROUP BY expressions" in (if (hiveSupported) {
@@ -380,15 +398,15 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |SELECT
               |   col_1,
               |   sum(col_0) AS sum
-              |FROM sql_builder_0
+              |FROM sql_builder_table
               |GROUP BY col_1
               |""".stripMargin)
         val sql8 = new SqlBuilder(df8.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql8))
         if (spark.version < "3.2")
-            sql8 should be ("SELECT `gen_attr_0` AS `col_1`, sum(CAST(`gen_attr_2` AS BIGINT)) AS `sum` FROM (SELECT `col_0` AS `gen_attr_2`, `col_1` AS `gen_attr_0`, `ts` AS `gen_attr_3` FROM `default`.`sql_builder_0`) AS `gen_subquery_0` GROUP BY `gen_attr_0`")
+            sql8 should be ("SELECT `gen_attr_0` AS `col_1`, sum(CAST(`gen_attr_2` AS BIGINT)) AS `sum` FROM (SELECT `col_0` AS `gen_attr_2`, `col_1` AS `gen_attr_0`, `ts` AS `gen_attr_3` FROM `default`.`sql_builder_table`) AS `gen_subquery_0` GROUP BY `gen_attr_0`")
         else
-            sql8 should be ("SELECT `gen_attr_0` AS `col_1`, sum(`gen_attr_2`) AS `sum` FROM (SELECT `col_0` AS `gen_attr_2`, `col_1` AS `gen_attr_0`, `ts` AS `gen_attr_3` FROM `default`.`sql_builder_0`) AS `gen_subquery_0` GROUP BY `gen_attr_0`")
+            sql8 should be ("SELECT `gen_attr_0` AS `col_1`, sum(`gen_attr_2`) AS `sum` FROM (SELECT `col_0` AS `gen_attr_2`, `col_1` AS `gen_attr_0`, `ts` AS `gen_attr_3` FROM `default`.`sql_builder_table`) AS `gen_subquery_0` GROUP BY `gen_attr_0`")
 
     })
 
@@ -398,15 +416,15 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |SELECT
               |   col_1,
               |   sum(col_0) AS sum
-              |FROM sql_builder_0
+              |FROM sql_builder_table
               |GROUP BY 1
               |""".stripMargin)
         val sql8 = new SqlBuilder(df8.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql8))
         if (spark.version < "3.2")
-            sql8 should be ("SELECT `gen_attr_0` AS `col_1`, sum(CAST(`gen_attr_2` AS BIGINT)) AS `sum` FROM (SELECT `col_0` AS `gen_attr_2`, `col_1` AS `gen_attr_0`, `ts` AS `gen_attr_3` FROM `default`.`sql_builder_0`) AS `gen_subquery_0` GROUP BY `gen_attr_0`")
+            sql8 should be ("SELECT `gen_attr_0` AS `col_1`, sum(CAST(`gen_attr_2` AS BIGINT)) AS `sum` FROM (SELECT `col_0` AS `gen_attr_2`, `col_1` AS `gen_attr_0`, `ts` AS `gen_attr_3` FROM `default`.`sql_builder_table`) AS `gen_subquery_0` GROUP BY `gen_attr_0`")
         else
-            sql8 should be ("SELECT `gen_attr_0` AS `col_1`, sum(`gen_attr_2`) AS `sum` FROM (SELECT `col_0` AS `gen_attr_2`, `col_1` AS `gen_attr_0`, `ts` AS `gen_attr_3` FROM `default`.`sql_builder_0`) AS `gen_subquery_0` GROUP BY `gen_attr_0`")
+            sql8 should be ("SELECT `gen_attr_0` AS `col_1`, sum(`gen_attr_2`) AS `sum` FROM (SELECT `col_0` AS `gen_attr_2`, `col_1` AS `gen_attr_0`, `ts` AS `gen_attr_3` FROM `default`.`sql_builder_table`) AS `gen_subquery_0` GROUP BY `gen_attr_0`")
     })
 
     it should "support sort ordering" in (if (hiveSupported) {
@@ -415,11 +433,11 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |SELECT
               |  x.col_0,
               |  x.col_1
-              |FROM sql_builder_0 x
+              |FROM sql_builder_table x
               |ORDER BY col_0""".stripMargin)
         val sql1 = new SqlBuilder(df1.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql1))
-        sql1 should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1` FROM `default`.`sql_builder_0`) AS `gen_subquery_1` ORDER BY `gen_attr_0` ASC")
+        sql1 should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1` FROM `default`.`sql_builder_table`) AS `gen_subquery_1` ORDER BY `gen_attr_0` ASC")
     })
 
     it should "support sort ordering with cardinal expressions" in (if (hiveSupported) {
@@ -428,11 +446,11 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |SELECT
               |  x.col_0,
               |  x.col_1
-              |FROM sql_builder_0 x
+              |FROM sql_builder_table x
               |ORDER BY 1""".stripMargin)
         val sql1 = new SqlBuilder(df1.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql1))
-        sql1 should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1` FROM `default`.`sql_builder_0`) AS `gen_subquery_1` ORDER BY `gen_attr_0` ASC")
+        sql1 should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1` FROM `default`.`sql_builder_table`) AS `gen_subquery_1` ORDER BY `gen_attr_0` ASC")
     })
 
     it should "support sort ordering with DESC NULLS FIRST" in (if (hiveSupported) {
@@ -441,11 +459,11 @@ class SqlBuilderTest extends AnyFlatSpec with Matchers with LocalSparkSession {
               |SELECT
               |  x.col_0,
               |  x.col_1
-              |FROM sql_builder_0 x
+              |FROM sql_builder_table x
               |ORDER BY col_0 DESC NULLS FIRST""".stripMargin)
         val sql2 = new SqlBuilder(df2.queryExecution.analyzed).toSQL
         noException shouldBe thrownBy(spark.sql(sql2))
-        sql2 should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1` FROM `default`.`sql_builder_0`) AS `gen_subquery_1` ORDER BY `gen_attr_0` DESC NULLS FIRST")
+        sql2 should be ("SELECT `gen_attr_0` AS `col_0`, `gen_attr_1` AS `col_1` FROM (SELECT `col_0` AS `gen_attr_0`, `col_1` AS `gen_attr_1` FROM `default`.`sql_builder_table`) AS `gen_subquery_1` ORDER BY `gen_attr_0` DESC NULLS FIRST")
     })
 
     it should "support VARCHAR(n) and CHAR(n) columns" in (if (hiveSupported && hiveVarcharSupported) {

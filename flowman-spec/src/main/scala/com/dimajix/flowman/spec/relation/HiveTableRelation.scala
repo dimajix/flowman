@@ -500,7 +500,7 @@ final case class HiveTableRelation(
 
         val catalog = execution.catalog
         logger.info(s"Destroying Hive table relation '$identifier' by dropping table $table")
-        catalog.dropTable(table)
+        catalog.dropTable(table, true)
         execution.refreshResource(resource)
     }
 

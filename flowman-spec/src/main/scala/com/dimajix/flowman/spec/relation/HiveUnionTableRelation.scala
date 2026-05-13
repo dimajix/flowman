@@ -448,13 +448,13 @@ final case class HiveUnionTableRelation(
         // Destroy view
         logger.info(s"Dropping Hive union relation '$identifier' UNION VIEW $viewIdentifier")
         val catalog = execution.catalog
-        catalog.dropView(viewIdentifier, false)
+        catalog.dropView(viewIdentifier, true)
 
         // Destroy tables
         listTables(execution)
             .foreach { table =>
                 logger.info(s"Dropping Hive union relation '$identifier' backend table '$table'")
-                catalog.dropTable(table, false)
+                catalog.dropTable(table, true)
             }
     }
 

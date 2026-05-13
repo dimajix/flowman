@@ -18,14 +18,12 @@
 package com.dimajix.spark.sql.catalyst
 
 import java.util.concurrent.atomic.AtomicLong
-
 import scala.collection.mutable.Map
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
-
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.catalyst.catalog.HiveTableRelation
+import org.apache.spark.sql.catalyst.catalog.{CatalogTable, HiveTableRelation}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects.StaticInvoke
 import org.apache.spark.sql.catalyst.optimizer.CollapseProject
@@ -44,8 +42,8 @@ import org.apache.spark.sql.types.ByteType
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.types.IntegerType
 import org.apache.spark.sql.types.NullType
-
 import com.dimajix.util.Reflection
+import org.apache.spark.sql.catalyst.TableIdentifier
 
 
 /**
@@ -564,8 +562,9 @@ class SqlBuilder private(
 
     object ReplaceView extends Rule[LogicalPlan] {
         override def apply(plan: LogicalPlan): LogicalPlan = plan.transformDown {
+            case view: View if view.isTempView =>
+                view.child
             case view: View =>
-                val m = view.desc
                 val cols = view.output.map(a => AttributeReference(a.name, a.dataType, a.nullable, a.metadata)(a.exprId, a.qualifier))
                 HiveTableRelation(view.desc, cols, Seq())
         }

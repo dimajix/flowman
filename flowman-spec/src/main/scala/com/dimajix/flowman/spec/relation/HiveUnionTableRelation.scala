@@ -22,7 +22,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.catalog.CatalogTable
 import org.apache.spark.sql.types.StructField
 import org.apache.spark.sql.types.StructType
-
 import com.dimajix.common.MapIgnoreCase
 import com.dimajix.common.No
 import com.dimajix.common.SetIgnoreCase
@@ -55,6 +54,7 @@ import com.dimajix.flowman.types.FieldValue
 import com.dimajix.flowman.types.SingleValue
 import com.dimajix.flowman.util.SparkSchemaUtils
 import com.dimajix.spark.sql.catalyst.SqlBuilder
+import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 
 
 object HiveUnionTableRelation {
@@ -427,12 +427,19 @@ final case class HiveUnionTableRelation(
             throw new UnspecifiedSchemaException(identifier)
         }
 
-        // Create first table using current schema
-        val hiveTableRelation = tableRelation(1)
-        hiveTableRelation.create(execution)
+        var tableRelations = listTables(execution)
+        if (tableRelations.nonEmpty) {
+            logger.warn(s"Some backend tables already exist: ${tableRelations.map(_.toString).mkString(",")}. Existing tables will be reused, no new table will be created now.")
+        }
+        else {
+            // Create first table using current schema
+            val hiveTableRelation = tableRelation(1)
+            hiveTableRelation.create(execution)
+            tableRelations = Seq(hiveTableRelation.table)
+        }
 
         // Create initial view
-        val hiveViewRelation = viewRelationFromTables(execution, Seq(hiveTableRelation.table))
+        val hiveViewRelation = viewRelationFromTables(execution, tableRelations)
         hiveViewRelation.create(execution)
     }
 
@@ -448,14 +455,27 @@ final case class HiveUnionTableRelation(
         // Destroy view
         logger.info(s"Dropping Hive union relation '$identifier' UNION VIEW $viewIdentifier")
         val catalog = execution.catalog
-        catalog.dropView(viewIdentifier, true)
+
+        // Do not let the exception directly bubble up, try to cleanup backend tables before
+        var exception:Option[Exception] = None
+        try {
+            catalog.dropView(viewIdentifier)
+        }
+        catch {
+            case ex:NoSuchTableException => exception = Some(ex)
+        }
 
         // Destroy tables
-        listTables(execution)
+        val existingBackendTables = listTables(execution)
+        existingBackendTables
             .foreach { table =>
                 logger.info(s"Dropping Hive union relation '$identifier' backend table '$table'")
                 catalog.dropTable(table, true)
             }
+
+        // Only propagate exception if no backend tables had been present
+        if (existingBackendTables.isEmpty)
+            exception.foreach(throw _)
     }
 
     /**

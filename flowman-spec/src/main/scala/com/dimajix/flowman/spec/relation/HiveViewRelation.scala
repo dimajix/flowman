@@ -245,7 +245,7 @@ final case class HiveViewRelation(
     override def destroy(execution:Execution) : Unit = {
         logger.info(s"Destroying Hive view relation '$identifier' with VIEW $table")
         val catalog = execution.catalog
-        catalog.dropView(table, true)
+        catalog.dropView(table)
         execution.refreshResource(resource)
     }
 

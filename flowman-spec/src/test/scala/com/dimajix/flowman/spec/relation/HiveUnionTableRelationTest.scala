@@ -256,6 +256,83 @@ class HiveUnionTableRelationTest extends AnyFlatSpec with Matchers with LocalSpa
         session.shutdown()
     })
 
+    it should "cleanup backend tables if UNION view is missing" in (if (hiveSupported) {
+        val spec =
+            """
+              |relations:
+              |  t0:
+              |    kind: hiveUnionTable
+              |    description: "This is a test table"
+              |    tableDatabase: default
+              |    tablePrefix: lala
+              |    view: lala
+              |    schema:
+              |      kind: inline
+              |      fields:
+              |        - name: str_col
+              |          type: string
+              |        - name: int_col
+              |          type: integer
+            """.stripMargin
+        val project = Module.read.string(spec).toProject("project")
+
+        val session = Session.builder().withSparkSession(spark).build()
+        val execution = session.execution
+        val context = session.getContext(project)
+
+        val relation = context.getRelation(RelationIdentifier("t0")).asInstanceOf[HiveUnionTableRelation]
+        // == Create =================================================================================================
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
+
+        // == Delete view =============================================================================================
+        session.catalog.dropView(TableIdentifier("lala", Some("default")))
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
+
+        // == Create =================================================================================================
+        relation.create(execution)
+        relation.exists(execution) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (Yes)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (Yes)
+        relation.loaded(execution, Map()) should be (No)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (true)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
+
+        // == Delete view =============================================================================================
+        session.catalog.dropView(TableIdentifier("lala", Some("default")))
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (true)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        relation.conforms(execution, MigrationPolicy.RELAXED) should be (No)
+        relation.conforms(execution, MigrationPolicy.STRICT) should be (No)
+
+        // == Destroy =================================================================================================
+        relation.destroy(execution)
+        relation.exists(execution) should be (No)
+        relation.loaded(execution, Map()) should be (No)
+        session.catalog.tableExists(TableIdentifier("lala", Some("default"))) should be (false)
+        session.catalog.tableExists(TableIdentifier("lala_1", Some("default"))) should be (false)
+
+        a[NoSuchTableException] shouldBe thrownBy(relation.destroy(execution))
+
+        session.shutdown()
+    })
+
     it should "cast compatible types" in (if (hiveSupported) {
         val spec =
             """

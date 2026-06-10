@@ -31,7 +31,7 @@ is installed on the build machine.
 
 When you decide against downloading a prebuilt Flowman distribution, you can simply build it yourself with Maven. As
 a prerequisite, you need
-* Java (1.8 for Spark ≤ 2.4 and 11 for Spark ≥ 3.0)
+* Java (11 for Spark 3.x builds and 17 for Spark 4.x builds)
 * Apache Maven (install via package manager download from https://maven.apache.org/download.cgi)
 * npm (install via package manager or download from https://www.npmjs.com/get-npm)
 * Docker (the creation of the Docker image can be skipped via `-Ddockerfile.skip`)
@@ -48,6 +48,8 @@ Building Flowman with the default settings (i.e. Hadoop and Spark version) is as
 ```shell
 mvn clean install
 ```
+
+The default open source build currently targets Spark 4.0, Scala 2.13, Hadoop 3.4, and Java 17.
 
 ### Skip Tests
 
@@ -100,10 +102,10 @@ You might also want to skip unit tests (the HBase plugin is currently failing un
 
 ### Build for Custom Spark / Hadoop Version
 
-Per default, Flowman will be built for fairly recent versions of Spark (3.0.2 as of this writing) and Hadoop (3.2.0). 
-But of course, you can also build for a different version by either using a profile
+Per default, Flowman will be built for the newest supported open source Spark and Hadoop versions. But of course, you can
+also build for a different version by using a profile
     
-    mvn install -Pspark2.4 -Phadoop2.7 -DskipTests
+    mvn install -Pspark-3.5 -Phadoop-3.3 -DskipTests
     
 This will always select the latest bug fix version within the minor version. You can also specify versions explicitly
 as follows:    
@@ -119,9 +121,11 @@ using the correct version. The following profiles are available:
 * spark-3.3
 * spark-3.4
 * spark-3.5
+* spark-4.0
 * hadoop-3.1
 * hadoop-3.2
 * hadoop-3.3
+* hadoop-3.4
 * EMR-6.12
 * synapse-3.3
 * CDP-7.1-spark-3.2
@@ -130,10 +134,26 @@ using the correct version. The following profiles are available:
 With these profiles it is easy to build Flowman to match your environment. 
 
 
+### Supported Spark, Scala and Java Combinations
+
+The main open source compatibility targets are:
+
+* Spark 3.5 with Scala 2.12 and Java 11
+* Spark 4.0 with Scala 2.13 and Java 17
+
+To validate both package variants locally, run the package phase with the matching JDK:
+
+```shell
+JAVA_HOME=/path/to/jdk-11 mvn clean package -Pspark-3.5 -DskipTests
+JAVA_HOME=/path/to/jdk-17 mvn clean package -Pspark-4.0 -DskipTests
+```
+
+
 ### Building for specific Java Version
 
-If nothing else is set on the command line, Flowman will now build for Java 11. If you are still stuck on Java 1.8, 
-you can simply override the Java version by specifying the property `java.version`
+If nothing else is set on the command line, Flowman will now build for Java 17. The `spark-3.5` profile overrides this
+to Java 11, and the older distribution profiles may use Java 8. You can override the Java target by specifying the
+property `java.version`, but the selected Spark runtime still needs to support that Java version.
 
 ```shell
 mvn install -Djava.version=1.8
@@ -175,6 +195,11 @@ mvn clean install -Pspark-3.4 -Phadoop-3.3 -Phadoop.version=3.3.4 -DskipTests
 #### Spark 3.5 and Hadoop 3.3
 ```shell
 mvn clean install -Pspark-3.5 -Phadoop-3.3 -Phadoop.version=3.3.4 -DskipTests
+```
+
+#### Spark 4.0 and Hadoop 3.4
+```shell
+mvn clean install -Pspark-4.0 -Phadoop-3.4 -DskipTests
 ```
 
 

@@ -91,10 +91,10 @@
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-plugin-delta</artifactId>
         </dependency>
-        <dependency>
+        <!-- <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-plugin-mssqlserver</artifactId>
-        </dependency>
+        </dependency> -->
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
             <artifactId>flowman-plugin-kafka</artifactId>

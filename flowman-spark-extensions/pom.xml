@@ -58,8 +58,6 @@
         </plugins>
     </build>
 
-
-
     <dependencies>
         <dependency>
             <groupId>com.dimajix.flowman</groupId>
@@ -81,5 +79,3 @@
         </dependency>
     </dependencies>
 </project>
-
-

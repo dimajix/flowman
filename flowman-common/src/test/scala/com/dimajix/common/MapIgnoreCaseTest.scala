@@ -95,13 +95,13 @@ class MapIgnoreCaseTest extends AnyFlatSpec with Matchers {
         map.toMap should be (Map("a" -> 1, "B" -> 2))
     }
 
-    it should "support mapValues" in {
+    it should "support mapValues via view" in {
         val map = MapIgnoreCase[Int](Seq(
             "a" -> 1,
             "B" -> 2
         ))
 
-        map.mapValues(v => 2*v) should be (MapIgnoreCase("a" -> 2, "B" -> 4))
+        map.mapValues(v => 2*v).toMap should be (MapIgnoreCase("a" -> 2, "B" -> 4))
         map.mapValues(v => 2*v).toSeq should be (Seq("a" -> 2, "B" -> 4))
     }
 }

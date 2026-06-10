@@ -64,6 +64,6 @@ class ListMapDeserializer(vc:Class[_]) extends StdDeserializer[ListMap[String,St
             key = jp.nextFieldName
         }
 
-        ListMap(result:_*)
+        ListMap(result.toSeq:_*)
     }
 }

@@ -36,7 +36,7 @@ object JavaConverters {
 
     def asScala[T](seq: java.lang.Iterable[T]): Iterable[T] = seq.asScala
 
-    def asScala[T](seq: java.util.List[T]): Seq[T] = seq.asScala
+    def asScala[T](seq: java.util.List[T]): Seq[T] = seq.asScala.toSeq
 
     def asScala[S, T](seq: java.util.Map[S, T]): Map[S, T] = seq.asScala.toMap
 
